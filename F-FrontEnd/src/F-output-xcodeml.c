@@ -4404,6 +4404,7 @@ outx_structType(int l, TYPE_DESC tp)
             }
             if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_IS_GENERIC) {
                 ID binding;
+                int is_defined_io = FALSE;
                 outx_printi(l2, "<typeBoundGenericProcedure");
                 if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_IS_OPERATOR) {
                     outx_true(TRUE, "is_operator");
@@ -4411,8 +4412,26 @@ outx_structType(int l, TYPE_DESC tp)
                 if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_IS_ASSIGNMENT) {
                     outx_true(TRUE, "is_assignment");
                 }
+                if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_READ ||
+                    TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_WRITE) {
+                    is_defined_io = TRUE;
+                    outx_puts(" is_defined_io=\"");
+                    if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_READ) {
+                        outx_puts("READ");
+                    } else {
+                        outx_puts("WRITE");
+                    }
+                    if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_FORMATTED) {
+                        outx_puts("(FORMATTED)");
+                    } else {
+                        outx_puts("(UNFORMATTED)");
+                    }
+                    outx_puts("\" ");
+                }
                 outx_printi(0,">\n");
-                outx_tagText(l3, "name", SYM_NAME(ID_SYM(id)));
+                if (!is_defined_io) {
+                    outx_tagText(l3, "name", SYM_NAME(ID_SYM(id)));
+                }
                 outx_tag(l3, "binding");
                 FOREACH_ID(binding, TBP_BINDING(id)) {
                     outx_tagText(l4, "name", SYM_NAME(ID_SYM(binding)));
