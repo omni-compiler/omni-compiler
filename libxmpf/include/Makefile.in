@@ -16,19 +16,10 @@ else
   COARRAY_SYNC_H = xmp_coarray_sync.h
 endif
 
+%.h:	%.h.sh
+	bash $< $(TARGET) > $@
+
 all: $(CREATE_HEADERS)
-
-xmp_coarray_put.h:  xmp_coarray_put.h.sh
-	bash $< $(TARGET) > $@
-
-xmp_coarray_get.h:  xmp_coarray_get.h.sh
-	bash $< $(TARGET) > $@
-
-xmp_coarray_alloc.h:  xmp_coarray_alloc.h.sh
-	bash $< $(TARGET) > $@
-
-xmp_coarray_reduction.h:  xmp_coarray_reduction.h.sh
-	bash $< $(TARGET) > $@
 
 install: $(CREATE_HEADERS) $(HEADERS)
 	$(MKDIR_P) $(DESTDIR)$(INCDIR)
