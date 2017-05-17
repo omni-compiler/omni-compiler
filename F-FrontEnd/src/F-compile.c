@@ -3140,10 +3140,341 @@ check_procedure_variables_forall(int is_final)
 }
 
 static int
-is_defined_io_procedure(ID id)
+is_defined_io_read_formatted(const TYPE_DESC ftp, const TYPE_DESC stp)
 {
-    /* TODO(shingo-s): implement*/
+    /*
+     * SUBROUTINE my_read_routine_formatted (dtv,
+     *                                       unit,
+     *                                       iotype,
+     *                                       v_list,
+     *                                       iostat,
+     *                                       iomsg)
+     *         ! the derived-type variable
+     *         `dtv-type-spec` , INTENT(INOUT)  :: dtv
+     *         INTEGER, INTENT(IN)              :: unit ! unit number
+     *         ! the edit descriptor string
+     *         CHARACTER (LEN=*), INTENT(IN)    :: iotype
+     *         INTEGER, INTENT(IN)              :: v_list(:)
+     *         INTEGER, INTENT(OUT)             :: iostat
+     *         CHARACTER (LEN=*), INTENT(INOUT) :: iomsg
+     * END
+     */
+    ID dtv, unit, iotype, v_list, iostat, iomsg;
+    TYPE_DESC tp;
+
+    if (ftp == NULL) {
+        return FALSE;
+    }
+
+    if (!IS_SUBR(ftp)) {
+        return FALSE;
+    }
+
+    dtv    = FUNCTION_TYPE_ARGS(ftp);
+    unit   = dtv?ID_NEXT(dtv):NULL;
+    iotype = unit?ID_NEXT(unit):NULL;
+    v_list = iotype?ID_NEXT(iotype):NULL;
+    iostat = v_list?ID_NEXT(v_list):NULL;
+    iomsg  = iostat?ID_NEXT(iostat):NULL;
+
+    if (dtv == NULL || strcmp("dtv", SYM_NAME(ID_SYM(dtv))) != 0){
+        return FALSE;
+    }
+    if (stp != NULL) {
+        tp = ID_TYPE(dtv);
+        if (tp == NULL || TYPE_REF(tp) != stp || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_INOUT) {
+            return FALSE;
+        }
+    }
+
+    if (unit == NULL || strcmp("unit", SYM_NAME(ID_SYM(unit))) != 0){
+        return FALSE;
+    }
+    tp = ID_TYPE(unit);
+    if (!IS_INT(tp) || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_IN) {
+        return FALSE;
+    }
+
+    if (iotype == NULL || strcmp("iotype", SYM_NAME(ID_SYM(iotype))) != 0){
+        return FALSE;
+    }
+    tp = ID_TYPE(iotype);
+    if (!IS_CHAR(tp) || !IS_CHAR_LEN_UNFIXED(tp) || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_IN) {
+        return FALSE;
+    }
+
+    if (v_list == NULL || strcmp("v_list", SYM_NAME(ID_SYM(v_list))) != 0){
+        return FALSE;
+    }
+    tp = ID_TYPE(v_list);
+    if (!IS_ARRAY_TYPE(tp) || !TYPE_IS_ARRAY_ASSUMED_SHAPE(tp) || !IS_INT(TYPE_REF(tp)) || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_IN) {
+        return FALSE;
+    }
+
+    if (iostat == NULL || strcmp("iostat", SYM_NAME(ID_SYM(iostat))) != 0){
+        return FALSE;
+    }
+    tp = ID_TYPE(iostat);
+    if (!IS_CHAR(tp) || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_OUT) {
+        return FALSE;
+    }
+
+    if (iomsg == NULL || strcmp("iomsg", SYM_NAME(ID_SYM(iomsg))) != 0){
+        return FALSE;
+    }
+    tp = ID_TYPE(iomsg);
+    if (!IS_CHAR(tp) || !IS_CHAR_LEN_UNFIXED(tp) || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_INOUT) {
+        return FALSE;
+    }
+
     return TRUE;
+}
+
+static int
+is_defined_io_read_unformatted(const TYPE_DESC ftp, const TYPE_DESC stp)
+{
+    /*
+     * SUBROUTINE my_read_routine_unformatted
+     *         (dtv,
+     *          unit,
+     *          iostat, iomsg)
+     *         ! the derived-type variable
+     *         dtv-type-spec , INTENT(INOUT) :: dtv
+     *         INTEGER, INTENT(IN) :: unit
+     *         INTEGER, INTENT(OUT) :: iostat
+     *         CHARACTER (LEN=*), INTENT(INOUT) :: iomsg
+     *         END
+     */
+    ID dtv, unit, iostat, iomsg;
+    TYPE_DESC tp;
+
+    if (ftp == NULL) {
+        return FALSE;
+    }
+
+    if (!IS_SUBR(ftp)) {
+        return FALSE;
+    }
+
+    dtv    = FUNCTION_TYPE_ARGS(ftp);
+    unit   = dtv?ID_NEXT(dtv):NULL;
+    iostat = unit?ID_NEXT(unit):NULL;
+    iomsg  = iostat?ID_NEXT(iostat):NULL;
+
+    if (dtv == NULL || strcmp("dtv", SYM_NAME(ID_SYM(dtv))) != 0){
+        return FALSE;
+    }
+    if (stp != NULL) {
+        tp = ID_TYPE(dtv);
+        if (tp == NULL || TYPE_REF(tp) != stp || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_INOUT) {
+            return FALSE;
+        }
+    }
+
+    if (unit == NULL || strcmp("unit", SYM_NAME(ID_SYM(unit))) != 0){
+        return FALSE;
+    }
+    tp = ID_TYPE(unit);
+    if (!IS_INT(tp) || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_IN) {
+        return FALSE;
+    }
+
+    if (iostat == NULL || strcmp("iostat", SYM_NAME(ID_SYM(iostat))) != 0){
+        return FALSE;
+    }
+    tp = ID_TYPE(iostat);
+    if (!IS_CHAR(tp) || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_OUT) {
+        return FALSE;
+    }
+
+    if (iomsg == NULL || strcmp("iomsg", SYM_NAME(ID_SYM(iomsg))) != 0){
+        return FALSE;
+    }
+    tp = ID_TYPE(iomsg);
+    if (!IS_CHAR(tp) || !IS_CHAR_LEN_UNFIXED(tp) || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_INOUT) {
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+static int
+is_defined_io_write_formatted(const TYPE_DESC ftp, const TYPE_DESC stp)
+{
+    /*
+     * SUBROUTINE my_write_routine_formatted
+     *         (dtv,
+     *          unit,
+     *          iotype, v_list,
+     *          iostat, iomsg)
+     *         ! the derived-type value/variable
+     *         dtv-type-spec , INTENT(IN) :: dtv
+     *         INTEGER, INTENT(IN) :: unit
+     *         ! the edit descriptor string
+     *         CHARACTER (LEN=*), INTENT(IN) :: iotype
+     *         INTEGER, INTENT(IN) :: v_list(:)
+     *         INTEGER, INTENT(OUT) :: iostat
+     *         CHARACTER (LEN=*), INTENT(INOUT) :: iomsg
+     * END
+     */
+    ID dtv, unit, iotype, v_list, iostat, iomsg;
+    TYPE_DESC tp;
+
+    if (ftp == NULL) {
+        return FALSE;
+    }
+
+    if (!IS_SUBR(ftp)) {
+        return FALSE;
+    }
+
+    dtv    = FUNCTION_TYPE_ARGS(ftp);
+    unit   = dtv?ID_NEXT(dtv):NULL;
+    iotype = unit?ID_NEXT(unit):NULL;
+    v_list = iotype?ID_NEXT(iotype):NULL;
+    iostat = v_list?ID_NEXT(v_list):NULL;
+    iomsg  = iostat?ID_NEXT(iostat):NULL;
+
+    if (dtv == NULL || strcmp("dtv", SYM_NAME(ID_SYM(dtv))) != 0){
+        return FALSE;
+    }
+    if (stp != NULL) {
+        tp = ID_TYPE(dtv);
+        if (tp == NULL || TYPE_REF(tp) != stp || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_IN) {
+            return FALSE;
+        }
+    }
+
+    if (unit == NULL || strcmp("unit", SYM_NAME(ID_SYM(unit))) != 0){
+        return FALSE;
+    }
+    tp = ID_TYPE(unit);
+    if (!IS_INT(tp) || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_IN) {
+        return FALSE;
+    }
+
+    if (iotype == NULL || strcmp("iotype", SYM_NAME(ID_SYM(iotype))) != 0){
+        return FALSE;
+    }
+    tp = ID_TYPE(iotype);
+    if (!IS_CHAR(tp) || !IS_CHAR_LEN_UNFIXED(tp) || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_IN) {
+        return FALSE;
+    }
+
+    if (v_list == NULL || strcmp("v_list", SYM_NAME(ID_SYM(v_list))) != 0){
+        return FALSE;
+    }
+    tp = ID_TYPE(v_list);
+    if (!IS_ARRAY_TYPE(tp) || !TYPE_IS_ARRAY_ASSUMED_SHAPE(tp) || !IS_INT(TYPE_REF(tp)) || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_IN) {
+        return FALSE;
+    }
+
+    if (iostat == NULL || strcmp("iostat", SYM_NAME(ID_SYM(iostat))) != 0){
+        return FALSE;
+    }
+    tp = ID_TYPE(iostat);
+    if (!IS_CHAR(tp) || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_OUT) {
+        return FALSE;
+    }
+
+    if (iomsg == NULL || strcmp("iomsg", SYM_NAME(ID_SYM(iomsg))) != 0){
+        return FALSE;
+    }
+    tp = ID_TYPE(iomsg);
+    if (!IS_CHAR(tp) || !IS_CHAR_LEN_UNFIXED(tp) || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_INOUT) {
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+static int
+is_defined_io_write_unformatted(const TYPE_DESC ftp, const TYPE_DESC stp)
+{
+    /*
+     * SUBROUTINE my_write_routine_unformatted
+     *         (dtv,
+     *          unit,
+     *          iostat, iomsg)
+     *         ! the derived-type value/variable
+     *         dtv-type-spec , INTENT(IN) :: dtv
+     *         INTEGER, INTENT(IN) :: unit
+     *         INTEGER, INTENT(OUT) :: iostat
+     *         CHARACTER (LEN=*), INTENT(INOUT) :: iomsg
+     * END
+     */
+    ID dtv, unit, iostat, iomsg;
+    TYPE_DESC tp;
+
+    if (ftp == NULL) {
+        return FALSE;
+    }
+
+    if (!IS_SUBR(ftp)) {
+        return FALSE;
+    }
+
+    dtv    = FUNCTION_TYPE_ARGS(ftp);
+    unit   = dtv?ID_NEXT(dtv):NULL;
+    iostat = unit?ID_NEXT(unit):NULL;
+    iomsg  = iostat?ID_NEXT(iostat):NULL;
+
+    if (dtv == NULL || strcmp("dtv", SYM_NAME(ID_SYM(dtv))) != 0){
+        return FALSE;
+    }
+    if (stp != NULL) {
+        tp = ID_TYPE(dtv);
+        if (tp == NULL || TYPE_REF(tp) != stp || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_IN) {
+            return FALSE;
+        }
+    }
+
+    if (unit == NULL || strcmp("unit", SYM_NAME(ID_SYM(unit))) != 0){
+        return FALSE;
+    }
+    tp = ID_TYPE(unit);
+    if (!IS_INT(tp) || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_IN) {
+        return FALSE;
+    }
+
+    if (iostat == NULL || strcmp("iostat", SYM_NAME(ID_SYM(iostat))) != 0){
+        return FALSE;
+    }
+    tp = ID_TYPE(iostat);
+    if (!IS_CHAR(tp) || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_OUT) {
+        return FALSE;
+    }
+
+    if (iomsg == NULL || strcmp("iomsg", SYM_NAME(ID_SYM(iomsg))) != 0){
+        return FALSE;
+    }
+    tp = ID_TYPE(iomsg);
+    if (!IS_CHAR(tp) || !IS_CHAR_LEN_UNFIXED(tp) || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_INOUT) {
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+
+static int
+is_defined_io_procedure(const ID id, const TYPE_DESC stp)
+{
+    if (id == NULL || ID_TYPE(id) == NULL || stp == NULL) {
+        return FALSE;
+    }
+
+    if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_WRITE && TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_FORMATTED) {
+        return is_defined_io_write_formatted(ID_TYPE(id), stp);
+    } else if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_WRITE && TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_UNFORMATTED) {
+        return is_defined_io_write_unformatted(ID_TYPE(id), stp);
+    } else if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_READ && TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_FORMATTED) {
+        return is_defined_io_read_formatted(ID_TYPE(id), stp);
+    } else if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_READ && TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_UNFORMATTED) {
+        return is_defined_io_read_unformatted(ID_TYPE(id), stp);
+    } else {
+        return FALSE;
+    }
 }
 
 
@@ -3178,12 +3509,13 @@ check_type_bound_procedures()
         FOREACH_TYPE_BOUND_GENERIC(mem, tp) {
             FOREACH_ID(binding, TBP_BINDING(mem)) {
                 bindto = find_struct_member(tp, ID_SYM(binding));
-                TBP_BINDING_ATTRS(bindto) |= TBP_BINDING_ATTRS(mem) & TYPE_BOUND_PROCEDURE_IS_OPERATOR;
-                TBP_BINDING_ATTRS(bindto) |= TBP_BINDING_ATTRS(mem) & TYPE_BOUND_PROCEDURE_IS_ASSIGNMENT;
-                TBP_BINDING_ATTRS(bindto) |= TBP_BINDING_ATTRS(mem) & TYPE_BOUND_PROCEDURE_WRITE;
-                TBP_BINDING_ATTRS(bindto) |= TBP_BINDING_ATTRS(mem) & TYPE_BOUND_PROCEDURE_READ;
-                TBP_BINDING_ATTRS(bindto) |= TBP_BINDING_ATTRS(mem) & TYPE_BOUND_PROCEDURE_FORMATTED;
-                TBP_BINDING_ATTRS(bindto) |= TBP_BINDING_ATTRS(mem) & TYPE_BOUND_PROCEDURE_UNFORMATTED;
+                TBP_BINDING_ATTRS(bindto) |= TBP_BINDING_ATTRS(mem) & (
+                        TYPE_BOUND_PROCEDURE_IS_OPERATOR |
+                        TYPE_BOUND_PROCEDURE_IS_ASSIGNMENT |
+                        TYPE_BOUND_PROCEDURE_WRITE |
+                        TYPE_BOUND_PROCEDURE_READ |
+                        TYPE_BOUND_PROCEDURE_FORMATTED |
+                        TYPE_BOUND_PROCEDURE_UNFORMATTED);
             }
         }
 
@@ -3204,7 +3536,7 @@ check_type_bound_procedures()
              * Check a type-bound procedure works as defined io procedure
              */
             if (TBP_IS_DEFINED_IO(tbp)) {
-                if (!is_defined_io_procedure(tbp)) {
+                if (!is_defined_io_procedure(tbp, tp)) {
                     error("type-bound procedure is used as defined i/o procedure, "
                           "but its procedure signamture is wrong");
                 }
