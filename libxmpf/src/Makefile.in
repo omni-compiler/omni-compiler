@@ -26,7 +26,7 @@ OBJECTS   = xmpf_array.o xmpf_async.o xmpf_gcomm.o xmpf_gmove.o xmpf_index.o xmp
 	    xmpf_task.o xmpf_template.o \
             xmpf_coarray.o xmpf_coarray_alloc.o \
 	    xmpf_coarray_wrap.o xmpf_coarray_alloc_wrap.o \
-            xmpf_coarray_put.o xmpf_coarray_get.o xmpf_coarray_atomic.o \
+            xmpf_coarray_put.o xmpf_coarray_get.o xmpf_coarray_getsub.o xmpf_coarray_atomic.o \
 	    xmpf_coarray_put_wrap.o xmpf_coarray_get_wrap.o xmpf_coarray_getsub_wrap.o xmpf_coarray_atomic_wrap.o \
 	    xmpf_coarray_lib.o xmpf_coarray_reduction.o \
             xmpf_coarray_decl.o $(F_MAIN_O)
