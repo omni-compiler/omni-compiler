@@ -23,12 +23,6 @@ static char *_getVectorIter(void *descPtr, char *baseAddr, int bytes, int coinde
                             char *dst, int loops, int skip[], int count[],
                             void *descDMA, size_t offsetDMA, char *nameDMA);
 
-static void _getVector_DMA(void *descPtr, char *baseAddr, int bytes, int coindex,
-                           void *descDMA, size_t offsetDMA, char *nameDMA);
-
-static void _getVector_buffer(void *descPtr, char *baseAddr, int bytesRU, int coindex,
-                              char *result, int bytes);
-
 #if 0   //obsolete
 static void _getVector(void *descPtr, char *baseAddr, int bytes,
                        int coindex, char *dst);
@@ -100,14 +94,14 @@ extern void xmpf_coarray_get_scalar_(void **descPtr, char **baseAddr, int *eleme
     _XMPF_coarrayDebugPrint("SCHEME_DirectGet/scalar selected\n");
 
     assert(avail_DMA);
-    _getVector_DMA(*descPtr, *baseAddr, *element, coindex0,
+    _XMPF_getVector_DMA(*descPtr, *baseAddr, *element, coindex0,
                    descDMA, offsetDMA, nameDMA);
     break;
 
   case SCHEME_BufferGet:
     _XMPF_coarrayDebugPrint("select SCHEME_BufferGet/scalar\n");
 
-    _getVector_buffer(*descPtr, *baseAddr, *element, coindex0,
+    _XMPF_getVector_buffer(*descPtr, *baseAddr, *element, coindex0,
                       result, *element);
     break;
 
@@ -118,7 +112,7 @@ extern void xmpf_coarray_get_scalar_(void **descPtr, char **baseAddr, int *eleme
       _XMPF_coarrayDebugPrint("select SCHEME_ExtraBufferGet/scalar. elementRU=%ud\n",
                               elementRU);
 
-      _getVector_buffer(*descPtr, *baseAddr, elementRU, coindex0,
+      _XMPF_getVector_buffer(*descPtr, *baseAddr, elementRU, coindex0,
                         result, *element);
     }
     break;
@@ -266,10 +260,10 @@ void _getCoarray(void *descPtr, char *baseAddr, int coindex, char *result,
 {
   if (rank == 0) {  // fully contiguous after perfect collapsing
     if (descDMA != NULL)   // DMA available
-      _getVector_DMA(descPtr, baseAddr, bytes, coindex,
+      _XMPF_getVector_DMA(descPtr, baseAddr, bytes, coindex,
                      descDMA, offsetDMA, nameDMA);
     else
-      _getVector_buffer(descPtr, baseAddr, bytes, coindex,
+      _XMPF_getVector_buffer(descPtr, baseAddr, bytes, coindex,
                         result, bytes);
     return;
   }
@@ -314,14 +308,14 @@ char *_getVectorIter(void *descPtr, char *baseAddr, int bytes, int coindex,
   if (loops == 1) {
     if (descDMA != NULL) {  // DMA available
       for (int i = 0; i < n; i++) {
-        _getVector_DMA(descPtr, src, bytes, coindex,
+        _XMPF_getVector_DMA(descPtr, src, bytes, coindex,
                        descDMA, offsetDMA, nameDMA);
         dst += bytes;
         src += gap;
       }
     } else {    // recursive getVector with static buffer
       for (int i = 0; i < n; i++) {
-        _getVector_buffer(descPtr, src, bytes, coindex,
+        _XMPF_getVector_buffer(descPtr, src, bytes, coindex,
                           dst, bytes);
         dst += bytes;
         src += gap;
@@ -340,7 +334,12 @@ char *_getVectorIter(void *descPtr, char *baseAddr, int bytes, int coindex,
 }
 
 
-void _getVector_DMA(void *descPtr, char *baseAddr, int bytes, int coindex,
+
+/***************************************************\
+    common
+\***************************************************/
+
+void _XMPF_getVector_DMA(void *descPtr, char *baseAddr, int bytes, int coindex,
                     void *descDMA, size_t offsetDMA, char *nameDMA)
 {
   char* desc = _XMPF_get_coarrayChunkDesc(descPtr);
@@ -361,7 +360,7 @@ void _getVector_DMA(void *descPtr, char *baseAddr, int bytes, int coindex,
 }
 
 
-void _getVector_buffer(void *descPtr, char *baseAddr, int bytesRU, int coindex,
+void _XMPF_getVector_buffer(void *descPtr, char *baseAddr, int bytesRU, int coindex,
                        char *result, int bytes)
 {
   size_t rest1, rest2, bufSize;
@@ -375,7 +374,7 @@ void _getVector_buffer(void *descPtr, char *baseAddr, int bytesRU, int coindex,
   for (rest1 = bytesRU, rest2 = bytes;
        rest1 > bufSize;
        rest1 -= bufSize, rest2 -=bufSize) {
-    _getVector_DMA(descPtr, src, bufSize, coindex,
+    _XMPF_getVector_DMA(descPtr, src, bufSize, coindex,
                    _localBuf_desc, _localBuf_offset, _localBuf_name);
 
     _XMPF_coarrayDebugPrint("MEMCPY %d bytes, cont\'d\n"
@@ -390,7 +389,7 @@ void _getVector_buffer(void *descPtr, char *baseAddr, int bytesRU, int coindex,
     dst += bufSize;
   }
 
-  _getVector_DMA(descPtr, src, rest1, coindex,
+  _XMPF_getVector_DMA(descPtr, src, rest1, coindex,
                  _localBuf_desc, _localBuf_offset, _localBuf_name);
 
   _XMPF_coarrayDebugPrint("MEMCPY %d bytes, final\n"
@@ -401,6 +400,7 @@ void _getVector_buffer(void *descPtr, char *baseAddr, int bytesRU, int coindex,
                           dst);
   (void)memcpy(dst, _localBuf_baseAddr, rest2);
 }
+
 
 
 #if 0   //obsolete

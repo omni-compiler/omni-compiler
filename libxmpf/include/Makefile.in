@@ -4,7 +4,7 @@ INCDIR  = @OMNI_HOME@/include
 MKDIR_P = @MKDIR_P@
 INSTALL = @INSTALL@
 TARGET  = @TARGET@
-CREATE_HEADERS = xmp_coarray_put.h xmp_coarray_get.h xmp_coarray_alloc.h xmp_coarray_reduction.h
+CREATE_HEADERS = xmp_coarray_put.h xmp_coarray_get.h xmp_coarray_getsub.h xmp_coarray_alloc.h xmp_coarray_reduction.h
 HEADERS = xmp_coarray.h xmp_lib.h xmp_coarray_atomic.h
 
 FALSE      = 1

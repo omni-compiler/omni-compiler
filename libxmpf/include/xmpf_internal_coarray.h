@@ -213,7 +213,6 @@ extern void xmpf_coarray_put_spread_(void **descPtr, char **baseAddr, int *eleme
 #endif
 extern void _XMPF_coarrayInit_put(void);
 
-
 /* xmpf_coarray_get.c */
 extern void xmpf_coarray_get_scalar_(void **descPtr, char **baseAddr, int *element,
                                      int *coindex, char *result);
@@ -226,6 +225,20 @@ extern void xmpf_coarray_get_array_(void **descPtr, char **baseAddr, int *elemen
                                     int *coindex, char *result, int *rank, ...);
 #endif
 extern void _XMPF_coarrayInit_get(void);
+
+/* xmpf_coarray_getsub.c */
+/* INTERFACE_TYPE==8 only */
+extern void xmpf_coarray_getsub_array_(void **descPtr, char **baseAddr, int *element,
+                                       int *coindex, char **localAddr, int *rank,
+                                       int skip[], int skip_local[], int count[]);
+extern void _XMPF_coarrayInit_getsub(void);
+
+// common
+extern void _XMPF_getVector_DMA(void *descPtr, char *baseAddr, int bytes, int coindex,
+                                void *descDMA, size_t offsetDMA, char *nameDMA);
+
+extern void _XMPF_getVector_buffer(void *descPtr, char *baseAddr, int bytesRU, int coindex,
+                                   char *result, int bytes);
 
 
 /* xmpf_async.c */

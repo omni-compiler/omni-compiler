@@ -401,6 +401,7 @@ public class XobjList extends Xobject implements Iterable<Xobject>, XobjContaine
       case F_VAR_REF:
       case F_ARRAY_REF:
       case CO_ARRAY_REF:
+      case FUNCTION_CALL:
         return getArg(0).getName();
       }
       throw new UnsupportedOperationException(toString());

@@ -29,7 +29,7 @@ print_function_scalar() {
     echo   '!-----------------------------------------------------------------------'
     echo   '      integer(8), intent(in) :: descptr'
     echo   '      integer, intent(in) :: coindex'
-    echo   "      ${typekind}, intent(in) :: mold"
+    echo   "      ${typekind}, intent(inout) :: mold   !! \'inout\' to avoid excessive code motion"
     case ${typekind} in
         'character(*)')  echo    "      character(len=len(mold)) :: dst";;
         *)               echo    "      ${typekind} :: dst";;

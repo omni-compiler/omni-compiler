@@ -129,9 +129,10 @@ public class XMPtransCoarrayRun
    *
    */
 
-  private int version;
+  private int     version;
   private Boolean useMalloc;
   private Boolean onlyCafMode;
+  private int     optLevel;
 
   private XMPenv env;
   private String name;
@@ -193,7 +194,7 @@ public class XMPtransCoarrayRun
   public XMPtransCoarrayRun(XobjectDef def, XMPenv env,
                             ArrayList<XMPtransCoarrayRun> pastRuns,
                             int pass, int version,
-                            Boolean useMalloc, Boolean onlyCafMode)
+                            Boolean useMalloc, Boolean onlyCafMode, int optLevel)
   {
     this.def = def;
     this.env = env;
@@ -201,6 +202,7 @@ public class XMPtransCoarrayRun
     this.version = version;
     this.useMalloc = useMalloc;
     this.onlyCafMode = onlyCafMode;
+    this.optLevel = optLevel;
 
     funcDef = new FuncDefBlock(def);
     env.setCurrentDef(funcDef);
@@ -1354,6 +1356,10 @@ public class XMPtransCoarrayRun
     // d. convert coindexed variable assignment stmts to call stmts
     convCoidxStmtsToSubrCalls(visibleCoarrays);
 
+    // optimization: convert assignment stmts with coindexed obj as RHS
+    if (optLevel == 1)
+      convGETfuncStmtsToSubrCalls(visibleCoarrays);
+
     // j. or j4. convert allocate/deallocate stmts (allocatable coarrays only)
     convAllocateStmts(visibleCoarrays);
     convDellocateStmts(visibleCoarrays);
@@ -1953,6 +1959,74 @@ public class XMPtransCoarrayRun
   }
 
   //-----------------------------------------------------
+  //  OPTIMIZATION 
+  //  convert the statements, whose RHS are runtime library function calls
+  //  converted from coindexed variables (translation e.), to subroutine calls
+  //-----------------------------------------------------
+  private void convGETfuncStmtsToSubrCalls(ArrayList<XMPcoarray> coarrays) {
+    BlockIterator bi = new topdownBlockIterator(getFblock());
+
+    for (bi.init(); !bi.end(); bi.next()) {
+
+      BasicBlock bb = bi.getBlock().getBasicBlock();
+      if (bb == null) continue;
+      for (Statement s = bb.getHead(); s != null; s = s.getNext()) {
+        Xobject assignExpr = s.getExpr();
+        if (assignExpr == null)
+          continue;
+
+        if (_hasGETfuncAsRHS(assignExpr)) {
+          // found -- convert the statement
+          Xobject callExpr = convGETfuncStmtToCallStmt(assignExpr);
+          s.setExpr(callExpr);
+        }
+      }
+    }
+  }
+
+  /**   "lhs = COARRAYGET_GENERIC_NAME(...)" --> "call COARRAYGETSUB_GENERIC_NAME(...,lhs)"
+   */
+  private Xobject convGETfuncStmtToCallStmt(Xobject assignExpr) {
+    LineNo lineno = assignExpr.getLineNo();
+    Xobject lhs = assignExpr.getArg(0);
+    Xobject rhs = assignExpr.getArg(1);
+    Xobject actualArgs = rhs.getArg(1);
+    String subrName = XMPcoindexObj.COARRAYGETSUB_GENERIC_NAME;
+
+    actualArgs.add(lhs);
+
+    Ident subrIdent = env.findVarIdent(subrName, null);
+    if (subrIdent == null)
+      subrIdent = env.declExternIdent
+        (subrName, Xtype.FexternalSubroutineType);
+
+    Xobject subrCall = subrIdent.callSubroutine(actualArgs);
+    subrCall.setLineNo(lineno);
+
+    /////////////////////////////
+    System.out.println("GACHA lhs.name=" + lhs.getName() + ", rhs.name="+rhs.getName());
+    System.out.println("   subrName="+subrName);
+    /////////////////////////////
+    return subrCall;
+  }
+
+  /** find assignment statement "lhs = COARRAYGET_GENERIC_NAME( ... )" 
+   */
+  private Boolean _hasGETfuncAsRHS(Xobject xobj) {
+    if (xobj.Opcode() == Xcode.F_ASSIGN_STATEMENT) {
+      Xobject rhs = xobj.getArg(1);
+      if (_isGETfunc(rhs))
+        return true;
+    }
+    return false;
+  }
+
+  private Boolean _isGETfunc(Xobject xobj) {
+    return XMPcoindexObj.isGETfunc(xobj);
+  }
+
+
+  //-----------------------------------------------------
   //  TRANSLATION e. (GET)
   //  convert coindexed objects to function references
   //-----------------------------------------------------
@@ -1987,15 +2061,13 @@ public class XMPtransCoarrayRun
    * convert expression:
    *    v(s1,s2,...)[cs1,cs2,...]
    * to:
-   *    type,external,dimension(:,:,..) :: commGetLibName_M
-   *    commGetLibName_M(...)
+   *    COARRAYGET_GENERIC_NAME(...)
    */
-  private Xobject coindexObjToFuncRef(Xobject funcRef,
+  private Xobject coindexObjToFuncRef(Xobject xobj,
                                       ArrayList<XMPcoarray> coarrays) {
-    XMPcoindexObj coindexObj = new XMPcoindexObj(funcRef, coarrays);
+    XMPcoindexObj coindexObj = new XMPcoindexObj(xobj, coarrays);
     return coindexObj.toFuncRef();
   }
-
 
   /** check if it is formally a coindexed object
    */

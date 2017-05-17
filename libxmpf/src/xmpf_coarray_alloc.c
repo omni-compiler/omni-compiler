@@ -572,6 +572,7 @@ void xmpf_coarray_malloc_pool_(void)
 
   // init library internal
   _XMPF_coarrayInit_get();
+  _XMPF_coarrayInit_getsub();
   _XMPF_coarrayInit_put();
 }
 

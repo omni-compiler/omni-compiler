@@ -21,95 +21,95 @@ MAKEDEF = "ONESIDED_LAYER=`./find_layer.sh`" "EXEC_FC=`./find_exec_fc.sh`" "FX10
 
 all:
 	for d in $(DIRS); do \
-	  $(MAKE) $(MAKEDEF) -C $$d all || exit 1; \
+	  $(MAKE) $(MAKEDEF) $(OPT) -C $$d all || exit 1; \
 	done
 
 all4:
 	for d in $(DIRS); do \
-	  $(MAKE) $(MAKEDEF) -C $$d all4 || exit 1; \
+	  $(MAKE) $(MAKEDEF) $(OPT) -C $$d all4 || exit 1; \
 	done
 
 all6:
 	for d in $(DIRS); do \
-	  $(MAKE) $(MAKEDEF) -C $$d all6 || exit 1; \
+	  $(MAKE) $(MAKEDEF) $(OPT) -C $$d all6 || exit 1; \
 	done
 
 all7:
 	for d in $(DIRS); do \
-	  $(MAKE) $(MAKEDEF) -C $$d all7 || exit 1; \
+	  $(MAKE) $(MAKEDEF) $(OPT) -C $$d all7 || exit 1; \
 	done
 
 all7g:
 	for d in $(DIRS); do \
-	  $(MAKE) $(MAKEDEF) -C $$d all7g || exit 1; \
+	  $(MAKE) $(MAKEDEF) $(OPT) -C $$d all7g || exit 1; \
 	done
 
 run:
 	for d in $(DIRS); do \
-	  $(MAKE) $(MAKEDEF) -C $$d -j1 run || exit 1; \
+	  $(MAKE) $(MAKEDEF) $(OPT) -C $$d -j1 run || exit 1; \
 	done
 
 run4:
 	for d in $(DIRS); do \
-	  $(MAKE) $(MAKEDEF) -C $$d -j1 run4 || exit 1; \
+	  $(MAKE) $(MAKEDEF) $(OPT) -C $$d -j1 run4 || exit 1; \
 	done
 
 run6:
 	for d in $(DIRS); do \
-	  $(MAKE) $(MAKEDEF) -C $$d -j1 run6 || exit 1; \
+	  $(MAKE) $(MAKEDEF) $(OPT) -C $$d -j1 run6 || exit 1; \
 	done
 
 run7:
 	for d in $(DIRS); do \
-	  $(MAKE) $(MAKEDEF) -C $$d -j1 run7 || exit 1; \
+	  $(MAKE) $(MAKEDEF) $(OPT) -C $$d -j1 run7 || exit 1; \
 	done
 
 run7g:
 	for d in $(DIRS); do \
-	  $(MAKE) $(MAKEDEF) -C $$d -j1 run7g || exit 1; \
+	  $(MAKE) $(MAKEDEF) $(OPT) -C $$d -j1 run7g || exit 1; \
 	done
 
 rerun:
 	for d in $(DIRS); do \
-	  $(MAKE) $(MAKEDEF) -C $$d -j1 rerun || exit 1; \
+	  $(MAKE) $(MAKEDEF) $(OPT) -C $$d -j1 rerun || exit 1; \
 	done
 
 submit:
 	for d in $(DIRS_SUBMIT); do \
-	  $(MAKE) $(MAKEDEF) -C $$d submit || exit 1; \
+	  $(MAKE) $(MAKEDEF) $(OPT) -C $$d submit || exit 1; \
 	done
 
 submit4:
 	for d in $(DIRS_SUBMIT); do \
-	  $(MAKE) $(MAKEDEF) -C $$d submit4 || exit 1; \
+	  $(MAKE) $(MAKEDEF) $(OPT) -C $$d submit4 || exit 1; \
 	done
 
 submit6:
 	for d in $(DIRS_SUBMIT); do \
-	  $(MAKE) $(MAKEDEF) -C $$d submit6 || exit 1; \
+	  $(MAKE) $(MAKEDEF) $(OPT) -C $$d submit6 || exit 1; \
 	done
 
 submit7:
 	for d in $(DIRS_SUBMIT); do \
-	  $(MAKE) $(MAKEDEF) -C $$d submit7 || exit 1; \
+	  $(MAKE) $(MAKEDEF) $(OPT) -C $$d submit7 || exit 1; \
 	done
 
 submit7g:
 	for d in $(DIRS_SUBMIT); do \
-	  $(MAKE) $(MAKEDEF) -C $$d submit7g || exit 1; \
+	  $(MAKE) $(MAKEDEF) $(OPT) -C $$d submit7g || exit 1; \
 	done
 
 showlog:
 	for d in $(DIRS_SUBMIT); do \
-	  $(MAKE) $(MAKEDEF) -C $$d showlog || exit 1; \
+	  $(MAKE) $(MAKEDEF) $(OPT) -C $$d showlog || exit 1; \
 	done
 
 cleanlog:
 	for d in $(DIRS); do \
-	  $(MAKE) $(MAKEDEF) -C $$d cleanlog || exit 1; \
+	  $(MAKE) $(MAKEDEF) $(OPT) -C $$d cleanlog || exit 1; \
 	done
 
 clean: cleanlog
 	for d in $(DIRS); do \
-	  $(MAKE) $(MAKEDEF) -C $$d clean || exit 1; \
+	  $(MAKE) $(MAKEDEF) $(OPT) -C $$d clean || exit 1; \
 	done
