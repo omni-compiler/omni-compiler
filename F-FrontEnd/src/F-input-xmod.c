@@ -3319,7 +3319,6 @@ input_module(xmlTextReaderPtr reader, struct module * mod, int is_intrinsic)
 #include <stdlib.h>
 #define _XMPMOD_NAME "T_Module"
 
-
 const char *
 search_intrinsic_include_path(const char * filename)
 {

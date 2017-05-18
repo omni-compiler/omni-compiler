@@ -317,10 +317,18 @@ expr_is_constant_typeof(x, bt)
                 if(arg == NULL) return FALSE;
                 return expr_is_constant(arg);
             } else if (strncasecmp("selected_real_kind", name, 18) == 0) {
-                expv arg1 = expr_list_get_n(EXPR_ARG2(x), 0);
-                expv arg2 = expr_list_get_n(EXPR_ARG2(x), 1);
-                if(arg1 == NULL || arg2 == NULL) return FALSE; // error
-                return (expr_is_constant(arg1) && expr_is_constant(arg2));
+                expv arg = EXPR_ARG2(x);
+                int n = expr_list_length(arg);
+                if(n == 1){
+                    expv arg1 = expr_list_get_n(arg, 0);
+                    if(arg1 == NULL) return FALSE; // error
+                    return (expr_is_constant(arg1));
+                } else if(n == 2){
+                    expv arg1 = expr_list_get_n(arg, 0);
+                    expv arg2 = expr_list_get_n(arg, 1);
+                    if(arg1 == NULL || arg2 == NULL) return FALSE; // error
+                    return (expr_is_constant(arg1) && expr_is_constant(arg2));
+                }
             }
         }
         break;

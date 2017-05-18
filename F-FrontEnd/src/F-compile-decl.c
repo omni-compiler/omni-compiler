@@ -2794,16 +2794,26 @@ expv_reduce_kind(expv v)
             expv arg = expr_list_get_n(EXPR_ARG2(ret), 0);
             arg = expv_reduce_kind(arg);
             if(arg == NULL) return NULL;
-            return expv_cons(FUNCTION_CALL, type_INT, EXPR_ARG1(ret), list1(LIST,arg));
-        } else if (strncasecmp("selected_real_kind", name, 18) == 0) {
-            expv arg1 = expr_list_get_n(EXPR_ARG2(ret), 0);
-            expv arg2 = expr_list_get_n(EXPR_ARG2(ret), 1);
-            
-            if(arg1 == NULL || arg2 == NULL) return NULL; // error
-            arg1 = expv_reduce_kind(arg1);
-            arg2 = expv_reduce_kind(arg2);
             return expv_cons(FUNCTION_CALL, type_INT, 
-                             EXPR_ARG1(ret), list2(LIST,arg1,arg2));
+                             EXPR_ARG1(ret), list1(LIST,arg));
+        } else if (strncasecmp("selected_real_kind", name, 18) == 0) {
+            expv arg = EXPR_ARG2(ret);
+            int n = expr_list_length(arg);
+            if(n == 1){
+                expv arg1 = expr_list_get_n(arg, 0);
+                if(arg1 == NULL) return NULL; // error
+                return expv_cons(FUNCTION_CALL, type_INT, 
+                                 EXPR_ARG1(ret), list1(LIST,arg1));
+            } else if(n == 2){
+                expv arg1 = expr_list_get_n(arg, 0);
+                expv arg2 = expr_list_get_n(arg, 1);
+            
+                if(arg1 == NULL || arg2 == NULL) return NULL; // error
+                arg1 = expv_reduce_kind(arg1);
+                arg2 = expv_reduce_kind(arg2);
+                return expv_cons(FUNCTION_CALL, type_INT, 
+                                 EXPR_ARG1(ret), list2(LIST,arg1,arg2));
+            } 
         }
         break;
     }
@@ -4409,6 +4419,8 @@ postproc_PARAM_decl(expr ident, expr e)
 
     v = compile_expression(e);
 
+    if(v == NULL) return; // error
+
     if (expr_is_constant(e)) {
         if(v)
             v = expv_reduce(v, FALSE);
@@ -4416,10 +4428,7 @@ postproc_PARAM_decl(expr ident, expr e)
             error("bad constant expression in PARAMETER statement");
             return;
         }
-    } else {
-        if (v == NULL)
-            return;
-    }
+    } 
 
     if (ID_TYPE(id) != NULL) {
         if (type_is_compatible_for_assignment(ID_TYPE(id),
