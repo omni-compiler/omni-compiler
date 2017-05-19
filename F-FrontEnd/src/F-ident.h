@@ -419,6 +419,10 @@ struct interface_info {
         INTF_GENERICS,    /* for generics interface but not yet defined */
         INTF_GENERIC_FUNC,/* for generic 'functions' interface */
         INTF_GENERIC_SUBR,/* for generic 'subroutines' interface */
+        INTF_GENERIC_WRITE_FORMATTED,/* for generic 'WRITE(FORMATTED)' interface */
+        INTF_GENERIC_WRITE_UNFORMATTED,/* for generic 'WRITE(UNFORMATTED)' interface */
+        INTF_GENERIC_READ_FORMATTED,/* for generic 'READ(FORMATTED)' interface */
+        INTF_GENERIC_READ_UNFORMATTED,/* for generic 'READ(UNFORMATTED)' interface */
         INTF_DECL         /* for interface not above cases. (interface for function prottype)*/
     } class;
 };

@@ -5671,8 +5671,8 @@ compile_type_generic_procedure(expr x)
                     binding_attr_flags |= TYPE_BOUND_PROCEDURE_UNFORMATTED;
                     break;
                 default:
-                    /* never reach */
-                    break;
+                    error("expect FORMATTED or UNFORMATTED");
+                    return;
             }
             /* TODO(shingo-s): check the procedure already exists */
             id = declare_ident(sym, CL_TYPE_BOUND_PROC);
@@ -5691,9 +5691,10 @@ compile_type_generic_procedure(expr x)
                     binding_attr_flags |= TYPE_BOUND_PROCEDURE_UNFORMATTED;
                     break;
                 default:
-                    /* never reach */
-                    break;
+                    error("expect FORMATTED or UNFORMATTED");
+                    return;
             }
+            id = declare_ident(sym, CL_TYPE_BOUND_PROC);
         } break;
         default:
             error_at_node(x, "unexpected expression");

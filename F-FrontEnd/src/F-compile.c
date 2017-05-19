@@ -5382,6 +5382,39 @@ compile_INTERFACE_statement(expr x)
             s = find_symbol(EXPR_CODE_SYMBOL(EXPR_CODE(identOrOp)));
             info->class = INTF_OPERATOR;
         } break;
+        case F03_GENERIC_WRITE: {
+            expr formatted = EXPR_ARG1(identOrOp);
+            switch (EXPR_CODE(formatted)) {
+                case F03_FORMATTED:
+                    s = find_symbol("_write_formatted");
+                    info->class = INTF_GENERIC_WRITE_FORMATTED;
+                    break;
+                case F03_UNFORMATTED:
+                    s = find_symbol("_write_unformatted");
+                    info->class = INTF_GENERIC_WRITE_UNFORMATTED;
+                    break;
+                default:
+                    /* never reach */
+                    break;
+            }
+            /* TODO(shingo-s): check the procedure already exists */
+        } break;
+        case F03_GENERIC_READ: {
+            expr formatted = EXPR_ARG1(identOrOp);
+            switch (EXPR_CODE(formatted)) {
+                case F03_FORMATTED:
+                    s = find_symbol("_read_formatted");
+                    info->class = INTF_GENERIC_READ_FORMATTED;
+                    break;
+                case F03_UNFORMATTED:
+                    s = find_symbol("_read_unformatted");
+                    info->class = INTF_GENERIC_READ_UNFORMATTED;
+                    break;
+                default:
+                    /* never reach */
+                    break;
+            }
+        } break;
         default:
             NOT_YET();
         break;

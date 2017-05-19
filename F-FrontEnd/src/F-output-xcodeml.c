@@ -5228,6 +5228,18 @@ outx_interfaceDecl(int l, EXT_ID ep)
             outx_printi(0, " name=\"%s\"", SYM_NAME(EXT_SYM(ep)));
             outx_true(TRUE, "is_operator");
             break;
+        case INTF_GENERIC_WRITE_FORMATTED:
+            outx_printi(0, " is_defined_io=\"WRITE(FORMATTED)\"");
+            break;
+        case INTF_GENERIC_WRITE_UNFORMATTED:
+            outx_printi(0, " is_defined_io=\"WRITE(UNFORMATTED)\"");
+            break;
+        case INTF_GENERIC_READ_FORMATTED:
+            outx_printi(0, " is_defined_io=\"READ(FORMATTED)\"");
+            break;
+        case INTF_GENERIC_READ_UNFORMATTED:
+            outx_printi(0, " is_defined_io=\"READ(UNFORMATTED)\"");
+            break;
         default:
             /* never reach. here*/
             break;
