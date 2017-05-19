@@ -50,6 +50,9 @@ C-exprcode.c: C-exprcode.def C-exprcode.c.awk
 fincludes/iso_c_binding.xmod: fincludes/iso_c_binding.f90 $(F_FRONT)
 	./$(F_FRONT) -module-compile $< > $@
 
+fincludes/iso_fortran_env.xmod: fincludes/iso_fortran_env.f90 $(F_FRONT)
+	./$(F_FRONT) -module-compile $< > $@
+
 install: $(F_FRONT)
 	$(MKDIR_P) $(DESTDIR)$(BINDIR)
 	$(INSTALL) $(F_FRONT) $(DESTDIR)$(BINDIR)
