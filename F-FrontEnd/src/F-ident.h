@@ -410,7 +410,6 @@ struct use_assoc_info {
 
 #define MULTI_ID_LIST(id)     ((id)->info.multi_info.id_list)
 
-
 struct interface_info {
     enum {
         INTF_ASSIGNMENT,  /* for assignment interface */
