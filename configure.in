@@ -926,8 +926,7 @@ else
     AC_CHECK_PROG([MPI_CC], [mpicc], [mpicc])
 
     # Workaround for Cray CC >8.5. Version is printed on stderr now.
-    if [ $CRAY ]
-    then 
+    if test "$CRAY" = "$TRUE"; then 
       chk=`${MPI_CC} -V 2>&1 | head -n1`
     else
       chk=`${MPI_CC} --version | head -n1`
@@ -1300,8 +1299,7 @@ else
 	CFLAGS="${CFLAGS} -maix64"
     fi
 
-    if [ $CRAY ]
-    then 
+    if test "${userCFLAGS}" != ""; then
       chk=`${CC} -V 2>&1 | head -n1`
     else
       chk=`${CC} --version | head -n1`
