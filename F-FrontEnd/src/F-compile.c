@@ -3177,53 +3177,79 @@ is_defined_io_read_formatted(const TYPE_DESC ftp, const TYPE_DESC stp)
     iostat = v_list?ID_NEXT(v_list):NULL;
     iomsg  = iostat?ID_NEXT(iostat):NULL;
 
-    if (dtv == NULL || strcmp("dtv", SYM_NAME(ID_SYM(dtv))) != 0){
+    if (dtv == NULL || strcmp("dtv", SYM_NAME(ID_SYM(dtv))) != 0) {
+        debug("expect 'dtv' as a 1st argument, but got %s\n", unit?SYM_NAME(ID_SYM(dtv)):"null");
         return FALSE;
     }
-    if (stp != NULL) {
-        tp = ID_TYPE(dtv);
-        if (tp == NULL || TYPE_REF(tp) != stp || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_INOUT) {
-            return FALSE;
-        }
+    tp = ID_TYPE(dtv);
+    if (tp == NULL || (stp != NULL && TYPE_REF(tp) != stp) ||
+        (TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_INOUT &&
+         TYPE_ATTR_FLAGS(tp) != (TYPE_ATTR_CLASS | TYPE_ATTR_INTENT_INOUT))) {
+        debug("unexpected type of 'dtv'\n");
+        return FALSE;
     }
 
-    if (unit == NULL || strcmp("unit", SYM_NAME(ID_SYM(unit))) != 0){
+    if (unit == NULL || strcmp("unit", SYM_NAME(ID_SYM(unit))) != 0) {
+        debug("expect 'unit' as a 2nd arg, but got %s\n", unit?SYM_NAME(ID_SYM(unit)):"null");
         return FALSE;
     }
     tp = ID_TYPE(unit);
     if (!IS_INT(tp) || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_IN) {
+        debug("unexpected type of 'unit'\n");
         return FALSE;
     }
 
-    if (iotype == NULL || strcmp("iotype", SYM_NAME(ID_SYM(iotype))) != 0){
+    if (iotype == NULL || strcmp("iotype", SYM_NAME(ID_SYM(iotype))) != 0) {
+        debug("expect 'iotype' as a 3rd arg, but got %s\n", unit?SYM_NAME(ID_SYM(iostat)):"null");
         return FALSE;
     }
     tp = ID_TYPE(iotype);
-    if (!IS_CHAR(tp) || !IS_CHAR_LEN_UNFIXED(tp) || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_IN) {
+    if (!IS_CHAR(tp) ||
+        !IS_CHAR_LEN_UNFIXED(tp) ||
+        TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_IN) {
+        debug("unexpected type of 'iotype'\n");
         return FALSE;
     }
 
-    if (v_list == NULL || strcmp("v_list", SYM_NAME(ID_SYM(v_list))) != 0){
+    if (v_list == NULL || strcmp("v_list", SYM_NAME(ID_SYM(v_list))) != 0) {
+        debug("expect 'v_list' as a 4th arg, but got %s\n", unit?SYM_NAME(ID_SYM(v_list)):"null");
         return FALSE;
     }
     tp = ID_TYPE(v_list);
-    if (!IS_ARRAY_TYPE(tp) || !TYPE_IS_ARRAY_ASSUMED_SHAPE(tp) || !IS_INT(TYPE_REF(tp)) || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_IN) {
+    if (!IS_ARRAY_TYPE(tp) ||
+        !TYPE_IS_ARRAY_ASSUMED_SHAPE(tp) ||
+        !IS_INT(TYPE_REF(tp)) ||
+        TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_IN) {
+        debug("unexpected type of 'v_list'\n");
         return FALSE;
     }
 
-    if (iostat == NULL || strcmp("iostat", SYM_NAME(ID_SYM(iostat))) != 0){
+    if (iostat == NULL || strcmp("iostat", SYM_NAME(ID_SYM(iostat))) != 0) {
+        debug("expect 'iostat' as a 5th arg, but got %s\n",
+              unit?SYM_NAME(ID_SYM(iostat)):"null");
         return FALSE;
     }
     tp = ID_TYPE(iostat);
     if (!IS_CHAR(tp) || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_OUT) {
+        debug("unexpected type of 'iostat'\n");
         return FALSE;
     }
 
-    if (iomsg == NULL || strcmp("iomsg", SYM_NAME(ID_SYM(iomsg))) != 0){
+    if (iomsg == NULL || strcmp("iomsg", SYM_NAME(ID_SYM(iomsg))) != 0) {
+        debug("expect 'iomsg' as a 6th arg, but got %s\n",
+              unit?SYM_NAME(ID_SYM(iostat)):"null");
         return FALSE;
     }
     tp = ID_TYPE(iomsg);
-    if (!IS_CHAR(tp) || !IS_CHAR_LEN_UNFIXED(tp) || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_INOUT) {
+    if (!IS_CHAR(tp) ||
+        !IS_CHAR_LEN_UNFIXED(tp) ||
+        TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_INOUT) {
+        debug("unexpected type of 'iomsg'\n");
+        return FALSE;
+    }
+
+    if (ID_NEXT(iomsg) != NULL) {
+        debug("Unexpected 7th arg\n");
         return FALSE;
     }
 
@@ -3261,37 +3287,57 @@ is_defined_io_read_unformatted(const TYPE_DESC ftp, const TYPE_DESC stp)
     iostat = unit?ID_NEXT(unit):NULL;
     iomsg  = iostat?ID_NEXT(iostat):NULL;
 
-    if (dtv == NULL || strcmp("dtv", SYM_NAME(ID_SYM(dtv))) != 0){
+    if (dtv == NULL || strcmp("dtv", SYM_NAME(ID_SYM(dtv))) != 0) {
+        debug("expect 'dtv' as a 1st arg, but got %s\n",
+              unit?SYM_NAME(ID_SYM(dtv)):"null");
         return FALSE;
     }
-    if (stp != NULL) {
-        tp = ID_TYPE(dtv);
-        if (tp == NULL || TYPE_REF(tp) != stp || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_INOUT) {
-            return FALSE;
-        }
+    tp = ID_TYPE(dtv);
+    if (tp == NULL ||
+        (stp != NULL && TYPE_REF(tp) != stp) ||
+        (TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_INOUT &&
+         TYPE_ATTR_FLAGS(tp) != (TYPE_ATTR_CLASS | TYPE_ATTR_INTENT_INOUT))) {
+        debug("unexpected type of 'dtv'\n");
+        return FALSE;
     }
 
-    if (unit == NULL || strcmp("unit", SYM_NAME(ID_SYM(unit))) != 0){
+    if (unit == NULL || strcmp("unit", SYM_NAME(ID_SYM(unit))) != 0) {
+        debug("expect 'unit' as a 2nd arg, but got %s\n",
+              unit?SYM_NAME(ID_SYM(unit)):"null");
         return FALSE;
     }
     tp = ID_TYPE(unit);
     if (!IS_INT(tp) || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_IN) {
+        debug("unexpected type of 'unit'\n");
         return FALSE;
     }
 
-    if (iostat == NULL || strcmp("iostat", SYM_NAME(ID_SYM(iostat))) != 0){
+    if (iostat == NULL || strcmp("iostat", SYM_NAME(ID_SYM(iostat))) != 0) {
+        debug("expect 'iostat' as a 3rd arg, but got %s\n",
+              unit?SYM_NAME(ID_SYM(iostat)):"null");
         return FALSE;
     }
     tp = ID_TYPE(iostat);
     if (!IS_CHAR(tp) || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_OUT) {
+        debug("unexpected type of 'iostat'\n");
         return FALSE;
     }
 
-    if (iomsg == NULL || strcmp("iomsg", SYM_NAME(ID_SYM(iomsg))) != 0){
+    if (iomsg == NULL || strcmp("iomsg", SYM_NAME(ID_SYM(iomsg))) != 0) {
+        debug("expect 'iomsg' as a 4th arg, but got %s\n",
+              unit?SYM_NAME(ID_SYM(iomsg)):"null");
         return FALSE;
     }
     tp = ID_TYPE(iomsg);
-    if (!IS_CHAR(tp) || !IS_CHAR_LEN_UNFIXED(tp) || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_INOUT) {
+    if (!IS_CHAR(tp) ||
+        !IS_CHAR_LEN_UNFIXED(tp) ||
+        TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_INOUT) {
+        debug("Unexpected type of 'iomsg'\n");
+        return FALSE;
+    }
+
+    if (ID_NEXT(iomsg) != NULL) {
+        debug("unexpected 5th arg\n");
         return FALSE;
     }
 
@@ -3335,53 +3381,80 @@ is_defined_io_write_formatted(const TYPE_DESC ftp, const TYPE_DESC stp)
     iostat = v_list?ID_NEXT(v_list):NULL;
     iomsg  = iostat?ID_NEXT(iostat):NULL;
 
-    if (dtv == NULL || strcmp("dtv", SYM_NAME(ID_SYM(dtv))) != 0){
+    if (dtv == NULL || strcmp("dtv", SYM_NAME(ID_SYM(dtv))) != 0) {
+        debug("expect 'dtv' as a 1st arg, but got %s\n",
+              unit?SYM_NAME(ID_SYM(dtv)):"null");
         return FALSE;
     }
     if (stp != NULL) {
         tp = ID_TYPE(dtv);
-        if (tp == NULL || TYPE_REF(tp) != stp || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_IN) {
+        if (tp == NULL ||
+            TYPE_REF(tp) != stp ||
+            (TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_IN &&
+             TYPE_ATTR_FLAGS(tp) != (TYPE_ATTR_CLASS | TYPE_ATTR_INTENT_IN))) {
+            debug("unexpected type of 'dtv'\n");
             return FALSE;
         }
     }
 
-    if (unit == NULL || strcmp("unit", SYM_NAME(ID_SYM(unit))) != 0){
+    if (unit == NULL || strcmp("unit", SYM_NAME(ID_SYM(unit))) != 0) {
+        debug("expect 'unit' as a 2nd arg, but got %s\n",
+              unit?SYM_NAME(ID_SYM(unit)):"null");
         return FALSE;
     }
     tp = ID_TYPE(unit);
     if (!IS_INT(tp) || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_IN) {
+        debug("unexpected type of 'unit'\n");
         return FALSE;
     }
 
-    if (iotype == NULL || strcmp("iotype", SYM_NAME(ID_SYM(iotype))) != 0){
+    if (iotype == NULL || strcmp("iotype", SYM_NAME(ID_SYM(iotype))) != 0) {
+        debug("expect 'iotype' as a 3rd arg, but got %s\n",
+              unit?SYM_NAME(ID_SYM(iotype)):"null");
         return FALSE;
     }
     tp = ID_TYPE(iotype);
-    if (!IS_CHAR(tp) || !IS_CHAR_LEN_UNFIXED(tp) || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_IN) {
+    if (!IS_CHAR(tp) ||
+        !IS_CHAR_LEN_UNFIXED(tp) ||
+        TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_IN) {
+        debug("Unexpected type of 'iotype'\n");
         return FALSE;
     }
 
-    if (v_list == NULL || strcmp("v_list", SYM_NAME(ID_SYM(v_list))) != 0){
+    if (v_list == NULL || strcmp("v_list", SYM_NAME(ID_SYM(v_list))) != 0) {
+        debug("expect 'v_list' as a 4th arg, but got %s\n",
+              unit?SYM_NAME(ID_SYM(v_list)):"null");
         return FALSE;
     }
     tp = ID_TYPE(v_list);
     if (!IS_ARRAY_TYPE(tp) || !TYPE_IS_ARRAY_ASSUMED_SHAPE(tp) || !IS_INT(TYPE_REF(tp)) || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_IN) {
+        debug("unexpected type of 'v_list'\n");
         return FALSE;
     }
 
-    if (iostat == NULL || strcmp("iostat", SYM_NAME(ID_SYM(iostat))) != 0){
+    if (iostat == NULL || strcmp("iostat", SYM_NAME(ID_SYM(iostat))) != 0) {
+        debug("expect 'iostat' as a 5th arg, but got %s\n",
+              unit?SYM_NAME(ID_SYM(iomsg)):"null");
         return FALSE;
     }
     tp = ID_TYPE(iostat);
-    if (!IS_CHAR(tp) || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_OUT) {
+    if (!IS_INT(tp) || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_OUT) {
+        debug("unexpected type of 'iostat'\n");
         return FALSE;
     }
 
-    if (iomsg == NULL || strcmp("iomsg", SYM_NAME(ID_SYM(iomsg))) != 0){
+    if (iomsg == NULL || strcmp("iomsg", SYM_NAME(ID_SYM(iomsg))) != 0) {
+        debug("expect 'iomsg' as a 6th arg, but got %s\n", unit?SYM_NAME(ID_SYM(iomsg)):"null");
         return FALSE;
     }
     tp = ID_TYPE(iomsg);
     if (!IS_CHAR(tp) || !IS_CHAR_LEN_UNFIXED(tp) || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_INOUT) {
+        debug("unexpected type of 'iomsg'\n");
+        return FALSE;
+    }
+
+    if (ID_NEXT(iomsg) != NULL) {
+        debug("unexpected 7th arg\n");
         return FALSE;
     }
 
@@ -3419,37 +3492,56 @@ is_defined_io_write_unformatted(const TYPE_DESC ftp, const TYPE_DESC stp)
     iostat = unit?ID_NEXT(unit):NULL;
     iomsg  = iostat?ID_NEXT(iostat):NULL;
 
-    if (dtv == NULL || strcmp("dtv", SYM_NAME(ID_SYM(dtv))) != 0){
+    if (dtv == NULL || strcmp("dtv", SYM_NAME(ID_SYM(dtv))) != 0) {
+        debug("expect 'dtv' as a 1st arg, but got %s\n",
+              unit?SYM_NAME(ID_SYM(dtv)):"null");
         return FALSE;
     }
-    if (stp != NULL) {
-        tp = ID_TYPE(dtv);
-        if (tp == NULL || TYPE_REF(tp) != stp || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_IN) {
-            return FALSE;
-        }
+    tp = ID_TYPE(dtv);
+    if (tp == NULL || (stp != NULL && TYPE_REF(tp) != stp) ||
+        (TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_INOUT &&
+         TYPE_ATTR_FLAGS(tp) != (TYPE_ATTR_CLASS | TYPE_ATTR_INTENT_IN))) {
+        debug("unexpected type of 'dtv'\n");
+        return FALSE;
     }
 
-    if (unit == NULL || strcmp("unit", SYM_NAME(ID_SYM(unit))) != 0){
+    if (unit == NULL || strcmp("unit", SYM_NAME(ID_SYM(unit))) != 0) {
+        debug("expect 'unit' as a 2nd arg, but got %s\n",
+              unit?SYM_NAME(ID_SYM(unit)):"null");
         return FALSE;
     }
     tp = ID_TYPE(unit);
     if (!IS_INT(tp) || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_IN) {
+        debug("unexpected type of 'unit'\n");
         return FALSE;
     }
 
-    if (iostat == NULL || strcmp("iostat", SYM_NAME(ID_SYM(iostat))) != 0){
+    if (iostat == NULL || strcmp("iostat", SYM_NAME(ID_SYM(iostat))) != 0) {
+        debug("expect 'iostat' as a 3rd arg, but got %s\n",
+              unit?SYM_NAME(ID_SYM(iostat)):"null");
         return FALSE;
     }
     tp = ID_TYPE(iostat);
     if (!IS_CHAR(tp) || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_OUT) {
+        debug("unexpected type of 'iostat'\n");
         return FALSE;
     }
 
-    if (iomsg == NULL || strcmp("iomsg", SYM_NAME(ID_SYM(iomsg))) != 0){
+    if (iomsg == NULL || strcmp("iomsg", SYM_NAME(ID_SYM(iomsg))) != 0) {
+        debug("expect 'iomsg' as a 4th arg, but got %s\n",
+              unit?SYM_NAME(ID_SYM(iomsg)):"null");
         return FALSE;
     }
     tp = ID_TYPE(iomsg);
-    if (!IS_CHAR(tp) || !IS_CHAR_LEN_UNFIXED(tp) || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_INOUT) {
+    if (!IS_CHAR(tp) ||
+        !IS_CHAR_LEN_UNFIXED(tp) ||
+        TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_INOUT) {
+        debug("Unexpected type of 'iomsg'\n");
+        return FALSE;
+    }
+
+    if (ID_NEXT(iomsg) != NULL) {
+        debug("unexpected 5th arg\n");
         return FALSE;
     }
 
@@ -3460,18 +3552,25 @@ is_defined_io_write_unformatted(const TYPE_DESC ftp, const TYPE_DESC stp)
 static int
 is_defined_io_procedure(const ID id, const TYPE_DESC stp)
 {
+    TYPE_DESC ftp;
+
     if (id == NULL || ID_TYPE(id) == NULL || stp == NULL) {
         return FALSE;
     }
 
+    ftp = ID_TYPE(id);
+    while (TYPE_REF(ftp) != NULL) {
+        ftp = TYPE_REF(ftp);
+    }
+
     if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_WRITE && TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_FORMATTED) {
-        return is_defined_io_write_formatted(ID_TYPE(id), stp);
+        return is_defined_io_write_formatted(ftp, stp);
     } else if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_WRITE && TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_UNFORMATTED) {
-        return is_defined_io_write_unformatted(ID_TYPE(id), stp);
+        return is_defined_io_write_unformatted(ftp, stp);
     } else if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_READ && TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_FORMATTED) {
-        return is_defined_io_read_formatted(ID_TYPE(id), stp);
+        return is_defined_io_read_formatted(ftp, stp);
     } else if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_READ && TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_UNFORMATTED) {
-        return is_defined_io_read_unformatted(ID_TYPE(id), stp);
+        return is_defined_io_read_unformatted(ftp, stp);
     } else {
         return FALSE;
     }
@@ -5449,6 +5548,23 @@ compile_INTERFACE_statement(expr x)
     CURRENT_INTERFACE = ep;
 }
 
+static int
+check_interface_type(EXT_ID ep, TYPE_DESC ftp)
+{
+    switch (EXT_PROC_INTERFACE_INFO(ep)->class) {
+        case INTF_GENERIC_READ_FORMATTED:
+            return is_defined_io_read_formatted(ftp, NULL);
+        case INTF_GENERIC_READ_UNFORMATTED:
+            return is_defined_io_read_unformatted(ftp, NULL);
+        case INTF_GENERIC_WRITE_FORMATTED:
+            return is_defined_io_write_formatted(ftp, NULL);
+        case INTF_GENERIC_WRITE_UNFORMATTED:
+            return is_defined_io_write_unformatted(ftp, NULL);
+        default:
+            return TRUE;
+    }
+}
+
 /*
  * complies END INTERFACE statement
  */
@@ -5523,6 +5639,11 @@ end_interface()
             PROC_EXT_ID(fid) = ep;
             EXT_PROC_CLASS(ep) = EP_INTERFACE_DEF;
         }
+
+        if (!check_interface_type(intr, EXT_PROC_TYPE(ep))) {
+            return;
+        }
+
     }
 
     if(EXT_IS_BLANK_NAME(intr) == FALSE) {
