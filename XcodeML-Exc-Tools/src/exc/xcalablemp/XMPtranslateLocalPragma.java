@@ -2418,7 +2418,7 @@ public class XMPtranslateLocalPragma {
     return Bcons.COMPOUND(funcCallList);
   }
 
-  private Block createBcastFuncCallBlock(PragmaBlock pb) throws XMPexception {
+  private Block createBcastFuncCallBlock(PragmaBlock pb, boolean isAcc) throws XMPexception {
 
     BlockList ret_body = Bcons.emptyBody();
 
@@ -2438,7 +2438,7 @@ public class XMPtranslateLocalPragma {
     }
     else on_ref_arg = Xcons.Cnull();
 
-    Ident f = _globalDecl.declExternFunc("_XMP_bcast", Xtype.voidType);
+    Ident f = _globalDecl.declExternFunc(isAcc? "_XMP_bcast_acc" : "_XMP_bcast", Xtype.voidType);
 
     for (Xobject v: (XobjList)pb.getClauses().getArg(0)){
       XobjList args = createBcastArgsList(v, pb);
@@ -2476,7 +2476,7 @@ public class XMPtranslateLocalPragma {
       throw new XMPexception(pb.getLineNo(), "bcast for both acc and host is unimplemented");
     }
     
-    Block bcastFuncCallBlock = createBcastFuncCallBlock(pb);
+    Block bcastFuncCallBlock = createBcastFuncCallBlock(pb, isACC);
     // // create function arguments
     // XobjList varList = (XobjList)bcastDecl.getArg(0);
     // Vector<XobjList> bcastArgsList = createBcastArgsList(varList, pb);
@@ -2512,9 +2512,7 @@ public class XMPtranslateLocalPragma {
     
     if(isACC){
       XobjList varList = (XobjList)bcastDecl.getArg(0);
-      bcastFuncCallBlock = Bcons.PRAGMA(Xcode.ACC_PRAGMA, "HOST_DATA",
-                                        Xcons.List(Xcons.List(Xcons.String("USE_DEVICE"),varList)),
-                                        Bcons.blockList(bcastFuncCallBlock));
+      bcastFuncCallBlock = encloseWithAccHostDataConstruct(bcastFuncCallBlock, varList);
     }
 
     Xobject async = bcastDecl.getArg(3);

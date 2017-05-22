@@ -14,10 +14,12 @@ all default: $(EXES)
 .f90.x:
 	$(XFC) -o $@ $< $(FCFLAGS)
 
-#run: $(EXES)
-#	$(XRUN) -n 4 ./xacc_distarray.x
-#	$(XRUN) -n 4 ./xacc_reflect.x
-#	$(XRUN) -n 4 ./xacc_reduction.x
+run: $(EXES)
+	$(XRUN) -n 4 ./xacc_distarray.x
+	$(XRUN) -n 4 ./xacc_reflect.x
+	$(XRUN) -n 4 ./xacc_reflect_oneside.x
+	$(XRUN) -n 4 ./xacc_reduction.x
+	$(XRUN) -n 4 ./xacc_bcast.x
 
 clean:
 	rm -f $(EXES) $(OBJS)
