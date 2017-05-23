@@ -10772,6 +10772,8 @@ else
 
     if test "${userCFLAGS}" != ""; then
       chk=`${CC} -V 2>&1 | head -n1`
+    elif test "$CRAY" = "$TRUE"; then
+      chk=`${CC} -V 2>&1 | head -n1`
     else
       chk=`${CC} --version | head -n1`
     fi

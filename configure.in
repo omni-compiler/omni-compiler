@@ -428,7 +428,7 @@ AC_ARG_ENABLE(shared,
   [doshared=yes], [doshared=no])
 
 AC_ARG_ENABLE(fjrdma,
-  [  --enable-fjrdma         enable FJRDMA for one-sided communication. If "--disable-fjrdma" is attatched, 
+  [  --enable-fjrdma         enable FJRDMA for one-sided communication. If "--disable-fjrdma" is attatched,
                           MPI3 is used instead of FJRDMA. This disable option works on only FX100 (true default)],
   [dofjrdma=no], [dofjrdma=yes])
 
@@ -660,7 +660,7 @@ elif test "$target" = "MIC-linux-gnu"; then
     OMNI_C2X_FLAGS=""
     OMNI_NTV_CFLAGS="-std=gnu99"
     OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT_C"
-    
+
     # Omni F
     OMNI_F2X_FLAGS=""
     OMNI_NTV_FCFLAGS=""
@@ -732,7 +732,7 @@ elif test "$target" = "sxace-nec-superux"; then
     #  MPI_CFLAGS="-Chopt $OPENMP_OPT_C"  # Don't use OpenMP option because of SX-ACE bug [Xmp-dev:5418].
     MPI_CFLAGS="-Chopt"
     MPI_CLIBS=""
-    
+
     # MPI F
     AC_CHECK_PROG([MPI_FC], [sxmpif90], [sxmpif90])
     # Fix:[Xmp-dev:5723] [xmp-bts:0432]
@@ -926,7 +926,7 @@ else
     AC_CHECK_PROG([MPI_CC], [mpicc], [mpicc])
 
     # Workaround for Cray CC >8.5. Version is printed on stderr now.
-    if test "$CRAY" = "$TRUE"; then 
+    if test "$CRAY" = "$TRUE"; then
       chk=`${MPI_CC} -V 2>&1 | head -n1`
     else
       chk=`${MPI_CC} --version | head -n1`
@@ -1301,6 +1301,8 @@ else
 
     if test "${userCFLAGS}" != ""; then
       chk=`${CC} -V 2>&1 | head -n1`
+    elif test "$CRAY" = "$TRUE"; then
+      chk=`${CC} -V 2>&1 | head -n1`
     else
       chk=`${CC} --version | head -n1`
     fi
@@ -1452,7 +1454,7 @@ if test "$IS_MOD2XMOD" = "yes"; then
 	rm -f $tmp_file_c
 	AC_MSG_ERROR([gmp.h not found. Please attach --with-gmp=<DIR> or --with-gmp-include=<DIR>.])
     fi
-    
+
     # check -lgmp
     echo "int main(){return 0;}" > $tmp_file_c
     ${CC} -L$GMP_LIB_DIR -lgmp $tmp_file_c -o $tmp_file
@@ -1802,7 +1804,7 @@ else
     fi
 fi
 rm -f ./addr64.* ./addr64
-							
+
 #--------------------------------------------------------------------
 # has printf "%qd"
 
@@ -1824,7 +1826,7 @@ if test "x${hasQD}" = "xyes"; then
     AH_TEMPLATE(HAVE_QUAD_PRINT, [has printf "%qd"])
 fi
 rm -f ./hasqd.* ./hasqd
-					
+
 #--------------------------------------------------------------------
 # quad real support
 
@@ -1842,11 +1844,11 @@ if test "x${doQReal}" = "xyes"; then
     else
         AC_MSG_ERROR([can't find ${GMP_INCLUDE_DIR}/gmp.h. Please attach --with-gmp=<DIR> or --with-gmp-lib=<DIR>.])
     fi
-    
+
     if ! test -d "$GMP_LIB_DIR"; then
       AC_MSG_ERROR([$GMP_LIB_DIR not found. Please attach --with-gmp=<DIR> or --with-gmp-lib=<DIR>.])
     fi
-    
+
     gmpLibs=`ls ${GMP_LIB_DIR}/libgmp.* 2> /dev/null`
     if test "x${gmpLibs}" = "x"; then
         AC_MSG_ERROR([can't find ${GMP_LIB_DIR}/libgmp.*. Please attach --with-gmp=<DIR> or --with-gmp-lib=<DIR>.])
@@ -2283,9 +2285,9 @@ fi
 if test x${use_tca} = xyes; then
   ONESIDED_LIB="$ONESIDED_LIB + TCA"
 fi
-  
+
 AC_SUBST(ONESIDED_LIB)
-			      
+
 #--------------------------------------------------------------------
 AC_CONFIG_FILES(XcodeML-Common/Makefile)
 AC_CONFIG_FILES(C-FrontEnd/src/Makefile)
