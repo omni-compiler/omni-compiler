@@ -4744,9 +4744,10 @@ genSortedIDs(ID ids, int *retnIDs)
       PROC_CLASS(id) == P_DEFINEDPROC)     \
   && (PROC_EXT_ID(id) == NULL ||           \
       PROC_CLASS(id) == P_UNDEFINEDPROC || \
-      PROC_CLASS(id) == P_DEFINEDPROC || ( \
+      PROC_CLASS(id) == P_DEFINEDPROC || \
+      (TYPE_IS_PUBLIC(id) || TYPE_IS_PRIVATE(id) || ( \
       EXT_PROC_IS_INTERFACE(PROC_EXT_ID(id)) == FALSE && \
-      EXT_PROC_IS_INTERFACE_DEF(PROC_EXT_ID(id)) == FALSE)) \
+      EXT_PROC_IS_INTERFACE_DEF(PROC_EXT_ID(id)) == FALSE)))    \
   && (ID_TYPE(id) \
       && TYPE_IS_IMPLICIT(id) == FALSE \
       && IS_MODULE(ID_TYPE(id)) == FALSE   \
