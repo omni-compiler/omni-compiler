@@ -3586,9 +3586,9 @@ public class XfDecompileDomVisitor {
             if (XfUtilForDom.isNullOrEmpty(kind) == false) {
                 writer.writeToken(content + "_" + kind);
             } else {
-		/* check minus number */
-		if(new Integer(content).intValue() < 0)
-		    content = "("+content+")";
+                /* check minus number */
+                if(new Long(content).longValue() < 0)
+                    content = "("+content+")";
                 writer.writeToken(content);
             }
         }
