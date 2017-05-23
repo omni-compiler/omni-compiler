@@ -115,8 +115,6 @@ state 2058
 %token INTERFACE
 %token INTERFACEASSIGNMENT
 %token INTERFACEOPERATOR
-%token INTERFACEREAD
-%token INTERFACEWRITE
 %token ENDINTERFACE
 %token PROCEDURE
 %token MODULEPROCEDURE
@@ -173,6 +171,8 @@ state 2058
 %token NOPASS
 %token NON_OVERRIDABLE
 %token DEFERRED
+%token INTERFACEREAD
+%token INTERFACEWRITE
 %token FORMATTED
 %token UNFORMATTED
 
@@ -586,6 +586,10 @@ statement:      /* entry */
           }
         | INTERFACEASSIGNMENT '(' '=' ')'
           { $$ = list1(F95_INTERFACE_STATEMENT, list0(F95_ASSIGNOP)); }
+        | INTERFACEREAD '(' KW formatted_or_unformatted ')'
+         { $$ = list1(F95_INTERFACE_STATEMENT, list1(F03_GENERIC_READ, $4)); }
+        | INTERFACEWRITE '(' KW formatted_or_unformatted ')'
+          { $$ = list1(F95_INTERFACE_STATEMENT, list1(F03_GENERIC_WRITE, $4)); }
         | INTERFACE generic_name
           { $$ = list1(F95_INTERFACE_STATEMENT, $2); }
         | INTERFACE
@@ -602,10 +606,10 @@ statement:      /* entry */
           { $$ = list1(F95_ENDINTERFACE_STATEMENT, $4); }
         | ENDINTERFACE OPERATOR '(' USER_DEFINED_OP ')'
           { $$ = list1(F95_ENDINTERFACE_STATEMENT, $4); }
-        | ENDINTERFACE READ '(' formatted_or_unformatted ')'
-          { $$ = list1(F95_ENDINTERFACE_STATEMENT, list1(F03_GENERIC_READ, $4)); }
-        | ENDINTERFACE WRITE '(' formatted_or_unformatted ')'
-          { $$ = list1(F95_ENDINTERFACE_STATEMENT, list1(F03_GENERIC_WRITE, $4)); }
+        | ENDINTERFACE READ '(' KW formatted_or_unformatted ')'
+          { $$ = list1(F95_ENDINTERFACE_STATEMENT, list1(F03_GENERIC_READ, $5)); }
+        | ENDINTERFACE WRITE '(' KW formatted_or_unformatted ')'
+          { $$ = list1(F95_ENDINTERFACE_STATEMENT, list1(F03_GENERIC_WRITE, $5)); }
         | ENDINTERFACE
           { $$ = list1(F95_ENDINTERFACE_STATEMENT,NULL); }
         | MODULEPROCEDURE ident_list

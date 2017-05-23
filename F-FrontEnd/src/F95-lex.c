@@ -459,10 +459,14 @@ int check_ident_context(char *name)
 
     case ENDINTERFACE:
         if(token_history_count == 2){
-            if (strcasecmp(name,"operator") == 0) 
+            if (strcasecmp(name,"operator") == 0)
                 return OPERATOR;
             else if (strcasecmp(name,"assignment") == 0)
                 return ASSIGNMENT;
+            else if (strcasecmp(name,"read") == 0)
+                return READ;
+            else if (strcasecmp(name,"write") == 0)
+                return WRITE;
         }
     }
     return ret;
