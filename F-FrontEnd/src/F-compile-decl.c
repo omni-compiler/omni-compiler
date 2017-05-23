@@ -5680,7 +5680,7 @@ compile_type_generic_procedure(expr x)
         case F03_GENERIC_READ: {
             expr formatted = EXPR_ARG1(generics_spec);
             SYMBOL sym;
-            binding_attr_flags |= TYPE_BOUND_PROCEDURE_WRITE;
+            binding_attr_flags |= TYPE_BOUND_PROCEDURE_READ;
             switch (EXPR_CODE(formatted)) {
                 case F03_FORMATTED:
                     sym = find_symbol("_read_formatted");
