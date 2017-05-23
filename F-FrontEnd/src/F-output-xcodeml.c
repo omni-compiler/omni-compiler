@@ -4580,6 +4580,9 @@ id_is_visibleVar(ID id)
                 return FALSE;
             }
         }
+        if (EXT_IS_DEFINED_IO(PROC_EXT_ID(id))) {
+            return FALSE;
+        }
         /* FALL THROUGH */
     default:
         switch(ID_STORAGE(id)) {
@@ -4613,7 +4616,7 @@ id_is_visibleVar_for_symbols(ID id)
     return (id_is_visibleVar(id) && IS_MODULE(ID_TYPE(id)) == FALSE) ||
             ((ID_STORAGE(id) == STG_ARG ||
               ID_STORAGE(id) == STG_SAVE ||
-              ID_STORAGE(id) == STG_EXT ||
+              (ID_STORAGE(id) == STG_EXT && !EXT_IS_DEFINED_IO(PROC_EXT_ID(id))) ||
               ID_STORAGE(id) == STG_AUTO) && ID_CLASS(id) == CL_PROC);
 }
 

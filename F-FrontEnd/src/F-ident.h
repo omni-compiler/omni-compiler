@@ -491,6 +491,12 @@ typedef struct external_symbol
 #define EXT_IS_DUMMY(ep) ((ep)->isHighOrderDummy)
 #define EXT_IS_BLANK_NAME(ep) ((ep)->is_blank_name)
 #define EXT_IS_OFMODULE(ep)  ((ep)->is_ofModule)
+#define EXT_IS_DEFINED_IO(ep) (ep != NULL &&    \
+                               EXT_PROC_INTERFACE_INFO(ep) != NULL &&   \
+                               (EXT_PROC_INTERFACE_INFO(ep)->class == INTF_GENERIC_READ_FORMATTED || \
+                                EXT_PROC_INTERFACE_INFO(ep)->class == INTF_GENERIC_READ_UNFORMATTED || \
+                                EXT_PROC_INTERFACE_INFO(ep)->class == INTF_GENERIC_WRITE_FORMATTED || \
+                                EXT_PROC_INTERFACE_INFO(ep)->class == INTF_GENERIC_WRITE_UNFORMATTED))
 
 #define EXT_PROC_TYPE(ep)       ((ep)->info.proc_info.type)
 #define EXT_PROC_BODY(ep)       ((ep)->info.proc_info.body)
