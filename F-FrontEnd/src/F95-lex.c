@@ -3965,7 +3965,7 @@ struct keyword_token keywords[ ] =
     { "type",           KW_TYPE},
     { "class",          CLASS},
     { "undefined",      KW_UNDEFINED },
-    { "funormatted",    UNFORMATTED  },  /* F2003 spec */
+    { "unformatted",    UNFORMATTED  },  /* F2003 spec */
     { "unlock",         UNLOCK },        /* #060 coarray */
     { "use",            KW_USE },
     { "value",          VALUE },
