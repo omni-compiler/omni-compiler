@@ -122,6 +122,7 @@ enum lex_state
     LEX_OMP_TOKEN,
     LEX_XMP_TOKEN,
     LEX_ACC_TOKEN,
+    LEX_OMN_TOKEN,
     LEX_RET_EOS
 };
 
@@ -132,6 +133,7 @@ int st_OMP_flag;
 int st_XMP_flag;
 int st_ACC_flag;
 int st_OMN_flag;
+int st_OMD_flag;
 
 enum lex_state lexstate;
 
@@ -150,6 +152,7 @@ sentinel_list sentinels;
 #define OCL_SENTINEL "!ocl"
 #define CDIR_SENTINEL "!cdir"
 #define OMN_SENTINEL "!$omn"
+#define OMD_SENTINEL "!$omd"
 
 /* sentinel list functions */
 static void init_sentinel_list( sentinel_list * p );
@@ -319,6 +322,7 @@ initialize_lex()
     if (ocl_flag) add_sentinel( &sentinels, OCL_SENTINEL );
     if (cdir_flag) add_sentinel( &sentinels, CDIR_SENTINEL );
     add_sentinel( &sentinels, OMN_SENTINEL );
+    add_sentinel( &sentinels, OMD_SENTINEL );
 }
 
 static void
@@ -484,9 +488,14 @@ yylex0()
             return ACCKW_LINE;
         }
 	if (st_OMN_flag && OMN_flag) {
-            lexstate = LEX_ACC_TOKEN;
+	    lexstate = LEX_OMN_TOKEN;
 	    //for (p = bufptr; *p != '\0'; p++) *p = TOLOWER(*p);
             return OMNKW_LINE;
+	}
+	if (st_OMD_flag && OMN_flag) {
+	    lexstate = LEX_OMN_TOKEN;
+	    //for (p = bufptr; *p != '\0'; p++) *p = TOLOWER(*p);
+            return OMNDECLKW_LINE;
 	}
         if (st_OMP_flag || st_XMP_flag || st_ACC_flag || st_PRAGMA_flag ||
             (st_CONDCOMPL_flag && !OMP_flag && !cond_compile_enabled)) {
@@ -561,6 +570,11 @@ yylex0()
         if (t == EOS) lexstate = LEX_NEW_STATEMENT;
         return t;
 
+    case LEX_OMN_TOKEN:
+        t = OMP_lex_token();
+        if (t == EOS) lexstate = LEX_NEW_STATEMENT;
+        return t;
+	
     case LEX_PRAGMA_TOKEN:
         lexstate = LEX_RET_EOS;
         return PRAGMA_SLINE;
@@ -2082,7 +2096,8 @@ again:
     st_ACC_flag = FALSE;       /* flag for "!$ACC" */
     st_PRAGMA_flag = FALSE;    /* flag for "!$+" */
     st_OCL_flag = FALSE;       /* flag for "!OCL" */
-    st_OMN_flag = FALSE;       /* flag for "!OCL" */
+    st_OMN_flag = FALSE;       /* flag for "!OMN" */
+    st_OMD_flag = FALSE;       /* flag for "!OMD" */
     st_CONDCOMPL_flag = FALSE; /* flag for "!$" */
 
     if (flag_force_c_comment) {
@@ -2125,6 +2140,11 @@ again:
 		strcat(buff, p);
                 set_pragma_str( buff );
                 st_OMN_flag = TRUE;
+            }else if( strcasecmp( sentinel_name( &sentinels, index ), OMD_SENTINEL )== 0 ){
+	        char buff[256] = "OMD";
+		strcat(buff, p);
+                set_pragma_str( buff );
+                st_OMD_flag = TRUE;
             }else{
                 set_pragma_str( &(sentinel_name( &sentinels, index )[2]) );
                 st_PRAGMA_flag = TRUE;
@@ -4100,7 +4120,6 @@ struct keyword_token XMP_keywords[ ] =
 
     { 0, 0 }
 };
-
 
 /*
  * lex for OpenACC part

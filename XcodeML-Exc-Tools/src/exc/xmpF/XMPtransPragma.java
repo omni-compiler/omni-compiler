@@ -29,6 +29,7 @@ public class XMPtransPragma
     
     if(XMP.debugFlag) System.out.println("pass3 +fblock="+fblock);
     // scan by bottom-up iterator
+    //System.out.println("block  " + fblock.getBody().getHead().getBody());
     BlockIterator i = new bottomupBlockIterator(fblock.getBody().getHead());
     for(i.init(); !i.end(); i.next()) {
       Block bc = i.getBlock();
@@ -40,7 +41,13 @@ public class XMPtransPragma
 	((METAXblock)bc).run();
 	i.setBlock(Bcons.COMPOUND(bc.getBody()));
       }
+      else if (bc.Opcode() == Xcode.OMNDECL_PRAGMA) {
+	if (bc.getProp("METAX_IMPORTED") != null) ((METAXblock)bc).runDecl();
+	((METAXblock)bc).run();
+	i.setBlock(Bcons.emptyBlock());
+      }
     }
+    //System.out.println(fblock.getBody());
     
     run_block(def, env, null);
   }

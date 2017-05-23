@@ -466,6 +466,10 @@ public class Bcons
 	    return METAX(Xcode.OMN_PRAGMA, v.getArg(0).getString(), v.getArgOrNull(1),
 			 buildList(v.getArgOrNull(2)));
 
+	case OMNDECL_PRAGMA:
+	    return METAX(Xcode.OMNDECL_PRAGMA, v.getArg(0).getString(), v.getArgOrNull(1),
+			 buildList(v.getArgOrNull(2)));
+
         case IF_STATEMENT: /* (IF_STATMENT cond then-part else-part) */
             return IF(BasicBlock.Cond(v.getArg(0)), buildList(v.getArg(1)),
 		      buildList(v.getArg(2)));

@@ -129,6 +129,7 @@ public class XcodeMLNameTable_F extends XcodeMLNameTable {
 			new XcodeMLName(Xcode.XMP_PRAGMA, "XMPPragma"),
 			new XcodeMLName(Xcode.ACC_PRAGMA, "ACCPragma"),
 			new XcodeMLName(Xcode.OMN_PRAGMA, "OMNPragma"),
+			new XcodeMLName(Xcode.OMNDECL_PRAGMA, "OMNDECLPragma"),
 
 			new XcodeMLName(Xcode.F_SYNCALL_STATEMENT, "syncAllStatement"),
 			new XcodeMLName(Xcode.F_SYNCIMAGE_STATEMENT, "syncImagesStatement"),

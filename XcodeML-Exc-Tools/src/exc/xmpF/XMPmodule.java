@@ -99,6 +99,18 @@ public class XMPmodule extends XMPenv {
     // process xmp pragma
     aux_info = tools.getAuxInfo();
     for(Xobject x: aux_info){
+
+      if (x.Opcode() == Xcode.OMNDECL_PRAGMA){
+	if (x.getProp("METAX_IMPORTED") == null){
+	  //System.out.println("module " + parent.getCurrentDef().getBlock().getBody().getHead().getBody());
+	  Block b = Bcons.buildBlock(x);
+	  b.setProp("METAX_IMPORTED", "true");
+	  parent.getCurrentDef().getBlock().getBody().getHead().getBody().insert(b);
+	  x.setProp("METAX_IMPORTED", "done");
+	}
+	continue;
+      }
+
       if(x.Opcode() != Xcode.XMP_PRAGMA) continue;
       XMPpragma pragma = XMPpragma.valueOf(x.getArg(0));
       if(XMP.debugFlag) System.out.println("module pragma="+x);

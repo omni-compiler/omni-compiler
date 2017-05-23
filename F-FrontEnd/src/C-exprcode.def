@@ -305,6 +305,7 @@ L    ACC_PRAGMA
 
 # OMN
 L    OMN_PRAGMA
+L    OMNDECL_PRAGMA
 
 # just text, for comment, etc ...
 T    TEXT

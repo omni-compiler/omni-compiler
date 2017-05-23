@@ -145,7 +145,7 @@ int check_for_XMP_pragma(int st_no, expr x);
 void init_for_ACC_pragma();
 void check_for_ACC_pragma(expr x);
 
-expv OMN_pragma_list(char *dir_name, expv arg1, expv arg2);
+expv OMN_pragma_list(int pragma, char *dir_name, expv arg1, expv arg2);
 void init_for_OMN_pragma();
 void check_for_OMN_pragma(expr x);
 
@@ -868,7 +868,7 @@ compile_statement1(int st_no, expr x)
 	}
 	else if (CTL_TYPE(ctl_top) == CTL_OMN){
 	  CTL_BLOCK(ctl_top) =
-	    OMN_pragma_list(CTL_OMN_ARG_DIR(ctl_top), CTL_OMN_ARG_CLAUSE(ctl_top), CURRENT_STATEMENTS);
+	    OMN_pragma_list(OMN_PRAGMA, CTL_OMN_ARG_DIR(ctl_top), CTL_OMN_ARG_CLAUSE(ctl_top), CURRENT_STATEMENTS);
 	  EXPR_LINE(CTL_BLOCK(ctl_top)) = EXPR_LINE(CTL_OMP_ARG(ctl_top));
 	  pop_ctl();
 	}

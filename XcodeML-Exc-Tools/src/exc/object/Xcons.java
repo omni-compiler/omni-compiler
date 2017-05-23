@@ -247,8 +247,8 @@ public class Xcons
     public static Xobject memberRef(Xobject x, String member_name)
     {
         Xtype type = x.Type();
-        if(!type.isPointer())
-            fatal("memberRef: not Pointer");
+        // if(!type.isPointer())
+        //     fatal("memberRef: not Pointer");
         type = type.getRef();
         if(!type.isStruct() && !type.isUnion())
             fatal("memberAddr: not struct/union");

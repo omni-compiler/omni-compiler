@@ -28,21 +28,21 @@ public class METAXblock extends PragmaBlock {
       e.printStackTrace();
     }
     try {
-      run = metaxClass.getMethod("run", BlockList.class, XobjList.class);
+      run = metaxClass.getMethod("run", BlockList.class, XobjList.class, METAXblock.class);
     } catch (NoSuchMethodException e){
       e.printStackTrace();
     }
     try {
-      runDecl = metaxClass.getMethod("runDecl", BlockList.class, XobjList.class);
+      runDecl = metaxClass.getMethod("runDecl", BlockList.class, XobjList.class, METAXblock.class);
     } catch (NoSuchMethodException e){
-      runDecl = null;
+      e.printStackTrace();
     }
 
   }
 
   public void run(){
     try {
-      run.invoke(metaxObj, body, args);
+      run.invoke(metaxObj, body, args, this);
     } catch (IllegalAccessException e){
       e.printStackTrace();
     } catch (InvocationTargetException e){
@@ -51,9 +51,8 @@ public class METAXblock extends PragmaBlock {
   }
 
   public void runDecl(){
-    if (runDecl == null) return;
     try {
-      runDecl.invoke(metaxObj, body, args);
+      runDecl.invoke(metaxObj, body, args, this);
     } catch (IllegalAccessException e){
       e.printStackTrace();
     } catch (InvocationTargetException e){

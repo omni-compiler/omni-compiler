@@ -319,7 +319,8 @@ public class XMPtranslate implements XobjectDefVisitor
     Xobject d = def.getDef();
     // module = (F_MODULE_DEFINITION name_id id_list decls body?)
     for(Xobject decl: (XobjList)d.getArg(2)){
-      if(decl.Opcode() == Xcode.XMP_PRAGMA)
+      if(decl.Opcode() == Xcode.XMP_PRAGMA ||
+	 decl.Opcode() == Xcode.OMNDECL_PRAGMA)
 	xmp_pragma_list.add(decl);
       else
 	decls.add(decl);
@@ -335,7 +336,8 @@ public class XMPtranslate implements XobjectDefVisitor
     XobjectIterator i = new topdownXobjectIterator(x);
     for(i.init(); !i.end(); i.next()) {
       Xobject xx = i.getXobject();
-      if(xx != null && xx.Opcode() == Xcode.XMP_PRAGMA)
+      if(xx != null && (xx.Opcode() == Xcode.XMP_PRAGMA ||
+			xx.Opcode() == Xcode.OMNDECL_PRAGMA))
 	return true;
     }
     return false;

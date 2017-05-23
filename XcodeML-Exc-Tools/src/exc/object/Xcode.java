@@ -318,6 +318,7 @@ public enum Xcode
     F_FORALL_STATEMENT              ( 232, 'L', null, null),
 
     OMN_PRAGMA                      ( 233, 'L', null, null),
+    OMNDECL_PRAGMA                  ( 234, 'L', null, null),
 
      // Codes dynamically assignable
     DYN_1                           ( 1001, 'L', null, null),

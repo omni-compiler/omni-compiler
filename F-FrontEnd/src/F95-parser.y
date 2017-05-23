@@ -341,7 +341,7 @@
 
 
 %token OMNKW_LINE
-
+%token OMNDECLKW_LINE
 
 %type <val> xmp_directive xmp_nodes_clause xmp_template_clause xmp_distribute_clause xmp_align_clause xmp_shadow_clause xmp_template_fix_clause xmp_task_clause xmp_loop_clause xmp_reflect_clause xmp_gmove_clause xmp_barrier_clause xmp_bcast_clause xmp_reduction_clause xmp_array_clause xmp_save_desc_clause xmp_wait_async_clause xmp_end_clause
 
@@ -459,7 +459,7 @@ static void append_pragma_str _ANSI_ARGS_((char *p));
 #define OMP_LIST(op, args) list2(LIST, GEN_NODE(INT_CONSTANT, op), args)
 #define XMP_LIST(op, args) list2(XMP_PRAGMA, GEN_NODE(INT_CONSTANT, op), args)
 #define ACC_LIST(op, args) list2(ACC_PRAGMA, GEN_NODE(INT_CONSTANT, op), args)
-#define OMN_LIST(op, args) list2(OMN_PRAGMA, GEN_NODE(INT_CONSTANT, op), args)
+#define OMN_LIST(op, args) list2(OMN_PRAGMA, GEN_NODE(STRING_CONSTANT, op), args)
 
 /* statement name */
 expr st_name;
@@ -538,8 +538,10 @@ one_statement:
 	{ compile_XMP_directive($3); }
 	| ACCKW_LINE { need_keyword = TRUE; } acc_directive
 	{ compile_ACC_directive($3); }
-        | OMNKW_LINE { need_keyword = TRUE; } omn_directive
-	{ compile_OMN_directive($3); }
+        | OMNKW_LINE omn_directive
+	{ compile_OMN_directive($2); }
+        | OMNDECLKW_LINE omn_directive
+	{ compile_OMN_decl_directive($2); }
         | PRAGMA_HEAD  PRAGMA_SLINE /* like !$ ... */
 	{
 	    if (pragmaString != NULL)
@@ -3001,7 +3003,7 @@ acc_directive:
 
 omn_directive:
         IDENTIFIER '(' xmp_expr_list ')'
-	{ $$ = OMN_LIST(GEN_NODE(STRING_CONSTANT, $1), $3); }
+	{ $$ = OMN_LIST(SYM_NAME(EXPR_SYM($1)), $3); }
         ;
 
 /* clause separator */

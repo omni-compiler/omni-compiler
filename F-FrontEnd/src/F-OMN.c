@@ -17,7 +17,7 @@ extern expv CURRENT_STATEMENTS_saved;
 /* void compile_OMP_name_list(expr x); */
 /* void compile_OMP_pragma_clause(expr x, int pragma, int is_parallel, */
 /* 			  expv *pc,expv *dc); */
-expv OMN_pragma_list(char *dir_name, expv arg1, expv arg2);
+expv OMN_pragma_list(int pragma, char *dir_name, expv arg1, expv arg2);
 //void check_for_OMP_pragma(expr x);
 //int check_for_XMP_pragma(int st_no, expr x);
 
@@ -96,7 +96,7 @@ void init_for_OMN_pragma()
 static void push_OMN_construct(char *dir_name, expv clauses)
 {
   push_ctl(CTL_OMN);
-  CTL_OMN_ARG(ctl_top) = OMN_pragma_list(dir_name, clauses, NULL);
+  CTL_OMN_ARG(ctl_top) = OMN_pragma_list(OMN_PRAGMA, dir_name, clauses, NULL);
   EXPR_LINE(CTL_OMN_ARG(ctl_top)) = current_line;
 }
 
@@ -209,13 +209,31 @@ void compile_OMN_directive(expr x)
     expv clauses = compile_clause_list(EXPR_ARG2(x));
 
     check_INEXEC();
-    //output_statement(OMN_pragma_list(dir_name, clauses, NULL));
     push_OMN_construct(dir_name, clauses);
     _OMN_do_required = TRUE;
+
     return;
 }
 
-expv OMN_pragma_list(char *dir_name, expv arg1, expv arg2)
+void compile_OMN_decl_directive(expr x)
+{
+    if (x == NULL) return;	/* error */
+
+    if (debug_flag) {
+	fprintf(stderr, "OMN_directive:\n");
+	expv_output(x, stderr);
+	fprintf(stderr, "\n");
+    }
+
+    char *dir_name = EXPR_STR(EXPR_ARG1(x));  /* direcive name */
+    expv clauses = compile_clause_list(EXPR_ARG2(x));
+
+    output_statement(OMN_pragma_list(OMNDECL_PRAGMA, dir_name, clauses, NULL));
+
+    return;
+}
+
+expv OMN_pragma_list(int pragma, char *dir_name, expv arg1, expv arg2)
 {
   expv xx = arg2;
   
@@ -224,7 +242,7 @@ expv OMN_pragma_list(char *dir_name, expv arg1, expv arg2)
     xx = EXPR_ARG1(arg2);
   }
   
-  return list3(OMN_PRAGMA, expv_str_term(STRING_CONSTANT, NULL, dir_name),
+  return list3(pragma, expv_str_term(STRING_CONSTANT, NULL, dir_name),
 	       arg1, xx);
 }
 
@@ -232,7 +250,7 @@ void check_for_OMN_pragma(expr x)
 {
   if (CTL_TYPE(ctl_top) != CTL_OMN) return;
 
-  char *ctl_top_dir = CTL_OMN_ARG_DIR(ctl_top);
+  //char *ctl_top_dir = CTL_OMN_ARG_DIR(ctl_top);
   //  pop_OMN_loop_construct(ctl_top_dir);
 
 }

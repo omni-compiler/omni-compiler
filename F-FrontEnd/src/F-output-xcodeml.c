@@ -389,6 +389,9 @@ xtag(enum expr_code code)
     case OMN_PRAGMA:
       return "OMNPragma";
       
+    case OMNDECL_PRAGMA:
+      return "OMNDECLPragma";
+
     default:
       fatal("unknown exprcode : %d", code);
     }
@@ -3077,7 +3080,8 @@ outx_OMN_pragma(int l, expv v)
   outx_tagOfStatement(l, v);
 
   //outx_XMP_dir_string(l1,EXPR_ARG1(v));
-  outx_tagText(l, "string", "Unroll");
+  //outx_tagText(l, "string", "Unroll");
+  outx_tagText(l, "string", EXPR_STR(EXPR_ARG1(v)));
 
   if (EXPR_ARG2(v)) outx_XMP_dir_clause_list(l1, EXPR_ARG2(v));
   
@@ -3844,6 +3848,7 @@ outx_expv(int l, expv v)
       break;
 
     case OMN_PRAGMA:
+    case OMNDECL_PRAGMA:
       outx_OMN_pragma(l, v);
       break;
       
@@ -5061,6 +5066,10 @@ outx_declarations1(int l, EXT_ID parent_ep, int outputPragmaInBody)
 		break;
 	    case ACC_PRAGMA:
 		outx_ACC_pragma(l1, v);
+		break;
+	    case OMN_PRAGMA:
+	    case OMNDECL_PRAGMA:
+	        outx_OMN_pragma(l, v);
 		break;
             default:
                 break;
