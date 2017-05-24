@@ -3320,8 +3320,10 @@ input_module(xmlTextReaderPtr reader, struct module * mod, int is_intrinsic)
 
 #if defined(_FC_IS_GFORTRAN)
 #define _XMPMOD_NAME "T_Module"
+#define _XMPMOD_LEN 8
 #elif defined(_FC_IS_FRTPX)
 #define _XMPMOD_NAME "T_FJModule"
+#define _XMPMOD_LEN 10
 #endif
 
 const char *
@@ -3384,6 +3386,16 @@ input_intermediate_file(const SYMBOL mod_name,
 #if defined(_FC_IS_GFORTRAN) || defined(_FC_IS_FRTPX)
     // if not found, then search for "xxx.mod" and convert it into "xxx.xmod"
     if (reader == NULL){
+
+        char command2[6 + _XMPMOD_LEN];
+        bzero(command2, 6 + _XMPMOD_LEN);
+        strcpy(command2, "which ");
+	strcat(command2, _XMPMOD_NAME);
+        if (system(command2) != 0){
+	  warning("No module translator found.");
+	  return FALSE;
+	}
+
         char filename2[FILE_NAME_LEN];
         const char * filepath2;
 
