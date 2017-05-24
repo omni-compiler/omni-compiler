@@ -692,6 +692,8 @@ MPFR_LIB_DIR
 MPFR_INCLUDE_DIR
 GMP_LIB_DIR
 GMP_INCLUDE_DIR
+NEED_MAKE_MOD2XMOD
+KIND_MPI_FORTRAN
 MOD2XMOD
 NM_OPT
 OMNI_X2X_FLAGS
@@ -8754,7 +8756,7 @@ fi
     MPI_FCFLAGS="-Kfast,openmp"
     MPI_MODINC="-M"
     MPI_FCLIBS=""
-    KIND_MPI_FORTRAN=other
+    KIND_MPI_FORTRAN=frtpx
 
     # Omni C
     OMNI_C2X_FLAGS=""
@@ -10895,7 +10897,7 @@ if test "$domod2xmod" = "yes" -a "$KIND_MPI_FORTRAN" = "other"; then
 fi
 
 IS_MOD2XMOD=no
-if test "$domod2xmod" = "yes" -a "$KIND_MPI_FORTRAN" = "gfortran"; then
+if test "$domod2xmod" = "yes" -a \( "$KIND_MPI_FORTRAN" = "gfortran" -o "$KIND_MPI_FORTRAN" = "frtpx" \); then
     IS_MOD2XMOD=yes
 fi
 
@@ -10904,8 +10906,16 @@ if test "$IS_MOD2XMOD" = "yes"; then
     MOD2XMOD=$TRUE
 fi
 
+NEED_MAKE_MOD2XMOD=$FALSE
+if test "$IS_MOD2XMOD" = "yes" -a "$KIND_MPI_FORTRAN" = "gfortran"; then
+    NEED_MAKE_MOD2XMOD=$TRUE
+fi
 
-if test "$IS_MOD2XMOD" = "yes"; then
+
+
+
+
+if test "$NEED_MAKE_MOD2XMOD" = $TRUE; then
     #### GMP ####
     # check dirs
     if ! test -d "$GMP_INCLUDE_DIR"; then

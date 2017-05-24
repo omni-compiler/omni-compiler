@@ -3317,7 +3317,12 @@ input_module(xmlTextReaderPtr reader, struct module * mod, int is_intrinsic)
 }
 
 #include <stdlib.h>
+
+#if defined(_FC_IS_GFORTRAN)
 #define _XMPMOD_NAME "T_Module"
+#elif defined(_FC_IS_FRTPX)
+#define _XMPMOD_NAME "T_FJModule"
+#endif
 
 const char *
 search_intrinsic_include_path(const char * filename)
@@ -3374,10 +3379,9 @@ input_intermediate_file(const SYMBOL mod_name,
     }
 
     filepath = search_include_path(filename);
-
     reader = xmlNewTextReaderFilename(filepath);
 
-#if defined _MPI_FC && _MPI_FC == gfortran
+#if defined(_FC_IS_GFORTRAN) || defined(_FC_IS_FRTPX)
     // if not found, then search for "xxx.mod" and convert it into "xxx.xmod"
     if (reader == NULL){
         char filename2[FILE_NAME_LEN];
@@ -3397,6 +3401,7 @@ input_intermediate_file(const SYMBOL mod_name,
         strcat(command, filepath2);
         if (system(command) != 0) return FALSE;
 
+	filepath = search_include_path(filename);
         reader = xmlNewTextReaderFilename(filepath);
     }
 #endif
