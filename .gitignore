@@ -102,6 +102,7 @@ libxmpf/include/xmp_coarray_alloc.h
 libxmpf/include/xmp_coarray_get.h
 libxmpf/include/xmp_coarray_put.h
 libxmpf/include/xmp_coarray_reduction.h
+libxmpf/include/xmp_coarray_getsub.h
 libxmpf/src/Makefile
 libxmpf/src/include_work/
 
