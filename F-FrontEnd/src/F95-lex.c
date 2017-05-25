@@ -1132,7 +1132,7 @@ read_identifier()
                 case NEQV :   code = F95_NEQVOP; break;
                 case CONCAT : code = F95_CONCATOP; break;
                 default :
-                    error("sytax error. ");
+                    error("syntax error. ");
                     break;
             }
             yylval.val = list1(F95_GENERIC_SPEC, list0(code));
@@ -1146,7 +1146,7 @@ read_identifier()
                     code = F03_UNFORMATTED;
                     break;
                 default:
-                    error("sytax error. ");
+                    error("syntax error. ");
                     break;
             }
             yylval.val = list1(defined_io, list0(code));
@@ -1154,11 +1154,6 @@ read_identifier()
             yylval.val = list1(F95_USER_DEFINED, yylval.val);
         }
         return GENERIC_SPEC;
-    } else if (may_generic_spec &&
-        ((strcmp(buffio, "write") == 0)
-         || (strcmp(buffio, "read") == 0))) {
-
-
     }
 
 

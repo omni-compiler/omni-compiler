@@ -3209,7 +3209,7 @@ is_defined_io_formatted(const TYPE_DESC ftp, const TYPE_DESC stp, int is_read)
         return FALSE;
     }
     tp = ID_TYPE(dtv);
-    if (tp == NULL || (stp != NULL && TYPE_REF(tp) != stp) ||
+    if (!IS_STRUCT_TYPE(tp) || (stp != NULL && TYPE_REF(tp) != stp) ||
         (TYPE_ATTR_FLAGS(tp) != dtv_attr_flags &&
          TYPE_ATTR_FLAGS(tp) != (TYPE_ATTR_CLASS | dtv_attr_flags))) {
         debug("unexpected type of 'dtv'");
@@ -3340,7 +3340,7 @@ is_defined_io_unformatted(const TYPE_DESC ftp, const TYPE_DESC stp, int is_read)
         return FALSE;
     }
     tp = ID_TYPE(dtv);
-    if (tp == NULL ||
+    if (!IS_STRUCT_TYPE(tp) ||
         (stp != NULL && TYPE_REF(tp) != stp) ||
         (TYPE_ATTR_FLAGS(tp) != dtv_attr_flags &&
          TYPE_ATTR_FLAGS(tp) != (TYPE_ATTR_CLASS | dtv_attr_flags))) {
@@ -5366,7 +5366,6 @@ compile_INTERFACE_statement(expr x)
                     /* never reach */
                     break;
             }
-            /* TODO(shingo-s): check the procedure already exists */
         } break;
         case F03_GENERIC_READ: {
             expr formatted = EXPR_ARG1(identOrOp);

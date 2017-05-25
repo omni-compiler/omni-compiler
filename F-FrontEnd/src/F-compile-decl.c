@@ -5674,7 +5674,6 @@ compile_type_generic_procedure(expr x)
                     error("expect FORMATTED or UNFORMATTED");
                     return;
             }
-            /* TODO(shingo-s): check the procedure already exists */
             id = declare_ident(sym, CL_TYPE_BOUND_PROC);
         } break;
         case F03_GENERIC_READ: {
