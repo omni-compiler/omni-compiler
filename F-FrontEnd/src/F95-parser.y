@@ -175,6 +175,7 @@ state 2058
 %token INTERFACEWRITE
 %token FORMATTED
 %token UNFORMATTED
+%token FINAL
 
 /* Coarray keywords #060 */
 %token SYNCALL
@@ -644,6 +645,8 @@ statement:      /* entry */
           { $$ = list3(F03_TYPE_BOUND_GENERIC_STATEMENT,$3, $5, NULL); }
         | GENERIC ',' private_or_public_spec COL2 type_bound_generic_spec REF_OP ident_list
           { $$ = list3(F03_TYPE_BOUND_GENERIC_STATEMENT,$5, $7, $3); }
+        | FINAL COL2_or_null ident_list
+          { $$ = list1(F03_TYPE_BOUND_FINAL_STATEMENT, $3); }
         | BLOCKDATA program_name
           { $$ = list1(F_BLOCK_STATEMENT,$2); }
         | ENDBLOCKDATA name_or_null
