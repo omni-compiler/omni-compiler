@@ -3118,7 +3118,7 @@ input_FinterfaceDecl(xmlTextReaderPtr reader, HashTable * ht, ID id_list)
     is_defined_io = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_defined_io");
 
 
-    if (is_operator != NULL && name != NULL) {
+    if (is_defined_io == NULL && name != NULL) {
         id = find_ident_head(find_symbol(name), id_list);
         if (ID_CLASS(id) == CL_TAGNAME) { /* for multi class */
             id = find_ident_head(ID_SYM(id), ID_NEXT(id));
