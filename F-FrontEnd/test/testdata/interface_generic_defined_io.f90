@@ -1,10 +1,11 @@
-module mod
+module generic_defined_io_mod
   type node
      integer :: i
      real :: a
   end type node
   INTERFACE READ(FORMATTED)
     SUBROUTINE my_read_routine_formatted (dtv, unit, iotype, v_list, iostat, iomsg)
+      IMPORT node
       class(node) , INTENT(INOUT) :: dtv
       INTEGER, INTENT(IN) :: unit
       CHARACTER (LEN=*), INTENT(IN) :: iotype
@@ -15,6 +16,7 @@ module mod
   END INTERFACE READ(FORMATTED)
   INTERFACE READ(UNFORMATTED)
      SUBROUTINE my_read_routine_unformatted (dtv, unit, iostat, iomsg)
+       IMPORT node
        class(node) , INTENT(INOUT) :: dtv
        INTEGER, INTENT(IN) :: unit
        INTEGER, INTENT(OUT) :: iostat
@@ -23,6 +25,7 @@ module mod
   END INTERFACE READ(UNFORMATTED)
   INTERFACE WRITE(FORMATTED)
      SUBROUTINE my_write_routine_formatted(dtv, unit, iotype, v_list, iostat, iomsg)
+       IMPORT node
        class(node), intent(in) :: dtv
        integer, intent(in) :: unit
        character (len=*), intent(in) :: iotype
@@ -34,16 +37,17 @@ module mod
   END INTERFACE WRITE(FORMATTED)
   INTERFACE WRITE(UNFORMATTED)
      SUBROUTINE my_write_routine_unformatted (dtv, unit, iostat, iomsg)
+       IMPORT node
        class(node) , INTENT(IN) :: dtv
        INTEGER, INTENT(IN) :: unit
        INTEGER, INTENT(OUT) :: iostat
        CHARACTER (LEN=*), INTENT(INOUT) :: iomsg
      END SUBROUTINE my_write_routine_unformatted
   END INTERFACE WRITE(UNFORMATTED)
-end module mod
+end module generic_defined_io_mod
 
 program test
-  use mod
+  use generic_defined_io_mod
   type(node) :: tt
   tt%i = 3
   tt%a = 2.0

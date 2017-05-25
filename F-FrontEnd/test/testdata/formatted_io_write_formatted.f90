@@ -1,4 +1,4 @@
-module mod
+module formatted_io_write_mod
   type node
      integer :: i
      real :: a
@@ -17,10 +17,10 @@ contains
     character (len=*), intent(inout) :: iomsg
     write (unit, '(dt)', iostat=iostat) dtv%i
   end subroutine mywrite
-end module mod
+end module formatted_io_write_mod
 
 program test
-  use mod
+  use formatted_io_write_mod
   type(node) :: tt
   tt%i = 3
   tt%a = 2.0

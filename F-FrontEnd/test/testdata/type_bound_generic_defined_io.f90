@@ -1,4 +1,4 @@
-module mod
+module tpb_defined_io_mod
   type node
      integer :: i
      real :: a
@@ -41,10 +41,10 @@ contains
     INTEGER, INTENT(OUT) :: iostat
     CHARACTER (LEN=*), INTENT(INOUT) :: iomsg
   END SUBROUTINE my_write_routine_unformatted
-end module mod
+end module tpb_defined_io_mod
 
 program test
-  use mod
+  use tpb_defined_io_mod
   type(node) :: tt
   tt%i = 3
   tt%a = 2.0
