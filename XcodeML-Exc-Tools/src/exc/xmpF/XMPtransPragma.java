@@ -42,7 +42,10 @@ public class XMPtransPragma
 	i.setBlock(Bcons.COMPOUND(bc.getBody()));
       }
       else if (bc.Opcode() == Xcode.OMNDECL_PRAGMA) {
-	if (bc.getProp("METAX_IMPORTED") != null) ((METAXblock)bc).runDecl();
+	// no need to execute runDecl() in functions that import OMNDECL from modules
+	if (bc.getProp("METAX_IMPORTED") == null){
+	  ((METAXblock)bc).runDecl();
+	}
 	((METAXblock)bc).run();
 	i.setBlock(Bcons.emptyBlock());
       }
