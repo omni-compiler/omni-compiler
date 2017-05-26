@@ -643,7 +643,7 @@ declare_procedure(enum name_class class,
         assert(interface != NULL);
 
         switch(EXT_PROC_INTERFACE_CLASS(interface)) {
-            case INTF_ASSINGMENT: {
+            case INTF_ASSIGNMENT: {
                 if(IS_SUBR(type) == FALSE) {
                     error("unexpected FUNCTION in assignment(=) INTERFACE");
                     return;
@@ -5605,7 +5605,7 @@ compile_type_bound_procedure(expr x)
 void
 compile_type_generic_procedure(expr x)
 {
-    expr generis_spec = EXPR_ARG1(x);
+    expr generics_spec = EXPR_ARG1(x);
     expr id_list = EXPR_ARG2(x);
     expr access_attr = EXPR_ARG3(x);
 
@@ -5624,17 +5624,17 @@ compile_type_generic_procedure(expr x)
     struct_tp = CTL_STRUCT_TYPEDESC(ctl_top);
     is_internal_private = TYPE_IS_INTERNAL_PRIVATE(struct_tp);
 
-    switch (EXPR_CODE(generis_spec)) {
+    switch (EXPR_CODE(generics_spec)) {
         case IDENT:
-            if ((find_struct_member(struct_tp, EXPR_SYM(generis_spec))) != NULL) {
+            if ((find_struct_member(struct_tp, EXPR_SYM(generics_spec))) != NULL) {
                 error("already declared");
                 return;
             }
-            id = declare_ident(EXPR_SYM(generis_spec), CL_TYPE_BOUND_PROC);
+            id = declare_ident(EXPR_SYM(generics_spec), CL_TYPE_BOUND_PROC);
             break;
         case F95_GENERIC_SPEC:{
             expr arg;
-            arg = EXPR_ARG1(generis_spec);
+            arg = EXPR_ARG1(generics_spec);
             SYMBOL sym = find_symbol(EXPR_CODE_SYMBOL(EXPR_CODE(arg)));
             if ((id = find_struct_member(struct_tp, sym)) != NULL) {
                 error("already declared");
@@ -5649,13 +5649,51 @@ compile_type_generic_procedure(expr x)
         } break;
         case F95_USER_DEFINED:{
             expr arg;
-            arg = EXPR_ARG1(generis_spec);
+            arg = EXPR_ARG1(generics_spec);
             if ((id = find_struct_member(struct_tp, EXPR_SYM(arg))) != NULL) {
                 error("already declared");
                 return;
             }
             id = declare_ident(EXPR_SYM(arg), CL_TYPE_BOUND_PROC);
             binding_attr_flags |= TYPE_BOUND_PROCEDURE_IS_OPERATOR;
+        } break;
+        case F03_GENERIC_WRITE: {
+            expr formatted = EXPR_ARG1(generics_spec);
+            SYMBOL sym;
+            binding_attr_flags |= TYPE_BOUND_PROCEDURE_WRITE;
+            switch (EXPR_CODE(formatted)) {
+                case F03_FORMATTED:
+                    sym = find_symbol("_write_formatted");
+                    binding_attr_flags |= TYPE_BOUND_PROCEDURE_FORMATTED;
+                    break;
+                case F03_UNFORMATTED:
+                    sym = find_symbol("_write_unformatted");
+                    binding_attr_flags |= TYPE_BOUND_PROCEDURE_UNFORMATTED;
+                    break;
+                default:
+                    error("expect FORMATTED or UNFORMATTED");
+                    return;
+            }
+            id = declare_ident(sym, CL_TYPE_BOUND_PROC);
+        } break;
+        case F03_GENERIC_READ: {
+            expr formatted = EXPR_ARG1(generics_spec);
+            SYMBOL sym;
+            binding_attr_flags |= TYPE_BOUND_PROCEDURE_READ;
+            switch (EXPR_CODE(formatted)) {
+                case F03_FORMATTED:
+                    sym = find_symbol("_read_formatted");
+                    binding_attr_flags |= TYPE_BOUND_PROCEDURE_FORMATTED;
+                    break;
+                case F03_UNFORMATTED:
+                    sym = find_symbol("_read_unformatted");
+                    binding_attr_flags |= TYPE_BOUND_PROCEDURE_UNFORMATTED;
+                    break;
+                default:
+                    error("expect FORMATTED or UNFORMATTED");
+                    return;
+            }
+            id = declare_ident(sym, CL_TYPE_BOUND_PROC);
         } break;
         default:
             error_at_node(x, "unexpected expression");

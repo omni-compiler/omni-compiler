@@ -3139,6 +3139,313 @@ check_procedure_variables_forall(int is_final)
     }
 }
 
+static int
+is_defined_io_formatted(const TYPE_DESC ftp, const TYPE_DESC stp, int is_read)
+{
+    /*
+     * SUBROUTINE my_read_routine_formatted
+     *         (dtv,
+     *          unit,
+     *          iotype,
+     *          v_list,
+     *          iostat,
+     *          iomsg)
+     *         ! the derived-type variable
+     *         `dtv-type-spec` , INTENT(INOUT)  :: dtv
+     *         INTEGER, INTENT(IN)              :: unit ! unit number
+     *         ! the edit descriptor string
+     *         CHARACTER (LEN=*), INTENT(IN)    :: iotype
+     *         INTEGER, INTENT(IN)              :: v_list(:)
+     *         INTEGER, INTENT(OUT)             :: iostat
+     *         CHARACTER (LEN=*), INTENT(INOUT) :: iomsg
+     * END
+     *
+     * OR
+     *
+     * SUBROUTINE my_write_routine_formatted
+     *         (dtv,
+     *          unit,
+     *          iotype,
+     *          v_list,
+     *          iostat,
+     *          iomsg)
+     *         ! the derived-type value/variable
+     *         dtv-type-spec , INTENT(IN) :: dtv
+     *         INTEGER, INTENT(IN) :: unit
+     *         ! the edit descriptor string
+     *         CHARACTER (LEN=*), INTENT(IN) :: iotype
+     *         INTEGER, INTENT(IN) :: v_list(:)
+     *         INTEGER, INTENT(OUT) :: iostat
+     *         CHARACTER (LEN=*), INTENT(INOUT) :: iomsg
+     * END
+     */
+    ID dtv, unit, iotype, v_list, iostat, iomsg;
+    TYPE_DESC tp;
+    int dtv_attr_flags = 0;
+
+    if (is_read == TRUE) {
+        dtv_attr_flags = TYPE_ATTR_INTENT_INOUT;
+    } else {
+        dtv_attr_flags = TYPE_ATTR_INTENT_IN;
+    }
+
+    if (ftp == NULL) {
+        return FALSE;
+    }
+
+    if (!IS_SUBR(ftp)) {
+        return FALSE;
+    }
+
+    dtv    = FUNCTION_TYPE_ARGS(ftp);
+    unit   = dtv?ID_NEXT(dtv):NULL;
+    iotype = unit?ID_NEXT(unit):NULL;
+    v_list = iotype?ID_NEXT(iotype):NULL;
+    iostat = v_list?ID_NEXT(v_list):NULL;
+    iomsg  = iostat?ID_NEXT(iostat):NULL;
+
+    if (dtv == NULL || strcmp("dtv", SYM_NAME(ID_SYM(dtv))) != 0) {
+        debug("expect 'dtv' as a 1st argument, but got %s", unit?SYM_NAME(ID_SYM(dtv)):"null");
+        return FALSE;
+    }
+    tp = ID_TYPE(dtv);
+    if (!IS_STRUCT_TYPE(tp) || (stp != NULL && TYPE_REF(tp) != stp) ||
+        (TYPE_ATTR_FLAGS(tp) != dtv_attr_flags &&
+         TYPE_ATTR_FLAGS(tp) != (TYPE_ATTR_CLASS | dtv_attr_flags))) {
+        debug("unexpected type of 'dtv'");
+        return FALSE;
+    }
+
+    if (unit == NULL || strcmp("unit", SYM_NAME(ID_SYM(unit))) != 0) {
+        debug("expect 'unit' as a 2nd arg, but got %s", unit?SYM_NAME(ID_SYM(unit)):"null");
+        return FALSE;
+    }
+    tp = ID_TYPE(unit);
+    if (!IS_INT(tp) || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_IN) {
+        debug("unexpected type of 'unit'");
+        return FALSE;
+    }
+
+    if (iotype == NULL || strcmp("iotype", SYM_NAME(ID_SYM(iotype))) != 0) {
+        debug("expect 'iotype' as a 3rd arg, but got %s", unit?SYM_NAME(ID_SYM(iostat)):"null");
+        return FALSE;
+    }
+    tp = ID_TYPE(iotype);
+    if (!IS_CHAR(tp) ||
+        !IS_CHAR_LEN_UNFIXED(tp) ||
+        TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_IN) {
+        debug("unexpected type of 'iotype'");
+        return FALSE;
+    }
+
+    if (v_list == NULL || strcmp("v_list", SYM_NAME(ID_SYM(v_list))) != 0) {
+        debug("expect 'v_list' as a 4th arg, but got %s", unit?SYM_NAME(ID_SYM(v_list)):"null");
+        return FALSE;
+    }
+    tp = ID_TYPE(v_list);
+    if (!IS_ARRAY_TYPE(tp) ||
+        !TYPE_IS_ARRAY_ASSUMED_SHAPE(tp) ||
+        !IS_INT(TYPE_REF(tp)) ||
+        TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_IN) {
+        debug("unexpected type of 'v_list'");
+        return FALSE;
+    }
+
+    if (iostat == NULL || strcmp("iostat", SYM_NAME(ID_SYM(iostat))) != 0) {
+        debug("expect 'iostat' as a 5th arg, but got %s",
+              unit?SYM_NAME(ID_SYM(iostat)):"null");
+        return FALSE;
+    }
+    tp = ID_TYPE(iostat);
+    if (!IS_INT(tp) || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_OUT) {
+        debug("unexpected type of 'iostat'");
+        return FALSE;
+    }
+
+    if (iomsg == NULL || strcmp("iomsg", SYM_NAME(ID_SYM(iomsg))) != 0) {
+        debug("expect 'iomsg' as a 6th arg, but got %s",
+              unit?SYM_NAME(ID_SYM(iostat)):"null");
+        return FALSE;
+    }
+    tp = ID_TYPE(iomsg);
+    if (!IS_CHAR(tp) ||
+        !IS_CHAR_LEN_UNFIXED(tp) ||
+        TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_INOUT) {
+        debug("unexpected type of 'iomsg'");
+        return FALSE;
+    }
+
+    if (ID_NEXT(iomsg) != NULL) {
+        debug("Unexpected 7th arg");
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+static int
+is_defined_io_unformatted(const TYPE_DESC ftp, const TYPE_DESC stp, int is_read)
+{
+    /*
+     * SUBROUTINE my_read_routine_unformatted
+     *         (dtv,
+     *          unit,
+     *          iostat,
+     *          iomsg)
+     *         dtv-type-spec , INTENT(INOUT) :: dtv
+     *         INTEGER, INTENT(IN) :: unit
+     *         INTEGER, INTENT(OUT) :: iostat
+     *         CHARACTER (LEN=*), INTENT(INOUT) :: iomsg
+     *         END
+     *
+     * OR
+     *
+     * SUBROUTINE my_write_routine_unformatted
+     *         (dtv,
+     *          unit,
+     *          iostat,
+     *          iomsg)
+     *         dtv-type-spec , INTENT(IN) :: dtv
+     *         INTEGER, INTENT(IN) :: unit
+     *         INTEGER, INTENT(OUT) :: iostat
+     *         CHARACTER (LEN=*), INTENT(INOUT) :: iomsg
+     * END
+     */
+    ID dtv, unit, iostat, iomsg;
+    TYPE_DESC tp;
+    int dtv_attr_flags = 0;
+
+    if (is_read == TRUE) {
+        dtv_attr_flags = TYPE_ATTR_INTENT_INOUT;
+    } else {
+        dtv_attr_flags = TYPE_ATTR_INTENT_IN;
+    }
+
+    if (ftp == NULL) {
+        return FALSE;
+    }
+
+    if (!IS_SUBR(ftp)) {
+        return FALSE;
+    }
+
+    dtv    = FUNCTION_TYPE_ARGS(ftp);
+    unit   = dtv?ID_NEXT(dtv):NULL;
+    iostat = unit?ID_NEXT(unit):NULL;
+    iomsg  = iostat?ID_NEXT(iostat):NULL;
+
+    if (dtv == NULL || strcmp("dtv", SYM_NAME(ID_SYM(dtv))) != 0) {
+        debug("expect 'dtv' as a 1st arg, but got %s",
+              unit?SYM_NAME(ID_SYM(dtv)):"null");
+        return FALSE;
+    }
+    tp = ID_TYPE(dtv);
+    if (!IS_STRUCT_TYPE(tp) ||
+        (stp != NULL && TYPE_REF(tp) != stp) ||
+        (TYPE_ATTR_FLAGS(tp) != dtv_attr_flags &&
+         TYPE_ATTR_FLAGS(tp) != (TYPE_ATTR_CLASS | dtv_attr_flags))) {
+        debug("unexpected type of 'dtv'");
+        return FALSE;
+    }
+
+    if (unit == NULL || strcmp("unit", SYM_NAME(ID_SYM(unit))) != 0) {
+        debug("expect 'unit' as a 2nd arg, but got %s",
+              unit?SYM_NAME(ID_SYM(unit)):"null");
+        return FALSE;
+    }
+    tp = ID_TYPE(unit);
+    if (!IS_INT(tp) || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_IN) {
+        debug("unexpected type of 'unit'");
+        return FALSE;
+    }
+
+    if (iostat == NULL || strcmp("iostat", SYM_NAME(ID_SYM(iostat))) != 0) {
+        debug("expect 'iostat' as a 3rd arg, but got %s",
+              unit?SYM_NAME(ID_SYM(iostat)):"null");
+        return FALSE;
+    }
+    tp = ID_TYPE(iostat);
+    if (!IS_INT(tp) || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_OUT) {
+        debug("unexpected type of 'iostat'");
+        return FALSE;
+    }
+
+    if (iomsg == NULL || strcmp("iomsg", SYM_NAME(ID_SYM(iomsg))) != 0) {
+        debug("expect 'iomsg' as a 4th arg, but got %s",
+              unit?SYM_NAME(ID_SYM(iomsg)):"null");
+        return FALSE;
+    }
+    tp = ID_TYPE(iomsg);
+    if (!IS_CHAR(tp) ||
+        !IS_CHAR_LEN_UNFIXED(tp) ||
+        TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_INOUT) {
+        debug("Unexpected type of 'iomsg'");
+        return FALSE;
+    }
+
+    if (ID_NEXT(iomsg) != NULL) {
+        debug("unexpected 5th arg");
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+static int
+is_defined_io_read_formatted(const TYPE_DESC ftp, const TYPE_DESC stp)
+{
+    return is_defined_io_formatted(ftp, stp, /*is_read=*/TRUE);
+}
+
+static int
+is_defined_io_write_formatted(const TYPE_DESC ftp, const TYPE_DESC stp)
+{
+    return is_defined_io_formatted(ftp, stp, /*is_read=*/FALSE);
+}
+
+static int
+is_defined_io_read_unformatted(const TYPE_DESC ftp, const TYPE_DESC stp)
+{
+    return is_defined_io_unformatted(ftp, stp, /*is_read=*/TRUE);
+}
+
+static int
+is_defined_io_write_unformatted(const TYPE_DESC ftp, const TYPE_DESC stp)
+{
+    return is_defined_io_unformatted(ftp, stp, /*is_read=*/FALSE);
+}
+
+static int
+is_defined_io_procedure(const ID id, const TYPE_DESC stp)
+{
+    TYPE_DESC ftp;
+
+    if (id == NULL || ID_TYPE(id) == NULL || stp == NULL) {
+        return FALSE;
+    }
+
+    ftp = ID_TYPE(id);
+    while (TYPE_REF(ftp) != NULL) {
+        ftp = TYPE_REF(ftp);
+    }
+
+    if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_WRITE &&
+        TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_FORMATTED) {
+        return is_defined_io_write_formatted(ftp, stp);
+    } else if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_WRITE &&
+               TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_UNFORMATTED) {
+        return is_defined_io_write_unformatted(ftp, stp);
+    } else if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_READ &&
+               TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_FORMATTED) {
+        return is_defined_io_read_formatted(ftp, stp);
+    } else if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_READ &&
+               TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_UNFORMATTED) {
+        return is_defined_io_read_unformatted(ftp, stp);
+    } else {
+        return FALSE;
+    }
+}
+
 
 static void
 check_type_bound_procedures()
@@ -3166,13 +3473,18 @@ check_type_bound_procedures()
         parent = TYPE_PARENT(tp)? TYPE_PARENT_TYPE(tp) : NULL;
 
         /*
-         * Marks each type-bound procedure if it is used as operator/assignment
+         * Marks each type-bound procedure if it is specified by type-bound generics
          */
         FOREACH_TYPE_BOUND_GENERIC(mem, tp) {
             FOREACH_ID(binding, TBP_BINDING(mem)) {
                 bindto = find_struct_member(tp, ID_SYM(binding));
-                TBP_BINDING_ATTRS(bindto) |= TBP_BINDING_ATTRS(mem) & TYPE_BOUND_PROCEDURE_IS_OPERATOR;
-                TBP_BINDING_ATTRS(bindto) |= TBP_BINDING_ATTRS(mem) & TYPE_BOUND_PROCEDURE_IS_ASSIGNMENT;
+                TBP_BINDING_ATTRS(bindto) |= TBP_BINDING_ATTRS(mem) & (
+                        TYPE_BOUND_PROCEDURE_IS_OPERATOR |
+                        TYPE_BOUND_PROCEDURE_IS_ASSIGNMENT |
+                        TYPE_BOUND_PROCEDURE_WRITE |
+                        TYPE_BOUND_PROCEDURE_READ |
+                        TYPE_BOUND_PROCEDURE_FORMATTED |
+                        TYPE_BOUND_PROCEDURE_UNFORMATTED);
             }
         }
 
@@ -3190,14 +3502,13 @@ check_type_bound_procedures()
             }
 
             /*
-             * Check a type-bound procedure works as operator or assginment
+             * Check a type-bound procedure works as defined io procedure
              */
-            if (TBP_IS_OPERATOR(tbp) && TBP_IS_ASSIGNMENT(tbp)) {
-                /*
-                 * If a procedure is bound from a operator generics and a assignment generics,
-                 * raise an error.
-                 */
-                error("type-bound procedure that is bound to an operator cannot be bound to an assignment");
+            if (TBP_IS_DEFINED_IO(tbp)) {
+                if (!is_defined_io_procedure(tbp, tp)) {
+                    error("type-bound procedure is used as defined i/o procedure, "
+                          "but its procedure signature is wrong");
+                }
             }
 
             if ((ftp = TYPE_REF(ID_TYPE(tbp))) != NULL) {
@@ -4996,7 +5307,7 @@ compile_INTERFACE_statement(expr x)
         case F95_ASSIGNOP: {
             /* user define assingment operator */
             s = find_symbol(EXPR_CODE_SYMBOL(EXPR_CODE(identOrOp)));
-            info->class = INTF_ASSINGMENT;
+            info->class = INTF_ASSIGNMENT;
         } break;
         case F95_USER_DEFINED: {
 #define END_LENGTH 2
@@ -5040,6 +5351,38 @@ compile_INTERFACE_statement(expr x)
             s = find_symbol(EXPR_CODE_SYMBOL(EXPR_CODE(identOrOp)));
             info->class = INTF_OPERATOR;
         } break;
+        case F03_GENERIC_WRITE: {
+            expr formatted = EXPR_ARG1(identOrOp);
+            switch (EXPR_CODE(formatted)) {
+                case F03_FORMATTED:
+                    s = find_symbol("_write_formatted");
+                    info->class = INTF_GENERIC_WRITE_FORMATTED;
+                    break;
+                case F03_UNFORMATTED:
+                    s = find_symbol("_write_unformatted");
+                    info->class = INTF_GENERIC_WRITE_UNFORMATTED;
+                    break;
+                default:
+                    /* never reach */
+                    break;
+            }
+        } break;
+        case F03_GENERIC_READ: {
+            expr formatted = EXPR_ARG1(identOrOp);
+            switch (EXPR_CODE(formatted)) {
+                case F03_FORMATTED:
+                    s = find_symbol("_read_formatted");
+                    info->class = INTF_GENERIC_READ_FORMATTED;
+                    break;
+                case F03_UNFORMATTED:
+                    s = find_symbol("_read_unformatted");
+                    info->class = INTF_GENERIC_READ_UNFORMATTED;
+                    break;
+                default:
+                    /* never reach */
+                    break;
+            }
+        } break;
         default:
             NOT_YET();
         break;
@@ -5072,6 +5415,23 @@ compile_INTERFACE_statement(expr x)
     ctl_top = ctl_base;
 
     CURRENT_INTERFACE = ep;
+}
+
+static int
+check_interface_type(EXT_ID ep, TYPE_DESC ftp)
+{
+    switch (EXT_PROC_INTERFACE_INFO(ep)->class) {
+        case INTF_GENERIC_READ_FORMATTED:
+            return is_defined_io_read_formatted(ftp, NULL);
+        case INTF_GENERIC_READ_UNFORMATTED:
+            return is_defined_io_read_unformatted(ftp, NULL);
+        case INTF_GENERIC_WRITE_FORMATTED:
+            return is_defined_io_write_formatted(ftp, NULL);
+        case INTF_GENERIC_WRITE_UNFORMATTED:
+            return is_defined_io_write_unformatted(ftp, NULL);
+        default:
+            return TRUE;
+    }
 }
 
 /*
@@ -5148,6 +5508,11 @@ end_interface()
             PROC_EXT_ID(fid) = ep;
             EXT_PROC_CLASS(ep) = EP_INTERFACE_DEF;
         }
+
+        if (!check_interface_type(intr, EXT_PROC_TYPE(ep))) {
+            return;
+        }
+
     }
 
     if(EXT_IS_BLANK_NAME(intr) == FALSE) {

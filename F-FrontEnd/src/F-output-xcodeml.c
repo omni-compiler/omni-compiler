@@ -4404,6 +4404,7 @@ outx_structType(int l, TYPE_DESC tp)
             }
             if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_IS_GENERIC) {
                 ID binding;
+                int is_defined_io = FALSE;
                 outx_printi(l2, "<typeBoundGenericProcedure");
                 if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_IS_OPERATOR) {
                     outx_true(TRUE, "is_operator");
@@ -4411,8 +4412,26 @@ outx_structType(int l, TYPE_DESC tp)
                 if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_IS_ASSIGNMENT) {
                     outx_true(TRUE, "is_assignment");
                 }
+                if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_READ ||
+                    TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_WRITE) {
+                    is_defined_io = TRUE;
+                    outx_puts(" is_defined_io=\"");
+                    if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_READ) {
+                        outx_puts("READ");
+                    } else {
+                        outx_puts("WRITE");
+                    }
+                    if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_FORMATTED) {
+                        outx_puts("(FORMATTED)");
+                    } else {
+                        outx_puts("(UNFORMATTED)");
+                    }
+                    outx_puts("\" ");
+                }
                 outx_printi(0,">\n");
-                outx_tagText(l3, "name", SYM_NAME(ID_SYM(id)));
+                if (!is_defined_io) {
+                    outx_tagText(l3, "name", SYM_NAME(ID_SYM(id)));
+                }
                 outx_tag(l3, "binding");
                 FOREACH_ID(binding, TBP_BINDING(id)) {
                     outx_tagText(l4, "name", SYM_NAME(ID_SYM(binding)));
@@ -4561,6 +4580,9 @@ id_is_visibleVar(ID id)
                 return FALSE;
             }
         }
+        if (EXT_IS_DEFINED_IO(PROC_EXT_ID(id))) {
+            return FALSE;
+        }
         /* FALL THROUGH */
     default:
         switch(ID_STORAGE(id)) {
@@ -4594,7 +4616,7 @@ id_is_visibleVar_for_symbols(ID id)
     return (id_is_visibleVar(id) && IS_MODULE(ID_TYPE(id)) == FALSE) ||
             ((ID_STORAGE(id) == STG_ARG ||
               ID_STORAGE(id) == STG_SAVE ||
-              ID_STORAGE(id) == STG_EXT ||
+              (ID_STORAGE(id) == STG_EXT && !EXT_IS_DEFINED_IO(PROC_EXT_ID(id))) ||
               ID_STORAGE(id) == STG_AUTO) && ID_CLASS(id) == CL_PROC);
 }
 
@@ -5201,13 +5223,25 @@ outx_interfaceDecl(int l, EXT_ID ep)
             if(EXT_IS_BLANK_NAME(ep) == FALSE)
                 outx_printi(0, " name=\"%s\"", SYM_NAME(EXT_SYM(ep)));
             break;
-        case INTF_ASSINGMENT:
+        case INTF_ASSIGNMENT:
             outx_true(TRUE, "is_assignment");
             break;
         case INTF_OPERATOR:
         case INTF_USEROP:
             outx_printi(0, " name=\"%s\"", SYM_NAME(EXT_SYM(ep)));
             outx_true(TRUE, "is_operator");
+            break;
+        case INTF_GENERIC_WRITE_FORMATTED:
+            outx_printi(0, " is_defined_io=\"WRITE(FORMATTED)\"");
+            break;
+        case INTF_GENERIC_WRITE_UNFORMATTED:
+            outx_printi(0, " is_defined_io=\"WRITE(UNFORMATTED)\"");
+            break;
+        case INTF_GENERIC_READ_FORMATTED:
+            outx_printi(0, " is_defined_io=\"READ(FORMATTED)\"");
+            break;
+        case INTF_GENERIC_READ_UNFORMATTED:
+            outx_printi(0, " is_defined_io=\"READ(UNFORMATTED)\"");
             break;
         default:
             /* never reach. here*/
