@@ -19,7 +19,7 @@ run: $(EXES)
 	$(XRUN) -n 4 ./bcast_from_p_on_p.x
 	$(XRUN) -n 4 ./bcast_on_p.x
 	$(XRUN) -n 4 ./bcast_on_split_p.x
-	$(XRUN) -n 4 ./bcast_from_p_on_t2.x
+#	$(XRUN) -n 4 ./bcast_from_p_on_t2.x
 	$(XRUN) -n 4 ./bcast_on_split_p_from_p.x
 	$(XRUN) -n 4 ./bcast_on_t2.x
 	$(XRUN) -n 4 ./bcast_array_section.x

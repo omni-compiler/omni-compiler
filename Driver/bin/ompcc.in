@@ -59,19 +59,19 @@ ompcc_set_parameters ${@+"$@"}
 omni_c_check_file_exist
 
 ### Create temporal directory ###
-[ $ENABLE_DEBUG = true ] && TEMP_DIR=$DEBUG_TEMP_DIR
+[ "$ENABLE_DEBUG" = true ] && TEMP_DIR=$DEBUG_TEMP_DIR
 # Note that if TEMP_DIR exists, the TEMP_DIR is not deleted (KAGEMAI #379)
 
 omni_exec mkdir -p $TEMP_DIR
-[ $ENABLE_DEBUG = true ] && echo "Create ${TEMP_DIR}/"
+[ "$ENABLE_DEBUG" = true ] && echo "Create ${TEMP_DIR}/"
 
 ### Clean temporal directory before exit ###
 omni_set_trap
 
 ### Preprocessor ###
-[ $ONLY_PP = true -a -f "${output_file}" ] && omni_exec rm "${output_file}"
+[ "$ONLY_PP" = true -a -f "${output_file}" ] && omni_exec rm "${output_file}"
 
-if [ $ENABLE_ACC = true ]; then
+if [ "$ENABLE_ACC" = true ]; then
     OMNI_CPP_OPT="$OMNI_CPP_OPT ${OPENACC_DEF}"
 else
     OMNI_CPP_OPT="$OMNI_CPP_OPT ${OPENMP_DEF}"
@@ -86,10 +86,10 @@ for c_file in "${c_files[@]}"; do
 
     # When ">" or ">>" is used, please use "omni_exec_echo" and "omni_exec_run" instead of "omni_exec".
     omni_exec_echo $OMNI_CPP_CMD "${define_opts[@]}" $OMNI_CPP_OPT "${pp_add_opt[@]}" "${other_args[@]}" "${FILE_PP_C}" ">" "${FILE_PP_I}"
-    [ $DRY_RUN = false ] && omni_exec_run $OMNI_CPP_CMD "${define_opts[@]}" $OMNI_CPP_OPT "${pp_add_opt[@]}" "${other_args[@]}" "${FILE_PP_C}" > "${FILE_PP_I}"
+    [ "$DRY_RUN" = false ] && omni_exec_run $OMNI_CPP_CMD "${define_opts[@]}" $OMNI_CPP_OPT "${pp_add_opt[@]}" "${other_args[@]}" "${FILE_PP_C}" > "${FILE_PP_I}"
     # AIX compiler cannot output file with ".i" suffix. So, ">" is used.
 
-    if [ $ONLY_PP = true ]; then
+    if [ "$ONLY_PP" = true ]; then
 	if [ "${output_file}" = "" ]; then
 	    omni_exec cat "${FILE_PP_I}"
 	else
@@ -98,12 +98,12 @@ for c_file in "${c_files[@]}"; do
 	fi
     fi
 done
-[ $STOP_PP = true ] && exit 0;
-[ $ONLY_PP = true -a $ENABLE_DEBUG = true ] && exit 0;          # ompcc -E --debug hoge.c (save $TMP_DIR)
-[ $ONLY_PP = true ] && { omni_exec rm -rf $TEMP_DIR; exit 0; }  # ompcc -E hoge.c
+[ "$STOP_PP" = true ] && exit 0;
+[ "$ONLY_PP" = true -a "$ENABLE_DEBUG" = true ] && exit 0;          # ompcc -E --debug hoge.c (save $TMP_DIR)
+[ "$ONLY_PP" = true ] && { omni_exec rm -rf $TEMP_DIR; exit 0; }  # ompcc -E hoge.c
 
 ### Frontend ###
-[ $ENABLE_ACC = true ] && OMNI_C2X_OPT="-facc $OMNI_C2X_OPT"
+[ "$ENABLE_ACC" = true ] && OMNI_C2X_OPT="-facc $OMNI_C2X_OPT"
 for c_file in "${c_files[@]}"; do
     C_FILE=("${c_file}")
     FILE_NAME=`omni_c_norm_file_name "${C_FILE}"`     # ./hoge/fuga.c -> hoge_2f_fuga_2f_a
@@ -112,10 +112,10 @@ for c_file in "${c_files[@]}"; do
 
     omni_exec $OMNI_C2X_CMD $OMNI_C2X_OPT "${frontend_add_opt[@]}" "${FILE_PP_I}" -o "${FILE_IN_X}"
 done
-[ $STOP_FRONTEND = true ] && exit 0;
+[ "$STOP_FRONTEND" = true ] && exit 0;
 
 ### Translator ###
-if [ $ENABLE_ACC = true ]; then
+if [ "$ENABLE_ACC" = true ]; then
     OMNI_CX2X_OPT="$OMNI_CX2X_OPT -facc"
     [ "$DISABLE_LDG" = true ] && OMNI_CX2X_OPT="$OMNI_CX2X_OPT -no-ldg"
     [ "$DEFAULT_VECLEN" != "" ] && OMNI_CX2X_OPT="$OMNI_CX2X_OPT -default-veclen=${DEFAULT_VECLEN}"
@@ -134,10 +134,10 @@ for c_file in "${c_files[@]}"; do
     # also create ${TEMP_DIR}/${FILE_NAME}_in.c
     omni_exec cp ${TEMP_DIR}/"${FILE_NAME}"_in.c ${TEMP_DIR}/"${FILE_NAME}".c
 done
-[ $STOP_TRANSLATOR = true ] && exit 0;
+[ "$STOP_TRANSLATOR" = true ] && exit 0;
 
 ### Backend ###
-if [ $OUTPUT_TEMPORAL = true ]; then
+if [ "$OUTPUT_TEMPORAL" = true ]; then
     for c_file in "${c_files[@]}"; do
         C_FILE=("${c_file}")
 	FILE_NAME=`omni_c_norm_file_name "${C_FILE}"`     # ./hoge/fuga.c -> hoge_2f_fuga_2f_a
@@ -148,10 +148,10 @@ if [ $OUTPUT_TEMPORAL = true ]; then
         echo output __omni_tmp__"${BASENAME}"
     done
 fi
-[ $STOP_BACKEND = true ] && exit 0;
+[ "$STOP_BACKEND" = true ] && exit 0;
 
 ### Native Compiler ###
-if [ $ENABLE_ACC = true ]; then
+if [ "$ENABLE_ACC" = true ]; then
     OMNI_CC_OPT="$OMNI_CC_OPT ${OPENACC_DEF}"
 else
     OMNI_CC_OPT="$OMNI_CC_OPT ${OPENMP_DEF}"
@@ -166,13 +166,13 @@ for c_file in "${c_files[@]}"; do
     omni_exec $OMNI_CC_CMD $OMNI_CC_OPT "${native_add_opt[@]}" "${other_args[@]}" "${FILE_C}" -o "${FILE_O}"
 
     ### GPU Compiler ###
-    if [ $OPENACC_PLATFORM = "CUDA" ]; then
+    if [ "$OPENACC_PLATFORM" = "CUDA" ]; then
 	FILE_CU=${TEMP_DIR}/"${FILE_NAME}"_pp.cu
 	if [ -e "${FILE_CU}" ]; then
 	    GPUCC_ADD_ARGS=(`omni_acc_cuda_get_args ${other_args[@]}`)
 	    omni_acc_cuda_compile ${FILE_CU} ${FILE_O} ${GPUCC_ADD_ARGS[@]}
 	fi
-    elif [ $OPENACC_PLATFORM = "OpenCL" ]; then
+    elif [ "$OPENACC_PLATFORM" = "OpenCL" ]; then
 	FILE_CL=${TEMP_DIR}/"${FILE_NAME}"_pp.cl
 	if [ -e "${FILE_CL}" ]; then
 	    FILE_USER_CL="${FILE_NAME}"_pp.cl
@@ -180,15 +180,15 @@ for c_file in "${c_files[@]}"; do
 	fi
     fi
 
-    if [ $ENABLE_LINKER = false -a "${output_file}" != "" ]; then
+    if [ "$ENABLE_LINKER" = false -a "${output_file}" != "" ]; then
         omni_exec mv "${FILE_O}" "${output_file}"  # only a single file is created.
     else
         omni_exec cp "${FILE_O}" "${FILE_USER_O}"
     fi
 done
-[ $STOP_COMPILE = true ] && exit 0;
-[ $ENABLE_LINKER = false -a $ENABLE_DEBUG = true ] && exit 0;         # ompcc -c --debug hoge.c
-[ $ENABLE_LINKER = false ] && { omni_exec rm -rf $TEMP_DIR; exit 0; } # ompcc -c hoge.c
+[ "$STOP_COMPILE" = true ] && exit 0;
+[ "$ENABLE_LINKER" = false -a "$ENABLE_DEBUG" = true ] && exit 0;         # ompcc -c --debug hoge.c
+[ "$ENABLE_LINKER" = false ] && { omni_exec rm -rf $TEMP_DIR; exit 0; } # ompcc -c hoge.c
 
 ### Linker ###
 # collect initialize modules
@@ -198,9 +198,9 @@ for c_file in "${c_files[@]}"; do
     FILE_O=${TEMP_DIR}/"${FILE_NAME}".o
     obj_files+=("${FILE_O}")
 done
-if [ $ENABLE_ACC = true ]; then
+if [ "$ENABLE_ACC" = true ]; then
     OMNI_TRAVERSE_OPT="--C --nm ${NM} --prefix acc"
-    [ ${TARGET} = "powerpc-hitachi-aix" ] && OMNI_TRAVERSE_OPT="${OMNI_TRAVERSE_OPT} --sr"
+    [ "${TARGET}" = "powerpc-hitachi-aix" ] && OMNI_TRAVERSE_OPT="${OMNI_TRAVERSE_OPT} --sr"
     TRAVERSE_FILE_C=${TEMP_DIR}/omni_traverse_${PID}.c
     TRAVERSE_FILE_O=${TEMP_DIR}/omni_traverse_${PID}.o
     omni_exec $OMNI_TRAVERSE $OMNI_TRAVERSE_OPT -o $TRAVERSE_FILE_C "${obj_files[@]}" "${archive_files[@]}"
@@ -208,10 +208,10 @@ if [ $ENABLE_ACC = true ]; then
 fi
 
 # link
-if [ $ENABLE_ACC = true ]; then
-    if [ $OPENACC_PLATFORM = "CUDA" ]; then
+if [ "$ENABLE_ACC" = true ]; then
+    if [ "$OPENACC_PLATFORM" = "CUDA" ]; then
 	OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_CUDA_LIB"
-    elif [ $OPENACC_PLATFORM = "OpenCL" ]; then
+    elif [ "$OPENACC_PLATFORM" = "OpenCL" ]; then
 	OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_OPENCL_LIB"
     fi
     obj_files+=("$TRAVERSE_FILE_O")
@@ -230,6 +230,6 @@ fi
 omni_exec $OMNI_LINKER_CMD "${obj_files[@]}" "${linker_add_opt[@]}" "${other_args[@]}" "${archive_files[@]}" "${lib_args[@]}" $OMNI_LINKER_OPT
 
 ### Delete temporal directory ###
-[ $ENABLE_DEBUG = false ] && omni_exec rm -rf $TEMP_DIR
+[ "$ENABLE_DEBUG" = false ] && omni_exec rm -rf $TEMP_DIR
 
 exit 0

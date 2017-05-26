@@ -559,7 +559,7 @@ public class XMPtranslateLocalPragma {
     addProfileFunctions(profileClause, reflectFuncCallBlock, "reflect", pb);
   }
 
-  static Block encloseWithAccHostDataDirective(Block block, XobjList useDeviceClauseArgs) throws XMPexception {
+  static Block encloseWithAccHostDataConstruct(Block block, XobjList useDeviceClauseArgs) throws XMPexception {
     if(useDeviceClauseArgs == null || useDeviceClauseArgs.isEmpty()){
       throw new XMPexception("empty argument for use_device clause");
     }
@@ -1706,35 +1706,59 @@ public class XMPtranslateLocalPragma {
   }
 
   private void translateBarrier(PragmaBlock pb) throws XMPexception {
-    // start translation
-    XobjList barrierDecl = (XobjList)pb.getClauses();
-    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
 
-    // create function call
-    Block barrierFuncCallBlock = null;
-    XobjList onRef = (XobjList)barrierDecl.getArg(0);
-    if (onRef == null || onRef.Nargs() == 0) {
-      barrierFuncCallBlock = _globalDecl.createFuncCallBlock("_XMP_barrier_EXEC", null);
+    BlockList ret_body = Bcons.emptyBody();
+
+    XMPobjectsRef on_ref = XMPobjectsRef.parseDecl(pb.getClauses().getArg(0), _globalDecl, pb);
+    Xobject on_ref_arg;
+
+    if (on_ref != null){
+      ret_body.add(on_ref.buildConstructor(_globalDecl));
+      on_ref_arg = on_ref.getDescId().Ref();
     }
-    else {
-      XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, pb);
-      String execFuncSuffix = execOnRefArgs.getFirst();
-      boolean splitComm = execOnRefArgs.getSecond().booleanValue();
-      XobjList execFuncArgs = execOnRefArgs.getThird();
-      if (splitComm) {
-        BlockList barrierBody = Bcons.blockList(_globalDecl.createFuncCallBlock("_XMP_barrier_EXEC", null));
-	barrierFuncCallBlock = createCommTaskBlock(barrierBody, execFuncSuffix, execFuncArgs);
-      }
-      else {
-	barrierFuncCallBlock = _globalDecl.createFuncCallBlock("_XMP_barrier_" + execFuncSuffix, execFuncArgs);
-      }
+    else on_ref_arg = Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0));
+
+    Ident f = _globalDecl.declExternFunc("_XMP_barrier", Xtype.voidType);
+    ret_body.add(f.Call(Xcons.List(on_ref_arg)));
+
+    if (on_ref != null){
+      Ident g = _globalDecl.declExternFunc("_XMP_ref_dealloc", Xtype.voidType);
+      ret_body.add(g.Call(Xcons.List(on_ref_arg)));
     }
 
-    pb.replace(barrierFuncCallBlock);
-
-    Xobject profileClause = barrierDecl.getArg(1);
-    addProfileFunctions(profileClause, barrierFuncCallBlock, "barrier", pb);
+    pb.replace(Bcons.COMPOUND(ret_body));
   }
+
+  // private void translateBarrier(PragmaBlock pb) throws XMPexception {
+  //   // start translation
+  //   XobjList barrierDecl = (XobjList)pb.getClauses();
+  //   XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
+
+  //   // create function call
+  //   Block barrierFuncCallBlock = null;
+  //   XobjList onRef = (XobjList)barrierDecl.getArg(0);
+  //   if (onRef == null || onRef.Nargs() == 0) {
+  //     barrierFuncCallBlock = _globalDecl.createFuncCallBlock("_XMP_barrier_EXEC", null);
+  //   }
+  //   else {
+  //     XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, pb);
+  //     String execFuncSuffix = execOnRefArgs.getFirst();
+  //     boolean splitComm = execOnRefArgs.getSecond().booleanValue();
+  //     XobjList execFuncArgs = execOnRefArgs.getThird();
+  //     if (splitComm) {
+  //       BlockList barrierBody = Bcons.blockList(_globalDecl.createFuncCallBlock("_XMP_barrier_EXEC", null));
+  // 	barrierFuncCallBlock = createCommTaskBlock(barrierBody, execFuncSuffix, execFuncArgs);
+  //     }
+  //     else {
+  // 	barrierFuncCallBlock = _globalDecl.createFuncCallBlock("_XMP_barrier_" + execFuncSuffix, execFuncArgs);
+  //     }
+  //   }
+
+  //   pb.replace(barrierFuncCallBlock);
+
+  //   Xobject profileClause = barrierDecl.getArg(1);
+  //   addProfileFunctions(profileClause, barrierFuncCallBlock, "barrier", pb);
+  // }
 
 
   private Xobject setStartLengthSize(Xobject obj, Xtype varType, int dims, Xobject[] start, Xobject[] length, Xobject[] size) throws XMPexception {
@@ -1860,7 +1884,81 @@ public class XMPtranslateLocalPragma {
     
     pb.replace(reductionBodyBlock);
   }
-  
+
+  private Block createReductionFuncCallBlock(PragmaBlock pb, Boolean isAcc) throws XMPexception {
+
+    BlockList ret_body = Bcons.emptyBody();
+    
+    XobjList reductionRef = (XobjList)pb.getClauses().getArg(0);
+
+    XMPobjectsRef on_ref = XMPobjectsRef.parseDecl(pb.getClauses().getArg(1), _globalDecl, pb);
+    Xobject on_ref_arg;
+
+    if (on_ref != null){
+      if (XMPpragma.valueOf(pb.getPragma()) != XMPpragma.LOOP){
+	ret_body.add(on_ref.buildConstructor(_globalDecl));
+	on_ref_arg = on_ref.getDescId().Ref();
+      }
+      else {
+	XMPobjectsRef on_ref_copy = on_ref.convertLoopToReduction();
+	ret_body.add(on_ref_copy.buildConstructor(_globalDecl));
+	on_ref_arg = on_ref_copy.getDescId().Ref();
+      }
+    }
+    else on_ref_arg = Xcons.Cnull();
+
+    Ident f = _globalDecl.declExternFunc(isAcc? "_XMP_reduction_acc" : "_XMP_reduction", Xtype.voidType);
+    Ident f2 = _globalDecl.declExternFunc("_XMP_reduction_loc", Xtype.voidType);
+
+    Vector<XobjList> reductionFuncArgsList = createReductionArgsList(reductionRef, pb, false, null, null);
+
+    Vector<Vector<Ident>> pos_vars = new Vector<Vector<Ident>>();
+    for (Xobject w: (XobjList)reductionRef.getArg(1)){
+      Vector<Ident> plist = new Vector<Ident>();
+      if (w.getArg(1) != null){
+	for (Xobject p: (XobjList)w.getArg(1)){
+	  Ident pid = pb.findVarIdent(p.getName());
+	  if (pid == null){
+	    XMP.error(pb.getLineNo(), "variable '" + p.getName() + "' in reduction is not found");
+	  }
+	  plist.add(pid);
+	}
+      }
+      pos_vars.add(plist);
+    }
+
+    int i = 0;
+    for (XobjList args : reductionFuncArgsList){
+      int j = 0;
+      Vector<Ident> plist = pos_vars.elementAt(i);
+      for (Ident pos: plist){
+      	Xobject args2 = Xcons.List(Xcons.IntConstant(j), pos.Ref(), XMP.createBasicTypeConstantObj(pos.Type()));
+      	ret_body.add(f2.Call(args2));
+      	j++;
+      }
+      args.add(on_ref_arg);
+      args.add(Xcons.IntConstant(plist.size()));
+      ret_body.add(f.Call(args));
+      i++;
+    }      
+    
+    if (on_ref != null){
+      Ident g = _globalDecl.declExternFunc("_XMP_ref_dealloc", Xtype.voidType);
+      ret_body.add(g.Call(Xcons.List(on_ref.getDescId().Ref())));
+    }
+
+    // if (isAcc){
+    //   XobjList vars = Xcons.List();
+    //   for(Ident id : info.getReductionVars()){
+    //     vars.add(id.Ref());
+    //   }
+    //   ret_body = Bcons.blockList(buildAccHostData(vars, ret_body));
+    // }
+
+    return Bcons.COMPOUND(ret_body);
+
+  }
+
   private void translateReduction(PragmaBlock pb) throws XMPexception {
     // start translation
     XobjList reductionDecl = (XobjList)pb.getClauses();
@@ -1878,41 +1976,43 @@ public class XMPtranslateLocalPragma {
       throw new XMPexception(pb.getLineNo(), "reduction for both acc and host is unimplemented");
     }
 
-    // create function arguments
+    Block reductionFuncCallBlock = createReductionFuncCallBlock(pb, isACC);
     XobjList reductionRef = (XobjList)reductionDecl.getArg(0);
-    XobjInt reductionOp = (XobjInt)reductionRef.getArg(0);
+    // // create function arguments
+    // XobjList reductionRef = (XobjList)reductionDecl.getArg(0);
+    // XobjInt reductionOp = (XobjInt)reductionRef.getArg(0);
 
-    // create function call
-    XobjList onRef = (XobjList)reductionDecl.getArg(1);
+    // // create function call
+    // XobjList onRef = (XobjList)reductionDecl.getArg(1);
     
-    // When MAXLOC or MINLOC, another flow, which does not use a variadic function in runtime, is executed.
-    if(reductionOp.getInt() == XMPcollective.REDUCE_MAXLOC || reductionOp.getInt() == XMPcollective.REDUCE_MINLOC){
-      createLocReduction(pb, reductionRef, reductionOp, onRef);
-      return;
-    }
+    // // When MAXLOC or MINLOC, another flow, which does not use a variadic function in runtime, is executed.
+    // if(reductionOp.getInt() == XMPcollective.REDUCE_MAXLOC || reductionOp.getInt() == XMPcollective.REDUCE_MINLOC){
+    //   createLocReduction(pb, reductionRef, reductionOp, onRef);
+    //   return;
+    // }
 
-    Block reductionFuncCallBlock = null;
-    Vector<XobjList> reductionFuncArgsList = createReductionArgsList(reductionRef, pb, false, null, null);
-    String reductionFuncType = createReductionFuncType(reductionRef, pb, isACC);
+    // Block reductionFuncCallBlock = null;
+    // Vector<XobjList> reductionFuncArgsList = createReductionArgsList(reductionRef, pb, false, null, null);
+    // String reductionFuncType = createReductionFuncType(reductionRef, pb, isACC);
 
-    if (onRef == null || onRef.Nargs() == 0){
-      reductionFuncCallBlock = createReductionFuncCallBlock(true, reductionFuncType + "_EXEC", null, reductionFuncArgsList);
-    }
-    else{
-      XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, pb);
-      String execFuncSuffix = execOnRefArgs.getFirst();
-      boolean splitComm = execOnRefArgs.getSecond().booleanValue();
-      XobjList execFuncArgs = execOnRefArgs.getThird();
-      if (splitComm) {
-        BlockList reductionBody =
-          Bcons.blockList(createReductionFuncCallBlock(true, reductionFuncType + "_EXEC", null, reductionFuncArgsList));
-	reductionFuncCallBlock = createCommTaskBlock(reductionBody, execFuncSuffix, execFuncArgs);
-      }
-      else {
-        reductionFuncCallBlock = createReductionFuncCallBlock(false, reductionFuncType + "_" + execFuncSuffix,
-                                                              execFuncArgs.operand(), reductionFuncArgsList);
-      }
-    }
+    // if (onRef == null || onRef.Nargs() == 0){
+    //   reductionFuncCallBlock = createReductionFuncCallBlock(true, reductionFuncType + "_EXEC", null, reductionFuncArgsList);
+    // }
+    // else{
+    //   XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, pb);
+    //   String execFuncSuffix = execOnRefArgs.getFirst();
+    //   boolean splitComm = execOnRefArgs.getSecond().booleanValue();
+    //   XobjList execFuncArgs = execOnRefArgs.getThird();
+    //   if (splitComm) {
+    //     BlockList reductionBody =
+    //       Bcons.blockList(createReductionFuncCallBlock(true, reductionFuncType + "_EXEC", null, reductionFuncArgsList));
+    // 	reductionFuncCallBlock = createCommTaskBlock(reductionBody, execFuncSuffix, execFuncArgs);
+    //   }
+    //   else {
+    //     reductionFuncCallBlock = createReductionFuncCallBlock(false, reductionFuncType + "_" + execFuncSuffix,
+    //                                                           execFuncArgs.operand(), reductionFuncArgsList);
+    //   }
+    // }
 
     if(isACC){
       XobjList vars = Xcons.List();
@@ -1920,9 +2020,7 @@ public class XMPtranslateLocalPragma {
       for(Xobject x : reductionSpecList){
         vars.add(x.getArg(0));
       }
-      reductionFuncCallBlock =
-      Bcons.PRAGMA(Xcode.ACC_PRAGMA, "HOST_DATA", Xcons.List(Xcons.List(Xcons.String("USE_DEVICE"), vars)),
-                   Bcons.blockList(reductionFuncCallBlock));
+      reductionFuncCallBlock = encloseWithAccHostDataConstruct(reductionFuncCallBlock, vars);
     }
 
     Xobject async = reductionDecl.getArg(2);
@@ -2320,6 +2418,48 @@ public class XMPtranslateLocalPragma {
     return Bcons.COMPOUND(funcCallList);
   }
 
+  private Block createBcastFuncCallBlock(PragmaBlock pb, boolean isAcc) throws XMPexception {
+
+    BlockList ret_body = Bcons.emptyBody();
+
+    XMPobjectsRef from_ref = XMPobjectsRef.parseDecl(pb.getClauses().getArg(1), _globalDecl, pb);
+    Xobject from_ref_arg;
+    if (from_ref != null){
+      ret_body.add(from_ref.buildConstructor(_globalDecl));
+      from_ref_arg = from_ref.getDescId().Ref();
+    }
+    else from_ref_arg = Xcons.Cnull();
+
+    XMPobjectsRef on_ref = XMPobjectsRef.parseDecl(pb.getClauses().getArg(2), _globalDecl, pb);
+    Xobject on_ref_arg;
+    if (on_ref != null){
+      ret_body.add(on_ref.buildConstructor(_globalDecl));
+      on_ref_arg = on_ref.getDescId().Ref();
+    }
+    else on_ref_arg = Xcons.Cnull();
+
+    Ident f = _globalDecl.declExternFunc(isAcc? "_XMP_bcast_acc" : "_XMP_bcast", Xtype.voidType);
+
+    for (Xobject v: (XobjList)pb.getClauses().getArg(0)){
+      XobjList args = createBcastArgsList(v, pb);
+      args.add(from_ref_arg);
+      args.add(on_ref_arg);
+      ret_body.add(f.Call(args));
+    }
+
+    if (on_ref != null){
+      Ident g = _globalDecl.declExternFunc("_XMP_ref_dealloc", Xtype.voidType);
+      ret_body.add(g.Call(Xcons.List(on_ref_arg)));
+    }
+
+    if (from_ref != null){
+      Ident g = _globalDecl.declExternFunc("_XMP_ref_dealloc", Xtype.voidType);
+      ret_body.add(g.Call(Xcons.List(from_ref_arg)));
+    }
+
+    return Bcons.COMPOUND(ret_body);
+  }
+  
   private void translateBcast(PragmaBlock pb) throws XMPexception {
     // start translation
     XobjList bcastDecl = (XobjList)pb.getClauses();
@@ -2336,43 +2476,43 @@ public class XMPtranslateLocalPragma {
       throw new XMPexception(pb.getLineNo(), "bcast for both acc and host is unimplemented");
     }
     
-    // create function arguments
-    XobjList varList = (XobjList)bcastDecl.getArg(0);
-    Vector<XobjList> bcastArgsList = createBcastArgsList(varList, pb);
+    Block bcastFuncCallBlock = createBcastFuncCallBlock(pb, isACC);
+    // // create function arguments
+    // XobjList varList = (XobjList)bcastDecl.getArg(0);
+    // Vector<XobjList> bcastArgsList = createBcastArgsList(varList, pb);
 
-    // create function call
-    Block bcastFuncCallBlock = null;
-    XobjList fromRef = (XobjList)bcastDecl.getArg(1);
-    XMPpair<String, XobjList> execFromRefArgs = null;
-    if(fromRef != null && fromRef.Nargs() != 0){
-      execFromRefArgs = createExecFromRefArgs(fromRef, pb);
-    }
+    // // create function call
+    // Block bcastFuncCallBlock = null;
+    // XobjList fromRef = (XobjList)bcastDecl.getArg(1);
+    // XMPpair<String, XobjList> execFromRefArgs = null;
+    // if(fromRef != null && fromRef.Nargs() != 0){
+    //   execFromRefArgs = createExecFromRefArgs(fromRef, pb);
+    // }
 
-    XobjList onRef = (XobjList)bcastDecl.getArg(2);
-    boolean splitComm = false;
-    if(onRef == null || onRef.getArgs() == null) {
-      bcastFuncCallBlock = createBcastFuncCallBlock(true, "EXEC", null, bcastArgsList, execFromRefArgs, isACC);
-    }
-    else{
-      XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, pb);
-      String execFuncSuffix = execOnRefArgs.getFirst();
-      splitComm = execOnRefArgs.getSecond().booleanValue();
-      XobjList execFuncArgs = execOnRefArgs.getThird();
-      if(splitComm){
-        BlockList bcastBody = Bcons.blockList(createBcastFuncCallBlock(true, "EXEC", null, bcastArgsList,
-                                                                       execFromRefArgs, isACC));
-	bcastFuncCallBlock = createCommTaskBlock(bcastBody, execFuncSuffix, execFuncArgs);
-      }
-      else{
-	bcastFuncCallBlock = createBcastFuncCallBlock(false, execFuncSuffix, execFuncArgs.operand(),
-                                                      bcastArgsList, execFromRefArgs, isACC);
-      }
-    }
+    // XobjList onRef = (XobjList)bcastDecl.getArg(2);
+    // boolean splitComm = false;
+    // if(onRef == null || onRef.getArgs() == null) {
+    //   bcastFuncCallBlock = createBcastFuncCallBlock(true, "EXEC", null, bcastArgsList, execFromRefArgs, isACC);
+    // }
+    // else{
+    //   XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, pb);
+    //   String execFuncSuffix = execOnRefArgs.getFirst();
+    //   splitComm = execOnRefArgs.getSecond().booleanValue();
+    //   XobjList execFuncArgs = execOnRefArgs.getThird();
+    //   if(splitComm){
+    //     BlockList bcastBody = Bcons.blockList(createBcastFuncCallBlock(true, "EXEC", null, bcastArgsList,
+    //                                                                    execFromRefArgs, isACC));
+    // 	bcastFuncCallBlock = createCommTaskBlock(bcastBody, execFuncSuffix, execFuncArgs);
+    //   }
+    //   else{
+    // 	bcastFuncCallBlock = createBcastFuncCallBlock(false, execFuncSuffix, execFuncArgs.operand(),
+    //                                                   bcastArgsList, execFromRefArgs, isACC);
+    //   }
+    // }
     
     if(isACC){
-      bcastFuncCallBlock = Bcons.PRAGMA(Xcode.ACC_PRAGMA, "HOST_DATA",
-                                        Xcons.List(Xcons.List(Xcons.String("USE_DEVICE"),varList)),
-                                        Bcons.blockList(bcastFuncCallBlock));
+      XobjList varList = (XobjList)bcastDecl.getArg(0);
+      bcastFuncCallBlock = encloseWithAccHostDataConstruct(bcastFuncCallBlock, varList);
     }
 
     Xobject async = bcastDecl.getArg(3);
@@ -2458,132 +2598,230 @@ public class XMPtranslateLocalPragma {
     return is_contiguous;
   }
   
-  private Vector<XobjList> createBcastArgsList(XobjList varList, PragmaBlock pb) throws XMPexception {
-    Vector<XobjList> returnVector = new Vector<XobjList>();
+  private XobjList createBcastArgsList(Xobject var, PragmaBlock pb) throws XMPexception {
+    XobjList argsList = null;
 
-    for (XobjArgs i = varList.getArgs(); i != null; i = i.nextArgs()) {
-      if(i.getArg().isVariable()){
-        // The variable indicated in bcast directive is variable name.
-        // For example,
-        // ---
-        // int a[10], b[10][10];
-        // #pragma xmp bcast (a,b)
-        // ---
-        String varName = i.getArg().getString();
-        XMPpair<Ident, Xtype> typedSpec = XMPutil.findTypedVar(varName, pb);
-        Ident varId = typedSpec.getFirst();
-        Xtype varType = typedSpec.getSecond();
+    if (var.isVariable()){
+      // The variable indicated in bcast directive is variable name.
+      // For example,
+      // ---
+      // int a[10], b[10][10];
+      // #pragma xmp bcast (a,b)
+      // ---
+      String varName = var.getString();
+      XMPpair<Ident, Xtype> typedSpec = XMPutil.findTypedVar(varName, pb);
+      Ident varId = typedSpec.getFirst();
+      Xtype varType = typedSpec.getSecond();
         
-        XobjLong count = null;
-        switch (varType.getKind()) {
-        case Xtype.BASIC:
-        case Xtype.STRUCT:
-        case Xtype.UNION:
-          {
-            count = Xcons.LongLongConstant(0, 1);
-            returnVector.add(Xcons.List(varId.getAddr(), count, Xcons.SizeOf(varType)));
-          } break;
-        case Xtype.POINTER:
-	  {
-	    count = Xcons.LongLongConstant(0, 1);
-	    returnVector.add(Xcons.List(varId.Ref(), count, Xcons.SizeOf(varType)));
-  	  } break;
-        case Xtype.ARRAY:
-          {
-            ArrayType arrayVarType = (ArrayType)varType;
-            switch (arrayVarType.getArrayElementType().getKind()) {
-              case Xtype.BASIC:
-              case Xtype.STRUCT:
-              case Xtype.UNION:
-                break;
-              default:
-                throw new XMPexception("array '" + varName + "' has has a wrong data type for broadcast");
-            }
+      XobjLong count = null;
+      switch (varType.getKind()) {
+      case Xtype.BASIC:
+      case Xtype.STRUCT:
+      case Xtype.UNION:
+	{
+	  count = Xcons.LongLongConstant(0, 1);
+	  argsList = Xcons.List(varId.getAddr(), count, Xcons.SizeOf(varType));
+	} break;
+      case Xtype.POINTER:
+	{
+	  count = Xcons.LongLongConstant(0, 1);
+	  argsList = Xcons.List(varId.Ref(), count, Xcons.SizeOf(varType));
+	} break;
+      case Xtype.ARRAY:
+	{
+	  ArrayType arrayVarType = (ArrayType)varType;
+	  switch (arrayVarType.getArrayElementType().getKind()) {
+	  case Xtype.BASIC:
+	  case Xtype.STRUCT:
+	  case Xtype.UNION:
+	    break;
+	  default:
+	    throw new XMPexception("array '" + varName + "' has has a wrong data type for broadcast");
+	}
             
-            if(arrayVarType.getArraySizeExpr() == null){
-              // Number of elements is static
-              // int a[10];
-              // #pragma xmp bcast (a)
-              count = Xcons.LongLongConstant(0, XMPutil.getArrayElmtCount(arrayVarType));
-              returnVector.add(Xcons.List(varId.Ref(), count, Xcons.SizeOf(arrayVarType.getArrayElementType())));
-            }
-            else{
-              // Number of elements is defined in arguments
-              // void hoge(int n, int a[n]){
-              // #pragma xmp bcast (a)
-              returnVector.add(Xcons.List(varId.Ref(), arrayVarType.getArraySizeExpr(),
-                                          Xcons.SizeOf(arrayVarType.getArrayElementType())));
-            }
-          } break;
-        default:
-          throw new XMPexception("'" + varName + "' has a wrong data type for broadcast");
-        }
+	if (arrayVarType.getArraySizeExpr() == null){
+	  // Number of elements is static
+	  // int a[10];
+	  // #pragma xmp bcast (a)
+	  count = Xcons.LongLongConstant(0, XMPutil.getArrayElmtCount(arrayVarType));
+	  argsList = Xcons.List(varId.Ref(), count, Xcons.SizeOf(arrayVarType.getArrayElementType()));
+	}
+	else{
+	  // Number of elements is defined in arguments
+	  // void hoge(int n, int a[n]){
+	  // #pragma xmp bcast (a)
+	  argsList = Xcons.List(varId.Ref(), arrayVarType.getArraySizeExpr(),
+			       Xcons.SizeOf(arrayVarType.getArrayElementType()));
+	}
+	} break;
+      default:
+	throw new XMPexception("'" + varName + "' has a wrong data type for broadcast");
       }
-      else{
-        // The variable indicated in bcast directive is array with array section.
-        // For example,
-        // ---
-        // int a[10], b[10][10];
-        // #pragma xmp bcast (a[:],b[2:5][:])
-        // ---
-        String varName = i.getArg().getArg(0).getString();
-        XMPpair<Ident, Xtype> typedSpec = XMPutil.findTypedVar(varName, pb);
-        Ident varId = typedSpec.getFirst();
-        Xtype varType = typedSpec.getSecond();
+    }
+    else{
+      // The variable indicated in bcast directive is array with array section.
+      // For example,
+      // ---
+      // int a[10], b[10][10];
+      // #pragma xmp bcast (a[:],b[2:5][:])
+      // ---
+      String varName = var.getArg(0).getString();
+      XMPpair<Ident, Xtype> typedSpec = XMPutil.findTypedVar(varName, pb);
+      Ident varId = typedSpec.getFirst();
+      Xtype varType = typedSpec.getSecond();
 
-        int dims = varType.getNumDimensions();
-        if(dims != i.getArg().getArg(1).Nargs())
-          throw new XMPexception(varName + " has a wrong dimension");
+      int dims = varType.getNumDimensions();
+      if (dims != var.getArg(1).Nargs())
+	throw new XMPexception(varName + " has a wrong dimension");
         
-        Xobject[] start  = new Xobject[dims];
-        Xobject[] length = new Xobject[dims];
-        Xobject[] size   = new Xobject[dims];
-        Xobject total_length = setStartLengthSize(i.getArg(), varType, dims, start, length, size);
+      Xobject[] start  = new Xobject[dims];
+      Xobject[] length = new Xobject[dims];
+      Xobject[] size   = new Xobject[dims];
+      Xobject total_length = setStartLengthSize(var, varType, dims, start, length, size);
 
-        // Check the array is contiguous or not.
-        // Note that when XMP runtime supports stride bcast communication,
-        // the following if-statment will be removed.
-        if(! check_contiguous_of_array(dims, length, size))
-          throw new XMPexception("Stride bcast operation is not supported");
+      // Check the array is contiguous or not.
+      // Note that when XMP runtime supports stride bcast communication,
+      // the following if-statment will be removed.
+      if (!check_contiguous_of_array(dims, length, size))
+	throw new XMPexception("Stride bcast operation is not supported");
 
-        Xobject[] acc_size = new Xobject[dims];
-        setAccSize(dims, size, acc_size);
-        Xobject offset = calcOffsetSize(dims, start, acc_size, varType);
+      Xobject[] acc_size = new Xobject[dims];
+      setAccSize(dims, size, acc_size);
+      Xobject offset = calcOffsetSize(dims, start, acc_size, varType);
 
-        returnVector.add(Xcons.List(Xcons.binaryOp(Xcode.PLUS_EXPR, Xcons.Cast(Xtype.Pointer(BasicType.charType), varId.Ref()), offset),
-                                    total_length, Xcons.SizeOf(varType.getArrayElementType())));
-      }
+      argsList = Xcons.List(Xcons.binaryOp(Xcode.PLUS_EXPR, Xcons.Cast(Xtype.Pointer(BasicType.charType), varId.Ref()), offset),
+			   total_length, Xcons.SizeOf(varType.getArrayElementType()));
     }
 
-    return returnVector;
+    return argsList;
   }
 
-  private Block createBcastFuncCallBlock(boolean isMacro, String funcType, Xobject execDesc, Vector<XobjList> funcArgsList,
-                                         XMPpair<String, XobjList> execFromRefArgs, boolean isACC) throws XMPexception {
-    String funcSuffix = null;
-    XobjList fromRef = null;
-    if (execFromRefArgs == null) funcSuffix = new String(funcType + "_OMITTED");
-    else {
-      funcSuffix = new String(funcType + "_" + execFromRefArgs.getFirst());
-      fromRef = execFromRefArgs.getSecond();
-    }
+  // private Vector<XobjList> createBcastArgsList(XobjList varList, PragmaBlock pb) throws XMPexception {
+  //   Vector<XobjList> returnVector = new Vector<XobjList>();
 
-    String accSuffix = isACC? "acc_" : "";
-    Ident funcId = null;
-    if (isMacro) funcId = XMP.getMacroId("_XMP_M_BCAST_" + accSuffix.toUpperCase() + funcSuffix);
-    else         funcId = _globalDecl.declExternFunc("_XMP_bcast_" + accSuffix + funcSuffix);
+  //   for (XobjArgs i = varList.getArgs(); i != null; i = i.nextArgs()) {
+  //     if(i.getArg().isVariable()){
+  //       // The variable indicated in bcast directive is variable name.
+  //       // For example,
+  //       // ---
+  //       // int a[10], b[10][10];
+  //       // #pragma xmp bcast (a,b)
+  //       // ---
+  //       String varName = i.getArg().getString();
+  //       XMPpair<Ident, Xtype> typedSpec = XMPutil.findTypedVar(varName, pb);
+  //       Ident varId = typedSpec.getFirst();
+  //       Xtype varType = typedSpec.getSecond();
+        
+  //       XobjLong count = null;
+  //       switch (varType.getKind()) {
+  //       case Xtype.BASIC:
+  //       case Xtype.STRUCT:
+  //       case Xtype.UNION:
+  //         {
+  //           count = Xcons.LongLongConstant(0, 1);
+  //           returnVector.add(Xcons.List(varId.getAddr(), count, Xcons.SizeOf(varType)));
+  //         } break;
+  //       case Xtype.POINTER:
+  // 	  {
+  // 	    count = Xcons.LongLongConstant(0, 1);
+  // 	    returnVector.add(Xcons.List(varId.Ref(), count, Xcons.SizeOf(varType)));
+  // 	  } break;
+  //       case Xtype.ARRAY:
+  //         {
+  //           ArrayType arrayVarType = (ArrayType)varType;
+  //           switch (arrayVarType.getArrayElementType().getKind()) {
+  //             case Xtype.BASIC:
+  //             case Xtype.STRUCT:
+  //             case Xtype.UNION:
+  //               break;
+  //             default:
+  //               throw new XMPexception("array '" + varName + "' has has a wrong data type for broadcast");
+  //           }
+            
+  //           if(arrayVarType.getArraySizeExpr() == null){
+  //             // Number of elements is static
+  //             // int a[10];
+  //             // #pragma xmp bcast (a)
+  //             count = Xcons.LongLongConstant(0, XMPutil.getArrayElmtCount(arrayVarType));
+  //             returnVector.add(Xcons.List(varId.Ref(), count, Xcons.SizeOf(arrayVarType.getArrayElementType())));
+  //           }
+  //           else{
+  //             // Number of elements is defined in arguments
+  //             // void hoge(int n, int a[n]){
+  //             // #pragma xmp bcast (a)
+  //             returnVector.add(Xcons.List(varId.Ref(), arrayVarType.getArraySizeExpr(),
+  //                                         Xcons.SizeOf(arrayVarType.getArrayElementType())));
+  //           }
+  //         } break;
+  //       default:
+  //         throw new XMPexception("'" + varName + "' has a wrong data type for broadcast");
+  //       }
+  //     }
+  //     else{
+  //       // The variable indicated in bcast directive is array with array section.
+  //       // For example,
+  //       // ---
+  //       // int a[10], b[10][10];
+  //       // #pragma xmp bcast (a[:],b[2:5][:])
+  //       // ---
+  //       String varName = i.getArg().getArg(0).getString();
+  //       XMPpair<Ident, Xtype> typedSpec = XMPutil.findTypedVar(varName, pb);
+  //       Ident varId = typedSpec.getFirst();
+  //       Xtype varType = typedSpec.getSecond();
 
-    BlockList funcCallList = Bcons.emptyBody();
-    Iterator<XobjList> it = funcArgsList.iterator();
-    while (it.hasNext()) {
-      XobjList funcArgs = it.next();
-      if (execDesc != null) funcArgs.cons(execDesc);
-      if (execFromRefArgs != null) funcArgs.mergeList(fromRef);
+  //       int dims = varType.getNumDimensions();
+  //       if(dims != i.getArg().getArg(1).Nargs())
+  //         throw new XMPexception(varName + " has a wrong dimension");
+        
+  //       Xobject[] start  = new Xobject[dims];
+  //       Xobject[] length = new Xobject[dims];
+  //       Xobject[] size   = new Xobject[dims];
+  //       Xobject total_length = setStartLengthSize(i.getArg(), varType, dims, start, length, size);
 
-      funcCallList.add(Bcons.Statement(funcId.Call(funcArgs)));
-    }
-    return Bcons.COMPOUND(funcCallList);
-  }
+  //       // Check the array is contiguous or not.
+  //       // Note that when XMP runtime supports stride bcast communication,
+  //       // the following if-statment will be removed.
+  //       if(! check_contiguous_of_array(dims, length, size))
+  //         throw new XMPexception("Stride bcast operation is not supported");
+
+  //       Xobject[] acc_size = new Xobject[dims];
+  //       setAccSize(dims, size, acc_size);
+  //       Xobject offset = calcOffsetSize(dims, start, acc_size, varType);
+
+  //       returnVector.add(Xcons.List(Xcons.binaryOp(Xcode.PLUS_EXPR, Xcons.Cast(Xtype.Pointer(BasicType.charType), varId.Ref()), offset),
+  //                                   total_length, Xcons.SizeOf(varType.getArrayElementType())));
+  //     }
+  //   }
+
+  //   return returnVector;
+  // }
+
+  // private Block createBcastFuncCallBlock(boolean isMacro, String funcType, Xobject execDesc, Vector<XobjList> funcArgsList,
+  //                                        XMPpair<String, XobjList> execFromRefArgs, boolean isACC) throws XMPexception {
+  //   String funcSuffix = null;
+  //   XobjList fromRef = null;
+  //   if (execFromRefArgs == null) funcSuffix = new String(funcType + "_OMITTED");
+  //   else {
+  //     funcSuffix = new String(funcType + "_" + execFromRefArgs.getFirst());
+  //     fromRef = execFromRefArgs.getSecond();
+  //   }
+
+  //   String accSuffix = isACC? "acc_" : "";
+  //   Ident funcId = null;
+  //   if (isMacro) funcId = XMP.getMacroId("_XMP_M_BCAST_" + accSuffix.toUpperCase() + funcSuffix);
+  //   else         funcId = _globalDecl.declExternFunc("_XMP_bcast_" + accSuffix + funcSuffix);
+
+  //   BlockList funcCallList = Bcons.emptyBody();
+  //   Iterator<XobjList> it = funcArgsList.iterator();
+  //   while (it.hasNext()) {
+  //     XobjList funcArgs = it.next();
+  //     if (execDesc != null) funcArgs.cons(execDesc);
+  //     if (execFromRefArgs != null) funcArgs.mergeList(fromRef);
+
+  //     funcCallList.add(Bcons.Statement(funcId.Call(funcArgs)));
+  //   }
+  //   return Bcons.COMPOUND(funcCallList);
+  // }
 
   // private XMPpair<String, XobjList> createExecFromRefArgs(XobjList fromRef,
   //                                                         XMPsymbolTable localXMPsymbolTable) throws XMPexception {

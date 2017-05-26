@@ -906,47 +906,61 @@ void _push_localBuf(char *src0, int bytes0, BOOL synchronous)
 {
   char *src = src0;
   int bytes = bytes0;
+  int copySize;
 
   if (_localBuf_used + bytes >= _localBuf_size) {
       _flush_localBuf(synchronous);
 
       // for huge data
       while (bytes > _localBuf_size) {
-        _XMPF_coarrayDebugPrint("===MEMCPY to localBuf, %d bytes (cont\'d)\n"
+        copySize = _localBuf_size;      
+        _XMPF_coarrayDebugPrint("===MEMCPY %d of %d bytes to localBuf (cont\'d)\n"
                                 "  from: addr=%p\n"
-                                "  to  : localBuf, offset=0\n",
-                                _localBuf_size, src);
+                                "  to  : localBuf\n",
+                                copySize, bytes,
+                                src);
 
-        (void)memcpy(_localBuf_baseAddr, src, _localBuf_size);
-        _localBuf_used = _localBuf_size;
+        (void)memcpy(_localBuf_baseAddr, src, copySize);
+        _localBuf_used = copySize;
 
         _flush_localBuf(synchronous);
 
-        src += _localBuf_size;
-        bytes -= _localBuf_size;
+        src += copySize;
+        bytes -= copySize;
       }
   }    
 
   if (bytes == 0)
     return;
+  copySize = bytes;
 
-  _XMPF_coarrayDebugPrint("===MEMCPY to localBuf, %d bytes (final)\n"
+  _XMPF_coarrayDebugPrint("===MEMCPY %d bytes to localBuf (final)\n"
                           "  from: addr=%p\n"
-                          "  to  : localBuf, offset=%d\n",
-                          _localBuf_size, src, _localBuf_used);
+                          "  to  : localBuf + offset(%d bytes)\n",
+                          copySize,
+                          src,
+                          _localBuf_used);
 
-  (void)memcpy(_localBuf_baseAddr + _localBuf_used, src, bytes);
-  _localBuf_used += bytes;
+  (void)memcpy(_localBuf_baseAddr + _localBuf_used, src, copySize);
+  _localBuf_used += copySize;
 }
 
 
 void _flush_localBuf(BOOL synchronous)
 {
+  int state;
+
   if (_localBuf_used > 0) {
     _putVector_DMA(_target_desc, _target_baseAddr, _localBuf_used, _target_coindex,
                    _localBuf_desc, _localBuf_offset, _localBuf_name, synchronous);
     _target_baseAddr += _localBuf_used;
     _localBuf_used = 0;
+  }
+
+  if (XMPF_isSyncPutMode()) {
+      xmp_sync_memory(&state);
+      _XMPF_coarrayDebugPrint("SYNC MEMORY caused by SYNCPUT MODE (stat=%d)\n",
+                              state);
   }
 }
 

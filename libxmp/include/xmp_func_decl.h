@@ -47,20 +47,19 @@ extern void xmpc_start_async();
 extern void xmpc_end_async(int async_id);
 
 // xmp_barrier.c
-extern void _XMP_barrier_NODES_ENTIRE(void *nodes);
-extern void _XMP_barrier_EXEC(void);
+//extern void _XMP_barrier_NODES_ENTIRE(void *nodes);
+//extern void _XMP_barrier_EXEC(void);
+extern void _XMP_barrier(void *desc);
 
 // xmp_bcast.c
-extern void _XMP_bcast_NODES_ENTIRE_OMITTED(void *bcast_nodes, void *addr, int count, size_t datatype_size);
-extern void _XMP_bcast_NODES_ENTIRE_GLOBAL(void *bcast_nodes, void *addr, int count, size_t datatype_size,
-                                           int from_lower, int from_upper, int from_stride);
-extern void _XMP_bcast_NODES_ENTIRE_NODES(void *bcast_nodes, void *addr, int count, size_t datatype_size, void *from_nodes, ...);
+/* extern void _XMP_bcast_NODES_ENTIRE_OMITTED(void *bcast_nodes, void *addr, int count, size_t datatype_size); */
+/* extern void _XMP_bcast_NODES_ENTIRE_GLOBAL(void *bcast_nodes, void *addr, int count, size_t datatype_size, */
+/*                                            int from_lower, int from_upper, int from_stride); */
+/* extern void _XMP_bcast_NODES_ENTIRE_NODES(void *bcast_nodes, void *addr, int count, size_t datatype_size, void *from_nodes, ...); */
+extern void _XMP_bcast(void *data_addr, int count, int size, void *from_desc, void *on_desc);
 
 // xmp_bcast_acc.c
-extern void _XMP_bcast_acc_NODES_ENTIRE_OMITTED(void *bcast_nodes, void *addr, int count, size_t datatype_size);
-extern void _XMP_bcast_acc_NODES_ENTIRE_GLOBAL(void *bcast_nodes, void *addr, int count, size_t datatype_size,
-                                           int from_lower, int from_upper, int from_stride);
-extern void _XMP_bcast_acc_NODES_ENTIRE_NODES(void *bcast_nodes, void *addr, int count, size_t datatype_size, void *from_nodes, ...);
+extern void _XMP_bcast_acc(void *data_addr, int count, int size, void *from_desc, void *on_desc);
 
 // xmp_coarray.c
 extern void _XMP_gasnet_not_contiguous_put();
@@ -270,8 +269,8 @@ extern void _XMP_push_comm(void *comm);
 extern void _XMP_finalize_comm(void *comm);
 
 // xmp_reduce.c
-extern void _XMP_reduce_NODES_ENTIRE(void *nodes, void *addr, int count, int datatype, int op);
-extern void _XMP_reduce_FLMM_NODES_ENTIRE(void *nodes, void *addr, int count, int datatype, int op, int num_locs, ...);
+/* extern void _XMP_reduce_NODES_ENTIRE(void *nodes, void *addr, int count, int datatype, int op); */
+/* extern void _XMP_reduce_FLMM_NODES_ENTIRE(void *nodes, void *addr, int count, int datatype, int op, int num_locs, ...); */
 extern void _XMP_reduce_CLAUSE(void *data_addr, int count, int datatype, int op);
 extern void _XMP_reduce_FLMM_CLAUSE(void *data_addr, int count, int datatype, int op, int num_locs, ...);
 extern int _XMP_init_reduce_comm_NODES(void *nodes, ...);
@@ -279,12 +278,15 @@ extern int _XMP_init_reduce_comm_TEMPLATE(void *template, ...);
 extern void xmp_reduce_loc_init(const int nlocs, const long double value, void *value_addr, const int datatype);
 extern void xmp_reduce_loc_set(void *buf, const int length, const size_t s);
 extern void xmp_reduce_loc_execute(const int op);
+extern void _XMP_reduction_loc(int dim, void *loc, int datatype);
+extern void _XMP_reduction(void *data_addr, int count, int datatype, int op, void *r_desc, int num_locs);
 
 // xmp_reduce_acc.c
-extern void _XMP_reduce_acc_NODES_ENTIRE(void *nodes, void *dev_addr, int count, int datatype, int op);
-extern void _XMP_reduce_acc_FLMM_NODES_ENTIRE(void *nodes, void *addr, int count, int datatype, int op, int num_locs, ...);
+//extern void _XMP_reduce_acc_NODES_ENTIRE(void *nodes, void *dev_addr, int count, int datatype, int op);
+//extern void _XMP_reduce_acc_FLMM_NODES_ENTIRE(void *nodes, void *addr, int count, int datatype, int op, int num_locs, ...);
 extern void _XMP_reduce_acc_CLAUSE(void *dev_addr, int count, int datatype, int op);
 extern void _XMP_reduce_acc_FLMM_CLAUSE(void *data_addr, int count, int datatype, int op, int num_locs, ...);
+extern void _XMP_reduction_acc(void *data_addr, int count, int datatype, int op, void *r_desc, int num_locs);
 
 
 // xmp_reflect.c
@@ -451,5 +453,13 @@ extern void _XMP_lock_initialize_7(void*, const unsigned int, const unsigned int
 // xmpt_lib.c
 extern void _XMP_coarray_local_read(void *local_coarray, ...);
 extern void _XMP_coarray_local_write(void *local_coarray, ...);
+
+// xmp_obj_ref.c
+extern void _XMP_ref_templ_alloc(void **r_desc, void *t_desc, int n);
+extern void _XMP_ref_nodes_alloc(void **r_desc, void *n_desc, int n);
+extern void _XMP_ref_set_loop_info(void *rp, int i, int t_idx, int off);
+extern void _XMP_ref_set_dim_info(void *rp, int i, int type, int lb, int ub, int st);
+extern void _XMP_ref_init(void *rp);
+extern void _XMP_ref_dealloc(void *rp);
 
 #endif // _XMP_RUNTIME_FUNC_DECL

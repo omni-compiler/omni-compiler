@@ -2891,7 +2891,8 @@ public class XmcXcodeToXcTranslator {
                        XcNode arrayRefObj) {
         List<Node> childNodes = XmDomUtil.collectChildNodes(arrayRefNode);
         Node arrayAddrNode = childNodes.remove(0);
-        if (! arrayAddrNode.getNodeName().equals("arrayAddr")) {
+        String nodeName = arrayAddrNode.getNodeName();
+        if (! nodeName.equals("arrayAddr") && ! nodeName.equals("Var")) {
             throw new XmTranslationException(arrayRefNode, "Invalid arrayRef: arrayAddr not found.");
         }
 

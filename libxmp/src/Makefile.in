@@ -17,7 +17,8 @@ HEADERS   = ../include/xmp_internal.h ../include/xmp_constant.h ../include/xmp_d
 OBJECTS   = xmp_lib.o xmp_util.o xmp_world.o xmp_nodes_stack.o xmp_nodes.o xmp_template.o \
 	    xmp_barrier.o xmp_reduce.o xmp_bcast.o xmp_align.o xmp_shadow.o xmp_array_section.o \
 	    xmp_loop.o xmp_gmove.o xmp_math_function.o xmp_runtime.o xmp_tlog_runtime.o xmp_io.o \
-	    xmp_reflect.o xmp_pack_vector.o xmp_intrinsic.o xmp_section_desc.o xmp_sort.o xmp_async.o xmpc_gmove.o
+	    xmp_reflect.o xmp_pack_vector.o xmp_intrinsic.o xmp_section_desc.o xmp_sort.o xmp_async.o \
+            xmpc_gmove.o xmp_obj_ref.o
 
 FALSE            = 1
 TRUE             = 0

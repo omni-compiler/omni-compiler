@@ -526,7 +526,7 @@ public class Xcons
                 if(x.isZeroConstant())
                     return Xcons.List(Xcode.UNARY_MINUS_EXPR, t, y);
             }
-            if(y.isZeroConstant()) {
+            if(y.isZeroConstant() && x.code != Xcode.ARRAY_ADDR) {
                 if (lt.equals(t))
                     return x;
                 else
@@ -959,5 +959,10 @@ public class Xcons
     public static Xobject StatementLabel(String label)
     {
 	return Xcons.List(Xcode.STATEMENT_LABEL, Xcons.StringConstant(label));
+    }
+
+    public static Xobject Cnull()
+    {
+	return Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0));
     }
 }

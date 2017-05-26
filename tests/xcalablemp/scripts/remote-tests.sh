@@ -104,7 +104,7 @@ CMD="export PATH=${OPENMPI_PATH}/bin:${GASNET_OPENMPI_INSTALL_DIR}/bin:$PATH && 
      cd ${GASNET_OPENMPI_BASE_DIR}/${OMNI} && \
      sh autogen.sh && \
      ./configure --prefix=${GASNET_OPENMPI_INSTALL_DIR} --with-gasnet=${GASNET_OPENMPI_PATH} && \
-     make -j && make install && make tests -j && make run-tests"
+     make -j16 && make install && make clean-tests && make tests -j16 && make run-tests"
 omni_exec ssh ${REMOTE_HOST} ${CMD}
 
 ## GASNet and mpich
@@ -116,7 +116,7 @@ CMD="export PATH=${MPICH_PATH}/bin:${GASNET_MPICH_INSTALL_DIR}/bin:$PATH && \
      cd ${GASNET_MPICH_BASE_DIR}/${OMNI} && \
      sh autogen.sh && \
      ./configure --prefix=${GASNET_MPICH_INSTALL_DIR} --with-gasnet=${GASNET_MPICH_PATH} && \
-     make -j && make install && make tests -j && make run-tests"
+     make -j16 && make install && make clean-tests && make tests -j16 && make run-tests"
 omni_exec ssh ${REMOTE_HOST} ${CMD}
 
 ## OpenMPI
@@ -128,7 +128,7 @@ CMD="export PATH=${OPENMPI_PATH}/bin:${OPENMPI_INSTALL_DIR}/bin:$PATH && \
      cd ${OPENMPI_BASE_DIR}/${OMNI} && \
      sh autogen.sh && \
      ./configure --prefix=${OPENMPI_INSTALL_DIR} && \
-     make -j && make install && make tests -j && make run-tests"
+     make -j16 && make install && make clean-tests && make tests -j16 && make run-tests"
 omni_exec ssh ${REMOTE_HOST} ${CMD}
 
 ## MPICH
@@ -140,7 +140,7 @@ CMD="export PATH=${MPICH_PATH}/bin:${MPICH_INSTALL_DIR}/bin:$PATH && \
      cd ${MPICH_BASE_DIR}/${OMNI} && \
      sh autogen.sh && \
      ./configure --prefix=${MPICH_INSTALL_DIR} && \
-     make -j && make install && make tests -j && make run-tests"
+     make -j16 && make install && make clean-tests && make tests -j16 && make run-tests"
 omni_exec ssh ${REMOTE_HOST} ${CMD}
 
 echo "------------------"
