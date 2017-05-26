@@ -424,7 +424,13 @@ struct interface_info {
         INTF_GENERIC_READ_UNFORMATTED,/* for generic 'READ(UNFORMATTED)' interface */
         INTF_DECL         /* for interface not above cases. (interface for function prottype)*/
     } class;
+    /* NOTE: the following members are used in the .mod->xmod tranformation tool */
+    enum expr_code ecode; /* need it? */
+    ID operatorId;        /* identifier of the operator */
+    ID idlist;            /* ident implements this interface. */
 };
+#define INTF_OPID(ii) ((ii)->operatorId)
+#define INTF_IMPL(ii) ((ii)->idlist) /* need it? */
 
 enum ext_proc_class {
     EP_UNKNOWN,
