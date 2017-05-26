@@ -1,5 +1,11 @@
 .PHONY: all install clean tests clean-tests run-tests tests-F2003 clean-tests-F2003 run-tests-F2003 large-tests clean-large-tests run-large-tests release remote-tests distclean submit-tests submit1-tests submit2-tests submit3-tests submit4-tests showlog-tests cleanlog-tests submit-large-tests showlog-large-tests cleanlog-large-tests
 
+INSTALL=@INSTALL@
+BINDIR=@OMNI_HOME@/bin
+T_FJMODULE=@T_FJMODULE@
+T_FJMODULE_REMOTE=http://omni-compiler.org/T_FJModule/20170523
+T_FJMODULE_LOCAL=T_FJModule
+
 SUBDIRS=libxmp/include libxmp/src libxmpf/include libxmpf/src libxmp/src_threads \
 	C-FrontEnd/src F-FrontEnd/src Driver/src libtlog/src_threads libtlog/src_mpi \
 	XcodeML-Common C-BackEnd F-BackEnd XcodeML-Exc-Tools
@@ -36,12 +42,17 @@ install:
 	@for subdir in $(SUBDIRS) ; do \
 	  $(MAKE) -C $$subdir install ; \
 	  if test $$? -ne 0; then exit 1; fi ; \
-	done
+	done; \
+	if test $(T_FJMODULE) -eq $(TRUE); then \
+	  wget $(T_FJMODULE_REMOTE) -O $(DESTDIR)$(BINDIR)/$(T_FJMODULE_LOCAL) || \
+	  echo "Please download $(T_FJMODULE_REMOTE) and copy it at $(DESTDIR)$(BINDIR)/$(T_FJMODULE_LOCAL)"; \
+	  chmod +x $(DESTDIR)$(BINDIR)/$(T_FJMODULE_LOCAL); \
+	fi
 
 clean:
 	@for subdir in $(SUBDIRS) ; do \
 	  $(MAKE) -C $$subdir clean ; \
-	  if test $$? -ne 0; then exit 1; fi ; \
+	  if test $$? -ne 0; then exit 1; fi; \
 	done
 
 BASE_TESTDIR = "tests/xcalablemp/"

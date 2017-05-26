@@ -742,6 +742,7 @@ XACC
 ACC
 TARGET
 SUPERUX_OR_POWERPC
+T_FJMODULE
 SUPERUX
 CRAY
 POWERPC
@@ -8531,26 +8532,31 @@ FJRDMA=$FALSE
 KCOMPUTER=$FALSE
 FX10=$FALSE
 FX100=$FALSE
+T_FJMODULE=$FALSE
 POWERPC=$FALSE
 CRAY=$FALSE
 SUPERUX=$FALSE
-if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$target" = "FX100-linux-gnu"; then
-    if test "$dofjrdma" = "yes"; then
+if test "x${target}" = "xKcomputer-linux-gnu" -o "x${target}" = "xFX10-linux-gnu" -o "x${target}" = "xFX100-linux-gnu"; then
+    if test "x${domod2xmod}" = "xyes"; then
+        T_FJMODULE=$TRUE
+    fi
+
+    if test "x${dofjrdma}" = "xyes"; then
         FJRDMA=$TRUE
     fi
 
-    if test "$target" = "Kcomputer-linux-gnu"; then
+    if test "x${target}" = "xKcomputer-linux-gnu"; then
         KCOMPUTER=$TRUE
-    elif test "$target" = "FX10-linux-gnu"; then
+    elif test "x${target}" = "xFX10-linux-gnu"; then
         FX10=$TRUE
-    elif test "$target" = "FX100-linux-gnu"; then
+    elif test "x${target}" = "xFX100-linux-gnu"; then
         FX100=$TRUE
     fi
-elif test "$target" = "powerpc-ibm-cnk" -o "$target" = "powerpc-hitachi-aix"; then
+elif test "x${target}" = "xpowerpc-ibm-cnk" -o "x${target}" = "xpowerpc-hitachi-aix"; then
     POWERPC=$TRUE
-elif test "$target" = "Cray-linux-gnu"; then
+elif test "x${target}" = "xCray-linux-gnu"; then
     CRAY=$TRUE
-elif test "$target" = "sxace-nec-superux" -o "$target" = "sx9-nec-superux"; then
+elif test "x${target}" = "xsxace-nec-superux" -o "x${target}" = "xsx9-nec-superux"; then
     SUPERUX=$TRUE
 fi
 
@@ -8562,8 +8568,9 @@ fi
 
 
 
+
 SUPERUX_OR_POWERPC=$FALSE
-if test $SUPERUX -eq 0 -o $POWERPC -eq 0; then
+if test $SUPERUX -eq $TRUE -o $POWERPC -eq $TRUE; then
     SUPERUX_OR_POWERPC=$TRUE
 fi
 
