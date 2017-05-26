@@ -2489,7 +2489,7 @@ compile_basic_type(expr x)
             } else {
                 vcharLen = vcharLen1;
                 charLen = EXPV_INT_VALUE(vcharLen1);
-                if(charLen < 0) {
+                if(EXPV_CODE(vcharLen1) == INT_CONSTANT && charLen < 0) {
                     error("length specification must be positive");
                     return NULL;
                 }
