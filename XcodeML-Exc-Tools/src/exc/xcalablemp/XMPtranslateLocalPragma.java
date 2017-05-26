@@ -2958,10 +2958,24 @@ public class XMPtranslateLocalPragma {
 	
 	f = _globalDecl.declExternFunc("xmpc_gmv_l_alloc", Xtype.FsubroutineType);
 	type = a.Type();
-	if (!type.isArray()) 
+
+	// if (!type.isArray())
+	//   XMP.fatal("buildGmoveDesc: SUB_ARRAY_REF for non-array");
+	// args = Xcons.List(descId.getAddr(), a,
+	// 		  Xcons.IntConstant(type.getNumDimensions()));
+
+	if (type.isArray()){
+	  ;
+	}
+	else if (type.isPointer()){
+	  // current limitation: local pointers are always considered to be one-dimensional.
+	  n = 1;
+	}
+	else {
 	  XMP.fatal("buildGmoveDesc: SUB_ARRAY_REF for non-array");
-	args = Xcons.List(descId.getAddr(), a,
-			  Xcons.IntConstant(type.getNumDimensions()));
+	}
+	    
+	args = Xcons.List(descId.getAddr(), a, Xcons.IntConstant(n));
 	bb.add(f.callSubroutine(args));
 
 	Xobject a_lb = Xcons.IntConstant(0);
@@ -2973,24 +2987,29 @@ public class XMPtranslateLocalPragma {
 
 	for (int i = 0; i < n; i++, type = type.getRef()){
 
-	  long dimSize = type.getArraySize();
-	  if (dimSize == 0 || type.getKind() == Xtype.POINTER){
-	    Ident ret = declIdentWithBlock(pb, "XMP_" + arrayName + "_ret" + Integer.toString(i),
-					   Xtype.intType);
-	    Ident sz = declIdentWithBlock(pb, "XMP_" + arrayName + "_len" + Integer.toString(i),
-					  Xtype.intType);
-
-	    f = _globalDecl.declExternFunc("xmp_array_ubound", Xtype.intType);
-	    args = Xcons.List(array.getDescId().Ref(), Xcons.IntConstant(i+1), sz.getAddr());
-
-	    pb.insert(Xcons.Set(ret.Ref(), Xcons.binaryOp(Xcode.MINUS_EXPR, f.Call(args), Xcons.IntConstant(1))));
-	    a_len = sz.Ref();
-	  }
-	  else if (dimSize == -1){
-	    a_len = type.getArraySizeExpr();
+	  if (type.getKind() == Xtype.POINTER){
+	    a_len = Xcons.LongLongConstant(0, 1); // dummy
 	  }
 	  else {
-	    a_len = Xcons.LongLongConstant(0, dimSize);
+	    long dimSize = type.getArraySize();
+	    if (dimSize == 0){
+	      Ident ret = declIdentWithBlock(pb, "XMP_" + arrayName + "_ret" + Integer.toString(i),
+					     Xtype.intType);
+	      Ident sz = declIdentWithBlock(pb, "XMP_" + arrayName + "_len" + Integer.toString(i),
+					    Xtype.intType);
+
+	      f = _globalDecl.declExternFunc("xmp_array_ubound", Xtype.intType);
+	      args = Xcons.List(array.getDescId().Ref(), Xcons.IntConstant(i+1), sz.getAddr());
+
+	      pb.insert(Xcons.Set(ret.Ref(), Xcons.binaryOp(Xcode.MINUS_EXPR, f.Call(args), Xcons.IntConstant(1))));
+	      a_len = sz.Ref();
+	    }
+	    else if (dimSize == -1){
+	      a_len = type.getArraySizeExpr();
+	    }
+	    else {
+	      a_len = Xcons.LongLongConstant(0, dimSize);
+	    }
 	  }
 
 	  Xobject sub = subscripts.getArg(i);
