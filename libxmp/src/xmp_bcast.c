@@ -431,12 +431,59 @@ void _XMP_bcast_on_template(void *data_addr, int count, int size,
   }
 }
 
+extern void _XMPT_set_bcast_subsc(xmpt_subscript_t subsc, _XMP_object_ref_t *desc);
 
 void _XMP_bcast(void *data_addr, int count, int size,
 		_XMP_object_ref_t *from_desc, _XMP_object_ref_t *on_desc)
 {
+#ifdef _XMPT
+  xmpt_tool_data_t *data = NULL;
+  xmp_desc_t on = on_desc->ref_kind == XMP_OBJ_REF_NODES ?
+    (xmp_desc_t)on_desc->n_desc : (xmp_desc_t)on_desc->t_desc;
+  struct _xmpt_subscript_t on_subsc;
+  _XMPT_set_bcast_subsc(&on_subsc, on_desc);
+  xmp_desc_t from = from_desc->ref_kind == XMP_OBJ_REF_NODES ?
+    (xmp_desc_t)from_desc->n_desc : (xmp_desc_t)from_desc->t_desc;
+  struct _xmpt_subscript_t from_subsc;
+  _XMPT_set_bcast_subsc(&from_subsc, from_desc);
+
+  if (xmp_is_async()){
+    _XMP_async_comm_t *async = _XMP_get_current_async();
+    xmpt_async_id_t async_id = async->async_id;
+    if (xmpt_enabled && xmpt_callback[xmpt_event_bcast_begin_async]){
+      (*(xmpt_event_bcast_begin_async_t)xmpt_callback[xmpt_event_bcast_begin_async])(
+        data_addr,
+	count * size,
+	from,
+	&from_subsc,
+	on,
+	&on_subsc,
+        async_id,
+	data);
+    }
+  }
+  else {
+    if (xmpt_enabled && xmpt_callback[xmpt_event_bcast_begin]){
+      (*(xmpt_event_bcast_begin_t)xmpt_callback[xmpt_event_bcast_begin])(
+        data_addr,
+	count * size,
+	from,
+	&from_subsc,
+	on,
+	&on_subsc,
+	data);
+    }
+  }
+#endif
+
   if (on_desc && on_desc->ref_kind == XMP_OBJ_REF_TEMPL)
     _XMP_bcast_on_template(data_addr, count, size, from_desc, on_desc);
   else
     _XMP_bcast_on_nodes(data_addr, count, size, from_desc, on_desc);
+
+#ifdef _XMPT
+  if (xmpt_enabled && xmpt_callback[xmpt_event_bcast_end])
+    (*(xmpt_event_end_t)xmpt_callback[xmpt_event_bcast_end])(data);
+#endif
+
 }

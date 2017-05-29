@@ -48,6 +48,15 @@ extern int xmpt_coarray_get_gid(
 
 /*   xmpt_event_gmove_end, */
 
+/*   xmpt_event_barrier_begin, */
+/*   xmpt_event_barrier_end, */
+
+/*   xmpt_event_reduction_begin, */
+/*   xmpt_event_reduction_begin_async, */
+/*   xmpt_event_reduction_end, */
+  
+/*   xmpt_event_bcast_begin,         // needs support for ON */
+/*   xmpt_event_bcast_begin_async,   // needs support for ON */
 /*   xmpt_event_bcast_end, */
 
 /*   // image control statements */
@@ -69,9 +78,6 @@ extern int xmpt_coarray_get_gid(
   
 /*   xmpt_event_wait_async_begin,    // needs support for ON */
 /*   xmpt_event_wait_async_end,      // needs support for ON */
-
-/*   xmpt_event_bcast_begin,         // needs support for ON */
-/*   xmpt_event_bcast_begin_async,   // needs support for ON */
 
 /*   // coarray access */
 /*   xmpt_event_coarray_remote_write, */
@@ -108,13 +114,6 @@ extern int xmpt_coarray_get_gid(
 /*   xmpt_event_loop_begin, */
 /*   xmpt_event_loop_end, */
 
-/*   xmpt_event_barrier_begin, */
-/*   xmpt_event_barrier_end, */
-
-/*   xmpt_event_reduction_begin, */
-/*   xmpt_event_reduction_begin_async, */
-/*   xmpt_event_reduction_end, */
-  
 /*   XMPT_EVENT_ALL */
 /* } xmpt_event_t; */
 

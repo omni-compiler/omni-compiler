@@ -178,3 +178,18 @@ void _XMPT_set_gmove_subsc(xmpt_subscript_t subsc, _XMP_gmv_desc_t *gmv_desc){
   }
 }
 
+void _XMPT_set_bcast_subsc(xmpt_subscript_t subsc, _XMP_object_ref_t *desc){
+  if (desc){
+    subsc->ndims = desc->ndims;
+    subsc->omit = 0;
+    for (int i = 0; i < subsc->ndims; i++){
+      subsc->lbound[i] = desc->REF_LBOUND[i];
+      subsc->ubound[i] = desc->REF_UBOUND[i];
+      subsc->marker[i] = desc->REF_STRIDE[i];
+    }
+  }
+  else {
+    subsc->omit = 1;
+  }
+}
+

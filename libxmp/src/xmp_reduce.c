@@ -697,10 +697,40 @@ void _XMP_reduction_loc(int dim, void *loc, int datatype)
   _XMP_reduction_loc_types[dim] = datatype;
 }
 
+extern void _XMPT_set_bcast_subsc(xmpt_subscript_t subsc, _XMP_object_ref_t *desc);
+
 void _XMP_reduction(void *data_addr, int count, int datatype, int op,
 		    _XMP_object_ref_t *r_desc, int num_locs)
 {
   _XMP_nodes_t *nodes;
+
+#ifdef _XMPT
+  xmpt_tool_data_t *data = NULL;
+  xmp_desc_t on = r_desc->ref_kind == XMP_OBJ_REF_NODES ?
+    (xmp_desc_t)r_desc->n_desc : (xmp_desc_t)r_desc->t_desc;
+  struct _xmpt_subscript_t on_subsc;
+  _XMPT_set_bcast_subsc(&on_subsc, r_desc);
+
+  if (xmp_is_async()){
+    _XMP_async_comm_t *async = _XMP_get_current_async();
+    xmpt_async_id_t async_id = async->async_id;
+    if (xmpt_enabled && xmpt_callback[xmpt_event_reduction_begin_async]){
+      (*(xmpt_event_single_desc_begin_async_t)xmpt_callback[xmpt_event_reduction_begin_async])(
+	on,
+	&on_subsc,
+        async_id,
+	data);
+    }
+  }
+  else {
+    if (xmpt_enabled && xmpt_callback[xmpt_event_reduction_begin]){
+      (*(xmpt_event_single_desc_begin_t)xmpt_callback[xmpt_event_reduction_begin])(
+	on,
+	&on_subsc,
+	data);
+    }
+  }
+#endif
 
   if (r_desc){
     if (_XMP_is_entire(r_desc)){
@@ -737,4 +767,10 @@ void _XMP_reduction(void *data_addr, int count, int datatype, int op,
     else _XMP_reduce_FLMM_NODES_ENTIRE(nodes, data_addr, count, datatype, op, num_locs,
 				       _XMP_reduction_loc_vars, _XMP_reduction_loc_types);
   }
+
+#ifdef _XMPT
+  if (xmpt_enabled && xmpt_callback[xmpt_event_reduction_end])
+    (*(xmpt_event_end_t)xmpt_callback[xmpt_event_reduction_end])(data);
+#endif
+
 }
