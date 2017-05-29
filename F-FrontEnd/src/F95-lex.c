@@ -764,7 +764,6 @@ token()
 
     while(isspace(*bufptr)) bufptr++;  /* skip white space */
 
-    //printf("token() need_keyword=%d expect_next_token_is_keyword=%d need_type_keyword=%d\n", need_keyword, expect_next_token_is_keyword, need_type_keyword);
     if (need_keyword == TRUE || expect_next_token_is_keyword == TRUE) {
         /*
          * require keyword
@@ -772,7 +771,6 @@ token()
         need_keyword = FALSE;
         expect_next_token_is_keyword = FALSE;
         t = get_keyword(keywords);
-//        printf("KEYWORD: %d\n", t);
         if (t != UNKNOWN) return(t);
     }
 
