@@ -114,4 +114,8 @@ contains
     end if
   end function func11k
 
+  character(len=4) function func12()
+    func12 = 'test'
+  end function func12
+
 end module mod1
