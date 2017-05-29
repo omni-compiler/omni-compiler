@@ -402,8 +402,10 @@ int is_function_statement_context()
     case KW_LOGICAL:
     case KW_REAL:
         i++;
-        /* SET_KIND include a left parenthesis directly */
-        if(token_history_buf[i] == '(' || token_history_buf[i] == SET_KIND) {
+        /* SET_KIND and SET_LEN include a left parenthesis directly */
+        if(token_history_buf[i] == '(' || token_history_buf[i] == SET_KIND 
+            || token_history_buf[i] == SET_LEN) 
+        {
             plevel++;
             for(i++; i < token_history_count; i++){
                 if(token_history_buf[i] == ')') plevel--;
