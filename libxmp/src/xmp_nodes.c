@@ -174,41 +174,41 @@ static void _XMP_init_nodes_info(_XMP_nodes_t *n, int *dim_size, int is_static)
   }
 }
 
-static void _XMP_set_task_desc(_XMP_task_desc_t *desc, _XMP_nodes_t *n, int execute,
-                               _XMP_nodes_t *ref_nodes, int *ref_lower, int *ref_upper, int *ref_stride)
-{
-  desc->nodes     = n;
-  desc->execute   = execute;
-  desc->on_ref_id = ref_nodes->on_ref_id;
+/* static void _XMP_set_task_desc(_XMP_task_desc_t *desc, _XMP_nodes_t *n, int execute, */
+/*                                _XMP_nodes_t *ref_nodes, int *ref_lower, int *ref_upper, int *ref_stride) */
+/* { */
+/*   desc->nodes     = n; */
+/*   desc->execute   = execute; */
+/*   desc->on_ref_id = ref_nodes->on_ref_id; */
 
-  int dim = ref_nodes->dim;
-  for(int i=0;i<dim;i++){
-    desc->ref_lower[i]  = ref_lower[i];
-    desc->ref_upper[i]  = ref_upper[i];
-    desc->ref_stride[i] = ref_stride[i];
-  }
-}
+/*   int dim = ref_nodes->dim; */
+/*   for(int i=0;i<dim;i++){ */
+/*     desc->ref_lower[i]  = ref_lower[i]; */
+/*     desc->ref_upper[i]  = ref_upper[i]; */
+/*     desc->ref_stride[i] = ref_stride[i]; */
+/*   } */
+/* } */
 
-static int _XMP_compare_task_exec_cond(_XMP_task_desc_t *task_desc, _XMP_nodes_t *ref_nodes,
-                                       int *ref_lower, int *ref_upper, int *ref_stride)
-{
-  // FIXME can use compare_nodes?
-  if(ref_nodes->on_ref_id != task_desc->on_ref_id)
-    return _XMP_N_INT_FALSE;
+/* static int _XMP_compare_task_exec_cond(_XMP_task_desc_t *task_desc, _XMP_nodes_t *ref_nodes, */
+/*                                        int *ref_lower, int *ref_upper, int *ref_stride) */
+/* { */
+/*   // FIXME can use compare_nodes? */
+/*   if(ref_nodes->on_ref_id != task_desc->on_ref_id) */
+/*     return _XMP_N_INT_FALSE; */
 
-  int dim = ref_nodes->dim;
-  for(int i=0;i<dim;i++){
-    if(task_desc->ref_stride[i] == -1 && ref_stride[i] == -1) continue;
+/*   int dim = ref_nodes->dim; */
+/*   for(int i=0;i<dim;i++){ */
+/*     if(task_desc->ref_stride[i] == -1 && ref_stride[i] == -1) continue; */
 
-    // NOTE: task_desc->ref is 0-origin. ref is 1-origine.
-    if((task_desc->ref_lower[i] != ref_lower[i] - 1) ||
-       (task_desc->ref_upper[i] != ref_upper[i] - 1) ||
-       (task_desc->ref_stride[i] != ref_stride[i]))
-      return _XMP_N_INT_FALSE;
-  }
+/*     // NOTE: task_desc->ref is 0-origin. ref is 1-origine. */
+/*     if((task_desc->ref_lower[i] != ref_lower[i] - 1) || */
+/*        (task_desc->ref_upper[i] != ref_upper[i] - 1) || */
+/*        (task_desc->ref_stride[i] != ref_stride[i])) */
+/*       return _XMP_N_INT_FALSE; */
+/*   } */
 
-  return _XMP_N_INT_TRUE;
-}
+/*   return _XMP_N_INT_TRUE; */
+/* } */
 
 static int _XMP_compare_nodes(_XMP_nodes_t *a, _XMP_nodes_t *b)
 {
@@ -820,49 +820,49 @@ void _XMP_finalize_nodes(_XMP_nodes_t *nodes)
   _XMP_free(nodes);
 }
 
-int _XMP_exec_task_GLOBAL_PART(_XMP_task_desc_t **task_desc, int ref_lower, int ref_upper, int ref_stride)
-{
-  int lower[1], upper[1], stride[1];
+/* int _XMP_exec_task_GLOBAL_PART(_XMP_task_desc_t **task_desc, int ref_lower, int ref_upper, int ref_stride) */
+/* { */
+/*   int lower[1], upper[1], stride[1]; */
   
-  lower[0] = ref_lower;
-  upper[0] = ref_upper;
-  stride[0] = ref_stride;
+/*   lower[0] = ref_lower; */
+/*   upper[0] = ref_upper; */
+/*   stride[0] = ref_stride; */
 
-  _XMP_task_desc_t *desc = NULL;
-  if(*task_desc == NULL){
-    desc = (_XMP_task_desc_t *)_XMP_alloc(sizeof(_XMP_task_desc_t));
-    *task_desc = desc;
-  }
-  else{
-    desc = *task_desc;
-    if(_XMP_compare_task_exec_cond(desc, _XMP_world_nodes, lower, upper, stride)){
-      if(desc->execute){
-        _XMP_push_nodes(desc->nodes);
-        return _XMP_N_INT_TRUE;
-      }
-      else {
-        return _XMP_N_INT_FALSE;
-      }
-    }
-    else{
-      if(desc->nodes != NULL){
-        _XMP_finalize_nodes(desc->nodes);
-      }
-    }
-  }
+/*   _XMP_task_desc_t *desc = NULL; */
+/*   if(*task_desc == NULL){ */
+/*     desc = (_XMP_task_desc_t *)_XMP_alloc(sizeof(_XMP_task_desc_t)); */
+/*     *task_desc = desc; */
+/*   } */
+/*   else{ */
+/*     desc = *task_desc; */
+/*     if(_XMP_compare_task_exec_cond(desc, _XMP_world_nodes, lower, upper, stride)){ */
+/*       if(desc->execute){ */
+/*         _XMP_push_nodes(desc->nodes); */
+/*         return _XMP_N_INT_TRUE; */
+/*       } */
+/*       else { */
+/*         return _XMP_N_INT_FALSE; */
+/*       } */
+/*     } */
+/*     else{ */
+/*       if(desc->nodes != NULL){ */
+/*         _XMP_finalize_nodes(desc->nodes); */
+/*       } */
+/*     } */
+/*   } */
 
-  _XMP_nodes_t *n = NULL;
-  _XMP_init_nodes_STATIC_NODES_NUMBER(&n, 1, ref_lower, ref_upper, ref_stride, _XMP_M_COUNT_TRIPLETi(ref_lower, ref_upper, ref_stride));
-  _XMP_set_task_desc(desc, n, n->is_member, _XMP_world_nodes, lower, upper, stride);
+/*   _XMP_nodes_t *n = NULL; */
+/*   _XMP_init_nodes_STATIC_NODES_NUMBER(&n, 1, ref_lower, ref_upper, ref_stride, _XMP_M_COUNT_TRIPLETi(ref_lower, ref_upper, ref_stride)); */
+/*   _XMP_set_task_desc(desc, n, n->is_member, _XMP_world_nodes, lower, upper, stride); */
   
-  if(n->is_member){
-    _XMP_push_nodes(n);
-    return _XMP_N_INT_TRUE;
-  }
-  else{
-    return _XMP_N_INT_FALSE;
-  }
-}
+/*   if(n->is_member){ */
+/*     _XMP_push_nodes(n); */
+/*     return _XMP_N_INT_TRUE; */
+/*   } */
+/*   else{ */
+/*     return _XMP_N_INT_FALSE; */
+/*   } */
+/* } */
 
 void _XMP_create_task_nodes(_XMP_nodes_t **n, _XMP_object_ref_t *rp)
 {
@@ -921,137 +921,189 @@ int _XMP_test_task_on_nodes(_XMP_nodes_t *ref_nodes)
   }
 }
 
-void _XMP_end_task(void)
-{
-  _XMP_pop_nodes();
-}
+_Bool union_triplet(int lb0, int ub0, int st0, int lb1, int ub1, int st1);
 
-int _XMP_exec_task_NODES_ENTIRE(_XMP_task_desc_t **task_desc, _XMP_nodes_t *ref_nodes)
+_Bool _XMP_test_task_nocomm(_XMP_object_ref_t *rp)
 {
-  if(ref_nodes->is_member){
-    _XMP_push_nodes(ref_nodes);
-    return true;
-  }
-  else{
-    return false;
-  }
-}
+  if (rp->ref_kind == XMP_OBJ_REF_NODES){
+    _XMP_nodes_t *n = rp->n_desc;
+    
+    if (!n->is_member) return false;
+    for (int i = 0; i < rp->ndims; i++){
+      if (rp->subscript_type[i] == SUBSCRIPT_ASTERISK) continue;
 
-int _XMP_exec_task_NODES_ENTIRE_nocomm(_XMP_nodes_t *ref_nodes)
-{
-  return ref_nodes->is_member;
-}
-
-void _XMP_exec_task_NODES_FINALIZE(_XMP_task_desc_t *task_desc)
-{
-  if(task_desc == NULL) return;
-  
-  if(xmp_is_async()){
-    // Keep a node descriptor. After wait_async directive,
-    // the node descriptor is freed.
-    _XMP_nodes_dealloc_after_wait_async(task_desc->nodes); 
-    _XMP_free(task_desc);
-    return;
-  }
-
-  _XMP_finalize_nodes(task_desc->nodes);
-  _XMP_free(task_desc);
-}
-
-int _XMP_exec_task_NODES_PART(_XMP_task_desc_t **task_desc, _XMP_nodes_t *ref_nodes, ...)
-{
-  va_list args;
-  va_start(args, ref_nodes);
-  int ref_dim = ref_nodes->dim;
-  int shrink[ref_dim], ref_lower[ref_dim], ref_upper[ref_dim], ref_stride[ref_dim];
-  
-  int acc_dim_size = 1;
-  for(int i=0;i<ref_dim;i++){
-    shrink[i] = va_arg(args, int);
-    if(!shrink[i]){
-      ref_lower[i]  = va_arg(args, int);
-      ref_upper[i]  = va_arg(args, int);
-      ref_stride[i] = va_arg(args, int);
-      acc_dim_size *= _XMP_M_COUNT_TRIPLETi(ref_lower[i], ref_upper[i], ref_stride[i]);
+      int me = n->info[i].rank + 1;
+      int lb = rp->REF_LBOUND[i];
+      int ub = rp->REF_UBOUND[i];
+      int st = rp->REF_STRIDE[i];
+      if (me < lb || ub < me)  return false;
+      if ((me - lb) % st != 0) return false;
     }
-    else{
-      ref_lower[i]  = 0;
-      ref_upper[i]  = 0;
-      ref_stride[i] = -1;
-    }      
   }
-  va_end(args);
+  else {
+    _XMP_template_t *t = rp->t_desc;
+    
+    if (!t->is_owner) return false;
+    for (int i = 0; i < rp->ndims; i++){
+      if (rp->subscript_type[i] == SUBSCRIPT_ASTERISK) continue;
+      int lb = rp->REF_LBOUND[i];
+      int ub = rp->REF_UBOUND[i];
+      int st = rp->REF_STRIDE[i];
+      _XMP_template_chunk_t *chunk = &t->chunk[i];
+      long long plb = chunk->par_lower;
+      long long pub = chunk->par_upper;
+      int pst = chunk->par_stride;
 
-  _XMP_task_desc_t *desc = NULL;
-  if(*task_desc == NULL){
-    desc = (_XMP_task_desc_t *)_XMP_alloc(sizeof(_XMP_task_desc_t));
-    *task_desc = desc;
-    //    printf("communicator created.\n");
-  }
-  else{
-    desc = *task_desc;
-    if(_XMP_compare_task_exec_cond(desc, ref_nodes, ref_lower, ref_upper, ref_stride)){
-      if(desc->execute){
-        _XMP_push_nodes(desc->nodes);
-	//	printf("communicator reused.\n");
-        return _XMP_N_INT_TRUE;
-      }
-      else{
-        return _XMP_N_INT_FALSE;
-      }
-    }
-    else{
-      if(desc->nodes != NULL){
-        _XMP_finalize_nodes(desc->nodes);
-	//	printf("communicator freed.\n");
+      switch (chunk->dist_manner){
+      case _XMP_N_DIST_DUPLICATION:
+	break;
+      case _XMP_N_DIST_BLOCK:
+      case _XMP_N_DIST_GBLOCK:
+	if (pub < lb || ub < plb) return false;
+	break;
+      case _XMP_N_DIST_CYCLIC:
+	if (union_triplet(lb, ub, st, plb, pub, pst)) break;
+	return false;
+      case _XMP_N_DIST_BLOCK_CYCLIC:
+	for (int i = 0; i < chunk->par_width; i++)
+	  if (union_triplet(lb, ub, st, plb+i, pub+i, pst)) goto next;
+	return false;
+      next:
+	break;
+      default:
+	_XMP_fatal("xmpf_test_task_nocmm: unknown dist_manner");
       }
     }
   }
+  return true;
+}
 
-  _XMP_nodes_t *n = _XMP_init_nodes_struct_NODES_NAMED(1, ref_nodes, shrink, ref_lower, ref_upper, ref_stride,
-                                                       &acc_dim_size, _XMP_N_INT_TRUE);
-  _XMP_set_task_desc(desc, n, n->is_member, ref_nodes, ref_lower, ref_upper, ref_stride);
+/* int _XMP_exec_task_NODES_ENTIRE(_XMP_task_desc_t **task_desc, _XMP_nodes_t *ref_nodes) */
+/* { */
+/*   if(ref_nodes->is_member){ */
+/*     _XMP_push_nodes(ref_nodes); */
+/*     return true; */
+/*   } */
+/*   else{ */
+/*     return false; */
+/*   } */
+/* } */
+
+/* int _XMP_exec_task_NODES_ENTIRE_nocomm(_XMP_nodes_t *ref_nodes) */
+/* { */
+/*   return ref_nodes->is_member; */
+/* } */
+
+/* void _XMP_exec_task_NODES_FINALIZE(_XMP_task_desc_t *task_desc) */
+/* { */
+/*   if(task_desc == NULL) return; */
   
-  if(n->is_member){
-    _XMP_push_nodes(n);
-    return _XMP_N_INT_TRUE;
-  }
-  else{
-    return _XMP_N_INT_FALSE;
-  }
-}
+/*   if(xmp_is_async()){ */
+/*     // Keep a node descriptor. After wait_async directive, */
+/*     // the node descriptor is freed. */
+/*     _XMP_nodes_dealloc_after_wait_async(task_desc->nodes);  */
+/*     _XMP_free(task_desc); */
+/*     return; */
+/*   } */
 
-int _XMP_exec_task_NODES_PART_nocomm(_XMP_nodes_t *ref_nodes, ...)
-{
-  if (!ref_nodes->is_member) return _XMP_N_INT_FALSE;
+/*   _XMP_finalize_nodes(task_desc->nodes); */
+/*   _XMP_free(task_desc); */
+/* } */
 
-  int ref_dim = ref_nodes->dim;
-  int shrink[ref_dim], ref_lower[ref_dim], ref_upper[ref_dim], ref_stride[ref_dim];
+/* int _XMP_exec_task_NODES_PART(_XMP_task_desc_t **task_desc, _XMP_nodes_t *ref_nodes, ...) */
+/* { */
+/*   va_list args; */
+/*   va_start(args, ref_nodes); */
+/*   int ref_dim = ref_nodes->dim; */
+/*   int shrink[ref_dim], ref_lower[ref_dim], ref_upper[ref_dim], ref_stride[ref_dim]; */
+  
+/*   int acc_dim_size = 1; */
+/*   for(int i=0;i<ref_dim;i++){ */
+/*     shrink[i] = va_arg(args, int); */
+/*     if(!shrink[i]){ */
+/*       ref_lower[i]  = va_arg(args, int); */
+/*       ref_upper[i]  = va_arg(args, int); */
+/*       ref_stride[i] = va_arg(args, int); */
+/*       acc_dim_size *= _XMP_M_COUNT_TRIPLETi(ref_lower[i], ref_upper[i], ref_stride[i]); */
+/*     } */
+/*     else{ */
+/*       ref_lower[i]  = 0; */
+/*       ref_upper[i]  = 0; */
+/*       ref_stride[i] = -1; */
+/*     }       */
+/*   } */
+/*   va_end(args); */
 
-  va_list args;
-  va_start(args, ref_nodes);
+/*   _XMP_task_desc_t *desc = NULL; */
+/*   if(*task_desc == NULL){ */
+/*     desc = (_XMP_task_desc_t *)_XMP_alloc(sizeof(_XMP_task_desc_t)); */
+/*     *task_desc = desc; */
+/*     //    printf("communicator created.\n"); */
+/*   } */
+/*   else{ */
+/*     desc = *task_desc; */
+/*     if(_XMP_compare_task_exec_cond(desc, ref_nodes, ref_lower, ref_upper, ref_stride)){ */
+/*       if(desc->execute){ */
+/*         _XMP_push_nodes(desc->nodes); */
+/* 	//	printf("communicator reused.\n"); */
+/*         return _XMP_N_INT_TRUE; */
+/*       } */
+/*       else{ */
+/*         return _XMP_N_INT_FALSE; */
+/*       } */
+/*     } */
+/*     else{ */
+/*       if(desc->nodes != NULL){ */
+/*         _XMP_finalize_nodes(desc->nodes); */
+/* 	//	printf("communicator freed.\n"); */
+/*       } */
+/*     } */
+/*   } */
 
-  for(int i=0;i<ref_dim;i++){
-    shrink[i] = va_arg(args, int);
-    if(!shrink[i]){
-      ref_lower[i]  = va_arg(args, int);
-      ref_upper[i]  = va_arg(args, int);
-      ref_stride[i] = va_arg(args, int);
-    }
-  }
-  va_end(args);
+/*   _XMP_nodes_t *n = _XMP_init_nodes_struct_NODES_NAMED(1, ref_nodes, shrink, ref_lower, ref_upper, ref_stride, */
+/*                                                        &acc_dim_size, _XMP_N_INT_TRUE); */
+/*   _XMP_set_task_desc(desc, n, n->is_member, ref_nodes, ref_lower, ref_upper, ref_stride); */
+  
+/*   if(n->is_member){ */
+/*     _XMP_push_nodes(n); */
+/*     return _XMP_N_INT_TRUE; */
+/*   } */
+/*   else{ */
+/*     return _XMP_N_INT_FALSE; */
+/*   } */
+/* } */
 
-  for(int i=0;i<ref_dim;i++){
-    if(shrink[i]) continue;
+/* int _XMP_exec_task_NODES_PART_nocomm(_XMP_nodes_t *ref_nodes, ...) */
+/* { */
+/*   if (!ref_nodes->is_member) return _XMP_N_INT_FALSE; */
 
-    int me = ref_nodes->info[i].rank + 1;
+/*   int ref_dim = ref_nodes->dim; */
+/*   int shrink[ref_dim], ref_lower[ref_dim], ref_upper[ref_dim], ref_stride[ref_dim]; */
 
-    if (me < ref_lower[i] || ref_upper[i] < me) return _XMP_N_INT_FALSE;
-    if ((me-ref_lower[i]) % ref_stride[i] != 0) return _XMP_N_INT_FALSE;
-  }
+/*   va_list args; */
+/*   va_start(args, ref_nodes); */
 
-  return _XMP_N_INT_TRUE;
-}
+/*   for(int i=0;i<ref_dim;i++){ */
+/*     shrink[i] = va_arg(args, int); */
+/*     if(!shrink[i]){ */
+/*       ref_lower[i]  = va_arg(args, int); */
+/*       ref_upper[i]  = va_arg(args, int); */
+/*       ref_stride[i] = va_arg(args, int); */
+/*     } */
+/*   } */
+/*   va_end(args); */
+
+/*   for(int i=0;i<ref_dim;i++){ */
+/*     if(shrink[i]) continue; */
+
+/*     int me = ref_nodes->info[i].rank + 1; */
+
+/*     if (me < ref_lower[i] || ref_upper[i] < me) return _XMP_N_INT_FALSE; */
+/*     if ((me-ref_lower[i]) % ref_stride[i] != 0) return _XMP_N_INT_FALSE; */
+/*   } */
+
+/*   return _XMP_N_INT_TRUE; */
+/* } */
 
 // FIXME do not use this function
 _XMP_nodes_t *_XMP_create_nodes_by_comm(int is_member, _XMP_comm_t *comm)

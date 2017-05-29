@@ -78,6 +78,26 @@ static void _XMP_finalize_async_gmove(_XMP_async_gmove_t *gmove)
   _XMP_free(gmove->comm_set);
 }
 
+
+void xmpc_wait_async(int async_id, _XMP_object_ref_t *on_desc)
+{
+  if (on_desc){
+    _XMP_nodes_t *n;
+    _XMP_create_task_nodes(&n, on_desc);
+    if (_XMP_test_task_on_nodes(n)){
+      _XMP_wait_async__(async_id);
+      _XMP_end_task();
+    }
+    _XMP_finalize_nodes(n);
+  }
+  else {
+    _XMP_wait_async__(async_id);
+  }
+  
+  xmpc_end_async(async_id);
+}
+
+
 /*******************************************************************/
 /* DESCRIPTION : Wait until completing asynchronous communication. */
 /* ARGUMENT    : [IN] async_id : ID of async                       */

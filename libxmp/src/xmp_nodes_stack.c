@@ -20,7 +20,7 @@ void _XMP_push_nodes(_XMP_nodes_t *nodes)
   _XMP_nodes_stack_top        = new_dish;
 }
 
-void _XMP_pop_nodes(void)
+void _XMP_end_task(void)
 {
   _XMP_nodes_dish_t *freed_dish = _XMP_nodes_stack_top;
   _XMP_nodes_stack_top          = freed_dish->prev;
