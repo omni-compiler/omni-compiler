@@ -20,6 +20,9 @@ MPI_Win _xmp_mpi_distarray_win_acc;
 
 ////int _xmp_mpi_onesided_enable_host_device_comm = 0; //if 0 then use MPI_Win_create else MPI_Win_dynamic
 
+void _XMP_mpi_onesided_alloc_win(MPI_Win *win, void **addr, size_t size, bool is_acc);
+void _XMP_mpi_onesided_free_win(MPI_Win *win, void **addr, bool is_acc);
+
 #define CUDA_SAFE_CALL(call)						\
   do {                                                                  \
     cudaError_t err = call;						\
@@ -38,12 +41,7 @@ void _XMP_mpi_onesided_initialize(int argc, char **argv, const size_t heap_size)
 
   XACC_DEBUG("alloc memory size=%zd\n", heap_size);
   XACC_DEBUG("alloced _xmp_mpi_onesided_buf(%p)\n", _xmp_mpi_onesided_buf);
-  MPI_Win_allocate(heap_size, //window size
-		   1,         //gap size
-		   MPI_INFO_NULL,
-		   MPI_COMM_WORLD,
-		   &_xmp_mpi_onesided_buf, //window address
-		   &_xmp_mpi_onesided_win);
+  _XMP_mpi_onesided_alloc_win(&_xmp_mpi_onesided_win, (void**)&_xmp_mpi_onesided_buf, heap_size, false);
 
   _XMP_mpi_build_shift_queue(false);
   MPI_Win_lock_all(MPI_MODE_NOCHECK, _xmp_mpi_onesided_win);
@@ -53,14 +51,7 @@ void _XMP_mpi_onesided_initialize(int argc, char **argv, const size_t heap_size)
   MPI_Win_lock_all(MPI_MODE_NOCHECK, _xmp_mpi_distarray_win);
   
 #ifdef _XMP_XACC
-  CUDA_SAFE_CALL(cudaMalloc((void**)&_xmp_mpi_onesided_buf_acc, heap_size));
-  XACC_DEBUG("alloced gpu addr =%p\n", _xmp_mpi_onesided_buf_acc);
-  MPI_Win_create((void*)_xmp_mpi_onesided_buf_acc, //window address
-		 heap_size, //window size
-		 1,         //gap size
-		 MPI_INFO_NULL,
-		 MPI_COMM_WORLD,
-		 &_xmp_mpi_onesided_win_acc);
+  _XMP_mpi_onesided_alloc_win(&_xmp_mpi_onesided_win_acc, (void**)&_xmp_mpi_onesided_buf_acc, heap_size, true);
 
   _XMP_mpi_build_shift_queue(true);
   MPI_Win_lock_all(MPI_MODE_NOCHECK, _xmp_mpi_onesided_win_acc);
@@ -79,7 +70,7 @@ void _XMP_mpi_onesided_finalize(){
   MPI_Win_unlock_all(_xmp_mpi_distarray_win);
 
   MPI_Barrier(MPI_COMM_WORLD);
-  MPI_Win_free(&_xmp_mpi_onesided_win);
+  _XMP_mpi_onesided_free_win(&_xmp_mpi_onesided_win, (void**)&_xmp_mpi_onesided_buf, false);
   XACC_DEBUG("free _xmp_mpi_onesided_buf(%p)\n", _xmp_mpi_onesided_buf);
   MPI_Win_free(&_xmp_mpi_distarray_win);
   
@@ -89,8 +80,39 @@ void _XMP_mpi_onesided_finalize(){
   MPI_Win_unlock_all(_xmp_mpi_distarray_win_acc);
 
   MPI_Barrier(MPI_COMM_WORLD);
-  MPI_Win_free(&_xmp_mpi_onesided_win_acc);
-  CUDA_SAFE_CALL(cudaFree(_xmp_mpi_onesided_buf_acc));
+  _XMP_mpi_onesided_free_win(&_xmp_mpi_onesided_win_acc, (void**)&_xmp_mpi_onesided_buf_acc, true);
   MPI_Win_free(&_xmp_mpi_distarray_win_acc);
 #endif
+}
+
+void _XMP_mpi_onesided_alloc_win(MPI_Win *win, void **addr, size_t size, bool is_acc)
+{
+  if(is_acc){
+    CUDA_SAFE_CALL(cudaMalloc(addr, size));
+    XACC_DEBUG("alloced gpu addr =%p\n", *addr);
+    MPI_Win_create(*addr,    //window address
+		   size,     //window size
+		   1,        //gap size
+		   MPI_INFO_NULL,
+		   MPI_COMM_WORLD,
+		   win);
+  }else{
+    MPI_Win_allocate(size,   //window size
+		     1,      //gap size
+		     MPI_INFO_NULL,
+		     MPI_COMM_WORLD,
+		     addr,   //window address
+		     win);
+  }
+}
+
+void _XMP_mpi_onesided_free_win(MPI_Win *win, void **addr, bool is_acc)
+{
+  if(is_acc){
+    CUDA_SAFE_CALL(cudaFree(*addr));
+  }else{
+//
+  }
+  MPI_Win_free(win);
+  *addr = NULL;
 }
