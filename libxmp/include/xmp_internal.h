@@ -269,11 +269,12 @@ extern int _XMP_get_next_rank(_XMP_nodes_t *nodes, int *rank_array);
 extern int _XMP_calc_nodes_index_from_inherit_nodes_index(_XMP_nodes_t *nodes, int inherit_nodes_index);
 extern void _XMP_create_task_nodes(_XMP_nodes_t **n, _XMP_object_ref_t *rp);
 extern int _XMP_test_task_on_nodes(_XMP_nodes_t *ref_nodes);
-extern void _XMP_end_task(void);
+extern _Bool _XMP_test_task_nocomm(_XMP_object_ref_t *rp);
+
   
 // xmp_nodes_stack.c
 extern void _XMP_push_nodes(_XMP_nodes_t *nodes);
-extern void _XMP_pop_nodes(void);
+extern void _XMP_end_task(void);
 extern void _XMP_pop_n_free_nodes(void);
 extern void _XMP_pop_n_free_nodes_wo_finalize_comm(void);
 extern _XMP_nodes_t *_XMP_get_execution_nodes(void);
