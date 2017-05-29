@@ -3958,7 +3958,6 @@ check_type_bound_generics(TYPE_DESC stp)
     }
 }
 
-
 /* compile end type statement */
 void
 compile_struct_decl_end()
@@ -5753,4 +5752,36 @@ compile_type_generic_procedure(expr x)
     ID_TYPE(id) = type_bound_procedure_type();
     ID_LINE(id) = EXPR_LINE(x);
     TYPE_BOUND_GENERIC_TYPE_GENERICS(ID_TYPE(id)) = TBP_BINDING(id);
+}
+
+void
+compile_final_statement(expr x)
+{
+    expr id_list = EXPR_ARG1(x);
+
+    ID id = NULL;
+    ID last_ip = NULL;
+
+    list lp;
+
+    TYPE_DESC struct_tp;
+
+    assert(CTL_TYPE(ctl_top) == CTL_STRUCT);
+    struct_tp = CTL_STRUCT_TYPEDESC(ctl_top);
+
+    id = declare_ident(find_symbol("_final"), CL_TYPE_BOUND_PROC);
+
+    FOR_ITEMS_IN_LIST(lp, id_list) {
+        ID binding;
+        if (EXPR_CODE(LIST_ITEM(lp)) != IDENT) {
+            error_at_node(x, "unexpected expression");
+        }
+        binding = new_ident_desc(EXPR_SYM(LIST_ITEM(lp)));
+        ID_LINK_ADD(binding, TBP_BINDING(id), last_ip);
+    }
+
+    TBP_BINDING_ATTRS(id) = TYPE_BOUND_PROCEDURE_IS_FINAL;
+
+    ID_TYPE(id) = type_bound_procedure_type();
+    ID_LINE(id) = EXPR_LINE(x);
 }
