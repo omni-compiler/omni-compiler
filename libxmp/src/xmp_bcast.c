@@ -431,23 +431,36 @@ void _XMP_bcast_on_template(void *data_addr, int count, int size,
   }
 }
 
-#ifdef _XMPT
-extern void _XMPT_set_bcast_subsc(xmpt_subscript_t subsc, _XMP_object_ref_t *desc);
-#endif
 
 void _XMP_bcast(void *data_addr, int count, int size,
 		_XMP_object_ref_t *from_desc, _XMP_object_ref_t *on_desc)
 {
 #ifdef _XMPT
   xmpt_tool_data_t *data = NULL;
-  xmp_desc_t on = on_desc->ref_kind == XMP_OBJ_REF_NODES ?
-    (xmp_desc_t)on_desc->n_desc : (xmp_desc_t)on_desc->t_desc;
+
+  xmp_desc_t on;
+  if (on_desc){
+    on = on_desc->ref_kind == XMP_OBJ_REF_NODES ?
+      (xmp_desc_t)on_desc->n_desc : (xmp_desc_t)on_desc->t_desc;
+  }
+  else {
+    on = (xmp_desc_t)_XMP_get_execution_nodes();
+  }
+
   struct _xmpt_subscript_t on_subsc;
-  _XMPT_set_bcast_subsc(&on_subsc, on_desc);
-  xmp_desc_t from = from_desc->ref_kind == XMP_OBJ_REF_NODES ?
-    (xmp_desc_t)from_desc->n_desc : (xmp_desc_t)from_desc->t_desc;
+  _XMPT_set_subsc(&on_subsc, on_desc);
+
+  xmp_desc_t from;
+  if (from_desc){
+    from = from_desc->ref_kind == XMP_OBJ_REF_NODES ?
+      (xmp_desc_t)from_desc->n_desc : (xmp_desc_t)from_desc->t_desc;
+  }
+  else {
+    from = on;
+  }
+  
   struct _xmpt_subscript_t from_subsc;
-  _XMPT_set_bcast_subsc(&from_subsc, from_desc);
+  _XMPT_set_subsc(&from_subsc, from_desc);
 
   if (xmp_is_async()){
     _XMP_async_comm_t *async = _XMP_get_current_async();

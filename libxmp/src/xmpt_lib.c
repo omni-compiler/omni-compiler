@@ -1,9 +1,10 @@
 #include "xmp_internal.h"
 
-xmpt_callback_t xmpt_callback[XMPT_EVENT_ALL] = { 0 };
-int xmpt_support_level[XMPT_EVENT_ALL] = {
-  1, /* xmpt_event_task_begin */
-  1, /* xmpt_event_task_end */
+xmpt_callback_t xmpt_callback[XMPT_EVENT_ALL+1] = { 0 };
+int xmpt_support_level[XMPT_EVENT_ALL+1] = {
+  0, /* dummy */
+  4, /* xmpt_event_task_begin */
+  4, /* xmpt_event_task_end */
   2, /* xmpt_event_tasks_begin */
   2, /* xmpt_event_tasks_end */
   1, /* xmpt_event_loop_begin */
@@ -16,13 +17,13 @@ int xmpt_support_level[XMPT_EVENT_ALL] = {
   3, /* xmpt_event_gmove_begin */
   3, /* xmpt_event_gmove_begin_async */
   4, /* xmpt_event_gmove_end */
-  1, /* xmpt_event_barrier_begin */
-  1, /* xmpt_event_barrier_end */
-  1, /* xmpt_event_reduction_begin */
-  1, /* xmpt_event_reduction_begin_async */
-  1, /* xmpt_event_reduction_end */
-  3, /* xmpt_event_bcast_begin */
-  3, /* xmpt_event_bcast_begin_async */
+  4, /* xmpt_event_barrier_begin */
+  4, /* xmpt_event_barrier_end */
+  4, /* xmpt_event_reduction_begin */
+  4, /* xmpt_event_reduction_begin_async */
+  4, /* xmpt_event_reduction_end */
+  4, /* xmpt_event_bcast_begin */
+  4, /* xmpt_event_bcast_begin_async */
   4, /* xmpt_event_bcast_end */
   3, /* xmpt_event_wait_async_begin */
   3, /* xmpt_event_wait_async_end */
@@ -178,7 +179,7 @@ void _XMPT_set_gmove_subsc(xmpt_subscript_t subsc, _XMP_gmv_desc_t *gmv_desc){
   }
 }
 
-void _XMPT_set_bcast_subsc(xmpt_subscript_t subsc, _XMP_object_ref_t *desc){
+void _XMPT_set_subsc(xmpt_subscript_t subsc, _XMP_object_ref_t *desc){
   if (desc){
     subsc->ndims = desc->ndims;
     subsc->omit = 0;

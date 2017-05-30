@@ -54,13 +54,7 @@ void xmpf_create_task_nodes__(_XMP_nodes_t **n, _XMP_object_ref_t **r_desc)
 
 _Bool xmpf_test_task_on_nodes__(_XMP_nodes_t **n)
 {
-  if ((*n)->is_member){
-    _XMP_push_nodes(*n);
-    return true;
-  }
-  else {
-    return false;
-  }
+  return _XMP_test_task_on_nodes(*n);
 }
 
 //_Bool union_triplet(int lb0, int ub0, int st0, int lb1, int ub1, int st1);
@@ -198,4 +192,10 @@ _Bool xmpf_test_task_nocomm__(_XMP_object_ref_t **r_desc){
 void xmpf_end_task__(void)
 {
   _XMP_end_task();
+}
+
+
+void xmpf_finalize_task_nodes__(_XMP_nodes_t **n)
+{
+  _XMP_finalize_nodes(*n);
 }

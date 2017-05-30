@@ -42,6 +42,9 @@ extern int xmpt_coarray_get_gid(
 /*   // 4: event may occur; callback always invoked when event occurs */
 /*   // */
   
+/*   xmpt_event_task_begin, */
+/*   xmpt_event_task_end, */
+
 /*   xmpt_event_reflect_begin, */
 /*   xmpt_event_reflect_begin_async, */
 /*   xmpt_event_reflect_end, */
@@ -108,9 +111,6 @@ extern int xmpt_coarray_get_gid(
 /*   // 1: event may occur; no callback is possible (e.g., not yet implemented) */
 /*   // */
   
-/*   xmpt_event_task_begin, */
-/*   xmpt_event_task_end, */
-
 /*   xmpt_event_loop_begin, */
 /*   xmpt_event_loop_end, */
 
@@ -118,6 +118,8 @@ extern int xmpt_coarray_get_gid(
 /* } xmpt_event_t; */
 
 typedef enum xmpt_event_e {
+  dummy                            = 0,
+
   xmpt_event_task_begin            = 1,
   xmpt_event_task_end              = 2,
   xmpt_event_tasks_begin           = 3,
@@ -274,10 +276,11 @@ typedef void (*xmpt_callback_t);
 
 int xmpt_set_callback(xmpt_event_t, xmpt_callback_t);
 
-extern xmpt_callback_t xmpt_callback[XMPT_EVENT_ALL];
+extern xmpt_callback_t xmpt_callback[XMPT_EVENT_ALL+1];
 extern int xmpt_enabled;
 
 extern xmp_desc_t on_desc;
 extern struct _xmpt_subscript_t on_subsc;
 extern xmp_desc_t from_desc;
 extern struct _xmpt_subscript_t from_subsc;
+

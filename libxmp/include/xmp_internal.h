@@ -385,6 +385,11 @@ extern int _XMP_split_world_by_color(int color);
 
 // xmp_async.c
 extern _Bool xmp_is_async();
+
+// xmpt
+#ifdef _XMPT
+extern void _XMPT_set_subsc(xmpt_subscript_t subsc, _XMP_object_ref_t *desc);
+#endif
   
 #ifdef _XMP_XACC
 extern void _XMP_reflect_gpu(void *dev_addr, _XMP_array_t *a);

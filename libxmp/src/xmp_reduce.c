@@ -697,9 +697,6 @@ void _XMP_reduction_loc(int dim, void *loc, int datatype)
   _XMP_reduction_loc_types[dim] = datatype;
 }
 
-#ifdef _XMPT
-extern void _XMPT_set_bcast_subsc(xmpt_subscript_t subsc, _XMP_object_ref_t *desc);
-#endif
 
 void _XMP_reduction(void *data_addr, int count, int datatype, int op,
 		    _XMP_object_ref_t *r_desc, int num_locs)
@@ -708,10 +705,18 @@ void _XMP_reduction(void *data_addr, int count, int datatype, int op,
 
 #ifdef _XMPT
   xmpt_tool_data_t *data = NULL;
-  xmp_desc_t on = r_desc->ref_kind == XMP_OBJ_REF_NODES ?
-    (xmp_desc_t)r_desc->n_desc : (xmp_desc_t)r_desc->t_desc;
+
+  xmp_desc_t on;
+  if (r_desc){
+    on = r_desc->ref_kind == XMP_OBJ_REF_NODES ?
+      (xmp_desc_t)r_desc->n_desc : (xmp_desc_t)r_desc->t_desc;
+  }
+  else {
+    on = (xmp_desc_t)_XMP_get_execution_nodes();
+  }
+
   struct _xmpt_subscript_t on_subsc;
-  _XMPT_set_bcast_subsc(&on_subsc, r_desc);
+  _XMPT_set_subsc(&on_subsc, r_desc);
 
   if (xmp_is_async()){
     _XMP_async_comm_t *async = _XMP_get_current_async();

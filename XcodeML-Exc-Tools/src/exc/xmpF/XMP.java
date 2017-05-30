@@ -113,6 +113,7 @@ public class XMP {
   public final static String test_task_on_f      = "xmpf_test_task_on_nodes_";
   public final static String end_task_f          = "xmpf_end_task_";
   public final static String test_task_nocomm_f  = "xmpf_test_task_nocomm_";
+  public final static String finalize_task_nodes_f  = "xmpf_finalize_task_nodes_";
 
   public final static String gmove_g_alloc_f     = "xmpf_gmv_g_alloc_";
   public final static String gmove_l_alloc_f     = "xmpf_gmv_l_alloc_";

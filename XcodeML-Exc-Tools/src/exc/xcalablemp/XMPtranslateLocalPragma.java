@@ -793,11 +793,11 @@ public class XMPtranslateLocalPragma {
 
     Ident f;
     if (!nocomm_flag){
-      f = _globalDecl.declExternFunc("_XMP_create_task_nodes", Xtype.voidType);
+      f = _globalDecl.declExternFunc("xmpc_create_task_nodes", Xtype.voidType);
       bb.add(f.callSubroutine(Xcons.List(taskNodesDescId.getAddr(), on_ref.getDescId().Ref())));
     }
 
-    Ident g1 = _globalDecl.declExternFunc("_XMP_finalize_nodes", Xtype.voidType);
+    Ident g1 = _globalDecl.declExternFunc("xmpc_finalize_task_nodes", Xtype.voidType);
     Ident g2 = _globalDecl.declExternFunc("_XMP_ref_dealloc", Xtype.voidType);
 
     if (tasksFlag){
@@ -811,18 +811,18 @@ public class XMPtranslateLocalPragma {
 
     Xobject cond = null;
     if (!nocomm_flag){
-      f = _globalDecl.declExternFunc("_XMP_test_task_on_nodes", Xtype.intType);
+      f = _globalDecl.declExternFunc("xmpc_test_task_on_nodes", Xtype.intType);
       cond = f.Call(Xcons.List(taskNodesDescId.Ref()));
     }
     else {
-      f = _globalDecl.declExternFunc("_XMP_test_task_nocomm", Xtype.intType);
+      f = _globalDecl.declExternFunc("xmpc_test_task_nocomm", Xtype.intType);
       cond = f.Call(Xcons.List(on_ref.getDescId().Ref()));
     }
 
     ret_body.add(Bcons.IF(cond,Bcons.COMPOUND(pb.getBody()), null));
       
     if (!nocomm_flag){
-      f = _globalDecl.declExternFunc("_XMP_end_task", Xtype.voidType);
+      f = _globalDecl.declExternFunc("xmpc_end_task", Xtype.voidType);
       pb.getBody().add(f.Call(Xcons.List()));
     }
 

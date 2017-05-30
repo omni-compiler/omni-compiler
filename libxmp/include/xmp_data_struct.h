@@ -51,6 +51,11 @@ typedef struct _XMP_nodes_type {
   struct _XMP_nodes_type *inherit_nodes;
   // enable when inherit_nodes is not NULL
   _XMP_nodes_inherit_info_t *inherit_info;
+
+#ifdef _XMPT
+  void *xmpt_data;
+#endif
+
   _XMP_nodes_info_t info[1];
 } _XMP_nodes_t;
 
