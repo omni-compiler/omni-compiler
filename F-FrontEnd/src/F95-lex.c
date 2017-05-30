@@ -3949,6 +3949,7 @@ struct keyword_token keywords[ ] =
     { "save",           SAVE },
     { "selectcase",     SELECT },
     { "select",         KW_SELECT },
+    { "selecttype",     SELECTTYPE },  /* F2003 spec */
     { "sequence",       SEQUENCE },
     /*    { "static",   KW_STATIC },*/
     { "stop",           STOP },

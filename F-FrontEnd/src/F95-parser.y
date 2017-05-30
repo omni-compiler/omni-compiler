@@ -143,6 +143,7 @@ state 2058
 %token ENDSUBROUTINE
 %token ENDBLOCKDATA
 %token SELECT   /* select case */
+%token SELECTTYPE   /* select type F03 keyword */
 %token CASEDEFAULT /* case defualt */
 %token CASE     /* case */
 %token ENDSELECT
@@ -1707,6 +1708,10 @@ executable_statement:
         { $$ = list2(F03_SELECTTYPE_STATEMENT, $5, st_name); }
         | KW_SELECT KW KW_TYPE '(' IDENTIFIER REF_OP expr ')'
         { $$ = list3(F03_SELECTTYPE_STATEMENT, $7, st_name, $5); }
+        | SELECTTYPE '(' expr ')'
+        { $$ = list2(F03_SELECTTYPE_STATEMENT, $3, st_name); }
+        | SELECTTYPE '(' IDENTIFIER REF_OP expr ')'
+        { $$ = list3(F03_SELECTTYPE_STATEMENT, $5, st_name, $3); }
         | CASE '(' scene_list ')' name_or_null
         { $$ = list2(F_CASELABEL_STATEMENT, $3, $5); }
         | CASEDEFAULT name_or_null
