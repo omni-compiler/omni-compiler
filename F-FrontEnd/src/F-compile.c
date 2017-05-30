@@ -998,7 +998,7 @@ compile_statement1(int st_no, expr x)
 
     case F03_SELECTTYPE_STATEMENT:
           check_INEXEC();
-          push_ctl(CTL_SELECT); // TODO special select type ctl
+          push_ctl(CTL_SELECT_TYPE);
           v = compile_expression(EXPR_ARG1(x));
           ID selector = find_ident(EXPR_SYM(EXPR_ARG1(x)));
           if(EXPR_HAS_ARG3(x)){
@@ -1050,19 +1050,19 @@ compile_statement1(int st_no, expr x)
         break;
         case F03_TYPEIS_STATEMENT:
         case F03_CLASSIS_STATEMENT:
-            if(CTL_TYPE(ctl_top) == CTL_SELECT
-                || CTL_TYPE(ctl_top) == CTL_CASE)
+            if(CTL_TYPE(ctl_top) == CTL_SELECT_TYPE ||
+               CTL_TYPE(ctl_top) == CTL_TYPE_GUARD)
             {
-                if (CTL_TYPE(ctl_top) == CTL_CASE) {
+                if (CTL_TYPE(ctl_top) == CTL_TYPE_GUARD) {
                     CTL_CASE_BLOCK(ctl_top) = CURRENT_STATEMENTS;
                     CURRENT_STATEMENTS = NULL;
-                    
+
                     if (endlineno_flag)
                          EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
                     pop_ctl();
                 }
-                    
-                push_ctl(CTL_CASE);
+
+                push_ctl(CTL_TYPE_GUARD);
 
                 if(EXPR_ARG1(x) != NULL) { // NULL for CLASS DEFAULT
                     TYPE_DESC tp = find_struct_decl_parent(EXPR_SYM(EXPR_ARG1(x)));
@@ -1080,30 +1080,34 @@ compile_statement1(int st_no, expr x)
             }
             break;
     case F_ENDSELECT_STATEMENT:
-        if(CTL_TYPE(ctl_top) == CTL_SELECT) {
+        if (CTL_TYPE(ctl_top) == CTL_SELECT ||
+            CTL_TYPE(ctl_top) == CTL_SELECT_TYPE) {
             CTL_SELECT_STATEMENT_BODY(ctl_top) = CURRENT_STATEMENTS;
 
-	    if (endlineno_flag)
-	      EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+            if (endlineno_flag)
+                EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
 
             pop_ctl();
-        } else if (CTL_TYPE(ctl_top) == CTL_CASE) {
+        } else if (CTL_TYPE(ctl_top) == CTL_CASE ||
+                   CTL_TYPE(ctl_top) == CTL_TYPE_GUARD) {
             CTL_CASE_BLOCK(ctl_top) = CURRENT_STATEMENTS;
 
-	    // For previous CASE.
-	    if (endlineno_flag)
-	      EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+            // For previous CASE.
+            if (endlineno_flag)
+                EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
 
             pop_ctl();
 
-            if(CTL_TYPE(ctl_top) != CTL_SELECT)
+            if (CTL_TYPE(ctl_top) != CTL_SELECT &&
+                CTL_TYPE(ctl_top) != CTL_SELECT_TYPE) {
                 error("'end select', out of place");
+            }
 
             CTL_SELECT_STATEMENT_BODY(ctl_top) = CURRENT_STATEMENTS;
 
-	    // For SELECT
-	    if (endlineno_flag)
-	      EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+            // For SELECT
+            if (endlineno_flag)
+                EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
 
             pop_ctl();
         } else error("'end select', out of place");

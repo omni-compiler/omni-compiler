@@ -162,6 +162,8 @@ enum control_type {
     CTL_ELSE_WHERE,
     CTL_SELECT,
     CTL_CASE,
+    CTL_SELECT_TYPE,
+    CTL_TYPE_GUARD,
     CTL_STRUCT,
     CTL_OMP,
     CTL_XMP,
