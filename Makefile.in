@@ -13,6 +13,7 @@ SUBDIRS=libxmp/include libxmp/src libxmpf/include libxmpf/src libxmp/src_threads
 FALSE=1
 TRUE=0
 NEED_MAKE_MOD2XMOD=@NEED_MAKE_MOD2XMOD@
+USER=$(shell whoami)
 ifeq ($(NEED_MAKE_MOD2XMOD), $(TRUE))
     SUBDIRS+=F-FrontEnd/gnu_module
 endif
@@ -232,8 +233,12 @@ release:
 	echo "Created /tmp/$(PACKAGE_NAME).tar.bz2"; \
 	rm -rf $(WORKDIR)
 
+
 remote-tests:
 	@bash ./tests/xcalablemp/scripts/remote-tests.sh $(USER)
+
+remote-tests-short:
+	@bash ./tests/xcalablemp/scripts/remote-tests.sh $(USER) short
 
 distclean: clean
 	rm -rf autom4te.cache
