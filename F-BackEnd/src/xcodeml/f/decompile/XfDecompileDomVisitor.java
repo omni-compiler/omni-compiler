@@ -1600,20 +1600,53 @@ public class XfDecompileDomVisitor {
             }
             writer.writeToken("::");
 
-            Node nameNode = XmDomUtil.getElement(n, "name");
-            String name = XmDomUtil.getContentText(nameNode);
-            if (XmDomUtil.getAttrBool(n, "is_operator")) {
-                writer.writeToken("OPERATOR");
-                writer.writeToken("(");
-                writer.writeToken(name);
-                writer.writeToken(")");
-            } else if (XmDomUtil.getAttrBool(n, "is_assignment")) {
-                writer.writeToken("ASSIGNMENT");
-                writer.writeToken("(");
-                writer.writeToken("=");
-                writer.writeToken(")");
+            String isDefinedIo = XmDomUtil.getAttr(n, "is_defined_io");
+            if (XfUtilForDom.isNullOrEmpty(isDefinedIo)) {
+                Node nameNode = XmDomUtil.getElement(n, "name");
+                String name = XmDomUtil.getContentText(nameNode);
+                if (XmDomUtil.getAttrBool(n, "is_operator")) {
+                    writer.writeToken("OPERATOR");
+                    writer.writeToken("(");
+                    writer.writeToken(name);
+                    writer.writeToken(")");
+                } else if (XmDomUtil.getAttrBool(n, "is_assignment")) {
+                    writer.writeToken("ASSIGNMENT");
+                    writer.writeToken("(");
+                    writer.writeToken("=");
+                    writer.writeToken(")");
+                } else {
+                    writer.writeToken(name);
+                }
             } else {
-                writer.writeToken(name);
+                isDefinedIo = isDefinedIo.toUpperCase();
+                if (isDefinedIo.equals("WRITE(FORMATTED)")) {
+                    writer.writeToken("WRITE");
+                    writer.writeToken("(");
+                    writer.writeToken("FORMATTED");
+                    writer.writeToken(")");
+                } else if (isDefinedIo.equals("WRITE(UNFORMATTED)")) {
+                    writer.writeToken("WRITE");
+                    writer.writeToken("(");
+                    writer.writeToken("UNFORMATTED");
+                    writer.writeToken(")");
+                } else if (isDefinedIo.equals("READ(FORMATTED)")) {
+                    writer.writeToken("READ");
+                    writer.writeToken("(");
+                    writer.writeToken("FORMATTED");
+                    writer.writeToken(")");
+                } else if (isDefinedIo.equals("READ(UNFORMATTED)")) {
+                    writer.writeToken("READ");
+                    writer.writeToken("(");
+                    writer.writeToken("UNFORMATTED");
+                    writer.writeToken(")");
+                } else {
+                    _context.setLastErrorMessage(
+                            XfUtilForDom.formatError(n,
+                                    XfError.XCODEML_SEMANTICS,
+                                    n.getNodeName(),
+                                    isDefinedIo));
+                    fail(n);
+                }
             }
 
             writer.writeToken("=>");
@@ -3625,9 +3658,39 @@ public class XfDecompileDomVisitor {
             XmfWriter writer = _context.getWriter();
 
             String interfaceName = XmDomUtil.getAttr(n, "name");
-
+            String isDefinedIo = XmDomUtil.getAttr(n, "is_defined_io");
             writer.writeToken("INTERFACE");
-            if (XmDomUtil.getAttrBool(n, "is_assignment")) {
+            if (!XfUtilForDom.isNullOrEmpty(isDefinedIo)) {
+                isDefinedIo = isDefinedIo.toUpperCase();
+                if (isDefinedIo.equals("WRITE(FORMATTED)")) {
+                    writer.writeToken("WRITE");
+                    writer.writeToken("(");
+                    writer.writeToken("FORMATTED");
+                    writer.writeToken(")");
+                } else if (isDefinedIo.equals("WRITE(UNFORMATTED)")) {
+                    writer.writeToken("WRITE");
+                    writer.writeToken("(");
+                    writer.writeToken("UNFORMATTED");
+                    writer.writeToken(")");
+                } else if (isDefinedIo.equals("READ(FORMATTED)")) {
+                    writer.writeToken("READ");
+                    writer.writeToken("(");
+                    writer.writeToken("FORMATTED");
+                    writer.writeToken(")");
+                } else if (isDefinedIo.equals("READ(UNFORMATTED)")) {
+                    writer.writeToken("READ");
+                    writer.writeToken("(");
+                    writer.writeToken("UNFORMATTED");
+                    writer.writeToken(")");
+                } else {
+                    _context.setLastErrorMessage(
+                            XfUtilForDom.formatError(n,
+                                    XfError.XCODEML_SEMANTICS,
+                                    n.getNodeName(),
+                                    isDefinedIo));
+                    fail(n);
+                }
+            } else if (XmDomUtil.getAttrBool(n, "is_assignment")) {
                 writer.writeToken(" ASSIGNMENT(=)");
             } else if (XmDomUtil.getAttrBool(n, "is_operator")) {
                 writer.writeToken(" OPERATOR(");

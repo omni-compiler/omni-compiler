@@ -53,6 +53,7 @@ run: $(EXES)
 #	$(XRUN) -n 8 ./gmove_test_out.x
 	$(XRUN) -n 8 ./gmove_opt_53.x
 	$(XRUN) -n 4 ./gmove_opt_54.x
+	$(XRUN) -n 4 ./141_gmove.x
 
 RUN:
 	mkdir RUN

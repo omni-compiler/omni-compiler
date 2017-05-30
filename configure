@@ -692,6 +692,8 @@ MPFR_LIB_DIR
 MPFR_INCLUDE_DIR
 GMP_LIB_DIR
 GMP_INCLUDE_DIR
+NEED_MAKE_MOD2XMOD
+KIND_MPI_FORTRAN
 MOD2XMOD
 NM_OPT
 OMNI_X2X_FLAGS
@@ -740,6 +742,7 @@ XACC
 ACC
 TARGET
 SUPERUX_OR_POWERPC
+T_FJMODULE
 SUPERUX
 CRAY
 POWERPC
@@ -8529,26 +8532,31 @@ FJRDMA=$FALSE
 KCOMPUTER=$FALSE
 FX10=$FALSE
 FX100=$FALSE
+T_FJMODULE=$FALSE
 POWERPC=$FALSE
 CRAY=$FALSE
 SUPERUX=$FALSE
-if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$target" = "FX100-linux-gnu"; then
-    if test "$dofjrdma" = "yes"; then
+if test "x${target}" = "xKcomputer-linux-gnu" -o "x${target}" = "xFX10-linux-gnu" -o "x${target}" = "xFX100-linux-gnu"; then
+    if test "x${domod2xmod}" = "xyes"; then
+        T_FJMODULE=$TRUE
+    fi
+
+    if test "x${dofjrdma}" = "xyes"; then
         FJRDMA=$TRUE
     fi
 
-    if test "$target" = "Kcomputer-linux-gnu"; then
+    if test "x${target}" = "xKcomputer-linux-gnu"; then
         KCOMPUTER=$TRUE
-    elif test "$target" = "FX10-linux-gnu"; then
+    elif test "x${target}" = "xFX10-linux-gnu"; then
         FX10=$TRUE
-    elif test "$target" = "FX100-linux-gnu"; then
+    elif test "x${target}" = "xFX100-linux-gnu"; then
         FX100=$TRUE
     fi
-elif test "$target" = "powerpc-ibm-cnk" -o "$target" = "powerpc-hitachi-aix"; then
+elif test "x${target}" = "xpowerpc-ibm-cnk" -o "x${target}" = "xpowerpc-hitachi-aix"; then
     POWERPC=$TRUE
-elif test "$target" = "Cray-linux-gnu"; then
+elif test "x${target}" = "xCray-linux-gnu"; then
     CRAY=$TRUE
-elif test "$target" = "sxace-nec-superux" -o "$target" = "sx9-nec-superux"; then
+elif test "x${target}" = "xsxace-nec-superux" -o "x${target}" = "xsx9-nec-superux"; then
     SUPERUX=$TRUE
 fi
 
@@ -8560,8 +8568,9 @@ fi
 
 
 
+
 SUPERUX_OR_POWERPC=$FALSE
-if test $SUPERUX -eq 0 -o $POWERPC -eq 0; then
+if test $SUPERUX -eq $TRUE -o $POWERPC -eq $TRUE; then
     SUPERUX_OR_POWERPC=$TRUE
 fi
 
@@ -8754,7 +8763,7 @@ fi
     MPI_FCFLAGS="-Kfast,openmp"
     MPI_MODINC="-M"
     MPI_FCLIBS=""
-    KIND_MPI_FORTRAN=other
+    KIND_MPI_FORTRAN=frtpx
 
     # Omni C
     OMNI_C2X_FLAGS=""
@@ -10296,14 +10305,9 @@ fi
 
 
 
-    # Workaround for Cray CC >8.5. Version is printed on stderr now.
-    if test "$CRAY" = "$TRUE"; then
-      chk=`${MPI_CC} -V 2>&1 | head -n1`
-    else
-      chk=`${MPI_CC} --version | head -n1`
-    fi
+    chk=`${MPI_CC} --version | head -n1`
     case $chk in
-       gcc* | Apple*)
+       gcc* | Apple* | cc*)
 	    # OpenMP
 	    OPENMP_OPT_C="-fopenmp"
 
@@ -10323,26 +10327,6 @@ fi
 	    # Omni Common
 	    OMNI_X2X_FLAGS="-gnu"
 	    ;;
-       Cray* | cc*)
-           # OpenMP
-           OPENMP_OPT_C="-h omp"
-
-           # XcalableMP
-           XMPC_DEF="-D_XCALABLEMP"
-
-           # MPI C
-           MPI_CPPFLAGS="-E -std=c99"
-           MPI_CFLAGS="-O2 -std=c99 -Wall -Wpointer-arith $OPENMP_OPT_C"
-           MPI_CLIBS=""
-
-           # Omni C
-           OMNI_C2X_FLAGS=""
-           OMNI_NTV_CFLAGS="-std=c99 -lm"
-           OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT_C"
-
-           # Omni Common
-           OMNI_X2X_FLAGS="-gnu"
-           ;;
 	*ICC*)
 	    # OpenMP
 	    OPENMP_OPT_C="-fopenmp"
@@ -10895,7 +10879,7 @@ if test "$domod2xmod" = "yes" -a "$KIND_MPI_FORTRAN" = "other"; then
 fi
 
 IS_MOD2XMOD=no
-if test "$domod2xmod" = "yes" -a "$KIND_MPI_FORTRAN" = "gfortran"; then
+if test "$domod2xmod" = "yes" -a \( "$KIND_MPI_FORTRAN" = "gfortran" -o "$KIND_MPI_FORTRAN" = "frtpx" \); then
     IS_MOD2XMOD=yes
 fi
 
@@ -10904,8 +10888,16 @@ if test "$IS_MOD2XMOD" = "yes"; then
     MOD2XMOD=$TRUE
 fi
 
+NEED_MAKE_MOD2XMOD=$FALSE
+if test "$IS_MOD2XMOD" = "yes" -a "$KIND_MPI_FORTRAN" = "gfortran"; then
+    NEED_MAKE_MOD2XMOD=$TRUE
+fi
 
-if test "$IS_MOD2XMOD" = "yes"; then
+
+
+
+
+if test "$NEED_MAKE_MOD2XMOD" = $TRUE; then
     #### GMP ####
     # check dirs
     if ! test -d "$GMP_INCLUDE_DIR"; then

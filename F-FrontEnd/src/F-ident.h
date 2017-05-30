@@ -254,6 +254,10 @@ typedef struct ident_descriptor
 #define TYPE_BOUND_PROCEDURE_DEFERRED              0x0010
 #define TYPE_BOUND_PROCEDURE_IS_OPERATOR           0x0020
 #define TYPE_BOUND_PROCEDURE_IS_ASSIGNMENT         0x0040
+#define TYPE_BOUND_PROCEDURE_WRITE                 0x0080
+#define TYPE_BOUND_PROCEDURE_READ                  0x0100
+#define TYPE_BOUND_PROCEDURE_FORMATTED             0x0200
+#define TYPE_BOUND_PROCEDURE_UNFORMATTED           0x0400
         } tbp_info;
         struct {
             /* for CL_MULTI */
@@ -398,19 +402,29 @@ struct use_assoc_info {
     (ID_CLASS(id) == CL_TYPE_BOUND_PROC && \
      TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_IS_ASSIGNMENT)
 
-#define MULTI_ID_LIST(id)     ((id)->info.multi_info.id_list)
+#define TBP_IS_DEFINED_IO(id) \
+    (ID_CLASS(id) == CL_TYPE_BOUND_PROC && (                    \
+        TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_WRITE ||   \
+        TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_READ))
 
+
+#define MULTI_ID_LIST(id)     ((id)->info.multi_info.id_list)
 
 struct interface_info {
     enum {
-        INTF_ASSINGMENT,  /* for assignment interface */
+        INTF_ASSIGNMENT,  /* for assignment interface */
         INTF_OPERATOR,    /* for operator (override) interface */
         INTF_USEROP,      /* for user defined operator interface */
         INTF_GENERICS,    /* for generics interface but not yet defined */
         INTF_GENERIC_FUNC,/* for generic 'functions' interface */
         INTF_GENERIC_SUBR,/* for generic 'subroutines' interface */
+        INTF_GENERIC_WRITE_FORMATTED,/* for generic 'WRITE(FORMATTED)' interface */
+        INTF_GENERIC_WRITE_UNFORMATTED,/* for generic 'WRITE(UNFORMATTED)' interface */
+        INTF_GENERIC_READ_FORMATTED,/* for generic 'READ(FORMATTED)' interface */
+        INTF_GENERIC_READ_UNFORMATTED,/* for generic 'READ(UNFORMATTED)' interface */
         INTF_DECL         /* for interface not above cases. (interface for function prottype)*/
     } class;
+    /* NOTE: the following members are used in the .mod->xmod tranformation tool */
     enum expr_code ecode; /* need it? */
     ID operatorId;        /* identifier of the operator */
     ID idlist;            /* ident implements this interface. */
@@ -483,6 +497,12 @@ typedef struct external_symbol
 #define EXT_IS_DUMMY(ep) ((ep)->isHighOrderDummy)
 #define EXT_IS_BLANK_NAME(ep) ((ep)->is_blank_name)
 #define EXT_IS_OFMODULE(ep)  ((ep)->is_ofModule)
+#define EXT_IS_DEFINED_IO(ep) (ep != NULL &&    \
+                               EXT_PROC_INTERFACE_INFO(ep) != NULL &&   \
+                               (EXT_PROC_INTERFACE_INFO(ep)->class == INTF_GENERIC_READ_FORMATTED || \
+                                EXT_PROC_INTERFACE_INFO(ep)->class == INTF_GENERIC_READ_UNFORMATTED || \
+                                EXT_PROC_INTERFACE_INFO(ep)->class == INTF_GENERIC_WRITE_FORMATTED || \
+                                EXT_PROC_INTERFACE_INFO(ep)->class == INTF_GENERIC_WRITE_UNFORMATTED))
 
 #define EXT_PROC_TYPE(ep)       ((ep)->info.proc_info.type)
 #define EXT_PROC_BODY(ep)       ((ep)->info.proc_info.body)

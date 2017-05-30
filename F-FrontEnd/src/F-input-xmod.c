@@ -2153,7 +2153,7 @@ input_typeBoundProcedure(xmlTextReaderPtr reader, HashTable * ht, ID * id)
 static int
 input_typeBoundGenericProcedure(xmlTextReaderPtr reader, HashTable * ht, ID *id)
 {
-    char * name;
+    char * name = NULL;
     char * str;
     ID binding = NULL;
     ID pass_arg = NULL;
@@ -2200,10 +2200,31 @@ input_typeBoundGenericProcedure(xmlTextReaderPtr reader, HashTable * ht, ID *id)
         binding_attr_flags |= TYPE_BOUND_PROCEDURE_IS_ASSIGNMENT;
     }
 
-#if 0 // to be solved
-    /* NOT IMPLEMENETED YET */
     str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_defined_io");
-#endif
+    if (str != NULL) {
+        if (strcmp("WRITE(FORMATTED)", str) == 0) {
+            binding_attr_flags |= TYPE_BOUND_PROCEDURE_WRITE;
+            binding_attr_flags |= TYPE_BOUND_PROCEDURE_FORMATTED;
+            name = "_write_formatted";
+
+        } else if (strcmp("WRITE(UNFORMATTED)", str) == 0) {
+            binding_attr_flags |= TYPE_BOUND_PROCEDURE_WRITE;
+            binding_attr_flags |= TYPE_BOUND_PROCEDURE_UNFORMATTED;
+            name = "_write_unformatted";
+
+        } else if (strcmp("READ(FORMATTED)", str) == 0) {
+            binding_attr_flags |= TYPE_BOUND_PROCEDURE_READ;
+            binding_attr_flags |= TYPE_BOUND_PROCEDURE_FORMATTED;
+            name = "_read_formatted";
+
+        } else if (strcmp("READ(UNFORMATTED)", str) == 0) {
+            binding_attr_flags |= TYPE_BOUND_PROCEDURE_READ;
+            binding_attr_flags |= TYPE_BOUND_PROCEDURE_UNFORMATTED;
+            name = "_read_unformatted";
+        } else {
+            return FALSE;
+        }
+    }
 
     TBP_PASS_ARG(*id) = pass_arg;
     TBP_BINDING(*id) = NULL;
@@ -2213,15 +2234,15 @@ input_typeBoundGenericProcedure(xmlTextReaderPtr reader, HashTable * ht, ID *id)
         return FALSE;
 
     while (TRUE) {
-        if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "name"))
-            return FALSE;
+        if (xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "name")) {
+            name = (char *)xmlTextReaderConstValue(reader);
+            if (!xmlSkipWhiteSpace(reader)) {
+                return FALSE;
+            }
+        }
 
-        name = (char *)xmlTextReaderConstValue(reader);
         if (name != NULL) {
             name = strdup(name);
-        }
-        if (!xmlSkipWhiteSpace(reader)) {
-            return FALSE;
         }
 
         binding = new_ident_desc(find_symbol(name));
@@ -2900,6 +2921,7 @@ input_FinterfaceDecl_in_declarations(xmlTextReaderPtr reader, HashTable * ht,
     char * name = NULL;
     char * is_operator = NULL;
     char * is_assignment = NULL;
+    char * is_defined_io = NULL;
 
     if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "FinterfaceDecl"))
         return FALSE;
@@ -2926,8 +2948,30 @@ input_FinterfaceDecl_in_declarations(xmlTextReaderPtr reader, HashTable * ht,
     }
 
     if (is_assignment != NULL) {
-        EXT_PROC_INTERFACE_CLASS(ep) = INTF_ASSINGMENT;
+        EXT_PROC_INTERFACE_CLASS(ep) = INTF_ASSIGNMENT;
         free(is_assignment);
+    }
+
+    is_defined_io = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_defined_io");
+    if (is_defined_io != NULL) {
+        if (strcmp("WRITE(FORMATTED)", is_defined_io) == 0) {
+            EXT_PROC_INTERFACE_CLASS(ep) = INTF_GENERIC_WRITE_FORMATTED;
+            name = "_write_formatted";
+        } else if (strcmp("WRITE(UNFORMATTED)", is_defined_io) == 0) {
+            EXT_PROC_INTERFACE_CLASS(ep) = INTF_GENERIC_WRITE_UNFORMATTED;
+            name = "_write_unformatted";
+        } else if (strcmp("READ(FORMATTED)", is_defined_io) == 0) {
+            EXT_PROC_INTERFACE_CLASS(ep) = INTF_GENERIC_READ_FORMATTED;
+            name = "_read_formatted";
+        } else if (strcmp("READ(UNFORMATTED)", is_defined_io) == 0) {
+            EXT_PROC_INTERFACE_CLASS(ep) = INTF_GENERIC_READ_UNFORMATTED;
+            name = "_read_unformatted";
+        } else {
+            return FALSE;
+        }
+        EXT_IS_BLANK_NAME(ep) = FALSE;
+        EXT_SYM(ep) = find_symbol(name);
+        free(is_defined_io);
     }
 
     EXT_PROC_INTERFACE_INFO(ep) =
@@ -3060,6 +3104,8 @@ input_FinterfaceDecl(xmlTextReaderPtr reader, HashTable * ht, ID id_list)
     char * name = NULL;
     char * is_operator = NULL;
     char * is_assignment = NULL;
+    char * is_defined_io = NULL;
+    int interface_class = 0;
 
     if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "FinterfaceDecl"))
         return FALSE;
@@ -3069,34 +3115,50 @@ input_FinterfaceDecl(xmlTextReaderPtr reader, HashTable * ht, ID id_list)
                                BAD_CAST "is_operator");
     is_assignment = (char *) xmlTextReaderGetAttribute(reader,
                                  BAD_CAST "is_assignment");
+    is_defined_io = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_defined_io");
 
-    if (name != NULL) {
+
+    if (is_defined_io == NULL && name != NULL) {
         id = find_ident_head(find_symbol(name), id_list);
         if (ID_CLASS(id) == CL_TAGNAME) { /* for multi class */
             id = find_ident_head(ID_SYM(id), ID_NEXT(id));
         }
+        interface_class = INTF_OPERATOR;
+        free(is_operator);
         free(name);
+    } else if (is_defined_io != NULL) {
+        if (strcmp("WRITE(FORMATTED)", is_defined_io) == 0) {
+            interface_class = INTF_GENERIC_WRITE_FORMATTED;
+            name = "_write_formatted";
+        } else if (strcmp("WRITE(UNFORMATTED)", is_defined_io) == 0) {
+            interface_class = INTF_GENERIC_WRITE_UNFORMATTED;
+            name = "_write_unformatted";
+        } else if (strcmp("READ(FORMATTED)", is_defined_io) == 0) {
+            interface_class = INTF_GENERIC_READ_FORMATTED;
+            name = "_read_formatted";
+        } else if (strcmp("READ(UNFORMATTED)", is_defined_io) == 0) {
+            interface_class = INTF_GENERIC_READ_UNFORMATTED;
+            name = "_read_unformatted";
+        } else {
+            free(is_defined_io);
+            return FALSE;
+        }
+        id = find_ident_head(find_symbol(name), id_list);
+        free(is_defined_io);
     } else {
         assert(is_assignment != NULL); /* must be assignment */
         id = find_ident_head(find_symbol("="), id_list);
+        interface_class = INTF_ASSIGNMENT;
+        free(is_assignment);
     }
 
     ep = PROC_EXT_ID(id);
     EXT_PROC_INTERFACE_INFO(ep) =
         XMALLOC(struct interface_info *, sizeof(struct interface_info));
+    EXT_PROC_INTERFACE_CLASS(ep) = interface_class;
     EXT_IS_BLANK_NAME(ep) = FALSE;
     EXT_PROC_CLASS(ep) = EP_INTERFACE;
     EXT_PROC_INTERFACE_CLASS(ep) = INTF_DECL;
-
-    if (is_operator != NULL) {
-        EXT_PROC_INTERFACE_CLASS(ep) = INTF_OPERATOR;
-        free(is_operator);
-    }
-
-    if (is_assignment != NULL) {
-        EXT_PROC_INTERFACE_CLASS(ep) = INTF_ASSINGMENT;
-        free(is_assignment);
-    }
 
     if (!xmlSkipWhiteSpace(reader))
         return FALSE;
@@ -3317,7 +3379,14 @@ input_module(xmlTextReaderPtr reader, struct module * mod, int is_intrinsic)
 }
 
 #include <stdlib.h>
+
+#if defined(_FC_IS_GFORTRAN)
 #define _XMPMOD_NAME "T_Module"
+#define _XMPMOD_LEN 8
+#elif defined(_FC_IS_FRTPX)
+#define _XMPMOD_NAME "T_FJModule"
+#define _XMPMOD_LEN 10
+#endif
 
 const char *
 search_intrinsic_include_path(const char * filename)
@@ -3374,12 +3443,21 @@ input_intermediate_file(const SYMBOL mod_name,
     }
 
     filepath = search_include_path(filename);
-
     reader = xmlNewTextReaderFilename(filepath);
 
-#if defined _MPI_FC && _MPI_FC == gfortran
+#if defined(_FC_IS_GFORTRAN) || defined(_FC_IS_FRTPX)
     // if not found, then search for "xxx.mod" and convert it into "xxx.xmod"
     if (reader == NULL){
+
+        char command2[6 + _XMPMOD_LEN];
+        bzero(command2, 6 + _XMPMOD_LEN);
+        strcpy(command2, "which ");
+	strcat(command2, _XMPMOD_NAME);
+        if (system(command2) != 0){
+	  warning("No module translator found.");
+	  return FALSE;
+	}
+
         char filename2[FILE_NAME_LEN];
         const char * filepath2;
 
@@ -3397,6 +3475,7 @@ input_intermediate_file(const SYMBOL mod_name,
         strcat(command, filepath2);
         if (system(command) != 0) return FALSE;
 
+	filepath = search_include_path(filename);
         reader = xmlNewTextReaderFilename(filepath);
     }
 #endif
