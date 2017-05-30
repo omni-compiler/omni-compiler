@@ -431,7 +431,9 @@ void _XMP_bcast_on_template(void *data_addr, int count, int size,
   }
 }
 
+#ifdef _XMPT
 extern void _XMPT_set_bcast_subsc(xmpt_subscript_t subsc, _XMP_object_ref_t *desc);
+#endif
 
 void _XMP_bcast(void *data_addr, int count, int size,
 		_XMP_object_ref_t *from_desc, _XMP_object_ref_t *on_desc)

@@ -24,7 +24,9 @@
 /*   MPI_Barrier(*((MPI_Comm *)(_XMP_get_execution_nodes())->comm)); */
 /* } */
 
+#ifdef _XMPT
 extern void _XMPT_set_bcast_subsc(xmpt_subscript_t subsc, _XMP_object_ref_t *desc);
+#endif
 
 void _XMP_barrier(_XMP_object_ref_t *desc)
 {

@@ -697,7 +697,9 @@ void _XMP_reduction_loc(int dim, void *loc, int datatype)
   _XMP_reduction_loc_types[dim] = datatype;
 }
 
+#ifdef _XMPT
 extern void _XMPT_set_bcast_subsc(xmpt_subscript_t subsc, _XMP_object_ref_t *desc);
+#endif
 
 void _XMP_reduction(void *data_addr, int count, int datatype, int op,
 		    _XMP_object_ref_t *r_desc, int num_locs)
