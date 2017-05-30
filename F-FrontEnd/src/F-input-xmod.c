@@ -2355,6 +2355,37 @@ input_value(xmlTextReaderPtr reader, HashTable * ht, expv * v)
 }
 
 /**
+ * input <namedValue> node
+ */
+static int
+input_namedValue(xmlTextReaderPtr reader, HashTable * ht, expv * v)
+{
+    if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "namedValue"))
+        return FALSE;
+    
+    char * name = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "name");
+    if (name == NULL)
+        return FALSE;
+
+    if (!xmlSkipWhiteSpace(reader))
+        return FALSE;
+
+    if (!input_expv(reader, ht, v))
+        return FALSE;
+
+    EXPV_KWOPT_NAME(*v) = strdup(name);
+    free(name);
+
+    if (!xmlMatchNode(reader, XML_READER_TYPE_END_ELEMENT, "namedValue"))
+        return FALSE;
+
+   if (!xmlSkipWhiteSpace(reader))
+        return FALSE;
+
+    return TRUE;
+}
+
+/**
  * input expv node
  */
 static int
@@ -2433,6 +2464,8 @@ input_expv(xmlTextReaderPtr reader, HashTable * ht, expv * v)
         return input_userUnaryExpr(reader, ht, v);
     if (strcmp(name, "FdoLoop") == 0)
         return input_FdoLoop(reader, ht, v);
+    if (strcmp(name, "namedValue") == 0)
+        return input_namedValue(reader, ht, v);
 
     fprintf(stderr, "unknown node \"%s\".\n", name);
 
