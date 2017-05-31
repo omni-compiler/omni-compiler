@@ -17,14 +17,6 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
-import xcodeml.XmException;
-import xcodeml.binding.XmXcodeProgram;
-import xcodeml.util.XmBindingException;
-import xcodeml.util.XmDecompiler;
-import xcodeml.util.XmOption;
-import xcodeml.util.XmToolFactory;
-import xcodeml.util.XmValidator;
-
 import org.w3c.dom.Document;
 import javax.xml.parsers.ParserConfigurationException;
 import org.xml.sax.SAXException;

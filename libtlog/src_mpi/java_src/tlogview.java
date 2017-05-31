@@ -6,11 +6,12 @@
  *  tlog viewer
  */
 
+import javax.swing.*;
 import java.awt.*;
 import java.applet.*;
 import java.io.*;
 
-public class tlogview extends Applet {
+public class tlogview extends JApplet {
   boolean isApplet = true;
   tlogPanel ep;
   Button zoomUp, zoomDown, ShowColorMap, Exit;
@@ -67,7 +68,7 @@ public class tlogview extends Applet {
       System.err.println("dump file name required...");
       System.exit(1);
     }
-    Frame f = new Frame("tlogview");
+    JFrame f = new JFrame("tlogview");
     // f.resize(600, 500);
     tlogview app = new tlogview();
     app.isApplet = false;

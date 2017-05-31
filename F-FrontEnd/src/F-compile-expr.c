@@ -3115,7 +3115,7 @@ compile_array_constructor(expr x)
     int nElems = 0;
     list lp;
     expv v, res, l;
-    TYPE_DESC tp;
+    TYPE_DESC tp = NULL;
     TYPE_DESC base_type = NULL;
     BASIC_DATA_TYPE elem_type = TYPE_UNKNOWN;
 

@@ -6,7 +6,7 @@
  */
 package xcodeml.util;
 
-import xcodeml.XmLanguage;
+import xcodeml.util.XmLanguage;
 
 /**
  * Decompile option.

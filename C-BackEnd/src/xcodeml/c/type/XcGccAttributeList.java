@@ -12,7 +12,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import xcodeml.XmException;
+import xcodeml.util.XmException;
 //import xcodeml.c.binding.gen.IRVisitable;
 //import xcodeml.c.binding.gen.XbcGccAttributes;
 import xcodeml.c.decompile.XcObj;

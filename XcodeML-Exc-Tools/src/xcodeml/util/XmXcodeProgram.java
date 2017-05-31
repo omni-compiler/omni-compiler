@@ -4,12 +4,13 @@
  *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
  *  $
  */
-package xcodeml.binding;
+//package xcodeml.binding;
+package xcodeml.util;
 
 /**
  * Represents XcodeProgram
  */
-public interface XmXcodeProgram extends IXmlElement
+public interface XmXcodeProgram 
 {
     /**
      * Get language.

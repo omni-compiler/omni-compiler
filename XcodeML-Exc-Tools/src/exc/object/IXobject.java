@@ -1,4 +1,6 @@
-package xcodeml;
+package exc.object;
+
+import xcodeml.util.ILineNo;
 
 public interface IXobject
 {

@@ -4,8 +4,13 @@
  *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
  *  $
  */
-package xcodeml.binding;
+package xcodeml.util;
 
-public interface IXbVar extends IXbVarRef
-{
+/**
+ * The Language a XcodeML decompiler decompiles to.
+ */
+public enum XmLanguage {
+    C,
+    F,
+    ;
 }

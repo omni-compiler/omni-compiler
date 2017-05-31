@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.LinkedList;
 import java.util.Queue;
 
-import xcodeml.XmException;
+import xcodeml.util.XmException;
 import xcodeml.c.obj.XcNode;
 import xcodeml.c.type.XcArrayType;
 import xcodeml.c.type.XcBaseTypeEnum;
