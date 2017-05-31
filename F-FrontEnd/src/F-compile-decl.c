@@ -4569,6 +4569,7 @@ compile_INTRINSIC_decl(id_list)
             PROC_CLASS(id) = P_INTRINSIC;
         else if(PROC_CLASS(id) != P_INTRINSIC)
             error("invalid intrinsic declaration, %s", ID_NAME(id));
+        TYPE_SET_INTRINSIC(id);
     }
 }
 
