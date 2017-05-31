@@ -1339,6 +1339,10 @@ procedure_has_pass_arg(const TYPE_DESC ftp, const SYMBOL pass_arg, const TYPE_DE
 
     /* check type */
     tp = ID_TYPE(target);
+    if (tp == NULL) {
+        return FALSE;
+    }
+
     if (type_is_unlimited_class(tp)) {
         return TRUE;
 

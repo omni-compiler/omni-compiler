@@ -4441,8 +4441,15 @@ outx_structType(int l, TYPE_DESC tp)
                 }
                 outx_close(l3, "binding");
                 outx_close(l2, "typeBoundGenericProcedure");
-            } else {
 
+            } else if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_IS_FINAL) {
+                ID final;
+                FOREACH_ID(final, TBP_BINDING(id)) {
+                    outx_tag(l2, "finalProcedure");
+                    outx_tagText(l3, "name", SYM_NAME(ID_SYM(final)));
+                    outx_close(l2, "finalProcedure");
+                }
+            } else {
                 outx_printi(l2, "<typeBoundProcedure");
                 outx_printi(0, " type=\"%s\"", getTypeID(ID_TYPE(id)));
 
