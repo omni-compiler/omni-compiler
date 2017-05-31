@@ -131,6 +131,8 @@ static void compile_ENDBLOCK_statement(expr x);
 static void compile_FORALL_statement(int st_no, expr x);
 static void compile_ENDFORALL_statement(expr x);
 
+static int check_valid_construction_name(expr x, expr y);
+
 static void unify_submodule_symbol_table(void);
 
 void init_for_OMP_pragma();
@@ -1011,30 +1013,37 @@ compile_statement1(int st_no, expr x)
             }
             expv tmp = expv_sym_term(IDENT, ID_TYPE(associate_name), 
                 ID_SYM(associate_name));
-            st = list4(F03_SELECTTYPE_STATEMENT, v, NULL, EXPR_ARG2(x), 
-                tmp);          
+            st = list4(F03_SELECTTYPE_STATEMENT, v, NULL, EXPR_ARG2(x), tmp);
           } else {
             st = list4(F03_SELECTTYPE_STATEMENT, v, NULL, EXPR_ARG2(x), NULL);
           }
-          
+
           CTL_BLOCK(ctl_top) = st;
           break;
     case F_CASELABEL_STATEMENT:
         if(CTL_TYPE(ctl_top) == CTL_SELECT  ||
            CTL_TYPE(ctl_top) == CTL_CASE) {
+            expr const_name = EXPR_ARG2(x);
+            expr parent_const_name = NULL;
 
             if (CTL_TYPE(ctl_top) == CTL_CASE) {
                 CTL_CASE_BLOCK(ctl_top) = CURRENT_STATEMENTS;
                 CURRENT_STATEMENTS = NULL;
 
-		if (endlineno_flag)
-		  EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+                if (endlineno_flag)
+                    EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+
+                parent_const_name = CTL_CASE_CONST_NAME(ctl_top);
 
                 pop_ctl();
+            } else {
+                parent_const_name = CTL_SELECT_CONST_NAME(ctl_top);
             }
 
             v = compile_scene_range_expression_list(EXPR_ARG1(x));
             push_ctl(CTL_CASE);
+
+            (void)check_valid_construction_name(parent_const_name, const_name);
 
             /*
              *  (F_CASELABEL_STATEMENT
@@ -1042,7 +1051,7 @@ compile_statement1(int st_no, expr x)
              *    (LIST (exec statement) ...)
              *    (IDENTIFIER))
              */
-            st = list3(F_CASELABEL_STATEMENT,v,NULL,EXPR_ARG2(x));
+            st = list3(F_CASELABEL_STATEMENT, v, NULL, const_name);
 
             CTL_BLOCK(ctl_top) = st;
 
@@ -1053,6 +1062,9 @@ compile_statement1(int st_no, expr x)
             if(CTL_TYPE(ctl_top) == CTL_SELECT_TYPE ||
                CTL_TYPE(ctl_top) == CTL_TYPE_GUARD)
             {
+                expr const_name = EXPR_ARG2(x);
+                expr parent_const_name = NULL;
+
                 if (CTL_TYPE(ctl_top) == CTL_TYPE_GUARD) {
                     CTL_CASE_BLOCK(ctl_top) = CURRENT_STATEMENTS;
                     CURRENT_STATEMENTS = NULL;
@@ -1060,7 +1072,13 @@ compile_statement1(int st_no, expr x)
                     if (endlineno_flag)
                          EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
                     pop_ctl();
+
+                    parent_const_name = CTL_TYPE_GUARD_CONST_NAME(ctl_top);
+                } else {
+                    parent_const_name = CTL_SELECT_CONST_NAME(ctl_top);
                 }
+
+                (void)check_valid_construction_name(parent_const_name, const_name);
 
                 push_ctl(CTL_TYPE_GUARD);
 
@@ -1070,9 +1088,9 @@ compile_statement1(int st_no, expr x)
                         error("%s has not been declared.", SYM_NAME(EXPR_SYM(EXPR_ARG1(x))));
                     }
                     expv tmp = expv_sym_term(IDENT, tp, EXPR_SYM(EXPR_ARG1(x)));
-                    st = list3(EXPR_CODE(x), tmp, NULL, EXPR_ARG2(x));
+                    st = list3(EXPR_CODE(x), tmp, NULL, const_name);
                 } else {
-                    st = list3(EXPR_CODE(x), NULL, NULL, EXPR_ARG2(x));
+                    st = list3(EXPR_CODE(x), NULL, NULL, const_name);
                 }
                 CTL_BLOCK(ctl_top) = st;
             } else {
@@ -1082,7 +1100,12 @@ compile_statement1(int st_no, expr x)
     case F_ENDSELECT_STATEMENT:
         if (CTL_TYPE(ctl_top) == CTL_SELECT ||
             CTL_TYPE(ctl_top) == CTL_SELECT_TYPE) {
+            expr const_name = EXPR_ARG2(x);
+            expr parent_const_name = NULL;
             CTL_SELECT_STATEMENT_BODY(ctl_top) = CURRENT_STATEMENTS;
+
+            parent_const_name = CTL_SELECT_CONST_NAME(ctl_top);
+            (void)check_valid_construction_name(parent_const_name, const_name);
 
             if (endlineno_flag)
                 EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
@@ -1090,7 +1113,18 @@ compile_statement1(int st_no, expr x)
             pop_ctl();
         } else if (CTL_TYPE(ctl_top) == CTL_CASE ||
                    CTL_TYPE(ctl_top) == CTL_TYPE_GUARD) {
+            expr const_name = EXPR_ARG2(x);
+            expr parent_const_name = NULL;
+
             CTL_CASE_BLOCK(ctl_top) = CURRENT_STATEMENTS;
+
+            if (CTL_TYPE(ctl_top) == CTL_CASE) {
+                parent_const_name = CTL_CASE_CONST_NAME(ctl_top);
+            } else {
+                parent_const_name = CTL_TYPE_GUARD_CONST_NAME(ctl_top);
+            }
+
+            (void)check_valid_construction_name(parent_const_name, const_name);
 
             // For previous CASE.
             if (endlineno_flag)
@@ -7777,6 +7811,25 @@ compile_CRITICAL_statement(expr x) {
 }
 
 
+static int
+check_valid_construction_name(expr x, expr y)
+{
+    if (x != NULL && y == NULL) {
+        error("expect construnct name");
+        return FALSE;
+    } else if (x == NULL && y != NULL) {
+        error("unexpected construnct name");
+        return FALSE;
+    } else if (x != NULL && y != NULL) {
+        if (EXPR_SYM(x) != EXPR_SYM(y)) {
+            error("unmatched construct name");
+            return FALSE;
+        }
+    }
+    return TRUE;
+}
+
+
 /*
  *  (F2008_ENDCRITICAL_STATEMENT expr)
  */
@@ -7788,19 +7841,8 @@ compile_ENDCRITICAL_statement(expr x) {
     }
 
     /* check construct name */
-    if (CTL_CRIT_CONST_NAME(ctl_top) != NULL && EXPR_ARG1(x) == NULL) {
-        error("expect construnct name");
+    if (!check_valid_construction_name(CTL_CRIT_CONST_NAME(ctl_top), EXPR_ARG1(x)))
         return;
-    } else if (CTL_CRIT_CONST_NAME(ctl_top) == NULL && EXPR_ARG1(x) != NULL) {
-        error("unexpected construnct name");
-        return;
-    } else if ((CTL_CRIT_CONST_NAME(ctl_top) != NULL) && EXPR_ARG1(x) != NULL) {
-        if (EXPR_SYM(CTL_CRIT_CONST_NAME(ctl_top))
-            != EXPR_SYM(EXPR_ARG1(x))) {
-            error("unmatched construct name");
-            return;
-        }
-    }
 
     if (XMP_coarray_flag) {
         replace_CALL_statement("xmpf_end_critical", NULL);

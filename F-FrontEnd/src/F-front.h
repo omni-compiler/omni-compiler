@@ -259,7 +259,11 @@ typedef struct control
 #define CTL_WHERE_ELSE(l)          (EXPR_ARG3((l)->v2))
 
 #define CTL_SELECT_STATEMENT_BODY(l)    (EXPR_ARG2((l)->v1))
-#define CTL_CASE_BLOCK(l)     (EXPR_ARG2((l)->v1))
+#define CTL_SELECT_CONST_NAME(l)        (EXPR_ARG3((l)->v1))
+#define CTL_CASE_BLOCK(l)               (EXPR_ARG2((l)->v1))
+#define CTL_CASE_CONST_NAME(l)          (EXPR_ARG3((l)->v1))
+#define CTL_TYPE_GUARD_BLOCK(l)         (EXPR_ARG2((l)->v1))
+#define CTL_TYPE_GUARD_CONST_NAME(l)    (EXPR_ARG3((l)->v1))
 
 #define CTL_OMP_ARG(l)	((l)->v2)
 #define CTL_OMP_ARG_DIR(l) (EXPR_INT(EXPR_ARG1((l)->v2)))
