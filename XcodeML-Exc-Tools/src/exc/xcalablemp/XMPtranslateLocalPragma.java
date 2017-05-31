@@ -901,6 +901,40 @@ public class XMPtranslateLocalPragma {
       }
     }
 
+    // for XMPT
+    if (XmOption.isXmptEnabled()){
+      Xobject onRef = loopDecl.getArg(1);
+
+      Ident xmptFuncId;
+      XobjList xmptArgs;
+
+      // event_loop_begin
+      xmptFuncId = _globalDecl.declExternFunc("_XMP_loop_begin");
+      xmptArgs = Xcons.List();
+
+      String onRefObjName = onRef.getArg(0).getString();
+      XMPobject onRefObj = _globalDecl.getXMPobject(onRefObjName, pb);
+      xmptArgs.add(onRefObj.getDescId().Ref());
+
+      Ident xmptDataId = pb.getParentBlock().getBody().declLocalIdent(tmpSym.getStr("xmpt_data"), Xtype.voidPtrType);
+      xmptArgs.add(xmptDataId.Ref());
+
+      for (XobjArgs i = onRef.getArg(1).getArgs(); i != null; i = i.nextArgs()){
+	//xmptArgs.add(i.getArg());
+	xmptArgs.add(Xcons.IntConstant(0));
+	xmptArgs.add(Xcons.IntConstant(0));
+	xmptArgs.add(Xcons.IntConstant(0));
+      }
+      
+      //schedBaseBlock.insert(xmptFuncId.Call(xmptArgs));
+      loopBody.insert(xmptFuncId.Call(xmptArgs));
+
+      // event_loop_end
+      xmptFuncId = _globalDecl.declExternFunc("_XMP_loop_end");
+      xmptArgs = Xcons.List(xmptDataId.Ref());
+      loopBody.add(xmptFuncId.Call(xmptArgs));
+    }
+	      
     // rewrite array refs in loop
     topdownXobjectIterator iter = new topdownXobjectIterator(getLoopBody(schedBaseBlock).toXobject());
     for (iter.init(); !iter.end(); iter.next()) {

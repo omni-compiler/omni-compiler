@@ -7,8 +7,8 @@ int xmpt_support_level[XMPT_EVENT_ALL+1] = {
   4, /* xmpt_event_task_end */
   2, /* xmpt_event_tasks_begin */
   2, /* xmpt_event_tasks_end */
-  1, /* xmpt_event_loop_begin */
-  1, /* xmpt_event_loop_end */
+  4, /* xmpt_event_loop_begin */
+  4, /* xmpt_event_loop_end */
   2, /* xmpt_event_array_begin */
   2, /* xmpt_event_array_end */
   4, /* xmpt_event_reflect_begin */
@@ -193,4 +193,3 @@ void _XMPT_set_subsc(xmpt_subscript_t subsc, _XMP_object_ref_t *desc){
     subsc->omit = 1;
   }
 }
-

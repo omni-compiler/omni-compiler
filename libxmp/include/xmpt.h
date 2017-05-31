@@ -45,6 +45,9 @@ extern int xmpt_coarray_get_gid(
 /*   xmpt_event_task_begin, */
 /*   xmpt_event_task_end, */
 
+/*   xmpt_event_loop_begin, */
+/*   xmpt_event_loop_end, */
+
 /*   xmpt_event_reflect_begin, */
 /*   xmpt_event_reflect_begin_async, */
 /*   xmpt_event_reflect_end, */
@@ -111,9 +114,6 @@ extern int xmpt_coarray_get_gid(
 /*   // 1: event may occur; no callback is possible (e.g., not yet implemented) */
 /*   // */
   
-/*   xmpt_event_loop_begin, */
-/*   xmpt_event_loop_end, */
-
 /*   XMPT_EVENT_ALL */
 /* } xmpt_event_t; */
 
