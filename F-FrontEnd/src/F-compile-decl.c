@@ -5761,14 +5761,9 @@ compile_final_statement(expr x)
 
     ID id = NULL;
     ID last_ip = NULL;
-
     list lp;
 
-    TYPE_DESC struct_tp;
-
     assert(CTL_TYPE(ctl_top) == CTL_STRUCT);
-    struct_tp = CTL_STRUCT_TYPEDESC(ctl_top);
-
     id = declare_ident(find_symbol("_final"), CL_TYPE_BOUND_PROC);
 
     FOR_ITEMS_IN_LIST(lp, id_list) {

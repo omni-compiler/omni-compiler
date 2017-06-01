@@ -3564,6 +3564,7 @@ check_final_subroutine_is_valid(ID id, TYPE_DESC stp)
     ID arg;
 
     if (id == NULL || ID_TYPE(id) == NULL) {
+        fatal("unexpected final subroutine");
         return FALSE;
     }
 
@@ -3612,6 +3613,7 @@ check_final_subroutine_is_valid(ID id, TYPE_DESC stp)
                 if (EXPV_CODE(LIST_ITEM(lp)) != LEN_SPEC_ASTERISC) {
                     error("FINAL subroutine's argument should "
                           "have an assumed length for the length parameter");
+                    return FALSE;
                 }
             }
             lp = LIST_NEXT(lp);
@@ -3622,17 +3624,12 @@ check_final_subroutine_is_valid(ID id, TYPE_DESC stp)
 }
 
 
-
 static void
 check_final_subroutines()
 {
     ID mem;
-    ID tbp;
     ID binding;
-    ID bindto;
     TYPE_DESC tp;
-    TYPE_DESC parent;
-    TYPE_DESC ftp;
 
     FOREACH_STRUCTDECLS(tp, LOCAL_STRUCT_DECLS) {
 
@@ -3647,6 +3644,8 @@ check_final_subroutines()
         }
 
         FOREACH_TYPE_BOUND_FINAL(mem, tp) {
+            ID fin1, fin2;
+
             FOREACH_ID(binding, TBP_BINDING(mem)) {
                 ID final = find_ident(ID_SYM(binding));
                 if (final == NULL) {
@@ -3656,23 +3655,17 @@ check_final_subroutines()
                 if (TBP_BINDING_ATTRS(final) & TYPE_BOUND_PROCEDURE_IS_FINAL) {
                     error("FINAL subroutine duplicate used");
                 }
-                if (!check_final_subroutine_is_valid(binding, tp)) {
+                if (!check_final_subroutine_is_valid(final, tp)) {
                     return;
                 }
                 TBP_BINDING_ATTRS(final) |= TYPE_BOUND_PROCEDURE_IS_FINAL;
                 ID_TYPE(binding) = ID_TYPE(final);
             }
-        }
 
-        FOREACH_TYPE_BOUND_FINAL(mem, tp) {
-            TYPE_DESC ftp1 = ID_TYPE(TBP_BINDING(mem));
-            ID ip;
-
-            FOREACH_ID(ip, ID_NEXT(mem)) {
-                if (ID_CLASS(ip) == CL_TYPE_BOUND_PROC &&
-                    (TBP_BINDING_ATTRS(ip) & TYPE_BOUND_PROCEDURE_IS_FINAL)) {
-                    TYPE_DESC ftp2 = ID_TYPE(TBP_BINDING(ip));
-                    if (function_type_is_compatible(ftp1, ftp2)) {
+            FOREACH_ID(binding, TBP_BINDING(mem)) {
+                fin1 = binding;
+                FOREACH_ID(fin2, ID_NEXT(fin1)) {
+                    if (function_type_is_compatible(ID_TYPE(fin1), ID_TYPE(fin2))) {
                         error("duplicate FINAL SUBROUTINE types");
                     }
                 }
@@ -4048,6 +4041,8 @@ end_procedure()
     check_procedure_variables_forall(/*is_final*/ unit_ctl_level == 0);
 
     check_type_bound_procedures();
+
+    check_final_subroutines();
 
     if (CURRENT_PROC_CLASS == CL_MODULE) {
         if(!export_module(current_module_name, LOCAL_SYMBOLS,

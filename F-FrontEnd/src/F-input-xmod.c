@@ -2270,12 +2270,10 @@ static int
 input_finalProcedure(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC stp)
 {
     char * name = NULL;
-    char * str;
     ID binding;
     ID mem;
     ID last_ip = NULL;
     ID id = NULL;
-    uint32_t binding_attr_flags = TYPE_BOUND_PROCEDURE_IS_FINAL;
 
     if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT,
                        "finalProcedure"))
