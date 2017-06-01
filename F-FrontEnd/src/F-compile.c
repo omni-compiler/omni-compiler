@@ -132,6 +132,7 @@ static void compile_FORALL_statement(int st_no, expr x);
 static void compile_ENDFORALL_statement(expr x);
 
 static int check_valid_construction_name(expr x, expr y);
+static void check_select_types(void);
 
 static void unify_submodule_symbol_table(void);
 
@@ -1064,6 +1065,7 @@ compile_statement1(int st_no, expr x)
             {
                 expr const_name = EXPR_ARG2(x);
                 expr parent_const_name = NULL;
+                expv type = NULL;
 
                 if (CTL_TYPE(ctl_top) == CTL_TYPE_GUARD) {
                     CTL_CASE_BLOCK(ctl_top) = CURRENT_STATEMENTS;
@@ -1082,16 +1084,22 @@ compile_statement1(int st_no, expr x)
 
                 push_ctl(CTL_TYPE_GUARD);
 
-                if(EXPR_ARG1(x) != NULL) { // NULL for CLASS DEFAULT
+                if (EXPR_CODE(x) == F03_TYPEIS_STATEMENT) {
+                    TYPE_DESC tp;
+                    if (EXPR_ARG1(x)) {
+                        error("TYPE IS statement requires type-spec");
+                    }
+                    tp = compile_type(EXPR_ARG1(x), /* allow_predecl=*/ FALSE);
+                    type = expv_sym_term(IDENT, tp, EXPR_SYM(EXPR_ARG1(x)));
+                } else if(EXPR_ARG1(x) != NULL) { // NULL for CLASS DEFAULT
                     TYPE_DESC tp = find_struct_decl_parent(EXPR_SYM(EXPR_ARG1(x)));
                     if(tp == NULL){
-                        error("%s has not been declared.", SYM_NAME(EXPR_SYM(EXPR_ARG1(x))));
+                        error("%s has not been declared.",
+                              SYM_NAME(EXPR_SYM(EXPR_ARG1(x))));
                     }
-                    expv tmp = expv_sym_term(IDENT, tp, EXPR_SYM(EXPR_ARG1(x)));
-                    st = list3(EXPR_CODE(x), tmp, NULL, const_name);
-                } else {
-                    st = list3(EXPR_CODE(x), NULL, NULL, const_name);
+                    type = expv_sym_term(IDENT, tp, EXPR_SYM(EXPR_ARG1(x)));
                 }
+                st = list3(EXPR_CODE(x), type, NULL, const_name);
                 CTL_BLOCK(ctl_top) = st;
             } else {
                 error("'class is/type is label', out of place");
@@ -1109,6 +1117,7 @@ compile_statement1(int st_no, expr x)
 
             if (endlineno_flag)
                 EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+
 
             pop_ctl();
         } else if (CTL_TYPE(ctl_top) == CTL_CASE ||
@@ -1144,7 +1153,9 @@ compile_statement1(int st_no, expr x)
                 EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
 
             pop_ctl();
-        } else error("'end select', out of place");
+        } else {
+            error("'end select', out of place");
+        }
         break;
 
     case F_PRAGMA_STATEMENT:
@@ -8376,5 +8387,55 @@ compile_ENDFORALL_statement(expr x)
      */
     if (CTL_TYPE(ctl_top) == CTL_BLOCK) {
         compile_ENDBLOCK_statement(list0(F2008_ENDBLOCK_STATEMENT));
+    }
+}
+
+/*
+ * Checks types of each type guard statements under SELECT TYPE construct
+ */
+static void
+check_select_types()
+{
+    expv statements;
+    expv statement1, statement2;
+    list lp1, lp2;
+    TYPE_DESC tp1, tp2;
+
+    if (CTL_TYPE(ctl_top) != CTL_SELECT_TYPE)
+        return;
+
+    statements = CTL_SELECT_STATEMENT_BODY(ctl_top);
+
+    FOR_ITEMS_IN_LIST(lp1, statements) {
+        statement1 = LIST_ITEM(lp1);
+
+        tp1 = EXPR_ARG2(statement1)?EXPV_TYPE(EXPR_ARG2(statement1)):NULL;
+
+        if (EXPR_CODE(statement1) != F03_TYPEIS_STATEMENT &&
+            EXPR_CODE(statement1) != F03_CLASSIS_STATEMENT) {
+            continue;
+        }
+
+
+        FOR_ITEMS_IN_LIST(lp2, LIST_NEXT(lp1)) {
+            statement2 = LIST_ITEM(lp2);
+            if (EXPR_CODE(statement2) != F03_TYPEIS_STATEMENT &&
+                EXPR_CODE(statement2) != F03_CLASSIS_STATEMENT) {
+                continue;
+            }
+
+            tp2 = EXPR_ARG2(statement2)?EXPV_TYPE(EXPR_ARG2(statement2)):NULL;
+
+            if (tp1 == NULL && tp2 == NULL) {
+                error("duplicate CLASS DEFAULT");
+                return;
+            }
+
+            if (EXPR_CODE(statement1) == EXPR_CODE(statement2) &&
+                type_is_strict_compatible(tp1, tp2)) {
+                error("duplicate type in SELECT TYPE construct");
+                return;
+            }
+        }
     }
 }
