@@ -741,6 +741,9 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
   reflect->hi_send_buf = hi_send_buf;
   reflect->hi_recv_buf = hi_recv_buf;
 
+  reflect->lo_rank = lo_rank;
+  reflect->hi_rank = hi_rank;
+
 }
 
 
@@ -1698,7 +1701,7 @@ static void _XMP_reflect_pack_dim(_XMP_array_t *a, int i, int *lwidth, int *uwid
   if (ai->shadow_type == _XMP_N_SHADOW_NORMAL){
 
     // for lower reflect
-    if (lwidth[i]){
+    if (lwidth[i] && reflect->hi_rank != MPI_PROC_NULL){
       _XMP_pack_vector((char *)reflect->lo_send_buf,
 		       (char *)reflect->lo_send_array,
 		       reflect->count, lwidth[i] * reflect->blocklength,
@@ -1706,7 +1709,7 @@ static void _XMP_reflect_pack_dim(_XMP_array_t *a, int i, int *lwidth, int *uwid
     }
 
     // for upper reflect
-    if (uwidth[i]){
+    if (uwidth[i] && reflect->lo_rank != MPI_PROC_NULL){
       _XMP_pack_vector((char *)reflect->hi_send_buf,
 		       (char *)reflect->hi_send_array,
 		       reflect->count, uwidth[i] * reflect->blocklength,
@@ -1743,7 +1746,7 @@ void _XMP_reflect_unpack(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_peri
     if (ai->shadow_type == _XMP_N_SHADOW_NORMAL){
 
       // for lower reflect
-      if (lwidth[i]){
+      if (lwidth[i] && reflect->lo_rank != MPI_PROC_NULL){
 	_XMP_unpack_vector((char *)reflect->lo_recv_array,
 			   (char *)reflect->lo_recv_buf,
 			   reflect->count, lwidth[i] * reflect->blocklength,
@@ -1751,7 +1754,7 @@ void _XMP_reflect_unpack(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_peri
       }
 
       // for upper reflect
-      if (uwidth[i]){
+      if (uwidth[i] && reflect->hi_rank != MPI_PROC_NULL){
 	_XMP_unpack_vector((char *)reflect->hi_recv_array,
 			   (char *)reflect->hi_recv_buf,
 			   reflect->count, uwidth[i] * reflect->blocklength,
@@ -1784,7 +1787,7 @@ static void _XMP_reflect_unpack_dim(_XMP_array_t *a, int i, int *lwidth, int *uw
   if (ai->shadow_type == _XMP_N_SHADOW_NORMAL){
 
     // for lower reflect
-    if (lwidth[i]){
+    if (lwidth[i] && reflect->lo_rank != MPI_PROC_NULL){
       _XMP_unpack_vector((char *)reflect->lo_recv_array,
 			 (char *)reflect->lo_recv_buf,
 			 reflect->count, lwidth[i] * reflect->blocklength,
@@ -1792,7 +1795,7 @@ static void _XMP_reflect_unpack_dim(_XMP_array_t *a, int i, int *lwidth, int *uw
     }
 
     // for upper reflect
-    if (uwidth[i]){
+    if (uwidth[i] && reflect->hi_rank != MPI_PROC_NULL){
       _XMP_unpack_vector((char *)reflect->hi_recv_array,
 			 (char *)reflect->hi_recv_buf,
 			 reflect->count, uwidth[i] * reflect->blocklength,
