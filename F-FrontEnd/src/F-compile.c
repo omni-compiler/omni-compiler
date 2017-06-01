@@ -3650,10 +3650,12 @@ check_final_subroutines()
                 ID final = find_ident(ID_SYM(binding));
                 if (final == NULL) {
                     error("FINAL subroutine does not exist");
+                    return;
                 }
                 /* DIRTY CODE, use type attribute for type-bound procedure as a flag */
                 if (TBP_BINDING_ATTRS(final) & TYPE_BOUND_PROCEDURE_IS_FINAL) {
                     error("FINAL subroutine duplicate used");
+                    return;
                 }
                 if (!check_final_subroutine_is_valid(final, tp)) {
                     return;
