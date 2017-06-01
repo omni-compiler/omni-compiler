@@ -5771,6 +5771,11 @@ compile_final_statement(expr x)
         if (EXPR_CODE(LIST_ITEM(lp)) != IDENT) {
             error_at_node(x, "unexpected expression");
         }
+        if (find_ident_head(EXPR_SYM(LIST_ITEM(lp)), TBP_BINDING(id)) != NULL) {
+            error_at_node(x, "%s is already used as FINAL procedure",
+                          SYM_NAME(EXPR_SYM(LIST_ITEM(lp))));
+            continue;
+        }
         binding = new_ident_desc(EXPR_SYM(LIST_ITEM(lp)));
         ID_LINK_ADD(binding, TBP_BINDING(id), last_ip);
     }
