@@ -1215,9 +1215,15 @@ compile_statement1(int st_no, expr x)
 
     case F03_TYPE_BOUND_FINAL_STATEMENT:
         if (CURRENT_STATE != IN_TYPE_BOUND_PROCS) {
-            error("TYPE-BOUND FINAL out of the derived-type declaration");
+            error("FINAL statement is out of the derived-type declaration");
+            return;
         }
-        compile_final_statement(x);
+        if (!INMODULE()) {
+            error("FINAL statement should be inside a MODULE specification part");
+            return;
+        }
+
+        compile_FINAL_statement(x);
         break;
 
     case F03_PROCEDURE_DECL_STATEMENT:

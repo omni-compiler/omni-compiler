@@ -5755,13 +5755,15 @@ compile_type_generic_procedure(expr x)
 }
 
 void
-compile_final_statement(expr x)
+compile_FINAL_statement(expr x)
 {
     expr id_list = EXPR_ARG1(x);
 
     ID id = NULL;
     ID last_ip = NULL;
     list lp;
+
+    
 
     assert(CTL_TYPE(ctl_top) == CTL_STRUCT);
     id = declare_ident(find_symbol("_final"), CL_TYPE_BOUND_PROC);
