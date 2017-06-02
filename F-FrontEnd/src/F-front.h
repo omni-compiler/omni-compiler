@@ -706,7 +706,8 @@ extern void     compile_VALUE_statement _ANSI_ARGS_((expr id_list));
 extern void     compile_procedure_declaration _ANSI_ARGS_((expr x));
 extern void     compile_type_bound_procedure _ANSI_ARGS_((expr x));
 extern void     compile_type_generic_procedure _ANSI_ARGS_((expr x));
-extern void     compile_final_statement _ANSI_ARGS_((expr x));
+extern void     compile_FINAL_statement _ANSI_ARGS_((expr x));
+#define FINALIZER_PROCEDURE "_final"
 extern void     update_type_bound_procedures_forall _ANSI_ARGS_((TYPE_DESC struct_decls, ID local_symbols));
 extern int      type_bound_procedure_type_match _ANSI_ARGS_((EXT_ID f1, EXT_ID f2, int has_pass_arg));
 extern int      is_procedure_acceptable _ANSI_ARGS_((EXT_ID proc, expv actual_args));

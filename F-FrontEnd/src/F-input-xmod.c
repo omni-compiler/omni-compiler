@@ -2274,6 +2274,7 @@ input_finalProcedure(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC stp)
     ID mem;
     ID last_ip = NULL;
     ID id = NULL;
+    SYMBOL sym = find_symbol(FINALIZER_PROCEDURE);
 
     if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT,
                        "finalProcedure"))
@@ -2290,10 +2291,10 @@ input_finalProcedure(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC stp)
         return FALSE;
     }
 
-    id = find_struct_member(stp, find_symbol("_final"));
+    id = find_struct_member(stp, sym);
     if (id == NULL) {
         ID last = NULL;
-        id = new_ident_desc(find_symbol("_final"));
+        id = new_ident_desc(sym);
         ID_LINK_ADD(id, TYPE_MEMBER_LIST(stp), last);
     }
 
@@ -2351,7 +2352,7 @@ input_typeBoundProcedures(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC str
             if (!input_typeBoundGenericProcedure(reader, ht, &mem))
                 return FALSE;
         } else if (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT,
-                                "finaleProcedure")) {
+                                "finalProcedure")) {
             if (!input_finalProcedure(reader, ht, struct_tp))
                 return FALSE;
         }
@@ -3560,5 +3561,3 @@ input_intermediate_file(const SYMBOL mod_name,
 
     return ret;
 }
-
-

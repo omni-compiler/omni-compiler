@@ -5763,10 +5763,8 @@ compile_FINAL_statement(expr x)
     ID last_ip = NULL;
     list lp;
 
-    
-
     assert(CTL_TYPE(ctl_top) == CTL_STRUCT);
-    id = declare_ident(find_symbol("_final"), CL_TYPE_BOUND_PROC);
+    id = declare_ident(find_symbol(FINALIZER_PROCEDURE), CL_TYPE_BOUND_PROC);
 
     FOR_ITEMS_IN_LIST(lp, id_list) {
         ID binding;

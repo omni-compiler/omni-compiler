@@ -3633,11 +3633,13 @@ check_final_subroutine_is_valid(ID id, TYPE_DESC stp)
 static void
 check_final_subroutines()
 {
-    ID mem;
     ID binding;
     TYPE_DESC tp;
 
+    SYMBOL sym = find_symbol(FINALIZER_PROCEDURE);
+
     FOREACH_STRUCTDECLS(tp, LOCAL_STRUCT_DECLS) {
+        ID final = NULL;
 
         if (TYPE_TAGNAME(tp) &&
             ID_USEASSOC_INFO(TYPE_TAGNAME(tp)) &&
@@ -3649,29 +3651,29 @@ check_final_subroutines()
             continue;
         }
 
-        FOREACH_TYPE_BOUND_FINAL(mem, tp) {
-            ID fin1, fin2;
+        if ((final = find_struct_member(tp, sym)) != NULL) {
+            ID fin, fin1, fin2;
 
-            FOREACH_ID(binding, TBP_BINDING(mem)) {
-                ID final = find_ident(ID_SYM(binding));
-                if (final == NULL) {
-                    error("FINAL subroutine does not exist");
+            FOREACH_ID(binding, TBP_BINDING(final)) {
+                if ((fin = find_ident(ID_SYM(binding))) == NULL) {
+                    error("FINAL subroutine %s does not exist",
+                          SYM_NAME(ID_SYM(binding)));
                     return;
                 }
                 /* DIRTY CODE, use type attribute for type-bound procedure as a flag */
-                if (TBP_BINDING_ATTRS(final) & TYPE_BOUND_PROCEDURE_IS_FINAL) {
-                    error("FINAL subroutine duplicate used");
+                if (TBP_BINDING_ATTRS(fin) & TYPE_BOUND_PROCEDURE_IS_FINAL) {
+                    error("FINAL subroutine %s used duplicately",
+                          SYM_NAME(ID_SYM(fin)));
                     return;
                 }
-                if (!check_final_subroutine_is_valid(final, tp)) {
+                if (!check_final_subroutine_is_valid(fin, tp)) {
                     return;
                 }
-                TBP_BINDING_ATTRS(final) |= TYPE_BOUND_PROCEDURE_IS_FINAL;
-                ID_TYPE(binding) = ID_TYPE(final);
+                TBP_BINDING_ATTRS(fin) |= TYPE_BOUND_PROCEDURE_IS_FINAL;
+                ID_TYPE(binding) = ID_TYPE(fin);
             }
 
-            FOREACH_ID(binding, TBP_BINDING(mem)) {
-                fin1 = binding;
+            FOREACH_ID(fin1, TBP_BINDING(final)) {
                 FOREACH_ID(fin2, ID_NEXT(fin1)) {
                     if (function_type_is_compatible(ID_TYPE(fin1), ID_TYPE(fin2))) {
                         error("duplicate FINAL SUBROUTINE types");
