@@ -1672,6 +1672,21 @@ public class XfDecompileDomVisitor {
         }
     }
 
+    class FinalProcedureVisitor extends XcodeNodeVisitor {
+        @Override public void enter(Node n) {
+            XmfWriter writer = _context.getWriter();
+
+            writer.writeToken("FINAL");
+            writer.writeToken("::");
+
+            Node nameNode = XmDomUtil.getElement(n, "name");
+            String name = XmDomUtil.getContentText(nameNode);
+            writer.writeToken(name);
+
+            writer.setupNewLine();
+        }
+    }
+
     // globalSymbols
     class GlobalSymbolsVisitor extends XcodeNodeVisitor {
         /**
@@ -7015,6 +7030,7 @@ public class XfDecompileDomVisitor {
         new Pair("typeBoundProcedures", new TypeBoundProceduresVisitor()),
         new Pair("typeBoundProcedure", new TypeBoundProcedureVisitor()),
         new Pair("typeBoundGenericProcedure", new TypeBoundGenericProcedureVisitor()),
+        new Pair("finalProcedure", new FinalProcedureVisitor()),
         new Pair("globalSymbols", new GlobalSymbolsVisitor()),
         new Pair("globalDeclarations", new GlobalDeclarationsVisitor()),
         new Pair("alloc", new AllocVisitor()),

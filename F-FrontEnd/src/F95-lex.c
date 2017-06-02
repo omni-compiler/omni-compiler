@@ -3905,6 +3905,7 @@ struct keyword_token keywords[ ] =
     { "error",          KW_ERROR },      /* #060 coarray */
     { "external",       EXTERNAL  },
     { "extends",        EXTENDS  },      /* F2003 spec */
+    { "final",          FINAL },         /* F2003 spec */
     { "format",         FORMAT  },
     { "formatted",      FORMATTED  },    /* F2003 spec */
     { "function",       FUNCTION  },

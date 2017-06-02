@@ -1213,6 +1213,19 @@ compile_statement1(int st_no, expr x)
         compile_type_generic_procedure(x);
         break;
 
+    case F03_TYPE_BOUND_FINAL_STATEMENT:
+        if (CURRENT_STATE != IN_TYPE_BOUND_PROCS) {
+            error("FINAL statement is out of the derived-type declaration");
+            return;
+        }
+        if (!INMODULE()) {
+            error("FINAL statement should be inside a MODULE specification part");
+            return;
+        }
+
+        compile_FINAL_statement(x);
+        break;
+
     case F03_PROCEDURE_DECL_STATEMENT:
         if (CURRENT_STATE == IN_TYPE_PARAM_DECL) {
             CURRENT_STATE = INDCL;
@@ -2507,9 +2520,9 @@ end_declaration()
             if (TYPE_IS_ALLOCATABLE(tp) &&
                 !(IS_ARRAY_TYPE(tp) ||
                   TYPE_IS_COINDEXED(tp) ||
-                  TYPE_IS_CLASS(tp) ||
+                  IS_STRUCT_TYPE(tp) ||
                   (IS_CHAR(tp) && IS_CHAR_LEN_ALLOCATABLE(tp)))) {
-                error_at_id(ip, "ALLOCATABLE is applied only to array/coarray/class/character(:)");
+                error_at_id(ip, "ALLOCATABLE is applied only to array/coarray/derived-type/character(:)");
             } else if (TYPE_IS_OPTIONAL(tp) && !(ID_IS_DUMMY_ARG(ip))) {
                 warning_at_id(ip, "OPTIONAL is applied only "
                               "to dummy argument");
@@ -3549,6 +3562,129 @@ check_type_bound_procedures()
     }
 }
 
+static int
+check_final_subroutine_is_valid(ID id, TYPE_DESC stp)
+{
+    TYPE_DESC tp;
+    TYPE_DESC ftp;
+    ID arg;
+
+    if (id == NULL || ID_TYPE(id) == NULL) {
+        fatal("unexpected final subroutine");
+        return FALSE;
+    }
+
+    ftp = ID_TYPE(id);
+
+    if (!IS_SUBR(ftp)) {
+        error("FINAL subroutine should be a subroutine");
+        return FALSE;
+    }
+
+    arg = FUNCTION_TYPE_ARGS(ftp);
+
+    if (arg == NULL) {
+        error("FINAL subroutine should have one argument");
+        return FALSE;
+    }
+
+    if (ID_NEXT(arg) != NULL) {
+        error("FINAL subroutine has too many argument");
+        return FALSE;
+    }
+
+    tp = ID_TYPE(arg);
+    if (tp == NULL || get_bottom_ref_type(tp) != stp) {
+        error("FINAL subroutine's argument should "
+              "be the derived type");
+        return FALSE;
+    }
+
+    if (TYPE_IS_POINTER(tp) ||
+        TYPE_IS_ALLOCATABLE(tp) ||
+        TYPE_IS_CLASS(tp) ||
+        TYPE_IS_VALUE(tp) ||
+        TYPE_IS_INTENT_OUT(tp)) {
+        error("FINAL subroutine's argument should "
+              "not be POINTER/ALLOCATABLE/CLASS/VALUE/INTENT(OUT)");
+        return FALSE;
+    }
+
+    if (TYPE_HAS_TYPE_PARAMS(tp)) {
+        ID ip;
+
+        list lp = EXPR_LIST(TYPE_TYPE_PARAM_VALUES(tp));
+        FOREACH_ID(ip, TYPE_TYPE_PARAMS(stp)) {
+            if (ID_TYPE(ip) != NULL && TYPE_IS_LEN(ID_TYPE(ip))) {
+                if (EXPV_CODE(LIST_ITEM(lp)) != LEN_SPEC_ASTERISC) {
+                    error("FINAL subroutine's argument should "
+                          "have an assumed length for the length parameter");
+                    return FALSE;
+                }
+            }
+            lp = LIST_NEXT(lp);
+        }
+    }
+
+    return TRUE;
+}
+
+
+static void
+check_final_subroutines()
+{
+    ID binding;
+    TYPE_DESC tp;
+
+    SYMBOL sym = find_symbol(FINALIZER_PROCEDURE);
+
+    FOREACH_STRUCTDECLS(tp, LOCAL_STRUCT_DECLS) {
+        ID final = NULL;
+
+        if (TYPE_TAGNAME(tp) &&
+            ID_USEASSOC_INFO(TYPE_TAGNAME(tp)) &&
+            current_module_name != ID_MODULE_NAME(TYPE_TAGNAME(tp))) {
+            /*
+             * This derived-type is defined in the other module,
+             * skip check.
+             */
+            continue;
+        }
+
+        if ((final = find_struct_member(tp, sym)) != NULL) {
+            ID fin, fin1, fin2;
+
+            FOREACH_ID(binding, TBP_BINDING(final)) {
+                if ((fin = find_ident(ID_SYM(binding))) == NULL) {
+                    error("FINAL subroutine %s does not exist",
+                          SYM_NAME(ID_SYM(binding)));
+                    return;
+                }
+                /* DIRTY CODE, use type attribute for type-bound procedure as a flag */
+                if (TBP_BINDING_ATTRS(fin) & TYPE_BOUND_PROCEDURE_IS_FINAL) {
+                    error("FINAL subroutine %s used duplicately",
+                          SYM_NAME(ID_SYM(fin)));
+                    return;
+                }
+                if (!check_final_subroutine_is_valid(fin, tp)) {
+                    return;
+                }
+                TBP_BINDING_ATTRS(fin) |= TYPE_BOUND_PROCEDURE_IS_FINAL;
+                ID_TYPE(binding) = ID_TYPE(fin);
+            }
+
+            FOREACH_ID(fin1, TBP_BINDING(final)) {
+                FOREACH_ID(fin2, ID_NEXT(fin1)) {
+                    if (function_type_is_compatible(ID_TYPE(fin1), ID_TYPE(fin2))) {
+                        error("duplicate FINAL SUBROUTINE types");
+                    }
+                }
+            }
+        }
+    }
+}
+
+
 /* end of procedure. generate variables, epilogs, and prologs */
 static void
 end_procedure()
@@ -3915,6 +4051,8 @@ end_procedure()
     check_procedure_variables_forall(/*is_final*/ unit_ctl_level == 0);
 
     check_type_bound_procedures();
+
+    check_final_subroutines();
 
     if (CURRENT_PROC_CLASS == CL_MODULE) {
         if(!export_module(current_module_name, LOCAL_SYMBOLS,

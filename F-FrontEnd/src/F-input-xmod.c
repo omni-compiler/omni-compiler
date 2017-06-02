@@ -2267,6 +2267,65 @@ input_typeBoundGenericProcedure(xmlTextReaderPtr reader, HashTable * ht, ID *id)
 
 
 static int
+input_finalProcedure(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC stp)
+{
+    char * name = NULL;
+    ID binding;
+    ID mem;
+    ID last_ip = NULL;
+    ID id = NULL;
+    SYMBOL sym = find_symbol(FINALIZER_PROCEDURE);
+
+    if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT,
+                       "finalProcedure"))
+        return FALSE;
+
+    if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "name"))
+        return FALSE;
+
+    name = (char *)xmlTextReaderConstValue(reader);
+    if (name != NULL) {
+        name = strdup(name);
+    }
+    if (!xmlSkipWhiteSpace(reader)) {
+        return FALSE;
+    }
+
+    id = find_struct_member(stp, sym);
+    if (id == NULL) {
+        ID last = NULL;
+        id = new_ident_desc(sym);
+        ID_LINK_ADD(id, TYPE_MEMBER_LIST(stp), last);
+    }
+
+    if (xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "name")) {
+        name = (char *)xmlTextReaderConstValue(reader);
+        if (!xmlSkipWhiteSpace(reader)) {
+            return FALSE;
+        }
+    }
+
+    if (name != NULL) {
+        name = strdup(name);
+    }
+
+    binding = new_ident_desc(find_symbol(name));
+    FOREACH_ID(mem, TBP_BINDING(id)) {
+        last_ip = mem;
+    }
+    ID_LINK_ADD(binding, TBP_BINDING(id), last_ip);
+
+    if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "name"))
+        return FALSE;
+
+    if (!xmlMatchNode(reader, XML_READER_TYPE_END_ELEMENT, "finalProcedure"))
+        return FALSE;
+
+    return TRUE;
+}
+
+
+static int
 input_typeBoundProcedures(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC struct_tp)
 {
     ID mem = NULL;
@@ -2291,6 +2350,10 @@ input_typeBoundProcedures(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC str
         } else if (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT,
                                 "typeBoundGenericProcedure")) {
             if (!input_typeBoundGenericProcedure(reader, ht, &mem))
+                return FALSE;
+        } else if (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT,
+                                "finalProcedure")) {
+            if (!input_finalProcedure(reader, ht, struct_tp))
                 return FALSE;
         }
 
@@ -3500,5 +3563,3 @@ input_intermediate_file(const SYMBOL mod_name,
 
     return ret;
 }
-
-
