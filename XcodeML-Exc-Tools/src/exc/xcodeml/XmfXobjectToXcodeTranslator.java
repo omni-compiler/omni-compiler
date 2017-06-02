@@ -8,6 +8,8 @@ package exc.xcodeml;
 
 import static xcodeml.util.XmLog.fatal;
 import static xcodeml.util.XmLog.fatal_dump;
+import xcodeml.util.XmDomUtil;
+import xcodeml.util.ILineNo;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,32 +24,13 @@ import java.util.Set;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
-import xcodeml.ILineNo;
-import xcodeml.IXobject;
-import xcodeml.util.XmDomUtil;
-import exc.object.BasicType;
-import exc.object.Ident;
-import exc.object.Xcode;
-import exc.object.Xcons;
-import exc.object.XobjBool;
-import exc.object.XobjConst;
-import exc.object.XobjInt;
-import exc.object.XobjContainer;
-import exc.object.XobjList;
-import exc.object.XobjLong;
-import exc.object.XobjString;
-import exc.object.Xobject;
-import exc.object.XobjectDef;
-import exc.object.XobjectDefEnv;
-import exc.object.XobjectFile;
-import exc.object.XobjectIterator;
-import exc.object.Xtype;
-import exc.object.CompositeType;
-import exc.object.StructType;
-import exc.object.topdownXobjectIterator;
+import exc.object.*;
 import exc.openmp.OMPpragma;
 
 
+/**
+ * convert Xobject/F to XcodeML(DOM)/F
+ */
 public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
     private XcodeMLNameTable_F nameTable = new XcodeMLNameTable_F();
 

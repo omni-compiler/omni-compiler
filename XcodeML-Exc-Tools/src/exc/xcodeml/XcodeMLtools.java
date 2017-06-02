@@ -9,11 +9,8 @@ import javax.xml.parsers.*;
 import javax.xml.transform.dom.*;
 import exc.object.*;
 
-import xcodeml.IXobject;
-
 import static xcodeml.util.XmDomUtil.getElement;
 import static xcodeml.util.XmDomUtil.getAttr;
-
 
 /**
  * basse tools class for XcodeML

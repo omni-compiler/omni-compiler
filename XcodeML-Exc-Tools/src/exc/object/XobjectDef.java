@@ -11,8 +11,7 @@ import java.util.List;
 
 import exc.util.XobjectVisitable;
 import exc.util.XobjectVisitor;
-import xcodeml.ILineNo;
-import xcodeml.IXobject;
+import xcodeml.util.ILineNo;
 import xcodeml.util.XmLog;
 import xcodeml.util.XmOption;
 
