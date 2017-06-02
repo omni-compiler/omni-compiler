@@ -6,11 +6,11 @@
  */
 package xcodeml.c.util;
 
-import xcodeml.XmException;
+import xcodeml.util.XmException;
 //import xcodeml.c.binding.gen.XbcLonglongConstant;
+//import xcodeml.util.XmBindingException;
 import xcodeml.c.decompile.XcConstObj;
 import xcodeml.c.type.XcBaseTypeEnum;
-import xcodeml.util.XmBindingException;
 import xcodeml.util.XmStringUtil;
 
 public class XmcBindingUtil

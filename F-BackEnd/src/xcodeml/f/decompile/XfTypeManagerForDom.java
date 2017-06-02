@@ -10,7 +10,7 @@ import java.util.*;
 
 import org.w3c.dom.Node;
 
-import xcodeml.XmException;
+import xcodeml.util.XmException;
 import xcodeml.util.XmDomUtil;
 
 /**

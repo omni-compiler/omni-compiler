@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import exc.object.XobjectFile;
+import exc.object.IXobject;
 
 import exc.openacc.ACC;
 import exc.openacc.AccDevice;
@@ -27,14 +28,13 @@ import exc.xcodeml.XcodeMLtools;
 import exc.xcodeml.XcodeMLtools_F;
 import exc.xcodeml.XcodeMLtools_Fmod;
 import exc.xcodeml.XcodeMLtools_C;
-import xcodeml.IXobject;
-import xcodeml.XmLanguage;
-import xcodeml.binding.XmXcodeProgram;
+
 import xcodeml.util.*;
 
 import exc.xcodeml.XmXobjectToXcodeTranslator;
 import exc.xcodeml.XmfXobjectToXcodeTranslator;
 import exc.xcodeml.XmcXobjectToXcodeTranslator;
+
 import org.w3c.dom.Document;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.TransformerConfigurationException;
@@ -43,7 +43,6 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import xcodeml.XmException;
 
 /**
  * OpenMP-supported XcodeML to XcodeML translator

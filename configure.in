@@ -2278,7 +2278,7 @@ fi
 AC_SUBST(ONESIDED_LIB)
 
 #--------------------------------------------------------------------
-AC_CONFIG_FILES(XcodeML-Common/Makefile)
+# AC_CONFIG_FILES(XcodeML-Common/Makefile)
 AC_CONFIG_FILES(C-FrontEnd/src/Makefile)
 AC_CONFIG_FILES(C-BackEnd/Makefile)
 AC_CONFIG_FILES(F-FrontEnd/src/Makefile)

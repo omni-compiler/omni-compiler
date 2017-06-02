@@ -6,7 +6,7 @@
  */
 package xcodeml.c.decompile;
 
-import xcodeml.XmException;
+import xcodeml.util.XmException;
 import xcodeml.c.util.XmcWriter;
 
 /**

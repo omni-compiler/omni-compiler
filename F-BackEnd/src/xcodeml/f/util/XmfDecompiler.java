@@ -13,8 +13,8 @@ import java.util.List;
 import java.util.ArrayList;
 import org.w3c.dom.Document;
 
-import xcodeml.XmException;
-import xcodeml.binding.XmXcodeProgram;
+import xcodeml.util.XmException;
+import xcodeml.util.XmXcodeProgram;
 // import xcodeml.f.binding.gen.XbfXcodeProgram;
 // import xcodeml.f.binding.gen.XcodeML_FFactory;
 // import xcodeml.f.decompile.XfDecompileVisitor;

@@ -8,14 +8,7 @@
 
 package exc.xcodeml;
 
-
-import static xcodeml.util.XmDomUtil.collectChildNodes;
-import static xcodeml.util.XmDomUtil.collectElementsExclude;
-import static xcodeml.util.XmDomUtil.getAttr;
-import static xcodeml.util.XmDomUtil.getAttrBool;
-import static xcodeml.util.XmDomUtil.getContent;
-import static xcodeml.util.XmDomUtil.getContentText;
-import static xcodeml.util.XmDomUtil.getElement;
+import static xcodeml.util.XmDomUtil.*;
 import org.w3c.dom.*;
 
 import java.io.Reader;
@@ -26,36 +19,12 @@ import java.util.Stack;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import xcodeml.c.decompile.XcConstObj;
-import xcodeml.c.util.XmcBindingUtil;
+// import xcodeml.c.decompile.XcConstObj;
+// import xcodeml.c.util.XmcBindingUtil;
 import xcodeml.util.XmStringUtil;
-import exc.object.ArrayType;
-import exc.object.BasicType;
-import exc.object.EnumType;
-import exc.object.FunctionType;
-import exc.object.Ident;
-import exc.object.PointerType;
-import exc.object.StorageClass;
-import exc.object.StructType;
-import exc.object.UnionType;
-import exc.object.VarScope;
-import exc.object.Xcode;
-import exc.object.Xcons;
-import exc.object.XmpCoArrayType;
-import exc.object.XobjArgs;
-import exc.object.XobjList;
-import exc.object.XobjString;
-import exc.object.Xobject;
-import exc.object.XobjectFile;
-import exc.object.Xtype;
+import xcodeml.util.XmLongLongConst;
 
-import static xcodeml.util.XmDomUtil.getElement;
-import static xcodeml.util.XmDomUtil.getAttr;
-import static xcodeml.util.XmDomUtil.getContent;
-import static xcodeml.util.XmDomUtil.getContentText;
-import static xcodeml.util.XmDomUtil.getAttrBool;
-import static xcodeml.util.XmDomUtil.collectChildNodes;
-import static xcodeml.util.XmDomUtil.collectElementsExclude;
+import exc.object.*;
 
 /**
  * tools for XcodeML/C to Xcode translation.
@@ -281,16 +250,15 @@ public class XcodeMLtools_C extends XcodeMLtools {
 			 getContentText(n));
 
     case LONGLONG_CONSTANT: {
-      XcConstObj.LongLongConst llConst =
-	XmcBindingUtil.createLongLongConst(getContentText(n),
-					   typeId);
-      if (llConst == null) {
-	fatal("Invalid long long value");
-      }
-      return Xcons.Long(code,
-			type,
-			llConst.getHigh(),
-			llConst.getLow());
+        XmLongLongConst llConst =
+            XmLongLongConst.createLongLongConst(getContentText(n));
+        if (llConst == null) {
+            fatal("Invalid long long value");
+        }
+        return Xcons.Long(code,
+                          type,
+                          llConst.getHigh(),
+                          llConst.getLow());
     }
 
     case MOE_CONSTANT:
@@ -1048,9 +1016,9 @@ public class XcodeMLtools_C extends XcodeMLtools {
 
    */
   private int getAsCInt(String str) {
-    return XmStringUtil.getAsCInt(null, str);
+    return XmStringUtil.getAsCInt(str);
   }
   private long getAsCLong(String str) {
-    return XmStringUtil.getAsCLong(null, str);
+    return XmStringUtil.getAsCLong(str);
   }
 }

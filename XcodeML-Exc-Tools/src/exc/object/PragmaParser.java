@@ -7,7 +7,7 @@
 package exc.object;
 
 import exc.openmp.OMPpragmaParser;
-import xcodeml.XmException;
+import xcodeml.util.XmException;
 
 import java.util.Stack;
 
