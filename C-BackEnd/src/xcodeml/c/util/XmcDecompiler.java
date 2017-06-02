@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.ArrayList;
 import org.w3c.dom.Document;
 
-import xcodeml.XmException;
+import xcodeml.util.XmException;
 // import xcodeml.binding.XmXcodeProgram;
 // import xcodeml.c.binding.gen.XbcXcodeProgram;
 // import xcodeml.c.binding.gen.XcodeML_CFactory;

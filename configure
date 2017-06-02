@@ -10305,14 +10305,9 @@ fi
 
 
 
-    # Workaround for Cray CC >8.5. Version is printed on stderr now.
-    if test "$CRAY" = "$TRUE"; then
-      chk=`${MPI_CC} -V 2>&1 | head -n1`
-    else
-      chk=`${MPI_CC} --version | head -n1`
-    fi
+    chk=`${MPI_CC} --version | head -n1`
     case $chk in
-       gcc* | Apple*)
+       gcc* | Apple* | cc*)
 	    # OpenMP
 	    OPENMP_OPT_C="-fopenmp"
 
@@ -10332,26 +10327,6 @@ fi
 	    # Omni Common
 	    OMNI_X2X_FLAGS="-gnu"
 	    ;;
-       Cray* | cc*)
-           # OpenMP
-           OPENMP_OPT_C="-h omp"
-
-           # XcalableMP
-           XMPC_DEF="-D_XCALABLEMP"
-
-           # MPI C
-           MPI_CPPFLAGS="-E -std=c99"
-           MPI_CFLAGS="-O2 -std=c99 -Wall -Wpointer-arith $OPENMP_OPT_C"
-           MPI_CLIBS=""
-
-           # Omni C
-           OMNI_C2X_FLAGS=""
-           OMNI_NTV_CFLAGS="-std=c99 -lm"
-           OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT_C"
-
-           # Omni Common
-           OMNI_X2X_FLAGS="-gnu"
-           ;;
 	*ICC*)
 	    # OpenMP
 	    OPENMP_OPT_C="-fopenmp"
@@ -13055,8 +13030,7 @@ fi
 
 
 #--------------------------------------------------------------------
-ac_config_files="$ac_config_files XcodeML-Common/Makefile"
-
+# AC_CONFIG_FILES(XcodeML-Common/Makefile)
 ac_config_files="$ac_config_files C-FrontEnd/src/Makefile"
 
 ac_config_files="$ac_config_files C-BackEnd/Makefile"
@@ -13857,7 +13831,6 @@ do
     "modify-config") CONFIG_COMMANDS="$CONFIG_COMMANDS modify-config" ;;
     "includes") CONFIG_COMMANDS="$CONFIG_COMMANDS includes" ;;
     "depend") CONFIG_COMMANDS="$CONFIG_COMMANDS depend" ;;
-    "XcodeML-Common/Makefile") CONFIG_FILES="$CONFIG_FILES XcodeML-Common/Makefile" ;;
     "C-FrontEnd/src/Makefile") CONFIG_FILES="$CONFIG_FILES C-FrontEnd/src/Makefile" ;;
     "C-BackEnd/Makefile") CONFIG_FILES="$CONFIG_FILES C-BackEnd/Makefile" ;;
     "F-FrontEnd/src/Makefile") CONFIG_FILES="$CONFIG_FILES F-FrontEnd/src/Makefile" ;;

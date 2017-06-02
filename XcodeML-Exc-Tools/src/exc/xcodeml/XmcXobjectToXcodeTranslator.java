@@ -2,26 +2,16 @@ package exc.xcodeml;
 
 import static xcodeml.util.XmLog.fatal;
 import static xcodeml.util.XmLog.fatal_dump;
+import xcodeml.util.ILineNo;
 
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
-import xcodeml.ILineNo;
-import exc.object.BasicType;
-import exc.object.Ident;
-import exc.object.StorageClass;
-import exc.object.Xcode;
-import exc.object.Xcons;
-import exc.object.XobjList;
-import exc.object.XobjInt;
-import exc.object.XobjString;
-import exc.object.Xobject;
-import exc.object.XobjectDef;
-import exc.object.XobjectDefEnv;
-import exc.object.Xtype;
-import exc.object.CompositeType;
-import exc.object.StructType;
+import exc.object.*;
 
+/**
+ * convert Xobject/C to XcodeML(DOM)/C
+ */
 public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
     private XcodeMLNameTable_C nameTable = new XcodeMLNameTable_C();
 

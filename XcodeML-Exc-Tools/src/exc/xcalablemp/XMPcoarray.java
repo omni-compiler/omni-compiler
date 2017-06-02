@@ -2,7 +2,6 @@ package exc.xcalablemp;
 
 import exc.object.*;
 import exc.block.*;
-import xcodeml.IXobject;
 import java.util.Vector;
 
 public class XMPcoarray {

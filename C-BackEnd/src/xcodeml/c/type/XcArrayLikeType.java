@@ -9,7 +9,7 @@ package xcodeml.c.type;
 import java.util.Set;
 import java.util.HashSet;
 
-import xcodeml.XmException;
+import xcodeml.util.XmException;
 //import xcodeml.c.binding.gen.IRVisitable;
 import xcodeml.c.decompile.XcConstObj;
 import xcodeml.c.decompile.XcExprObj;

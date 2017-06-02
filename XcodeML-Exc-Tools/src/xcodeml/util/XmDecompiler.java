@@ -10,8 +10,8 @@ import java.io.Reader;
 import java.io.Writer;
 import org.w3c.dom.Document;
 
-import xcodeml.XmException;
-import xcodeml.binding.XmXcodeProgram;
+import xcodeml.util.XmException;
+import xcodeml.util.XmXcodeProgram;
 
 /**
  * The interface for XcodeML decompiler.

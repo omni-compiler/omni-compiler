@@ -17,7 +17,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
-import xcodeml.XmException;
+import xcodeml.util.XmException;
+
 import exc.object.Ident;
 import exc.object.XobjList;
 import exc.object.Xobject;

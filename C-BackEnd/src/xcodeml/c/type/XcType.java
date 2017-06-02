@@ -10,7 +10,7 @@ import java.util.Stack;
 import java.util.List;
 import java.util.ArrayList;
 
-import xcodeml.XmException;
+import xcodeml.util.XmException;
 import xcodeml.c.decompile.XcObj;
 import xcodeml.c.util.XmcWriter;
 

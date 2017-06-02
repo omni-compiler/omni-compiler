@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
 
-import xcodeml.XmException;
+import xcodeml.util.XmException;
 import xcodeml.c.util.XcLazyVisitor;
 
 /**

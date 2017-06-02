@@ -6,10 +6,11 @@
  */
 package xcodeml.util;
 
-import xcodeml.ILineNo;
-import xcodeml.IXobject;
-import xcodeml.XmObj;
-import xcodeml.binding.IXbLineNo;
+import xcodeml.util.ILineNo;
+import exc.object.IXobject;
+
+// import xcodeml.binding.IXbLineNo;
+// import xcodeml.XmObj;
 
 public class XmLog
 {
@@ -35,10 +36,10 @@ public class XmLog
         printlnToErr("warn: " + s);
     }
     
-    public static void warning(XmObj xmobj, String s)
-    {
-        warning(wrapLocation(xmobj, s));
-    }
+    // public static void warning(XmObj xmobj, String s)
+    // {
+    //     warning(wrapLocation(xmobj, s));
+    // }
     
     public static void warning(ILineNo lineNo, String s)
     {
@@ -69,17 +70,17 @@ public class XmLog
             e.printStackTrace();
     }
     
-    public static void error(XmObj xmobj, String s)
-    {
-        error(wrapLocation(xmobj, s));
-    }
+    // public static void error(XmObj xmobj, String s)
+    // {
+    //     error(wrapLocation(xmobj, s));
+    // }
     
-    public static void error(XmObj xmobj, Exception e)
-    {
-        error(wrapLocation(xmobj, getExceptionMessage(e)));
-        if(XmOption.isDebugOutput())
-            e.printStackTrace();
-    }
+    // public static void error(XmObj xmobj, Exception e)
+    // {
+    //     error(wrapLocation(xmobj, getExceptionMessage(e)));
+    //     if(XmOption.isDebugOutput())
+    //         e.printStackTrace();
+    // }
     
     public static void fatal(String s)
     {
@@ -107,10 +108,10 @@ public class XmLog
         Thread.dumpStack();
     }
     
-    public static void fatal(XmObj xmobj, String s)
-    {
-        fatal(wrapLocation(xmobj, s));
-    }
+    // public static void fatal(XmObj xmobj, String s)
+    // {
+    //     fatal(wrapLocation(xmobj, s));
+    // }
     
     public static void fatal(ILineNo lineNo, String s)
     {
@@ -128,30 +129,30 @@ public class XmLog
         printlnToOut(s);
     }
     
-    private static String getLeadText(XmObj xmobj)
-    {
-        if(xmobj == null)
-            return "";
+    // private static String getLeadText(XmObj xmobj)
+    // {
+    //     if(xmobj == null)
+    //         return "";
         
-        StringBuffer buf = new StringBuffer();
-        xmobj.makeTextElement(buf);
-        String s = buf.toString();
-        buf = null;
-        final int maxlen = 20;
-        int len = (s.length() < maxlen) ? s.length() : maxlen;
-        return s.substring(0, len);
-    }
+    //     StringBuffer buf = new StringBuffer();
+    //     xmobj.makeTextElement(buf);
+    //     String s = buf.toString();
+    //     buf = null;
+    //     final int maxlen = 20;
+    //     int len = (s.length() < maxlen) ? s.length() : maxlen;
+    //     return s.substring(0, len);
+    // }
     
-    private static String wrapLocation(XmObj xmobj, String s)
-    {
-        if(xmobj instanceof IXbLineNo) {
-            IXbLineNo lineno = (IXbLineNo)xmobj;
-            return ((lineno.getFile() != null ? lineno.getFile() : "") + ":" +
-                lineno.getLineno() + ": " + s);
-        } else {
-            return (s + "at " + getLeadText(xmobj));
-        }
-    }
+    // private static String wrapLocation(XmObj xmobj, String s)
+    // {
+    //     if(xmobj instanceof IXbILineNo) {
+    //         IXbLineNo lineno = (IXbLineNo)xmobj;
+    //         return ((lineno.getFile() != null ? lineno.getFile() : "") + ":" +
+    //             lineno.getLineno() + ": " + s);
+    //     } else {
+    //         return (s + "at " + getLeadText(xmobj));
+    //     }
+    // }
 
     private static String wrapLocation(ILineNo lineno, String s)
     {

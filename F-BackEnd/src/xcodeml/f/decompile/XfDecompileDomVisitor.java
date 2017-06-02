@@ -17,7 +17,7 @@ import javax.xml.transform.Transformer;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
-import xcodeml.XmException;
+import xcodeml.util.XmException;
 import xcodeml.f.util.XmfNodeVisitorMap;
 import xcodeml.f.util.XmfWriter;
 import xcodeml.f.util.XmfNodeVisitorMap.Pair;

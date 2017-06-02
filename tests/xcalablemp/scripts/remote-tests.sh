@@ -1,13 +1,8 @@
 #!/bin/bash -x
 
 ## Check arguments
-if test -z $1; then
-    echo "make remote-test (user name)"
-    exit 1
-else
-    USER=$1
-    echo "User name is ${USER}"
-fi
+USER=$1
+[ "$2" = short ] && SHORT_FLAG=TRUE || SHORT_FLAG=FALSE
 
 ## Set static arguments
 PWD=`pwd`
@@ -36,7 +31,7 @@ MPICH_PATH=/opt/mpich
 ## Clean Temporal files and dirs
 function clean_files()
 {
-    echo "Clean temporal files ... "
+    echo "Clean temporal dir"
     rm -rf ${TMP_DIR}
     ssh ${REMOTE_HOST} "rm -rf ${TMP_DIR} 2> /dev/null"
 }
@@ -51,6 +46,7 @@ if test -d ${TMP_DIR}; then
 fi
 
 mkdir -p ${TMP_DIR}
+echo "Create temporal dir ${TMP_DIR}"
 cd ..
 cp -a ${OMNI} ${TMP_DIR}/${OMNI}
 cd ${TMP_DIR}/${OMNI}
@@ -101,7 +97,11 @@ sh autogen.sh
 make -j16; make install
 make clean-tests;       make tests -j16;       make run-tests
 make clean-tests-F2003; make tests-F2003 -j16; make run-tests-F2003
-exit 0
+
+EOF
+
+if test $SHORT_FLAG = FALSE; then
+cat << EOF >> ${CMD_FILE}
 echo ""
 echo "--------------------------------------------"
 echo "  Test omni compiler with GASNet and MPICH  "
@@ -140,6 +140,7 @@ make -j16; make install
 make clean-tests;       make tests -j16;       make run-tests
 make clean-tests-F2003; make tests-F2003 -j16; make run-tests-F2003
 EOF
+fi
 
 scp ${CMD_FILE} ${REMOTE_HOST}:${CMD_FILE}
 ssh ${REMOTE_HOST} sh ${CMD_FILE}

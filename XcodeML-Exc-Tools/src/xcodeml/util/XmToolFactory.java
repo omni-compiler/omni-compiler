@@ -8,9 +8,9 @@ package xcodeml.util;
 
 import java.lang.reflect.Method;
 
-import xcodeml.XmException;
-import xcodeml.XmLanguage;
-import xcodeml.binding.XmXcodeProgram;
+import xcodeml.util.XmException;
+import xcodeml.util.XmLanguage;
+import xcodeml.util.XmXcodeProgram;
 
 /**
  * XcodeML decompiler facotry.
@@ -125,15 +125,15 @@ public class XmToolFactory
     /**
      * create XcodeML validator.
      */
-    public XmValidator createValidator() throws XmException
-    {
-        try {
-            return (XmValidator)Class.forName(
-                _property.getValidatorClassName()).newInstance();
-        } catch(Exception e) {
-            throw new XmException(e);
-        }
-    }
+    // public XmValidator createValidator() throws XmException
+    // {
+    //     try {
+    //         return (XmValidator)Class.forName(
+    //             _property.getValidatorClassName()).newInstance();
+    //     } catch(Exception e) {
+    //         throw new XmException(e);
+    //     }
+    // }
     
     /**
      * create XcodeML decompiler.
@@ -180,26 +180,26 @@ public class XmToolFactory
     /**
      * create XmObj to Xobject translator.
      */
-    public XmXmObjToXobjectTranslator createXmObjToXobjectTranslator() throws XmException
-    {
-        try {
-            return (XmXmObjToXobjectTranslator)Class.forName(
-                _property.getXmObjToXobjectTranslatorClassName()).newInstance();
-        } catch(Exception e) {
-            throw new XmException(e);
-        }
-    }
+    // public XmXmObjToXobjectTranslator createXmObjToXobjectTranslator() throws XmException
+    // {
+    //     try {
+    //         return (XmXmObjToXobjectTranslator)Class.forName(
+    //             _property.getXmObjToXobjectTranslatorClassName()).newInstance();
+    //     } catch(Exception e) {
+    //         throw new XmException(e);
+    //     }
+    // }
 
     /**
      * create Xobject to XmObj translator.
      */
-    public XmXobjectToXmObjTranslator createXobjectToXmObjTranslator() throws XmException
-    {
-        try {
-            return (XmXobjectToXmObjTranslator)Class.forName(
-                _property.getXobjectToXmObjTranslatorClassName()).newInstance();
-        } catch(Exception e) {
-            throw new XmException(e);
-        }
-    }
+    // public XmXobjectToXmObjTranslator createXobjectToXmObjTranslator() throws XmException
+    // {
+    //     try {
+    //         return (XmXobjectToXmObjTranslator)Class.forName(
+    //             _property.getXobjectToXmObjTranslatorClassName()).newInstance();
+    //     } catch(Exception e) {
+    //         throw new XmException(e);
+    //     }
+    // }
 }

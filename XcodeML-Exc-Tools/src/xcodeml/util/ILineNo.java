@@ -4,7 +4,7 @@
  *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
  *  $
  */
-package xcodeml;
+package xcodeml.util;
 
 /**
  * Represents line number

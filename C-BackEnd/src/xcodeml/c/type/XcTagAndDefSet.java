@@ -15,7 +15,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 
-import xcodeml.XmException;
+import xcodeml.util.XmException;
 
 /**
  * Set of dependency of tagname and typedef name.

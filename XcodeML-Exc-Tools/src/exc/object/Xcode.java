@@ -3,7 +3,7 @@
  */
 package exc.object;
 
-import xcodeml.XmException;
+import xcodeml.util.XmException;
 
 //import xcodeml.c.binding.gen.*;
 //import xcodeml.f.binding.gen.*;

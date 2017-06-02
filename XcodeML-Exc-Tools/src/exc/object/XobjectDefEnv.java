@@ -7,8 +7,7 @@ import java.util.List;
 import exc.util.XobjectVisitable;
 import exc.util.XobjectVisitor;
 
-import xcodeml.ILineNo;
-import xcodeml.IXobject;
+import xcodeml.util.ILineNo;
 
 public class XobjectDefEnv extends PropObject
     implements Iterable<XobjectDef>, IXobject, XobjectVisitable, XobjContainer

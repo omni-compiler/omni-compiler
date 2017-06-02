@@ -8,11 +8,12 @@ T_FJMODULE_LOCAL=T_FJModule
 
 SUBDIRS=libxmp/include libxmp/src libxmpf/include libxmpf/src libxmp/src_threads \
 	C-FrontEnd/src F-FrontEnd/src Driver/src libtlog/src_threads libtlog/src_mpi \
-	XcodeML-Common C-BackEnd F-BackEnd XcodeML-Exc-Tools
+	XcodeML-Exc-Tools C-BackEnd F-BackEnd 
 
 FALSE=1
 TRUE=0
 NEED_MAKE_MOD2XMOD=@NEED_MAKE_MOD2XMOD@
+USER=$(shell whoami)
 ifeq ($(NEED_MAKE_MOD2XMOD), $(TRUE))
     SUBDIRS+=F-FrontEnd/gnu_module
 endif
@@ -232,8 +233,12 @@ release:
 	echo "Created /tmp/$(PACKAGE_NAME).tar.bz2"; \
 	rm -rf $(WORKDIR)
 
+
 remote-tests:
 	@bash ./tests/xcalablemp/scripts/remote-tests.sh $(USER)
+
+remote-tests-short:
+	@bash ./tests/xcalablemp/scripts/remote-tests.sh $(USER) short
 
 distclean: clean
 	rm -rf autom4te.cache

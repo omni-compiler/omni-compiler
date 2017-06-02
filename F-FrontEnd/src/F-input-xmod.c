@@ -3559,5 +3559,7 @@ input_intermediate_file(const SYMBOL mod_name,
 
     xmlTextReaderClose(reader);
 
+    // (*pmod)->filepath = strdup(filepath);
+
     return ret;
 }
