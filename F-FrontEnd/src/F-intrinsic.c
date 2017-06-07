@@ -95,7 +95,6 @@ compile_intrinsic_call0(ID id, expv args, int ignoreTypeMismatch) {
             args = list0(LIST);
         }
 
-        if (ID_TYPE(id) == NULL) implicit_declaration(id);
         tp = ID_TYPE(id);
 
         if(tp == NULL){
@@ -112,9 +111,9 @@ compile_intrinsic_call0(ID id, expv args, int ignoreTypeMismatch) {
         if (IS_PROCEDURE_TYPE(tp)) {
             ftp = tp;
             tp = FUNCTION_TYPE_RETURN_TYPE(ftp);
+
         } else {
             ftp = intrinsic_function_type(tp);
-            FUNCTION_TYPE_SET_VISIBLE_INTRINSIC(ftp);
 
             extid = new_external_id_for_external_decl(ID_SYM(id), ftp);
             ID_TYPE(id) = ftp;
@@ -126,6 +125,7 @@ compile_intrinsic_call0(ID id, expv args, int ignoreTypeMismatch) {
                 EXT_PROC_CLASS(extid) = EP_INTRINSIC;
             }
         }
+        FUNCTION_TYPE_SET_VISIBLE_INTRINSIC(ftp);
 
         EXPV_TYPE(symV) = ftp;
         return expv_cons(FUNCTION_CALL, tp, symV, args);

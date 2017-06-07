@@ -854,6 +854,10 @@ implicit_declaration(ID id)
             }
         }
 
+        if (ID_CLASS(id) == CL_PROC && PROC_CLASS(id) == P_INTRINSIC) {
+            TYPE_SET_INTRINSIC(tp);
+        }
+
         declare_id_type(id, tp);
     }
 }
@@ -4638,10 +4642,11 @@ compile_INTRINSIC_decl(id_list)
         if(ident == NULL) break;
         if(EXPR_CODE(ident) != IDENT)fatal("compile_INTRINSIC_decl:not ident");
         if((id = declare_ident(EXPR_SYM(ident),CL_PROC)) == NULL) continue;
-        if(PROC_CLASS(id) == P_UNKNOWN)
+        if(PROC_CLASS(id) == P_UNKNOWN) {
             PROC_CLASS(id) = P_INTRINSIC;
-        else if(PROC_CLASS(id) != P_INTRINSIC)
+        } else if(PROC_CLASS(id) != P_INTRINSIC) {
             error("invalid intrinsic declaration, %s", ID_NAME(id));
+        }
         TYPE_SET_INTRINSIC(id);
     }
 }
