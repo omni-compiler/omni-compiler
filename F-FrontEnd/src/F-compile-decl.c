@@ -2023,6 +2023,7 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
             break;
         case F95_INTRINSIC_SPEC:
             TYPE_SET_INTRINSIC(tp);
+            FUNCTION_TYPE_SET_VISIBLE_INTRINSIC(tp);
             break;
         case F95_OPTIONAL_SPEC:
             TYPE_SET_OPTIONAL(tp);

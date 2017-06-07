@@ -2374,6 +2374,12 @@ end_declaration()
             tp = function_type(tp);
             TYPE_UNSET_SAVE(tp);
         }
+        if (TYPE_IS_INTRINSIC(ip)) {
+            if (! IS_PROCEDURE_TYPE(tp)) {
+                tp = function_type(tp);
+            }
+            FUNCTION_TYPE_SET_VISIBLE_INTRINSIC(tp);
+        }
 
         /* copy type attribute flags to EXT_PROC_TYPE */
         ep = PROC_EXT_ID(ip);
