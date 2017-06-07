@@ -1118,7 +1118,7 @@ compile_statement1(int st_no, expr x)
             if (endlineno_flag)
                 EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
 
-
+            check_select_types();
             pop_ctl();
         } else if (CTL_TYPE(ctl_top) == CTL_CASE ||
                    CTL_TYPE(ctl_top) == CTL_TYPE_GUARD) {
@@ -1152,6 +1152,7 @@ compile_statement1(int st_no, expr x)
             if (endlineno_flag)
                 EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
 
+            check_select_types();
             pop_ctl();
         } else {
             error("'end select', out of place");
@@ -8416,8 +8417,7 @@ check_select_types()
             continue;
         }
 
-
-        FOR_ITEMS_IN_LIST(lp2, LIST_NEXT(lp1)) {
+        for (lp2 = LIST_NEXT(lp1); lp2 != NULL; lp2 = LIST_NEXT(lp2)) {
             statement2 = LIST_ITEM(lp2);
             if (EXPR_CODE(statement2) != F03_TYPEIS_STATEMENT &&
                 EXPR_CODE(statement2) != F03_CLASSIS_STATEMENT) {

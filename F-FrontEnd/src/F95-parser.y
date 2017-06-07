@@ -1704,10 +1704,6 @@ executable_statement:
         { $$ = list0(F_ENDWHERE_STATEMENT); }
         | SELECT '(' expr ')'
         { $$ = list2(F_SELECTCASE_STATEMENT, $3, st_name); }
-        | KW_SELECT KW KW_TYPE '(' expr ')'
-        { $$ = list2(F03_SELECTTYPE_STATEMENT, $5, st_name); }
-        | KW_SELECT KW KW_TYPE '(' IDENTIFIER REF_OP expr ')'
-        { $$ = list3(F03_SELECTTYPE_STATEMENT, $7, st_name, $5); }
         | SELECTTYPE '(' expr ')'
         { $$ = list2(F03_SELECTTYPE_STATEMENT, $3, st_name); }
         | SELECTTYPE '(' IDENTIFIER REF_OP expr ')'

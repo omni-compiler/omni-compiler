@@ -717,6 +717,7 @@ extern int      type_bound_procedure_type_match _ANSI_ARGS_((EXT_ID f1, EXT_ID f
 extern int      is_procedure_acceptable _ANSI_ARGS_((EXT_ID proc, expv actual_args));
 
 extern int      type_is_soft_compatible _ANSI_ARGS_((TYPE_DESC tp, TYPE_DESC tq));
+extern int      type_is_strict_compatible _ANSI_ARGS_((TYPE_DESC tp, TYPE_DESC tq));
 extern int      type_is_compatible_for_assignment
                     _ANSI_ARGS_((TYPE_DESC tp1, TYPE_DESC tp2));
 extern int      struct_type_is_compatible_for_assignment
