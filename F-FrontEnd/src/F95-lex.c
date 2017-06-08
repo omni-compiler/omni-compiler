@@ -1913,10 +1913,11 @@ get_keyword_optional_blank(int class)
     case KW_TYPE:
         if(get_keyword(keywords) == KW_IS) return TYPEIS;
         break;
-    case KW_SELECT:
-        if(get_keyword(keywords) == CASE) return SELECT;
-        if(get_keyword(keywords) == KW_TYPE) return SELECTTYPE;
-        break;
+    case KW_SELECT: {
+        int kwd = get_keyword(keywords);
+        if(kwd == CASE) return SELECT;
+        if(kwd == KW_TYPE) return SELECTTYPE;
+    } break;
     case DO: /* DO WHILE *//* blanks mandatory.  */
         if(get_keyword(keywords) == KW_WHILE) return DOWHILE;
         break;

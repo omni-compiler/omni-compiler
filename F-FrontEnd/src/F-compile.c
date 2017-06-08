@@ -1085,15 +1085,19 @@ compile_statement1(int st_no, expr x)
                 push_ctl(CTL_TYPE_GUARD);
 
                 if (EXPR_CODE(x) == F03_TYPEIS_STATEMENT) {
-                    TYPE_DESC tp;
-                    if (EXPR_ARG1(x)) {
+                    TYPE_DESC tp = NULL;
+                    if (!EXPR_ARG1(x)) {
                         error("TYPE IS statement requires type-spec");
+                        break;
                     }
-                    tp = compile_type(EXPR_ARG1(x), /* allow_predecl=*/ FALSE);
+                    tp = find_struct_decl(EXPR_SYM(EXPR_ARG1(x)));
+                    if (tp == NULL) {
+                        tp = compile_type(EXPR_ARG1(x), /* allow_predecl=*/ FALSE);
+                    }
                     type = expv_sym_term(IDENT, tp, EXPR_SYM(EXPR_ARG1(x)));
                 } else if(EXPR_ARG1(x) != NULL) { // NULL for CLASS DEFAULT
-                    TYPE_DESC tp = find_struct_decl_parent(EXPR_SYM(EXPR_ARG1(x)));
-                    if(tp == NULL){
+                    TYPE_DESC tp = find_struct_decl(EXPR_SYM(EXPR_ARG1(x)));
+                    if (tp == NULL){
                         error("%s has not been declared.",
                               SYM_NAME(EXPR_SYM(EXPR_ARG1(x))));
                     }
@@ -1108,7 +1112,7 @@ compile_statement1(int st_no, expr x)
     case F_ENDSELECT_STATEMENT:
         if (CTL_TYPE(ctl_top) == CTL_SELECT ||
             CTL_TYPE(ctl_top) == CTL_SELECT_TYPE) {
-            expr const_name = EXPR_ARG2(x);
+            expr const_name = EXPR_HAS_ARG1(x)?EXPR_ARG1(x):NULL;
             expr parent_const_name = NULL;
             CTL_SELECT_STATEMENT_BODY(ctl_top) = CURRENT_STATEMENTS;
 
@@ -1118,11 +1122,9 @@ compile_statement1(int st_no, expr x)
             if (endlineno_flag)
                 EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
 
-            check_select_types();
-            pop_ctl();
         } else if (CTL_TYPE(ctl_top) == CTL_CASE ||
                    CTL_TYPE(ctl_top) == CTL_TYPE_GUARD) {
-            expr const_name = EXPR_ARG2(x);
+            expr const_name = EXPR_HAS_ARG1(x)?EXPR_ARG1(x):NULL;
             expr parent_const_name = NULL;
 
             CTL_CASE_BLOCK(ctl_top) = CURRENT_STATEMENTS;
@@ -1152,11 +1154,12 @@ compile_statement1(int st_no, expr x)
             if (endlineno_flag)
                 EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
 
-            check_select_types();
-            pop_ctl();
         } else {
             error("'end select', out of place");
         }
+        check_select_types();
+        pop_ctl();
+
         break;
 
     case F_PRAGMA_STATEMENT:
@@ -8410,7 +8413,7 @@ check_select_types()
     FOR_ITEMS_IN_LIST(lp1, statements) {
         statement1 = LIST_ITEM(lp1);
 
-        tp1 = EXPR_ARG2(statement1)?EXPV_TYPE(EXPR_ARG2(statement1)):NULL;
+        tp1 = EXPR_ARG1(statement1)?EXPV_TYPE(EXPR_ARG1(statement1)):NULL;
 
         if (EXPR_CODE(statement1) != F03_TYPEIS_STATEMENT &&
             EXPR_CODE(statement1) != F03_CLASSIS_STATEMENT) {
@@ -8424,7 +8427,7 @@ check_select_types()
                 continue;
             }
 
-            tp2 = EXPR_ARG2(statement2)?EXPV_TYPE(EXPR_ARG2(statement2)):NULL;
+            tp2 = EXPR_ARG1(statement2)?EXPV_TYPE(EXPR_ARG1(statement2)):NULL;
 
             if (tp1 == NULL && tp2 == NULL) {
                 error("duplicate CLASS DEFAULT");

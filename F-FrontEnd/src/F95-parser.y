@@ -1721,7 +1721,7 @@ executable_statement:
         | CLASSIS '(' IDENTIFIER ')' name_or_null
         { $$ = list2(F03_CLASSIS_STATEMENT, $3, $5); }
         | TYPEIS '(' IDENTIFIER ')' name_or_null
-        { $$ = list2(F03_TYPEIS_STATEMENT, $3, $5); }  
+        { $$ = list2(F03_TYPEIS_STATEMENT, $3, $5); }
         | CLASSDEFAULT name_or_null
         { $$ = list2(F03_CLASSIS_STATEMENT, NULL, $2); }
         | FORALL '(' forall_header ')' assign_statement_or_null
