@@ -113,7 +113,7 @@ int main(void)
 	}
     }
 
-#pragma reduction(+:err)
+#pragma xmp reduction(+:err)
 
     if(err > 0) return 1;
 
