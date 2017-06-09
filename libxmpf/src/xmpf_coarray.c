@@ -29,6 +29,7 @@ static unsigned _XMPF_poolThreshold = POOL_THRESHOLD;
 static size_t _XMPF_localBufSize = LOCAL_BUF_SIZE;
 static BOOL _XMPF_isSafeBufferMode = FALSE;
 static BOOL _XMPF_isSyncPutMode = FALSE;
+static BOOL _XMPF_isEagerCommMode = FALSE;
 
 static void _set_coarrayMsg(int sw)
 {
@@ -58,6 +59,7 @@ static void _set_localBufSize(unsigned size);
 static unsigned _envStringToBytes(char *str, char *envVarName);
 static void _set_isSafeBufferMode(BOOL sw);
 static void _set_isSyncPutMode(BOOL sw);
+static void _set_isEagerCommMode(BOOL sw);
 
 int _XMPF_get_coarrayMsg(void)
 {
@@ -130,6 +132,17 @@ BOOL XMPF_isSyncPutMode(void)
 }
 
 
+void _set_isEagerCommMode(BOOL sw)
+{
+  _XMPF_isEagerCommMode = sw;
+}
+
+BOOL XMPF_isEagerCommMode(void)
+{
+  return _XMPF_isEagerCommMode;
+}
+
+
 /*****************************************\
   hidden API,
    which can be used in the program
@@ -171,7 +184,7 @@ void _XMPF_coarray_init(void)
   /*
    * read environment variables
    */
-  char *tok, *work, *env1, *env2, *env3, *env4, *env5;
+  char *tok, *work, *env1, *env2, *env3, *env4, *env5, *env6;
   int i;
   char delim[] = ", ";
   unsigned len;
@@ -230,6 +243,12 @@ void _XMPF_coarray_init(void)
     _set_isSyncPutMode(atoi(env5));
   }
 
+  env6 = getenv("XMPF_COARRAY_EAGER");
+  if (env6 != NULL) {
+    _XMPF_coarrayDebugPrint("Accepted XMPF_COARRAY_EAGER=%s\n", env6);
+    _set_isEagerCommMode(atoi(env6));
+  }
+
   _XMPF_reset_coarrayMsg();
 
 
@@ -239,6 +258,7 @@ void _XMPF_coarray_init(void)
                           "   static buffer (localBuf) size :  %u bytes\n"
                           "   safe buffer mode (PUT only)   :  %s\n"
                           "   sync put mode (PUT only)      :  %s\n"
+                          "   eager communication mode      :  %s\n"
                           "   GET-communication interface   :  type %d\n"
                           "   PUT-communication interface   :  type %d\n",
                           _XMPF_get_coarrayMsg() ? "on" : "off",
@@ -246,6 +266,7 @@ void _XMPF_coarray_init(void)
                           XMPF_get_localBufSize(),
                           XMPF_isSafeBufferMode() ? "on" : "off",
                           XMPF_isSyncPutMode() ? "on" : "off",
+                          XMPF_isEagerCommMode() ? "on" : "off",
                           GET_INTERFACE_TYPE,
                           PUT_INTERFACE_TYPE
                           );
