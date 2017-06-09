@@ -132,6 +132,7 @@ static void compile_FORALL_statement(int st_no, expr x);
 static void compile_ENDFORALL_statement(expr x);
 
 static int check_valid_construction_name(expr x, expr y);
+static void move_implicit_vars_to_parent_from_type_guard(void);
 static void check_select_types(void);
 
 static void unify_submodule_symbol_table(void);
@@ -1077,6 +1078,7 @@ compile_statement1(int st_no, expr x)
                     if (endlineno_flag)
                          EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
                     pop_ctl();
+                    move_implicit_vars_to_parent_from_type_guard();
                     pop_env();
 
                     parent_const_name = CTL_TYPE_GUARD_CONST_NAME(ctl_top);
@@ -1142,6 +1144,7 @@ compile_statement1(int st_no, expr x)
                 EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
 
             pop_ctl();
+            move_implicit_vars_to_parent_from_type_guard();
             pop_env();
 
             if (CTL_TYPE(ctl_top) != CTL_SELECT &&
