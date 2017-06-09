@@ -34,8 +34,8 @@ contains
     select type (assoc_name=>p)
       class is(point)
         print*,'class is point',assoc_name%x
-      !class is(color_point)
-      !  print*,'class is color_point',assoc_name%color
+      class is(color_point)
+        print*,'class is color_point',assoc_name%color
       class default
         print*,'default'
     end select
