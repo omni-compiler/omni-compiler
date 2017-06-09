@@ -8444,10 +8444,19 @@ check_select_types()
                 return;
             }
 
-            if (EXPR_CODE(statement1) == EXPR_CODE(statement2) &&
-                type_is_strict_compatible(tp1, tp2)) {
-                error("duplicate type in SELECT TYPE construct");
-                return;
+            if (tp1 == NULL || tp2 == NULL) {
+                continue;
+            }
+
+            if (EXPR_CODE(statement1) == EXPR_CODE(statement2)) {
+                if (IS_STRUCT_TYPE(tp1) && IS_STRUCT_TYPE(tp2)) {
+                    if (TYPE_TAGNAME(tp1) == TYPE_TAGNAME(tp2)) {
+                        error("duplicate type in SELECT TYPE construct");
+                    }
+                } else if (type_is_strict_compatible(tp1, tp2)) {
+                    error("duplicate type in SELECT TYPE construct");
+                    return;
+                }
             }
         }
     }
