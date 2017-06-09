@@ -30,7 +30,6 @@ contains
         print*,'class default'
     end select cname
 
-
     select type (assoc_name=>p)
       class is(point)
         print*,'class is point',assoc_name%x

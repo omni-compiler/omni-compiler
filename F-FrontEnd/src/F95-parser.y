@@ -1718,10 +1718,10 @@ executable_statement:
         { $$ = list1(F2008_BLOCK_STATEMENT,st_name); }
         | ENDBLOCK name_or_null
         { $$ = list1(F2008_ENDBLOCK_STATEMENT,$2); }
-        | CLASSIS '(' IDENTIFIER ')' name_or_null
-        { $$ = list2(F03_CLASSIS_STATEMENT, $3, $5); }
-        | TYPEIS '(' IDENTIFIER ')' name_or_null
-        { $$ = list2(F03_TYPEIS_STATEMENT, $3, $5); }
+        | CLASSIS '(' TYPE_KW expr_type_spec ')' name_or_null
+        { $$ = list2(F03_CLASSIS_STATEMENT, $4, $6); }
+        | TYPEIS '(' TYPE_KW expr_type_spec ')' name_or_null
+        { $$ = list2(F03_TYPEIS_STATEMENT, $4, $6); }
         | CLASSDEFAULT name_or_null
         { $$ = list2(F03_CLASSIS_STATEMENT, NULL, $2); }
         | FORALL '(' forall_header ')' assign_statement_or_null

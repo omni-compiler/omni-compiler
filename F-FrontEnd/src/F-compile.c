@@ -1089,25 +1089,16 @@ compile_statement1(int st_no, expr x)
                 push_ctl(CTL_TYPE_GUARD);
                 push_env(CTL_TYPE_GUARD_LOCAL_ENV(ctl_top));
 
-                if (EXPR_CODE(x) == F03_TYPEIS_STATEMENT) {
-                    if (!EXPR_ARG1(x)) {
-                        error("TYPE IS statement requires type-spec");
-                        break;
-                    }
-                    tp = find_struct_decl(EXPR_SYM(EXPR_ARG1(x)));
-                    if (tp == NULL) {
-                        tp = compile_type(EXPR_ARG1(x), /* allow_predecl=*/ FALSE);
-                    }
-                    type = expv_sym_term(IDENT, tp, EXPR_SYM(EXPR_ARG1(x)));
-                } else if(EXPR_ARG1(x) != NULL) { // NULL for CLASS DEFAULT
-                    tp = find_struct_decl(EXPR_SYM(EXPR_ARG1(x)));
-                    if (tp == NULL){
-                        error("%s has not been declared.",
-                              SYM_NAME(EXPR_SYM(EXPR_ARG1(x))));
-                    }
+                if (EXPR_ARG1(x) != NULL) { // NULL for CLASS DEFAULT
+                    tp = compile_type(EXPR_ARG1(x), /* allow_predecl=*/ FALSE);
                     type = expv_sym_term(IDENT, tp, EXPR_SYM(EXPR_ARG1(x)));
                 }
-
+                if (EXPR_CODE(x) == F03_CLASSIS_STATEMENT) {
+                    if (tp != NULL && !IS_STRUCT_TYPE(tp)) {
+                        error("'class is' accepts only derived-type");
+                        break;
+                    }
+                }
                 selector = CTL_SELECT_TYPE_ASSICIATE(CTL_PREV(ctl_top))?:CTL_SELECT_TYPE_SELECTOR(CTL_PREV(ctl_top));
                 id = declare_ident(EXPR_SYM(selector), CL_VAR);
                 declare_id_type(id, tp);
@@ -8403,6 +8394,49 @@ compile_ENDFORALL_statement(expr x)
         compile_ENDBLOCK_statement(list0(F2008_ENDBLOCK_STATEMENT));
     }
 }
+
+/*
+ * Move implict declared identifiers in a TYPE GUARD clause to parent's LOCAL_SYMBOLS
+ *
+ * ex)
+ *  1  SELECT TYPE(p)
+ *  2    TYPE IS (INTEGER)
+ *  3      a = 1             ! a is declared implicitly
+ *  4    TYPE IS (REAL
+ *  5      a = 2             ! a is the same one with 'a' in line 3
+ *  6  END SELECT TYPE
+ *
+ *  'a' in line 3 is declared inside the environment of CTL_TYPE_GUARD,
+ *  but it should be moved to the parent ennvironment.
+ */
+static void
+move_implicit_vars_to_parent_from_type_guard()
+{
+    ID ip, iq, last = NULL;
+    ENV parent = ENV_PARENT(current_local_env);
+
+    if (parent == NULL) {
+        return;
+    }
+    if (LOCAL_SYMBOLS == NULL) {
+        return;
+    }
+
+    FOREACH_ID(ip, ENV_SYMBOLS(parent)) {
+        last = ip;
+    }
+
+    SAFE_FOREACH_ID(ip, iq, LOCAL_SYMBOLS) {
+        if (ip == LOCAL_SYMBOLS) {
+            continue;
+        }
+        ID_NEXT(ip) = NULL;
+        ID_LINK_ADD(ip, ENV_SYMBOLS(parent), last);
+    }
+    if (LOCAL_SYMBOLS)
+        ID_NEXT(LOCAL_SYMBOLS) = NULL;
+}
+
 
 /*
  * Checks types of each type guard statements under SELECT TYPE construct
