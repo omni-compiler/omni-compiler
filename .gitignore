@@ -10,7 +10,7 @@ a.out
 autom4te.cache
 config.log
 config.status
-./Makefile
+/Makefile
 
 # Sub directories
 C-BackEnd/Makefile
