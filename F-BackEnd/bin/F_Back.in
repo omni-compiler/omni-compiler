@@ -15,12 +15,12 @@ if [ -r ${CONF} ]; then
 fi
 
 OMNI_JAR1="${OMNI_HOME}/share/xcalablemp/om-f-back.jar"
-OMNI_JAR2="${OMNI_HOME}/share/xcalablemp/om-common.jar"
+OMNI_JAR2="${OMNI_HOME}/share/xcalablemp/om-exc-tools.jar"
 
 if [ -f $OMNI_JAR1 -a -f $OMNI_JAR2 ]; then
     ${OMNI_JAVA} ${OMNI_JAVA_OPT} -cp ${OMNI_JAR2}:${OMNI_JAR1} xcodeml.f.util.omx2f "$@"
-elif [ -f "${OMNI_HOME}/XcodeML-Common/build/om-common.jar" ]; then
-    export CLASSPATH="${OMNI_HOME}/XcodeML-Common/build/om-common.jar:${OMNI_HOME}/F-BackEnd/build/om-f-back.jar"
+elif [ -f "${OMNI_HOME}/XcodeML-Exc-Tools/build/om-exc-tools.jar" ]; then
+    export CLASSPATH="${OMNI_HOME}/XcodeML-Exc-Tools/build/om-exc-tools.jar:${OMNI_HOME}/F-BackEnd/build/om-f-back.jar"
     ${OMNI_JAVA} ${OMNI_JAVA_OPT} xcodeml.f.util.omx2f "$@"
 else
   echo ${OMNI_JAR1} not found.
