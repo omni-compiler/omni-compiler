@@ -1,9 +1,3 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package exc.util;
 
 import java.io.*;
@@ -78,6 +72,7 @@ public class omompx
       "  -M dir       specify where to search for .xmod files",
       "  -max_assumed_shape=N  set max number of assumed-shape arrays of a proedure (for Fortran).",
       "  -decomp      output decompiled source code.",
+      "  -silent      no output.",
       "",
       " Debug Options:",
       "  -d           enable output debug message.",
@@ -121,6 +116,7 @@ public class omompx
     boolean selective_profile = false;
     boolean doScalasca = false;
     boolean doTlog = false;
+    boolean silent = false;
     int maxColumns = 0;
     String coarray_suboption = "";            // HIDDEN
     boolean coarray_noUseStmt = false;     // TEMPORARY
@@ -178,6 +174,8 @@ public class omompx
         outputXcode = true;
       } else if(arg.equals("-decomp")) {
         outputDecomp = true;
+      } else if(arg.equals("-silent")){
+        silent = true;
       } else if(arg.equals("-dump")) {
         dump = true;
         outputXcode = true;
@@ -297,7 +295,7 @@ public class omompx
     } else {
       tools = new XcodeMLtools_C();
     }
-
+    
     // read XcodeML
     xobjFile = tools.read(reader);
     if (inXmlFile != null) {
@@ -309,7 +307,6 @@ public class omompx
       srcPath = null;
     } else {
       String fileName = new File(srcPath).getName();
-      //      int idx = fileName.indexOf(".");
       int idx = fileName.lastIndexOf(".");
       if(idx < 0) {
         XmLog.fatal("invalid source file name : " + fileName);
@@ -436,7 +433,7 @@ public class omompx
         xcodeWriter.flush();
       }
     }
-
+    
     // OpenMP translation
 //    OMP.debugFlag = true;
     if(openMP) {
@@ -487,7 +484,7 @@ public class omompx
     if(!dump && outputXcode) {
       xcodeWriter.close();
     }
-        
+
     // translate Xcode to XcodeML
     XmXcodeProgram xmprog = null;
     Document xcodeDoc = null;
@@ -500,36 +497,30 @@ public class omompx
       xc2xcodeTranslator = new XmcXobjectToXcodeTranslator();
     }
 
-    xcodeDoc = xc2xcodeTranslator.write(xobjFile);
+    xcodeDoc = xc2xcodeTranslator.write(xobjFile);  // koko
 
     // transformation from DOM to the file. It means to output DOM to the file.
-    Transformer transformer = null;
-    try {
-      transformer = TransformerFactory.newInstance().newTransformer();
-    } catch(TransformerConfigurationException e) {
-      throw new XmException(e);
+    if(silent == false){
+      try {
+        Transformer transformer = null;
+        transformer = TransformerFactory.newInstance().newTransformer();
+        transformer.setOutputProperty(OutputKeys.METHOD, "xml");
+        transformer.transform(new DOMSource(xcodeDoc), new StreamResult(xmlWriter)); // koko
+      } catch(TransformerException e) {
+        throw new XmException(e);
+      }
     }
-
-    transformer.setOutputProperty(OutputKeys.METHOD, "xml");
-
-    try {
-      transformer.transform(new DOMSource(xcodeDoc), new StreamResult(xmlWriter));
-      // transformer.transform(new DOMSource(xcodeDoc), new StreamResult(new OutputStreamWriter(System.out)));
-    } catch(TransformerException e) {
-      throw new XmException(e);
-    }
-
+    
     if (!dump && !outputDecomp) {
       xmprog = null;
     }
-        
+
     xmlWriter.flush();
-        
     if(outXmlFile != null) {
       xmlWriter.close();
       xmlWriter = null;
     }
-        
+    
     // Decompile
     XmDecompilerContext context = null;
     if(lang.equals("F")) {
