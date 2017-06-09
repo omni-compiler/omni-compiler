@@ -494,14 +494,20 @@ extern TYPE_DESC basic_type_desc[];
         FOREACH_ID(mp, TYPE_TYPE_PARAMS(tp))
 
 #define FOREACH_TYPE_BOUND_PROCEDURE(/* ID */ mp, /* TYPE_DESC */ tp) \
-    FOREACH_MEMBER(mp, tp) \
-    if (ID_CLASS(mp) == CL_TYPE_BOUND_PROC && \
-        !(TBP_BINDING_ATTRS(mp) & TYPE_BOUND_PROCEDURE_IS_GENERIC))
+    FOREACH_MEMBER(mp, tp)                                            \
+    if (ID_CLASS(mp) == CL_TYPE_BOUND_PROC &&                         \
+        !(TBP_BINDING_ATTRS(mp) &                                       \
+          (TYPE_BOUND_PROCEDURE_IS_GENERIC | TYPE_BOUND_PROCEDURE_IS_FINAL)))
 
 #define FOREACH_TYPE_BOUND_GENERIC(/* ID */ mp, /* TYPE_DESC */ tp) \
-    FOREACH_MEMBER(mp, tp) \
-    if (ID_CLASS(mp) == CL_TYPE_BOUND_PROC && \
+    FOREACH_MEMBER(mp, tp)                                          \
+    if (ID_CLASS(mp) == CL_TYPE_BOUND_PROC &&                       \
         (TBP_BINDING_ATTRS(mp) & TYPE_BOUND_PROCEDURE_IS_GENERIC))
+
+#define FOREACH_TYPE_BOUND_FINAL(/* ID */ mp, /* TYPE_DESC */ tp) \
+    FOREACH_MEMBER(mp, tp)                                        \
+    if (ID_CLASS(mp) == CL_TYPE_BOUND_PROC &&                     \
+        (TBP_BINDING_ATTRS(mp) & TYPE_BOUND_PROCEDURE_IS_FINAL))
 
 #define FUNCTION_TYPE_RETURN_TYPE(tp) ((tp)->proc_info.return_type)
 #define FUNCTION_TYPE_HAS_EXPLICIT_ARGS(tp) ((tp)->proc_info.has_explicit_arguments)

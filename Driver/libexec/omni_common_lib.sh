@@ -41,7 +41,7 @@ function omni_exec()
 {
     [ $VERBOSE = true -o $DRY_RUN = true ] && echo ${@+"$@"}
     if [ $DRY_RUN = false ]; then
-	$(${@+"$@"}) || error_process
+	${@+"$@"} || error_process
     fi
 }
 

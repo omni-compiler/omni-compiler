@@ -258,6 +258,7 @@ typedef struct ident_descriptor
 #define TYPE_BOUND_PROCEDURE_READ                  0x0100
 #define TYPE_BOUND_PROCEDURE_FORMATTED             0x0200
 #define TYPE_BOUND_PROCEDURE_UNFORMATTED           0x0400
+#define TYPE_BOUND_PROCEDURE_IS_FINAL              0x0800
         } tbp_info;
         struct {
             /* for CL_MULTI */
