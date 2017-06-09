@@ -260,10 +260,13 @@ typedef struct control
 
 #define CTL_SELECT_STATEMENT_BODY(l)    (EXPR_ARG2((l)->v1))
 #define CTL_SELECT_CONST_NAME(l)        (EXPR_ARG3((l)->v1))
+#define CTL_SELECT_TYPE_SELECTOR(l)     (EXPR_ARG1((l)->v1))
+#define CTL_SELECT_TYPE_ASSICIATE(l)    (EXPR_ARG4((l)->v1))
 #define CTL_CASE_BLOCK(l)               (EXPR_ARG2((l)->v1))
 #define CTL_CASE_CONST_NAME(l)          (EXPR_ARG3((l)->v1))
 #define CTL_TYPE_GUARD_BLOCK(l)         (EXPR_ARG2((l)->v1))
 #define CTL_TYPE_GUARD_CONST_NAME(l)    (EXPR_ARG3((l)->v1))
+#define CTL_TYPE_GUARD_LOCAL_ENV(l)     (&((l)->local_env))
 
 #define CTL_OMP_ARG(l)	((l)->v2)
 #define CTL_OMP_ARG_DIR(l) (EXPR_INT(EXPR_ARG1((l)->v2)))

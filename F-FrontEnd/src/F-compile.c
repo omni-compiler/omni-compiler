@@ -1012,7 +1012,7 @@ compile_statement1(int st_no, expr x)
                 ID_IS_ASSOCIATIVE(associate_name) = TRUE;
                 ID_TYPE(associate_name) = ID_TYPE(selector);
             }
-            expv tmp = expv_sym_term(IDENT, ID_TYPE(associate_name), 
+            expv tmp = expv_sym_term(IDENT, ID_TYPE(associate_name),
                 ID_SYM(associate_name));
             st = list4(F03_SELECTTYPE_STATEMENT, v, NULL, EXPR_ARG2(x), tmp);
           } else {
@@ -1063,9 +1063,12 @@ compile_statement1(int st_no, expr x)
             if(CTL_TYPE(ctl_top) == CTL_SELECT_TYPE ||
                CTL_TYPE(ctl_top) == CTL_TYPE_GUARD)
             {
+                ID id = NULL;
+                TYPE_DESC tp = NULL;
                 expr const_name = EXPR_ARG2(x);
                 expr parent_const_name = NULL;
                 expv type = NULL;
+                expv selector = NULL;
 
                 if (CTL_TYPE(ctl_top) == CTL_TYPE_GUARD) {
                     CTL_CASE_BLOCK(ctl_top) = CURRENT_STATEMENTS;
@@ -1074,6 +1077,7 @@ compile_statement1(int st_no, expr x)
                     if (endlineno_flag)
                          EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
                     pop_ctl();
+                    pop_env();
 
                     parent_const_name = CTL_TYPE_GUARD_CONST_NAME(ctl_top);
                 } else {
@@ -1083,9 +1087,9 @@ compile_statement1(int st_no, expr x)
                 (void)check_valid_construction_name(parent_const_name, const_name);
 
                 push_ctl(CTL_TYPE_GUARD);
+                push_env(CTL_TYPE_GUARD_LOCAL_ENV(ctl_top));
 
                 if (EXPR_CODE(x) == F03_TYPEIS_STATEMENT) {
-                    TYPE_DESC tp = NULL;
                     if (!EXPR_ARG1(x)) {
                         error("TYPE IS statement requires type-spec");
                         break;
@@ -1096,13 +1100,18 @@ compile_statement1(int st_no, expr x)
                     }
                     type = expv_sym_term(IDENT, tp, EXPR_SYM(EXPR_ARG1(x)));
                 } else if(EXPR_ARG1(x) != NULL) { // NULL for CLASS DEFAULT
-                    TYPE_DESC tp = find_struct_decl(EXPR_SYM(EXPR_ARG1(x)));
+                    tp = find_struct_decl(EXPR_SYM(EXPR_ARG1(x)));
                     if (tp == NULL){
                         error("%s has not been declared.",
                               SYM_NAME(EXPR_SYM(EXPR_ARG1(x))));
                     }
                     type = expv_sym_term(IDENT, tp, EXPR_SYM(EXPR_ARG1(x)));
                 }
+
+                selector = CTL_SELECT_TYPE_ASSICIATE(CTL_PREV(ctl_top))?:CTL_SELECT_TYPE_SELECTOR(CTL_PREV(ctl_top));
+                id = declare_ident(EXPR_SYM(selector), CL_VAR);
+                declare_id_type(id, tp);
+
                 st = list3(EXPR_CODE(x), type, NULL, const_name);
                 CTL_BLOCK(ctl_top) = st;
             } else {
@@ -1142,6 +1151,7 @@ compile_statement1(int st_no, expr x)
                 EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
 
             pop_ctl();
+            pop_env();
 
             if (CTL_TYPE(ctl_top) != CTL_SELECT &&
                 CTL_TYPE(ctl_top) != CTL_SELECT_TYPE) {
