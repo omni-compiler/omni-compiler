@@ -133,7 +133,7 @@ static void compile_ENDFORALL_statement(expr x);
 
 static int check_valid_construction_name(expr x, expr y);
 static void move_implicit_vars_to_parent_from_type_guard(void);
-static void check_select_types(void);
+static void check_select_types(expr x, TYPE_DESC tp);
 
 static void unify_submodule_symbol_table(void);
 
@@ -1101,6 +1101,9 @@ compile_statement1(int st_no, expr x)
                         break;
                     }
                 }
+
+                check_select_types(x, tp);
+
                 selector = CTL_SELECT_TYPE_ASSICIATE(CTL_PREV(ctl_top))?:CTL_SELECT_TYPE_SELECTOR(CTL_PREV(ctl_top));
                 id = declare_ident(EXPR_SYM(selector), CL_VAR);
                 declare_id_type(id, tp);
@@ -1161,7 +1164,6 @@ compile_statement1(int st_no, expr x)
         } else {
             error("'end select', out of place");
         }
-        check_select_types();
         pop_ctl();
 
         break;
@@ -8445,55 +8447,44 @@ move_implicit_vars_to_parent_from_type_guard()
  * Checks types of each type guard statements under SELECT TYPE construct
  */
 static void
-check_select_types()
+check_select_types(expr x, TYPE_DESC tp)
 {
-    expv statements;
-    expv statement1, statement2;
-    list lp1, lp2;
-    TYPE_DESC tp1, tp2;
+    list lp;
 
-    if (CTL_TYPE(ctl_top) != CTL_SELECT_TYPE)
+    if (CTL_TYPE(ctl_top) != CTL_TYPE_GUARD) {
         return;
+    }
 
-    statements = CTL_SELECT_STATEMENT_BODY(ctl_top);
+    FOR_ITEMS_IN_LIST(lp, CTL_SAVE(ctl_top)) {
+        expv statement;
+        TYPE_DESC tq;
 
-    FOR_ITEMS_IN_LIST(lp1, statements) {
-        statement1 = LIST_ITEM(lp1);
+        statement = LIST_ITEM(lp);
 
-        tp1 = EXPR_ARG1(statement1)?EXPV_TYPE(EXPR_ARG1(statement1)):NULL;
-
-        if (EXPR_CODE(statement1) != F03_TYPEIS_STATEMENT &&
-            EXPR_CODE(statement1) != F03_CLASSIS_STATEMENT) {
+        if (EXPR_CODE(statement) != F03_TYPEIS_STATEMENT &&
+            EXPR_CODE(statement) != F03_CLASSIS_STATEMENT) {
             continue;
         }
 
-        for (lp2 = LIST_NEXT(lp1); lp2 != NULL; lp2 = LIST_NEXT(lp2)) {
-            statement2 = LIST_ITEM(lp2);
-            if (EXPR_CODE(statement2) != F03_TYPEIS_STATEMENT &&
-                EXPR_CODE(statement2) != F03_CLASSIS_STATEMENT) {
-                continue;
-            }
+        tq = EXPR_ARG1(statement)?EXPV_TYPE(EXPR_ARG1(statement)):NULL;
 
-            tp2 = EXPR_ARG1(statement2)?EXPV_TYPE(EXPR_ARG1(statement2)):NULL;
+        if (tp == NULL && tq == NULL) {
+            error_at_node(x, "duplicate CLASS DEFAULT");
+            return;
+        }
 
-            if (tp1 == NULL && tp2 == NULL) {
-                error("duplicate CLASS DEFAULT");
-                return;
-            }
+        if (tp == NULL || tq == NULL) {
+            continue;
+        }
 
-            if (tp1 == NULL || tp2 == NULL) {
-                continue;
-            }
-
-            if (EXPR_CODE(statement1) == EXPR_CODE(statement2)) {
-                if (IS_STRUCT_TYPE(tp1) && IS_STRUCT_TYPE(tp2)) {
-                    if (TYPE_TAGNAME(tp1) == TYPE_TAGNAME(tp2)) {
-                        error("duplicate derived-types in SELECT TYPE construct");
-                    }
-                } else if (type_is_strict_compatible(tp1, tp2)) {
-                    error("duplicate types in SELECT TYPE construct");
-                    return;
+        if (EXPR_CODE(x) == EXPR_CODE(statement)) {
+            if (IS_STRUCT_TYPE(tp) && IS_STRUCT_TYPE(tq)) {
+                if (TYPE_TAGNAME(tp) == TYPE_TAGNAME(tq)) {
+                    error_at_node(x, "duplicate derived-types in SELECT TYPE construct");
                 }
+            } else if (type_is_strict_compatible(tp, tq)) {
+                error_at_node(x, "duplicate types in SELECT TYPE construct");
+                return;
             }
         }
     }
