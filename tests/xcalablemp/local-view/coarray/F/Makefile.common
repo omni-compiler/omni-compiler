@@ -91,9 +91,9 @@ RUN:
 
 RUN/go.sh:
 	rm -rf $@
-	@if test $(FX10) == '0'; then\
+	if [[ ${HOSTNAME} =~ ^fe??p?? ]]; then\
 	  sed "s/@OUT@/$(OUT)/" >$@ go.template;\
-	elif ( hostname | egrep -q '^greatwave' ); then\
+	elif [[ ${HOSTNAME} =~ ^greatwave ]]; then\
 	  if test -f ./go-hokusai.template; then\
 	    sed "s/@OUT@/$(OUT)/" >$@ ./go-hokusai.template;\
 	  else\
@@ -103,9 +103,9 @@ RUN/go.sh:
 
 RUN/go4.sh:
 	rm -rf $@
-	@if test $(FX10) == '0'; then\
+	if [[ ${HOSTNAME} =~ ^fe??p?? ]]; then\
 	  sed "s/@OUT@/$(OUT4)/" >$@ go.template;\
-	elif ( hostname | egrep -q '^greatwave' ); then\
+	elif [[ ${HOSTNAME} =~ ^greatwave ]]; then\
 	  if test -f ./go-hokusai.template; then\
 	    sed "s/@OUT@/$(OUT4)/" >$@ ./go-hokusai.template;\
 	  else\
