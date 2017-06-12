@@ -536,10 +536,15 @@ public class XMPalignedArray {
     }
 
     // check <align-source> list, <align-subscrip> list
-    XobjList alignSourceList = (XobjList)alignDecl.getArg(1);
-    XobjList alignSubscriptList = (XobjList)alignDecl.getArg(3);
-    XobjList alignSubscriptVarList = (XobjList)alignSubscriptList.left();
+    XobjList alignSourceList        = (XobjList)alignDecl.getArg(1);
+    XobjList alignSubscriptList     = (XobjList)alignDecl.getArg(3);
+    XobjList alignSubscriptVarList  = (XobjList)alignSubscriptList.left();
     XobjList alignSubscriptExprList = (XobjList)alignSubscriptList.right();
+
+    String kind_bracket = alignSubscriptList.getTail().getString();
+    boolean isSquare    = kind_bracket.equals("SQUARE");
+    alignSubscriptList.removeLastArgs(); // Remove information of ROUND or SQUARE
+    if(isSquare) alignSubscriptVarList.reverse();
 
     // check <align-source> list
     if(arrayType.getRef().getKind() == Xtype.POINTER){

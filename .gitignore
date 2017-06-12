@@ -4,12 +4,13 @@
 *.mod
 *.xmod
 *.so
+a.out
 
 # Top directory
 autom4te.cache
 config.log
 config.status
-Makefile
+./Makefile
 
 # Sub directories
 C-BackEnd/Makefile
