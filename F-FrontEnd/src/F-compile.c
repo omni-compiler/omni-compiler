@@ -1147,8 +1147,11 @@ compile_statement1(int st_no, expr x)
                 EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
 
             pop_ctl();
-            move_implicit_vars_to_parent_from_type_guard();
-            pop_env();
+
+            if (CTL_TYPE(ctl_top) == CTL_SELECT_TYPE) {
+                move_implicit_vars_to_parent_from_type_guard();
+                pop_env();
+            }
 
             if (CTL_TYPE(ctl_top) != CTL_SELECT &&
                 CTL_TYPE(ctl_top) != CTL_SELECT_TYPE) {
@@ -1164,6 +1167,7 @@ compile_statement1(int st_no, expr x)
         } else {
             error("'end select', out of place");
         }
+
         pop_ctl();
 
         break;
@@ -8479,7 +8483,10 @@ check_select_types(expr x, TYPE_DESC tp)
 
         if (EXPR_CODE(x) == EXPR_CODE(statement)) {
             if (IS_STRUCT_TYPE(tp) && IS_STRUCT_TYPE(tq)) {
-                if (TYPE_TAGNAME(tp) == TYPE_TAGNAME(tq)) {
+                TYPE_DESC btp, btq;
+                btp = get_bottom_ref_type(tp);
+                btq = get_bottom_ref_type(tq);
+                if (type_is_strict_compatible(tp, tq) && TYPE_TAGNAME(btp) == TYPE_TAGNAME(btq)) {
                     error_at_node(x, "duplicate derived-types in SELECT TYPE construct");
                 }
             } else if (type_is_strict_compatible(tp, tq)) {
