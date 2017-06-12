@@ -79,10 +79,11 @@ extern void xmpf_coarray_get_scalar_(void **descPtr, char **baseAddr, int *eleme
   size_t offsetDMA;
   char *orgAddrDMA;
   char *nameDMA;
-  int avail_DMA;
+  BOOL avail_DMA;
 
-  descDMA = _XMPF_get_coarrayDescFromAddr(result, &orgAddrDMA, &offsetDMA, &nameDMA);
-  avail_DMA = descDMA ? 1 : 0;
+  descDMA = XMPF_isEagerCommMode() ? NULL :
+      _XMPF_get_coarrayDescFromAddr(result, &orgAddrDMA, &offsetDMA, &nameDMA);
+  avail_DMA = descDMA ? TRUE : FALSE;
 
   /*--------------------------------------*\
    * select scheme                        *
@@ -182,10 +183,11 @@ extern void xmpf_coarray_get_array_(void **descPtr, char **baseAddr, int *elemen
   size_t offsetDMA;
   char *orgAddrDMA;
   char *nameDMA;
-  int avail_DMA;
+  BOOL avail_DMA;
 
-  descDMA = _XMPF_get_coarrayDescFromAddr(result, &orgAddrDMA, &offsetDMA, &nameDMA);
-  avail_DMA = descDMA ? 1 : 0;
+  descDMA = XMPF_isEagerCommMode() ? NULL :
+      _XMPF_get_coarrayDescFromAddr(result, &orgAddrDMA, &offsetDMA, &nameDMA);
+  avail_DMA = descDMA ? TRUE : FALSE;
 
   /*--------------------------------------*\
    * select scheme                        *
