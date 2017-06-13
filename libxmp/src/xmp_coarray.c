@@ -24,6 +24,8 @@ struct _coarray_queue_t{
 };
 static struct _coarray_queue_t _coarray_queue;
 static void _push_coarray_queue(_XMP_coarray_t *c);
+static _XMP_coarray_t* _pop_coarray_queue();
+extern int _XMP_flag_multi_win;
 
 /**
    Set 1-dim coarray information 
@@ -402,6 +404,11 @@ void _XMP_coarray_attach(_XMP_coarray_t *coarray_desc, void *addr, const size_t 
  */
 void _XMP_coarray_detach(_XMP_coarray_t *coarray_desc)
 {
+  _XMP_coarray_t* poped_desc = _pop_coarray_queue();
+  if(poped_desc != coarray_desc){
+    _XMP_fatal("_XMP_coarary_detach: poped coarray desc is not the same to argument");
+  }
+
 #ifdef _XMP_GASNET
   //not implemented
   _XMP_fatal("_XMP_gasnet_coarray_detach is not implemented\n");
@@ -1562,7 +1569,20 @@ static void _XMP_coarray_deallocate(_XMP_coarray_t *c)
   if(c == NULL) return;
 
   free(c->addr);
-#if !defined(_XMP_GASNET) && !defined(_XMP_MPI3_ONESIDED)
+#if defined(_XMP_GASNET)
+  //
+#elif defined(_XMP_MPI3_ONESIDED)
+  if(_XMP_flag_multi_win){
+    if(c->win == MPI_WIN_NULL && c->real_addr != NULL){
+      //free dummy memory
+      _XMP_free(c->real_addr);
+    }else{
+      MPI_Win_unlock_all(c->win);
+      _XMP_barrier_EXEC();
+      _XMP_mpi_onesided_dealloc_win(&(c->win), (void **)&(c->real_addr), false);
+    }
+  }
+#else
   free(c->real_addr);
 #endif
   free(c->coarray_elmts);
@@ -1693,4 +1713,10 @@ void _XMP_coarray_get_acc(void *remote_coarray, void *local_array, void *local_c
   free(_coarray);
   free(_array);
   free(_image_num);
+}
+
+_XMP_coarray_t** _XMP_coarray_get_list(int *num)
+{
+  *num = _coarray_queue.num;
+  return _coarray_queue.coarrays;
 }

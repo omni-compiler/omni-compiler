@@ -146,6 +146,7 @@ extern void _XMP_coarray_put(void*, void*, void*);
 extern void _XMP_coarray_get(void*, void*, void*);
 extern void _XMP_coarray_rdma_do2(const int rdma_code, void *remote_coarray, void *local_array, void *local_coarray,
 				  const long coarray_elmts[], const long coarray_distance[]);
+extern _XMP_coarray_t** _XMP_coarray_get_list(int *num);
 #endif
 
 extern void _XMP_initialize_onesided_functions(int, char **);
@@ -580,6 +581,10 @@ extern MPI_Win _xmp_mpi_distarray_win_acc;
 //#endif
 void _XMP_mpi_onesided_initialize(int argc, char **argv, const size_t heap_size);
 void _XMP_mpi_onesided_finalize();
+void _XMP_mpi_onesided_create_win(MPI_Win *win, void *addr, size_t size, MPI_Comm comm);
+void _XMP_mpi_onesided_alloc_win(MPI_Win *win, void **addr, size_t size, MPI_Comm comm, bool is_acc);
+void _XMP_mpi_onesided_destroy_win(MPI_Win *win);
+void _XMP_mpi_onesided_dealloc_win(MPI_Win *win, void **addr, bool is_acc);
 void _XMP_mpi_build_shift_queue(bool);
 void _XMP_mpi_destroy_shift_queue(bool);
 void _XMP_mpi_coarray_lastly_deallocate(bool);
