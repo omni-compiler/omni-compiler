@@ -5031,6 +5031,11 @@ public class XfDecompileDomVisitor {
             XmfWriter writer = _context.getWriter();
             writer.writeToken("TYPE");
 
+            if (XmDomUtil.getAttrBool(structTypeNode, "is_abstract")) {
+                writer.writeToken(",");
+                writer.writeToken("ABSTRACT");
+            }
+
             String parentTypeId = XmDomUtil.getAttr(structTypeNode, "extends");
             if (parentTypeId != null) {
                 String typeName = typeManager.getAliasTypeName(parentTypeId);

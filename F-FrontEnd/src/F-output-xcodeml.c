@@ -804,6 +804,14 @@ outx_typeAttrs(int l, TYPE_DESC tp, const char *tag, int options)
         }
         outx_true(TYPE_IS_CLASS(tp),            "is_class");
 
+        if (IS_STRUCT_TYPE(tp)) {
+            /*
+             * function/subroutine type can be abstract,
+             * but XcodeML schema does not allow it.
+             */
+            outx_true(TYPE_IS_ABSTRACT(tp) ,    "is_abstract");
+        }
+
         if(TYPE_HAS_BIND(tp)){
             outx_print(" bind=\"%s\"", "C"); // Only C for the moment
             if(TYPE_BIND_NAME(tp)){

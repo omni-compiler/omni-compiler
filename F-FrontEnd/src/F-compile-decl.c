@@ -3833,6 +3833,7 @@ compile_struct_decl(expr ident, expr type, expr type_params)
     list lp = NULL;
     int has_access_spec = FALSE;
     int has_extends_spec = FALSE;
+    int has_abstract_spec = FALSE;
     ID last = NULL;
 
     if(ident == NULL)
@@ -3865,6 +3866,13 @@ compile_struct_decl(expr ident, expr type, expr type_params)
                     error("Dupulicate EXTENDS spec");
                 } else {
                     has_extends_spec = TRUE;
+                }
+                break;
+            case F03_ABSTRACT_SPEC:
+                if (has_abstract_spec) {
+                    error("Dupulicate ABSTRACT spec");
+                } else {
+                    has_abstract_spec = TRUE;
                 }
                 break;
             default:
@@ -3903,6 +3911,9 @@ compile_struct_decl(expr ident, expr type, expr type_params)
                 TYPE_PARENT(tp) = new_ident_desc(EXPR_SYM(EXPR_ARG1(x)));
                 TYPE_PARENT_TYPE(tp) = parent_type;
             }; break;
+            case F03_ABSTRACT_SPEC:
+                TYPE_SET_ABSTRACT(tp);
+                break;
             case F03_BIND_SPEC:
                 TYPE_SET_BIND(tp);
                 break;
