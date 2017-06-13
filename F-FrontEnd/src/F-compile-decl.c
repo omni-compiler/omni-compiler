@@ -5553,9 +5553,18 @@ compile_type_bound_procedure(expr x)
         binding_attr_flags |= TYPE_BOUND_PROCEDURE_PASS;
     }
 
-    if ((binding_attr_flags & TYPE_BOUND_PROCEDURE_DEFERRED) != 0 &&
-        interface_name == NULL) {
-        error("DEFERRED shall appears if and only if interface_name appears.");
+    if ((binding_attr_flags & TYPE_BOUND_PROCEDURE_DEFERRED) != 0) {
+        TYPE_DESC stp;
+        if (interface_name == NULL) {
+            error("DEFERRED shall appears if and only if interface_name appears.");
+        }
+        assert(CTL_TYPE(ctl_top) == CTL_STRUCT);
+
+        stp = CTL_STRUCT_TYPEDESC(ctl_top);
+
+        if (!TYPE_IS_ABSTRACT(stp)) {
+            error("DEFERRED shall appears in ABSTRACT TYPE.");
+        }
     }
 
     if (interface_name) {
@@ -5569,7 +5578,6 @@ compile_type_bound_procedure(expr x)
         if (!(binding_attr_flags & TYPE_BOUND_PROCEDURE_DEFERRED)) {
             error_at_node(x, "require DEFERRED attribute");
         }
-        warning_at_node(x, "NOT IMPLEMENTED YET");
         FOR_ITEMS_IN_LIST(lp, bindings) {
             if (EXPR_CODE(LIST_ITEM(lp)) != IDENT) {
                 error_at_node(x, "unexpected expression");
