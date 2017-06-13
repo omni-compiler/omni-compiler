@@ -86,7 +86,7 @@ public class XMPtranslateLocalPragma {
       case TASKS:
         { translateTasks(pb);			break; }
       case LOOP:
-        { translateLoop(pb);			break; }
+        { translateLoop(pb,true);		break; }
       case REFLECT:
         { translateReflect(pb);			break; }
       case BARRIER:
@@ -436,7 +436,12 @@ public class XMPtranslateLocalPragma {
     }
     args = Xcons.List(nodeObj.getDescId().Ref());
     
-    XobjList nodeList = (XobjList)onRef.getArg(1);
+    XobjList nodeList   = (XobjList)onRef.getArg(1);
+    String kind_bracket = nodeList.getTail().getString();
+    boolean isSquare    = kind_bracket.equals("SQUARE");
+
+    nodeList.removeLastArgs(); // Remove information of ROUND or SQUARE
+    if(isSquare) nodeList.reverse();
 
     if(nodeObj.getDim() != nodeList.Nargs()){
       throw new XMPexception("Error. Dimension of node is different.");
@@ -444,8 +449,13 @@ public class XMPtranslateLocalPragma {
 
     String funcName = "_XMP_post_" + String.valueOf(nodeObj.getDim());
 
-    for(int i=0;i<nodeObj.getDim();i++)
-      args.add(nodeList.getArg(i).getArg(0));
+    for(int i=0;i<nodeObj.getDim();i++){
+      Xobject v = nodeList.getArg(i).getArg(0);
+      if(isSquare)
+        v = Xcons.binaryOp(Xcode.PLUS_EXPR, v, Xcons.IntConstant(1));
+
+      args.add(v);
+    }
 
     Xobject tag = postDecl.getArg(1);
     args.add(tag);
@@ -465,12 +475,16 @@ public class XMPtranslateLocalPragma {
     }
 
     // only node
-    XobjList onRef = (XobjList)waitDecl.getArg(0);
-    String nodeName = onRef.getArg(0).getString();
-    XobjList nodeList = (XobjList)onRef.getArg(1);
-    XMPnodes nodeObj = _globalDecl.getXMPnodes(nodeName, pb);
-    String funcName = null;
-    XobjList args = Xcons.List(nodeObj.getDescId().Ref());
+    XobjList onRef      = (XobjList)waitDecl.getArg(0);
+    String nodeName     = onRef.getArg(0).getString();
+    XobjList nodeList   = (XobjList)onRef.getArg(1);
+    XMPnodes nodeObj    = _globalDecl.getXMPnodes(nodeName, pb);
+    String funcName     = null;
+    XobjList args       = Xcons.List(nodeObj.getDescId().Ref());
+    String kind_bracket = nodeList.getTail().getString();
+    boolean isSquare    = kind_bracket.equals("SQUARE");
+    nodeList.removeLastArgs(); // Remove information of ROUND or SQUARE
+    if(isSquare) nodeList.reverse();
 
     if(nodeObj == null){
       throw new XMPexception("cannot find '" + nodeName + "' nodes");
@@ -479,8 +493,13 @@ public class XMPtranslateLocalPragma {
       throw new XMPexception("Error. Dimension of node is different.");
     }
 
-    for(int i=0;i<nodeList.Nargs();i++)
-      args.add(onRef.getArg(1).getArg(i));
+    for(int i=0;i<nodeObj.getDim();i++){
+      Xobject v = nodeList.getArg(i);
+      if(isSquare)
+        v = Xcons.binaryOp(Xcode.PLUS_EXPR, v, Xcons.IntConstant(1));
+      
+      args.add(v);
+    }
 
     if(numOfArgs == 1){
       funcName = "_XMP_wait_node_" + String.valueOf(nodeObj.getDim());
@@ -746,7 +765,7 @@ public class XMPtranslateLocalPragma {
     // do nothing here
   }
 
-  private void translateLoop(PragmaBlock pb) throws XMPexception {
+  private void translateLoop(PragmaBlock pb, boolean isFromTranslateLoop) throws XMPexception {
     XobjList loopDecl = (XobjList)pb.getClauses();
     BlockList loopBody = pb.getBody();
 
@@ -754,7 +773,18 @@ public class XMPtranslateLocalPragma {
     CforBlock schedBaseBlock = getOutermostLoopBlock(loopBody);
 
     // schedule loop
-    XobjList loopIterList = (XobjList)loopDecl.getArg(0);
+    XobjList loopIterList  = (XobjList)loopDecl.getArg(0);
+    XobjList onRef         = (XobjList)loopDecl.getArg(1);
+    XobjList onRefIterList = (XobjList)onRef.getArg(1);
+    String kind_bracket    = onRefIterList.getTail().getString();
+    boolean isSquare       = kind_bracket.equals("SQUARE");
+
+    onRefIterList.removeLastArgs(); // Remove information of ROUND or SQUARE
+    if(isFromTranslateLoop){
+      loopIterList.removeLastArgs();  // Remove information of ROUND or SQUARE
+      if(isSquare) onRefIterList.reverse();
+    }
+    
     if (loopIterList == null || loopIterList.Nargs() == 0) {
       loopIterList = Xcons.List(Xcons.String(schedBaseBlock.getInductionVar().getName()));
       loopDecl.setArg(0, loopIterList);
@@ -1199,6 +1229,7 @@ public class XMPtranslateLocalPragma {
 
     // iterate index variable list
     XobjList loopVarList = (XobjList)loopDecl.getArg(0);
+
     Vector<CforBlock> loopVector = new Vector<CforBlock>(XMPutil.countElmts(loopVarList));
     for (XobjArgs i = loopVarList.getArgs(); i != null; i = i.nextArgs()) {
       loopVector.add(findLoopBlock(loopBody, i.getArg().getString()));
@@ -1262,9 +1293,8 @@ public class XMPtranslateLocalPragma {
     }
     funcArgs.add(templateObj.getDescId().Ref());
     funcArgs.add(templateIndexArg);
-    
+
     Ident funcId = _globalDecl.declExternFunc("_XMP_sched_loop_template_" + distMannerString);
-    
     int[] position = {iteraterList.size()};
     boolean[] flag = {false, false, false};
     String[] insertedIteraterList = new String[3];
@@ -1275,7 +1305,6 @@ public class XMPtranslateLocalPragma {
     if(position[0] == iteraterList.size()){
       Block b = getOuterSchedPoint(schedBaseBlock);
       b.insert(funcId.Call(funcArgs));
-      //schedBaseBlock.insert(funcId.Call(funcArgs));
     }
     else{
       if(flag[0]){ 
@@ -2585,85 +2614,6 @@ public class XMPtranslateLocalPragma {
     return Bcons.COMPOUND(funcCallList);
   }
 
-  // private XMPpair<String, XobjList> createExecFromRefArgs(XobjList fromRef,
-  //                                                         XMPsymbolTable localXMPsymbolTable) throws XMPexception {
-  //   if (fromRef.getArg(0) == null) {
-  //     // execute on global communicator
-  //     XobjList globalRef = (XobjList)fromRef.getArg(1);
-
-  //     XobjList execFuncArgs = Xcons.List();
-  //     // lower
-  //     if (globalRef.getArg(0) == null)
-  //       throw new XMPexception("lower bound cannot be omitted in <from-ref>");
-  //     else execFuncArgs.add(globalRef.getArg(0));
-
-  //     // upper
-  //     if (globalRef.getArg(1) == null)
-  //       throw new XMPexception("upper bound cannot be omitted in <from-ref>");
-  //     else execFuncArgs.add(globalRef.getArg(1));
-
-  //     // stride
-  //     if (globalRef.getArg(2) == null) execFuncArgs.add(Xcons.IntConstant(1));
-  //     else execFuncArgs.add(globalRef.getArg(2));
-
-  //     return new XMPpair<String, XobjList>(new String("GLOBAL"), execFuncArgs);
-  //   }
-  //   else {
-  //     // execute on <object-ref>
-
-  //     // check object name collision
-  //     String objectName = fromRef.getArg(0).getString();
-  //     XMPobject fromRefObject = _globalDecl.getXMPobject(objectName, localXMPsymbolTable);
-  //     if (fromRefObject == null) {
-  //       throw new XMPexception("cannot find '" + objectName + "' nodes/template");
-  //     }
-
-  //     if (fromRefObject.getKind() == XMPobject.TEMPLATE)
-  //       throw new XMPexception("template cannot be used in <from-ref>");
-
-  //     // create arguments
-  //     if (fromRef.getArg(1) == null)
-  //       throw new XMPexception("multiple source nodes indicated in bcast directive");
-  //     else {
-  //       XobjList execFuncArgs = Xcons.List(fromRefObject.getDescId().Ref());
-
-  //       int refIndex = 0;
-  //       int refDim = fromRefObject.getDim();
-  //       for (XobjArgs i = fromRef.getArg(1).getArgs(); i != null; i = i.nextArgs()) {
-  //         if (refIndex == refDim)
-  //           throw new XMPexception("wrong nodes dimension indicated, too many");
-
-  //         XobjList t = (XobjList)i.getArg();
-  //         if (t == null) execFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
-  //         else {
-  //           execFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(0)));
-
-  //           // lower
-  //           if (t.getArg(0) == null)
-  //             throw new XMPexception("lower bound cannot be omitted in <from-ref>");
-  //           else execFuncArgs.add(Xcons.Cast(Xtype.intType, t.getArg(0)));
-
-  //           // upper
-  //           if (t.getArg(1) == null)
-  //             throw new XMPexception("upper bound cannot be omitted in <from-ref>");
-  //           else execFuncArgs.add(Xcons.Cast(Xtype.intType, t.getArg(1)));
-
-  //           // stride
-  //           if (t.getArg(2) == null) execFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
-  //           else execFuncArgs.add(Xcons.Cast(Xtype.intType, t.getArg(2)));
-  //         }
-
-  //         refIndex++;
-  //       }
-
-  //       if (refIndex != refDim)
-  //         throw new XMPexception("the number of <nodes/template-subscript> should be the same with the dimension");
-
-  //       return new XMPpair<String, XobjList>(new String("NODES"), execFuncArgs);
-  //     }
-  //   }
-  // }
-
   private XMPpair<String, XobjList> createExecFromRefArgs(XobjList fromRef, Block block) throws XMPexception {
     if (fromRef.getArg(0) == null) {
       // execute on global communicator
@@ -2699,6 +2649,11 @@ public class XMPtranslateLocalPragma {
       if (fromRefObject.getKind() == XMPobject.TEMPLATE)
         throw new XMPexception("template cannot be used in <from-ref>");
 
+      String kind_bracket = fromRef.getArg(1).getTail().getString();
+      boolean isSquare    = kind_bracket.equals("SQUARE");
+      fromRef.getArg(1).removeLastArgs();  // remove ROUND or SQUARE information
+      if(isSquare) ((XobjList)fromRef.getArg(1)).reverse();
+
       // create arguments
       if (fromRef.getArg(1) == null)
         throw new XMPexception("multiple source nodes indicated in bcast directive");
@@ -2707,28 +2662,48 @@ public class XMPtranslateLocalPragma {
 
         int refIndex = 0;
         int refDim = fromRefObject.getDim();
+        
         for (XobjArgs i = fromRef.getArg(1).getArgs(); i != null; i = i.nextArgs()) {
           if (refIndex == refDim)
             throw new XMPexception("wrong nodes dimension indicated, too many");
 
           XobjList t = (XobjList)i.getArg();
-          if (t == null || t.isEmptyList()) execFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
+          if (t == null || t.isEmptyList()){
+            execFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
+          }
           else {
-            execFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(0)));
+            Xobject lower = null;
+            Xobject upper = null;
+            Xobject stride = null;
 
+            execFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(0)));
+            
             // lower
             if (t.getArg(0) == null)
               throw new XMPexception("lower bound cannot be omitted in <from-ref>");
-            else execFuncArgs.add(Xcons.Cast(Xtype.intType, t.getArg(0)));
+            else{
+              lower = t.getArg(0);
+              if(fromRefObject.getKind() == XMPobject.NODES && isSquare == true)
+                lower = Xcons.binaryOp(Xcode.PLUS_EXPR, lower, Xcons.IntConstant(1));
+            }
 
             // upper
             if (t.getArg(1) == null)
               throw new XMPexception("upper bound cannot be omitted in <from-ref>");
-            else execFuncArgs.add(Xcons.Cast(Xtype.intType, t.getArg(1)));
+            else{
+               upper =  t.getArg(1);
+               if(fromRefObject.getKind() == XMPobject.NODES && isSquare == true){
+                 upper = Xcons.binaryOp(Xcode.PLUS_EXPR, t.getArg(0), t.getArg(1));
+              }
+            }
 
             // stride
-            if (t.getArg(2) == null) execFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
-            else execFuncArgs.add(Xcons.Cast(Xtype.intType, t.getArg(2)));
+            stride = (t.getArg(2) == null)? Xcons.IntConstant(1) : t.getArg(2);
+
+            // Output
+            execFuncArgs.add(Xcons.Cast(Xtype.intType, lower));
+            execFuncArgs.add(Xcons.Cast(Xtype.intType, upper));
+            execFuncArgs.add(Xcons.Cast(Xtype.intType, stride));
           }
 
           refIndex++;
@@ -2745,10 +2720,9 @@ public class XMPtranslateLocalPragma {
   private final static int GMOVE_ALL   = 0;
   private final static int GMOVE_INDEX = 1;
   private final static int GMOVE_RANGE = 2;
-  
-  private final static int GMOVE_COLL   = 400;
-  private final static int GMOVE_IN = 401;
-  private final static int GMOVE_OUT = 402;
+  private final static int GMOVE_COLL  = 400;
+  private final static int GMOVE_IN    = 401;
+  private final static int GMOVE_OUT   = 402;
   
   private void translateGmove(PragmaBlock pb) throws XMPexception {
 
@@ -3542,7 +3516,6 @@ public class XMPtranslateLocalPragma {
     XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
     String arrayName = expr.getArg(0).getSym();
 
-    //XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, localXMPsymbolTable);
     XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, pb);
     XobjList castedArrayRefs = Xcons.List();
     XobjList arrayRefs = (XobjList)expr.getArg(1);
@@ -3554,171 +3527,15 @@ public class XMPtranslateLocalPragma {
 
     return new XMPpair<XMPalignedArray, XobjList>(alignedArray, castedArrayRefs);
   }
-
-  // private XMPquadruplet<String, Boolean, XobjList, XMPobject> createExecOnRefArgs(XobjList onRef,
-  //                                                                                 XMPsymbolTable localXMPsymbolTable) throws XMPexception {
-  //   if (onRef.getArg(0) == null) {
-  //     // execute on global communicator
-  //     XobjList globalRef = (XobjList)onRef.getArg(1);
-
-  //     boolean splitComm = false;
-  //     XobjList tempArgs = Xcons.List();
-  //     // lower
-  //     if (globalRef.getArg(0) == null) tempArgs.add(Xcons.IntConstant(1));
-  //     else {
-  //       splitComm = true;
-  //       tempArgs.add(globalRef.getArg(0));
-  //     }
-  //     // upper
-  //     if (globalRef.getArg(1) == null) tempArgs.add(_globalDecl.getWorldSizeId().Ref());
-  //     else {
-  //       splitComm = true;
-  //       tempArgs.add(globalRef.getArg(1));
-  //     }
-  //     // stride
-  //     if (globalRef.getArg(2) == null) tempArgs.add(Xcons.IntConstant(1));
-  //     else {
-  //       splitComm = true;
-  //       tempArgs.add(globalRef.getArg(2));
-  //     }
-
-  //     String execFuncSuffix = null;
-  //     XobjList execFuncArgs = null;
-  //     if (splitComm) {
-  //       execFuncSuffix = "GLOBAL_PART";
-  //       execFuncArgs = tempArgs;
-  //     }
-  //     else {
-  //       execFuncSuffix = "NODES_ENTIRE";
-  //       execFuncArgs = Xcons.List(_globalDecl.getWorldDescId().Ref());
-  //     }
-
-  //     return new XMPquadruplet<String, Boolean, XobjList, XMPobject>(execFuncSuffix, new Boolean(splitComm), execFuncArgs, null);
-  //   }
-  //   else {
-  //     // execute on <object-ref>
-
-  //     // check object name collision
-  //     String objectName = onRef.getArg(0).getString();
-  //     XMPobject onRefObject = _globalDecl.getXMPobject(objectName, localXMPsymbolTable);
-  //     if (onRefObject == null) {
-  //       throw new XMPexception("cannot find '" + objectName + "' nodes/template");
-  //     }
-
-  //     Xobject ontoNodesRef = null;
-  //     Xtype castType = null;
-  //     switch (onRefObject.getKind()) {
-  //       case XMPobject.NODES:
-  //         ontoNodesRef = onRefObject.getDescId().Ref();
-  //         castType = Xtype.intType;
-  //         break;
-  //       case XMPobject.TEMPLATE:
-  //         {
-  //           XMPtemplate ontoTemplate = (XMPtemplate)onRefObject;
-
-  //           if (!ontoTemplate.isFixed()) {
-  //             throw new XMPexception("template '" + objectName + "' is not fixed");
-  //           }
-
-  //           if (!ontoTemplate.isDistributed()) {
-  //             throw new XMPexception("template '" + objectName + "' is not distributed");
-  //           }
-
-  //           XMPnodes ontoNodes = ((XMPtemplate)onRefObject).getOntoNodes();
-
-  //           ontoNodesRef = ontoNodes.getDescId().Ref();
-  //           castType = Xtype.longlongType;
-  //           break;
-  //         }
-  //       default:
-  //         throw new XMPexception("unknown object type");
-  //     }
-
-  //     // create arguments
-  //     if (onRef.getArg(1) == null || onRef.getArg(1).getArgs() == null)
-  //       return new XMPquadruplet<String, Boolean, XobjList, XMPobject>(new String("NODES_ENTIRE"), new Boolean(false), Xcons.List(ontoNodesRef), onRefObject);
-  //     else {
-  //       boolean splitComm = false;
-  //       int refIndex = 0;
-  //       int refDim = onRefObject.getDim();
-  //       XobjList tempArgs = Xcons.List();
-  //       for (XobjArgs i = onRef.getArg(1).getArgs(); i != null; i = i.nextArgs()) {
-  //         if (refIndex == refDim)
-  //           throw new XMPexception("wrong nodes dimension indicated, too many");
-
-  //         XobjList t = (XobjList)i.getArg();
-  //         if (t == null || t.getArgs() == null) {
-  //           splitComm = true;
-  //           tempArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
-  //         }
-  //         else {
-  //           tempArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(0)));
-
-  //           // lower
-  //           if (t.getArg(0) == null || (t.getArg(0) instanceof XobjList && t.getArg(0).getArgs() == null)) {
-  //             tempArgs.add(Xcons.Cast(castType, onRefObject.getLowerAt(refIndex)));
-  //           } else {
-  //             splitComm = true;
-  //             tempArgs.add(Xcons.Cast(castType, t.getArg(0)));
-  //           }
-  //           // upper
-  //           if (t.getArg(1) == null || (t.getArg(0) instanceof XobjList && t.getArg(1).getArgs() == null)) {
-  //             tempArgs.add(Xcons.Cast(castType, onRefObject.getUpperAt(refIndex)));
-  //           }
-  //           else {
-  //             splitComm = true;
-  //             tempArgs.add(Xcons.Cast(castType, t.getArg(1)));
-  //           }
-  //           // stride
-  //           if (t.getArg(2) == null) tempArgs.add(Xcons.Cast(castType, Xcons.IntConstant(1)));
-  //           else {
-  //             splitComm = true;
-  //             // XXX stride: always int
-  //             tempArgs.add(Xcons.Cast(castType, t.getArg(2)));
-  //           }
-  //         }
-
-  //         refIndex++;
-  //       }
-
-  //       if (refIndex != refDim)
-  //         throw new XMPexception("the number of <nodes/template-subscript> should be the same with the dimension");
-
-  //       if (splitComm) {
-  //         String execFuncSuffix = null;
-  //         XobjList execFuncArgs = null;
-  //         execFuncArgs = tempArgs;
-  //         switch (onRefObject.getKind()) {
-  //           case XMPobject.NODES:
-  //             execFuncSuffix = "NODES_PART";
-  //             execFuncArgs.cons(ontoNodesRef);
-  //             break;
-  //           case XMPobject.TEMPLATE:
-  //             execFuncSuffix = "TEMPLATE_PART";
-  //             execFuncArgs.cons(((XMPtemplate)onRefObject).getDescId().Ref());
-  //             break;
-  //           default:
-  //             throw new XMPexception("unknown object type");
-  //         }
-
-  //         return new XMPquadruplet<String, Boolean, XobjList, XMPobject>(execFuncSuffix, new Boolean(splitComm), execFuncArgs, onRefObject);
-  //       }
-  //       else
-  //         return new XMPquadruplet<String, Boolean, XobjList, XMPobject>(new String("NODES_ENTIRE"),
-  //                                                             new Boolean(splitComm), Xcons.List(ontoNodesRef),
-  //                                                             onRefObject);
-  //     }
-  //   }
-  // }
-
+  
   private XMPquadruplet<String, Boolean, XobjList, XMPobject> createExecOnRefArgs(XobjList onRef,
                                                                                   Block block) throws XMPexception {
     if (onRef.getArg(0) == null) {
       // execute on global communicator
       XobjList globalRef = (XobjList)onRef.getArg(1);
-
       boolean splitComm = false;
       XobjList tempArgs = Xcons.List();
+      
       // lower
       if (globalRef.getArg(0) == null) tempArgs.add(Xcons.IntConstant(1));
       else {
@@ -3757,9 +3574,8 @@ public class XMPtranslateLocalPragma {
       // check object name collision
       String objectName = onRef.getArg(0).getString();
       XMPobject onRefObject = _globalDecl.getXMPobject(objectName, block);
-      if (onRefObject == null) {
+      if (onRefObject == null)
         throw new XMPexception("cannot find '" + objectName + "' nodes/template");
-      }
 
       Xobject ontoNodesRef = null;
       Xtype castType = null;
@@ -3769,34 +3585,33 @@ public class XMPtranslateLocalPragma {
           castType = Xtype.intType;
           break;
         case XMPobject.TEMPLATE:
-          {
-            XMPtemplate ontoTemplate = (XMPtemplate)onRefObject;
-
-            // if (!ontoTemplate.isFixed()) {
-            //   throw new XMPexception("template '" + objectName + "' is not fixed");
-            // }
-
-            if (!ontoTemplate.isDistributed()) {
-              throw new XMPexception("template '" + objectName + "' is not distributed");
-            }
-
-            XMPnodes ontoNodes = ((XMPtemplate)onRefObject).getOntoNodes();
-
-            ontoNodesRef = ontoNodes.getDescId().Ref();
-            castType = Xtype.longlongType;
-            break;
-          }
+          XMPtemplate ontoTemplate = (XMPtemplate)onRefObject;
+          
+          if (!ontoTemplate.isDistributed())
+            throw new XMPexception("template '" + objectName + "' is not distributed");
+          
+          XMPnodes ontoNodes = ((XMPtemplate)onRefObject).getOntoNodes();
+          
+          ontoNodesRef = ontoNodes.getDescId().Ref();
+          castType = Xtype.longlongType;
+          break;
         default:
           throw new XMPexception("unknown object type");
       }
 
       // create arguments
-      if (onRef.getArg(1) == null || onRef.getArg(1).getArgs() == null)
+      if (onRef.getArg(1) == null || onRef.getArg(1).getArgs() == null){
         return new XMPquadruplet<String, Boolean, XobjList, XMPobject>(new String("NODES_ENTIRE"), new Boolean(false), Xcons.List(ontoNodesRef), onRefObject);
+      }
       else {
-        boolean splitComm = false;
-        int refIndex = 0;
-        int refDim = onRefObject.getDim();
+        boolean splitComm   = false;
+        int refIndex        = 0;
+        int refDim          = onRefObject.getDim();
+        String kind_bracket = onRef.getArg(1).getTail().getString();
+        boolean isSquare    = kind_bracket.equals("SQUARE");
+        onRef.getArg(1).removeLastArgs(); // Remove information of ROUND or SQUARE
+        if(isSquare) ((XobjList)onRef.getArg(1)).reverse();
+
         XobjList tempArgs = Xcons.List();
         for (XobjArgs i = onRef.getArg(1).getArgs(); i != null; i = i.nextArgs()) {
           if (refIndex == refDim)
@@ -3808,32 +3623,53 @@ public class XMPtranslateLocalPragma {
             tempArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
           }
           else {
+            Xobject lower  = null;
+            Xobject upper  = null;
+            Xobject stride = null;
+            
             tempArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(0)));
 
             // lower
             if (t.getArg(0) == null || (t.getArg(0) instanceof XobjList && t.getArg(0).getArgs() == null)) {
-              tempArgs.add(Xcons.Cast(castType, onRefObject.getLowerAt(refIndex)));
-            } else {
-              splitComm = true;
-              tempArgs.add(Xcons.Cast(castType, t.getArg(0)));
+              lower = onRefObject.getLowerAt(refIndex);
             }
+            else {
+              splitComm = true;
+              lower = t.getArg(0);
+              if(onRefObject.getKind() == XMPobject.NODES && isSquare == true)
+                lower = Xcons.binaryOp(Xcode.PLUS_EXPR, lower, Xcons.IntConstant(1));
+            }
+
             // upper
             if (t.getArg(1) == null || (t.getArg(0) instanceof XobjList && t.getArg(1).getArgs() == null)) {
-              tempArgs.add(Xcons.Cast(castType, onRefObject.getUpperAt(refIndex)));
+              upper = onRefObject.getUpperAt(refIndex);
             }
             else {
               splitComm = true;
-              tempArgs.add(Xcons.Cast(castType, t.getArg(1)));
+              if(onRefObject.getKind() == XMPobject.NODES && isSquare == true){
+                upper = Xcons.binaryOp(Xcode.PLUS_EXPR, t.getArg(0), t.getArg(1));
+              }
+              else if(onRefObject.getKind() == XMPobject.TEMPLATE && isSquare == true){
+                upper = Xcons.binaryOp(Xcode.PLUS_EXPR, lower, t.getArg(1));
+                upper = Xcons.binaryOp(Xcode.MINUS_EXPR, upper, Xcons.IntConstant(1));
+              }
+              else
+                upper = t.getArg(1);
             }
+            
             // stride
             if (t.getArg(2) == null || t.getArg(2).equals(Xcons.IntConstant(1))){
-              tempArgs.add(Xcons.Cast(castType, Xcons.IntConstant(1)));
+              stride = Xcons.IntConstant(1);
             }
             else {
               splitComm = true;
-              // XXX stride: always int
-              tempArgs.add(Xcons.Cast(castType, t.getArg(2)));
+              stride = t.getArg(2);
             }
+
+            // Output
+            tempArgs.add(Xcons.Cast(castType, lower));
+            tempArgs.add(Xcons.Cast(castType, upper));
+            tempArgs.add(Xcons.Cast(castType, stride));
           }
 
           refIndex++;
@@ -3903,18 +3739,10 @@ public class XMPtranslateLocalPragma {
       throw new XMPexception(checkBodyErrMsg);
     }
 
-    // Xobject leftExpr = assignStmt.left();
-    // XMPpair<XMPalignedArray, XobjList> leftExprInfo = getXMPalignedArrayExpr(pb, leftExpr);
-    // XMPalignedArray leftAlignedArray = leftExprInfo.getFirst();
-
-    // Xobject rightExpr = assignStmt.right();
-    // XMPpair<XMPalignedArray, XobjList> rightExprInfo = getXMPalignedArrayExpr(pb, assignStmt.right());
-    // XMPalignedArray rightAlignedArray = rightExprInfo.getFirst();
-
     Block loopBlock = convertArrayToLoop(pb, arrayStmt);
     pb.replace(loopBlock);
 
-    translateLoop((PragmaBlock)loopBlock);
+    translateLoop((PragmaBlock)loopBlock, false);
 
   }
 
@@ -3926,10 +3754,6 @@ public class XMPtranslateLocalPragma {
     Xobject left = assignStmt.left();
     XMPpair<XMPalignedArray, XobjList> leftExprInfo = getXMPalignedArrayExpr(pb, left);
     XMPalignedArray leftAlignedArray = leftExprInfo.getFirst();
-
-    // Xobject right = assignStmt.right();
-    // XMPpair<XMPalignedArray, XobjList> rightExprInfo = getXMPalignedArrayExpr(pb, right);
-    // XMPalignedArray rightAlignedArray = rightExprInfo.getFirst();
 
     List<Ident> varList = new ArrayList<Ident>(XMP.MAX_DIM);
     List<Ident> varListTemplate = new ArrayList<Ident>(XMP.MAX_DIM);
@@ -3947,10 +3771,6 @@ public class XMPtranslateLocalPragma {
     }
 
     String arrayName = getArrayName(left);
-
-    //Ident arrayId = pb.findVarIdent(arrayName);
-    //Xtype arrayType = arrayId.Type();
-
     XMPalignedArray array = _globalDecl.getXMPalignedArray(arrayName, pb);
     Xtype arrayType = null;
     if (array != null){

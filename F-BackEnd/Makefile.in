@@ -15,8 +15,8 @@ SCRIPT_SRC  = ../libxmpf/src/xmpf_coarray_decl.F90
 SCRIPT_INC  = ../libxmpf/include
 
 all: $(OM_F_BACK)
-$(OM_F_BACK): $(SOURCE) $(SOURCE_AUTO) $(SCRIPT_SRC) $(SCRIPT_INC) ../XcodeML-Common/build/om-common.jar
-	$(JAVAC) $(JAVAC_OPT) src/xcodeml/f/*/*.java -classpath ../XcodeML-Common/build/om-common.jar:./src
+$(OM_F_BACK): $(SOURCE) $(SOURCE_AUTO) $(SCRIPT_SRC) $(SCRIPT_INC) ../XcodeML-Exc-Tools/build/om-exc-tools.jar
+	$(JAVAC) $(JAVAC_OPT) src/xcodeml/f/*/*.java -classpath ../XcodeML-Exc-Tools/src:./src
 	$(MKDIR_P) build
 	cd src; $(JAR) $(JAR_OPT) cf ../$@ xcodeml/f/*/*.class
 

@@ -4,6 +4,7 @@
 
 #include "F-front.h"
 #include "F-output-xcodeml.h"
+#include "module-manager.h"
 
 #define CHAR_BUF_SIZE 65536
 
@@ -3135,12 +3136,13 @@ outx_useDecl(int l, expv v, int is_intrinsic)
     } else {
         outx_tagOfDecl1(l, "%s name=\"%s\"", EXPR_LINE(v), XTAG(v), mod_name);
     }
-    
 
     FOR_ITEMS_IN_LIST(lp, EXPR_ARG2(v)) {
         expv x = LIST_ITEM(lp);
         outx_useRename(l+1, EXPR_ARG1(x), EXPR_ARG2(x));
     }
+
+    include_module_file(print_fp,EXPV_NAME(EXPR_ARG1(v)));
 
     outx_expvClose(l, v);
 }
@@ -3175,12 +3177,13 @@ outx_useOnlyDecl(int l, expv v, int is_intrinsic)
     } else {
         outx_tagOfDecl1(l, "%s name=\"%s\"", EXPR_LINE(v), XTAG(v), mod_name);
     }
-    
 
     FOR_ITEMS_IN_LIST(lp, EXPR_ARG2(v)) {
         expv x = LIST_ITEM(lp);
         outx_useRenamable(l+1, EXPR_ARG1(x), EXPR_ARG2(x));
     }
+
+    include_module_file(print_fp,EXPV_NAME(EXPR_ARG1(v)));
 
     outx_expvClose(l, v);
 }
@@ -4438,8 +4441,15 @@ outx_structType(int l, TYPE_DESC tp)
                 }
                 outx_close(l3, "binding");
                 outx_close(l2, "typeBoundGenericProcedure");
-            } else {
 
+            } else if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_IS_FINAL) {
+                ID final;
+                FOREACH_ID(final, TBP_BINDING(id)) {
+                    outx_tag(l2, "finalProcedure");
+                    outx_tagText(l3, "name", SYM_NAME(ID_SYM(final)));
+                    outx_close(l2, "finalProcedure");
+                }
+            } else {
                 outx_printi(l2, "<typeBoundProcedure");
                 outx_printi(0, " type=\"%s\"", getTypeID(ID_TYPE(id)));
 

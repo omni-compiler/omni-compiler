@@ -7,8 +7,6 @@
 package exc.object;
 
 import java.util.Iterator;
-
-import xcodeml.IXobject;
 import exc.block.Block;
 
 /**

@@ -1,9 +1,3 @@
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
-
 package exc.xcalablemp;
 
 import exc.block.*;
@@ -12,41 +6,40 @@ import java.util.Vector;
 
 public class XMPtemplate extends XMPobject {
   // defined in xmp_constant.h
-  public final static int DUPLICATION	= 100;
-  public final static int BLOCK		= 101;
-  public final static int CYCLIC	= 102;
-  public final static int BLOCK_CYCLIC	= 103;
-  public final static int GBLOCK	= 104;
+  public final static int DUPLICATION  = 100;
+  public final static int BLOCK        = 101;
+  public final static int CYCLIC       = 102;
+  public final static int BLOCK_CYCLIC = 103;
+  public final static int GBLOCK       = 104;
 
-  private boolean		_isFixed;
-  private boolean		_isDistributed;
-  private boolean               _distributionIsFixed;
-  private XMPnodes		_ontoNodes;
-  private Vector<XobjInt>	_ontoNodesIndexVector;
-  private Vector<Integer>	_distMannerVector;
-  private Vector<Xobject>       _sizeVector;
-  private Vector<Xobject>       _widthVector;
-  private XobjList              _decl;
-  private XobjList              _distDecl;
-  private Vector<Ident>		_gtolTemp0IdVector;
-
-  private boolean               _isStaticDesc = false;
-  private Ident                 _flagId = null;
+  private boolean         _isFixed;
+  private boolean         _isDistributed;
+  private boolean         _distributionIsFixed;
+  private XMPnodes	  _ontoNodes;
+  private Vector<XobjInt> _ontoNodesIndexVector;
+  private Vector<Integer> _distMannerVector;
+  private Vector<Xobject> _sizeVector;
+  private Vector<Xobject> _widthVector;
+  private XobjList        _decl;
+  private XobjList        _distDecl;
+  private Vector<Ident>   _gtolTemp0IdVector;
+  private boolean         _isStaticDesc = false;
+  private Ident           _flagId = null;
 
   public XMPtemplate(String name, int dim, Ident descId) {
     super(XMPobject.TEMPLATE, name, dim, descId);
 
-    _isFixed = false;
-    _isDistributed = false;
-    _distributionIsFixed = true;
-    _ontoNodes = null;
+    _isFixed              = false;
+    _isDistributed        = false;
+    _distributionIsFixed  = true;
+    _ontoNodes            = null;
     _ontoNodesIndexVector = new Vector<XobjInt>();
-    _distMannerVector = new Vector<Integer>();
-    _sizeVector = new Vector<Xobject>();
-    _widthVector = new Vector<Xobject>();
-    _gtolTemp0IdVector = new Vector<Ident>();
+    _distMannerVector     = new Vector<Integer>();
+    _sizeVector           = new Vector<Xobject>();
+    _widthVector          = new Vector<Xobject>();
+    _gtolTemp0IdVector    = new Vector<Ident>();
 
-    for (int i = 0; i < dim; i++) {
+    for (int i=0;i<dim;i++) {
       _ontoNodesIndexVector.add(null);
       _distMannerVector.add(null);
       _widthVector.add(null);
@@ -208,14 +201,11 @@ public class XMPtemplate extends XMPobject {
   public static void translateTemplate(XobjList templateDecl, XMPglobalDecl globalDecl,
                                        boolean isLocalPragma, PragmaBlock pb) throws XMPexception {
     // local parameters
-    //BlockList funcBlockList = null;
     XMPsymbolTable localXMPsymbolTable = null;
-    Block parentBlock = null;
+    Block parentBlock    = null;
     boolean isStaticDesc = false;
 
     if (isLocalPragma) {
-      //funcBlockList = XMPlocalDecl.findParentFunctionBlock(pb).getBody();
-      //localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
       parentBlock = pb.getParentBlock();
       localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable2(parentBlock);
     }
@@ -223,7 +213,6 @@ public class XMPtemplate extends XMPobject {
     // check name collision
     String templateName = templateDecl.getArg(0).getString();
     if (isLocalPragma) {
-      //XMPlocalDecl.checkObjectNameCollision(templateName, funcBlockList, localXMPsymbolTable);
       XMPlocalDecl.checkObjectNameCollision(templateName, parentBlock.getBody(), localXMPsymbolTable);
       isStaticDesc = localXMPsymbolTable.isStaticDesc(templateName);
     }
@@ -234,7 +223,6 @@ public class XMPtemplate extends XMPobject {
     // declare template desciptor
     Ident templateDescId = null;
     if (isLocalPragma) {
-      //templateDescId = XMPlocalDecl.addObjectId(XMP.DESC_PREFIX_ + templateName, pb);
       templateDescId = XMPlocalDecl.addObjectId2(XMP.DESC_PREFIX_ + templateName, parentBlock);
     }
     else {
@@ -244,11 +232,16 @@ public class XMPtemplate extends XMPobject {
     if (isStaticDesc) templateDescId.setStorageClass(StorageClass.STATIC);
 
     // declare template object
+    String kind_bracket = templateDecl.getArg(1).getTail().getString();
+    boolean isSquare    = kind_bracket.equals("SQUARE");
+    templateDecl.getArg(1).removeLastArgs(); // Remove information of ROUND or SQUARE
+    
     int templateDim = 0;
-    for (XobjArgs i = templateDecl.getArg(1).getArgs(); i != null; i = i.nextArgs()) templateDim++;
-    if (templateDim > XMP.MAX_DIM) {
+    for (XobjArgs i=templateDecl.getArg(1).getArgs();i!=null;i=i.nextArgs())
+      templateDim++;
+    
+    if (templateDim > XMP.MAX_DIM)
       throw new XMPexception("template dimension should be less than " + (XMP.MAX_DIM + 1));
-    }
 
     XMPtemplate templateObject = new XMPtemplate(templateName, templateDim, templateDescId);
     if (isLocalPragma) {
@@ -262,19 +255,26 @@ public class XMPtemplate extends XMPobject {
 
     // create function call
     boolean templateIsFixed = true;
-    XobjList templateArgs = Xcons.List(templateDescId.getAddr(), Xcons.IntConstant(templateDim));
-    for (XobjArgs i = templateDecl.getArg(1).getArgs(); i != null; i = i.nextArgs()) {
+    XobjList templateArgs   = Xcons.List(templateDescId.getAddr(), Xcons.IntConstant(templateDim));
+    if(isSquare) ((XobjList)templateDecl.getArg(1)).reverse();
+    for (XobjArgs i=templateDecl.getArg(1).getArgs();i!=null;i=i.nextArgs()) {
       Xobject templateSpec = i.getArg();
       if (templateSpec == null || (templateSpec instanceof XobjList && templateSpec.Nargs() == 0)) {
         templateIsFixed = false;
-        //throw new XMPexception("template should has fixed size in this version");
-      } else {
-
+      }
+      else {
 	if (!templateIsFixed)
 	  throw new XMPexception("Every <template-spec> shall be either [int-expr :] int-expr or ':'");
 
         Xobject templateLower = templateSpec.left();
-        Xobject templateUpper = templateSpec.right();
+        Xobject templateUpper;
+        if(isSquare){
+          Xobject tmp   = Xcons.binaryOp(Xcode.PLUS_EXPR,  templateLower, templateSpec.right());
+          templateUpper = Xcons.binaryOp(Xcode.MINUS_EXPR, tmp, Xcons.IntConstant(1));
+        }
+        else{ // ROUND
+          templateUpper = templateSpec.right();
+        }
 
         templateArgs.add(Xcons.Cast(Xtype.longlongType, templateLower));
         templateArgs.add(Xcons.Cast(Xtype.longlongType, templateUpper));
@@ -323,12 +323,9 @@ public class XMPtemplate extends XMPobject {
   public static void translateDistribute(XobjList distDecl, XMPglobalDecl globalDecl,
                                          boolean isLocalPragma, PragmaBlock pb) throws XMPexception {
     // local parameters
-    //BlockList funcBlockList = null;
     XMPsymbolTable localXMPsymbolTable = null;
     Block parentBlock = null;
     if (isLocalPragma) {
-      //funcBlockList = XMPlocalDecl.findParentFunctionBlock(pb).getBody();
-      //localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
       parentBlock = pb.getParentBlock();
       localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable2(parentBlock);
     }
@@ -336,18 +333,6 @@ public class XMPtemplate extends XMPobject {
     // get template object
     String templateName = distDecl.getArg(0).getString();
     XMPtemplate templateObject = null;
-    // if (isLocalPragma) {
-    //   templateObject = localXMPsymbolTable.getXMPtemplate(templateName);
-    //   if (templateObject == null) {
-    //     templateObject = globalDecl.getXMPtemplate(templateName);
-    //     if (templateObject != null) {
-    //       throw new XMPexception("global template cannot be distributed in local scope");
-    //     }
-    //   }
-    // }
-    // else {
-    //   templateObject = globalDecl.getXMPtemplate(templateName);
-    // }
     templateObject = globalDecl.getXMPtemplate(templateName, pb);
     if (templateObject == null) {
       throw new XMPexception("template '" + templateName + "' is not declared");
@@ -355,27 +340,19 @@ public class XMPtemplate extends XMPobject {
 
     templateObject.setDistDecl(distDecl);
 
-    // if (!templateObject.isFixed()) {
-    //   throw new XMPexception("template '" + templateName + "' is not fixed");
-    // }
-
-    if (templateObject.isDistributed()) {
+    if (templateObject.isDistributed())
        throw new XMPexception("template '" + templateName + "' is already distributed");
-    }
 
     // get nodes object
     String nodesName = distDecl.getArg(2).getString();
     XMPnodes nodesObject = null;
-    //nodesObject = globalDecl.getXMPnodes(nodesName, localXMPsymbolTable);
     nodesObject = globalDecl.getXMPnodes(nodesName, pb);
-    if (nodesObject == null) {
+    if (nodesObject == null)
       throw new XMPexception("nodes '" + nodesName + "' is not declared");
-    }
 
     templateObject.setOntoNodes(nodesObject);
 
     if (templateObject.isFixed()){
-
       // setup chunk constructor
       if (isLocalPragma) {
 	if (templateObject.isStaticDesc()){
@@ -400,14 +377,18 @@ public class XMPtemplate extends XMPobject {
     }
 
     // create distribute function calls
-    int templateDim = templateObject.getDim();
-    int templateDimIdx = 0;
-    int nodesDim = nodesObject.getDim();
-    int nodesDimIdx = 0;
-    for (XobjArgs i = distDecl.getArg(1).getArgs(); i != null; i = i.nextArgs()) {
-      if (templateDimIdx == templateDim) {
+    int templateDim     = templateObject.getDim();
+    int templateDimIdx  = 0;
+    int nodesDim        = nodesObject.getDim();
+    int nodesDimIdx     = 0;
+    String kind_bracket = distDecl.getArg(1).getTail().getString();
+    boolean isSquare    = kind_bracket.equals("SQUARE");
+    distDecl.getArg(1).removeLastArgs(); // Remove information of ROUND or SQUARE
+    if(isSquare) ((XobjList)distDecl.getArg(1)).reverse();
+    
+    for (XobjArgs i=distDecl.getArg(1).getArgs();i!=null;i=i.nextArgs()) {
+      if (templateDimIdx == templateDim)
         throw new XMPexception("wrong template dimension indicated, too many");
-      }
 
       XobjList distManner = (XobjList)i.getArg();
       setupDistribution(distManner, templateObject, templateDimIdx, nodesDimIdx, globalDecl, isLocalPragma, false, pb);
@@ -418,14 +399,11 @@ public class XMPtemplate extends XMPobject {
         case XMPtemplate.CYCLIC:
         case XMPtemplate.BLOCK_CYCLIC:
         case XMPtemplate.GBLOCK:
-          {
-            if (nodesDimIdx == nodesDim) {
+          if (nodesDimIdx == nodesDim) 
               throw new XMPexception("the number of <dist-format> (except '*') should be the same with the nodes dimension");
-            }
 
-            nodesDimIdx++;
-            break;
-          }
+          nodesDimIdx++;
+          break;
         default:
       }
 
@@ -433,13 +411,11 @@ public class XMPtemplate extends XMPobject {
     }
 
     // check nodes, template dimension
-    if (nodesDimIdx != nodesDim) {
+    if (nodesDimIdx != nodesDim)
       throw new XMPexception("the number of <dist-format> (except '*') should be the same with the nodes dimension");
-    }
 
-    if (templateDimIdx != templateDim) {
+    if (templateDimIdx != templateDim)
       throw new XMPexception("wrong template dimension indicated, too few");
-    }
 
     // set distributed
     templateObject.setIsDistributed();
@@ -449,83 +425,70 @@ public class XMPtemplate extends XMPobject {
 					 int templateDimIdx, int nodesDimIdx,
 					 XMPglobalDecl globalDecl, boolean isLocalPragma, boolean isTFIX,
 					 PragmaBlock pb) throws XMPexception {
-
     XobjList funcArgs = null;
     int distMannerValue = distManner.getArg(0).getInt();
     String distMannerName = getDistMannerString(distMannerValue);
     switch (distMannerValue) {
       case XMPtemplate.DUPLICATION:
-        {
-          funcArgs = Xcons.List(templateObject.getDescId().Ref(),
-                                Xcons.IntConstant(templateDimIdx));
-          break;
-        }
+        funcArgs = Xcons.List(templateObject.getDescId().Ref(),
+                              Xcons.IntConstant(templateDimIdx));
+        break;
       case XMPtemplate.BLOCK:
-        {
-          funcArgs = Xcons.List(templateObject.getDescId().Ref(),
-                                Xcons.IntConstant(templateDimIdx),
-                                Xcons.IntConstant(nodesDimIdx));
-          templateObject.setOntoNodesIndexAt(nodesDimIdx, templateDimIdx);
-          break;
-        }
+        funcArgs = Xcons.List(templateObject.getDescId().Ref(),
+                              Xcons.IntConstant(templateDimIdx),
+                              Xcons.IntConstant(nodesDimIdx));
+        templateObject.setOntoNodesIndexAt(nodesDimIdx, templateDimIdx);
+        break;
       case XMPtemplate.CYCLIC:
-        {
-          funcArgs = Xcons.List(templateObject.getDescId().Ref(),
-                                Xcons.IntConstant(templateDimIdx),
-                                Xcons.IntConstant(nodesDimIdx));
-          templateObject.setOntoNodesIndexAt(nodesDimIdx, templateDimIdx);
-          break;
-        }
+        funcArgs = Xcons.List(templateObject.getDescId().Ref(),
+                              Xcons.IntConstant(templateDimIdx),
+                              Xcons.IntConstant(nodesDimIdx));
+        templateObject.setOntoNodesIndexAt(nodesDimIdx, templateDimIdx);
+        break;
       case XMPtemplate.BLOCK_CYCLIC:
-        {
-          Xobject width = distManner.getArg(1);
+        Xobject width = distManner.getArg(1);
+        funcArgs = Xcons.List(templateObject.getDescId().Ref(),
+                              Xcons.IntConstant(templateDimIdx),
+                              Xcons.IntConstant(nodesDimIdx), width);
+        templateObject.setOntoNodesIndexAt(nodesDimIdx, templateDimIdx);
+        templateObject.setWidthAt(width, templateDimIdx);
+        break;
+      case XMPtemplate.GBLOCK:
+        Xobject mappingArray = distManner.getArg(1);
+        Xobject mappingArrayArg = mappingArray;
+        if (mappingArray instanceof XobjList && mappingArray.Nargs() == 0){
+          mappingArrayArg = Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0));
+          templateObject.setDistributionIsFixed(false);
+        }
+        
+        if (templateObject.isFixed() || isTFIX){
+          Ident gtolTemp0Id = null;
+          String tempName = XMP.GTOL_PREFIX_ + "temp0_" + templateObject.getName() + "_" + templateDimIdx;
+          if (isLocalPragma) {
+            Block parentBlock = pb.getParentBlock();
+            gtolTemp0Id = XMPlocalDecl.addObjectId2(tempName, Xtype.intType, parentBlock);
+            if (templateObject.isStaticDesc()) gtolTemp0Id.setStorageClass(StorageClass.STATIC);
+          }
+          else {
+            gtolTemp0Id = globalDecl.declStaticIdent(tempName, Xtype.intType);
+          }
+          
+          templateObject.setGtolTemp0IdAt(gtolTemp0Id, templateDimIdx);
+          
           funcArgs = Xcons.List(templateObject.getDescId().Ref(),
                                 Xcons.IntConstant(templateDimIdx),
                                 Xcons.IntConstant(nodesDimIdx),
-                                width);
-          templateObject.setOntoNodesIndexAt(nodesDimIdx, templateDimIdx);
-          templateObject.setWidthAt(width, templateDimIdx);
-          break;
+                                mappingArrayArg, gtolTemp0Id.getAddr());
         }
-      case XMPtemplate.GBLOCK:
-        {
-          Xobject mappingArray = distManner.getArg(1);
-	  Xobject mappingArrayArg = mappingArray;
-	  if (mappingArray instanceof XobjList && mappingArray.Nargs() == 0){
-	    mappingArrayArg = Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0));
-	    templateObject.setDistributionIsFixed(false);
-	  }
-
-	  if (templateObject.isFixed() || isTFIX){
-	    Ident gtolTemp0Id = null;
-	    String tempName = XMP.GTOL_PREFIX_ + "temp0_" + templateObject.getName() + "_" + templateDimIdx;
-	    if (isLocalPragma) {
-	      Block parentBlock = pb.getParentBlock();
-	      gtolTemp0Id = XMPlocalDecl.addObjectId2(tempName, Xtype.intType, parentBlock);
-	      if (templateObject.isStaticDesc()) gtolTemp0Id.setStorageClass(StorageClass.STATIC);
-	    }
-	    else {
-	      gtolTemp0Id = globalDecl.declStaticIdent(tempName, Xtype.intType);
-	    }
-
-	    templateObject.setGtolTemp0IdAt(gtolTemp0Id, templateDimIdx);
-
-	    funcArgs = Xcons.List(templateObject.getDescId().Ref(),
-				  Xcons.IntConstant(templateDimIdx),
-				  Xcons.IntConstant(nodesDimIdx),
-				  mappingArrayArg, gtolTemp0Id.getAddr());
-	  }
-
-          templateObject.setOntoNodesIndexAt(nodesDimIdx, templateDimIdx);
-	  templateObject.setWidthAt(mappingArray, templateDimIdx);
-          break;
-        }
-      default:
-        throw new XMPexception("unknown distribute manner");
+        
+        templateObject.setOntoNodesIndexAt(nodesDimIdx, templateDimIdx);
+        templateObject.setWidthAt(mappingArray, templateDimIdx);
+        break;
+    default:
+      throw new XMPexception("unknown distribute manner");
     }
 
     if (templateObject.isFixed()){
-
       if (isLocalPragma) {
 	Block parentBlock = pb.getParentBlock();
 	if (templateObject.isStaticDesc()){
@@ -556,35 +519,35 @@ public class XMPtemplate extends XMPobject {
 
   public static void translateTemplateFix(XobjList tfixDecl, XMPglobalDecl globalDecl,
 					  PragmaBlock pb) throws XMPexception {
-
     BlockList tFixFuncBody = Bcons.emptyBody();
-
-    Block parentBlock = pb.getParentBlock();
-
-    String tName = tfixDecl.getArg(1).getString();
-
-    XMPtemplate tObject = globalDecl.getXMPtemplate(tName, pb);
-
+    Block parentBlock      = pb.getParentBlock();
+    String tName           = tfixDecl.getArg(1).getString();
+    XMPtemplate tObject    = globalDecl.getXMPtemplate(tName, pb);
     XobjArgs i, j;
 
-    if (tObject == null) {
+    if (tObject == null)
       throw new XMPexception("template '" + tName + "' is not declared");
-    }
 
-    if (tObject.isFixed() && tObject.distributionIsFixed()) {
+    if (tObject.isFixed() && tObject.distributionIsFixed()) 
       throw new XMPexception("template '" + tName + "' is already fixed");
-    }
 
+    String kind_bracket = tfixDecl.getTail().getTail().getString();
+    boolean isSquare    = kind_bracket.equals("SQUARE");
+    tfixDecl.getArg(0).removeLastArgs(); // Remove information of ROUND or SQUARE
+    tfixDecl.getArg(2).removeLastArgs(); // Remove information of ROUND or SQUARE
+    if(isSquare) ((XobjList)tfixDecl.getArg(0)).reverse();
+    if(isSquare) ((XobjList)tfixDecl.getArg(2)).reverse();
+    if(isSquare) ((XobjList)tObject.getDecl().getArg(1)).reverse();
+    
     XobjArgs sizeArgs_decl = tObject.getDecl().getArg(1).getArgs();
-    XobjArgs sizeArgs_tfix = tfixDecl.getArg(2).getArgs();
-
-    if (tObject.getDistDecl() == null){
+    XobjArgs sizeArgs_tfix = tfixDecl.getArg(2).getArgs();    
+    
+    if (tObject.getDistDecl() == null)
       throw new XMPexception("template '" + tName + "' is not distributed");
-    }
 
     XobjArgs distMannerArgs_decl = tObject.getDistDecl().getArg(1).getArgs();
     XobjArgs distMannerArgs_tfix = tfixDecl.getArg(0).getArgs();
-
+    
     if (!tObject.isFixed() && sizeArgs_tfix == null)
     	throw new XMPexception("No <template-spec> specified for a non-fixed template '" + tName + "'");
 
@@ -610,13 +573,18 @@ public class XMPtemplate extends XMPobject {
     }
 
     XobjArgs sizeArgs = tObject.isFixed() ? sizeArgs_decl : sizeArgs_tfix;
-
     XobjList tArgs = Xcons.List(tObject.getDescId().Ref(), Xcons.IntConstant(tDim));
-
-    for (i = sizeArgs; i != null; i = i.nextArgs()) {
-      Xobject tSpec = i.getArg();
+    for (i=sizeArgs;i!= null;i=i.nextArgs()) {
+      Xobject tSpec  = i.getArg();
       Xobject tLower = tSpec.left();
-      Xobject tUpper = tSpec.right();
+      Xobject tUpper;
+      if(isSquare){
+        Xobject tmp = Xcons.binaryOp(Xcode.PLUS_EXPR, tLower, tSpec.right());
+        tUpper = Xcons.binaryOp(Xcode.MINUS_EXPR, tmp, Xcons.IntConstant(1));
+      }
+      else{ // ROUND
+        tUpper = tSpec.right();
+      }
 
       tArgs.add(Xcons.Cast(Xtype.longlongType, tLower));
       tArgs.add(Xcons.Cast(Xtype.longlongType, tUpper));
@@ -624,24 +592,16 @@ public class XMPtemplate extends XMPobject {
       tObject.addLower(tLower);
       tObject.addUpper(tUpper);
     }
-
+    
     tObject.createSizeVector();
 
-    Ident funcId;
-
-    //String constructorName = new String("_XMP_set_template_size");
-    //XMPlocalDecl.addConstructorCall2(constructorName, tArgs, globalDecl, parentBlock);
-    funcId = globalDecl.declExternFunc("_XMP_set_template_size");
+    Ident funcId = globalDecl.declExternFunc("_XMP_set_template_size");
     tFixFuncBody.add(Bcons.Statement(funcId.Call(tArgs)));
 
     //
     // create _XMP_init_template_chunk
     //
       
-    // XMPlocalDecl.addConstructorCall2("_XMP_init_template_chunk",
-    // 				     Xcons.List(tObject.getDescId().Ref(),
-    // 						nObject.getDescId().Ref()),
-    // 				     globalDecl, parentBlock);
     funcId = globalDecl.declExternFunc("_XMP_init_template_chunk");
     tFixFuncBody.add(Bcons.Statement(funcId.Call(Xcons.List(tObject.getDescId().Ref(),
     							    nObject.getDescId().Ref()))));
@@ -671,15 +631,13 @@ public class XMPtemplate extends XMPobject {
     }
 
     XobjArgs distMannerArgs = tObject.distributionIsFixed() ? distMannerArgs_decl : distMannerArgs_tfix;
-
     int tDimIdx = 0;
-    int nDim = nObject.getDim();
+    int nDim    = nObject.getDim();
     int nDimIdx = 0;
 
-    for (i = distMannerArgs; i != null; i = i.nextArgs()) {
-      if (tDimIdx == tDim) {
+    for (i=distMannerArgs;i!=null;i=i.nextArgs()) {
+      if (tDimIdx == tDim)
 	throw new XMPexception("wrong template dimension indicated, too many");
-      }
 	
       XobjList distManner = (XobjList)i.getArg();
       int distMannerValue = distManner.getArg(0).getInt();
@@ -692,9 +650,8 @@ public class XMPtemplate extends XMPobject {
       case XMPtemplate.CYCLIC:
       case XMPtemplate.BLOCK_CYCLIC:
       case XMPtemplate.GBLOCK:
-	if (nDimIdx == nDim){
+	if (nDimIdx == nDim)
 	  throw new XMPexception("the number of <dist-format> (except '*') should be the same with the nodes dimension");
-	}
 
 	nDimIdx++;
 	break;
@@ -705,20 +662,16 @@ public class XMPtemplate extends XMPobject {
     }
 
     // check nodes, template dimension
-    if (nDimIdx != nDim){
+    if (nDimIdx != nDim)
       throw new XMPexception("the number of <dist-format> (except '*') should be the same with the nodes dimension");
-    }
 
-    if (tDimIdx != tDim){
+    if (tDimIdx != tDim)
       throw new XMPexception("wrong template dimension indicated, too few");
-    }
 
     tObject.setIsFixed();
     tObject.setDistributionIsFixed();
 
     Block tFixFuncCallBlock = Bcons.COMPOUND(tFixFuncBody);
     pb.replace(tFixFuncCallBlock);
-
   }
-
 }

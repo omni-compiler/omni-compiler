@@ -6,7 +6,7 @@
  */
 package exc.object;
 
-import xcodeml.XmException;
+import xcodeml.util.XmException;
 
 /**
  * Pragma parser which processes pragma statement in XcodeML.

@@ -6,7 +6,7 @@
  */
 package xcodeml.f.util;
 
-import xcodeml.XmException;
+import xcodeml.util.XmException;
 import xcodeml.util.XmBackEnd;
 
 /**
