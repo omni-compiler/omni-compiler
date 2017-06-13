@@ -3674,6 +3674,12 @@ public class XfDecompileDomVisitor {
 
             String interfaceName = XmDomUtil.getAttr(n, "name");
             String isDefinedIo = XmDomUtil.getAttr(n, "is_defined_io");
+            boolean isAbstract = XmDomUtil.getAttrBool(n, "is_abstract");
+
+            if (isAbstract) {
+                writer.writeToken("ABSTRACT");
+            }
+
             writer.writeToken("INTERFACE");
             if (!XfUtilForDom.isNullOrEmpty(isDefinedIo)) {
                 isDefinedIo = isDefinedIo.toUpperCase();
