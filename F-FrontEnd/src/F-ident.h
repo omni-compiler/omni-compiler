@@ -423,8 +423,10 @@ struct interface_info {
         INTF_GENERIC_WRITE_UNFORMATTED,/* for generic 'WRITE(UNFORMATTED)' interface */
         INTF_GENERIC_READ_FORMATTED,/* for generic 'READ(FORMATTED)' interface */
         INTF_GENERIC_READ_UNFORMATTED,/* for generic 'READ(UNFORMATTED)' interface */
+        INTF_ABSTRACT,    /* for abstract interface */
         INTF_DECL         /* for interface not above cases. (interface for function prottype)*/
     } class;
+    int is_abstract;      /* TRUE if the interface is abstract */
     /* NOTE: the following members are used in the .mod->xmod tranformation tool */
     enum expr_code ecode; /* need it? */
     ID operatorId;        /* identifier of the operator */
@@ -432,6 +434,7 @@ struct interface_info {
 };
 #define INTF_OPID(ii) ((ii)->operatorId)
 #define INTF_IMPL(ii) ((ii)->idlist) /* need it? */
+#define INTF_IS_ABSTRACT(ii) ((ii)->class == INTF_ABSTRACT)
 
 enum ext_proc_class {
     EP_UNKNOWN,

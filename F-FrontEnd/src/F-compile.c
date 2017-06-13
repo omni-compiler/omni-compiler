@@ -5521,6 +5521,10 @@ compile_INTERFACE_statement(expr x)
                     break;
             }
         } break;
+        case F03_ABSTRACT_SPEC: {
+            hasName = FALSE;
+            info->class = INTF_ABSTRACT;
+        } break;
         default:
             NOT_YET();
         break;
@@ -5645,6 +5649,14 @@ end_interface()
             PROC_CLASS(fid) = P_EXTERNAL;
             PROC_EXT_ID(fid) = ep;
             EXT_PROC_CLASS(ep) = EP_INTERFACE_DEF;
+        }
+
+        if (INTF_IS_ABSTRACT(EXT_PROC_INTERFACE_INFO(intr))) {
+            /*
+             * FUNCTION/SUBROUTINE inside ABSTRACT INTERFACE are
+             * abstract procedures.
+             */
+            TYPE_SET_ABSTRACT(EXT_PROC_TYPE(ep));
         }
 
         if (!check_interface_type(intr, EXT_PROC_TYPE(ep))) {
