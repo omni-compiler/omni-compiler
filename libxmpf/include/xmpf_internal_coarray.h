@@ -38,8 +38,9 @@
 #endif
 
 #define _ROUND_UP(n,p)        (((((size_t)(n))-1)/(p)+1)*(p))
+#define _ROUND_UP_PLUS(n,p)   (((n)>0) ? _ROUND_UP(n,p) : (p))
 #define ROUND_UP_COMM(n)      _ROUND_UP((n),COMM_UNIT)
-#define ROUND_UP_MALLOC(n)    _ROUND_UP((n),MALLOC_UNIT)
+#define ROUND_UP_MALLOC(n)    _ROUND_UP_PLUS((n),MALLOC_UNIT)
 
 /*-- parameters --*/
 #define DESCR_ID_MAX   250

@@ -1800,100 +1800,6 @@ public class XMPrewriteExpr {
     return createRewriteAlignedArrayFunc(alignedArray, arrayDimCount, args);
   }
 
-  private static Boolean is_template_constant_size(XMPtemplate t) throws XMPexception
-  {
-    for(int i=0;i<t.getDim();i++){
-      topdownXobjectIterator iter = t.getSizeAt(i).topdownIterator();
-      for(iter.init(); !iter.end(); iter.next()){
-        Xobject expr = iter.getXobject();
-        Xcode code   = expr.Opcode();
-        if(code == Xcode.PLUS_EXPR || code == Xcode.MINUS_EXPR ||
-           code == Xcode.MUL_EXPR  || code == Xcode.DIV_EXPR)
-          continue;
-        else if(! expr.isConstant())
-          return false;
-      }
-    }
-    
-    return true;
-  }
-  
-  private static Boolean is_node_constant_size(XMPnodes n) throws XMPexception
-  {
-    for(int i=0;i<n.getDim();i++){
-      topdownXobjectIterator iter = n.getSizeAt(i).topdownIterator();
-      for(iter.init(); !iter.end(); iter.next()){
-        Xobject expr = iter.getXobject();
-        Xcode code   = expr.Opcode();
-        if(code == Xcode.PLUS_EXPR || code == Xcode.MINUS_EXPR ||
-           code == Xcode.MUL_EXPR  || code == Xcode.DIV_EXPR)
-          continue;
-        else if(! expr.isConstant())
-          return false;
-      }
-    }
-    
-    return true;
-  }
-
-  private static Boolean is_the_same_size_template_array(XMPalignedArray alignedArray) throws XMPexception
-  {
-    XMPtemplate t   = alignedArray.getAlignTemplate();
-    int arrayDim    = alignedArray.getDim();
-    Xtype arrayType = alignedArray.getArrayType();
-    for (int i=0; i<arrayDim; i++, arrayType=arrayType.getRef()){
-      if(arrayType.getArraySize() == 0)  // Use xmp_malloc
-        return false;
-
-      switch (alignedArray.getAlignMannerAt(i)){
-      case XMPtemplate.GBLOCK:
-	return false;
-      case XMPalignedArray.BLOCK:
-      case XMPalignedArray.CYCLIC:
-      case XMPalignedArray.BLOCK_CYCLIC:
-	Xobject x = arrayType.getArraySizeExpr();
-        if(x.getLongHigh() != 0) return false; // fix me
-	int index = alignedArray.getAlignSubscriptIndexAt(i);
-        int template_size = XMPutil.foldIntConstant(t.getSizeAt(index)).getInt();
-        if((int)x.getLongLow() != template_size) return false;
-      }
-    }
-
-    return true;
-  }
-  
-  // Is size of template % size of node == 0 && size of template and size of array?
-  private static Boolean is_divisible_size(XMPalignedArray alignedArray) throws XMPexception
-  {
-    XMPtemplate t = alignedArray.getAlignTemplate();
-    XMPnodes    n = t.getOntoNodes();
-    if(! is_template_constant_size(t))                  return false;
-    if(! is_node_constant_size(n))                      return false;
-    if(! is_the_same_size_template_array(alignedArray)) return false;
-
-    // Number of dimensions of template must be larger than that of node.
-    for(int i=0;i<t.getDim();i++){
-      int manner = t.getDistMannerAt(i);
-
-      switch (manner){
-      case XMPtemplate.GBLOCK:
-        return false;
-      case XMPtemplate.BLOCK:
-      case XMPtemplate.CYCLIC:
-      case XMPtemplate.BLOCK_CYCLIC:
-        int template_size = XMPutil.foldIntConstant(t.getSizeAt(i)).getInt();
-        int blocksize     = (manner == XMPtemplate.BLOCK_CYCLIC)? XMPutil.foldIntConstant(t.getWidthAt(i)).getInt() : 1;
-        int node_rank     = t.getOntoNodesIndexAt(i).getInt();
-        int node_size     = XMPutil.foldIntConstant(n.getSizeAt(node_rank)).getInt();
-        if(template_size%(node_size*blocksize) != 0)
-          return false;
-        break;
-      }
-    }
-
-    return true;
-  }
-
   public static Xobject createRewriteAlignedArrayFunc(XMPalignedArray alignedArray, int arrayDimCount,
                                                       XobjList getAddrFuncArgs) throws XMPexception {
     int arrayDim = alignedArray.getDim();
@@ -1901,9 +1807,7 @@ public class XMPrewriteExpr {
     XobjList args = Xcons.List();
     Boolean is_optimize_trasform = false;
 
-    if(is_divisible_size(alignedArray) && arrayDim > 1){
-      is_optimize_trasform = true;
-
+    if(alignedArray.canBeOptimized){
       XMPtemplate t     = alignedArray.getAlignTemplate();
       XMPnodes n        = t.getOntoNodes();
       XobjList tmp_args = Xcons.List();
@@ -1953,7 +1857,7 @@ public class XMPrewriteExpr {
     else if (arrayDim == arrayDimCount) {
       getAddrFuncId = XMP.getMacroId("_XMP_M_GET_ADDR_E_" + arrayDim, Xtype.Pointer(alignedArray.getType()));
       for (int i=0; i<arrayDim-1; i++)
-        if(is_optimize_trasform){
+        if(alignedArray.canBeOptimized){
           getAddrFuncArgs.add(args.getArg(i));
         }
         else{
