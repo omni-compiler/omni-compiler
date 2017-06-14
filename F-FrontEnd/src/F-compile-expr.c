@@ -2311,6 +2311,12 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
                 EXPV_TYPE(ID_ADDR(f_id)) = ID_TYPE(f_id);
             }
 
+            if (TYPE_IS_ABSTRACT(ID_TYPE(f_id))) {
+                error("'%s' is abstract",
+                      ID_NAME(f_id));
+                goto err;
+            }
+
             TYPE_SET_USED_EXPLICIT(tp);
             if (FUNCTION_TYPE_RETURN_TYPE(tp) != NULL &&
                 TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) == TYPE_UNKNOWN) {
@@ -2786,6 +2792,10 @@ compile_args(expr args)
                 error("an ambiguous reference to symbol '%s'", ID_NAME(id));
                 continue;
             }
+            if (ID_TYPE(id) != NULL && TYPE_IS_ABSTRACT(ID_TYPE(id))) {
+                error("an abstract interface '%s' in the actual argument", ID_NAME(id));
+            }
+
             switch (ID_CLASS(id)) {
             case CL_PROC:
             case CL_ENTRY:

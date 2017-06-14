@@ -6359,6 +6359,9 @@ compile_CALL_subroutine_statement(expr x)
         TYPE_IS_USED_EXPLICIT(ID_TYPE(id))) {
         error("'%s' is a function, not a subroutine", ID_NAME(id));
     }
+    if (ID_TYPE(id) != NULL && TYPE_IS_ABSTRACT(ID_TYPE(id))) {
+        error("'%s' is abstract", ID_NAME(id));
+    }
 
     if ((PROC_CLASS(id) == P_EXTERNAL || PROC_CLASS(id) == P_UNKNOWN) &&
         (ID_TYPE(id) == NULL || (
@@ -6887,6 +6890,12 @@ compile_POINTER_SET_statement(expr x) {
             error_at_node(x, "'%s' is not a function/subroutine",
                           SYM_NAME(EXPR_SYM(EXPR_ARG2(x))));
         }
+        if (TYPE_IS_ABSTRACT(vPteTyp)) {
+            error_at_node(x, "'%s' is an abstract interface",
+                          SYM_NAME(EXPR_SYM(EXPR_ARG2(x))));
+        }
+
+
         if (EXPR_CODE(vPointee) == F_VAR) {
             ID id = find_ident(EXPR_SYM(vPointee));
             if (!IS_PROCEDURE_TYPE(vPteTyp)) {
