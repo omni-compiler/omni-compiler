@@ -408,6 +408,9 @@ struct use_assoc_info {
         TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_WRITE ||   \
         TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_READ))
 
+#define TBP_IS_DEFERRED(id) \
+    (ID_CLASS(id) == CL_TYPE_BOUND_PROC && \
+     TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_DEFERRED)
 
 #define MULTI_ID_LIST(id)     ((id)->info.multi_info.id_list)
 

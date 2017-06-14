@@ -3969,6 +3969,34 @@ check_type_bound_generics(TYPE_DESC stp)
     }
 }
 
+/*
+ * Check the bindings of the type-bound generic appear before END TYPE statement.
+ */
+static void
+check_abstract_type_bound_procedure(const TYPE_DESC stp)
+{
+    ID mem;
+    ID p;
+    TYPE_DESC tp;
+
+    if (stp == NULL) {
+        return;
+    }
+
+    for (tp = stp; tp != NULL; tp = TYPE_PARENT(tp)?TYPE_PARENT_TYPE(tp):NULL) {
+        if (TYPE_IS_ABSTRACT(tp)) {
+            FOREACH_TYPE_BOUND_PROCEDURE(mem, tp) {
+                if (ID_CLASS(mem) == CL_TYPE_BOUND_PROC && TBP_IS_DEFERRED(mem)) {
+                    p = find_struct_member_allow_private(stp, ID_SYM(mem), TRUE);
+                    if (TBP_IS_DEFERRED(p)) {
+                        error("%s is not implemented", SYM_NAME(ID_SYM(mem)));
+                    }
+                }
+            }
+        }
+    }
+}
+
 /* compile end type statement */
 void
 compile_struct_decl_end()
@@ -3991,6 +4019,10 @@ compile_struct_decl_end()
 
     /* check for type bound generic */
     check_type_bound_generics(stp);
+
+    if (!TYPE_IS_ABSTRACT(stp)) {
+        check_abstract_type_bound_procedure(stp);
+    }
 
     if (!TYPE_IS_INTERNAL_PRIVATE(stp)) {
         /*
@@ -4041,7 +4073,6 @@ compile_struct_decl_end()
             }
         }
     }
-
 
     pop_ctl();
 }
