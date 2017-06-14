@@ -2740,6 +2740,9 @@ compile_struct_constructor(ID struct_id, expr type_param_args, expr args)
 
     base_stp = find_struct_decl(ID_SYM(struct_id));
     assert(EXPV_TYPE(result) != NULL);
+    if (TYPE_IS_ABSTRACT(base_stp)) {
+        error("abstract type in an derived-type constructor");
+    }
 
     if (type_param_args) {
         tp = type_apply_type_parameter(base_stp, type_param_args);
@@ -3131,11 +3134,15 @@ compile_array_constructor(expr x)
 
     l = list0(LIST);
     if ((base_type = compile_type(EXPR_ARG2(x), /*allow_predecl=*/FALSE)) != NULL) {
+        if (TYPE_IS_ABSTRACT(base_type)) {
+            error("abstract type in an array constructor");
+        }
         elem_type = get_basic_type(base_type);
         res = list1(F03_TYPED_ARRAY_CONSTRUCTOR, l);
     } else {
         res = list1(F95_ARRAY_CONSTRUCTOR, l);
     }
+
 
     FOR_ITEMS_IN_LIST(lp, EXPR_ARG1(x)) {
         nElems++;

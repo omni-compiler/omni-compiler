@@ -2331,7 +2331,6 @@ compile_derived_type(expr x, int allow_predecl)
         }
     }
 
-
     if(id != NULL && ID_IS_AMBIGUOUS(id)) {
         error_at_node(x, "an ambiguous reference to symbol '%s'", ID_NAME(id));
         return NULL;
@@ -2673,6 +2672,11 @@ compile_IMPLICIT_decl(expr type,expr l)
                 return;
             }
         }
+    }
+
+    if (TYPE_IS_ABSTRACT(tp) && !TYPE_IS_CLASS(tp)) {
+        error("abstract types in IMPLICIT statement");
+        return;
     }
 
     FOR_ITEMS_IN_LIST(lp,l){
@@ -5343,6 +5347,7 @@ compile_procedure_declaration(expr x)
         if (tp == NULL) {
             error("unexpected typeq");
         }
+
         tp = function_type(tp);
 
     } else {
@@ -5411,7 +5416,6 @@ compile_procedure_declaration(expr x)
         }
 
         tp = ID_TYPE(interface);
-
     }
 
     FOR_ITEMS_IN_LIST(lp, decls) {
