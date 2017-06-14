@@ -84,7 +84,8 @@ static void set_flushed_flag(bool is_normal, bool is_acc, bool flag)
   }
 }
 
-static MPI_Win get_window(const _XMP_coarray_t *desc, bool is_acc)
+static inline
+MPI_Win get_window(const _XMP_coarray_t *desc, bool is_acc)
 {
   MPI_Win win = desc->win;
 #ifdef _XMP_XACC
@@ -111,17 +112,21 @@ MPI_Win _XMP_mpi_coarray_get_window(const _XMP_coarray_t *desc, bool is_acc)
   return get_window(desc, is_acc);
 }
 
-static char *get_remote_addr(const _XMP_coarray_t *desc, const int target_rank, const bool is_acc)
+static inline
+char *get_remote_addr(const _XMP_coarray_t *desc, const int target_rank, const bool is_acc)
 {
 #ifdef _XMP_XACC
   if(is_acc){
+    if(desc->addr_dev == NULL) return (char*)0;
     return desc->addr_dev[target_rank];
   }
 #endif
+  if(desc->addr == NULL) return (char*)0;
   return desc->addr[target_rank];
 }
 
-static char *get_local_addr(const _XMP_coarray_t *desc, const bool is_acc)
+static inline
+char *get_local_addr(const _XMP_coarray_t *desc, const bool is_acc)
 {
 #ifdef _XMP_XACC
   if(is_acc){
@@ -129,6 +134,16 @@ static char *get_local_addr(const _XMP_coarray_t *desc, const bool is_acc)
   }
 #endif
   return desc->real_addr;
+}
+
+char *_XMP_mpi_coarray_get_remote_addr(const _XMP_coarray_t *desc, const int target_rank, const bool is_acc)
+{
+  return get_remote_addr(desc, target_rank, is_acc);
+}
+
+char *_XMP_mpi_coarray_get_local_addr(const _XMP_coarray_t *desc, const bool is_acc)
+{
+  return get_local_addr(desc, is_acc);
 }
 
 /**
@@ -211,22 +226,15 @@ void _XMP_mpi_coarray_lastly_deallocate(bool is_acc){
 /**********************************************************************/
 void _XMP_mpi_coarray_malloc(_XMP_coarray_t *coarray_desc, void **addr, const size_t coarray_size, bool is_acc)
 {
-  char **each_addr;  // gap_size on each node
+  char **each_addr = NULL;  // gap_size on each node
   struct _shift_queue_t *shift_queue = is_acc? &_shift_queue_acc : &_shift_queue;
   size_t shift;
   char *real_addr = NULL;
   MPI_Win win = MPI_WIN_NULL;
   _XMP_nodes_t *nodes = _XMP_get_execution_nodes();
-  int comm_size = nodes->comm_size;
   MPI_Comm comm = *(MPI_Comm *)nodes->comm;
 
-  each_addr = (char**)_XMP_alloc(sizeof(char *) * _XMP_world_size);
-
   if(_XMP_flag_multi_win){
-    for(int i=0;i<comm_size;i++){
-      each_addr[i] = (char *)0;
-    }
-
     if(coarray_size > 0){
       _XMP_mpi_onesided_alloc_win(&win, (void**)&real_addr, coarray_size, comm, is_acc);
       MPI_Win_lock_all(MPI_MODE_NOCHECK, win);
@@ -235,6 +243,7 @@ void _XMP_mpi_coarray_malloc(_XMP_coarray_t *coarray_desc, void **addr, const si
       real_addr = _XMP_alloc(sizeof(int));
     }
   }else{
+  each_addr = (char**)_XMP_alloc(sizeof(char *) * _XMP_world_size);
   for(int i=0;i<_XMP_world_size;i++){
     each_addr[i] = (char *)(shift_queue->total_shift);
   }
@@ -841,11 +850,6 @@ void _XMP_mpi_coarray_attach(_XMP_coarray_t *coarray_desc, void *addr, const siz
   if(_XMP_flag_multi_win){
     _XMP_mpi_onesided_create_win(&win, addr, coarray_size, comm);
     MPI_Win_lock_all(MPI_MODE_NOCHECK, win);
-
-    each_addr = (char**)_XMP_alloc(sizeof(char *) * comm_size);
-    for(int i = 0; i < comm_size; i++){
-      each_addr[i] = (char*)0;
-    }
   }else{
     win = _xmp_mpi_distarray_win;
 #ifdef _XMP_XACC
