@@ -1117,7 +1117,7 @@ static int _XMP_mpi_trans_rank(const _XMP_coarray_t *coarray, int const world_ra
 
   _XMP_nodes_t* nodes = coarray->nodes;
 
-  if(nodes == NULL){ //assume that comm is MPI_COMM_WORLD
+  if(nodes == NULL || nodes->attr == _XMP_ENTIRE_NODES){ //assume that comm is entire nodes if nodes is NULL
     return world_rank;
   }
 
