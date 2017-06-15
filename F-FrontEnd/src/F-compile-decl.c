@@ -2109,6 +2109,9 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
         case F03_VALUE_SPEC:
             TYPE_SET_VALUE(tp);
             break;
+        case F03_ASYNCHRONOUS_SPEC:
+            TYPE_SET_ASYNCHRONOUS(tp);
+            break;
         default:
             error("incompatible type attribute , code: %d", EXPR_CODE(v));
         }
@@ -4753,6 +4756,49 @@ compile_VOLATILE_statement(expr id_list)
     }
 }
 
+
+/*
+ * declare asynchronous variable
+ *   OR
+ * add asynchronous attribute (in block scope)
+ */
+void
+compile_ASYNCHRONOUS_statement(expr id_list)
+{
+    list lp;
+    expr ident;
+    ID id = NULL;
+
+    FOR_ITEMS_IN_LIST(lp, id_list) {
+        ident = LIST_ITEM(lp);
+
+        if ((id = find_ident_local(EXPR_SYM(ident))) == NULL) {
+            if ((id = find_ident(EXPR_SYM(ident))) == NULL ||
+                (ID_CLASS(id) != CL_VAR && ID_CLASS(id) != CL_UNKNOWN)) {
+                id = declare_ident(EXPR_SYM(ident), CL_VAR);
+                if(id == NULL) {
+                    continue; /* error */
+                }
+            } else {
+                /* id is use-/host-associated or out of the current BLOCK */
+                TYPE_DESC tp = ID_TYPE(id);
+                if (TYPE_IS_COINDEXED(tp)) {
+                    error("the ASYNCHRONOUS attribute shall not be specified for a coarray that is not local variable");
+                    return;
+                }
+                id = declare_ident(EXPR_SYM(ident), CL_VAR);
+                tp = wrap_type(tp);
+                ID_TYPE(id) = tp;
+                SET_MODIFIED(tp);
+            }
+        }
+        if (ID_IS_AMBIGUOUS(id)) {
+            error("an ambiguous reference to symbol '%s'", ID_NAME(id));
+            return;
+        }
+        TYPE_SET_ASYNCHRONOUS(id);
+    }
+}
 
 
 /*

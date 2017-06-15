@@ -1572,6 +1572,7 @@ classify_statement()
     case PARAMETER:
     case POINTER:
     case VOLATILE:
+    case ASYNCHRONOUS:
     case SAVE:
     case SELECT:
     case SEQUENCE:
@@ -3851,6 +3852,7 @@ struct keyword_token keywords[ ] =
     { "allocatable",    ALLOCATABLE },
     { "allocate",       ALLOCATE },
     { "all",            KW_ALL },       /* #060 coarray */
+    { "asynchronous",   ASYNCHRONOUS  }, /* F2003 spec */
     { "backspace",      BACKSPACE },
     { "bind",           BIND },
     { "blockdata",      BLOCKDATA },

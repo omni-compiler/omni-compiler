@@ -128,6 +128,7 @@ typedef struct type_descriptor
 #define TYPE_ATTR_VALUE             0x01000000
 #define TYPE_ATTR_MODULE            0x02000000 /* for module function/subroutine */
 #define TYPE_ATTR_PROCEDURE         0x04000000 /* for procedure variables */
+#define TYPE_ATTR_ASYNCHRONOUS      0x08000000
         uint32_t type_attr_flags;
 #define TYPE_EXFLAGS_IMPLICIT       0x00000001 /* implicitly defined or not */
 #define TYPE_EXFLAGS_OVERRIDDEN     0x00000002 /* type is overridden by child */
@@ -295,6 +296,9 @@ extern TYPE_DESC basic_type_desc[];
 #define TYPE_IS_VALUE(tp)           ((tp)->attr.type_attr_flags &   TYPE_ATTR_VALUE)
 #define TYPE_SET_VALUE(tp)          ((tp)->attr.type_attr_flags |=  TYPE_ATTR_VALUE)
 #define TYPE_UNSET_VALUE(tp)        ((tp)->attr.type_attr_flags &= ~TYPE_ATTR_VALUE)
+#define TYPE_IS_ASYNCHRONOUS(tp)    ((tp)->attr.type_attr_flags &   TYPE_ATTR_ASYNCHRONOUS)
+#define TYPE_SET_ASYNCHRONOUS(tp)   ((tp)->attr.type_attr_flags |=  TYPE_ATTR_ASYNCHRONOUS)
+#define TYPE_UNSET_ASYNCHRONOUS(tp) ((tp)->attr.type_attr_flags &= ~TYPE_ATTR_ASYNCHRONOUS)
 
 #define TYPE_EXTATTR_FLAGS(tp)      ((tp)->attr.exflags)
 #define TYPE_IS_IMPLICIT(tp)        ((tp)->attr.exflags &   TYPE_EXFLAGS_IMPLICIT)

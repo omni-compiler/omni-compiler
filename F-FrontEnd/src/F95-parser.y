@@ -107,6 +107,7 @@ state 2058
 %token REWIND_P
 %token POINTER
 %token VOLATILE
+%token ASYNCHRONOUS
 
 /* F95 keywords */
 %token ENDPROGRAM
@@ -1039,6 +1040,8 @@ declaration_statement95:
         { $$ = list1(F03_IMPORT_STATEMENT, $3); }
         | VOLATILE COL2_or_null access_ident_list
         { $$ = list1(F03_VOLATILE_STATEMENT, $3); }
+        | ASYNCHRONOUS COL2_or_null access_ident_list
+        { $$ = list1(F03_ASYNCHRONOUS_STATEMENT, $3); }
         ;
 
 
@@ -1145,6 +1148,8 @@ attr_spec:
         { $$ = list0(F95_TARGET_SPEC); }
         | VOLATILE
         { $$ = list0(F03_VOLATILE_SPEC); }
+        | ASYNCHRONOUS
+        { $$ = list0(F03_ASYNCHRONOUS_SPEC); }
         | KW_KIND
         { $$ = list0(F03_KIND_SPEC); }
         | KW_LEN
