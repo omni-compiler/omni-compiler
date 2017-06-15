@@ -177,6 +177,7 @@ state 2058
 %token FORMATTED
 %token UNFORMATTED
 %token FINAL
+%token WAIT
 
 /* Coarray keywords #060 */
 %token SYNCALL
@@ -514,7 +515,7 @@ static void type_spec_done();
 %type <val> do_spec arg arg_list parenthesis_arg_list image_selector cosubscript_list
 %type <val> parenthesis_arg_list_or_null
 %type <val> set_expr
-%type <val> io_statement format_spec ctl_list io_clause io_list_or_null io_list io_item
+%type <val> io_statement format_spec ctl_list io_clause io_list_or_null io_list io_item wait_spec_list wait_spec
 %type <val> IDENTIFIER CONSTANT const kind_parm GENERIC_SPEC USER_DEFINED_OP type_bound_generic_spec formatted_or_unformatted
 %type <val> string_const_substr
 %type <val> binding_attr_list binding_attr type_bound_proc_decl_list type_bound_proc_decl
@@ -2013,6 +2014,8 @@ io_statement:
         { $$ = list1(F_REWIND_STATEMENT,$2); }
         | INQUIRE '(' ctl_list ')' io_list_or_null
         { $$ = list2(F_INQUIRE_STATEMENT,$3, $5); }
+        | WAIT '(' wait_spec_list ')'
+        { $$ = list1(F03_WAIT_STATEMENT,$3); }
         ;
 
 ctl_list: io_clause
@@ -2031,6 +2034,19 @@ io_clause:
         { $$ = list2(F_SET_EXPR,$1,NULL); }
         | IDENTIFIER '=' POWER
         { $$ = list2(F_SET_EXPR,$1,list0(F_STARSTAR)); }
+        | set_expr
+        { $$ = $1; }
+        ;
+
+wait_spec_list:
+        wait_spec
+        { $$ = list1(LIST,$1); }
+        | wait_spec_list ',' wait_spec
+        { $$ = list_put_last($1,$3); }
+        ;
+
+wait_spec:
+          CONSTANT
         | set_expr
         { $$ = $1; }
         ;

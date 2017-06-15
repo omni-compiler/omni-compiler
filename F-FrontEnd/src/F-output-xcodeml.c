@@ -232,6 +232,7 @@ xtag(enum expr_code code)
      * F2003 statement
      */
     case F03_IMPORT_STATEMENT:      return "FimportDecl";
+    case F03_WAIT_STATEMENT:        return "FwaitStatement";
 
     /*
      * invalid or no corresponding tag
@@ -3532,6 +3533,12 @@ outx_expv(int l, expv v)
     case F_BACKSPACE_STATEMENT:
     case F_ENDFILE_STATEMENT:
     case F_REWIND_STATEMENT:        outx_IO_statement(l, v); break;
+
+    /*
+     * F03 statements
+     */
+    case F03_WAIT_STATEMENT:        outx_IO_statement(l, v); break;
+
 
     /*
      * F90/95 Pointer related.

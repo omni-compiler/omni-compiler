@@ -1501,6 +1501,10 @@ compile_exec_statement(expr x)
         compile_UNLOCK_statement(x);
         break;
 
+    case F03_WAIT_STATEMENT:
+        compile_WAIT_statement(x);
+        break;
+
     default:
         fatal("unknown statement");
     }
