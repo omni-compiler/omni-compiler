@@ -15,6 +15,10 @@ struct _shift_queue_t{
 };
 static struct _shift_queue_t _shift_queue; /** Queue which saves shift information */
 static struct _shift_queue_t _shift_queue_acc;
+static bool _is_coarray_win_flushed = true;
+static bool _is_coarray_win_acc_flushed = true;
+static bool _is_distarray_win_flushed = true;
+static bool _is_distarray_win_acc_flushed = true;
 static unsigned int *_sync_images_table;
 #ifndef _SYNCIMAGE_SENDRECV
 static unsigned int *_sync_images_table_disp;
@@ -63,6 +67,23 @@ static void _mpi_scalar_mget(const int target_rank,
 			     const _XMP_array_section_t *dst_info,
 			     const bool is_src_on_acc);
 
+static void set_flushed_flag(bool is_normal, bool is_acc, bool flag)
+{
+  if(is_normal){
+    if(is_acc){
+      _is_coarray_win_acc_flushed = flag;
+    }else{
+      _is_coarray_win_flushed = flag;
+    }
+  }else{
+    if(is_acc){
+      _is_distarray_win_acc_flushed = flag;
+    }else{
+      _is_distarray_win_flushed = flag;
+    }
+  }
+}
+
 static inline
 MPI_Win get_window(const _XMP_coarray_t *desc, bool is_acc)
 {
@@ -79,6 +100,9 @@ MPI_Win get_window(const _XMP_coarray_t *desc, bool is_acc)
       win = _xmp_mpi_onesided_win_acc;
     }
 #endif
+    set_flushed_flag(true, is_acc, false);
+  }else{
+    set_flushed_flag(false, is_acc, false);
   }
   }
   return win;
@@ -539,18 +563,34 @@ void _XMP_mpi_sync_memory()
 #endif
     }
   }else{
-    XACC_DEBUG("flush_all for host single coarray(%ld)", (long)_xmp_mpi_onesided_win);
-    MPI_Win_flush_all(_xmp_mpi_onesided_win);
+    if(! _is_coarray_win_flushed){
+      XACC_DEBUG("flush_all for host single coarray(%ld)", (long)_xmp_mpi_onesided_win);
+      MPI_Win_flush_all(_xmp_mpi_onesided_win);
 
-    XACC_DEBUG("flush_all for host single distarray(%ld)", (long)_xmp_mpi_distarray_win);
-    MPI_Win_flush_all(_xmp_mpi_distarray_win);
+      _is_coarray_win_flushed = true;
+    }
+
+    if(! _is_distarray_win_flushed){
+      XACC_DEBUG("flush_all for host single distarray(%ld)", (long)_xmp_mpi_distarray_win);
+      MPI_Win_flush_all(_xmp_mpi_distarray_win);
+
+      _is_distarray_win_flushed = true;
+    }
 
 #ifdef _XMP_XACC
-    XACC_DEBUG("flush_all for acc single coarray(%ld)", (long)_xmp_mpi_onesided_win_acc);
-    MPI_Win_flush_all(_xmp_mpi_onesided_win_acc);
+    if(! _is_coarray_win_acc_flushed){
+      XACC_DEBUG("flush_all for acc single coarray(%ld)", (long)_xmp_mpi_onesided_win_acc);
+      MPI_Win_flush_all(_xmp_mpi_onesided_win_acc);
 
-    XACC_DEBUG("flush_all for acc single distarray(%ld)", (long)_xmp_mpi_distarray_win_acc);
-    MPI_Win_flush_all(_xmp_mpi_distarray_win_acc);
+      _is_coarray_win_acc_flushed = true;
+    }
+
+    if(! _is_distarray_win_acc_flushed){
+      XACC_DEBUG("flush_all for acc single distarray(%ld)", (long)_xmp_mpi_distarray_win_acc);
+      MPI_Win_flush_all(_xmp_mpi_distarray_win_acc);
+
+      _is_distarray_win_acc_flushed = true;
+    }
 #endif
 
     _win_sync();
