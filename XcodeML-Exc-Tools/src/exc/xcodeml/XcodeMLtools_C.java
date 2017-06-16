@@ -1,11 +1,3 @@
-/*
- * $tsukuba_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
-// package exc.xcodeml;
-
 package exc.xcodeml;
 
 import static xcodeml.util.XmDomUtil.*;
@@ -19,8 +11,6 @@ import java.util.Stack;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-// import xcodeml.c.decompile.XcConstObj;
-// import xcodeml.c.util.XmcBindingUtil;
 import xcodeml.util.XmStringUtil;
 import xcodeml.util.XmLongLongConst;
 
@@ -44,29 +34,21 @@ public class XcodeMLtools_C extends XcodeMLtools {
   void enterType(Node n) {
     String name = n.getNodeName();
 
-    if (name.equals("basicType")) {
-      declBasicType(n);
-    } else if (name.equals("pointerType")) {
-      declPointerType(n);
-    } else if (name.equals("functionType")) {
-      declFunctionType(n);
-    } else if (name.equals("arrayType")) {
-      declArrayType(n);
-    } else if (name.equals("structType")) {
-      declStructType(n);
-    } else if (name.equals("unionType")) {
-      declUnionType(n);
-    } else if (name.equals("enumType")) {
-      declEnumType(n);
-    } else if (name.equals("classType")) {
-      declStructType(n);
-    } else if (name.equals("coArrayType")) {
-      declCoArrayType(n);
-    } else {
+    switch (name){
+    case "basicType"   : declBasicType(n);    break;
+    case "pointerType" : declPointerType(n);  break;
+    case "functionType": declFunctionType(n); break;
+    case "arrayType"   : declArrayType(n);    break;
+    case "structType"  : declStructType(n);   break;
+    case "unionType"   : declUnionType(n);    break;
+    case "enumType"    : declEnumType(n);     break;
+    case "classType"   : declStructType(n);   break;
+    case "coArrayType" : declCoArrayType(n);  break;
+    default:
       fatal("Unknown node in typeTable: " + n);
     }
   }
-
+  
   /*
    * global Ident section
    */
@@ -82,7 +64,7 @@ public class XcodeMLtools_C extends XcodeMLtools {
   @Override
   void enterGlobalDecl(Node n) {
     Xobject xobj = toXobject(n);
-    //xobj.setParentRecursively(null);
+
     switch (xobj.Opcode()) {
     case FUNCTION_DEFINITION:
     case VAR_DECL:

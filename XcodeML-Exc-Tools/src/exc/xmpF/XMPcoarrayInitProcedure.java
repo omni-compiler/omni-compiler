@@ -199,7 +199,7 @@ public class XMPcoarrayInitProcedure {
       Xobject setCoshape = coarray.makeStmt_setCoshape(env);
       blist2.add(setCoshape);
       ******************************/
-      coarray.addStmts_setCoshape(blist2, env);
+      coarray.addStmts_setCoshapeAndName(blist2, env);
     }
 
     funcDef2.Finalize();
