@@ -1572,16 +1572,7 @@ static void _XMP_coarray_deallocate(_XMP_coarray_t *c)
 #if defined(_XMP_GASNET)
   //
 #elif defined(_XMP_MPI3_ONESIDED)
-  if(_XMP_flag_multi_win){
-    if(c->win == MPI_WIN_NULL && c->real_addr != NULL){
-      //free dummy memory
-      _XMP_free(c->real_addr);
-    }else{
-      MPI_Win_unlock_all(c->win);
-      _XMP_barrier_EXEC();
-      _XMP_mpi_onesided_dealloc_win(&(c->win), (void **)&(c->real_addr), false);
-    }
-  }
+  _XMP_mpi_coarray_deallocate(c, false);
 #else
   free(c->real_addr);
 #endif

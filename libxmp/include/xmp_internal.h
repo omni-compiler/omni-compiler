@@ -155,6 +155,7 @@ extern void _XMP_build_sync_images_table();
 extern void _XMP_sync_images_EXEC(int* status);
 extern void _XMP_build_coarray_queue();
 extern void _XMP_coarray_lastly_deallocate();
+extern void _XMP_mpi_coarray_deallocate(_XMP_coarray_t *, bool is_acc);
 extern size_t _XMP_calc_copy_chunk(const int, const _XMP_array_section_t*);
 extern int _XMP_get_dim_of_allelmts(const int, const _XMP_array_section_t*);
 extern void _XMP_local_put(_XMP_coarray_t *, const void *, const int, const int, const int, const int, 
