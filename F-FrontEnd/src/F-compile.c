@@ -1496,6 +1496,10 @@ compile_exec_statement(expr x)
         compile_UNLOCK_statement(x);
         break;
 
+    case F03_FLUSH_STATEMENT:
+        compile_FLUSH_statement(x);
+        break;
+
     default:
         fatal("unknown statement");
     }

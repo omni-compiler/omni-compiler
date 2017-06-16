@@ -2979,6 +2979,19 @@ public class XfDecompileDomVisitor {
         }
     }
 
+    class FflushStatementVisitor extends XcodeNodeVisitor {
+        /**
+         * Decompile "FflushStatement" element in XcodeML/F.
+         */
+        @Override public void enter(Node n) {
+            _writeLineDirective(n);
+            XmfWriter writer = _context.getWriter();
+            writer.writeToken("FLUSH");
+            invokeEnter(XmDomUtil.getElement(n, "namedValueList"));
+            writer.setupNewLine();
+        }
+    }
+
     // FformatDecl
     class FformatDeclVisitor extends XcodeNodeVisitor {
         /**
@@ -7069,6 +7082,7 @@ public class XfDecompileDomVisitor {
         new Pair("FentryDecl", new FentryDeclVisitor()),
         new Pair("FequivalenceDecl", new FequivalenceDeclVisitor()),
         new Pair("FexitStatement", new FexitStatementVisitor()),
+        new Pair("FflushStatement", new FflushStatementVisitor()),
         new Pair("FformatDecl", new FformatDeclVisitor()),
         new Pair("FfunctionDecl", new FfunctionDeclVisitor()),
         new Pair("FfunctionDefinition", new FfunctionDefinitionVisitor()),
