@@ -146,6 +146,7 @@ extern void _XMP_coarray_put(void*, void*, void*);
 extern void _XMP_coarray_get(void*, void*, void*);
 extern void _XMP_coarray_rdma_do2(const int rdma_code, void *remote_coarray, void *local_array, void *local_coarray,
 				  const long coarray_elmts[], const long coarray_distance[]);
+extern _XMP_coarray_t** _XMP_coarray_get_list(int *num);
 #endif
 
 extern void _XMP_initialize_onesided_functions(int, char **);
@@ -154,6 +155,7 @@ extern void _XMP_build_sync_images_table();
 extern void _XMP_sync_images_EXEC(int* status);
 extern void _XMP_build_coarray_queue();
 extern void _XMP_coarray_lastly_deallocate();
+extern void _XMP_mpi_coarray_deallocate(_XMP_coarray_t *, bool is_acc);
 extern size_t _XMP_calc_copy_chunk(const int, const _XMP_array_section_t*);
 extern int _XMP_get_dim_of_allelmts(const int, const _XMP_array_section_t*);
 extern void _XMP_local_put(_XMP_coarray_t *, const void *, const int, const int, const int, const int, 
@@ -580,6 +582,10 @@ extern MPI_Win _xmp_mpi_distarray_win_acc;
 //#endif
 void _XMP_mpi_onesided_initialize(int argc, char **argv, const size_t heap_size);
 void _XMP_mpi_onesided_finalize();
+void _XMP_mpi_onesided_create_win(MPI_Win *win, void *addr, size_t size, MPI_Comm comm);
+void _XMP_mpi_onesided_alloc_win(MPI_Win *win, void **addr, size_t size, MPI_Comm comm, bool is_acc);
+void _XMP_mpi_onesided_destroy_win(MPI_Win *win);
+void _XMP_mpi_onesided_dealloc_win(MPI_Win *win, void **addr, bool is_acc);
 void _XMP_mpi_build_shift_queue(bool);
 void _XMP_mpi_destroy_shift_queue(bool);
 void _XMP_mpi_coarray_lastly_deallocate(bool);
@@ -616,6 +622,8 @@ void _XMP_sync_images_COMM(MPI_Comm *comm, int* status);
 void _XMP_mpi_build_sync_images_table();
 
 MPI_Win _XMP_mpi_coarray_get_window(const _XMP_coarray_t *desc, bool is_acc);
+char *_XMP_mpi_coarray_get_remote_addr(const _XMP_coarray_t *desc, const int target_rank, const bool is_acc);
+char *_XMP_mpi_coarray_get_local_addr(const _XMP_coarray_t *desc, const bool is_acc);
 void _XMP_mpi_atomic_define(int, _XMP_coarray_t*, size_t, int, size_t);
 void _XMP_mpi_atomic_ref(int, _XMP_coarray_t*, size_t, int*, size_t);
 #endif
