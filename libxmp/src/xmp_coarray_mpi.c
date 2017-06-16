@@ -92,6 +92,8 @@ MPI_Win get_window(const _XMP_coarray_t *desc, bool is_acc)
   if(is_acc){
     win = desc->win_acc;
   }
+
+  if(! _XMP_flag_multi_win){
 #endif
   if(win == MPI_WIN_NULL){ //when the coarray is normal
     win = _xmp_mpi_onesided_win;
@@ -103,6 +105,7 @@ MPI_Win get_window(const _XMP_coarray_t *desc, bool is_acc)
     set_flushed_flag(true, is_acc, false);
   }else{
     set_flushed_flag(false, is_acc, false);
+  }
   }
   return win;
 }
@@ -242,6 +245,7 @@ void _XMP_mpi_coarray_malloc(_XMP_coarray_t *coarray_desc, void **addr, const si
       //alloc dummy memory if coarray_size == 0
       real_addr = _XMP_alloc(sizeof(int));
     }
+    XACC_DEBUG("addr=%p, size=%zd, is_acc=%d", real_addr, coarray_size, is_acc);
   }else{
   each_addr = (char**)_XMP_alloc(sizeof(char *) * _XMP_world_size);
   for(int i=0;i<_XMP_world_size;i++){
@@ -512,10 +516,14 @@ void _XMP_mpi_get(const int src_contiguous, const int dst_contiguous, const int 
 
 static void _win_sync()
 {
+  XACC_DEBUG("sync for host single coarray");
+  XACC_DEBUG("sync for host single distarray");
   MPI_Win_sync(_xmp_mpi_onesided_win);
   MPI_Win_sync(_xmp_mpi_distarray_win);
 
 #ifdef _XMP_XACC
+  XACC_DEBUG("sync for acc single coarray");
+  XACC_DEBUG("sync for acc single distarray");
   MPI_Win_sync(_xmp_mpi_onesided_win_acc);
   MPI_Win_sync(_xmp_mpi_distarray_win_acc);
 #endif
@@ -532,27 +540,31 @@ void _XMP_mpi_sync_memory()
     for(int i = 0; i < num; i++){
       MPI_Win win = coarrays[i]->win;
       if(win != MPI_WIN_NULL){
+	XACC_DEBUG("flush_all for host a coarray (%ld)", (long)win);
 	MPI_Win_flush_all(win);
+	XACC_DEBUG("sync for host a coarray (%ld)", (long)win);
 	MPI_Win_sync(win);
       }
 #ifdef _XMP_XACC
       MPI_Win win_acc = coarrays[i]->win_acc;
       if(win_acc != MPI_WIN_NULL){
+	XACC_DEBUG("flush_all for acc a coarray (%ld)", (long)win_acc);
 	MPI_Win_flush_all(win_acc);
+	XACC_DEBUG("sync for acc a coarray (%ld)", (long)win_acc);
 	MPI_Win_sync(win_acc);
       }
 #endif
     }
   }else{
     if(! _is_coarray_win_flushed){
-      XACC_DEBUG("sync_memory(normal, host)");
+      XACC_DEBUG("flush_all for host single coarray(%ld)", (long)_xmp_mpi_onesided_win);
       MPI_Win_flush_all(_xmp_mpi_onesided_win);
 
       _is_coarray_win_flushed = true;
     }
 
     if(! _is_distarray_win_flushed){
-      XACC_DEBUG("sync_memory(distarray, host)");
+      XACC_DEBUG("flush_all for host single distarray(%ld)", (long)_xmp_mpi_distarray_win);
       MPI_Win_flush_all(_xmp_mpi_distarray_win);
 
       _is_distarray_win_flushed = true;
@@ -560,14 +572,14 @@ void _XMP_mpi_sync_memory()
 
 #ifdef _XMP_XACC
     if(! _is_coarray_win_acc_flushed){
-      XACC_DEBUG("sync_memory(normal, acc)");
+      XACC_DEBUG("flush_all for acc single coarray(%ld)", (long)_xmp_mpi_onesided_win_acc);
       MPI_Win_flush_all(_xmp_mpi_onesided_win_acc);
 
       _is_coarray_win_acc_flushed = true;
     }
 
     if(! _is_distarray_win_acc_flushed){
-      XACC_DEBUG("sync_memory(distarray, acc)");
+      XACC_DEBUG("flush_all for acc single distarray(%ld)", (long)_xmp_mpi_distarray_win_acc);
       MPI_Win_flush_all(_xmp_mpi_distarray_win_acc);
 
       _is_distarray_win_acc_flushed = true;
@@ -592,8 +604,10 @@ static inline
 void _wait_puts(const int target_rank, const MPI_Win win)
 {
     if(_is_put_blocking){
+      XACC_DEBUG("flush(%d) for [host|acc]", target_rank);
       MPI_Win_flush(target_rank, win);
     }else if(_is_put_local_blocking){
+      XACC_DEBUG("flush_local(%d) for [host|acc]", target_rank);
       MPI_Win_flush_local(target_rank, win);
     }
 }
@@ -601,6 +615,7 @@ static inline
 void _wait_gets(const int target_rank, const MPI_Win win)
 {
   if(_is_get_blocking){
+    XACC_DEBUG("flush_local(%d) for [host|acc]", target_rank);
     MPI_Win_flush_local(target_rank, win);
   }
 }
@@ -830,6 +845,7 @@ static void _mpi_scalar_mget(const int target_rank,
 	  win);
 
   //we have to wait completion of the get
+  XACC_DEBUG("flush_local(%d) for [host|acc]", target_rank);
   MPI_Win_flush_local(target_rank, win);
 
   _unpack_scalar((char*)dst, dst_dims, laddr, dst_info);
@@ -846,6 +862,8 @@ void _XMP_mpi_coarray_attach(_XMP_coarray_t *coarray_desc, void *addr, const siz
   _XMP_nodes_t *nodes = _XMP_get_execution_nodes();
   int comm_size = nodes->comm_size;
   MPI_Comm comm = *(MPI_Comm *)nodes->comm;
+
+  XACC_DEBUG("attach addr=%p, size=%zd, is_acc=%d", addr, coarray_size, is_acc);
 
   if(_XMP_flag_multi_win){
     _XMP_mpi_onesided_create_win(&win, addr, coarray_size, comm);
