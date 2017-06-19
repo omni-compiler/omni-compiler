@@ -6361,6 +6361,7 @@ compile_CALL_subroutine_statement(expr x)
     }
     if (ID_TYPE(id) != NULL && TYPE_IS_ABSTRACT(ID_TYPE(id))) {
         error("'%s' is abstract", ID_NAME(id));
+        return;
     }
 
     if ((PROC_CLASS(id) == P_EXTERNAL || PROC_CLASS(id) == P_UNKNOWN) &&
