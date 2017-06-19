@@ -1,7 +1,7 @@
 Omni Compiler Software RELEASE NOTES
 
 # ver. 1.2.0     2017/??/??
-* Add xmpc_all_node_num(), xmpc_node_num(), xmpc_this_image(), xmp_num_images().
+* Add xmpc_all_node_num(), xmpc_node_num(), xmpc_this_image(), and xmp_num_images().
 * Support square bracket in XMP/C directives.
 * Improve compile speed.
 
