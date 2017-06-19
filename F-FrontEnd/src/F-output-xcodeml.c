@@ -1214,6 +1214,11 @@ get_sclass(ID id)
 static void
 outx_id(int l, ID id)
 {
+    /* TODO(shingo-s): Remove after INTRINSIC fix */
+    if (SYM_TYPE(ID_SYM(id)) == S_INTR || TYPE_IS_INTRINSIC(ID_TYPE(id))) {
+        // do nothing
+    } else
+
     if(ID_STORAGE(id) == STG_EXT && !IS_PROCEDURE_TYPE(ID_TYPE(id)) &&  PROC_EXT_ID(id) == NULL) {
         fatal("outx_id: PROC_EXT_ID is NULL: symbol=%s", ID_NAME(id));
     }
