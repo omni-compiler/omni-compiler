@@ -1734,13 +1734,14 @@ public class XMPtransCoarrayRun
   //-----------------------------------------------------
   //
   private void genCallOfPrologAndEpilog() {
-    if (get_autoDealloc()) {
+    if (get_autoDealloc())
       genCallOfPrologAndEpilog_dealloc();
 
-      // perform prolog/epilog code generations
+    // perform prolog/epilog code generations if any
+    if (_prologStmts.size() > 0)
       genPrologStmts();          // stmts on the top of body
+    if (_epilogStmts.size() > 0)
       genEpilogStmts();          // stmts before RETURN- and END-stmts
-    }
   }
 
   private void genPrologStmts() {
@@ -1850,7 +1851,6 @@ public class XMPtransCoarrayRun
       descPtrId = coarray.getDescPointerId();
       String varname = coarray.getName();
       args = Xcons.List(descPtrId, coarray.getIdent(),
-                        Xcons.FvarRef(getResourceTagId()),
                         Xcons.IntConstant(coarray.isAllocatable() ? 1 : 0),
                         Xcons.IntConstant(varname.length()),
                         Xcons.FcharacterConstant(Xtype.FcharacterType,
@@ -2003,10 +2003,6 @@ public class XMPtransCoarrayRun
     Xobject subrCall = subrIdent.callSubroutine(actualArgs);
     subrCall.setLineNo(lineno);
 
-    /////////////////////////////
-    System.out.println("GACHA lhs.name=" + lhs.getName() + ", rhs.name="+rhs.getName());
-    System.out.println("   subrName="+subrName);
-    /////////////////////////////
     return subrCall;
   }
 
