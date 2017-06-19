@@ -586,20 +586,8 @@ find_struct_member_allow_private(TYPE_DESC struct_td, SYMBOL sym, int allow_priv
     if (!IS_STRUCT_TYPE(struct_td)) {
         return NULL;
     }
-    struct_td = getBaseParameterizedType(struct_td);
 
-    if (TYPE_PARENT(struct_td)) {
-        ID parent = TYPE_PARENT(struct_td);
-        if (ID_SYM(parent) != NULL && (strcmp(ID_NAME(parent), SYM_NAME(sym)) == 0)) {
-            member = TYPE_PARENT(struct_td);
-        }
-        if (member == NULL) {
-            member = find_struct_member_allow_private(ID_TYPE(parent), sym, allow_private_member);
-        }
-    }
-    if (member) {
-        return member;
-    }
+    struct_td = getBaseParameterizedType(struct_td);
 
     FOREACH_MEMBER(member, struct_td) {
         if (strcmp(ID_NAME(member), SYM_NAME(sym)) == 0) {
@@ -627,6 +615,17 @@ find_struct_member_allow_private(TYPE_DESC struct_td, SYMBOL sym, int allow_priv
             return member;
         }
     }
+
+    if (TYPE_PARENT(struct_td)) {
+        ID parent = TYPE_PARENT(struct_td);
+        if (ID_SYM(parent) != NULL && (strcmp(ID_NAME(parent), SYM_NAME(sym)) == 0)) {
+            return TYPE_PARENT(struct_td);
+        }
+        if (member == NULL) {
+            return find_struct_member_allow_private(ID_TYPE(parent), sym, allow_private_member);
+        }
+    }
+
     return NULL;
 }
 
