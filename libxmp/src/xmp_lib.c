@@ -40,9 +40,24 @@ int xmp_num_nodes(void)
   return _XMP_get_execution_nodes()->comm_size;
 }
 
+int xmp_num_images(void)
+{
+  return _XMP_get_execution_nodes()->comm_size;
+}
+
 int xmp_node_num(void)
 {
   return _XMP_get_execution_nodes()->comm_rank + 1;
+}
+
+int xmpc_node_num(void)
+{
+  return _XMP_get_execution_nodes()->comm_rank;
+}
+
+int xmpc_this_image(void)
+{
+  return _XMP_get_execution_nodes()->comm_rank;
 }
 
 void xmp_barrier(void)
@@ -58,6 +73,11 @@ int xmp_all_num_nodes(void)
 int xmp_all_node_num(void)
 {
   return _XMP_world_rank + 1;
+}
+
+int xmpc_all_node_num(void)
+{
+  return _XMP_world_rank;
 }
 
 double xmp_wtime(void)
