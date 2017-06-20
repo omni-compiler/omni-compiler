@@ -13,5 +13,5 @@
   end module m_abstract_derived_type
 
   program main
-    use abstract_derived_type
+    use m_abstract_derived_type
   end program main
