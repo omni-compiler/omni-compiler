@@ -1,10 +1,11 @@
 Omni Compiler Software RELEASE NOTES
 
-# ver. 1.2.0     2017/??/??
-* Add xmpc_all_node_num(), xmpc_node_num(), xmpc_this_image(), and xmp_num_images().
+# ver. 1.1.3     2017/07/02
 * Support square bracket in XMP/C directives.
+* Add xmpc_all_node_num(), xmpc_node_num(), xmpc_this_image(), and xmp_num_images().
+* Support -xacc=pgi option in XACC/Fortran.
 * Improve compile speed.
-
+* Fixed lots of bugs.
 
 # ver. 1.1.2      2017/06/09
 * Support charactor type for bcast operation in XMP/F.
