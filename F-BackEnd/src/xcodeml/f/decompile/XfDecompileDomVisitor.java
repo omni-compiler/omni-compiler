@@ -1530,6 +1530,19 @@ public class XfDecompileDomVisitor {
 
             writer.writeToken("PROCEDURE");
 
+            boolean isDeferred = XmDomUtil.getAttrBool(n, "is_deferred");
+            Node binding = XmDomUtil.getElement(n, "binding");
+
+            if (isDeferred) {
+                ArrayList<Node> nameList = XmDomUtil.collectChildNodes(binding);
+                if (nameList.size() != 1) {
+                    throw new XmTranslationException(n, "Invalid `binding' length.");
+                }
+                writer.writeToken("(");
+                writer.writeToken(XmDomUtil.getContentText(nameList.get(0)));
+                writer.writeToken(")");
+            }
+
             String pass = XmDomUtil.getAttr(n, "pass");
             if (!XfUtilForDom.isNullOrEmpty(pass)) {
                 if (pass.equals("pass")) {
@@ -1550,7 +1563,7 @@ public class XfDecompileDomVisitor {
                 writer.writeToken(",");
                 writer.writeToken("NON_OVERRIDABLE");
             }
-            if (XmDomUtil.getAttrBool(n, "is_deferred")) {
+            if (isDeferred) {
                 writer.writeToken(",");
                 writer.writeToken("DEFERRED");
             }
@@ -1568,16 +1581,17 @@ public class XfDecompileDomVisitor {
             String name = XmDomUtil.getContentText(nameNode);
             writer.writeToken(name);
 
-            writer.writeToken("=>");
+            if (!isDeferred) {
+                writer.writeToken("=>");
 
-            Node binding = XmDomUtil.getElement(n, "binding");
-            if (binding != null) {
-                ArrayList<Node> nameList = XmDomUtil.collectChildNodes(binding);
-                for (Node bindingNameNode : nameList) {
-                    if (bindingNameNode != nameList.get(0)) {
-                        writer.writeToken(",");
+                if (binding != null) {
+                    ArrayList<Node> nameList = XmDomUtil.collectChildNodes(binding);
+                    for (Node bindingNameNode : nameList) {
+                        if (bindingNameNode != nameList.get(0)) {
+                            writer.writeToken(",");
+                        }
+                        writer.writeToken(XmDomUtil.getContentText(bindingNameNode));
                     }
-                    writer.writeToken(XmDomUtil.getContentText(bindingNameNode));
                 }
             }
 
