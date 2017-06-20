@@ -1490,6 +1490,16 @@ expv_assignment(expv v1, expv v2)
         error("incompatible type in assignment.");
         return NULL;
     }
+    if (IS_PROCEDURE_TYPE(EXPV_TYPE(v1)) &&
+        FUNCTION_TYPE_IS_TYPE_BOUND(EXPV_TYPE(v1))) {
+            error("lhs expr is type bound procedure.");
+            return NULL;
+    }
+    if (IS_PROCEDURE_TYPE(EXPV_TYPE(v2)) &&
+        FUNCTION_TYPE_IS_TYPE_BOUND(EXPV_TYPE(v2))) {
+            error("rhs expr is type bound procedure.");
+            return NULL;
+    }
 
     if (TYPE_IS_RESHAPED(tp2) == FALSE &&
         EXPR_CODE(v2) != F95_ARRAY_CONSTRUCTOR &&

@@ -6875,9 +6875,25 @@ compile_POINTER_SET_statement(expr x) {
     }
 
     if (!TYPE_IS_POINTER(vPtrTyp)) {
-        error_at_node(x, "'%s' is not a pointer.",
-                      SYM_NAME(EXPR_SYM(EXPR_ARG1(x))));
+        if (EXPR_CODE(EXPR_ARG1(x)) == IDENT) {
+            error_at_node(x, "'%s' is not a pointer.",
+                          SYM_NAME(EXPR_SYM(EXPR_ARG1(x))));
+        } else {
+            error_at_node(x, "lhs is not a pointer.",
+                          SYM_NAME(EXPR_SYM(EXPR_ARG1(x))));
+        }
         return;
+    }
+
+    if (IS_PROCEDURE_TYPE(EXPV_TYPE(vPointer)) &&
+        FUNCTION_TYPE_IS_TYPE_BOUND(EXPV_TYPE(vPointer))) {
+            error("lhs expr is type bound procedure.");
+            return;
+    }
+    if (IS_PROCEDURE_TYPE(EXPV_TYPE(vPointee)) &&
+        FUNCTION_TYPE_IS_TYPE_BOUND(EXPV_TYPE(vPointee))) {
+            error("rhs expr is type bound procedure.");
+            return;
     }
 
     if (IS_PROCEDURE_TYPE(vPtrTyp)) {
