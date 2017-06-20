@@ -371,8 +371,7 @@ void _XMP_coarray_regmem(void **coarray_desc, void *addr)
 #elif _XMP_FJRDMA
   _XMP_fjrdma_regmem(*coarray_desc, addr, (size_t)transfer_size);
 #elif _XMP_MPI3_ONESIDED
-  //not implemented
-  _XMP_fatal("_XMP_coarray_regmem_do is not supported over MPI3.\n");
+  _XMP_mpi_coarray_regmem(*coarray_desc, addr, (size_t)transfer_size, false);
 #endif
 
   _push_coarray_queue(c);

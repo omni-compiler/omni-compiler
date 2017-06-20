@@ -590,6 +590,8 @@ void _XMP_mpi_build_shift_queue(bool);
 void _XMP_mpi_destroy_shift_queue(bool);
 void _XMP_mpi_coarray_lastly_deallocate(bool);
 void _XMP_mpi_coarray_malloc(_XMP_coarray_t *coarray_desc, void **addr, const size_t coarray_size, bool is_acc);
+void _XMP_mpi_coarray_regmem(_XMP_coarray_t *coarray_desc, void *real_addr, const size_t coarray_size, bool is_acc);
+void _XMP_mpi_coarray_deregmem(_XMP_coarray_t *coarray_desc);
 void _XMP_mpi_coarray_attach(_XMP_coarray_t *coarray_desc, void *addr, const size_t coarray_size, const bool is_acc);
 void _XMP_mpi_coarray_detach(_XMP_coarray_t *coarray_desc, const bool is_acc);
 void _XMP_mpi_contiguous_put(const int target_rank, const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc,
