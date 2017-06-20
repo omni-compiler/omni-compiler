@@ -204,6 +204,8 @@ function xmpf90_set_parameters()
 		tmp=${tmp#*=}
 		if [ "pgi" = "$tmp" ]; then
 		    other_args+=("-acc")
+		elif [ "-xacc" = "$tmp" ]; then
+		    : #do nothing
 		else
 		    omni_error_exit "Unknown OpenACC compiler for XACC"
 		fi
