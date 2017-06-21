@@ -1174,8 +1174,8 @@ access_spec:
 type_attr_spec_list:
           type_attr_spec
         { $$ = list1(LIST, $1); }
-        | type_attr_spec ',' type_attr_spec_list
-        { $$ = list_cons($1, $3); }
+        | type_attr_spec ',' KW type_attr_spec_list
+        { $$ = list_cons($1, $4); }
         ;
 
 type_attr_spec:
