@@ -1,0 +1,12 @@
+MODULE m
+  IMPLICIT NONE
+  TYPE, ABSTRACT :: t
+    INTEGER :: x
+  END TYPE t
+END MODULE m
+
+PROGRAM main
+  USE m
+  IMPLICIT NONE
+  TYPE(t) :: v
+END PROGRAM main

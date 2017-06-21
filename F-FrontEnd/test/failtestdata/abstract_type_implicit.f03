@@ -1,0 +1,11 @@
+MODULE m
+  USE ISO_C_BINDING
+  IMPLICIT NONE
+  TYPE, ABSTRACT :: t
+    INTEGER :: x = 0
+  END TYPE t
+CONTAINS
+  SUBROUTINE subroutine ()
+    IMPLICIT TYPE(t) (a-z)
+  END SUBROUTINE subroutine
+END MODULE m
