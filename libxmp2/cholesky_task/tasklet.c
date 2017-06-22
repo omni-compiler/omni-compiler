@@ -481,6 +481,23 @@ static void tasklet_unlock(Tasklet *tp)
         ABT_error("tasklet_unlock");
 }
 
+void tasklet_yield()
+{
+    ABT_thread_yield();
+}
+
+int xmp_thread_num()
+{
+    int tnum;
+    ABT_xstream_self_rank(&tnum);
+    return tnum;
+}
+
+int xmp_num_threads()
+{
+    return _xmp_num_xstreams;
+}
+
 #else
 
 void tasklet_initialize(int argc, char *argv[])

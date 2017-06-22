@@ -15,4 +15,8 @@ void tasklet_create(cfunc f, int narg, void **args,
                     int n_in, void **in_data, int n_out, void **out_data);
 
 void tasklet_wait_all();
+void tasklet_yield();
+
+int xmp_num_threads();
+int xmp_thread_num();
 
