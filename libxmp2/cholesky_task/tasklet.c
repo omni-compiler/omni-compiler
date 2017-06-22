@@ -441,9 +441,8 @@ static void tasklet_wrapper(Tasklet *tp)
         lp = lq;
     }
     tasklet_n_executed++;
-    tasklet_g_unlock();
-
     tasklet_ref_dec(tp);  // dec refcount, executed
+    tasklet_g_unlock();
 
     ABT_mutex_lock(tasklet_count_mutex);
     tasklet_running_count--;
