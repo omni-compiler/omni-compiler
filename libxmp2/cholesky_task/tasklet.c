@@ -8,6 +8,7 @@
 
 #ifdef USE_ABT
 #include <abt.h>
+//#define ENABLE_PRIVATE_POOL 1
 #endif
 
 #define TASKLET_MAX_ARGS  20
@@ -35,6 +36,9 @@ typedef struct _tasklet {
     void *args[TASKLET_MAX_ARGS];
 #ifdef USE_ABT
     ABT_mutex mutex;
+#ifdef ENABLE_PRIVATE_POOL
+    int pool_num;
+#endif
 #endif
 } Tasklet;
 
@@ -46,7 +50,6 @@ static int tasklet_n_executed = 0;
 static int tasklet_n_reclaimed = 0;
 
 #ifdef USE_ABT
-#define _ENABLE_SHARED_POOL 1
 
 static ABT_mutex tasklet_g_mutex;   // global lock
 static ABT_mutex tasklet_count_mutex;
@@ -56,11 +59,13 @@ static int tasklet_running_count = 0;
 int _xmp_num_xstreams = 4;  // number of execution stream
 static ABT_xstream *_xmp_ess; // execution stream
 
-#ifdef _ENABLE_SHARED_POOL
-static ABT_pool _xmp_shared_pool;  // shared global pool
-#else 
+#ifdef ENABLE_PRIVATE_POOL
 static int _xmp_num_pools;
 static ABT_pool *_xmp_private_pools;
+static ABT_sched *_xmp_scheds;
+static int tasklet_current_es_num = 0;
+#else
+static ABT_pool _xmp_shared_pool;  // shared global pool
 #endif
 
 #else
@@ -110,6 +115,12 @@ void tasklet_create(cfunc f, int narg, void **args,
     tp->ref_count = 1;  // just created
     tp->done = FALSE;
     tp->f = f;
+#ifdef ENABLE_PRIVATE_POOL
+    tp->pool_num = (tasklet_current_es_num >= 2) ? tasklet_current_es_num-1 : 0;
+    if (++tasklet_current_es_num >= _xmp_num_xstreams) {
+        tasklet_current_es_num = 0;
+    }
+#endif
     if(narg >= TASKLET_MAX_ARGS){
         fprintf(stderr,"too many task arg: %d > %d\n",narg,TASKLET_MAX_ARGS);
         exit(1);
@@ -303,7 +314,27 @@ void tasklet_initialize(int argc, char *argv[])
 
     _xmp_ess = (ABT_xstream *)malloc(sizeof(ABT_xstream) * _xmp_num_xstreams);
 
-#ifdef _ENABLE_SHARED_POOL
+#ifdef ENABLE_PRIVATE_POOL
+    _xmp_num_pools = (_xmp_num_xstreams != 1) ? _xmp_num_xstreams-1 : 1;
+    _xmp_private_pools = (ABT_pool *)malloc(sizeof(ABT_pool) * _xmp_num_pools);
+    _xmp_scheds = (ABT_sched *)malloc(sizeof(ABT_sched) * _xmp_num_xstreams);
+
+    for (i = 0; i < _xmp_num_pools; i++) {
+        ABT_pool_create_basic(ABT_POOL_FIFO, ABT_POOL_ACCESS_MPMC, ABT_TRUE, &_xmp_private_pools[i]);
+    }
+    ABT_sched_create_basic(ABT_SCHED_DEFAULT, 1, &_xmp_private_pools[0], ABT_SCHED_CONFIG_NULL, 
+                           &_xmp_scheds[0]);
+    for (i = 1; i < _xmp_num_xstreams; i++) {
+        ABT_sched_create_basic(ABT_SCHED_DEFAULT, 1, &_xmp_private_pools[i-1], 
+                               ABT_SCHED_CONFIG_NULL, &_xmp_scheds[i]);
+    }
+    ABT_xstream_self(&_xmp_ess[0]);
+    ABT_xstream_set_main_sched(_xmp_ess[0], _xmp_scheds[0]);
+    ABT_xstream_set_rank(_xmp_ess[0], 0);
+    for (i = 1; i < _xmp_num_xstreams; i++) {
+        ABT_xstream_create_with_rank(_xmp_scheds[i], i, &_xmp_ess[i]);
+    }
+#else
     /* shared pool creation */
     ABT_pool_create_basic(ABT_POOL_FIFO, ABT_POOL_ACCESS_MPMC, ABT_TRUE, &_xmp_shared_pool);
 
@@ -318,20 +349,6 @@ void tasklet_initialize(int argc, char *argv[])
     for (i = 0; i < _xmp_num_xstreams; i++) {
         int rank;
         ABT_xstream_get_rank(_xmp_ess[i],&rank);
-    }
-#else
-    _xmp_num_pools = (_xmp_num_threads != 1) ? _xmp_num_threads-1 : 1;
-    _xmp_private_pools = (ABT_pool *)malloc(sizeof(ABT_pool) * _xmp_num_pools);
-
-    ABT_pool_create_basic(ABT_POOL_FIFO, ABT_POOL_ACCESS_MPMC, ABT_TRUE, &_xmp_private_pools[0]);
-    for (int i = 1; i < _xmp_num_threads; i++) {
-        ABT_pool_create_basic(ABT_POOL_FIFO, ABT_POOL_ACCESS_MPMC, ABT_TRUE, &_xmp_private_pools[i-1]);
-    }
-    ABT_sched_create_basic(ABT_SCHED_DEFAULT, 1, &_xmp_private_pools[0], ABT_SCHED_CONFIG_NULL, 
-                           &_xmp_scheds[0]);
-    for (int i = 1; i < _xmp_num_threads; i++) {
-        ABT_sched_create_basic(ABT_SCHED_DEFAULT, 1, &_xmp_private_pools[i-1], 
-                               ABT_SCHED_CONFIG_NULL, &_xmp_scheds[i]);
     }
 #endif
 
@@ -348,11 +365,17 @@ void tasklet_initialize(int argc, char *argv[])
 void tasklet_exec_main(cfunc main_func)
 {
     ABT_thread thread;
+    ABT_pool pool;
     int dummy;
 
+#ifdef ENABLE_PRIVATE_POOL
+    pool = _xmp_private_pools[0];
+#else
+    pool = _xmp_shared_pool;
+#endif
+
     /* lauch main proram */
-    ABT_thread_create(_xmp_shared_pool, (void (*)(void *))main_func, (void *)&dummy, 
-                      ABT_THREAD_ATTR_NULL, &thread);
+    ABT_thread_create(pool, (void (*)(void *))main_func, (void *)&dummy, ABT_THREAD_ATTR_NULL, &thread);
 
     /* wait and join the thread */
     ABT_thread_join(thread);
@@ -372,6 +395,13 @@ void tasklet_finalize()
     }
 
     ABT_finalize();
+
+    free(_xmp_ess);
+#ifdef ENABLE_PRIVATE_POOL
+    free(_xmp_private_pools);
+    free(_xmp_scheds);
+#endif
+    
 }
 
 static void tasklet_wrapper(Tasklet *tp)
@@ -424,12 +454,20 @@ static void tasklet_wrapper(Tasklet *tp)
 
 static void tasklet_put_ready(Tasklet *tp)
 {
+    ABT_pool pool;
+
     /* lauch main proram */
     if(ABT_mutex_lock(tasklet_count_mutex) != ABT_SUCCESS) goto err;
     tasklet_running_count++;
     if(ABT_mutex_unlock(tasklet_count_mutex) != ABT_SUCCESS) goto err;
 
-    ABT_thread_create(_xmp_shared_pool, (void (*)(void *))tasklet_wrapper, tp, ABT_THREAD_ATTR_NULL, NULL);
+#ifdef ENABLE_PRIVATE_POOL
+    pool = _xmp_private_pools[tp->pool_num];
+#else
+    pool = _xmp_shared_pool;
+#endif
+
+    ABT_thread_create(pool, (void (*)(void *))tasklet_wrapper, tp, ABT_THREAD_ATTR_NULL, NULL);
     
     return;
  err:
@@ -472,7 +510,7 @@ static void tasklet_g_unlock()
 static void tasklet_lock(Tasklet *tp)
 {
     if(ABT_mutex_lock(tp->mutex) != ABT_SUCCESS) 
-        ABT_error("taslet_lock");
+        ABT_error("tasklet_lock");
 }
 
 static void tasklet_unlock(Tasklet *tp)
