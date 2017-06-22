@@ -232,11 +232,19 @@ public class XMPanalyzePragma
       break;
 
     case COARRAY:
-      XMPcoarray.analyzeCoarrayDirective(pb.getClauses(), env, pb);
+      if (XmOption.isCoarray()) {
+        XMPcoarray.analyzeCoarrayDirective(pb.getClauses(), env, pb);
+      } else {
+        XMP.error("coarray directive is specified.");
+      }
       break;
 
     case IMAGE:
-      XMPtransCoarrayRun.analyzeImageDirective(pb.getClauses(), env, pb);
+      if (XmOption.isCoarray()) {
+        XMPtransCoarrayRun.analyzeImageDirective(pb.getClauses(), env, pb);
+      } else {
+        XMP.error("image directive is specified.");
+      }
       break;
 
     case ARRAY:

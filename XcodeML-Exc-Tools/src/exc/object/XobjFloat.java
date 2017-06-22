@@ -8,7 +8,7 @@ package exc.object;
 
 import java.math.BigDecimal;
 
-import xcodeml.XmException;
+import xcodeml.util.XmException;
 
 /**
  * Represents float/double/long double constant.

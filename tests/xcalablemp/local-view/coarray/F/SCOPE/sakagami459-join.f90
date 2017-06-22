@@ -1,10 +1,10 @@
-module data
+module data222
 !! include 'xmp_coarray.h'
 parameter(lx=100,ly=50)
 real*8, allocatable :: a(:,:)[:]
 end module
 
-use data
+use data222
 allocate ( a(lx,ly)[*] )
 do i = 1, lx
   a(i,1)[2] = i

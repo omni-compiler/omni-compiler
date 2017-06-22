@@ -90,7 +90,7 @@ conflict_parent_vs_sub_program_unit(ID parent_id)
     if (ID_CLASS(parent_id) != CL_UNKNOWN) {
         if (debug_flag) fprintf(debug_fp, "parent_id has explicit class\n");
 
-        if (ID_CLASS(parent_id) == CL_PROC) {
+        if (ID_CLASS(parent_id) == CL_PROC && ID_TYPE(parent_id) != NULL) {
             if (IS_VOID(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(parent_id))) ||
                 FUNCTION_TYPE_HAS_IMPLICIT_RETURN_TYPE(ID_TYPE(parent_id)) ||
                 FUNCTION_TYPE_HAS_UNKNOWN_RETURN_TYPE(ID_TYPE(parent_id))) {
@@ -101,7 +101,6 @@ conflict_parent_vs_sub_program_unit(ID parent_id)
                 if (debug_flag) fprintf(debug_fp, "parent_id seems a module function/subroutine\n");
                 return FALSE;
             } else if (PROC_CLASS(parent_id) == P_UNDEFINEDPROC &&
-                       ID_TYPE(parent_id) != NULL &&
                        IS_PROCEDURE_TYPE(ID_TYPE(parent_id))) {
                 if (debug_flag) fprintf(debug_fp, "parent_id seems a undefined function/subroutine\n");
                 return FALSE;
@@ -644,7 +643,7 @@ declare_procedure(enum name_class class,
         assert(interface != NULL);
 
         switch(EXT_PROC_INTERFACE_CLASS(interface)) {
-            case INTF_ASSINGMENT: {
+            case INTF_ASSIGNMENT: {
                 if(IS_SUBR(type) == FALSE) {
                     error("unexpected FUNCTION in assignment(=) INTERFACE");
                     return;
@@ -829,7 +828,7 @@ implicit_declaration(ID id)
             if (ID_CLASS(id) == CL_VAR) {
 /* FEAST delete start */
                 /* error("attempt to use undefined type variable, %s", ID_NAME(id)); */
-                sp_link_id(id, 1, current_line);
+                sp_link_id(id, SP_ERR_UNDEF_TYPE_VAR, current_line);
 /* FEAST delete  end  */
                 return;
             }
@@ -931,6 +930,7 @@ declare_variable(ID id)
     case STG_COMEQ:
     case STG_COMMON:
     case STG_TYPE_PARAM:
+    case STG_INDEX:
         v = expv_sym_term(F_VAR, ID_TYPE(id), ID_SYM(id));
         if (PROC_CLASS(id) == P_THISPROC) {
             EXPV_TYPE(v) = FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id));
@@ -946,6 +946,14 @@ declare_variable(ID id)
 ID
 declare_function(ID id)
 {
+    if (ID_CLASS(id) == CL_MULTI) {
+        id = multi_find_class(id , CL_PROC);
+        if (id == NULL) {
+            fatal("multi class id bug");
+            return id;
+        }
+    }
+
     if (ID_CLASS(id) == CL_UNKNOWN) {
         /* if name class is unknown, define it as CL_PROC */
         ID_CLASS(id) = CL_PROC;
@@ -967,7 +975,7 @@ declare_function(ID id)
                         TYPE_SET_NOT_FIXED(FUNCTION_TYPE_RETURN_TYPE(tp));
                         TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) = TYPE_GNUMERIC;
                         ID_TYPE(id) = tp;
-                    } else if (!IS_FUNCTION_TYPE(tp)) {
+                    } else if (!IS_SUBR(tp) && !IS_FUNCTION_TYPE(tp)) {
                         ID_TYPE(id) = function_type(tp);
                         /*
                          * For F_Front, There is no difference between an
@@ -992,7 +1000,7 @@ declare_function(ID id)
                     }
                     PROC_CLASS(id) = P_UNDEFINEDPROC;
                 } else {
-                    if (!IS_FUNCTION_TYPE(tp)) {
+                    if (!IS_SUBR(tp) && !IS_FUNCTION_TYPE(tp)) {
                         ID_TYPE(id) = function_type(tp);
                         TYPE_UNSET_SAVE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)));
                     }
@@ -1413,9 +1421,19 @@ declare_ident(SYMBOL s, enum name_class class)
                 return ip;
             }
 
+            if (ID_CLASS(ip) == CL_MULTI &&
+                (class == CL_TAGNAME || class == CL_PROC)) {
+                symbols = &MULTI_ID_LIST(ip);
+                FOREACH_ID(ip, *symbols) {
+                    last_ip = ip;
+                }
+                break;
+            }
+
             if (class == CL_UNKNOWN) {
                 return ip;
             }
+
             /* define name class */
             if (ID_CLASS(ip) == CL_UNKNOWN) {
                 ID_CLASS(ip) = class;
@@ -1552,7 +1570,7 @@ find_ident_block_parent(SYMBOL s)
     int in_block = FALSE;
 
     FOR_CTLS_BACKWARD(cp) {
-        if (CTL_TYPE(cp) == CTL_BLOCK) {
+        if (CTL_TYPE(cp) == CTL_BLOCK || CTL_TYPE(cp) == CTL_FORALL) {
             in_block = TRUE;
             if (CTL_BLOCK_LOCAL_SYMBOLS(cp) == LOCAL_SYMBOLS) {
                 continue;
@@ -1852,6 +1870,16 @@ declare_struct_type(expr ident)
             if (ID_CLASS(id) == CL_UNKNOWN) {
                 ID_CLASS(id) = CL_TAGNAME;
                 ID_STORAGE(id) = STG_TAGNAME;
+
+            } else if (ID_CLASS(id) == CL_PROC &&
+                  ID_TYPE(id) != NULL &&
+                  IS_GENERIC_PROCEDURE_TYPE(ID_TYPE(id))) {
+                /*
+                 * There is the generic procedure with the same name,
+                 * so turn id into the multi class identifier.
+                 */
+                id_multilize(id);
+                id = declare_ident(sp, CL_TAGNAME);
             } else {
                 error("identifier '%s' is already used", ID_NAME(id));
             }
@@ -2024,10 +2052,6 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
             TYPE_UNSET_PUBLIC(tp);
             TYPE_UNSET_PROTECTED(tp);
             TYPE_SET_PRIVATE(tp);
-            if (CTL_TYPE(ctl_top) == CTL_STRUCT) {
-                TYPE_DESC struct_tp = CTL_STRUCT_TYPEDESC(ctl_top);
-                TYPE_SET_INTERNAL_PRIVATE(struct_tp);
-            }
             break;
         case F03_PROTECTED_SPEC:
             if (TYPE_IS_PUBLIC(tp)) {
@@ -2465,7 +2489,7 @@ compile_basic_type(expr x)
             } else {
                 vcharLen = vcharLen1;
                 charLen = EXPV_INT_VALUE(vcharLen1);
-                if(charLen < 0) {
+                if(EXPV_CODE(vcharLen1) == INT_CONSTANT && charLen < 0) {
                     error("length specification must be positive");
                     return NULL;
                 }
@@ -2584,8 +2608,8 @@ compile_basic_type(expr x)
 
     if(tp == NULL) {
         tp = type_basic(t);
-	//TYPE_KIND(tp) = org_vkind ? org_vkind : vkind;
-	TYPE_KIND(tp) = vkind;
+        //TYPE_KIND(tp) = org_vkind ? org_vkind : vkind;
+        TYPE_KIND(tp) = vkind;
     }
 
     return tp;
@@ -2745,56 +2769,60 @@ set_implicit_storage(enum storage_class stg,int c1,int c2)
 expv
 expv_reduce_kind(expv v)
 {
-    expv ret = expv_reduce(v, TRUE); /* reduce parameter. */
-
+    expv ret = expv_reduce(v, TRUE); /* reduce parameter */
+    
     if (EXPV_CODE(ret) == INT_CONSTANT) {
-        return ret;
+        return ret; // already reduced
     }
 
     switch (EXPV_CODE(ret)) {
-        case FUNCTION_CALL: {
-            ID fId = find_ident(EXPV_NAME(EXPR_ARG1(ret)));
-
-            if (PROC_CLASS(fId) == P_INTRINSIC) {
-                const char *name = SYM_NAME(ID_SYM(fId));
-
-                if (strncasecmp("kind", name, 4) == 0 ||
-                    strncasecmp("selected_int_kind", name, 17) == 0) {
-                    ret = EXPR_ARG1(EXPR_ARG2(ret));
-                } else if (strncasecmp("selected_real_kind", name, 18) == 0) {
-#if 1
-                    expv pV = expr_list_get_n(EXPR_ARG2(ret), 0);
-                    expv rV = expr_list_get_n(EXPR_ARG2(ret), 1);
-
-                    if(pV == NULL || rV == NULL)
-                        break;
-
-                    pV = expv_reduce(pV, TRUE);
-                    rV = expv_reduce(rV, TRUE);
-                    if (EXPV_CODE(pV) == INT_CONSTANT &&
-                        EXPV_CODE(rV) == INT_CONSTANT) {
-                        double p = pow((double)EXPV_INT_VALUE(pV),
-                                       (double)EXPV_INT_VALUE(rV));
-                        ret = expv_float_term(FLOAT_CONSTANT, type_DREAL,
-                                              p, "");
-                    } else {
-                        ret = expv_power_expr(pV, rV);
-                    }
-#else
-                    ret = expv_reduce(EXPR_ARG1(EXPR_ARG2(ret)), TRUE);
-#endif
-                }
-            }
-            break;
+    case FUNCTION_CALL: {
+        char *name = NULL;
+        SYMBOL s = EXPV_NAME(EXPR_ARG1(ret));
+        ID fId = find_ident(s);
+        
+        if(fId != NULL && PROC_CLASS(fId) == P_INTRINSIC){
+            name = SYM_NAME(ID_SYM(fId));
+        } else if(SYM_TYPE(s) == S_INTR){
+            name = SYM_NAME(s);
         }
-        default: {
-            break;
+
+        if (name == NULL) return NULL;
+        if (strncasecmp("kind", name, 4) == 0 ||
+            strncasecmp("selected_int_kind", name, 17) == 0) {
+            expv arg = expr_list_get_n(EXPR_ARG2(ret), 0);
+            arg = expv_reduce_kind(arg);
+            if(arg == NULL) return NULL;
+            return expv_cons(FUNCTION_CALL, type_INT, 
+                             EXPR_ARG1(ret), list1(LIST,arg));
+        } else if (strncasecmp("selected_real_kind", name, 18) == 0) {
+            expv arg = EXPR_ARG2(ret);
+            int n = expr_list_length(arg);
+            if(n == 1){
+                expv arg1 = expr_list_get_n(arg, 0);
+                if(arg1 == NULL) return NULL; // error
+                return expv_cons(FUNCTION_CALL, type_INT, 
+                                 EXPR_ARG1(ret), list1(LIST,arg1));
+            } else if(n == 2){
+                expv arg1 = expr_list_get_n(arg, 0);
+                expv arg2 = expr_list_get_n(arg, 1);
+            
+                if(arg1 == NULL || arg2 == NULL) return NULL; // error
+                arg1 = expv_reduce_kind(arg1);
+                arg2 = expv_reduce_kind(arg2);
+                return expv_cons(FUNCTION_CALL, type_INT, 
+                                 EXPR_ARG1(ret), list2(LIST,arg1,arg2));
+            } 
         }
+        break;
+    }
+    default: 
+        break;
     }
 
     if (EXPV_CODE(ret) != INT_CONSTANT &&
         EXPV_CODE(ret) != FLOAT_CONSTANT) {
-        ret = NULL;
+        ret = NULL;  // error
     }
 
     return ret;
@@ -3364,6 +3392,7 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
     int len;
     list lp;
     ID id;
+    SYMBOL resS = NULL;
     expr v;
     int hasDimsInAttr = FALSE;
     int hasPointerAttr = FALSE;
@@ -3421,10 +3450,22 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
 
     if (typeExpr != NULL) {
         tp0 = compile_type(typeExpr, hasPointerAttr);
-        if (tp0 == NULL)
+        if (tp0 == NULL) {
+            error_at_node(typeExpr, "Invalid type spec");
             return;
+        }
     } else if (baseTp != NULL) {
         tp0 = baseTp;
+    }
+
+    /*
+     * Check result var
+     */
+    if (CURRENT_PROCEDURE != NULL &&
+        ctl_top == ctl_base && /* not in BLOCK */
+        PROC_RESULTVAR(CURRENT_PROCEDURE) != NULL) {
+        expr resX = PROC_RESULTVAR(CURRENT_PROCEDURE);
+        resS = EXPR_SYM(resX);
     }
 
     FOR_ITEMS_IN_LIST(lp, decl_list) {
@@ -3456,10 +3497,22 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
             }
 
             id = find_ident_from_type_parameter(EXPR_SYM(ident), struct_tp);
-            if (id != NULL && CURRENT_STATE != IN_TYPE_PARAM_DECL) {
-                error_at_node(decl_list, "'%s' is already used as a type parameter.", ID_NAME(id));
-                continue;
+            if (hasTypeParamAttr) {
+                if (id == NULL) {
+                    error_at_node(decl_list,
+                                  "'%s' is not in the type parameter.",
+                                  SYM_NAME(EXPR_SYM(ident)));
+                } else if (ID_TYPE(id) != NULL) {
+                    error_at_node(decl_list, "'%s' is already declared.",
+                                  ID_NAME(id));
+                }
+            } else {
+                if (id != NULL && CURRENT_STATE != IN_TYPE_PARAM_DECL) {
+                    error_at_node(decl_list, "'%s' is already used as a type parameter.", ID_NAME(id));
+                    continue;
+                }
             }
+
 
             id = declare_ident(EXPR_SYM(ident), CL_UNKNOWN);
             if (id == NULL) {
@@ -3650,14 +3703,16 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
 
         if (value != NULL && EXPR_CODE(value) != F_DATA_DECL) {
 
-	  // to be checked for function results.
-	  if (ID_IS_DUMMY_ARG(id) || ID_CLASS(id) == CL_PROC ||
-	      TYPE_IS_ALLOCATABLE(tp) || TYPE_IS_POINTER(tp) ||
-	      TYPE_IS_EXTERNAL(tp) || TYPE_IS_INTRINSIC(tp)){
-	    error_at_node(decl_list, "%s cannot have an initializer.", ID_NAME(id));
-	    return;
-	  }
-	  
+            /*
+             * to be checked for function results.
+             */
+            if (ID_IS_DUMMY_ARG(id) || ID_CLASS(id) == CL_PROC ||
+                TYPE_IS_ALLOCATABLE(tp) ||
+                TYPE_IS_EXTERNAL(tp) || TYPE_IS_INTRINSIC(tp) || ID_SYM(id) == resS) {
+                error_at_node(decl_list, "%s cannot have an initializer.", ID_NAME(id));
+                return;
+            }
+
             /*
              * FIXME:
              *	SUPER BOGUS FLAG ALERT !
@@ -3903,7 +3958,6 @@ check_type_bound_generics(TYPE_DESC stp)
     }
 }
 
-
 /* compile end type statement */
 void
 compile_struct_decl_end()
@@ -3926,6 +3980,57 @@ compile_struct_decl_end()
 
     /* check for type bound generic */
     check_type_bound_generics(stp);
+
+    if (!TYPE_IS_INTERNAL_PRIVATE(stp)) {
+        /*
+         * To transform the fortran code.
+         *
+         * TYPE t
+         *  INTEGER, PRIVATE :: a
+         *  INTEGER :: b
+         * END TYPE t
+         *
+         * will turn into
+         *
+         * TYPE t
+         *  PRIVATE
+         *  INTEGER :: a
+         *  INTEGER, PUBLIC :: b
+         * END TYPE t
+         *
+         */
+
+        ID mem;
+        int has_private_member = FALSE;
+
+        FOREACH_MEMBER(mem, stp) {
+            if (TYPE_IS_PRIVATE(ID_TYPE(mem))) {
+                has_private_member = TRUE;
+                break;
+            }
+        }
+
+        if (has_private_member) {
+            /*
+             * If the derived-type has a PRIVATE member,
+             * set is_internal_private to the derived-type.
+             */
+            TYPE_SET_INTERNAL_PRIVATE(stp);
+
+            /*
+             * Remove PRIVATE from PRIVATE members,
+             * and add PUBLIC to other members.
+             */
+            FOREACH_MEMBER(mem, stp) {
+                if (TYPE_IS_PRIVATE(ID_TYPE(mem))) {
+                    TYPE_UNSET_PRIVATE(ID_TYPE(mem));
+                } else {
+                    TYPE_SET_PUBLIC(ID_TYPE(mem));
+                }
+            }
+        }
+    }
+
 
     pop_ctl();
 }
@@ -4312,6 +4417,8 @@ postproc_PARAM_decl(expr ident, expr e)
 
     v = compile_expression(e);
 
+    if(v == NULL) return; // error
+
     if (expr_is_constant(e)) {
         if(v)
             v = expv_reduce(v, FALSE);
@@ -4319,10 +4426,7 @@ postproc_PARAM_decl(expr ident, expr e)
             error("bad constant expression in PARAMETER statement");
             return;
         }
-    } else {
-        if (v == NULL)
-            return;
-    }
+    } 
 
     if (ID_TYPE(id) != NULL) {
         if (type_is_compatible_for_assignment(ID_TYPE(id),
@@ -5500,7 +5604,7 @@ compile_type_bound_procedure(expr x)
 void
 compile_type_generic_procedure(expr x)
 {
-    expr generis_spec = EXPR_ARG1(x);
+    expr generics_spec = EXPR_ARG1(x);
     expr id_list = EXPR_ARG2(x);
     expr access_attr = EXPR_ARG3(x);
 
@@ -5519,17 +5623,17 @@ compile_type_generic_procedure(expr x)
     struct_tp = CTL_STRUCT_TYPEDESC(ctl_top);
     is_internal_private = TYPE_IS_INTERNAL_PRIVATE(struct_tp);
 
-    switch (EXPR_CODE(generis_spec)) {
+    switch (EXPR_CODE(generics_spec)) {
         case IDENT:
-            if ((find_struct_member(struct_tp, EXPR_SYM(generis_spec))) != NULL) {
+            if ((find_struct_member(struct_tp, EXPR_SYM(generics_spec))) != NULL) {
                 error("already declared");
                 return;
             }
-            id = declare_ident(EXPR_SYM(generis_spec), CL_TYPE_BOUND_PROC);
+            id = declare_ident(EXPR_SYM(generics_spec), CL_TYPE_BOUND_PROC);
             break;
         case F95_GENERIC_SPEC:{
             expr arg;
-            arg = EXPR_ARG1(generis_spec);
+            arg = EXPR_ARG1(generics_spec);
             SYMBOL sym = find_symbol(EXPR_CODE_SYMBOL(EXPR_CODE(arg)));
             if ((id = find_struct_member(struct_tp, sym)) != NULL) {
                 error("already declared");
@@ -5544,13 +5648,51 @@ compile_type_generic_procedure(expr x)
         } break;
         case F95_USER_DEFINED:{
             expr arg;
-            arg = EXPR_ARG1(generis_spec);
+            arg = EXPR_ARG1(generics_spec);
             if ((id = find_struct_member(struct_tp, EXPR_SYM(arg))) != NULL) {
                 error("already declared");
                 return;
             }
             id = declare_ident(EXPR_SYM(arg), CL_TYPE_BOUND_PROC);
             binding_attr_flags |= TYPE_BOUND_PROCEDURE_IS_OPERATOR;
+        } break;
+        case F03_GENERIC_WRITE: {
+            expr formatted = EXPR_ARG1(generics_spec);
+            SYMBOL sym;
+            binding_attr_flags |= TYPE_BOUND_PROCEDURE_WRITE;
+            switch (EXPR_CODE(formatted)) {
+                case F03_FORMATTED:
+                    sym = find_symbol("_write_formatted");
+                    binding_attr_flags |= TYPE_BOUND_PROCEDURE_FORMATTED;
+                    break;
+                case F03_UNFORMATTED:
+                    sym = find_symbol("_write_unformatted");
+                    binding_attr_flags |= TYPE_BOUND_PROCEDURE_UNFORMATTED;
+                    break;
+                default:
+                    error("expect FORMATTED or UNFORMATTED");
+                    return;
+            }
+            id = declare_ident(sym, CL_TYPE_BOUND_PROC);
+        } break;
+        case F03_GENERIC_READ: {
+            expr formatted = EXPR_ARG1(generics_spec);
+            SYMBOL sym;
+            binding_attr_flags |= TYPE_BOUND_PROCEDURE_READ;
+            switch (EXPR_CODE(formatted)) {
+                case F03_FORMATTED:
+                    sym = find_symbol("_read_formatted");
+                    binding_attr_flags |= TYPE_BOUND_PROCEDURE_FORMATTED;
+                    break;
+                case F03_UNFORMATTED:
+                    sym = find_symbol("_read_unformatted");
+                    binding_attr_flags |= TYPE_BOUND_PROCEDURE_UNFORMATTED;
+                    break;
+                default:
+                    error("expect FORMATTED or UNFORMATTED");
+                    return;
+            }
+            id = declare_ident(sym, CL_TYPE_BOUND_PROC);
         } break;
         default:
             error_at_node(x, "unexpected expression");
@@ -5610,4 +5752,36 @@ compile_type_generic_procedure(expr x)
     ID_TYPE(id) = type_bound_procedure_type();
     ID_LINE(id) = EXPR_LINE(x);
     TYPE_BOUND_GENERIC_TYPE_GENERICS(ID_TYPE(id)) = TBP_BINDING(id);
+}
+
+void
+compile_FINAL_statement(expr x)
+{
+    expr id_list = EXPR_ARG1(x);
+
+    ID id = NULL;
+    ID last_ip = NULL;
+    list lp;
+
+    assert(CTL_TYPE(ctl_top) == CTL_STRUCT);
+    id = declare_ident(find_symbol(FINALIZER_PROCEDURE), CL_TYPE_BOUND_PROC);
+
+    FOR_ITEMS_IN_LIST(lp, id_list) {
+        ID binding;
+        if (EXPR_CODE(LIST_ITEM(lp)) != IDENT) {
+            error_at_node(x, "unexpected expression");
+        }
+        if (find_ident_head(EXPR_SYM(LIST_ITEM(lp)), TBP_BINDING(id)) != NULL) {
+            error_at_node(x, "%s is already used as FINAL procedure",
+                          SYM_NAME(EXPR_SYM(LIST_ITEM(lp))));
+            continue;
+        }
+        binding = new_ident_desc(EXPR_SYM(LIST_ITEM(lp)));
+        ID_LINK_ADD(binding, TBP_BINDING(id), last_ip);
+    }
+
+    TBP_BINDING_ATTRS(id) = TYPE_BOUND_PROCEDURE_IS_FINAL;
+
+    ID_TYPE(id) = type_bound_procedure_type();
+    ID_LINE(id) = EXPR_LINE(x);
 }

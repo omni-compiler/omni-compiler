@@ -367,4 +367,25 @@ public class XMPutil {
     else
       throw new XMPexception("exception in exc.xcalablemp.XMPutil.getLastIndex(), element does not exist");
   }
+
+  public static Xobject foldIntConstant(Xobject expr){
+    if(expr.isBinaryOp()){
+      Xcode code    = expr.Opcode();
+      Xobject left  = foldIntConstant(expr.left());
+      Xobject right = foldIntConstant(expr.right());
+      if(left.isIntConstant() && right.isIntConstant()){
+        switch(code){
+        case PLUS_EXPR:
+          return Xcons.IntConstant(left.getInt() + right.getInt());
+        case MINUS_EXPR:
+          return Xcons.IntConstant(left.getInt() - right.getInt());
+        case MUL_EXPR:
+          return Xcons.IntConstant(left.getInt() * right.getInt());
+        case DIV_EXPR:
+          return Xcons.IntConstant(left.getInt() / right.getInt());
+        }
+      }
+    }
+    return expr;
+  }
 }

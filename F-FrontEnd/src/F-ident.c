@@ -76,3 +76,65 @@ declare_storage(ID id, enum storage_class stg)
     else if(ID_STORAGE(id) != stg)
       error("incompatible storage declarations, %s", ID_NAME(id));
 }
+
+void
+id_multilize(ID id)
+{
+    /*
+     * TODO(shingo-s): copy necessary type ?
+     */
+
+    ID new_child;
+
+    new_child = new_ident_desc(ID_SYM(id));
+    *new_child = *id;
+    ID_NEXT(new_child) = NULL;
+
+    MULTI_ID_LIST(id) = new_child;
+    ID_CLASS(id) = CL_MULTI;
+}
+
+ID
+multi_find_class(const ID id, const enum name_class class)
+{
+    ID ip;
+
+    if (ID_CLASS(id) != CL_MULTI) {
+        return NULL;
+    }
+
+    FOREACH_ID(ip, MULTI_ID_LIST(id)) {
+        if (ID_CLASS(ip) == class) {
+            return ip;
+        }
+    }
+
+    FOREACH_ID(ip, ID_NEXT(id)) {
+        if (ID_SYM(id) == ID_SYM(ip) && ID_CLASS(ip) == class) {
+            return ip;
+        }
+    }
+
+
+    return NULL;
+}
+
+int
+id_link_remove(ID * head, ID tobeRemoved)
+{
+    ID ip, pre = NULL;
+    if (head == NULL) return FALSE;
+
+    FOREACH_ID(ip, *head) {
+        if (ID_SYM(ip) == ID_SYM(tobeRemoved)) {
+            if (pre == NULL) {
+                *head = ID_NEXT(ip);
+            } else {
+                ID_NEXT(pre) = ID_NEXT(ip);
+            }
+            return TRUE;
+        }
+        pre = ip;
+    }
+    return FALSE;
+}

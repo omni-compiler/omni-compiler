@@ -6,7 +6,7 @@
  */
 package exc.object;
 
-import xcodeml.ILineNo;
+import xcodeml.util.ILineNo;
 
 public class LineNo implements ILineNo
 {

@@ -261,6 +261,7 @@ do
     print_subr_regmem cn  "character(element)" 
 done
 
+
 echo ''
 echo '!-----------------------------------------------------------------------'
 echo '!     xmpf_coarray_dealloc_generic'
@@ -286,29 +287,11 @@ do
     print_subr_dealloc cn  "character(*)" 
 done
 
-echo ''
-echo '!-----------------------------------------------------------------------'
-echo '!     xmpf_coarray_unregmem_generic'
-echo '!-----------------------------------------------------------------------'
-echo ''
 
-for DIM in `seq 0 7`
-do
-    if test "sxace-nec-superux" != "$TARGET"; then    ## integer(2) cannot be used on SX-ACE
-	print_subr_unregmem i2  "integer(2)"
-    fi
-    print_subr_unregmem i4  "integer(4)"      
-    print_subr_unregmem i8  "integer(8)"
-    if test "sxace-nec-superux" != "$TARGET"; then    ## logical(2) cannot be used on SX-ACE
-	print_subr_unregmem l2  "logical(2)"
-    fi
-    print_subr_unregmem l4  "logical(4)"      
-    print_subr_unregmem l8  "logical(8)"      
-    print_subr_unregmem r4  "real(4)"         
-    print_subr_unregmem r8  "real(8)"         
-    print_subr_unregmem z8  "complex(4)"      
-    print_subr_unregmem z16 "complex(8)"      
-    print_subr_unregmem cn  "character(*)" 
-done
+#-----------------------------------------------------------------------
+#     xmpf_coarray_deregmem
+#-----------------------------------------------------------------------
+# No generic name is used.
+# The second argument var is simply negrected by the runtime.
 
 exit

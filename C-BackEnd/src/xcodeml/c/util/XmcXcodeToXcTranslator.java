@@ -38,7 +38,7 @@ import xcodeml.c.util.XmcBindingUtil;
 import xcodeml.util.XmStringUtil;
 import xcodeml.util.XmDomUtil;
 import xcodeml.util.XmTranslationException;
-import xcodeml.XmException;
+import xcodeml.util.XmException;
 import static xcodeml.util.XmDomUtil.getElement;
 import static xcodeml.util.XmDomUtil.getAttr;
 import static xcodeml.util.XmDomUtil.getContent;
@@ -350,8 +350,7 @@ public class XmcXcodeToXcTranslator {
                             Node valueChildNode = getContent(valueNode);
                             String valueChildNodeName = valueChildNode.getNodeName();
                             if ("intConstant".equals(valueChildNodeName)) {
-                                i = XmStringUtil.getAsCInt(null,
-                                                           getContentText(valueChildNode));
+                                i = XmStringUtil.getAsCInt(getContentText(valueChildNode));
 
                                 ident.setValue(new XcConstObj.IntConst(i++, XcBaseTypeEnum.INT));
                             } else {
@@ -2493,7 +2492,7 @@ public class XmcXcodeToXcTranslator {
             type.setIsArraySize(true);
             type.setIsArraySizeExpr(false);
 
-            type.setArraySize(XmStringUtil.getAsCInt(null, arraySizeStr));
+            type.setArraySize(XmStringUtil.getAsCInt(arraySizeStr));
         }
 
         type.setTempRefTypeId(getAttr(arrayTypeNode, "element_type"));
@@ -2558,8 +2557,7 @@ public class XmcXcodeToXcTranslator {
                     } else {
                         ident.setIsBitField(true);
                         ident.setIsBitFieldExpr(false);
-                        ident.setBitField(XmStringUtil.getAsCInt(null,
-                                                                 bitFieldStr));
+                        ident.setBitField(XmStringUtil.getAsCInt(bitFieldStr));
                     }
                 }
 
@@ -2891,7 +2889,8 @@ public class XmcXcodeToXcTranslator {
                        XcNode arrayRefObj) {
         List<Node> childNodes = XmDomUtil.collectChildNodes(arrayRefNode);
         Node arrayAddrNode = childNodes.remove(0);
-        if (! arrayAddrNode.getNodeName().equals("arrayAddr")) {
+        String nodeName = arrayAddrNode.getNodeName();
+        if (! nodeName.equals("arrayAddr") && ! nodeName.equals("Var")) {
             throw new XmTranslationException(arrayRefNode, "Invalid arrayRef: arrayAddr not found.");
         }
 

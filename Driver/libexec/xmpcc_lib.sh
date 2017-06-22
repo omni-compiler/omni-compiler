@@ -34,7 +34,9 @@ Process Options
 XcalableMP Options
 
   -omp,--openmp                       : enable OpenMP function.
-  -xacc,--xcalableacc                 : enable XcalableACC function.
+  -xacc[=pgi],--xcalableacc[=pgi]     : enable XcalableACC function. When adding "=pgi", 
+                                        PGI compiler is used as a backend OpenACC compiler.
+                                        Default OpenACC compiler is the omni OpenACC compiler.
   --profile [scalasca|tlog]           : output results in scalasca or tlog format for all directives.
   --selective-profile [scalasca|tlog] : output results in scalasca or tlog format for selected directives.
 
@@ -150,7 +152,19 @@ function xmpcc_set_parameters()
 		done;;
 	    --openmp|-omp)
 		ENABLE_OPENMP=true;;
-	    --xcalableacc|-xacc)
+	    --xcalableacc|-xacc|--xcalableacc=*|-xacc=*)
+		local tmp=${1}
+		[[ "$1" =~ ^((--xcalableacc)|(-xacc))$ ]] && tmp="${tmp}=omni" #default is omni
+		tmp=${tmp#*=}
+		if [ "omni" = "$tmp" ]; then
+		    ENABLE_OPENACC=true
+		elif [ "pgi" = "$tmp" ]; then
+		    other_args+=("-acc")
+		elif [ "cray" = "$tmp" ]; then
+		    : #do nothing
+		else
+		    omni_error_exit "Unknown OpenACC compiler for XACC"
+		fi
 		ENABLE_XACC=true;;
 	    --no-ldg)
 		DISABLE_LDG=true;;

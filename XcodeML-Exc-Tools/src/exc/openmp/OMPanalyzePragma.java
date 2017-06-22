@@ -217,18 +217,18 @@ public class OMPanalyzePragma
             break;
 
         case MASTER: /* master */
-            if(info.findContext(OMPpragma.FOR) != null)
+            if(info.findContext(OMPpragma.FOR, OMPpragma.PARALLEL) != null)
                 OMP.error(pb.getLineNo(), "'master' not permitted in the extent of 'for'");
-            if(info.findContext(OMPpragma.SECTIONS) != null)
+            if(info.findContext(OMPpragma.SECTIONS, OMPpragma.PARALLEL) != null)
                 OMP.error(pb.getLineNo(), "'master' not permitted in the extent of 'sections'");
-            if(info.findContext(OMPpragma.SINGLE) != null)
+            if(info.findContext(OMPpragma.SINGLE, OMPpragma.PARALLEL) != null)
                 OMP.error(pb.getLineNo(), "'master' not permitted in the extent of 'single'");
             break;
 
         case CRITICAL: /* critical <name> */
             t = pb.getClauses();
             if(t != null)
-                info.arg = t.getArg(0);
+                info.arg = t.getArgOrNull(0);
             else
                 info.arg = null;
             if(info.findContext(OMPpragma.CRITICAL, info.arg) != null)

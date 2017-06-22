@@ -32,6 +32,8 @@ void _XMP_finalize_world(void) {
   int flag = 0;
   MPI_Finalized(&flag);
   if (!flag) {
+    _XMP_nodes_t *n =  _XMP_get_execution_nodes();
+    _XMP_finalize_nodes(n);
     MPI_Finalize();
   }
 }

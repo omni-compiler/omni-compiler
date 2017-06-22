@@ -331,6 +331,7 @@ typedef struct xmp_coarray{
   char **addr_dev;
   char *real_addr_dev;
   MPI_Win win_acc;
+  _XMP_nodes_t *nodes; //nodes associated with window. it is not the same as _coarrayInfo_t.nodes in xmpf_coarray_alloc.c
   //#endif
 #endif
 }_XMP_coarray_t;

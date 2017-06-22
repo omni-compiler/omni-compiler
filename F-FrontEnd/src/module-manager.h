@@ -39,6 +39,7 @@ struct module {
     ID last;
     int is_intrinsic;         /* TRUE if this module is an intrinsic module. */
     int for_submodule;        /* module for submodule */
+    char *filepath;    	      /* path for module file */
 };
 
 #define MODULE_IS_MODULE(mod)     ((mod)->submodule_name == NULL)
@@ -77,5 +78,10 @@ int export_module(const SYMBOL, ID, expv);
  * export public identifiers in the submodule to module-manager.
  */
 int export_submodule(const SYMBOL, const SYMBOL, ID, expv);
+
+/**
+ * include .xmod file into XcodeML file.
+ */
+void include_module_file(FILE *fp, SYMBOL mod_name);
 
 #endif /* _MODULE_MANAGER_H_ */

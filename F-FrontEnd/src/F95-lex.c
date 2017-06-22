@@ -1,9 +1,3 @@
-/*
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 /**
  * \file F95-lex.c
  */
@@ -13,7 +7,7 @@
 
 // #define LEX_DEBUG 1
 
-/* lexical analyzer, enable open mp.  */
+/* Lexical analyzer, enable open mp.  */
 int OMP_flag = FALSE;
 int XMP_flag = FALSE;
 int ACC_flag = FALSE;
@@ -184,8 +178,12 @@ int last_ln_no = 0;
 /* when read ';', no need for line count up.  */
 static int no_countup = FALSE;
 
-static int the_last_token[2] = { UNKNOWN, UNKNOWN };
 static int expect_next_token_is_keyword = TRUE;
+
+static int token_history_buf_size = 200;
+#define ADD_HISTORY_BUF_SIZE 200
+static int token_history_count = 0;
+static int *token_history_buf = NULL;
 
 static int      read_initial_line _ANSI_ARGS_((void));
 static int      classify_statement _ANSI_ARGS_((void));
@@ -319,8 +317,7 @@ initialize_lex()
 
 static void
 prepare_for_new_statement(void) {
-    the_last_token[0] = UNKNOWN;
-    the_last_token[1] = UNKNOWN;
+    token_history_count = 0;
     expect_next_token_is_keyword = TRUE;
     need_keyword = FALSE;
 }
@@ -353,6 +350,7 @@ is_keyword(int k, struct keyword_token *tblPtr) {
     return FALSE;
 }
 
+#if 0
 static int
 seems_type_or_func_attr(int kw) {
     return (kw == KW_CHARACTER ||
@@ -366,23 +364,137 @@ seems_type_or_func_attr(int kw) {
             kw == PURE ||
             kw == RECURSIVE) ? TRUE : FALSE;
 }
+#endif
 
-static char *
-yyidentvalue(void) {
-    return SYM_NAME(EXPR_SYM(yylval.val));
-}
 
-static int
-is_current_ident_matched(const char *str) {
-    return (strcasecmp(str, yyidentvalue()) == 0) ? TRUE : FALSE;
+static void switch_need_keyword(int t)
+{
+    need_keyword = t;
 }
 
 static expr auxIdentX = NULL;
+
+static void type_spec_done()
+{
+    /* printf("type_spec_done!\n"); */
+}
+
+int is_function_statement_context()
+{
+    int i = 0;
+    int plevel = 0;
+    
+    switch(token_history_buf[0]){
+        /* func_prefix */
+    case PURE: 
+    case RECURSIVE:
+    case ELEMENTAL:
+    case MODULE:
+        i++;
+        /* type_spec */
+    case CLASS:
+    case KW_TYPE:
+    case KW_CHARACTER:
+    case KW_COMPLEX:
+    case KW_DOUBLE:
+    case KW_DCOMPLEX:
+    case KW_INTEGER:
+    case KW_LOGICAL:
+    case KW_REAL:
+        i++;
+        /* SET_KIND and SET_LEN include a left parenthesis directly */
+        if(token_history_buf[i] == '(' || token_history_buf[i] == SET_KIND 
+            || token_history_buf[i] == SET_LEN) 
+        {
+            plevel++;
+            for(i++; i < token_history_count; i++){
+                if(token_history_buf[i] == ')') plevel--;
+                if(token_history_buf[i] == '(') plevel++;
+                if(plevel == 0) {
+                    i++;
+                    break;
+                }
+            }
+            if(plevel != 0) {
+                return FALSE;
+            }
+        }
+        if(i == (token_history_count-1)) {
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+
+int check_ident_context(char *name)
+{
+    int ret = IDENTIFIER;
+
+    switch(token_history_buf[0]){
+        /* type_spec */
+    case CLASS:
+    case KW_TYPE:
+    case KW_CHARACTER:
+    case KW_COMPLEX:
+    case KW_DOUBLE:
+    case KW_DCOMPLEX:
+    case KW_INTEGER:
+    case KW_LOGICAL:
+    case KW_REAL:
+        /* func_prefix */
+    case PURE: 
+    case RECURSIVE:
+    case ELEMENTAL:
+    case MODULE:
+        if(fixed_format_flag){
+            if (strncasecmp(name, "function", 8) == 0 &&
+                is_function_statement_context()){
+                ret = FUNCTION;
+                if (strcasecmp(name,"function") != 0) {
+                    char *rest = name + 8;
+                    auxIdentX = GEN_NODE(IDENT, find_symbol(rest));
+                }
+            }
+        } else { // free format
+            if(is_function_statement_context()){
+                if (strcasecmp(name,"function") == 0) {
+                    ret = FUNCTION;
+                } else if(strcasecmp(name, "elemental") == 0) {
+                    ret = ELEMENTAL;
+                } else if(strcasecmp(name, "pure") == 0) {
+                    ret = PURE;
+                } else if(strcasecmp(name, "recursive") == 0){
+                    ret = RECURSIVE;
+                } else if (strcasecmp(name, "module") == 0) {
+                    ret = MODULE;
+                }
+            }
+        }
+        break;
+
+    case ENDINTERFACE:
+        if(token_history_count == 2){
+            if (strcasecmp(name,"operator") == 0)
+                return OPERATOR;
+            else if (strcasecmp(name,"assignment") == 0)
+                return ASSIGNMENT;
+            else if (strcasecmp(name,"read") == 0)
+                return READ;
+            else if (strcasecmp(name,"write") == 0)
+                return WRITE;
+        }
+    }
+    return ret;
+}
 
 /* lexical analyzer */
 int
 yylex()
 {
+  if(token_history_buf == NULL)
+    token_history_buf = malloc(sizeof(int) * token_history_buf_size);
+
     int curToken = UNKNOWN;
 
     if (auxIdentX != NULL) {
@@ -391,9 +503,25 @@ yylex()
     } else {
         curToken = yylex0();
     }
-
-    the_last_token[1] = the_last_token[0];
-    the_last_token[0] = curToken;
+    
+    // record history counter
+    if(curToken == STATEMENT_LABEL_NO){
+        token_history_count = 0;
+    } 
+    else {
+        token_history_buf[token_history_count++] = curToken;
+        if(token_history_count >= token_history_buf_size){
+	  int *tmp;
+	  token_history_buf_size += ADD_HISTORY_BUF_SIZE;
+	  if((tmp = (int *)realloc(token_history_buf, sizeof(int)*token_history_buf_size)) == NULL) {
+	    free(token_history_buf);
+	    fatal("Cannot allocate token_history_buffer");
+	  }
+	  else {
+	    token_history_buf = tmp;
+	  }
+	}
+    }
 
     if (auxIdentX != NULL) {
         auxIdentX = NULL;
@@ -401,29 +529,13 @@ yylex()
     }
 
     if (expect_next_token_is_keyword == TRUE) {
-        if (the_last_token[0] == '(' ||
-            the_last_token[0] == LET ||
-            is_keyword(the_last_token[0], keywords) == TRUE) {
+        if (curToken == '(' || curToken == LET ||
+            is_keyword(curToken, keywords) == TRUE) {
             expect_next_token_is_keyword = FALSE;
         }
-    } else {
-        if (curToken == IDENTIFIER) {
-            if ((strncasecmp(yyidentvalue(), "function", 8) == 0) &&
-                (seems_type_or_func_attr(the_last_token[1]) == TRUE ||
-                 the_last_token[1] == ')')) {
-                curToken = the_last_token[0] = FUNCTION;
-                if (is_current_ident_matched("function") != TRUE) {
-                    char *rest = yyidentvalue() + 8;
-                    auxIdentX = GEN_NODE(IDENT, find_symbol(rest));
-                }
-            } else if (is_current_ident_matched("operator") == TRUE &&
-                       the_last_token[1] == ENDINTERFACE) {
-                curToken = the_last_token[0] = OPERATOR;
-            } else if (is_current_ident_matched("assignment") == TRUE &&
-                       the_last_token[1] == ENDINTERFACE) {
-                curToken = the_last_token[0] = ASSIGNMENT;
-            }
-        }
+    } else if (curToken == IDENTIFIER) {
+        curToken = check_ident_context(SYM_NAME(EXPR_SYM(yylval.val)));
+        token_history_buf[token_history_count-1] = curToken;
     }
 
     Done:
@@ -635,7 +747,6 @@ char *lex_get_line()
     return(s);
 }
 
-
 void
 yyerror(s)
      const char *s;
@@ -664,6 +775,7 @@ token()
          * require keyword
          */
         need_keyword = FALSE;
+        expect_next_token_is_keyword = FALSE;
         t = get_keyword(keywords);
         if (t != UNKNOWN) return(t);
     }
@@ -933,6 +1045,7 @@ read_identifier()
     int tkn_len;
     char *p,ch;
     int excess_name_length = 0;
+    enum expr_code defined_io = 0;
 
     p = buffio;
     for(tkn_len = 0 ;
@@ -982,65 +1095,83 @@ read_identifier()
         fprintf (stderr, "read_identifier/(%s)\n", buffio);
 #endif
     if (may_generic_spec &&
-	((strcmp(buffio, "operator") == 0)
-	 || (strcmp(buffio, "assignment") == 0))) {
-	char *save = bufptr;
-	int t;
-	int save_n = need_keyword;
-	int save_p = paren_level;
-	need_keyword = TRUE;
-	while (isspace(*bufptr)) /* skip white space */
-	    bufptr++;
-	if (*bufptr != '(') {
-	    need_keyword = save_n;
-	    bufptr = save;
-	    paren_level = save_p;
-	    goto returnId;
-	} else
-	    bufptr++;
-	t = token();
-	while (isspace(*bufptr)) /* skip white space */
-	    bufptr++;
-	if (*bufptr != ')') {
-	    need_keyword = save_n;
-	    bufptr = save;
-	    paren_level = save_p;
-	    goto returnId;
-	}
-	bufptr++;
-    /* need to change this for compile phase in Front?  */
-    if(t != USER_DEFINED_OP) {
-        enum expr_code code = ERROR_NODE;
-        switch (t) {
-        case '=' :    code = F95_ASSIGNOP; break;
-        case '.' :    code = F95_DOTOP; break;
-        case POWER :  code = F95_POWEOP; break;
-        case '*' :    code = F95_MULOP; break;
-        case '/' :    code = F95_DIVOP; break;
-        case '+' :    code = F95_PLUSOP; break;
-        case '-' :    code = F95_MINUSOP; break;
-        case EQ :     code = F95_EQOP; break;
-        case NE :     code = F95_NEOP; break;
-        case LT :     code = F95_LTOP; break;
-        case LE :     code = F95_LEOP; break;
-        case GE :     code = F95_GEOP; break;
-        case GT :     code = F95_GTOP; break;
-        case NOT :    code = F95_NOTOP; break;
-        case AND :    code = F95_ANDOP; break;
-        case OR :     code = F95_OROP; break;
-        case EQV :    code = F95_EQVOP; break;
-        case NEQV :   code = F95_NEQVOP; break;
-        case CONCAT : code = F95_CONCATOP; break;
-        default :
-          error("sytax error. ");
-          break;
+        ((strcmp(buffio, "operator") == 0)
+         || (strcmp(buffio, "assignment") == 0)
+         || (strcmp(buffio, "write") == 0 && (defined_io = F03_GENERIC_WRITE) > 0)
+         || (strcmp(buffio, "read") == 0 && (defined_io = F03_GENERIC_READ) > 0))) {
+        char *save = bufptr;
+        int t;
+        int save_n = need_keyword;
+        int save_p = paren_level;
+
+        need_keyword = TRUE;
+        while (isspace(*bufptr)) /* skip white space */
+            bufptr++;
+        if (*bufptr != '(') {
+            need_keyword = save_n;
+            bufptr = save;
+            paren_level = save_p;
+            goto returnId;
+        } else
+            bufptr++;
+        t = token();
+        while (isspace(*bufptr)) /* skip white space */
+            bufptr++;
+        if (*bufptr != ')') {
+            need_keyword = save_n;
+            bufptr = save;
+            paren_level = save_p;
+            goto returnId;
         }
-        yylval.val = list1(F95_GENERIC_SPEC, list0(code));
-    } else {
-        yylval.val = list1(F95_USER_DEFINED, yylval.val);
+        bufptr++;
+        /* need to change this for compile phase in Front?  */
+        if (t != USER_DEFINED_OP && defined_io == 0) {
+            enum expr_code code = ERROR_NODE;
+            switch (t) {
+                case '=' :    code = F95_ASSIGNOP; break;
+                case '.' :    code = F95_DOTOP; break;
+                case POWER :  code = F95_POWEOP; break;
+                case '*' :    code = F95_MULOP; break;
+                case '/' :    code = F95_DIVOP; break;
+                case '+' :    code = F95_PLUSOP; break;
+                case '-' :    code = F95_MINUSOP; break;
+                case EQ :     code = F95_EQOP; break;
+                case NE :     code = F95_NEOP; break;
+                case LT :     code = F95_LTOP; break;
+                case LE :     code = F95_LEOP; break;
+                case GE :     code = F95_GEOP; break;
+                case GT :     code = F95_GTOP; break;
+                case NOT :    code = F95_NOTOP; break;
+                case AND :    code = F95_ANDOP; break;
+                case OR :     code = F95_OROP; break;
+                case EQV :    code = F95_EQVOP; break;
+                case NEQV :   code = F95_NEQVOP; break;
+                case CONCAT : code = F95_CONCATOP; break;
+                default :
+                    error("syntax error. ");
+                    break;
+            }
+            yylval.val = list1(F95_GENERIC_SPEC, list0(code));
+        } else if (defined_io != 0) {
+            enum expr_code code = ERROR_NODE;
+            switch (t) {
+                case FORMATTED:
+                    code = F03_FORMATTED;
+                    break;
+                case UNFORMATTED:
+                    code = F03_UNFORMATTED;
+                    break;
+                default:
+                    error("syntax error. ");
+                    break;
+            }
+            yylval.val = list1(defined_io, list0(code));
+        } else {
+            yylval.val = list1(F95_USER_DEFINED, yylval.val);
+        }
+        return GENERIC_SPEC;
     }
-    return GENERIC_SPEC;
-    }
+
 
 returnId:
     yylval.val = GEN_NODE(IDENT, find_symbol(buffio));
@@ -1817,8 +1948,12 @@ get_keyword_optional_blank(int class)
     case INTERFACE: /* interface assignment or interface operator */ {
            char *save2 = bufptr;
            if(get_keyword(keywords) == ASSIGNMENT) return INTERFACEASSIGNMENT;
-	   bufptr = save2;
-	   if(get_keyword(keywords) == OPERATOR) return INTERFACEOPERATOR;
+           bufptr = save2;
+           if(get_keyword(keywords) == OPERATOR) return INTERFACEOPERATOR;
+           bufptr = save2;
+           if(get_keyword(keywords) == READ) return INTERFACEREAD;
+           bufptr = save2;
+           if(get_keyword(keywords) == WRITE) return INTERFACEWRITE;
         }
 	break;
     case MODULE: /* module procedure */
@@ -3741,6 +3876,7 @@ struct keyword_token keywords[ ] =
     { "double",         KW_DBL },     /* optional */
     /* { "dowhile",     DOWHILE }, *//* blanks mandatory */
     { "do",             DO },
+    { "elemental",      ELEMENTAL },
     { "elseif",         ELSEIFTHEN },
     { "elsewhere",      ELSEWHERE },
     { "else",           ELSE },
@@ -3769,8 +3905,9 @@ struct keyword_token keywords[ ] =
     { "error",          KW_ERROR },      /* #060 coarray */
     { "external",       EXTERNAL  },
     { "extends",        EXTENDS  },      /* F2003 spec */
-    { "elemental",      ELEMENTAL },
+    { "final",          FINAL },         /* F2003 spec */
     { "format",         FORMAT  },
+    { "formatted",      FORMATTED  },    /* F2003 spec */
     { "function",       FUNCTION  },
     { "forall",         FORALL },
     { "generic",        GENERIC },       /* F2003 spec */
@@ -3844,6 +3981,7 @@ struct keyword_token keywords[ ] =
     { "type",           KW_TYPE},
     { "class",          CLASS},
     { "undefined",      KW_UNDEFINED },
+    { "unformatted",    UNFORMATTED  },  /* F2003 spec */
     { "unlock",         UNLOCK },        /* #060 coarray */
     { "use",            KW_USE },
     { "value",          VALUE },
@@ -3933,6 +4071,7 @@ struct keyword_token OMP_keywords[ ] =
     {"linear",		OMPKW_LINEAR },
     {"aligned",		OMPKW_ALIGNED },
     {"num_threads",     OMPKW_NUM_THREADS },
+    {"collapse",        OMPKW_COLLAPSE},
     {"copyin",		OMPKW_COPYIN },
     {"do",		OMPKW_DO },
     {"simd",		OMPKW_SIMD },

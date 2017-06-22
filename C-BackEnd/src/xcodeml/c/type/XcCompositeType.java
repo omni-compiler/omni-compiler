@@ -6,7 +6,7 @@
  */
 package xcodeml.c.type;
 
-import xcodeml.XmException;
+import xcodeml.util.XmException;
 import xcodeml.c.obj.XcNode;
 
 /**

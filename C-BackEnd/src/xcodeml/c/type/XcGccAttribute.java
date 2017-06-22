@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-import xcodeml.XmException;
+import xcodeml.util.XmException;
 import xcodeml.c.decompile.XcExprObj;
 import xcodeml.c.decompile.XcObj;
 import xcodeml.c.obj.XcNode;

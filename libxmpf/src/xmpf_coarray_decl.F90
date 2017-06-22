@@ -71,6 +71,7 @@ module xmpf_coarray_decl
 
 !! reference of coindexed objects
       include "xmp_coarray_get.h"
+      include "xmp_coarray_getsub.h"
 
 !! assignment statements to coindex variables
       include "xmp_coarray_put.h"

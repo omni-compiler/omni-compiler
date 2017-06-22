@@ -1,6 +1,23 @@
 /**
  * \file F95-parser.y
  */
+
+/*
+  yacc: 9 shift/reduce conflicts, 2 reduce/reduce conflicts.
+TO BE RESOLVED for "reduce/reduce conflicts.":
+
+1393: reduce/reduce conflict (reduce 318, reduce 364) on ')'
+state 1393
+	common_var : IDENTIFIER . dims  (306)
+	cray_pointer_var : IDENTIFIER .  (318)
+	dims : .  (364)
+
+2058: reduce/reduce conflict (reduce 751, reduce 795) on EOS
+state 2058
+	xmp_nodes_clause : IDENTIFIER '(' xmp_subscript_list ')' '=' '*' .  (751)
+	xmp_obj_ref : '*' .  (795)
+*/
+
 /* F95 parser */
 %token EOS              /* end of statement */
 %token CONSTANT         /* any constant */
@@ -154,6 +171,11 @@
 %token NOPASS
 %token NON_OVERRIDABLE
 %token DEFERRED
+%token INTERFACEREAD
+%token INTERFACEWRITE
+%token FORMATTED
+%token UNFORMATTED
+%token FINAL
 
 /* Coarray keywords #060 */
 %token SYNCALL
@@ -230,7 +252,6 @@
 %right POWER
 %left '%'
 
-
 %token PRAGMA_SLINE /* do not parse omp token.  */
 %token PRAGMA_HEAD /*  pragma leading char like !$ etc.  */
 
@@ -258,6 +279,7 @@
 %token OMPKW_LINEAR
 %token OMPKW_ALIGNED
 %token OMPKW_NUM_THREADS
+%token OMPKW_COLLAPSE
 %token OMPKW_COPYIN
 %token OMPKW_DO
 %token OMPKW_SIMD
@@ -473,6 +495,9 @@ gen_default_real_kind(void) {
 
 int enable_need_type_keyword = TRUE;
 
+static void switch_need_keyword(int t);
+static void type_spec_done();
+
 %}
 
 %type <val> statement label
@@ -489,11 +514,12 @@ int enable_need_type_keyword = TRUE;
 %type <val> parenthesis_arg_list_or_null
 %type <val> set_expr
 %type <val> io_statement format_spec ctl_list io_clause io_list_or_null io_list io_item
-%type <val> IDENTIFIER CONSTANT const kind_parm GENERIC_SPEC USER_DEFINED_OP type_bound_generic_spec
+%type <val> IDENTIFIER CONSTANT const kind_parm GENERIC_SPEC USER_DEFINED_OP type_bound_generic_spec formatted_or_unformatted
 %type <val> string_const_substr
 %type <val> binding_attr_list binding_attr type_bound_proc_decl_list type_bound_proc_decl
 %type <val> proc_attr_list proc_def_attr proc_attr proc_decl proc_decl_list name_or_type_spec_or_null0 name_or_type_spec_or_null
 %type <val> name name_or_null name_list generic_name defined_operator intrinsic_operator func_prefix prefix_spec
+%type <val> forall_header forall_triplet forall_triplet_list
 %type <val> declaration_statement95 attr_spec_list attr_spec private_or_public_spec access_spec type_attr_spec_list type_attr_spec
 %type <val> declaration_statement2003 type_param_list
 %type <val> intent_spec kind_selector kind_or_len_selector char_selector len_key_spec len_spec kind_key_spec array_allocation_list  array_allocation defered_shape_list defered_shape
@@ -514,7 +540,7 @@ program: /* empty */
         | program one_statement EOS
         ;
 
-KW: { need_keyword = TRUE; };
+KW: { switch_need_keyword(TRUE); };
 
 TYPE_KW: { if (enable_need_type_keyword == TRUE) need_type_keyword = TRUE; };
 
@@ -561,6 +587,10 @@ statement:      /* entry */
           }
         | INTERFACEASSIGNMENT '(' '=' ')'
           { $$ = list1(F95_INTERFACE_STATEMENT, list0(F95_ASSIGNOP)); }
+        | INTERFACEREAD '(' KW formatted_or_unformatted ')'
+         { $$ = list1(F95_INTERFACE_STATEMENT, list1(F03_GENERIC_READ, $4)); }
+        | INTERFACEWRITE '(' KW formatted_or_unformatted ')'
+          { $$ = list1(F95_INTERFACE_STATEMENT, list1(F03_GENERIC_WRITE, $4)); }
         | INTERFACE generic_name
           { $$ = list1(F95_INTERFACE_STATEMENT, $2); }
         | INTERFACE
@@ -577,6 +607,10 @@ statement:      /* entry */
           { $$ = list1(F95_ENDINTERFACE_STATEMENT, $4); }
         | ENDINTERFACE OPERATOR '(' USER_DEFINED_OP ')'
           { $$ = list1(F95_ENDINTERFACE_STATEMENT, $4); }
+        | ENDINTERFACE READ '(' KW formatted_or_unformatted ')'
+          { $$ = list1(F95_ENDINTERFACE_STATEMENT, list1(F03_GENERIC_READ, $5)); }
+        | ENDINTERFACE WRITE '(' KW formatted_or_unformatted ')'
+          { $$ = list1(F95_ENDINTERFACE_STATEMENT, list1(F03_GENERIC_WRITE, $5)); }
         | ENDINTERFACE
           { $$ = list1(F95_ENDINTERFACE_STATEMENT,NULL); }
         | MODULEPROCEDURE ident_list
@@ -611,6 +645,8 @@ statement:      /* entry */
           { $$ = list3(F03_TYPE_BOUND_GENERIC_STATEMENT,$3, $5, NULL); }
         | GENERIC ',' private_or_public_spec COL2 type_bound_generic_spec REF_OP ident_list
           { $$ = list3(F03_TYPE_BOUND_GENERIC_STATEMENT,$5, $7, $3); }
+        | FINAL COL2_or_null ident_list
+          { $$ = list1(F03_TYPE_BOUND_FINAL_STATEMENT, $3); }
         | BLOCKDATA program_name
           { $$ = list1(F_BLOCK_STATEMENT,$2); }
         | ENDBLOCKDATA name_or_null
@@ -627,24 +663,26 @@ statement:      /* entry */
           { $$ = list4(F_SUBROUTINE_STATEMENT, $3, $4, $1, $6); }
         | ENDSUBROUTINE name_or_null
           { $$ = list1(F95_ENDSUBROUTINE_STATEMENT,$2); }
+/* FUNCTION declaration */
         | FUNCTION IDENTIFIER dummy_arg_list KW result_opt bind_opt
           { $$ = list6(F_FUNCTION_STATEMENT, $2, $3, NULL, NULL, $5, $6); }
         | func_prefix FUNCTION IDENTIFIER dummy_arg_list KW result_opt bind_opt
           { $$ = list6(F_FUNCTION_STATEMENT, $3, $4, NULL, $1, $6, $7); }
-        | type_spec FUNCTION IDENTIFIER dummy_arg_list KW result_opt bind_opt
-          { $$ = list6(F_FUNCTION_STATEMENT, $3, $4, $1, NULL, $6, $7); }
-        | type_spec func_prefix FUNCTION IDENTIFIER dummy_arg_list
+        | type_spec KW FUNCTION IDENTIFIER dummy_arg_list KW result_opt bind_opt
+          { $$ = list6(F_FUNCTION_STATEMENT, $4, $5, $1, NULL, $7, $8); }
+        | type_spec KW func_prefix FUNCTION IDENTIFIER dummy_arg_list
           KW result_opt bind_opt
-          { $$ = list6(F_FUNCTION_STATEMENT, $4, $5, $1, $2, $7, $8); }
-        | func_prefix type_spec FUNCTION IDENTIFIER dummy_arg_list
+          { $$ = list6(F_FUNCTION_STATEMENT, $5, $6, $1, $3, $8, $9); }
+        | func_prefix type_spec KW FUNCTION IDENTIFIER dummy_arg_list
           KW result_opt bind_opt
-          { $$ = list6(F_FUNCTION_STATEMENT, $4, $5, $2, $1, $7, $8); }
+          { $$ = list6(F_FUNCTION_STATEMENT, $5, $6, $2, $1, $8, $9); }
+/* END: FUNCTION */
         | ENDFUNCTION name_or_null
           { $$ = list1(F95_ENDFUNCTION_STATEMENT,$2); }
         | type_spec COL2_or_null declaration_list
           { $$ = list3(F_TYPE_DECL,$1,$3,NULL); }
-        | type_spec attr_spec_list COL2 declaration_list
-          { $$ = list3(F_TYPE_DECL,$1,$4,$2); }
+        | type_spec KW attr_spec_list COL2 declaration_list
+          { $$ = list3(F_TYPE_DECL,$1,$5,$3); }
         | ENTRY IDENTIFIER dummy_arg_list KW result_opt
           { $$ = list3(F_ENTRY_STATEMENT,$2,$3, $5); }
         | CONTAINS
@@ -767,6 +805,13 @@ type_bound_proc_decl_list:
         { $$ = list1(LIST, $1); }
         | type_bound_proc_decl_list ',' type_bound_proc_decl
         { $$ = list_put_last($1, $3); }
+        ;
+
+formatted_or_unformatted:
+          FORMATTED
+        { $$ = list0(F03_FORMATTED); }
+        | UNFORMATTED
+        { $$ = list0(F03_UNFORMATTED); }
         ;
 
 type_bound_generic_spec: GENERIC_SPEC
@@ -1156,7 +1201,7 @@ declaration_list:
         ;
 
 entity_decl:
-          IDENTIFIER  dims image_dims length_spec
+          IDENTIFIER dims image_dims length_spec
         { $$ = list5(LIST,$1,$2,$4,NULL,$3); }
         | IDENTIFIER  dims image_dims length_spec '=' expr
         { $$ = list5(LIST,$1,$2,$4,$6,$3);}
@@ -1173,7 +1218,7 @@ entity_decl:
         ;
 
 // in fortran specification, `declaration-type-spec`
-type_spec: type_spec0 { $$ = $1; /* need_keyword = TRUE; */ };
+type_spec: type_spec0 { $$ = $1; type_spec_done(); }
 
 type_spec0:
           KW_TYPE '(' IDENTIFIER ')'
@@ -1187,7 +1232,7 @@ type_spec0:
         | CLASS '(' '*' ')'
         { $$ = list1(F03_CLASS, NULL);; }
         | type_keyword kind_selector
-        { $$ = list2(LIST,$1,$2); }
+        { $$ = list2(LIST,$1,$2);}
         | type_keyword length_spec  /* compatibility */
         { $$ = list2(LIST, $1, $2);}
         | KW_CHARACTER char_selector
@@ -1606,8 +1651,8 @@ namelist_list:  IDENTIFIER
  */
 executable_statement:
           action_statement
-	| DO label KW_WHILE '(' expr ')'
-	{ $$ = list3(F_DOWHILE_STATEMENT, $2, $5, st_name); }
+        | DO label KW_WHILE '(' expr ')'
+        { $$ = list3(F_DOWHILE_STATEMENT, $2, $5, st_name); }
         | DO label do_spec
         { $$ = list3(F_DO_STATEMENT, $2, $3, st_name); }
         | DO label ',' do_spec  /* for dusty deck */
@@ -1681,6 +1726,10 @@ executable_statement:
         { $$ = list2(F03_TYPEIS_STATEMENT, $3, $5); }  
         | CLASSDEFAULT name_or_null
         { $$ = list2(F03_CLASSIS_STATEMENT, NULL, $2); }
+        | FORALL '(' forall_header ')' assign_statement_or_null
+        { $$ = list3(F_FORALL_STATEMENT, $3, $5, st_name); }
+        | ENDFORALL name_or_null
+        { $$ = list1(F_ENDFORALL_STATEMENT, $2); }
         ;
 
 assign_statement_or_null:
@@ -1699,6 +1748,33 @@ do_spec:
         |  IDENTIFIER '=' expr ',' expr ',' expr
         { $$ = list4(LIST,$1,$3,$5,$7); }
         ;
+
+
+forall_triplet:
+          name '=' expr ':' expr
+        { $$ = list2(F_SET_EXPR, $1, list3(F95_TRIPLET_EXPR,$3,$5,NULL)); }
+        | name '=' expr ':' expr ':' expr
+        { $$ = list2(F_SET_EXPR, $1, list3(F95_TRIPLET_EXPR,$3,$5,$7)); }
+        ;
+
+forall_triplet_list:
+          forall_triplet
+        { $$ = list1(LIST, $1); }
+        | forall_triplet_list ',' forall_triplet
+        { $$ = list_put_last($1, $3); }
+        ;
+
+forall_header:
+          TYPE_KW forall_triplet_list
+        { $$ = list3(LIST, $2, NULL, NULL); }
+        | TYPE_KW forall_triplet_list ',' expr
+        { $$ = list3(LIST, $2,   $4, NULL); }
+        | TYPE_KW type_spec COL2 forall_triplet_list
+        { $$ = list3(LIST, $4, NULL,   $2); }
+        | TYPE_KW type_spec COL2 forall_triplet_list ',' expr
+        { $$ = list3(LIST, $4,   $6,   $2); }
+        ;
+
 
 /* 'ifable' statement */
 action_statement: action_statement_let
@@ -2376,6 +2452,8 @@ omp_clause:
 	  { $$ = OMP_LIST(OMP_DIR_ORDERED,NULL); }
         | OMPKW_NUM_THREADS '(' expr ')'
 	{ $$ = OMP_LIST(OMP_DIR_NUM_THREADS,$3); }
+        | OMPKW_COLLAPSE '(' expr ')'
+	{ $$ = OMP_LIST(OMP_DIR_COLLAPSE,$3); }
 	| OMPKW_DEPEND '(' omp_depend_op ':' omp_list ')'
 	{ $$ = OMP_LIST($3,$5); }
         | OMPKW_FINAL '(' expr ')'

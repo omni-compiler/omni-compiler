@@ -8,6 +8,8 @@ package exc.xcodeml;
 
 import static xcodeml.util.XmLog.fatal;
 import static xcodeml.util.XmLog.fatal_dump;
+import xcodeml.util.XmDomUtil;
+import xcodeml.util.ILineNo;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,32 +24,13 @@ import java.util.Set;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
-import xcodeml.ILineNo;
-import xcodeml.IXobject;
-import xcodeml.util.XmDomUtil;
-import exc.object.BasicType;
-import exc.object.Ident;
-import exc.object.Xcode;
-import exc.object.Xcons;
-import exc.object.XobjBool;
-import exc.object.XobjConst;
-import exc.object.XobjInt;
-import exc.object.XobjContainer;
-import exc.object.XobjList;
-import exc.object.XobjLong;
-import exc.object.XobjString;
-import exc.object.Xobject;
-import exc.object.XobjectDef;
-import exc.object.XobjectDefEnv;
-import exc.object.XobjectFile;
-import exc.object.XobjectIterator;
-import exc.object.Xtype;
-import exc.object.CompositeType;
-import exc.object.StructType;
-import exc.object.topdownXobjectIterator;
+import exc.object.*;
 import exc.openmp.OMPpragma;
 
 
+/**
+ * convert Xobject/F to XcodeML(DOM)/F
+ */
 public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
     private XcodeMLNameTable_F nameTable = new XcodeMLNameTable_F();
 
@@ -677,8 +660,10 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             break;
 
         case F_CO_SHAPE:                                        // #060
-            e = addChildNode(createElement(name),
-                             trans(xobj.getArg(0)));
+            e = createElement(name);
+            for (Xobject a : (XobjList)xobj) {
+                addChildNode(e, trans(a));
+            }
             break;
 
         case F_USER_UNARY_EXPR:
@@ -784,14 +769,35 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             break;
 
         case F_TYPE_PARAM:
-            e = addChildNode(createElement(name,
-                                           "attr", xobj.getArg(0).getName()),
-                             transName(xobj.getArg(1)));
+            e = addChildNode(addChildNode(createElement(name, "attr", xobj.getArg(0).getName()),
+                                          transName(xobj.getArg(1))),
+                             trans(xobj.getArg(2)));
             break;
 
         case F_VALUE:
             e = transValue(xobj);
             break;
+
+        case F_FORALL_STATEMENT: {
+              e = createElement(name, "type", (xobj.Type() != null) ? xobj.Type().getXcodeFId() : null,
+                                      "construct_name", (xobj.getArg(0) != null) ? xobj.getArg(0).getName() : null);
+              addChildNode(e, trans(xobj.getArg(1))); // VAR 1
+              addChildNode(e, trans(xobj.getArg(2))); // INDEX_RANGE 1
+              int idx = 3;
+              if (xobj.getArgOrNull(idx + 1) == null) {
+                  // 0:LABEL , 1:VAR1 , 2:INDEX_RANGE1 , 3:BODY
+                  // just continue...
+              } else {
+                  while (xobj.getArgOrNull(idx + 2) != null)
+                      addChildNode(e, trans(xobj.getArg(idx++)));
+                  if ((idx % 2) == 1)
+                      addChildNode(e, addChildNode(createElement("condition"), trans(xobj.getArg(idx++))));
+                  else
+                      addChildNode(e, trans(xobj.getArg(idx++)));
+              }
+              addChildNode(e, transBody(xobj.getArg(idx)));
+              break;
+            }
 
         case NULL:
             return null;

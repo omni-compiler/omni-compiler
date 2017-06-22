@@ -104,6 +104,12 @@ compile_intrinsic_call0(ID id, expv args, int ignoreTypeMismatch) {
         if (ID_TYPE(id) == NULL) implicit_declaration(id);
         tp = ID_TYPE(id);
         //tp = BASIC_TYPE_DESC(TYPE_SUBR);
+        if(tp == NULL){
+            error_at_node(args, 
+                          "unknown type of '%s' declared as intrinsic",
+                          SYM_NAME(ID_SYM(id)));
+            return NULL;
+        }
 
         expv symV = expv_sym_term(F_FUNC, NULL, ID_SYM(id));
 

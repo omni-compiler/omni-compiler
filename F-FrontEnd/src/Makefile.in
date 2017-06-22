@@ -27,8 +27,14 @@ CREATE_FILES = C-exprcode.h C-exprcode.c
 FALSE       = 1
 TRUE        = 0
 IS_MOD2XMOD = @MOD2XMOD@
+KIND_MPI_FORTRAN = @KIND_MPI_FORTRAN@
 ifeq ($(IS_MOD2XMOD), $(TRUE))
-    CFLAGS+=-D_MPI_FC=gfortran
+ifeq ($(KIND_MPI_FORTRAN), gfortran)
+    CFLAGS+=-D_FC_IS_GFORTRAN
+endif
+ifeq ($(KIND_MPI_FORTRAN), frtpx)
+    CFLAGS+=-D_FC_IS_FRTPX
+endif
 endif
 
 all: $(F_FRONT) $(INTRMOD)
@@ -48,6 +54,9 @@ C-exprcode.c: C-exprcode.def C-exprcode.c.awk
 	$(AWK) -f C-exprcode.c.awk < C-exprcode.def > C-exprcode.c
 
 fincludes/iso_c_binding.xmod: fincludes/iso_c_binding.f90 $(F_FRONT)
+	./$(F_FRONT) -module-compile $< > $@
+
+fincludes/iso_fortran_env.xmod: fincludes/iso_fortran_env.f90 $(F_FRONT)
 	./$(F_FRONT) -module-compile $< > $@
 
 install: $(F_FRONT)

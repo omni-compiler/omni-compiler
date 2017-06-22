@@ -648,9 +648,12 @@ void compile_OMP_pragma_clause(expr x, int pragma, int is_parallel,
                 break;
             }
             v = compile_expression(EXPR_ARG2(c));
-	    pclause = list_put_last(pclause,
-					list2(LIST,EXPR_ARG1(c),v));
+	    pclause = list_put_last(pclause, list2(LIST,EXPR_ARG1(c),v));
             break;
+	case OMP_DIR_COLLAPSE:
+	  v = compile_expression(EXPR_ARG2(c));
+	  dclause = list_put_last(dclause, list2(LIST,EXPR_ARG1(c),v));
+	  break;
 	case OMP_DATA_PRIVATE:
 	case OMP_DATA_FIRSTPRIVATE:
 	    /* all pragma can have these */

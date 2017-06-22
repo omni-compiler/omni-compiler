@@ -8,7 +8,7 @@ package xcodeml.c.type;
 
 import java.util.Iterator;
 
-import xcodeml.XmException;
+import xcodeml.util.XmException;
 import xcodeml.c.util.XmcWriter;
 
 /**

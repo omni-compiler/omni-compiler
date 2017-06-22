@@ -190,4 +190,9 @@ CONTAINS
         integer :: x
     end function c_loc
 
+    function c_sizeof (x)
+        class(*), intent(in) :: x
+        integer(kind=C_SIZE_T) :: c_sizeof
+    end function c_sizeof
+
 end module iso_c_binding

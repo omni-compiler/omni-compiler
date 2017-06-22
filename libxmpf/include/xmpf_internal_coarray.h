@@ -38,8 +38,9 @@
 #endif
 
 #define _ROUND_UP(n,p)        (((((size_t)(n))-1)/(p)+1)*(p))
+#define _ROUND_UP_PLUS(n,p)   (((n)>0) ? _ROUND_UP(n,p) : (p))
 #define ROUND_UP_COMM(n)      _ROUND_UP((n),COMM_UNIT)
-#define ROUND_UP_MALLOC(n)    _ROUND_UP((n),MALLOC_UNIT)
+#define ROUND_UP_MALLOC(n)    _ROUND_UP_PLUS((n),MALLOC_UNIT)
 
 /*-- parameters --*/
 #define DESCR_ID_MAX   250
@@ -60,6 +61,7 @@ extern unsigned XMPF_get_poolThreshold(void);
 extern size_t XMPF_get_localBufSize(void);
 extern BOOL XMPF_isSafeBufferMode(void);
 extern BOOL XMPF_isSyncPutMode(void);
+extern BOOL XMPF_isEagerCommMode(void);
 
 /* hidden API */
 extern void xmpf_coarray_msg_(int *sw);
@@ -83,6 +85,7 @@ typedef struct _coarrayInfo_t CoarrayInfo_t;
 extern void xmpf_coarray_malloc_(void **descPtr, char **crayPtr,
                                  int *count, int *element, void **tag);
 extern void xmpf_coarray_free_(void **descPtr);
+extern void xmpf_coarray_deregmem_(void **descPtr);
 
 extern void xmpf_coarray_malloc_pool_(void);
 extern void xmpf_coarray_alloc_static_(void **descPtr, char **crayPtr,
@@ -97,7 +100,6 @@ extern void xmpf_coarray_prolog_(void **tag, int *namelen, char *name);
 extern void xmpf_coarray_epilog_(void **tag);
 
 extern void xmpf_coarray_find_descptr_(void **descPtr, char *baseAddr,
-                                       void **tag, int *isAllocatable,
                                        int *namelen, char *name);
 extern void xmpf_coarray_set_corank_(void **descPtr, int *corank);
 extern void xmpf_coarray_set_codim_(void **descPtr, int *dim, int *lb, int *ub);
@@ -212,7 +214,6 @@ extern void xmpf_coarray_put_spread_(void **descPtr, char **baseAddr, int *eleme
 #endif
 extern void _XMPF_coarrayInit_put(void);
 
-
 /* xmpf_coarray_get.c */
 extern void xmpf_coarray_get_scalar_(void **descPtr, char **baseAddr, int *element,
                                      int *coindex, char *result);
@@ -225,6 +226,20 @@ extern void xmpf_coarray_get_array_(void **descPtr, char **baseAddr, int *elemen
                                     int *coindex, char *result, int *rank, ...);
 #endif
 extern void _XMPF_coarrayInit_get(void);
+
+/* xmpf_coarray_getsub.c */
+/* INTERFACE_TYPE==8 only */
+extern void xmpf_coarray_getsub_array_(void **descPtr, char **baseAddr, int *element,
+                                       int *coindex, char **localAddr, int *rank,
+                                       int skip[], int skip_local[], int count[]);
+extern void _XMPF_coarrayInit_getsub(void);
+
+// common
+extern void _XMPF_getVector_DMA(void *descPtr, char *baseAddr, int bytes, int coindex,
+                                void *descDMA, size_t offsetDMA, char *nameDMA);
+
+extern void _XMPF_getVector_buffer(void *descPtr, char *baseAddr, int bytesRU, int coindex,
+                                   char *result, int bytes);
 
 
 /* xmpf_async.c */
