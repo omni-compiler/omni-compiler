@@ -2322,8 +2322,7 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
             }
 
             if (TYPE_IS_ABSTRACT(ID_TYPE(f_id))) {
-                error("'%s' is abstract",
-                      ID_NAME(f_id));
+                error("'%s' is abstract", ID_NAME(f_id));
                 goto err;
             }
 
@@ -2805,7 +2804,7 @@ compile_args(expr args)
                 error("an ambiguous reference to symbol '%s'", ID_NAME(id));
                 continue;
             }
-            if (ID_TYPE(id) != NULL && TYPE_IS_ABSTRACT(ID_TYPE(id))) {
+            if (type_is_nopolymorphic_abstract(ID_TYPE(id))) {
                 error("an abstract interface '%s' in the actual argument", ID_NAME(id));
             }
 
@@ -3144,7 +3143,7 @@ compile_array_constructor(expr x)
 
     l = list0(LIST);
     if ((base_type = compile_type(EXPR_ARG2(x), /*allow_predecl=*/FALSE)) != NULL) {
-        if (TYPE_IS_ABSTRACT(base_type)) {
+        if (type_is_nopolymorphic_abstract(base_type)) {
             error("abstract type in an array constructor");
         }
         elem_type = get_basic_type(base_type);

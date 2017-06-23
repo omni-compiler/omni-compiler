@@ -2544,7 +2544,10 @@ end_declaration()
                         error_at_id(ip, "PROCEDURE variable should not have the INTENT attribute");
                     }
                 }
+            } else if (ID_STORAGE(ip) != STG_TAGNAME && type_is_nopolymorphic_abstract(tp)) {
+                error_at_id(ip, "ABSTRACT type");
             }
+
         }
     }
 
@@ -6355,13 +6358,15 @@ compile_CALL_subroutine_statement(expr x)
         error("an ambiguous reference to symbol '%s'", ID_NAME(id));
         return;
     }
-    if (ID_TYPE(id) != NULL && IS_FUNCTION_TYPE(ID_TYPE(id)) &&
-        TYPE_IS_USED_EXPLICIT(ID_TYPE(id))) {
-        error("'%s' is a function, not a subroutine", ID_NAME(id));
-    }
-    if (ID_TYPE(id) != NULL && TYPE_IS_ABSTRACT(ID_TYPE(id))) {
-        error("'%s' is abstract", ID_NAME(id));
-        return;
+    if (ID_TYPE(id) != NULL) {
+        if(IS_FUNCTION_TYPE(ID_TYPE(id)) &&
+           TYPE_IS_USED_EXPLICIT(ID_TYPE(id))) {
+            error("'%s' is a function, not a subroutine", ID_NAME(id));
+
+        } else if (TYPE_IS_ABSTRACT(ID_TYPE(id))) {
+            error("'%s' is abstract", ID_NAME(id));
+
+        }
     }
 
     if ((PROC_CLASS(id) == P_EXTERNAL || PROC_CLASS(id) == P_UNKNOWN) &&
