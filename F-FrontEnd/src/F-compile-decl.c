@@ -2681,7 +2681,7 @@ compile_IMPLICIT_decl(expr type,expr l)
         }
     }
 
-    if (TYPE_IS_ABSTRACT(tp) && !TYPE_IS_CLASS(tp)) {
+    if (type_is_nopolymorphic_abstract(tp)) {
         error("abstract types in IMPLICIT statement");
         return;
     }
