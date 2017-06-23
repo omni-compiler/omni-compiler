@@ -281,6 +281,13 @@ declare_procedure(enum name_class class,
         is_separate_definition = TRUE;
     }
 
+    if (type != NULL &&
+        ((type_is_nopolymorphic_abstract(type)) ||
+         (FUNCTION_TYPE_RETURN_TYPE(type) != NULL &&
+          type_is_nopolymorphic_abstract(FUNCTION_TYPE_RETURN_TYPE(type))))) {
+        error("%s returns ABSTRACT TYPE", s?SYM_NAME(s):"function");
+    }
+
     if (class != CL_ENTRY){
         CURRENT_PROC_CLASS = class;
         if (name) {

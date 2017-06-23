@@ -337,6 +337,31 @@ type_is_class_of(TYPE_DESC derived_type, TYPE_DESC class)
 }
 
 
+/*
+ * Retrun TRUE if the type is ABSTRACT and is not polymorphic = CLASS
+ */
+int
+type_is_nopolymorphic_abstract(TYPE_DESC tp)
+{
+    TYPE_DESC btp;
+
+    if (tp == NULL || !IS_STRUCT_TYPE(tp)) {
+        return FALSE;
+    }
+
+    if (TYPE_IS_CLASS(tp)) {
+        return FALSE;
+    }
+
+    btp = get_bottom_ref_type(tp);
+
+    if (TYPE_IS_ABSTRACT(btp)) {
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
 /**
  * check type is omissible, such that
  * no attributes, no memebers, no indexRanage and so on.
