@@ -3838,6 +3838,7 @@ compile_struct_decl(expr ident, expr type, expr type_params)
     int has_access_spec = FALSE;
     int has_extends_spec = FALSE;
     int has_abstract_spec = FALSE;
+    int has_bind_spec = FALSE;
     ID last = NULL;
 
     if(ident == NULL)
@@ -3879,8 +3880,19 @@ compile_struct_decl(expr ident, expr type, expr type_params)
                     has_abstract_spec = TRUE;
                 }
                 break;
+            case F03_BIND_SPEC:
+                if (has_bind_spec) {
+                    error("Dupulicate BIND spec");
+                } else {
+                    has_bind_spec = TRUE;
+                }
+                break;
             default:
                 break;
+        }
+
+        if (has_abstract_spec && has_bind_spec) {
+            error("non-extensible derived type should not be ABSTRACT");
         }
 
         switch(EXPR_CODE(x)) {
