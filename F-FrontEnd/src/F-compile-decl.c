@@ -824,6 +824,10 @@ implicit_declaration(ID id)
         tp = FUNCTION_TYPE_RETURN_TYPE(tp);
     }
 
+    if (tp != NULL && TYPE_IS_INTRINSIC(tp)) {
+        return;
+    }
+
     if (tp == NULL || TYPE_IS_NOT_FIXED(tp) ||
         (IS_ARRAY_TYPE(tp) && array_element_type(tp) == NULL)) {
         c = ID_NAME(id)[0];
@@ -854,7 +858,7 @@ implicit_declaration(ID id)
             }
         }
 
-        if (ID_CLASS(id) == CL_PROC && PROC_CLASS(id) == P_INTRINSIC) {
+        if (TYPE_IS_INTRINSIC(id)) {
             TYPE_SET_INTRINSIC(tp);
         }
 
@@ -4635,7 +4639,6 @@ compile_INTRINSIC_decl(expr id_list)
     list lp;
     expr ident;
     ID id;
-
     if(id_list == NULL) return; /* error */
     FOR_ITEMS_IN_LIST(lp,id_list){
         ident = LIST_ITEM(lp);
@@ -4658,6 +4661,14 @@ compile_INTRINSIC_decl(expr id_list)
         }
 
         TYPE_SET_INTRINSIC(id);
+
+        if (ID_TYPE(id) == NULL) {
+            ID_TYPE(id) = wrap_type(BASIC_TYPE_DESC(TYPE_GNUMERIC_ALL));
+        }
+
+        ID_TYPE(id) = intrinsic_function_type(ID_TYPE(id));
+        FUNCTION_TYPE_SET_VISIBLE_INTRINSIC(ID_TYPE(id));
+        ID_LINE(id) = EXPR_LINE(id_list);
     }
 }
 

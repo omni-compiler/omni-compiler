@@ -4386,8 +4386,9 @@ outx_functionType(int l, TYPE_DESC tp)
         outx_print(" return_type=\"%s\"", rtid);
         outx_true(FUNCTION_TYPE_IS_PROGRAM(tp), "is_program");
 
-        if (FUNCTION_TYPE_IS_VISIBLE_INTRINSIC(tp))
+        if (FUNCTION_TYPE_IS_VISIBLE_INTRINSIC(tp)) {
             outx_true(TYPE_IS_INTRINSIC(tp), "is_intrinsic");
+        }
 
         outx_true(TYPE_IS_RECURSIVE(tp), "is_recursive");
         outx_true(TYPE_IS_PURE(tp), "is_pure");
@@ -4677,6 +4678,11 @@ id_is_visibleVar(ID id)
                 return FALSE;
             }
         }
+        if (PROC_CLASS(id) == P_INTRINSIC &&
+            ID_TYPE(id) &&
+            FUNCTION_TYPE_IS_VISIBLE_INTRINSIC(ID_TYPE(id))) {
+                return TRUE;
+        }
         if (EXT_IS_DEFINED_IO(PROC_EXT_ID(id))) {
             return FALSE;
         }
@@ -4844,16 +4850,12 @@ genSortedIDs(ID ids, int *retnIDs)
         (FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)) != NULL && \
          !TYPE_IS_IMPLICIT(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)))))) || \
       (ID_TYPE(id) && TYPE_IS_EXTERNAL(ID_TYPE(id))) || \
-      (ID_TYPE(id) && TYPE_IS_INTRINSIC(ID_TYPE(id))) || \
       PROC_CLASS(id) == P_UNDEFINEDPROC || \
       PROC_CLASS(id) == P_DEFINEDPROC)     \
   && (PROC_EXT_ID(id) == NULL ||           \
       PROC_CLASS(id) == P_UNDEFINEDPROC || \
       PROC_CLASS(id) == P_DEFINEDPROC || \
-      (TYPE_IS_PUBLIC(id) || TYPE_IS_PRIVATE(id) || \
-      (/* for non-standart INTRINSIC  */ \
-       PROC_CLASS(id) == P_INTRINSIC && \
-       SYM_TYPE(ID_SYM(id)) != S_INTR) || ( \
+      (TYPE_IS_PUBLIC(id) || TYPE_IS_PRIVATE(id)  || ( \
       EXT_PROC_IS_INTERFACE(PROC_EXT_ID(id)) == FALSE && \
       EXT_PROC_IS_INTERFACE_DEF(PROC_EXT_ID(id)) == FALSE)))    \
   && (ID_TYPE(id) \
@@ -4936,6 +4938,14 @@ emit_decl(int l, ID id)
     case CL_ENTRY:
         break;
 
+    case CL_PROC:
+        if (ID_TYPE(id) &&
+            IS_PROCEDURE_TYPE(ID_TYPE(id)) &&
+            FUNCTION_TYPE_IS_VISIBLE_INTRINSIC(ID_TYPE(id))) {
+            outx_varDecl(l, id);
+            break;
+        }
+        /* fall through */
     default:
         switch (ID_STORAGE(id)) {
             case STG_ARG:

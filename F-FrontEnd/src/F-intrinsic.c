@@ -97,7 +97,7 @@ compile_intrinsic_call0(ID id, expv args, int ignoreTypeMismatch) {
 
         tp = ID_TYPE(id);
 
-        if(tp == NULL){
+        if (tp == NULL) {
             warning_at_node(args,
                           "unknown type of '%s' declared as intrinsic",
                           SYM_NAME(ID_SYM(id)));
@@ -125,7 +125,6 @@ compile_intrinsic_call0(ID id, expv args, int ignoreTypeMismatch) {
                 EXT_PROC_CLASS(extid) = EP_INTRINSIC;
             }
         }
-        FUNCTION_TYPE_SET_VISIBLE_INTRINSIC(ftp);
 
         EXPV_TYPE(symV) = ftp;
         return expv_cons(FUNCTION_CALL, tp, symV, args);
@@ -257,10 +256,6 @@ compile_intrinsic_call0(ID id, expv args, int ignoreTypeMismatch) {
         } else {
             ftp = intrinsic_function_type(tp);
         }
-        if (ep->langSpec != LANGSPEC_NONSTD && ep->langSpec != LANGSPEC_UNKNOWN) {
-            FUNCTION_TYPE_SET_VISIBLE_INTRINSIC(ftp);
-        }
-
 
         /* set external id for functionType's type ID.
          * dont call declare_external_id() */
