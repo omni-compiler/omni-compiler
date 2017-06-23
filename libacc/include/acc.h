@@ -40,6 +40,7 @@ extern "C" {
 
   //will be removed
   void _ACC_gpu_get_block_count(unsigned **count);
+  void _ACC_gpu_get_block_count_async(unsigned **count, int async_num);
 
 #ifdef __CUDACC__
   cudaStream_t _ACC_gpu_get_stream(int id);
