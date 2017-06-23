@@ -3989,7 +3989,7 @@ check_type_bound_generics(TYPE_DESC stp)
  * Check the bindings of the type-bound generic appear before END TYPE statement.
  */
 static void
-check_abstract_type_bound_procedure(const TYPE_DESC stp)
+check_no_abstract_type_bound_procedure(const TYPE_DESC stp)
 {
     ID mem;
     ID p;
@@ -4037,7 +4037,11 @@ compile_struct_decl_end()
     check_type_bound_generics(stp);
 
     if (!TYPE_IS_ABSTRACT(stp)) {
-        check_abstract_type_bound_procedure(stp);
+        check_no_abstract_type_bound_procedure(stp);
+    }
+
+    if (TYPE_IS_SEQUENCE(stp) && TYPE_IS_ABSTRACT(stp)) {
+        error("non-extensible derived type should not be ABSTRACT");
     }
 
     if (!TYPE_IS_INTERNAL_PRIVATE(stp)) {
