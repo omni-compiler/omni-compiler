@@ -282,6 +282,15 @@ static void convert_to_blocks(const int ts, const int DIM, const int N, double A
 			gather_block ( N, ts, &Alin[i*ts][j*ts], A[i][j]);
 		}
 }
+static void convert_to_blocks_per_rank(const int ts, const int DIM, const int N, double Alin[N][N], double *A[DIM][DIM], 
+                                       int *block_rank, int mype)
+{
+	for (int i = 0; i < DIM; i++)
+		for (int j = 0; j < DIM; j++) {
+            if (block_rank[i*DIM+j] == mype)
+			    gather_block ( N, ts, &Alin[i*ts][j*ts], A[i][j]);
+		}
+}
 
 static void convert_to_linear(const int ts, const int DIM, const int N, double *A[DIM][DIM], double Alin[N][N])
 {
