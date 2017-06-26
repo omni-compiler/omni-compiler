@@ -2376,12 +2376,12 @@ end_declaration()
             ID_TYPE(ip) = tp;
         }
 
-        if (TYPE_IS_INTRINSIC(tp)) {
+        if (FUNCTION_TYPE_IS_VISIBLE_INTRINSIC(tp)) {
             if (!IS_PROCEDURE_TYPE(tp)) {
                 tp = function_type(tp);
+                TYPE_SET_INTRINSIC(tp);
+                ID_TYPE(ip) = tp;
             }
-            TYPE_SET_INTRINSIC(tp);
-            ID_TYPE(ip) = tp;
             if (FUNCTION_TYPE_IS_VISIBLE_INTRINSIC(tp)) {
                 ID_STORAGE(ip) = STG_EXT;
             }

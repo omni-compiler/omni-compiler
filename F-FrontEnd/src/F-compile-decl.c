@@ -825,6 +825,7 @@ implicit_declaration(ID id)
     }
 
     if (tp != NULL && TYPE_IS_INTRINSIC(tp)) {
+        /* don't set a type to intrinsic procedures */
         return;
     }
 
@@ -856,10 +857,6 @@ implicit_declaration(ID id)
             if (!IS_PROCEDURE_TYPE(ID_TYPE(id))) {
                 TYPE_SET_SAVE(tp);
             }
-        }
-
-        if (TYPE_IS_INTRINSIC(id)) {
-            TYPE_SET_INTRINSIC(tp);
         }
 
         declare_id_type(id, tp);
