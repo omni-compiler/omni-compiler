@@ -1875,7 +1875,9 @@ public class AccKernel {
       Iterator<Reduction> blockRedIter = reductionManager.BlockReductionIterator();
       while (blockRedIter.hasNext()) {
         Reduction reduction = blockRedIter.next();
-        body.add(reduction.makeInitReductionVarFuncCall());
+	if(reduction.onlyKernelLast()){
+          body.add(reduction.makeInitReductionVarFuncCall());
+	}
       }
 
       if (body.isSingle()) {
@@ -1890,7 +1892,9 @@ public class AccKernel {
       Iterator<Reduction> blockRedIter = reductionManager.BlockReductionIterator();
       while (blockRedIter.hasNext()) {
         Reduction reduction = blockRedIter.next();
-        blockLocalIds.add(reduction.getLocalReductionVarId());
+	if(reduction.onlyKernelLast()){
+          blockLocalIds.add(reduction.getLocalReductionVarId());
+	}
       }
       return blockLocalIds;
     }
