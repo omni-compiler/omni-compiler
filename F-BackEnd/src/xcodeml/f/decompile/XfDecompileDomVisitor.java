@@ -7022,6 +7022,7 @@ public class XfDecompileDomVisitor {
             if (declaredSymbols.contains(volatileSymbol))
                 continue;
             writer.writeToken("VOLATILE");
+            writer.writeToken("::");
             writer.writeToken(volatileSymbol);
             writer.setupNewLine();
         }
@@ -7034,7 +7035,8 @@ public class XfDecompileDomVisitor {
         for (String asynchronousSymbol : asynchs) {
             if (declaredSymbols.contains(asynchronousSymbol))
                 continue;
-            writer.writeToken("asynchronous");
+            writer.writeToken("ASYNCHRONOUS");
+            writer.writeToken("::");
             writer.writeToken(asynchronousSymbol);
             writer.setupNewLine();
         }
