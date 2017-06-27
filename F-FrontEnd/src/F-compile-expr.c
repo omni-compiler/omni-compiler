@@ -2710,28 +2710,14 @@ compile_struct_constructor_with_components(const ID struct_id,
         list_put_last(components, v);
     }
 
-    // check not initialized type parameters
+    /*
+     * check all members are initialized
+     */
     FOREACH_ID(ip, members) {
-        int is_initialized = FALSE;
-
-        if (ID_CLASS(ip) != CL_TYPE_BOUND_PROC) {
-            is_initialized = TRUE;
-        }
-
-        if (ID_TYPE(ip) && TYPE_IS_ALLOCATABLE(ID_TYPE(ip))) {
-            /*
-             * Allocatable member can skip initialization.
-             */
-            is_initialized = TRUE;
-        }
-
-        if (!VAR_INIT_VALUE(ip)) {
-            is_initialized = TRUE;
-        }
-
-        if (! is_initialized) {
+        if (ID_CLASS(ip) != CL_TYPE_BOUND_PROC && (
+                !VAR_INIT_VALUE(ip) &&
+                !TYPE_IS_ALLOCATABLE(ID_TYPE(ip)))) {
             error("member %s is not initialized", ID_NAME(ip));
-            return NULL;
         }
     }
 
