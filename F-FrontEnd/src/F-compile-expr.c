@@ -1835,8 +1835,8 @@ compile_array_ref(ID id, expv vary, expr args, int isLeft) {
         if (TYPE_IS_VOLATILE(tp)) {
             TYPE_ATTR_FLAGS(tq) |= TYPE_IS_VOLATILE(tp);
         }
-        if (TYPE_IS_ASYNCHRONOUS(id)) {
-            TYPE_ATTR_FLAGS(tq) |= TYPE_IS_ASYNCHRONOUS(id);
+        if (TYPE_IS_ASYNCHRONOUS(tp)) {
+            TYPE_ATTR_FLAGS(tq) |= TYPE_IS_ASYNCHRONOUS(tp);
         }
         tp = TYPE_REF(tp);
     }
