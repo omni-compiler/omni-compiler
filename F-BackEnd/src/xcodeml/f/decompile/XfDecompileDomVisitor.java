@@ -249,6 +249,14 @@ public class XfDecompileDomVisitor {
         }
 
         for (Node basicTypeNode : basicTypeNodeArray) {
+            if (XmDomUtil.getAttrBool(basicTypeNode, "is_asynchronous")) {
+                writer.writeToken(", ");
+                writer.writeToken("ASYNCHRONOUS");
+                break;
+            }
+        }
+
+        for (Node basicTypeNode : basicTypeNodeArray) {
             String pass = XmDomUtil.getAttr(basicTypeNode, "pass");
             if (!XfUtilForDom.isNullOrEmpty(pass)) {
                 if (pass.equals("pass")) {
