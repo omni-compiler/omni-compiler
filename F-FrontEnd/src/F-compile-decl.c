@@ -4714,12 +4714,12 @@ compile_pragma_statement(expr x)
 
 
 /*
- * declare volatile variable
+ * declare variables those have a specified type attribute
  *   OR
- * add volatile attribute (in block scope)
+ * add a specified type attribute (in block scope)
  */
 void
-compile_VOLATILE_statement(expr id_list)
+compile_declare_or_add_attribute_statement(expr id_list, uint32_t type_attr)
 {
     list lp;
     expr ident;
@@ -4727,18 +4727,17 @@ compile_VOLATILE_statement(expr id_list)
 
     FOR_ITEMS_IN_LIST(lp, id_list) {
         ident = LIST_ITEM(lp);
-
         if ((id = find_ident_local(EXPR_SYM(ident))) == NULL) {
             if ((id = find_ident(EXPR_SYM(ident))) == NULL ||
                 (ID_CLASS(id) != CL_VAR && ID_CLASS(id) != CL_UNKNOWN)) {
                 id = declare_ident(EXPR_SYM(ident), CL_VAR);
                 if(id == NULL) {
-                    continue; /* error */
+                    fatal("cannot declare ident %s", SYM_NAME(EXPR_SYM(ident)));
                 }
             } else {
                 /* id is use-/host-associated or out of the current BLOCK */
                 TYPE_DESC tp = ID_TYPE(id);
-                if (TYPE_IS_COINDEXED(tp)) {
+                if (type_attr == TYPE_ATTR_VOLATILE && TYPE_IS_COINDEXED(tp)) {
                     error("the VOLATILE attribute shall not be specified for a coarray that is not local variable");
                     return;
                 }
@@ -4752,8 +4751,20 @@ compile_VOLATILE_statement(expr id_list)
             error("an ambiguous reference to symbol '%s'", ID_NAME(id));
             return;
         }
-        TYPE_SET_VOLATILE(id);
+        TYPE_ATTR_FLAGS(id) |= type_attr;
     }
+}
+
+
+/*
+ * declare volatile variable
+ *   OR
+ * add volatile attribute (in block scope)
+ */
+void
+compile_VOLATILE_statement(expr id_list)
+{
+    compile_declare_or_add_attribute_statement(id_list, TYPE_ATTR_VOLATILE);
 }
 
 
@@ -4765,39 +4776,7 @@ compile_VOLATILE_statement(expr id_list)
 void
 compile_ASYNCHRONOUS_statement(expr id_list)
 {
-    list lp;
-    expr ident;
-    ID id = NULL;
-
-    FOR_ITEMS_IN_LIST(lp, id_list) {
-        ident = LIST_ITEM(lp);
-
-        if ((id = find_ident_local(EXPR_SYM(ident))) == NULL) {
-            if ((id = find_ident(EXPR_SYM(ident))) == NULL ||
-                (ID_CLASS(id) != CL_VAR && ID_CLASS(id) != CL_UNKNOWN)) {
-                id = declare_ident(EXPR_SYM(ident), CL_VAR);
-                if(id == NULL) {
-                    continue; /* error */
-                }
-            } else {
-                /* id is use-/host-associated or out of the current BLOCK */
-                TYPE_DESC tp = ID_TYPE(id);
-                if (TYPE_IS_COINDEXED(tp)) {
-                    error("the ASYNCHRONOUS attribute shall not be specified for a coarray that is not local variable");
-                    return;
-                }
-                id = declare_ident(EXPR_SYM(ident), CL_VAR);
-                tp = wrap_type(tp);
-                ID_TYPE(id) = tp;
-                SET_MODIFIED(tp);
-            }
-        }
-        if (ID_IS_AMBIGUOUS(id)) {
-            error("an ambiguous reference to symbol '%s'", ID_NAME(id));
-            return;
-        }
-        TYPE_SET_ASYNCHRONOUS(id);
-    }
+    compile_declare_or_add_attribute_statement(id_list, TYPE_ATTR_ASYNCHRONOUS);
 }
 
 

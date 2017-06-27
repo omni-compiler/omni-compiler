@@ -8,5 +8,9 @@
       !
       program main
         integer,asynchronous :: ioitem
+        integer :: v
+        block
+          asynchronous :: v
+        end block
       end program
 
