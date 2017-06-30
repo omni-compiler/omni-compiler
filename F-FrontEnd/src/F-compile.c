@@ -80,6 +80,8 @@ static void compile_DO_statement(int range_st_no,
                             expr limit, expr incr);
 static void compile_DOWHILE_statement(int range_st_no, expr cond,
                             expr construct_name);
+static void compile_DOCONCURRENT_statement(expr range_st_no, expr cond,
+                            expr construct_name);
 static void check_DO_end(ID label);
 static void end_declaration(void);
 static void end_interface(void);
@@ -1316,6 +1318,12 @@ compile_statement1(int st_no, expr x)
         compile_ENDFORALL_statement(x);
         check_INEXEC();
         break;
+
+    case F08_DOCONCURRENT_STATEMENT: {
+        check_INEXEC();
+
+        compile_DOCONCURRENT_statement(EXPR_ARG1(x), EXPR_ARG2(x), EXPR_ARG3(x));
+    } break;
 
     default:
         compile_exec_statement(x);
@@ -4358,6 +4366,12 @@ check_DO_end(ID label)
                             "and ended ENDDO.",
                             SYM_NAME(ID_SYM(CTL_DO_LABEL(ctl_top))));
                 }
+                EXPR_ARG2(CTL_BLOCK(ctl_top)) = CURRENT_STATEMENTS;
+            } else if (EXPR_CODE(CTL_BLOCK(ctl_top)) == F08_DOCONCURRENT_STATEMENT) {
+                /*
+                 * DO CONCURRENT
+                 */
+                // TODO(shingo-s): implement
                 EXPR_ARG2(CTL_BLOCK(ctl_top)) = CURRENT_STATEMENTS;
             } else {
                 /*
@@ -8782,4 +8796,44 @@ check_select_types(expr x, TYPE_DESC tp)
             }
         }
     }
+}
+
+static void  compile_DOCONCURRENT_statement(expr range_st_no,
+                                            expr forall_header,
+                                            expr construct_name)
+{
+    expv v = NULL;
+
+    int do_stmt_num = -1;
+
+    ID do_label = NULL;
+
+    if (range_st_no != NULL) {
+        expv stmt_label = expr_label_value(range_st_no);
+        if (stmt_label == NULL) {
+            error("illegal label in DO CONCURRENT");
+            return;
+        }
+        do_stmt_num = EXPV_INT_VALUE(stmt_label);
+    }
+
+    if (forall_header == NULL) return; /* error recovery */
+
+    if (do_stmt_num > 0) {
+        do_label = declare_label(do_stmt_num, LAB_EXEC, FALSE);
+        if (do_label == NULL) return;
+        if (LAB_IS_DEFINED(do_label)) {
+            error("no backward DO loops");
+            return;
+        }
+        /* turn off, becuase this is not branch */
+        LAB_IS_USED(do_label) = FALSE;
+    }
+
+    // v = compile_expression(forall_header);
+    push_ctl(CTL_DO);
+    CTL_DO_VAR(ctl_top) = NULL;
+    CTL_DO_LABEL(ctl_top) = do_label;
+    CTL_BLOCK(ctl_top) = list3(F08_DOCONCURRENT_STATEMENT,
+                               v, NULL, construct_name);
 }

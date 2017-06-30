@@ -216,6 +216,9 @@ xtag(enum expr_code code)
 
     case F2008_BLOCK_STATEMENT:      return "blockStatement";
 
+    case F08_DOCONCURRENT_STATEMENT: return "FdoConcurrentStatement";
+
+
     /*                          
      * misc.                    
      */                         
@@ -3519,6 +3522,78 @@ outx_FORALL_statement(int l, expv v)
     outx_expvClose(l, v);
 }
 
+/*
+ * output doConcurrentStatement
+ */
+static void
+outx_DOCONCURRENT_statement(int l, expv v)
+{
+    list lp;
+    int l1 = l + 1;
+    expv init = EXPR_ARG1(v);
+    expv body = EXPR_ARG2(v);
+    expv mask = EXPR_ARG2(v);
+    const char *tid = NULL;
+
+    outx_vtagLineno(l, XTAG(v), EXPR_LINE(v), NULL);
+
+    if (EXPR_HAS_ARG4(v) && EXPR_ARG4(v) != NULL) {
+        outx_print(" construct_name=\"%s\"",
+                   SYM_NAME(EXPR_SYM(EXPR_ARG4(v))));
+    }
+    /* if (EXPV_TYPE(v)) { */
+    /*     tid = getTypeID(EXPV_TYPE(v)); */
+    /*     outx_print(" type=\"%s\"", tid); */
+    /* } */
+    outx_print(">\n");
+
+#if 0
+    /*
+     * NOTE:
+     *  Comment out by specification changed.
+     *  the BLOCK statement will have symbols for FORALL statement
+     *
+     *  It may be useful to output <symbols> for FORALL statement
+     *  to describe the indices of FORALL statement
+     *
+     * ex)
+     *
+     *   FORALL( INTEGER :: I = 1:3 )
+     *   ! print I to the <symbols> in <forallStatement>
+     *
+     */
+    if (BLOCK_LOCAL_SYMBOLS(EXPR_BLOCK(v))) {
+        ID id;
+        BLOCK_ENV block = EXPR_BLOCK(v);
+        outx_tag(l1, "symbols");
+        FOREACH_ID(id, BLOCK_LOCAL_SYMBOLS(block)) {
+            if (id_is_visibleVar_for_symbols(id))
+                outx_id(l2, id);
+        }
+        outx_close(l1, "symbols");
+    }
+#endif
+
+
+    /* FOR_ITEMS_IN_LIST(lp, init) { */
+    /*     expv name = EXPR_ARG1(LIST_ITEM(lp)); */
+    /*     expv indexRange = EXPR_ARG2(LIST_ITEM(lp)); */
+
+    /*     outx_varOrFunc(l1, name); */
+    /*     outx_indexRange(l1, */
+    /*                     EXPR_ARG1(indexRange), */
+    /*                     EXPR_ARG2(indexRange), */
+    /*                     EXPR_ARG3(indexRange)); */
+    /* } */
+
+    /* if (mask) { */
+    /*     outx_condition(l1, mask); */
+    /* } */
+
+    outx_body(l1, body);
+    outx_expvClose(l, v);
+}
+
 static void
 outx_lenspec(int l, expv v)
 {
@@ -3895,6 +3970,11 @@ outx_expv(int l, expv v)
     case F_FORALL_STATEMENT:
       outx_FORALL_statement(l, v);
       break;
+
+    case F08_DOCONCURRENT_STATEMENT:
+      outx_DOCONCURRENT_statement(l, v);
+      break;
+
 
     default:
         fatal("unkown exprcode : %d", code);
