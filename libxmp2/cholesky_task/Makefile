@@ -4,6 +4,7 @@
 #CFLAGS += -O3 -I ./ -std=c99 -qopenmp -ipo -g
 #LOADLIBES =  -std=c99 -lrt -lpthread -lm -qopenmp -ipo $(MKL_LIB)
 
+
 LAPACK_DIR = /home/msato/misc/lapack-3.7.0
 ABT_DIR = /home/msato/argobots
 CFLAGS = -std=c99 -g -I$(ABT_DIR)/include 
