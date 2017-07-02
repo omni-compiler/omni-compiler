@@ -1974,7 +1974,7 @@ public class XmcXcodeToXcTranslator {
 		    if (operator != "") obj.addToken(operator + " :");
 
 		    if (!arg.getNodeName().equals("list")){
-			enterIntExprNode(tc, obj, arg);
+			enterNodes(tc, obj, arg);
 		    }
 		    else {
 			NodeList varList = arg.getChildNodes();
