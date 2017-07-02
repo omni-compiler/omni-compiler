@@ -1081,7 +1081,9 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         		if(a.Opcode() == Xcode.LIST){
         		    //clause name
         		    Element g = createElement("list");
-        		    addChildNode(g, trans(a.getArg(0).getString()));
+        		    Element g0 = createElement("string");
+        		    addChildNode(g0, trans(a.getArg(0).getString()));
+                            addChildNode(g, g0);
 
         		    Xobject vars = a.getArgOrNull(1);
         		    if (vars != null){
