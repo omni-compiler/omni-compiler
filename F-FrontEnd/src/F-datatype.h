@@ -128,8 +128,7 @@ typedef struct type_descriptor
 #define TYPE_ATTR_VALUE             0x01000000
 #define TYPE_ATTR_MODULE            0x02000000 /* for module function/subroutine */
 #define TYPE_ATTR_PROCEDURE         0x04000000 /* for procedure variables */
-#define TYPE_ATTR_ASYNCHRONOUS      0x08000000
-#define TYPE_ATTR_ABSTRACT          0x10000000 /* for abstract derived-type or abstract interface */
+#define TYPE_ATTR_ABSTRACT          0x08000000 /* for abstract derived-type or abstract interface */
         uint32_t type_attr_flags;
 #define TYPE_EXFLAGS_IMPLICIT       0x00000001 /* implicitly defined or not */
 #define TYPE_EXFLAGS_OVERRIDDEN     0x00000002 /* type is overridden by child */
@@ -297,9 +296,6 @@ extern TYPE_DESC basic_type_desc[];
 #define TYPE_IS_VALUE(tp)           ((tp)->attr.type_attr_flags &   TYPE_ATTR_VALUE)
 #define TYPE_SET_VALUE(tp)          ((tp)->attr.type_attr_flags |=  TYPE_ATTR_VALUE)
 #define TYPE_UNSET_VALUE(tp)        ((tp)->attr.type_attr_flags &= ~TYPE_ATTR_VALUE)
-#define TYPE_IS_ASYNCHRONOUS(tp)    ((tp)->attr.type_attr_flags &   TYPE_ATTR_ASYNCHRONOUS)
-#define TYPE_SET_ASYNCHRONOUS(tp)   ((tp)->attr.type_attr_flags |=  TYPE_ATTR_ASYNCHRONOUS)
-#define TYPE_UNSET_ASYNCHRONOUS(tp) ((tp)->attr.type_attr_flags &= ~TYPE_ATTR_ASYNCHRONOUS)
 #define TYPE_IS_ABSTRACT(tp)        ((tp)->attr.type_attr_flags &   TYPE_ATTR_ABSTRACT)
 #define TYPE_SET_ABSTRACT(tp)       ((tp)->attr.type_attr_flags |=  TYPE_ATTR_ABSTRACT)
 #define TYPE_UNSET_ABSTRACT(tp)     ((tp)->attr.type_attr_flags &= ~TYPE_ATTR_ABSTRACT)
