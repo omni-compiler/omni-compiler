@@ -778,19 +778,13 @@ void xmpf_coarray_epilog_(void **tag)
  *   3. return coarrayInfo as descPtr
  */
 void xmpf_coarray_find_descptr_(void **descPtr, char *baseAddr,
-                                void **tag, int *isAllocatable,
                                 int *namelen, char *name)
 {
-  ResourceSet_t *rset = (ResourceSet_t*)(*tag);
   MemoryChunk_t *myChunk;
 
   _XMPF_coarrayDebugPrint("XMPF_COARRAY_FIND_DESCPTR_ "
-                          "(varname=\'%.*s\', isAllocatable=%s)\n",
-                          *namelen, name,
-                          *isAllocatable ? "yes" : "no");
-
-  if (rset == NULL)
-    rset = _newResourceSet("(POOL)", strlen("(POOL)"));
+                          "(varname=\'%.*s\')\n",
+                          *namelen, name);
 
   // generate a new descPtr for an allocatable dummy coarray
   CoarrayInfo_t *cinfo = _newCoarrayInfo_empty();
@@ -807,17 +801,10 @@ void xmpf_coarray_find_descptr_(void **descPtr, char *baseAddr,
     return;
   }
 
-  else if (*isAllocatable) {
-    _XMPF_coarrayDebugPrint("*** found the coarray is not allocated\n");
-    // return none
-    return;
-  }
-
-  _XMPF_coarrayDebugPrint("*** ILLEGAL: home MemoryChunk was not found. "
-                          "baseAddr=%p\n", baseAddr);
-
-  _XMPF_coarrayFatal("The actual argument corresponding to \'%.*s\' "
-                     "should be a coarray.\n", *namelen, name);
+  _XMPF_coarrayDebugPrint("*** found no MemoryChunk of mine\n");
+  // return null
+  *descPtr = NULL;
+  return;
 }
 
 

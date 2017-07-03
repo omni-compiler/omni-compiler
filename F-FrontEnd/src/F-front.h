@@ -162,6 +162,8 @@ enum control_type {
     CTL_ELSE_WHERE,
     CTL_SELECT,
     CTL_CASE,
+    CTL_SELECT_TYPE,
+    CTL_TYPE_GUARD,
     CTL_STRUCT,
     CTL_OMP,
     CTL_XMP,
@@ -257,7 +259,14 @@ typedef struct control
 #define CTL_WHERE_ELSE(l)          (EXPR_ARG3((l)->v2))
 
 #define CTL_SELECT_STATEMENT_BODY(l)    (EXPR_ARG2((l)->v1))
-#define CTL_CASE_BLOCK(l)     (EXPR_ARG2((l)->v1))
+#define CTL_SELECT_CONST_NAME(l)        (EXPR_ARG3((l)->v1))
+#define CTL_SELECT_TYPE_SELECTOR(l)     (EXPR_ARG1((l)->v1))
+#define CTL_SELECT_TYPE_ASSICIATE(l)    (EXPR_ARG4((l)->v1))
+#define CTL_CASE_BLOCK(l)               (EXPR_ARG2((l)->v1))
+#define CTL_CASE_CONST_NAME(l)          (EXPR_ARG3((l)->v1))
+#define CTL_TYPE_GUARD_BLOCK(l)         (EXPR_ARG2((l)->v1))
+#define CTL_TYPE_GUARD_CONST_NAME(l)    (EXPR_ARG3((l)->v1))
+#define CTL_TYPE_GUARD_LOCAL_ENV(l)     (&((l)->local_env))
 
 #define CTL_OMP_ARG(l)	((l)->v2)
 #define CTL_OMP_ARG_DIR(l) (EXPR_INT(EXPR_ARG1((l)->v2)))
@@ -660,6 +669,8 @@ extern int      type_is_parent_type _ANSI_ARGS_((TYPE_DESC parent, TYPE_DESC chi
 extern int      type_is_unlimited_class _ANSI_ARGS_((TYPE_DESC tp));
 extern int      type_is_class_of _ANSI_ARGS_((TYPE_DESC class, TYPE_DESC derived_type));
 extern int      compare_derived_type_name _ANSI_ARGS_((TYPE_DESC tp1, TYPE_DESC tp2));
+extern int      type_is_nopolymorphic_abstract _ANSI_ARGS_((TYPE_DESC tp));
+
 
 extern ID       find_type _ANSI_ARGS_((TYPE_DESC struct_td, SYMBOL sym));
 extern ID       find_external_ident_head _ANSI_ARGS_((SYMBOL s));
@@ -714,8 +725,11 @@ extern int      type_bound_procedure_type_match _ANSI_ARGS_((EXT_ID f1, EXT_ID f
 extern int      is_procedure_acceptable _ANSI_ARGS_((EXT_ID proc, expv actual_args));
 
 extern int      type_is_soft_compatible _ANSI_ARGS_((TYPE_DESC tp, TYPE_DESC tq));
+extern int      type_is_strict_compatible _ANSI_ARGS_((TYPE_DESC tp, TYPE_DESC tq));
 extern int      type_is_compatible_for_assignment
                     _ANSI_ARGS_((TYPE_DESC tp1, TYPE_DESC tp2));
+extern int      type_is_compatible_for_allocation
+                    _ANSI_ARGS_((TYPE_DESC left, TYPE_DESC right));
 extern int      struct_type_is_compatible_for_assignment
                     _ANSI_ARGS_((TYPE_DESC tp1, TYPE_DESC tp2, int is_pointer_set));
 extern int      type_is_specific_than
@@ -863,6 +877,7 @@ extern void     compile_FPOS_statement _ANSI_ARGS_((expr x));
 extern void     compile_INQUIRE_statement _ANSI_ARGS_((expr x));
 extern void     compile_NAMELIST_decl _ANSI_ARGS_((expr x));
 extern void     compile_WAIT_statement _ANSI_ARGS_((expr x));
+extern void     compile_FLUSH_statement _ANSI_ARGS_((expr x));
 
 extern void     compile_INTRINSIC_decl _ANSI_ARGS_((expr id_list));
 extern void     compile_SAVE_decl _ANSI_ARGS_((expr id_list));

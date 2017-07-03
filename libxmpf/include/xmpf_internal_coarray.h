@@ -100,7 +100,6 @@ extern void xmpf_coarray_prolog_(void **tag, int *namelen, char *name);
 extern void xmpf_coarray_epilog_(void **tag);
 
 extern void xmpf_coarray_find_descptr_(void **descPtr, char *baseAddr,
-                                       void **tag, int *isAllocatable,
                                        int *namelen, char *name);
 extern void xmpf_coarray_set_corank_(void **descPtr, int *corank);
 extern void xmpf_coarray_set_codim_(void **descPtr, int *dim, int *lb, int *ub);

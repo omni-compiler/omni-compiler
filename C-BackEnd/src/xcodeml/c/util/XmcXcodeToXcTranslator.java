@@ -1949,7 +1949,8 @@ public class XmcXcodeToXcTranslator {
 		    continue;
 		}
 
-		String clauseName = XmDomUtil.getContentText(childNode).toLowerCase();
+		Node clauseNameNode = childNode.getFirstChild();
+		String clauseName = XmDomUtil.getContentText(clauseNameNode).toLowerCase();
 		String operator = "";
 
 		if (clauseName.equals("dev_resident"))          clauseName = "device_resident";	  
@@ -1974,7 +1975,7 @@ public class XmcXcodeToXcTranslator {
 		    if (operator != "") obj.addToken(operator + " :");
 
 		    if (!arg.getNodeName().equals("list")){
-			enterIntExprNode(tc, obj, arg);
+			enterNodes(tc, obj, arg);
 		    }
 		    else {
 			NodeList varList = arg.getChildNodes();

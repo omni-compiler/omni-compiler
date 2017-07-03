@@ -380,3 +380,19 @@ compile_WAIT_statement(expr x)
     return;
 }
 
+void
+compile_FLUSH_statement(expr x)
+{
+    list lp;
+    expv v, callArgs;
+
+    if (EXPV_CODE(EXPR_ARG1(x)) != LIST) {
+        fatal("syntax error in FLUSH???");
+    }
+
+    callArgs = compile_io_arguments(EXPR_ARG1(x));
+
+    v = expv_cons(F03_FLUSH_STATEMENT, NULL, callArgs, NULL);
+    output_statement(v);
+    return;
+}
