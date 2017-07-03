@@ -1831,9 +1831,6 @@ compile_array_ref(ID id, expv vary, expr args, int isLeft) {
         if (TYPE_IS_VOLATILE(id)) {
             TYPE_ATTR_FLAGS(tq) |= TYPE_IS_VOLATILE(id);
         }
-        if (TYPE_IS_ASYNCHRONOUS(id)) {
-            TYPE_ATTR_FLAGS(tq) |= TYPE_IS_ASYNCHRONOUS(id);
-        }
     }
     while (tp != NULL) {
         if (TYPE_IS_POINTER(tp)) {
@@ -1844,9 +1841,6 @@ compile_array_ref(ID id, expv vary, expr args, int isLeft) {
         }
         if (TYPE_IS_VOLATILE(tp)) {
             TYPE_ATTR_FLAGS(tq) |= TYPE_IS_VOLATILE(tp);
-        }
-        if (TYPE_IS_ASYNCHRONOUS(tp)) {
-            TYPE_ATTR_FLAGS(tq) |= TYPE_IS_ASYNCHRONOUS(tp);
         }
         tp = TYPE_REF(tp);
     }
@@ -3329,17 +3323,14 @@ compile_member_array_ref(expr x, expv v)
         expv new_v = compile_array_ref(NULL, v, indices, TRUE);
         new_tp = EXPV_TYPE(new_v);
 
-        if ((TYPE_IS_POINTER(tp) || TYPE_IS_TARGET(tp) ||
-             TYPE_IS_VOLATILE(tp) || TYPE_IS_ASYNCHRONOUS(tp)) &&
-           !(TYPE_IS_POINTER(new_tp) || TYPE_IS_TARGET(new_tp)
-             || TYPE_IS_VOLATILE(new_tp) || TYPE_IS_ASYNCHRONOUS(new_tp))) {
+        if ((TYPE_IS_POINTER(tp) || TYPE_IS_TARGET(tp) || TYPE_IS_VOLATILE(tp)) &&
+           !(TYPE_IS_POINTER(new_tp) || TYPE_IS_TARGET(new_tp) || TYPE_IS_VOLATILE(new_tp))) {
             TYPE_DESC btp = bottom_type(new_tp);
             if(!EXPR_HAS_ARG1(shape))
                 generate_shape_expr(new_tp, shape);
             btp = wrap_type(btp);
             TYPE_ATTR_FLAGS(btp) |=
-                    TYPE_IS_POINTER(tp) | TYPE_IS_TARGET(tp) |
-                    TYPE_IS_VOLATILE(tp) | TYPE_IS_ASYNCHRONOUS(tp);
+                    TYPE_IS_POINTER(tp) | TYPE_IS_TARGET(tp) | TYPE_IS_VOLATILE(tp);
             new_tp = btp;
         }
         new_tp = compile_dimensions(new_tp, shape);

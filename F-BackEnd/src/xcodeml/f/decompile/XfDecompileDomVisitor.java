@@ -249,14 +249,6 @@ public class XfDecompileDomVisitor {
         }
 
         for (Node basicTypeNode : basicTypeNodeArray) {
-            if (XmDomUtil.getAttrBool(basicTypeNode, "is_asynchronous")) {
-                writer.writeToken(", ");
-                writer.writeToken("ASYNCHRONOUS");
-                break;
-            }
-        }
-
-        for (Node basicTypeNode : basicTypeNodeArray) {
             String pass = XmDomUtil.getAttr(basicTypeNode, "pass");
             if (!XfUtilForDom.isNullOrEmpty(pass)) {
                 if (pass.equals("pass")) {
@@ -4163,23 +4155,6 @@ public class XfDecompileDomVisitor {
         }
     }
 
-    // FwaitStatement
-    class FwaitStatementVisitor extends XcodeNodeVisitor {
-        /**
-         * Decompile "FwaitStatement" element in XcodeML/F.
-         */
-        @Override public void enter(Node n) {
-            _writeLineDirective(n);
-
-            XmfWriter writer = _context.getWriter();
-
-            writer.writeToken("WAIT ");
-            invokeEnter(XmDomUtil.getElement(n, "namedValueList"));
-
-            writer.setupNewLine();
-        }
-    }
-
     // FpointerAssignStatement
     class FpointerAssignStatementVisitor extends XcodeNodeVisitor {
         /**
@@ -7094,7 +7069,6 @@ public class XfDecompileDomVisitor {
             if (declaredSymbols.contains(volatileSymbol))
                 continue;
             writer.writeToken("VOLATILE");
-            writer.writeToken("::");
             writer.writeToken(volatileSymbol);
             writer.setupNewLine();
         }
@@ -7107,8 +7081,7 @@ public class XfDecompileDomVisitor {
         for (String asynchronousSymbol : asynchs) {
             if (declaredSymbols.contains(asynchronousSymbol))
                 continue;
-            writer.writeToken("ASYNCHRONOUS");
-            writer.writeToken("::");
+            writer.writeToken("asynchronous");
             writer.writeToken(asynchronousSymbol);
             writer.setupNewLine();
         }
@@ -7257,6 +7230,5 @@ public class XfDecompileDomVisitor {
         new Pair("blockStatement", new BlockStatementVisitor()),
         new Pair("FmoduleProcedureDefinition", new FmoduleProcedureDefinitionVisitor()),
         new Pair("forallStatement", new ForallStatementVisitor()),
-        new Pair("FwaitStatement", new FwaitStatementVisitor()),
     };
 }

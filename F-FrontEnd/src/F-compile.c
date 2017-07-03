@@ -1262,11 +1262,6 @@ compile_statement1(int st_no, expr x)
         compile_VOLATILE_statement(EXPR_ARG1(x));
         break;
 
-    case F03_ASYNCHRONOUS_STATEMENT:
-        check_INDCL();
-        compile_ASYNCHRONOUS_statement(EXPR_ARG1(x));
-        break;
-
     case F03_TYPE_BOUND_PROCEDURE_STATEMENT:
         if (CURRENT_STATE != IN_TYPE_BOUND_PROCS) {
             error("TYPE-BOUDNED PROCEDURE out of the derived-type declaration");
@@ -1564,12 +1559,8 @@ compile_exec_statement(expr x)
         compile_UNLOCK_statement(x);
         break;
 
-    case F03_WAIT_STATEMENT:
-        compile_WAIT_statement(x);
-        break;
-        
     case F03_FLUSH_STATEMENT:
-        compile_FLUSH_statement(
+        compile_FLUSH_statement(x);
         break;
 
     default:
@@ -6081,7 +6072,6 @@ compile_member_ref(expr x)
             TYPE_IS_POINTER(stVTyp) ||
             TYPE_IS_TARGET(stVTyp) ||
             TYPE_IS_VOLATILE(stVTyp) ||
-            TYPE_IS_ASYNCHRONOUS(stVTyp) ||
             TYPE_IS_COINDEXED(stVTyp))) {
         /*
          * If type of struct_v has pointer/pointee flags on, members
@@ -6100,7 +6090,6 @@ compile_member_ref(expr x)
         TYPE_ATTR_FLAGS(retTyp) |= TYPE_IS_POINTER(mVTyp);
         TYPE_ATTR_FLAGS(retTyp) |= TYPE_IS_TARGET(mVTyp);
         TYPE_ATTR_FLAGS(retTyp) |= TYPE_IS_VOLATILE(mVTyp);
-        TYPE_ATTR_FLAGS(retTyp) |= TYPE_IS_ASYNCHRONOUS(mVTyp);
         TYPE_ATTR_FLAGS(retTyp) |= TYPE_IS_ALLOCATABLE(mVTyp);
 
         TYPE_CODIMENSION(retTyp) = TYPE_CODIMENSION(stVTyp);
@@ -6116,9 +6105,6 @@ compile_member_ref(expr x)
         }
         if (!TYPE_IS_VOLATILE(retTyp)) {
             TYPE_ATTR_FLAGS(retTyp) |= TYPE_IS_VOLATILE(stVTyp);
-        }
-        if (!TYPE_IS_ASYNCHRONOUS(retTyp)) {
-            TYPE_ATTR_FLAGS(retTyp) |= TYPE_IS_ASYNCHRONOUS(stVTyp);
         }
 
         tp = retTyp;
@@ -7213,10 +7199,6 @@ compile_POINTER_SET_statement(expr x) {
 
     if (TYPE_IS_VOLATILE(vPtrTyp) != TYPE_IS_VOLATILE(vPteTyp)) {
         error_at_node(x, "VOLATILE attribute mismatch.");
-        return;
-    }
-    if (TYPE_IS_ASYNCHRONOUS(vPtrTyp) != TYPE_IS_ASYNCHRONOUS(vPteTyp)) {
-        error_at_node(x, "ASYNCHRONOUS attribute mismatch.");
         return;
     }
 
