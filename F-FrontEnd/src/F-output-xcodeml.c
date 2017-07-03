@@ -804,6 +804,14 @@ outx_typeAttrs(int l, TYPE_DESC tp, const char *tag, int options)
         }
         outx_true(TYPE_IS_CLASS(tp),            "is_class");
 
+        if (IS_STRUCT_TYPE(tp)) {
+            /*
+             * function/subroutine type can be abstract,
+             * but XcodeML schema does not allow it.
+             */
+            outx_true(TYPE_IS_ABSTRACT(tp) ,    "is_abstract");
+        }
+
         if(TYPE_HAS_BIND(tp)){
             outx_print(" bind=\"%s\"", "C"); // Only C for the moment
             if(TYPE_BIND_NAME(tp)){
@@ -5300,6 +5308,9 @@ outx_interfaceDecl(int l, EXT_ID ep)
             break;
         case INTF_GENERIC_READ_UNFORMATTED:
             outx_printi(0, " is_defined_io=\"READ(UNFORMATTED)\"");
+            break;
+        case INTF_ABSTRACT:
+            outx_true(TRUE, "is_abstract");
             break;
         default:
             /* never reach. here*/

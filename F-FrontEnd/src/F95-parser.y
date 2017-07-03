@@ -177,6 +177,7 @@ state 2058
 %token FORMATTED
 %token UNFORMATTED
 %token FINAL
+%token ABSTRACT
 
 /* Coarray keywords #060 */
 %token SYNCALL
@@ -596,6 +597,8 @@ statement:      /* entry */
           { $$ = list1(F95_INTERFACE_STATEMENT, $2); }
         | INTERFACE
           { $$ = list1(F95_INTERFACE_STATEMENT,NULL); }
+        | ABSTRACT KW INTERFACE
+          { $$ = list1(F95_INTERFACE_STATEMENT, list0(F03_ABSTRACT_SPEC)); }
         | ENDINTERFACE generic_name
           { $$ = list1(F95_ENDINTERFACE_STATEMENT,$2); }
         | ENDINTERFACE OPERATOR '(' '=' ')'
@@ -1172,8 +1175,8 @@ access_spec:
 type_attr_spec_list:
           type_attr_spec
         { $$ = list1(LIST, $1); }
-        | type_attr_spec ',' type_attr_spec_list
-        { $$ = list_cons($1, $3); }
+        | type_attr_spec ',' KW type_attr_spec_list
+        { $$ = list_cons($1, $4); }
         ;
 
 type_attr_spec:
@@ -1181,6 +1184,8 @@ type_attr_spec:
         { $$ = list1(F03_EXTENDS_SPEC, $3); }
         | BIND '(' IDENTIFIER /* C */ ')'
         { $$ = list0(F03_BIND_SPEC); }        
+        | ABSTRACT
+        { $$ = list0(F03_ABSTRACT_SPEC); }
         | access_spec
         { $$ = $1; }
         ;

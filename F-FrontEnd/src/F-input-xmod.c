@@ -410,6 +410,12 @@ input_type_and_attr(xmlTextReaderPtr reader, HashTable * ht, char ** retTypeId,
         free(str);
     }
 
+    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_abstract");
+    if (str != NULL) {
+        TYPE_SET_ABSTRACT(*tp);
+        free(str);
+    }
+
     if (retTypeId != NULL)
         *retTypeId = typeId;    /* return typeId */
     else
@@ -3013,11 +3019,12 @@ static int
 input_FinterfaceDecl_in_declarations(xmlTextReaderPtr reader, HashTable * ht,
                                      EXT_ID parent, ID id_list)
 {
-    EXT_ID ep;
+    EXT_ID ep, child;
     char * name = NULL;
     char * is_operator = NULL;
     char * is_assignment = NULL;
     char * is_defined_io = NULL;
+    char * is_abstract = NULL;
 
     if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "FinterfaceDecl"))
         return FALSE;
@@ -3027,6 +3034,8 @@ input_FinterfaceDecl_in_declarations(xmlTextReaderPtr reader, HashTable * ht,
                                BAD_CAST "is_operator");
     is_assignment = (char *) xmlTextReaderGetAttribute(reader,
                                  BAD_CAST "is_assignment");
+    is_abstract = (char *) xmlTextReaderGetAttribute(reader,
+                                 BAD_CAST "is_abstract");
 
     if (name != NULL) {
         ep = new_external_id(find_symbol(name));
@@ -3046,6 +3055,11 @@ input_FinterfaceDecl_in_declarations(xmlTextReaderPtr reader, HashTable * ht,
     if (is_assignment != NULL) {
         EXT_PROC_INTERFACE_CLASS(ep) = INTF_ASSIGNMENT;
         free(is_assignment);
+    }
+
+    if (is_abstract != NULL) {
+        EXT_PROC_INTERFACE_CLASS(ep) = INTF_ABSTRACT;
+        free(is_abstract);
     }
 
     is_defined_io = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_defined_io");
@@ -3099,6 +3113,12 @@ input_FinterfaceDecl_in_declarations(xmlTextReaderPtr reader, HashTable * ht,
 
     if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "FinterfaceDecl"))
         return FALSE;
+
+    FOREACH_EXT_ID(child, EXT_PROC_INTR_DEF_EXT_IDS(ep)) {
+        if (INTF_IS_ABSTRACT(EXT_PROC_INTERFACE_INFO(ep))) {
+            TYPE_SET_ABSTRACT(EXT_PROC_TYPE(child));
+        }
+    }
 
     return TRUE;
 }

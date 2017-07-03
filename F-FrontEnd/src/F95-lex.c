@@ -3848,6 +3848,7 @@ struct keyword_token dot_keywords[] =
 /* caution!: longger word should be first than short one.  */
 struct keyword_token keywords[ ] =
 {
+    { "abstract",       ABSTRACT  },     /* F2003 spec */
     { "assignment",     ASSIGNMENT  },
     { "assign",         ASSIGN  },
     { "allocatable",    ALLOCATABLE },

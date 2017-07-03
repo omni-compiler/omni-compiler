@@ -2607,7 +2607,10 @@ end_declaration()
                         error_at_id(ip, "PROCEDURE variable should not have the INTENT attribute");
                     }
                 }
+            } else if (ID_STORAGE(ip) != STG_TAGNAME && type_is_nopolymorphic_abstract(tp)) {
+                error_at_id(ip, "ABSTRACT type");
             }
+
         }
     }
 
@@ -5584,6 +5587,10 @@ compile_INTERFACE_statement(expr x)
                     break;
             }
         } break;
+        case F03_ABSTRACT_SPEC: {
+            hasName = FALSE;
+            info->class = INTF_ABSTRACT;
+        } break;
         default:
             NOT_YET();
         break;
@@ -5708,6 +5715,14 @@ end_interface()
             PROC_CLASS(fid) = P_EXTERNAL;
             PROC_EXT_ID(fid) = ep;
             EXT_PROC_CLASS(ep) = EP_INTERFACE_DEF;
+        }
+
+        if (INTF_IS_ABSTRACT(EXT_PROC_INTERFACE_INFO(intr))) {
+            /*
+             * FUNCTION/SUBROUTINE inside ABSTRACT INTERFACE are
+             * abstract procedures.
+             */
+            TYPE_SET_ABSTRACT(EXT_PROC_TYPE(ep));
         }
 
         if (!check_interface_type(intr, EXT_PROC_TYPE(ep))) {
@@ -6486,9 +6501,15 @@ compile_CALL_subroutine_statement(expr x)
         error("an ambiguous reference to symbol '%s'", ID_NAME(id));
         return;
     }
-    if (ID_TYPE(id) != NULL && IS_FUNCTION_TYPE(ID_TYPE(id)) &&
-        TYPE_IS_USED_EXPLICIT(ID_TYPE(id))) {
-        error("'%s' is a function, not a subroutine", ID_NAME(id));
+    if (ID_TYPE(id) != NULL) {
+        if(IS_FUNCTION_TYPE(ID_TYPE(id)) &&
+           TYPE_IS_USED_EXPLICIT(ID_TYPE(id))) {
+            error("'%s' is a function, not a subroutine", ID_NAME(id));
+
+        } else if (TYPE_IS_ABSTRACT(ID_TYPE(id))) {
+            error("'%s' is abstract", ID_NAME(id));
+
+        }
     }
 
     if ((PROC_CLASS(id) == P_EXTERNAL || PROC_CLASS(id) == P_UNKNOWN) &&
@@ -7002,9 +7023,25 @@ compile_POINTER_SET_statement(expr x) {
     }
 
     if (!TYPE_IS_POINTER(vPtrTyp)) {
-        error_at_node(x, "'%s' is not a pointer.",
-                      SYM_NAME(EXPR_SYM(EXPR_ARG1(x))));
+        if (EXPR_CODE(EXPR_ARG1(x)) == IDENT) {
+            error_at_node(x, "'%s' is not a pointer.",
+                          SYM_NAME(EXPR_SYM(EXPR_ARG1(x))));
+        } else {
+            error_at_node(x, "lhs is not a pointer.",
+                          SYM_NAME(EXPR_SYM(EXPR_ARG1(x))));
+        }
         return;
+    }
+
+    if (IS_PROCEDURE_TYPE(EXPV_TYPE(vPointer)) &&
+        FUNCTION_TYPE_IS_TYPE_BOUND(EXPV_TYPE(vPointer))) {
+            error("lhs expr is type bound procedure.");
+            return;
+    }
+    if (IS_PROCEDURE_TYPE(EXPV_TYPE(vPointee)) &&
+        FUNCTION_TYPE_IS_TYPE_BOUND(EXPV_TYPE(vPointee))) {
+            error("rhs expr is type bound procedure.");
+            return;
     }
 
     if (IS_PROCEDURE_TYPE(vPtrTyp)) {
@@ -7018,6 +7055,12 @@ compile_POINTER_SET_statement(expr x) {
             error_at_node(x, "'%s' is not a function/subroutine",
                           SYM_NAME(EXPR_SYM(EXPR_ARG2(x))));
         }
+        if (TYPE_IS_ABSTRACT(vPteTyp)) {
+            error_at_node(x, "'%s' is an abstract interface",
+                          SYM_NAME(EXPR_SYM(EXPR_ARG2(x))));
+        }
+
+
         if (EXPR_CODE(vPointee) == F_VAR) {
             ID id = find_ident(EXPR_SYM(vPointee));
             if (!IS_PROCEDURE_TYPE(vPteTyp)) {
