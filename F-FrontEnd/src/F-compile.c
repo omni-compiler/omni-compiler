@@ -131,6 +131,10 @@ static void compile_ENDBLOCK_statement(expr x);
 static void compile_FORALL_statement(int st_no, expr x);
 static void compile_ENDFORALL_statement(expr x);
 
+static int check_valid_construction_name(expr x, expr y);
+static void move_implicit_vars_to_parent_from_type_guard(void);
+static void check_select_types(expr x, TYPE_DESC tp);
+
 static void unify_submodule_symbol_table(void);
 
 void init_for_OMP_pragma();
@@ -998,7 +1002,7 @@ compile_statement1(int st_no, expr x)
 
     case F03_SELECTTYPE_STATEMENT:
           check_INEXEC();
-          push_ctl(CTL_SELECT); // TODO special select type ctl
+          push_ctl(CTL_SELECT_TYPE);
           v = compile_expression(EXPR_ARG1(x));
           ID selector = find_ident(EXPR_SYM(EXPR_ARG1(x)));
           if(EXPR_HAS_ARG3(x)){
@@ -1009,32 +1013,39 @@ compile_statement1(int st_no, expr x)
                 ID_IS_ASSOCIATIVE(associate_name) = TRUE;
                 ID_TYPE(associate_name) = ID_TYPE(selector);
             }
-            expv tmp = expv_sym_term(IDENT, ID_TYPE(associate_name), 
+            expv tmp = expv_sym_term(IDENT, ID_TYPE(associate_name),
                 ID_SYM(associate_name));
-            st = list4(F03_SELECTTYPE_STATEMENT, v, NULL, EXPR_ARG2(x), 
-                tmp);          
+            st = list4(F03_SELECTTYPE_STATEMENT, v, NULL, EXPR_ARG2(x), tmp);
           } else {
             st = list4(F03_SELECTTYPE_STATEMENT, v, NULL, EXPR_ARG2(x), NULL);
           }
-          
+
           CTL_BLOCK(ctl_top) = st;
           break;
     case F_CASELABEL_STATEMENT:
         if(CTL_TYPE(ctl_top) == CTL_SELECT  ||
            CTL_TYPE(ctl_top) == CTL_CASE) {
+            expr const_name = EXPR_ARG2(x);
+            expr parent_const_name = NULL;
 
             if (CTL_TYPE(ctl_top) == CTL_CASE) {
                 CTL_CASE_BLOCK(ctl_top) = CURRENT_STATEMENTS;
                 CURRENT_STATEMENTS = NULL;
 
-		if (endlineno_flag)
-		  EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+                if (endlineno_flag)
+                    EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+
+                parent_const_name = CTL_CASE_CONST_NAME(ctl_top);
 
                 pop_ctl();
+            } else {
+                parent_const_name = CTL_SELECT_CONST_NAME(ctl_top);
             }
 
             v = compile_scene_range_expression_list(EXPR_ARG1(x));
             push_ctl(CTL_CASE);
+
+            (void)check_valid_construction_name(parent_const_name, const_name);
 
             /*
              *  (F_CASELABEL_STATEMENT
@@ -1042,7 +1053,7 @@ compile_statement1(int st_no, expr x)
              *    (LIST (exec statement) ...)
              *    (IDENTIFIER))
              */
-            st = list3(F_CASELABEL_STATEMENT,v,NULL,EXPR_ARG2(x));
+            st = list3(F_CASELABEL_STATEMENT, v, NULL, const_name);
 
             CTL_BLOCK(ctl_top) = st;
 
@@ -1050,63 +1061,115 @@ compile_statement1(int st_no, expr x)
         break;
         case F03_TYPEIS_STATEMENT:
         case F03_CLASSIS_STATEMENT:
-            if(CTL_TYPE(ctl_top) == CTL_SELECT
-                || CTL_TYPE(ctl_top) == CTL_CASE)
+            if(CTL_TYPE(ctl_top) == CTL_SELECT_TYPE ||
+               CTL_TYPE(ctl_top) == CTL_TYPE_GUARD)
             {
-                if (CTL_TYPE(ctl_top) == CTL_CASE) {
+                ID id = NULL;
+                TYPE_DESC tp = NULL;
+                expr const_name = EXPR_ARG2(x);
+                expr parent_const_name = NULL;
+                expv type = NULL;
+                expv selector = NULL;
+
+                if (CTL_TYPE(ctl_top) == CTL_TYPE_GUARD) {
                     CTL_CASE_BLOCK(ctl_top) = CURRENT_STATEMENTS;
                     CURRENT_STATEMENTS = NULL;
-                    
+
                     if (endlineno_flag)
                          EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
                     pop_ctl();
-                }
-                    
-                push_ctl(CTL_CASE);
+                    move_implicit_vars_to_parent_from_type_guard();
+                    pop_env();
 
-                if(EXPR_ARG1(x) != NULL) { // NULL for CLASS DEFAULT
-                    TYPE_DESC tp = find_struct_decl_parent(EXPR_SYM(EXPR_ARG1(x)));
-                    if(tp == NULL){
-                        error("%s has not been declared.", SYM_NAME(EXPR_SYM(EXPR_ARG1(x))));
-                    }
-                    expv tmp = expv_sym_term(IDENT, tp, EXPR_SYM(EXPR_ARG1(x)));
-                    st = list3(EXPR_CODE(x), tmp, NULL, EXPR_ARG2(x));
+                    parent_const_name = CTL_TYPE_GUARD_CONST_NAME(ctl_top);
                 } else {
-                    st = list3(EXPR_CODE(x), NULL, NULL, EXPR_ARG2(x));
+                    parent_const_name = CTL_SELECT_CONST_NAME(ctl_top);
                 }
+
+                (void)check_valid_construction_name(parent_const_name, const_name);
+
+                push_ctl(CTL_TYPE_GUARD);
+                push_env(CTL_TYPE_GUARD_LOCAL_ENV(ctl_top));
+
+                if (EXPR_ARG1(x) != NULL) { // NULL for CLASS DEFAULT
+                    tp = compile_type(EXPR_ARG1(x), /* allow_predecl=*/ FALSE);
+                    type = expv_sym_term(IDENT, tp, EXPR_SYM(EXPR_ARG1(x)));
+                }
+                if (EXPR_CODE(x) == F03_CLASSIS_STATEMENT) {
+                    if (tp != NULL && !IS_STRUCT_TYPE(tp)) {
+                        error("'class is' accepts only derived-type");
+                        break;
+                    }
+                }
+
+                check_select_types(x, tp);
+
+                selector = CTL_SELECT_TYPE_ASSICIATE(CTL_PREV(ctl_top))?:CTL_SELECT_TYPE_SELECTOR(CTL_PREV(ctl_top));
+                id = declare_ident(EXPR_SYM(selector), CL_VAR);
+                declare_id_type(id, tp);
+
+                st = list3(EXPR_CODE(x), type, NULL, const_name);
                 CTL_BLOCK(ctl_top) = st;
             } else {
                 error("'class is/type is label', out of place");
             }
             break;
     case F_ENDSELECT_STATEMENT:
-        if(CTL_TYPE(ctl_top) == CTL_SELECT) {
+        if (CTL_TYPE(ctl_top) == CTL_SELECT ||
+            CTL_TYPE(ctl_top) == CTL_SELECT_TYPE) {
+            expr const_name = EXPR_HAS_ARG1(x)?EXPR_ARG1(x):NULL;
+            expr parent_const_name = NULL;
             CTL_SELECT_STATEMENT_BODY(ctl_top) = CURRENT_STATEMENTS;
 
-	    if (endlineno_flag)
-	      EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+            parent_const_name = CTL_SELECT_CONST_NAME(ctl_top);
+            (void)check_valid_construction_name(parent_const_name, const_name);
 
-            pop_ctl();
-        } else if (CTL_TYPE(ctl_top) == CTL_CASE) {
+            if (endlineno_flag)
+                EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+
+        } else if (CTL_TYPE(ctl_top) == CTL_CASE ||
+                   CTL_TYPE(ctl_top) == CTL_TYPE_GUARD) {
+            expr const_name = EXPR_HAS_ARG1(x)?EXPR_ARG1(x):NULL;
+            expr parent_const_name = NULL;
+
             CTL_CASE_BLOCK(ctl_top) = CURRENT_STATEMENTS;
 
-	    // For previous CASE.
-	    if (endlineno_flag)
-	      EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+            if (CTL_TYPE(ctl_top) == CTL_CASE) {
+                parent_const_name = CTL_CASE_CONST_NAME(ctl_top);
+            } else {
+                parent_const_name = CTL_TYPE_GUARD_CONST_NAME(ctl_top);
+            }
+
+            (void)check_valid_construction_name(parent_const_name, const_name);
+
+            // For previous CASE.
+            if (endlineno_flag)
+                EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
 
             pop_ctl();
 
-            if(CTL_TYPE(ctl_top) != CTL_SELECT)
+            if (CTL_TYPE(ctl_top) == CTL_SELECT_TYPE) {
+                move_implicit_vars_to_parent_from_type_guard();
+                pop_env();
+            }
+
+            if (CTL_TYPE(ctl_top) != CTL_SELECT &&
+                CTL_TYPE(ctl_top) != CTL_SELECT_TYPE) {
                 error("'end select', out of place");
+            }
 
             CTL_SELECT_STATEMENT_BODY(ctl_top) = CURRENT_STATEMENTS;
 
-	    // For SELECT
-	    if (endlineno_flag)
-	      EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+            // For SELECT
+            if (endlineno_flag)
+                EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
 
-            pop_ctl();
-        } else error("'end select', out of place");
+        } else {
+            error("'end select', out of place");
+        }
+
+        pop_ctl();
+
         break;
 
     case F_PRAGMA_STATEMENT:
@@ -7911,6 +7974,25 @@ compile_CRITICAL_statement(expr x) {
 }
 
 
+static int
+check_valid_construction_name(expr x, expr y)
+{
+    if (x != NULL && y == NULL) {
+        error("expect construnct name");
+        return FALSE;
+    } else if (x == NULL && y != NULL) {
+        error("unexpected construnct name");
+        return FALSE;
+    } else if (x != NULL && y != NULL) {
+        if (EXPR_SYM(x) != EXPR_SYM(y)) {
+            error("unmatched construct name");
+            return FALSE;
+        }
+    }
+    return TRUE;
+}
+
+
 /*
  *  (F2008_ENDCRITICAL_STATEMENT expr)
  */
@@ -7922,19 +8004,8 @@ compile_ENDCRITICAL_statement(expr x) {
     }
 
     /* check construct name */
-    if (CTL_CRIT_CONST_NAME(ctl_top) != NULL && EXPR_ARG1(x) == NULL) {
-        error("expect construnct name");
+    if (!check_valid_construction_name(CTL_CRIT_CONST_NAME(ctl_top), EXPR_ARG1(x)))
         return;
-    } else if (CTL_CRIT_CONST_NAME(ctl_top) == NULL && EXPR_ARG1(x) != NULL) {
-        error("unexpected construnct name");
-        return;
-    } else if ((CTL_CRIT_CONST_NAME(ctl_top) != NULL) && EXPR_ARG1(x) != NULL) {
-        if (EXPR_SYM(CTL_CRIT_CONST_NAME(ctl_top))
-            != EXPR_SYM(EXPR_ARG1(x))) {
-            error("unmatched construct name");
-            return;
-        }
-    }
 
     if (XMP_coarray_flag) {
         replace_CALL_statement("xmpf_end_critical", NULL);
@@ -8468,5 +8539,98 @@ compile_ENDFORALL_statement(expr x)
      */
     if (CTL_TYPE(ctl_top) == CTL_BLOCK) {
         compile_ENDBLOCK_statement(list0(F2008_ENDBLOCK_STATEMENT));
+    }
+}
+
+/*
+ * Move implict declared identifiers in a TYPE GUARD clause to parent's LOCAL_SYMBOLS
+ *
+ * ex)
+ *  1  SELECT TYPE(p)
+ *  2    TYPE IS (INTEGER)
+ *  3      a = 1             ! a is declared implicitly
+ *  4    TYPE IS (REAL
+ *  5      a = 2             ! a is the same one with 'a' in line 3
+ *  6  END SELECT TYPE
+ *
+ *  'a' in line 3 is declared inside the environment of CTL_TYPE_GUARD,
+ *  but it should be moved to the parent ennvironment.
+ */
+static void
+move_implicit_vars_to_parent_from_type_guard()
+{
+    ID ip, iq, last = NULL;
+    ENV parent = ENV_PARENT(current_local_env);
+
+    if (parent == NULL) {
+        return;
+    }
+    if (LOCAL_SYMBOLS == NULL) {
+        return;
+    }
+
+    FOREACH_ID(ip, ENV_SYMBOLS(parent)) {
+        last = ip;
+    }
+
+    SAFE_FOREACH_ID(ip, iq, LOCAL_SYMBOLS) {
+        if (ip == LOCAL_SYMBOLS) {
+            continue;
+        }
+        ID_NEXT(ip) = NULL;
+        ID_LINK_ADD(ip, ENV_SYMBOLS(parent), last);
+    }
+    if (LOCAL_SYMBOLS)
+        ID_NEXT(LOCAL_SYMBOLS) = NULL;
+}
+
+
+/*
+ * Checks types of each type guard statements under SELECT TYPE construct
+ */
+static void
+check_select_types(expr x, TYPE_DESC tp)
+{
+    list lp;
+
+    if (CTL_TYPE(ctl_top) != CTL_TYPE_GUARD) {
+        return;
+    }
+
+    FOR_ITEMS_IN_LIST(lp, CTL_SAVE(ctl_top)) {
+        expv statement;
+        TYPE_DESC tq;
+
+        statement = LIST_ITEM(lp);
+
+        if (EXPR_CODE(statement) != F03_TYPEIS_STATEMENT &&
+            EXPR_CODE(statement) != F03_CLASSIS_STATEMENT) {
+            continue;
+        }
+
+        tq = EXPR_ARG1(statement)?EXPV_TYPE(EXPR_ARG1(statement)):NULL;
+
+        if (tp == NULL && tq == NULL) {
+            error_at_node(x, "duplicate CLASS DEFAULT");
+            return;
+        }
+
+        if (tp == NULL || tq == NULL) {
+            continue;
+        }
+
+        if (EXPR_CODE(x) == EXPR_CODE(statement)) {
+            if (IS_STRUCT_TYPE(tp) && IS_STRUCT_TYPE(tq)) {
+                TYPE_DESC btp, btq;
+                btp = get_bottom_ref_type(tp);
+                btq = get_bottom_ref_type(tq);
+                if (type_is_strict_compatible(tp, tq) && TYPE_TAGNAME(btp) == TYPE_TAGNAME(btq)) {
+                    error_at_node(x, "duplicate derived-types in SELECT TYPE construct");
+                }
+            } else if (type_is_strict_compatible(tp, tq)) {
+                error_at_node(x, "duplicate types in SELECT TYPE construct");
+                return;
+            }
+        }
     }
 }

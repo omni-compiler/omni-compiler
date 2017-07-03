@@ -2259,18 +2259,23 @@ public class XfDecompileDomVisitor {
             XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
 
             String kind = XmDomUtil.getAttr(n, "kind");
-            String type = XmDomUtil.getAttr(n, "type");
+            String typeId = XmDomUtil.getAttr(n, "type");
             if(kind.equals("CLASS_DEFAULT")){
                 writer.writeToken("CLASS DEFAULT");
             } else {
-                String typeName = typeManager.getAliasTypeName(type);
                 if(kind.equals("CLASS_IS")){
                     writer.writeToken("CLASS IS");
                 } else if(kind.equals("TYPE_IS")){
                     writer.writeToken("TYPE IS");
                 }
                 writer.writeToken(" ( ");
-                writer.writeToken(typeName);
+                XfType type = XfType.getTypeIdFromXcodemlTypeName(typeId);
+                if (type.isPrimitive()) {
+                    writer.writeToken(type.fortranName());
+                } else {
+                    XfTypeManagerForDom.TypeList typeList = getTypeList(typeId);
+                    _writeTopType(typeList, false);
+                }
                 writer.writeToken(" ) ");
             }
 
