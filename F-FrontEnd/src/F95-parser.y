@@ -177,6 +177,7 @@ state 2058
 %token FORMATTED
 %token UNFORMATTED
 %token FINAL
+%token FLUSH
 %token ABSTRACT
 
 /* Coarray keywords #060 */
@@ -2016,6 +2017,10 @@ io_statement:
         { $$ = list1(F_REWIND_STATEMENT,$2); }
         | INQUIRE '(' ctl_list ')' io_list_or_null
         { $$ = list2(F_INQUIRE_STATEMENT,$3, $5); }
+        | FLUSH '(' ctl_list ')'
+        { $$ = list1(F03_FLUSH_STATEMENT,$3); }
+        | FLUSH CONSTANT
+        { $$ = list1(F03_FLUSH_STATEMENT,list1(LIST,$2)); }
         ;
 
 ctl_list: io_clause

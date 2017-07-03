@@ -875,6 +875,7 @@ extern void     compile_CLOSE_statement _ANSI_ARGS_((expr x));
 extern void     compile_FPOS_statement _ANSI_ARGS_((expr x));
 extern void     compile_INQUIRE_statement _ANSI_ARGS_((expr x));
 extern void     compile_NAMELIST_decl _ANSI_ARGS_((expr x));
+extern void     compile_FLUSH_statement _ANSI_ARGS_((expr x));
 
 extern void     compile_INTRINSIC_decl _ANSI_ARGS_((expr id_list));
 extern void     compile_SAVE_decl _ANSI_ARGS_((expr id_list));

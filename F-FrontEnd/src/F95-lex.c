@@ -3909,6 +3909,7 @@ struct keyword_token keywords[ ] =
     { "external",       EXTERNAL  },
     { "extends",        EXTENDS  },      /* F2003 spec */
     { "final",          FINAL },         /* F2003 spec */
+    { "flush",          FLUSH },         /* F2003 spec */
     { "format",         FORMAT  },
     { "formatted",      FORMATTED  },    /* F2003 spec */
     { "function",       FUNCTION  },

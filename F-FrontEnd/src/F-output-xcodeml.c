@@ -156,6 +156,8 @@ xtag(enum expr_code code)
     case F_REWIND_STATEMENT:        return "FrewindStatement";
     case F_INQUIRE_STATEMENT:       return "FinquireStatement";
 
+    case F03_FLUSH_STATEMENT:       return "FflushStatement";
+
     /*
      * F90/95 Pointer related
      */
@@ -2151,6 +2153,19 @@ outx_IO_statement(int l, expv v)
 
 
 /**
+ * output flush statement
+ */
+static void
+outx_FLUSH_statement(int l, expv v)
+{
+    static const char *keys[] = { "unit" };
+
+    outx_tagOfStatement(l, v);
+    outx_namedValueList(l + 1, keys, ARRAY_LEN(keys), EXPR_ARG1(v), "*");
+    outx_expvClose(l, v);
+}
+
+/**
  * output FpointerAssignExpr
  */
 static void
@@ -3588,6 +3603,8 @@ outx_expv(int l, expv v)
     case F_BACKSPACE_STATEMENT:
     case F_ENDFILE_STATEMENT:
     case F_REWIND_STATEMENT:        outx_IO_statement(l, v); break;
+
+    case F03_FLUSH_STATEMENT:       outx_FLUSH_statement(l, v); break;
 
     /*
      * F90/95 Pointer related.
