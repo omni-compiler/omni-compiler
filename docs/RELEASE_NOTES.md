@@ -1,6 +1,6 @@
 Omni Compiler Software RELEASE NOTES
 
-# ver. 1.1.3     2017/07/02
+# ver. 1.1.3     2017/07/03
 * Support square bracket in XMP/C directives.
 * Add xmpc_all_node_num(), xmpc_node_num(), xmpc_this_image(), and xmp_num_images().
 * Support -xacc=pgi option in XACC/Fortran.

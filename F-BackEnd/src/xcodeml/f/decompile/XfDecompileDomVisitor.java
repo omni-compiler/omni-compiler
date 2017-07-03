@@ -1530,6 +1530,19 @@ public class XfDecompileDomVisitor {
 
             writer.writeToken("PROCEDURE");
 
+            boolean isDeferred = XmDomUtil.getAttrBool(n, "is_deferred");
+            Node binding = XmDomUtil.getElement(n, "binding");
+
+            if (isDeferred) {
+                ArrayList<Node> nameList = XmDomUtil.collectChildNodes(binding);
+                if (nameList.size() != 1) {
+                    throw new XmTranslationException(n, "Invalid `binding' length.");
+                }
+                writer.writeToken("(");
+                writer.writeToken(XmDomUtil.getContentText(nameList.get(0)));
+                writer.writeToken(")");
+            }
+
             String pass = XmDomUtil.getAttr(n, "pass");
             if (!XfUtilForDom.isNullOrEmpty(pass)) {
                 if (pass.equals("pass")) {
@@ -1550,7 +1563,7 @@ public class XfDecompileDomVisitor {
                 writer.writeToken(",");
                 writer.writeToken("NON_OVERRIDABLE");
             }
-            if (XmDomUtil.getAttrBool(n, "is_deferred")) {
+            if (isDeferred) {
                 writer.writeToken(",");
                 writer.writeToken("DEFERRED");
             }
@@ -1568,16 +1581,17 @@ public class XfDecompileDomVisitor {
             String name = XmDomUtil.getContentText(nameNode);
             writer.writeToken(name);
 
-            writer.writeToken("=>");
+            if (!isDeferred) {
+                writer.writeToken("=>");
 
-            Node binding = XmDomUtil.getElement(n, "binding");
-            if (binding != null) {
-                ArrayList<Node> nameList = XmDomUtil.collectChildNodes(binding);
-                for (Node bindingNameNode : nameList) {
-                    if (bindingNameNode != nameList.get(0)) {
-                        writer.writeToken(",");
+                if (binding != null) {
+                    ArrayList<Node> nameList = XmDomUtil.collectChildNodes(binding);
+                    for (Node bindingNameNode : nameList) {
+                        if (bindingNameNode != nameList.get(0)) {
+                            writer.writeToken(",");
+                        }
+                        writer.writeToken(XmDomUtil.getContentText(bindingNameNode));
                     }
-                    writer.writeToken(XmDomUtil.getContentText(bindingNameNode));
                 }
             }
 
@@ -2054,22 +2068,51 @@ public class XfDecompileDomVisitor {
             _writeLineDirective(n);
 
             XmfWriter writer = _context.getWriter();
-            writer.writeToken("ALLOCATE (");
 
-            ArrayList<Node> allocNodes = XmDomUtil.collectElements(n, "alloc");
-            _invokeEnterAndWriteDelim(allocNodes, ", ");
+            String typeId = XmDomUtil.getAttr(n, "type");
 
-            String statName = XmDomUtil.getAttr(n, "stat_name");
-            if (XfUtilForDom.isNullOrEmpty(statName) == false) {
-                writer.writeToken(", ");
+            writer.writeToken("ALLOCATE");
+            writer.writeToken("(");
+
+            if (XfUtilForDom.isNullOrEmpty(typeId) == false) {
+                XfType type = XfType.getTypeIdFromXcodemlTypeName(typeId);
+                if (type.isPrimitive()) {
+                    writer.writeToken(type.fortranName());
+                } else {
+                    XfTypeManagerForDom.TypeList typeList = getTypeList(typeId);
+                    _writeTopType(typeList, false);
+                }
+                writer.writeToken("::");
+            }
+
+            ArrayList<Node> allocNodes = XmDomUtil.collectElements(n, "alloc", "allocOpt");
+            _invokeEnterAndWriteDelim(allocNodes, ",");
+
+            String keywordArg = XmDomUtil.getAttr(n, "stat_name");
+            if (XfUtilForDom.isNullOrEmpty(keywordArg) == false) {
+                writer.writeToken(",");
                 writer.writeToken("STAT = ");
-                writer.writeToken(statName);
+                writer.writeToken(keywordArg);
             }
 
             writer.writeToken(")");
             writer.setupNewLine();
         }
     }
+
+    // FallocOpt
+    class FallocOpt extends XcodeNodeVisitor {
+        @Override
+        public void enter(Node n) {
+            XmfWriter writer = _context.getWriter();
+            String kind = XmDomUtil.getAttr(n, "kind");
+            writer.writeToken(kind.toUpperCase());
+            writer.writeToken("=");
+            _invokeChildEnter(n);
+        }
+
+    }
+
 
     // FarrayConstructor
     class FarrayConstructor extends XcodeNodeVisitor {
@@ -2259,18 +2302,23 @@ public class XfDecompileDomVisitor {
             XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
 
             String kind = XmDomUtil.getAttr(n, "kind");
-            String type = XmDomUtil.getAttr(n, "type");
+            String typeId = XmDomUtil.getAttr(n, "type");
             if(kind.equals("CLASS_DEFAULT")){
                 writer.writeToken("CLASS DEFAULT");
             } else {
-                String typeName = typeManager.getAliasTypeName(type);
                 if(kind.equals("CLASS_IS")){
                     writer.writeToken("CLASS IS");
                 } else if(kind.equals("TYPE_IS")){
                     writer.writeToken("TYPE IS");
                 }
                 writer.writeToken(" ( ");
-                writer.writeToken(typeName);
+                XfType type = XfType.getTypeIdFromXcodemlTypeName(typeId);
+                if (type.isPrimitive()) {
+                    writer.writeToken(type.fortranName());
+                } else {
+                    XfTypeManagerForDom.TypeList typeList = getTypeList(typeId);
+                    _writeTopType(typeList, false);
+                }
                 writer.writeToken(" ) ");
             }
 
@@ -2632,14 +2680,14 @@ public class XfDecompileDomVisitor {
             XmfWriter writer = _context.getWriter();
             writer.writeToken("DEALLOCATE (");
 
-            ArrayList<Node> allocNodes = XmDomUtil.collectElements(n, "alloc");
-            _invokeEnterAndWriteDelim(allocNodes, ", ");
+            ArrayList<Node> allocNodes = XmDomUtil.collectElements(n, "alloc", "allocOpt");
+            _invokeEnterAndWriteDelim(allocNodes, ",");
 
-            String statName = XmDomUtil.getAttr(n, "stat_name");
-            if (XfUtilForDom.isNullOrEmpty(statName) == false) {
-                writer.writeToken(", ");
+            String keywordArg = XmDomUtil.getAttr(n, "stat_name");
+            if (XfUtilForDom.isNullOrEmpty(keywordArg) == false) {
+                writer.writeToken(",");
                 writer.writeToken("STAT = ");
-                writer.writeToken(statName);
+                writer.writeToken(keywordArg);
             }
 
             writer.writeToken(")");
@@ -3687,6 +3735,12 @@ public class XfDecompileDomVisitor {
 
             String interfaceName = XmDomUtil.getAttr(n, "name");
             String isDefinedIo = XmDomUtil.getAttr(n, "is_defined_io");
+            boolean isAbstract = XmDomUtil.getAttrBool(n, "is_abstract");
+
+            if (isAbstract) {
+                writer.writeToken("ABSTRACT");
+            }
+
             writer.writeToken("INTERFACE");
             if (!XfUtilForDom.isNullOrEmpty(isDefinedIo)) {
                 isDefinedIo = isDefinedIo.toUpperCase();
@@ -5037,6 +5091,11 @@ public class XfDecompileDomVisitor {
 
             XmfWriter writer = _context.getWriter();
             writer.writeToken("TYPE");
+
+            if (XmDomUtil.getAttrBool(structTypeNode, "is_abstract")) {
+                writer.writeToken(",");
+                writer.writeToken("ABSTRACT");
+            }
 
             String parentTypeId = XmDomUtil.getAttr(structTypeNode, "extends");
             if (parentTypeId != null) {
@@ -7059,6 +7118,7 @@ public class XfDecompileDomVisitor {
         new Pair("exprStatement", new ExprStatementVisitor()),
         new Pair("externDecl", new ExternDeclVisitor()),
         new Pair("FallocateStatement", new FallocateStatement()),
+        new Pair("allocOpt", new FallocOpt()),
         new Pair("FarrayConstructor", new FarrayConstructor()),
         new Pair("FarrayRef", new FarrayRefVisitor()),
         new Pair("FcoArrayRef", new FcoArrayRefVisitor()),

@@ -1490,6 +1490,16 @@ expv_assignment(expv v1, expv v2)
         error("incompatible type in assignment.");
         return NULL;
     }
+    if (IS_PROCEDURE_TYPE(EXPV_TYPE(v1)) &&
+        FUNCTION_TYPE_IS_TYPE_BOUND(EXPV_TYPE(v1))) {
+            error("lhs expr is type bound procedure.");
+            return NULL;
+    }
+    if (IS_PROCEDURE_TYPE(EXPV_TYPE(v2)) &&
+        FUNCTION_TYPE_IS_TYPE_BOUND(EXPV_TYPE(v2))) {
+            error("rhs expr is type bound procedure.");
+            return NULL;
+    }
 
     if (TYPE_IS_RESHAPED(tp2) == FALSE &&
         EXPR_CODE(v2) != F95_ARRAY_CONSTRUCTOR &&
@@ -2311,6 +2321,11 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
                 EXPV_TYPE(ID_ADDR(f_id)) = ID_TYPE(f_id);
             }
 
+            if (TYPE_IS_ABSTRACT(ID_TYPE(f_id))) {
+                error("'%s' is abstract", ID_NAME(f_id));
+                goto err;
+            }
+
             TYPE_SET_USED_EXPLICIT(tp);
             if (FUNCTION_TYPE_RETURN_TYPE(tp) != NULL &&
                 TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) == TYPE_UNKNOWN) {
@@ -2623,8 +2638,10 @@ get_struct_members(TYPE_DESC struct_tp)
 }
 
 
-static int
-compile_struct_constructor_components(ID struct_id, TYPE_DESC struct_tp, expr args, expv components)
+static expv
+compile_struct_constructor_with_components(const ID struct_id,
+                                           const TYPE_DESC stp,
+                                           const expr args)
 {
     int has_keyword = FALSE;
     list lp;
@@ -2632,16 +2649,16 @@ compile_struct_constructor_components(ID struct_id, TYPE_DESC struct_tp, expr ar
     ID match = NULL;
     SYMBOL sym;
     expv v;
+    expv result, components;
+    TYPE_DESC tp;
+    components = list0(LIST);
+    result = list2(F95_STRUCT_CONSTRUCTOR, NULL, components);
 
     // Check PRIVATE components
     // (PRIVATE works if the derived type is use-associated)
     int is_use_associated = ID_USEASSOC_INFO(struct_id) != NULL;
 
-    if (struct_tp == NULL) {
-        struct_tp = ID_TYPE(struct_id);
-    }
-
-    members = get_struct_members(struct_tp);
+    members = get_struct_members(stp?:ID_TYPE(struct_id));
     cur = members;
 
     FOR_ITEMS_IN_LIST(lp, args) {
@@ -2658,12 +2675,12 @@ compile_struct_constructor_components(ID struct_id, TYPE_DESC struct_tp, expr ar
             // check keyword is duplicate
             if (find_ident_head(sym, used) != NULL) {
                 error("member'%s' is already specified", SYM_NAME(sym));
-                return FALSE;
+                return NULL;
             }
 
             if ((match = find_ident_head(sym, members)) == NULL) {
                 error("'%s' is not member", SYM_NAME(sym));
-                return FALSE;
+                return NULL;
             }
         } else {
             sym = NULL;
@@ -2671,12 +2688,12 @@ compile_struct_constructor_components(ID struct_id, TYPE_DESC struct_tp, expr ar
             if (has_keyword == TRUE) {
                 // KEYWORD connot be ommit after KEYWORD-ed arg
                 error("KEYWORD connot be ommited after the component with a keyword");
-                return FALSE;
+                return NULL;
             }
 
             if (cur == NULL) {
                 error("unexpected member");
-                return FALSE;
+                return NULL;
             }
 
             match = cur;
@@ -2688,7 +2705,7 @@ compile_struct_constructor_components(ID struct_id, TYPE_DESC struct_tp, expr ar
              !(TYPE_IS_PUBLIC(match) ||
                TYPE_IS_PUBLIC(ID_TYPE(match))))) {
             error("accessing a private component");
-            return FALSE;
+            return NULL;
         }
 
         v = compile_expression(arg);
@@ -2696,7 +2713,7 @@ compile_struct_constructor_components(ID struct_id, TYPE_DESC struct_tp, expr ar
         if (!type_is_compatible_for_assignment(ID_TYPE(match),
                                                EXPV_TYPE(v))) {
             error("type is not applicable in struct constructor");
-            return FALSE;
+            return NULL;
         }
 
         if (!has_keyword) {
@@ -2708,15 +2725,26 @@ compile_struct_constructor_components(ID struct_id, TYPE_DESC struct_tp, expr ar
         list_put_last(components, v);
     }
 
-    // check not initialized type parameters
+    /*
+     * check all members are initialized
+     */
     FOREACH_ID(ip, members) {
-        if (ID_CLASS(ip) != CL_TYPE_BOUND_PROC && !VAR_INIT_VALUE(ip)) {
+        if (ID_CLASS(ip) != CL_TYPE_BOUND_PROC && (
+                !VAR_INIT_VALUE(ip) &&
+                !TYPE_IS_ALLOCATABLE(ID_TYPE(ip)))) {
             error("member %s is not initialized", ID_NAME(ip));
-            return FALSE;
         }
     }
-    return TRUE;
 
+    if (TYPE_REF(stp)) {
+        tp = stp;
+    } else {
+        tp = wrap_type(stp);
+    }
+
+    EXPV_TYPE(result) = tp;
+
+    return result;
 }
 
 
@@ -2734,6 +2762,9 @@ compile_struct_constructor(ID struct_id, expr type_param_args, expr args)
 
     base_stp = find_struct_decl(ID_SYM(struct_id));
     assert(EXPV_TYPE(result) != NULL);
+    if (TYPE_IS_ABSTRACT(base_stp)) {
+        error("abstract type in an derived-type constructor");
+    }
 
     if (type_param_args) {
         tp = type_apply_type_parameter(base_stp, type_param_args);
@@ -2746,12 +2777,9 @@ compile_struct_constructor(ID struct_id, expr type_param_args, expr args)
         tp = base_stp;
     }
 
-    if(args) {
+    if (args) {
         EXPV_LINE(result) = EXPR_LINE(args);
-        if (!compile_struct_constructor_components(struct_id, tp,
-                                                   args, component)) {
-            return NULL;
-        }
+        return compile_struct_constructor_with_components(struct_id, tp, args);
     }
 
     if (tp == base_stp) {
@@ -2786,6 +2814,10 @@ compile_args(expr args)
                 error("an ambiguous reference to symbol '%s'", ID_NAME(id));
                 continue;
             }
+            if (type_is_nopolymorphic_abstract(ID_TYPE(id))) {
+                error("an abstract interface '%s' in the actual argument", ID_NAME(id));
+            }
+
             switch (ID_CLASS(id)) {
             case CL_PROC:
             case CL_ENTRY:
@@ -3121,11 +3153,15 @@ compile_array_constructor(expr x)
 
     l = list0(LIST);
     if ((base_type = compile_type(EXPR_ARG2(x), /*allow_predecl=*/FALSE)) != NULL) {
+        if (type_is_nopolymorphic_abstract(base_type)) {
+            error("abstract type in an array constructor");
+        }
         elem_type = get_basic_type(base_type);
         res = list1(F03_TYPED_ARRAY_CONSTRUCTOR, l);
     } else {
         res = list1(F95_ARRAY_CONSTRUCTOR, l);
     }
+
 
     FOR_ITEMS_IN_LIST(lp, EXPR_ARG1(x)) {
         nElems++;
