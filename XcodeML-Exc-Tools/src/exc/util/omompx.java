@@ -229,7 +229,7 @@ public class omompx
         ACC.platform = ACC.Platform.valueOf(n);
       } else if (arg.startsWith("-device=")){
         String n = arg.substring("-device=".length());
-        ACC.device = AccDevice.valueOf(n);
+        ACC.device = AccDevice.getDevice(n);
       } else if(arg.startsWith("-")){
         error("unknown option " + arg);
       } else if(inXmlFile == null) {
@@ -433,7 +433,7 @@ public class omompx
         switch(ACC.platform){
           case CUDA:
           case OpenCL:
-            ACC.device = AccDevice.Fermi;
+            ACC.device = AccDevice.getDevice("Fermi");
             break;
         }
       }
