@@ -1141,6 +1141,17 @@ type_is_strict_compatible(TYPE_DESC left, TYPE_DESC right)
 }
 
 
+int
+type_is_compatible_for_allocation(TYPE_DESC left, TYPE_DESC right)
+{
+    return type_is_compatible(left, right,
+                              /*is_strict=*/TRUE,
+                              /*for_argument=*/FALSE,
+                              /*for_assignment=*/FALSE,
+                              /*is_pointer_assignment=*/TRUE);
+}
+
+
 static int
 function_type_is_compatible0(const TYPE_DESC ftp1, const TYPE_DESC ftp2,
                              int override, int assignment)

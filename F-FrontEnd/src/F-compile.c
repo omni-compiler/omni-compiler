@@ -6176,14 +6176,16 @@ isVarSetTypeAttr(expv v, uint32_t typeAttrFlags)
 extern int is_in_alloc;
 
 static void
-compile_ALLOCATE_DEALLOCATE_statement (expr x)
+compile_ALLOCATE_DEALLOCATE_statement(expr x)
 {
     /* (F95_ALLOCATE_STATEMENT args) */
     expr r, kwd;
-    expv args, v, vstat = NULL;
+    expv args, v, vstat = NULL, vmold = NULL, vsource = NULL, verrmsg = NULL;
     list lp;
     enum expr_code code = EXPR_CODE(x);
-    expv tmpAssignV = NULL;
+
+    expr type = EXPR_HAS_ARG2(x)?EXPR_ARG2(x):NULL;
+    TYPE_DESC tp = NULL;
 
     int isImageControlStatement = FALSE;
 
@@ -6193,33 +6195,80 @@ compile_ALLOCATE_DEALLOCATE_statement (expr x)
 
         if(EXPR_CODE(r) == F_SET_EXPR) {
             kwd = EXPR_ARG1(r);
-            if(vstat || EXPR_CODE(kwd) != IDENT ||
-                strcmp(SYM_NAME(EXPR_SYM(kwd)), "stat") != 0) {
+            if(EXPR_CODE(kwd) != IDENT ||
+               (strcmp(SYM_NAME(EXPR_SYM(kwd)), "stat") != 0 &&
+                strcmp(SYM_NAME(EXPR_SYM(kwd)), "mold") != 0 &&
+                strcmp(SYM_NAME(EXPR_SYM(kwd)), "errmsg") != 0 &&
+                strcmp(SYM_NAME(EXPR_SYM(kwd)), "source") != 0)) {
                 error("invalid keyword list");
                 break;
             }
-            vstat = compile_expression(EXPR_ARG2(r));
-            if(vstat == NULL || (EXPR_CODE(vstat) != F_VAR &&
-				 EXPR_CODE(vstat) != ARRAY_REF &&
-				 EXPR_CODE(vstat) != F95_MEMBER_REF)){
-                error("invalid status variable");
-            } else if(IS_INT(EXPV_TYPE(vstat)) == FALSE) {
-                error("status variable is not a integer type");
-            }
-            if (EXPR_CODE(vstat) != F_VAR) {
-                expv orgStat = vstat;
-                vstat = allocate_temp(type_INT);
-                tmpAssignV = expv_assignment(orgStat, vstat);
+            v = compile_expression(EXPR_ARG2(r));
+            if (strcmp(SYM_NAME(EXPR_SYM(kwd)), "stat") == 0) {
+
+                if (vstat != NULL) {
+                    error("duplicate stat keyword");
+                }
+
+                vstat = compile_expression(v);
+
+                if (vstat == NULL || (EXPR_CODE(vstat) != F_VAR &&
+                                      EXPR_CODE(vstat) != ARRAY_REF &&
+                                      EXPR_CODE(vstat) != F95_MEMBER_REF)){
+                    error("invalid status variable");
+                }
+
+            } else if (strcmp(SYM_NAME(EXPR_SYM(kwd)), "mold") == 0) {
+                if (code == F95_DEALLOCATE_STATEMENT) {
+                    error("MOLD keyword argument in DEALLOCATE statement");
+                }
+
+                if (vmold != NULL) {
+                    error("duplicate mold keyword");
+                }
+
+                vmold = compile_expression(v);
+
+            } else if (strcmp(SYM_NAME(EXPR_SYM(kwd)), "source") == 0) {
+                if (code == F95_DEALLOCATE_STATEMENT) {
+                    error("SOURCE keyword argument in DEALLOCATE statement");
+                }
+
+                if (vsource != NULL) {
+                    error("duplicate source keyword");
+                }
+
+                vsource = compile_expression(v);
+
+            } else if (strcmp(SYM_NAME(EXPR_SYM(kwd)), "errmsg") == 0) {
+                if (verrmsg != NULL) {
+                    error("duplicate errmsg keyword");
+                }
+
+                verrmsg = compile_expression(v);
+
+                if (verrmsg == NULL || (EXPR_CODE(verrmsg) != F_VAR &&
+                                        EXPR_CODE(verrmsg) != ARRAY_REF &&
+                                        EXPR_CODE(verrmsg) != F95_MEMBER_REF)){
+                    error("invalid errmsg variable");
+
+                }
+                
+                if(IS_CHAR(EXPV_TYPE(verrmsg)) == FALSE) {
+                    error("errmsg variable is not a scala character type");
+                }
+
+
             }
         } else {
-            if(vstat) {
-                error("syntax error after status variable");
+            if (vstat || vmold || vsource || verrmsg) {
+                error("non-keyword arguments after keyword arguments");
                 continue;
             }
 
-	    is_in_alloc = TRUE;
+            is_in_alloc = TRUE;
             expv ev = compile_lhs_expression(r);
-	    is_in_alloc = FALSE;
+            is_in_alloc = FALSE;
 
             if (ev == NULL)
                 continue;
@@ -6232,7 +6281,7 @@ compile_ALLOCATE_DEALLOCATE_statement (expr x)
             case F95_MEMBER_REF:
             case F_VAR:
             case ARRAY_REF:
-	    case XMP_COARRAY_REF:
+                case XMP_COARRAY_REF:
                 if(isVarSetTypeAttr(ev,
                     TYPE_ATTR_POINTER | TYPE_ATTR_ALLOCATABLE) == FALSE) {
                     error("argument is not a pointer nor allocatable type");
@@ -6252,12 +6301,43 @@ compile_ALLOCATE_DEALLOCATE_statement (expr x)
     if (isImageControlStatement && !check_image_control_statement_available())
         return;
 
-    v = expv_cons(code, NULL, args, vstat);
+    if (type) {
+        tp = compile_type(type, /*allow_predecl=*/FALSE);
+    }
+
+    /*
+     * Now check type for allocation
+     */
+
+    FOR_ITEMS_IN_LIST(lp, args) {
+        if (tp) {
+            if (type_is_compatible_for_allocation(EXPV_TYPE(LIST_ITEM(lp)),
+                                                  tp)) {
+                error("type incompatible");
+                return;
+            }
+        }
+        if (vsource) {
+            if (type_is_compatible_for_allocation(EXPV_TYPE(LIST_ITEM(lp)),
+                                                  EXPV_TYPE(vsource))) {
+                error("type incompatible");
+                return;
+            }
+        }
+        if (vmold) {
+            if (type_is_compatible_for_allocation(EXPV_TYPE(LIST_ITEM(lp)),
+                                                  EXPV_TYPE(vmold))) {
+                return;
+                error("type incompatible");
+            }
+        }
+    }
+
+    v = expv_cons(code, NULL, args, list4(LIST, vstat, vmold, vsource, verrmsg));
+    EXPV_TYPE(v) = tp;
+
     EXPV_LINE(v) = EXPR_LINE(x);
     output_statement(v);
-    if (tmpAssignV != NULL) {
-        output_statement(tmpAssignV);
-    }
 }
 
 

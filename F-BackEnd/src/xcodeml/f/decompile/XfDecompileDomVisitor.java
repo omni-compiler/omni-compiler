@@ -2054,22 +2054,51 @@ public class XfDecompileDomVisitor {
             _writeLineDirective(n);
 
             XmfWriter writer = _context.getWriter();
-            writer.writeToken("ALLOCATE (");
 
-            ArrayList<Node> allocNodes = XmDomUtil.collectElements(n, "alloc");
-            _invokeEnterAndWriteDelim(allocNodes, ", ");
+            String typeId = XmDomUtil.getAttr(n, "type");
 
-            String statName = XmDomUtil.getAttr(n, "stat_name");
-            if (XfUtilForDom.isNullOrEmpty(statName) == false) {
-                writer.writeToken(", ");
+            writer.writeToken("ALLOCATE");
+            writer.writeToken("(");
+
+            if (XfUtilForDom.isNullOrEmpty(typeId) == false) {
+                XfType type = XfType.getTypeIdFromXcodemlTypeName(typeId);
+                if (type.isPrimitive()) {
+                    writer.writeToken(type.fortranName());
+                } else {
+                    XfTypeManagerForDom.TypeList typeList = getTypeList(typeId);
+                    _writeTopType(typeList, false);
+                }
+                writer.writeToken("::");
+            }
+
+            ArrayList<Node> allocNodes = XmDomUtil.collectElements(n, "alloc", "allocOpt");
+            _invokeEnterAndWriteDelim(allocNodes, ",");
+
+            String keywordArg = XmDomUtil.getAttr(n, "stat_name");
+            if (XfUtilForDom.isNullOrEmpty(keywordArg) == false) {
+                writer.writeToken(",");
                 writer.writeToken("STAT = ");
-                writer.writeToken(statName);
+                writer.writeToken(keywordArg);
             }
 
             writer.writeToken(")");
             writer.setupNewLine();
         }
     }
+
+    // FallocOpt
+    class FallocOpt extends XcodeNodeVisitor {
+        @Override
+        public void enter(Node n) {
+            XmfWriter writer = _context.getWriter();
+            String kind = XmDomUtil.getAttr(n, "kind");
+            writer.writeToken(kind.toUpperCase());
+            writer.writeToken("=");
+            _invokeChildEnter(n);
+        }
+
+    }
+
 
     // FarrayConstructor
     class FarrayConstructor extends XcodeNodeVisitor {
@@ -2637,14 +2666,14 @@ public class XfDecompileDomVisitor {
             XmfWriter writer = _context.getWriter();
             writer.writeToken("DEALLOCATE (");
 
-            ArrayList<Node> allocNodes = XmDomUtil.collectElements(n, "alloc");
-            _invokeEnterAndWriteDelim(allocNodes, ", ");
+            ArrayList<Node> allocNodes = XmDomUtil.collectElements(n, "alloc", "allocOpt");
+            _invokeEnterAndWriteDelim(allocNodes, ",");
 
-            String statName = XmDomUtil.getAttr(n, "stat_name");
-            if (XfUtilForDom.isNullOrEmpty(statName) == false) {
-                writer.writeToken(", ");
+            String keywordArg = XmDomUtil.getAttr(n, "stat_name");
+            if (XfUtilForDom.isNullOrEmpty(keywordArg) == false) {
+                writer.writeToken(",");
                 writer.writeToken("STAT = ");
-                writer.writeToken(statName);
+                writer.writeToken(keywordArg);
             }
 
             writer.writeToken(")");
@@ -7051,6 +7080,7 @@ public class XfDecompileDomVisitor {
         new Pair("exprStatement", new ExprStatementVisitor()),
         new Pair("externDecl", new ExternDeclVisitor()),
         new Pair("FallocateStatement", new FallocateStatement()),
+        new Pair("allocOpt", new FallocOpt()),
         new Pair("FarrayConstructor", new FarrayConstructor()),
         new Pair("FarrayRef", new FarrayRefVisitor()),
         new Pair("FcoArrayRef", new FcoArrayRefVisitor()),
