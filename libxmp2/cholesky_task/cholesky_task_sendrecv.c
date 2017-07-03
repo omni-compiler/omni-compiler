@@ -9,6 +9,12 @@
 #include "cholesky.h"
 #include "tasklet.h"
 
+//#define USE_HBW 1
+
+#ifdef USE_HBW
+#include <hbwmalloc.h>
+#endif
+
 static int mype, np;
 
 void task_potrf(void **args);
@@ -447,19 +453,27 @@ int main(int argc, char* argv[])
     get_block_rank(nt, block_rank);
 
     double *A[nt][nt], *B, *C[nt];
-
+#ifdef USE_HBW
+    for (int i = 0; i < nt; i++) {
+        for (int j = 0; j < nt; j++) {
+            if (block_rank[i*nt+j] == mype) {
+                hbw_posix_memalign((void **) &A[i][j], 64, ts * ts * sizeof(double));
+            }
+        }
+        hbw_posix_memalign((void **) &C[i], 64, ts * ts * sizeof(double));
+    }
+    hbw_posix_memalign((void **) &B, 64, ts * ts * sizeof(double));
+#else
     for (int i = 0; i < nt; i++) {
         for (int j = 0; j < nt; j++) {
             if (block_rank[i*nt+j] == mype) {
                 A[i][j] = (double *) malloc(ts * ts * sizeof(double));
-                assert(A[i][j] != NULL);
             }
         }
         C[i] = (double *) malloc(ts * ts * sizeof(double));
-        assert(C[i] != NULL);
     }
     B = (double *) malloc(ts * ts * sizeof(double));
-    assert(B != NULL);
+#endif
 
     convert_to_blocks_per_rank(ts, nt, n, (double(*)[n]) original_matrix, A, block_rank, mype);
 
@@ -498,7 +512,17 @@ int main(int argc, char* argv[])
       printf("test:%s-%d-%d:np:%2d:mype:%2d:threads:%2d:result:%s:gflops:%f:time:%f\n", 
 	     argv[0], n, ts, np, mype, _xmp_num_xstreams, result[check], gflops, t2);
     }
-
+#ifdef USE_HBW
+    for (int i = 0; i < nt; i++) {
+        for (int j = 0; j < nt; j++) {
+            if (block_rank[i*nt+j] == mype) {
+                hbw_free(A[i][j]);
+            }
+        }
+        hbw_free(C[i]);
+    }
+    hbw_free(B);
+#else
     for (int i = 0; i < nt; i++) {
         for (int j = 0; j < nt; j++) {
             if (block_rank[i*nt+j] == mype) {
@@ -508,6 +532,7 @@ int main(int argc, char* argv[])
         free(C[i]);
     }
     free(B);
+#endif
     free(block_rank);
     free(original_matrix);
 
