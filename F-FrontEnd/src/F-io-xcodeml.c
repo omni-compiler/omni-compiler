@@ -366,6 +366,21 @@ compile_NAMELIST_decl(x)
 
 
 void
+compile_WAIT_statement(expr x)
+{
+    expr v, callArgs;
+
+    if (EXPV_CODE(EXPR_ARG1(x)) != LIST) {
+        fatal("syntax error in WAIT");
+    }
+
+    callArgs = compile_io_arguments(EXPR_ARG1(x));
+    v = expv_cons(F03_WAIT_STATEMENT, NULL, callArgs, NULL);
+    output_statement(v);
+    return;
+}
+
+void
 compile_FLUSH_statement(expr x)
 {
     list lp;

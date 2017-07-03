@@ -107,6 +107,7 @@ state 2058
 %token REWIND_P
 %token POINTER
 %token VOLATILE
+%token ASYNCHRONOUS
 
 /* F95 keywords */
 %token ENDPROGRAM
@@ -177,6 +178,7 @@ state 2058
 %token FORMATTED
 %token UNFORMATTED
 %token FINAL
+%token WAIT
 %token FLUSH
 %token ABSTRACT
 
@@ -516,7 +518,7 @@ static void type_spec_done();
 %type <val> do_spec arg arg_list parenthesis_arg_list image_selector cosubscript_list
 %type <val> parenthesis_arg_list_or_null
 %type <val> set_expr
-%type <val> io_statement format_spec ctl_list io_clause io_list_or_null io_list io_item
+%type <val> io_statement format_spec ctl_list io_clause io_list_or_null io_list io_item wait_spec_list wait_spec
 %type <val> IDENTIFIER CONSTANT const kind_parm GENERIC_SPEC USER_DEFINED_OP type_bound_generic_spec formatted_or_unformatted
 %type <val> string_const_substr
 %type <val> binding_attr_list binding_attr type_bound_proc_decl_list type_bound_proc_decl
@@ -1044,6 +1046,8 @@ declaration_statement95:
         { $$ = list1(F03_IMPORT_STATEMENT, $3); }
         | VOLATILE COL2_or_null access_ident_list
         { $$ = list1(F03_VOLATILE_STATEMENT, $3); }
+        | ASYNCHRONOUS COL2_or_null access_ident_list
+        { $$ = list1(F03_ASYNCHRONOUS_STATEMENT, $3); }
         ;
 
 
@@ -1150,6 +1154,8 @@ attr_spec:
         { $$ = list0(F95_TARGET_SPEC); }
         | VOLATILE
         { $$ = list0(F03_VOLATILE_SPEC); }
+        | ASYNCHRONOUS
+        { $$ = list0(F03_ASYNCHRONOUS_SPEC); }
         | KW_KIND
         { $$ = list0(F03_KIND_SPEC); }
         | KW_LEN
@@ -2017,6 +2023,8 @@ io_statement:
         { $$ = list1(F_REWIND_STATEMENT,$2); }
         | INQUIRE '(' ctl_list ')' io_list_or_null
         { $$ = list2(F_INQUIRE_STATEMENT,$3, $5); }
+        | WAIT '(' wait_spec_list ')'
+        { $$ = list1(F03_WAIT_STATEMENT,$3); }
         | FLUSH '(' ctl_list ')'
         { $$ = list1(F03_FLUSH_STATEMENT,$3); }
         | FLUSH CONSTANT
@@ -2039,6 +2047,19 @@ io_clause:
         { $$ = list2(F_SET_EXPR,$1,NULL); }
         | IDENTIFIER '=' POWER
         { $$ = list2(F_SET_EXPR,$1,list0(F_STARSTAR)); }
+        | set_expr
+        { $$ = $1; }
+        ;
+
+wait_spec_list:
+        wait_spec
+        { $$ = list1(LIST,$1); }
+        | wait_spec_list ',' wait_spec
+        { $$ = list_put_last($1,$3); }
+        ;
+
+wait_spec:
+          CONSTANT
         | set_expr
         { $$ = $1; }
         ;
