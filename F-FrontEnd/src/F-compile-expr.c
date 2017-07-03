@@ -2638,8 +2638,10 @@ get_struct_members(TYPE_DESC struct_tp)
 }
 
 
-static int
-compile_struct_constructor_components(ID struct_id, TYPE_DESC struct_tp, expr args, expv components)
+static expv
+compile_struct_constructor_with_components(const ID struct_id,
+                                           const TYPE_DESC stp,
+                                           const expr args)
 {
     int has_keyword = FALSE;
     list lp;
@@ -2647,16 +2649,16 @@ compile_struct_constructor_components(ID struct_id, TYPE_DESC struct_tp, expr ar
     ID match = NULL;
     SYMBOL sym;
     expv v;
+    expv result, components;
+    TYPE_DESC tp;
+    components = list0(LIST);
+    result = list2(F95_STRUCT_CONSTRUCTOR, NULL, components);
 
     // Check PRIVATE components
     // (PRIVATE works if the derived type is use-associated)
     int is_use_associated = ID_USEASSOC_INFO(struct_id) != NULL;
 
-    if (struct_tp == NULL) {
-        struct_tp = ID_TYPE(struct_id);
-    }
-
-    members = get_struct_members(struct_tp);
+    members = get_struct_members(stp?:ID_TYPE(struct_id));
     cur = members;
 
     FOR_ITEMS_IN_LIST(lp, args) {
@@ -2673,12 +2675,12 @@ compile_struct_constructor_components(ID struct_id, TYPE_DESC struct_tp, expr ar
             // check keyword is duplicate
             if (find_ident_head(sym, used) != NULL) {
                 error("member'%s' is already specified", SYM_NAME(sym));
-                return FALSE;
+                return NULL;
             }
 
             if ((match = find_ident_head(sym, members)) == NULL) {
                 error("'%s' is not member", SYM_NAME(sym));
-                return FALSE;
+                return NULL;
             }
         } else {
             sym = NULL;
@@ -2686,12 +2688,12 @@ compile_struct_constructor_components(ID struct_id, TYPE_DESC struct_tp, expr ar
             if (has_keyword == TRUE) {
                 // KEYWORD connot be ommit after KEYWORD-ed arg
                 error("KEYWORD connot be ommited after the component with a keyword");
-                return FALSE;
+                return NULL;
             }
 
             if (cur == NULL) {
                 error("unexpected member");
-                return FALSE;
+                return NULL;
             }
 
             match = cur;
@@ -2703,7 +2705,7 @@ compile_struct_constructor_components(ID struct_id, TYPE_DESC struct_tp, expr ar
              !(TYPE_IS_PUBLIC(match) ||
                TYPE_IS_PUBLIC(ID_TYPE(match))))) {
             error("accessing a private component");
-            return FALSE;
+            return NULL;
         }
 
         v = compile_expression(arg);
@@ -2711,7 +2713,7 @@ compile_struct_constructor_components(ID struct_id, TYPE_DESC struct_tp, expr ar
         if (!type_is_compatible_for_assignment(ID_TYPE(match),
                                                EXPV_TYPE(v))) {
             error("type is not applicable in struct constructor");
-            return FALSE;
+            return NULL;
         }
 
         if (!has_keyword) {
@@ -2723,15 +2725,26 @@ compile_struct_constructor_components(ID struct_id, TYPE_DESC struct_tp, expr ar
         list_put_last(components, v);
     }
 
-    // check not initialized type parameters
+    /*
+     * check all members are initialized
+     */
     FOREACH_ID(ip, members) {
-        if (ID_CLASS(ip) != CL_TYPE_BOUND_PROC && !VAR_INIT_VALUE(ip)) {
+        if (ID_CLASS(ip) != CL_TYPE_BOUND_PROC && (
+                !VAR_INIT_VALUE(ip) &&
+                !TYPE_IS_ALLOCATABLE(ID_TYPE(ip)))) {
             error("member %s is not initialized", ID_NAME(ip));
-            return FALSE;
         }
     }
-    return TRUE;
 
+    if (TYPE_REF(stp)) {
+        tp = stp;
+    } else {
+        tp = wrap_type(stp);
+    }
+
+    EXPV_TYPE(result) = tp;
+
+    return result;
 }
 
 
@@ -2764,12 +2777,9 @@ compile_struct_constructor(ID struct_id, expr type_param_args, expr args)
         tp = base_stp;
     }
 
-    if(args) {
+    if (args) {
         EXPV_LINE(result) = EXPR_LINE(args);
-        if (!compile_struct_constructor_components(struct_id, tp,
-                                                   args, component)) {
-            return NULL;
-        }
+        return compile_struct_constructor_with_components(struct_id, tp, args);
     }
 
     if (tp == base_stp) {
