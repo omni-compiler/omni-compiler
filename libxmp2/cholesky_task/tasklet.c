@@ -11,6 +11,10 @@
 //#define ENABLE_PRIVATE_POOL 1
 #endif
 
+#ifdef USE_HWLOC
+#include <hwloc.h>
+#endif
+
 #define TASKLET_MAX_ARGS  20
 
 typedef struct _tasklet_list
@@ -294,9 +298,46 @@ static void ABT_error(char *msg)
     exit(1);
 }
 
+
+#ifdef USE_HWLOC
+static hwloc_topology_t topo;
+static int hwloc_ncores;
+static int hwloc_nnodes;
+void hwloc_setup(int es_num)
+{
+    /* Compact */
+    int thread_num = es_num;
+
+    hwloc_obj_t core = hwloc_get_obj_by_type(topo, HWLOC_OBJ_CORE, thread_num);
+    hwloc_cpuset_t set = hwloc_bitmap_dup(core->cpuset);
+
+    int res;
+    res = hwloc_set_cpubind(topo, set, HWLOC_CPUBIND_THREAD | HWLOC_CPUBIND_STRICT);
+    if (res) {
+        int err = errno;
+        printf("[%d] error: hwloc_set_cpubind(): %d\n", es_num, err);
+    }
+
+    res = hwloc_set_membind(topo, set, HWLOC_MEMBIND_FIRSTTOUCH, HWLOC_MEMBIND_THREAD | HWLOC_MEMBIND_STRICT);
+    if (res) {
+        int err = errno;
+        printf("[%d] error: hwloc_set_membind(): %d\n", es_num, err);
+    }
+    hwloc_bitmap_free(set);
+}
+#endif
+void thread_initialize(void *arg)
+{
+    int es_num = (int)(intptr_t)arg;
+#ifdef USE_HWLOC
+    hwloc_setup(es_num);
+#endif
+}
+
 void tasklet_initialize(int argc, char *argv[])
 {
     int i;
+    ABT_thread *threads;
 
     /* initialization */
     ABT_init(argc, argv);
@@ -351,6 +392,23 @@ void tasklet_initialize(int argc, char *argv[])
         ABT_xstream_get_rank(_xmp_ess[i],&rank);
     }
 #endif
+
+#ifdef USE_HWLOC
+    hwloc_topology_init(&topo);
+    hwloc_topology_load(topo);
+    hwloc_ncores = hwloc_get_nbobjs_by_type(topo, HWLOC_OBJ_CORE);
+    hwloc_nnodes = hwloc_get_nbobjs_by_type(topo, HWLOC_OBJ_NODE);
+#endif
+    threads = (ABT_thread *) malloc(sizeof(ABT_thread) * _xmp_num_xstreams);
+    thread_initialize(0);
+    for (i = 1; i < _xmp_num_xstreams; i++) {
+        ABT_thread_create_on_xstream(_xmp_ess[i], thread_initialize, (void *)i, ABT_THREAD_ATTR_NULL, &threads[i]);
+    }
+    for (i = 1; i < _xmp_num_xstreams; i++) {
+        ABT_thread_join(threads[i]);
+        ABT_thread_free(&threads[i]);
+    }
+    free(threads);
 
     if(ABT_mutex_create(&tasklet_g_mutex) != ABT_SUCCESS) goto err;
     if(ABT_mutex_create(&tasklet_count_mutex) != ABT_SUCCESS) goto err;

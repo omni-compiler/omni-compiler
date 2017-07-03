@@ -5,6 +5,8 @@
 
 #define USE_ABT 1
 
+//#define USE_HWLOC 1
+
 typedef void (*cfunc)(void**);
 
 void tasklet_initialize(int argc, char *argv[]);
