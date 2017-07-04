@@ -1120,10 +1120,10 @@ public class XMPtransCoarrayRun
       ( call xmpf_coarray_prolog(tag, "EX1", 3)                   ! i. )
 
         !-- find descptr_V2 and set the attributes
-        call xmpf_coarray_get_descptr(descptr_V2, V2, tag)        ! a2.
+        call xmpf_coarray_find_descptr(descptr_V2, V2, 2, "V2")   ! a2.
         call xmpf_coarray_set_corank(descptr_V2, 1)               ! m.
         call xmpf_coarray_set_codim(descptr_V2, 0)                ! m.
-        call xmpf_coarray_set_varname(descptr_V2, "V2", 2)        ! n.
+        call xmpf_coarray_set_varname(descptr_V2, 2, "V2")        ! n.
 
         ... body ...
 
@@ -1161,8 +1161,8 @@ public class XMPtransCoarrayRun
         integer(8) :: descptr_V3 = 0_8                            ! a3.
 
         // find descptr_V3 and set attributes
-        call xmpf_coarray_get_descptr(descptr_V3, V3, tag)        ! a2.
-        call xmpf_coarray_set_varname(descptr_V3, "V3", 2)        ! n.
+        call xmpf_coarray_find_descptr(descptr_V3, V3, 2, "V3")   ! a2.
+        call xmpf_coarray_set_varname(descptr_V3, 2, "V3")        ! n.
 
         ...
       end subroutine
@@ -1306,7 +1306,7 @@ public class XMPtransCoarrayRun
         call xmpf_coarray_set_corank(descptr_V3, 2)                  ! m.
         call xmpf_coarray_set_codim(descptr_V3, 0, k1, k2)           ! m.
         call xmpf_coarray_set_codim(descptr_V3, 1, 0)                ! m.
-        call xmpf_coarray_set_varname(descptr_V3, "V3", 2)           ! n.
+        call xmpf_coarray_set_varname(descptr_V3, 2, "V3")           ! n.
         call xmpf_coarray_dealloc(descptr_V3)                        ! j.
         call xmpf_syncall(V1,V4,V2,V3)                               ! p.
         if (associated(V3)) write(*,*) "yes"                         ! l2.
@@ -1336,7 +1336,7 @@ public class XMPtransCoarrayRun
         call xmpf_coarray_set_corank(descptr_V3, 2)                  ! m.
         call xmpf_coarray_set_codim(descptr_V3, 0, k1, k2)           ! m.
         call xmpf_coarray_set_codim(descptr_V3, 1, 0)                ! m.
-        call xmpf_coarray_set_varname(descptr_V3, "V3", 2)           ! n.
+        call xmpf_coarray_set_varname(descptr_V3, 2, "V3")           ! n.
         deallocate (V3)                           ! keep original    ! j4.*
         call xmpf_coarray_unregmem(descptr_V3)                       ! j4.*
 
@@ -1734,13 +1734,14 @@ public class XMPtransCoarrayRun
   //-----------------------------------------------------
   //
   private void genCallOfPrologAndEpilog() {
-    if (get_autoDealloc()) {
+    if (get_autoDealloc())
       genCallOfPrologAndEpilog_dealloc();
 
-      // perform prolog/epilog code generations
+    // perform prolog/epilog code generations if any
+    if (_prologStmts.size() > 0)
       genPrologStmts();          // stmts on the top of body
+    if (_epilogStmts.size() > 0)
       genEpilogStmts();          // stmts before RETURN- and END-stmts
-    }
   }
 
   private void genPrologStmts() {
@@ -1846,12 +1847,10 @@ public class XMPtransCoarrayRun
     Ident subr, descPtrId;
 
     for (XMPcoarray coarray: dummyLocalcoarrays) {
-      // a2. call "get_descptr(descPtr, baseAddr, tag, varname, varnamelen)"
+      // a2. call "find_descptr(descPtr, baseAddr, varnamelen, varname)"
       descPtrId = coarray.getDescPointerId();
       String varname = coarray.getName();
       args = Xcons.List(descPtrId, coarray.getIdent(),
-                        Xcons.FvarRef(getResourceTagId()),
-                        Xcons.IntConstant(coarray.isAllocatable() ? 1 : 0),
                         Xcons.IntConstant(varname.length()),
                         Xcons.FcharacterConstant(Xtype.FcharacterType,
                                                  varname, null));
@@ -2003,10 +2002,6 @@ public class XMPtransCoarrayRun
     Xobject subrCall = subrIdent.callSubroutine(actualArgs);
     subrCall.setLineNo(lineno);
 
-    /////////////////////////////
-    System.out.println("GACHA lhs.name=" + lhs.getName() + ", rhs.name="+rhs.getName());
-    System.out.println("   subrName="+subrName);
-    /////////////////////////////
     return subrCall;
   }
 

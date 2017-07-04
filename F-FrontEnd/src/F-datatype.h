@@ -128,6 +128,7 @@ typedef struct type_descriptor
 #define TYPE_ATTR_VALUE             0x01000000
 #define TYPE_ATTR_MODULE            0x02000000 /* for module function/subroutine */
 #define TYPE_ATTR_PROCEDURE         0x04000000 /* for procedure variables */
+#define TYPE_ATTR_ABSTRACT          0x08000000 /* for abstract derived-type or abstract interface */
         uint32_t type_attr_flags;
 #define TYPE_EXFLAGS_IMPLICIT       0x00000001 /* implicitly defined or not */
 #define TYPE_EXFLAGS_OVERRIDDEN     0x00000002 /* type is overridden by child */
@@ -295,6 +296,9 @@ extern TYPE_DESC basic_type_desc[];
 #define TYPE_IS_VALUE(tp)           ((tp)->attr.type_attr_flags &   TYPE_ATTR_VALUE)
 #define TYPE_SET_VALUE(tp)          ((tp)->attr.type_attr_flags |=  TYPE_ATTR_VALUE)
 #define TYPE_UNSET_VALUE(tp)        ((tp)->attr.type_attr_flags &= ~TYPE_ATTR_VALUE)
+#define TYPE_IS_ABSTRACT(tp)        ((tp)->attr.type_attr_flags &   TYPE_ATTR_ABSTRACT)
+#define TYPE_SET_ABSTRACT(tp)       ((tp)->attr.type_attr_flags |=  TYPE_ATTR_ABSTRACT)
+#define TYPE_UNSET_ABSTRACT(tp)     ((tp)->attr.type_attr_flags &= ~TYPE_ATTR_ABSTRACT)
 
 #define TYPE_EXTATTR_FLAGS(tp)      ((tp)->attr.exflags)
 #define TYPE_IS_IMPLICIT(tp)        ((tp)->attr.exflags &   TYPE_EXFLAGS_IMPLICIT)
@@ -494,14 +498,20 @@ extern TYPE_DESC basic_type_desc[];
         FOREACH_ID(mp, TYPE_TYPE_PARAMS(tp))
 
 #define FOREACH_TYPE_BOUND_PROCEDURE(/* ID */ mp, /* TYPE_DESC */ tp) \
-    FOREACH_MEMBER(mp, tp) \
-    if (ID_CLASS(mp) == CL_TYPE_BOUND_PROC && \
-        !(TBP_BINDING_ATTRS(mp) & TYPE_BOUND_PROCEDURE_IS_GENERIC))
+    FOREACH_MEMBER(mp, tp)                                            \
+    if (ID_CLASS(mp) == CL_TYPE_BOUND_PROC &&                         \
+        !(TBP_BINDING_ATTRS(mp) &                                       \
+          (TYPE_BOUND_PROCEDURE_IS_GENERIC | TYPE_BOUND_PROCEDURE_IS_FINAL)))
 
 #define FOREACH_TYPE_BOUND_GENERIC(/* ID */ mp, /* TYPE_DESC */ tp) \
-    FOREACH_MEMBER(mp, tp) \
-    if (ID_CLASS(mp) == CL_TYPE_BOUND_PROC && \
+    FOREACH_MEMBER(mp, tp)                                          \
+    if (ID_CLASS(mp) == CL_TYPE_BOUND_PROC &&                       \
         (TBP_BINDING_ATTRS(mp) & TYPE_BOUND_PROCEDURE_IS_GENERIC))
+
+#define FOREACH_TYPE_BOUND_FINAL(/* ID */ mp, /* TYPE_DESC */ tp) \
+    FOREACH_MEMBER(mp, tp)                                        \
+    if (ID_CLASS(mp) == CL_TYPE_BOUND_PROC &&                     \
+        (TBP_BINDING_ATTRS(mp) & TYPE_BOUND_PROCEDURE_IS_FINAL))
 
 #define FUNCTION_TYPE_RETURN_TYPE(tp) ((tp)->proc_info.return_type)
 #define FUNCTION_TYPE_HAS_EXPLICIT_ARGS(tp) ((tp)->proc_info.has_explicit_arguments)

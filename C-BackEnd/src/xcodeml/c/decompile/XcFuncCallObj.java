@@ -9,7 +9,7 @@ package xcodeml.c.decompile;
 import java.util.ArrayList;
 import java.util.List;
 
-import xcodeml.XmException;
+import xcodeml.util.XmException;
 import xcodeml.c.obj.XcNode;
 import xcodeml.c.util.XmcWriter;
 

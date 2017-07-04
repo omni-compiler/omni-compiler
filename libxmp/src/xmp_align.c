@@ -172,6 +172,7 @@ void _XMP_init_array_desc_NOT_ALIGNED(_XMP_array_t **adesc, _XMP_template_t *tem
     //ai->shadow_size_hi  = 0;
 
     ai->reflect_sched = NULL;
+    ai->reflect_acc_sched = NULL;
     ai->shadow_comm = NULL;
     ai->shadow_comm_size = 1;
     ai->shadow_comm_rank = _XMP_N_INVALID_RANK;

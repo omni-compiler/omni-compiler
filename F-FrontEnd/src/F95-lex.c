@@ -402,7 +402,10 @@ int is_function_statement_context()
     case KW_LOGICAL:
     case KW_REAL:
         i++;
-        if(token_history_buf[i] == '('){
+        /* SET_KIND and SET_LEN include a left parenthesis directly */
+        if(token_history_buf[i] == '(' || token_history_buf[i] == SET_KIND 
+            || token_history_buf[i] == SET_LEN) 
+        {
             plevel++;
             for(i++; i < token_history_count; i++){
                 if(token_history_buf[i] == ')') plevel--;
@@ -412,9 +415,13 @@ int is_function_statement_context()
                     break;
                 }
             }
-            if(plevel != 0) return FALSE;
+            if(plevel != 0) {
+                return FALSE;
+            }
         }
-        if(i == (token_history_count-1)) return TRUE;
+        if(i == (token_history_count-1)) {
+            return TRUE;
+        }
     }
     return FALSE;
 }
@@ -450,9 +457,18 @@ int check_ident_context(char *name)
                 }
             }
         } else { // free format
-            if (strcasecmp(name,"function") == 0 && 
-                is_function_statement_context()){
-                ret = FUNCTION;
+            if(is_function_statement_context()){
+                if (strcasecmp(name,"function") == 0) {
+                    ret = FUNCTION;
+                } else if(strcasecmp(name, "elemental") == 0) {
+                    ret = ELEMENTAL;
+                } else if(strcasecmp(name, "pure") == 0) {
+                    ret = PURE;
+                } else if(strcasecmp(name, "recursive") == 0){
+                    ret = RECURSIVE;
+                } else if (strcasecmp(name, "module") == 0) {
+                    ret = MODULE;
+                }
             }
         }
         break;
@@ -1913,9 +1929,11 @@ get_keyword_optional_blank(int class)
     case KW_TYPE:
         if(get_keyword(keywords) == KW_IS) return TYPEIS;
         break;
-    case KW_SELECT:
-        if(get_keyword(keywords) == CASE) return SELECT;
-        break;
+    case KW_SELECT: {
+        int kwd = get_keyword(keywords);
+        if(kwd == CASE) return SELECT;
+        if(kwd == KW_TYPE) return SELECTTYPE;
+    } break;
     case DO: /* DO WHILE *//* blanks mandatory.  */
         if(get_keyword(keywords) == KW_WHILE) return DOWHILE;
         break;
@@ -3830,6 +3848,7 @@ struct keyword_token dot_keywords[] =
 /* caution!: longger word should be first than short one.  */
 struct keyword_token keywords[ ] =
 {
+    { "abstract",       ABSTRACT  },     /* F2003 spec */
     { "assignment",     ASSIGNMENT  },
     { "assign",         ASSIGN  },
     { "allocatable",    ALLOCATABLE },
@@ -3860,6 +3879,7 @@ struct keyword_token keywords[ ] =
     { "double",         KW_DBL },     /* optional */
     /* { "dowhile",     DOWHILE }, *//* blanks mandatory */
     { "do",             DO },
+    { "elemental",      ELEMENTAL },
     { "elseif",         ELSEIFTHEN },
     { "elsewhere",      ELSEWHERE },
     { "else",           ELSE },
@@ -3888,7 +3908,8 @@ struct keyword_token keywords[ ] =
     { "error",          KW_ERROR },      /* #060 coarray */
     { "external",       EXTERNAL  },
     { "extends",        EXTENDS  },      /* F2003 spec */
-    { "elemental",      ELEMENTAL },
+    { "final",          FINAL },         /* F2003 spec */
+    { "flush",          FLUSH },         /* F2003 spec */
     { "format",         FORMAT  },
     { "formatted",      FORMATTED  },    /* F2003 spec */
     { "function",       FUNCTION  },
@@ -3949,6 +3970,7 @@ struct keyword_token keywords[ ] =
     { "save",           SAVE },
     { "selectcase",     SELECT },
     { "select",         KW_SELECT },
+    { "selecttype",     SELECTTYPE },  /* F2003 spec */
     { "sequence",       SEQUENCE },
     /*    { "static",   KW_STATIC },*/
     { "stop",           STOP },

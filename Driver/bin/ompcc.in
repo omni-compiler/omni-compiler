@@ -129,7 +129,7 @@ for c_file in "${c_files[@]}"; do
     FILE_IN_X=${TEMP_DIR}/"${FILE_NAME}"_in.xml
     FILE_OUT_X=${TEMP_DIR}/"${FILE_NAME}"_out.xml
 
-    omni_exec $OMNI_CX2X_CMD $OMNI_CX2X_OPT "${xcode_translator_add_opt[@]}" "${FILE_IN_X}" -o "${FILE_OUT_X}"
+    omni_exec $OMNI_CX2X_CMD $OMNI_CX2X_OPT "${xcode_translator_add_opt[@]}" "${FILE_IN_X}"
     # also create ${TEMP_DIR}/${FILE_NAME}_in.c
     omni_exec cp ${TEMP_DIR}/"${FILE_NAME}"_in.c ${TEMP_DIR}/"${FILE_NAME}".c
 done
@@ -169,6 +169,7 @@ for c_file in "${c_files[@]}"; do
 	FILE_CU=${TEMP_DIR}/"${FILE_NAME}"_pp.cu
 	if [ -e "${FILE_CU}" ]; then
 	    GPUCC_ADD_ARGS=(`omni_acc_cuda_get_args ${other_args[@]}`)
+	    GPUCC_ADD_ARGS+=("-arch=sm_`omni_acc_cuda_get_cc_version ${OPENACC_DEVICE}`")
 	    omni_acc_cuda_compile ${FILE_CU} ${FILE_O} ${GPUCC_ADD_ARGS[@]}
 	fi
     elif [ "$OPENACC_PLATFORM" = "OpenCL" ]; then

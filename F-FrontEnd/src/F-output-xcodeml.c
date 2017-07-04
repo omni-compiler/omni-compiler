@@ -4,6 +4,7 @@
 
 #include "F-front.h"
 #include "F-output-xcodeml.h"
+#include "module-manager.h"
 
 #define CHAR_BUF_SIZE 65536
 
@@ -154,6 +155,8 @@ xtag(enum expr_code code)
     case F_ENDFILE_STATEMENT:       return "FendFileStatement";
     case F_REWIND_STATEMENT:        return "FrewindStatement";
     case F_INQUIRE_STATEMENT:       return "FinquireStatement";
+
+    case F03_FLUSH_STATEMENT:       return "FflushStatement";
 
     /*
      * F90/95 Pointer related
@@ -802,6 +805,14 @@ outx_typeAttrs(int l, TYPE_DESC tp, const char *tag, int options)
             outx_print(" extends=\"%s\"", getTypeID(TYPE_PARENT_TYPE(tp)));
         }
         outx_true(TYPE_IS_CLASS(tp),            "is_class");
+
+        if (IS_STRUCT_TYPE(tp)) {
+            /*
+             * function/subroutine type can be abstract,
+             * but XcodeML schema does not allow it.
+             */
+            outx_true(TYPE_IS_ABSTRACT(tp) ,    "is_abstract");
+        }
 
         if(TYPE_HAS_BIND(tp)){
             outx_print(" bind=\"%s\"", "C"); // Only C for the moment
@@ -2142,6 +2153,19 @@ outx_IO_statement(int l, expv v)
 
 
 /**
+ * output flush statement
+ */
+static void
+outx_FLUSH_statement(int l, expv v)
+{
+    static const char *keys[] = { "unit" };
+
+    outx_tagOfStatement(l, v);
+    outx_namedValueList(l + 1, keys, ARRAY_LEN(keys), EXPR_ARG1(v), "*");
+    outx_expvClose(l, v);
+}
+
+/**
  * output FpointerAssignExpr
  */
 static void
@@ -2301,51 +2325,54 @@ outx_alloc(int l, expv v)
     outx_tag(l, "alloc");
 
     switch(EXPV_CODE(v)) {
-    case F_VAR:
-    case F95_MEMBER_REF:
-        outx_expv(l1, v);
-        break;
-    case ARRAY_REF:
-        outx_expv(l1, EXPR_ARG1(v));
-        outx_arraySpec(l1, EXPR_ARG2(v));
-        break;
-    case XMP_COARRAY_REF:
+        case F_VAR:
+        case F95_MEMBER_REF:
+            outx_expv(l1, v);
+            break;
 
-      v1 = EXPR_ARG1(v);
+        case ARRAY_REF:
+            outx_expv(l1, EXPR_ARG1(v));
+            outx_arraySpec(l1, EXPR_ARG2(v));
+            break;
 
-      switch (EXPR_CODE(v1)){
+        case XMP_COARRAY_REF: {
 
-      case F_VAR:
-      case F95_MEMBER_REF:
-        outx_expv(l1, v1);
-        break;
-      case ARRAY_REF:
-        outx_expv(l1, EXPR_ARG1(v1));
-        outx_arraySpec(l1, EXPR_ARG2(v1));
-        break;
-      default:
-	abort();
-      }
+            v1 = EXPR_ARG1(v);
 
-      outx_printi(l1, "<coShape>\n");
-      FOR_ITEMS_IN_LIST(lp, EXPR_ARG2(v)){
-	expr cobound = LIST_ITEM(lp);
-/* 	expr upper = EXPR_ARG2(cobound); */
-/* 	ARRAY_ASSUME_KIND defaultAssumeKind = ASSUMED_SHAPE; */
+            switch (EXPR_CODE(v1)){
 
-/* 	if (upper && EXPR_CODE(upper) == F_ASTERISK){ */
-/* 	  upper = NULL; */
-/* 	  defaultAssumeKind = ASSUMED_SIZE; */
-/* 	} */
+                case F_VAR:
+                case F95_MEMBER_REF:
+                    outx_expv(l1, v1);
+                    break;
+                case ARRAY_REF:
+                    outx_expv(l1, EXPR_ARG1(v1));
+                    outx_arraySpec(l1, EXPR_ARG2(v1));
+                    break;
+                default:
+                    abort();
+            }
 
-	outx_indexRange0(l+2, ASSUMED_NONE, ASSUMED_SIZE,
-			 EXPR_ARG1(cobound), EXPR_ARG2(cobound), EXPR_ARG3(cobound));
+            outx_printi(l1, "<coShape>\n");
+            FOR_ITEMS_IN_LIST(lp, EXPR_ARG2(v)) {
 
-      }
-      outx_close(l1, "coShape");
-      break;
-    default:
-        abort();
+                expr cobound = LIST_ITEM(lp);
+                /* expr upper = EXPR_ARG2(cobound); */
+                /* ARRAY_ASSUME_KIND defaultAssumeKind = ASSUMED_SHAPE; */
+                /* if (upper && EXPR_CODE(upper) == F_ASTERISK){ */
+                /*   upper = NULL; */
+                /*   defaultAssumeKind = ASSUMED_SIZE; */
+                /* } */
+
+                outx_indexRange0(l+2, ASSUMED_NONE, ASSUMED_SIZE,
+                                 EXPR_ARG1(cobound), EXPR_ARG2(cobound), EXPR_ARG3(cobound));
+
+            }
+            outx_close(l1, "coShape");
+        } break;
+
+        default:
+            abort();
     }
 
     outx_close(l, "alloc");
@@ -2359,8 +2386,9 @@ static void
 outx_allocList(int l, expv v)
 {
     list lp;
-    FOR_ITEMS_IN_LIST(lp, v)
+    FOR_ITEMS_IN_LIST(lp, v) {
         outx_alloc(l, LIST_ITEM(lp));
+    }
 }
 
 
@@ -2378,6 +2406,32 @@ outx_nullifyStatement(int l, expv v)
 }
 
 
+#if 0
+static void
+print_allocate_keyword(char * buf, expv v, const char * keyword)
+{
+    if (v) {
+        switch (EXPR_CODE(v)){
+            case F_VAR:
+                sprintf(buf, " %s=\"%s\"", keyword, SYM_NAME(EXPV_NAME(v)));
+                break;
+            case ARRAY_REF:
+                warning("cannot use array ref. in allocate/deallocate keyword specifier");
+                buf[0] = '\0';
+                break;
+            case F95_MEMBER_REF:
+                warning("cannot use member ref. in allocate/deallocate keyword specifier");
+                buf[0] = '\0';
+                break;
+            default:
+                buf[0] = '\0';
+                break;
+        }
+    }
+}
+#endif
+
+
 /**
  * output FallocateStatement/FdeallocateStatement
  */
@@ -2385,35 +2439,53 @@ static void
 outx_ALLOCDEALLOC_statement(int l, expv v)
 {
     const int l1 = l + 1;
-    char buf[128];
-    expv vstat = expr_list_get_n(v, 1);
+    const int l2 = l + 2;
 
-    if(vstat)
-      switch (EXPR_CODE(vstat)){
-      case F_VAR:
-	sprintf(buf, " stat_name=\"%s\"", SYM_NAME(EXPV_NAME(vstat)));
-	break;
-      case ARRAY_REF:
-        //error_at_node(v, "cannot use array ref. in stat specifier");
-	warning("cannot use array ref. in stat specifier");
-        buf[0] = '\0';
-	break;
-	//        exit(1);
-      case F95_MEMBER_REF:
-        //error_at_node(v, "cannot use member ref. in stat specifier");
-	warning("cannot use member ref. in stat specifier");
-        buf[0] = '\0';
-        //exit(1);
-	break;
-      default:
-        buf[0] = '\0';
-	break;
-      }
-    else
-        buf[0] = '\0';
+    expv keywords = EXPR_ARG2(v);
 
-    outx_tagOfStatement1(l, v, buf);
+    expv vstat = expr_list_get_n(keywords, 0);
+    expv vmold = expr_list_get_n(keywords, 1);
+    expv vsource = expr_list_get_n(keywords, 2);
+    expv verrmsg = expr_list_get_n(keywords, 3);
+    char type_buf[128];
+    char stat_buf[128];
+
+    const char *tid = NULL;
+
+    if (EXPV_TYPE(v)) {
+        tid = getTypeID(EXPV_TYPE(v));
+        sprintf(type_buf, " type=\"%s\"", tid);
+    } else {
+        type_buf[0] = '\0';
+    }
+
+#if 0
+    /* Deprecated */
+    print_allocate_keyword(stat_buf, vstat, "stat_name");
+#endif
+
+    outx_tagOfStatement1(l, v, type_buf, stat_buf);
     outx_allocList(l1, EXPR_ARG1(v));
+    if (vstat) {
+        outx_printi(l1,"<allocOpt kind=\"stat\">\n");
+        outx_expv(l2, vstat);
+        outx_close(l1,"allocOpt");
+    }
+    if (vsource) {
+        outx_printi(l1,"<allocOpt kind=\"source\">\n");
+        outx_expv(l2, vsource);
+        outx_close(l1,"allocOpt");
+    }
+    if (vmold) {
+        outx_printi(l1,"<allocOpt kind=\"mold\">\n");
+        outx_expv(l2, vmold);
+        outx_close(l1,"allocOpt");
+    }
+    if (verrmsg) {
+        outx_printi(l1,"<allocOpt kind=\"errmsg\">\n");
+        outx_expv(l2, verrmsg);
+        outx_close(l1,"allocOpt");
+    }
     outx_expvClose(l, v);
 }
 
@@ -3135,12 +3207,13 @@ outx_useDecl(int l, expv v, int is_intrinsic)
     } else {
         outx_tagOfDecl1(l, "%s name=\"%s\"", EXPR_LINE(v), XTAG(v), mod_name);
     }
-    
 
     FOR_ITEMS_IN_LIST(lp, EXPR_ARG2(v)) {
         expv x = LIST_ITEM(lp);
         outx_useRename(l+1, EXPR_ARG1(x), EXPR_ARG2(x));
     }
+
+    include_module_file(print_fp,EXPV_NAME(EXPR_ARG1(v)));
 
     outx_expvClose(l, v);
 }
@@ -3175,12 +3248,13 @@ outx_useOnlyDecl(int l, expv v, int is_intrinsic)
     } else {
         outx_tagOfDecl1(l, "%s name=\"%s\"", EXPR_LINE(v), XTAG(v), mod_name);
     }
-    
 
     FOR_ITEMS_IN_LIST(lp, EXPR_ARG2(v)) {
         expv x = LIST_ITEM(lp);
         outx_useRenamable(l+1, EXPR_ARG1(x), EXPR_ARG2(x));
     }
+
+    include_module_file(print_fp,EXPV_NAME(EXPR_ARG1(v)));
 
     outx_expvClose(l, v);
 }
@@ -3529,6 +3603,8 @@ outx_expv(int l, expv v)
     case F_BACKSPACE_STATEMENT:
     case F_ENDFILE_STATEMENT:
     case F_REWIND_STATEMENT:        outx_IO_statement(l, v); break;
+
+    case F03_FLUSH_STATEMENT:       outx_FLUSH_statement(l, v); break;
 
     /*
      * F90/95 Pointer related.
@@ -4438,8 +4514,15 @@ outx_structType(int l, TYPE_DESC tp)
                 }
                 outx_close(l3, "binding");
                 outx_close(l2, "typeBoundGenericProcedure");
-            } else {
 
+            } else if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_IS_FINAL) {
+                ID final;
+                FOREACH_ID(final, TBP_BINDING(id)) {
+                    outx_tag(l2, "finalProcedure");
+                    outx_tagText(l3, "name", SYM_NAME(ID_SYM(final)));
+                    outx_close(l2, "finalProcedure");
+                }
+            } else {
                 outx_printi(l2, "<typeBoundProcedure");
                 outx_printi(0, " type=\"%s\"", getTypeID(ID_TYPE(id)));
 
@@ -5242,6 +5325,9 @@ outx_interfaceDecl(int l, EXT_ID ep)
             break;
         case INTF_GENERIC_READ_UNFORMATTED:
             outx_printi(0, " is_defined_io=\"READ(UNFORMATTED)\"");
+            break;
+        case INTF_ABSTRACT:
+            outx_true(TRUE, "is_abstract");
             break;
         default:
             /* never reach. here*/

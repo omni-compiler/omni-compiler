@@ -258,6 +258,7 @@ typedef struct ident_descriptor
 #define TYPE_BOUND_PROCEDURE_READ                  0x0100
 #define TYPE_BOUND_PROCEDURE_FORMATTED             0x0200
 #define TYPE_BOUND_PROCEDURE_UNFORMATTED           0x0400
+#define TYPE_BOUND_PROCEDURE_IS_FINAL              0x0800
         } tbp_info;
         struct {
             /* for CL_MULTI */
@@ -407,6 +408,9 @@ struct use_assoc_info {
         TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_WRITE ||   \
         TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_READ))
 
+#define TBP_IS_DEFERRED(id) \
+    (ID_CLASS(id) == CL_TYPE_BOUND_PROC && \
+     TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_DEFERRED)
 
 #define MULTI_ID_LIST(id)     ((id)->info.multi_info.id_list)
 
@@ -422,8 +426,10 @@ struct interface_info {
         INTF_GENERIC_WRITE_UNFORMATTED,/* for generic 'WRITE(UNFORMATTED)' interface */
         INTF_GENERIC_READ_FORMATTED,/* for generic 'READ(FORMATTED)' interface */
         INTF_GENERIC_READ_UNFORMATTED,/* for generic 'READ(UNFORMATTED)' interface */
+        INTF_ABSTRACT,    /* for abstract interface */
         INTF_DECL         /* for interface not above cases. (interface for function prottype)*/
     } class;
+    int is_abstract;      /* TRUE if the interface is abstract */
     /* NOTE: the following members are used in the .mod->xmod tranformation tool */
     enum expr_code ecode; /* need it? */
     ID operatorId;        /* identifier of the operator */
@@ -431,6 +437,7 @@ struct interface_info {
 };
 #define INTF_OPID(ii) ((ii)->operatorId)
 #define INTF_IMPL(ii) ((ii)->idlist) /* need it? */
+#define INTF_IS_ABSTRACT(ii) ((ii)->class == INTF_ABSTRACT)
 
 enum ext_proc_class {
     EP_UNKNOWN,

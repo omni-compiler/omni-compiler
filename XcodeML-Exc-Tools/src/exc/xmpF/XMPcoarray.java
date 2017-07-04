@@ -437,6 +437,12 @@ public class XMPcoarray {
   }
   ***********************************/
 
+  public void addStmts_setCoshapeAndName(BlockList list, XMPenv env) {
+    addStmts_setCoshape(list, env);
+    Xobject subrCall = makeStmt_setVarName();
+    list.add(subrCall);
+  }
+
   public void addStmts_setCoshape(BlockList list) {
     addStmts_setCoshape(list, env);
   }

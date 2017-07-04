@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 
-import xcodeml.XmException;
+import xcodeml.util.XmException;
 import xcodeml.c.decompile.XcDecAndDefObj;
 import xcodeml.c.decompile.XcDeclObj;
 import xcodeml.c.decompile.XcDeclsObj;

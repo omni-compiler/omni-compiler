@@ -341,3 +341,19 @@ import_submodule(const SYMBOL module_name,
 {
     return import_intermediate_file(module_name, submodule_name, pmod, TRUE);
 }
+
+void include_module_file(FILE *fp, SYMBOL mod_name)
+{
+    struct module *mod;
+    FILE *mod_fp;
+    int ch;
+
+    mod = find_module(mod_name, NULL, FALSE);
+    if(mod == NULL || mod->filepath == NULL) return;
+    if((mod_fp = fopen(mod->filepath,"r")) == NULL){
+        fatal("cannon open xmod file '%s'",mod->filepath);
+    }
+    while((ch = getc(mod_fp)) != EOF)
+        putc(ch,fp);
+    return;
+}

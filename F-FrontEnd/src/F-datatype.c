@@ -337,6 +337,31 @@ type_is_class_of(TYPE_DESC derived_type, TYPE_DESC class)
 }
 
 
+/*
+ * Retrun TRUE if the type is ABSTRACT and is not polymorphic = CLASS
+ */
+int
+type_is_nopolymorphic_abstract(TYPE_DESC tp)
+{
+    TYPE_DESC btp;
+
+    if (tp == NULL || !IS_STRUCT_TYPE(tp)) {
+        return FALSE;
+    }
+
+    if (TYPE_IS_CLASS(tp)) {
+        return FALSE;
+    }
+
+    btp = get_bottom_ref_type(tp);
+
+    if (TYPE_IS_ABSTRACT(btp)) {
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
 /**
  * check type is omissible, such that
  * no attributes, no memebers, no indexRanage and so on.
@@ -586,20 +611,8 @@ find_struct_member_allow_private(TYPE_DESC struct_td, SYMBOL sym, int allow_priv
     if (!IS_STRUCT_TYPE(struct_td)) {
         return NULL;
     }
-    struct_td = getBaseParameterizedType(struct_td);
 
-    if (TYPE_PARENT(struct_td)) {
-        ID parent = TYPE_PARENT(struct_td);
-        if (ID_SYM(parent) != NULL && (strcmp(ID_NAME(parent), SYM_NAME(sym)) == 0)) {
-            member = TYPE_PARENT(struct_td);
-        }
-        if (member == NULL) {
-            member = find_struct_member_allow_private(ID_TYPE(parent), sym, allow_private_member);
-        }
-    }
-    if (member) {
-        return member;
-    }
+    struct_td = getBaseParameterizedType(struct_td);
 
     FOREACH_MEMBER(member, struct_td) {
         if (strcmp(ID_NAME(member), SYM_NAME(sym)) == 0) {
@@ -627,6 +640,17 @@ find_struct_member_allow_private(TYPE_DESC struct_td, SYMBOL sym, int allow_priv
             return member;
         }
     }
+
+    if (TYPE_PARENT(struct_td)) {
+        ID parent = TYPE_PARENT(struct_td);
+        if (ID_SYM(parent) != NULL && (strcmp(ID_NAME(parent), SYM_NAME(sym)) == 0)) {
+            return TYPE_PARENT(struct_td);
+        }
+        if (member == NULL) {
+            return find_struct_member_allow_private(ID_TYPE(parent), sym, allow_private_member);
+        }
+    }
+
     return NULL;
 }
 
@@ -1141,6 +1165,17 @@ type_is_strict_compatible(TYPE_DESC left, TYPE_DESC right)
 }
 
 
+int
+type_is_compatible_for_allocation(TYPE_DESC left, TYPE_DESC right)
+{
+    return type_is_compatible(left, right,
+                              /*is_strict=*/TRUE,
+                              /*for_argument=*/FALSE,
+                              /*for_assignment=*/FALSE,
+                              /*is_pointer_assignment=*/TRUE);
+}
+
+
 static int
 function_type_is_compatible0(const TYPE_DESC ftp1, const TYPE_DESC ftp2,
                              int override, int assignment)
@@ -1339,6 +1374,10 @@ procedure_has_pass_arg(const TYPE_DESC ftp, const SYMBOL pass_arg, const TYPE_DE
 
     /* check type */
     tp = ID_TYPE(target);
+    if (tp == NULL) {
+        return FALSE;
+    }
+
     if (type_is_unlimited_class(tp)) {
         return TRUE;
 

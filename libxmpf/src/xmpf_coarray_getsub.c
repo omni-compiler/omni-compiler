@@ -111,9 +111,10 @@ extern void xmpf_coarray_getsub_array_(void **descPtr, char **baseAddr, int *ele
   size_t offsetDMA;
   char *orgAddrDMA;
   char *nameDMA;
-  int avail_DMA;
+  BOOL avail_DMA;
 
-  descDMA = _XMPF_get_coarrayDescFromAddr(local, &orgAddrDMA, &offsetDMA, &nameDMA);
+  descDMA = XMPF_isEagerCommMode() ? NULL :
+      _XMPF_get_coarrayDescFromAddr(local, &orgAddrDMA, &offsetDMA, &nameDMA);
   avail_DMA = descDMA ? TRUE : FALSE;
 
   /*--------------------------------------*\

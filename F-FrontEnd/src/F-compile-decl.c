@@ -281,6 +281,13 @@ declare_procedure(enum name_class class,
         is_separate_definition = TRUE;
     }
 
+    if (type != NULL &&
+        ((type_is_nopolymorphic_abstract(type)) ||
+         (FUNCTION_TYPE_RETURN_TYPE(type) != NULL &&
+          type_is_nopolymorphic_abstract(FUNCTION_TYPE_RETURN_TYPE(type))))) {
+        error("%s returns ABSTRACT TYPE", s?SYM_NAME(s):"function");
+    }
+
     if (class != CL_ENTRY){
         CURRENT_PROC_CLASS = class;
         if (name) {
@@ -1570,7 +1577,9 @@ find_ident_block_parent(SYMBOL s)
     int in_block = FALSE;
 
     FOR_CTLS_BACKWARD(cp) {
-        if (CTL_TYPE(cp) == CTL_BLOCK || CTL_TYPE(cp) == CTL_FORALL) {
+        if (CTL_TYPE(cp) == CTL_BLOCK || \
+            CTL_TYPE(cp) == CTL_FORALL || \
+            CTL_TYPE(cp) == CTL_TYPE_GUARD) {
             in_block = TRUE;
             if (CTL_BLOCK_LOCAL_SYMBOLS(cp) == LOCAL_SYMBOLS) {
                 continue;
@@ -2331,7 +2340,6 @@ compile_derived_type(expr x, int allow_predecl)
         }
     }
 
-
     if(id != NULL && ID_IS_AMBIGUOUS(id)) {
         error_at_node(x, "an ambiguous reference to symbol '%s'", ID_NAME(id));
         return NULL;
@@ -2673,6 +2681,11 @@ compile_IMPLICIT_decl(expr type,expr l)
                 return;
             }
         }
+    }
+
+    if (type_is_nopolymorphic_abstract(tp)) {
+        error("abstract types in IMPLICIT statement");
+        return;
     }
 
     FOR_ITEMS_IN_LIST(lp,l){
@@ -3833,6 +3846,8 @@ compile_struct_decl(expr ident, expr type, expr type_params)
     list lp = NULL;
     int has_access_spec = FALSE;
     int has_extends_spec = FALSE;
+    int has_abstract_spec = FALSE;
+    int has_bind_spec = FALSE;
     ID last = NULL;
 
     if(ident == NULL)
@@ -3867,8 +3882,26 @@ compile_struct_decl(expr ident, expr type, expr type_params)
                     has_extends_spec = TRUE;
                 }
                 break;
+            case F03_ABSTRACT_SPEC:
+                if (has_abstract_spec) {
+                    error("Dupulicate ABSTRACT spec");
+                } else {
+                    has_abstract_spec = TRUE;
+                }
+                break;
+            case F03_BIND_SPEC:
+                if (has_bind_spec) {
+                    error("Dupulicate BIND spec");
+                } else {
+                    has_bind_spec = TRUE;
+                }
+                break;
             default:
                 break;
+        }
+
+        if (has_abstract_spec && has_bind_spec) {
+            error("non-extensible derived type should not be ABSTRACT");
         }
 
         switch(EXPR_CODE(x)) {
@@ -3903,6 +3936,9 @@ compile_struct_decl(expr ident, expr type, expr type_params)
                 TYPE_PARENT(tp) = new_ident_desc(EXPR_SYM(EXPR_ARG1(x)));
                 TYPE_PARENT_TYPE(tp) = parent_type;
             }; break;
+            case F03_ABSTRACT_SPEC:
+                TYPE_SET_ABSTRACT(tp);
+                break;
             case F03_BIND_SPEC:
                 TYPE_SET_BIND(tp);
                 break;
@@ -3958,6 +3994,33 @@ check_type_bound_generics(TYPE_DESC stp)
     }
 }
 
+/*
+ * Check the bindings of the type-bound generic appear before END TYPE statement.
+ */
+static void
+check_no_abstract_type_bound_procedure(const TYPE_DESC stp)
+{
+    ID mem;
+    ID p;
+    TYPE_DESC tp;
+
+    if (stp == NULL) {
+        return;
+    }
+
+    for (tp = stp; tp != NULL; tp = TYPE_PARENT(tp)?TYPE_PARENT_TYPE(tp):NULL) {
+        if (TYPE_IS_ABSTRACT(tp)) {
+            FOREACH_TYPE_BOUND_PROCEDURE(mem, tp) {
+                if (ID_CLASS(mem) == CL_TYPE_BOUND_PROC && TBP_IS_DEFERRED(mem)) {
+                    p = find_struct_member_allow_private(stp, ID_SYM(mem), TRUE);
+                    if (TBP_IS_DEFERRED(p)) {
+                        error("%s is not implemented", SYM_NAME(ID_SYM(mem)));
+                    }
+                }
+            }
+        }
+    }
+}
 
 /* compile end type statement */
 void
@@ -3981,6 +4044,14 @@ compile_struct_decl_end()
 
     /* check for type bound generic */
     check_type_bound_generics(stp);
+
+    if (!TYPE_IS_ABSTRACT(stp)) {
+        check_no_abstract_type_bound_procedure(stp);
+    }
+
+    if (TYPE_IS_SEQUENCE(stp) && TYPE_IS_ABSTRACT(stp)) {
+        error("non-extensible derived type should not be ABSTRACT");
+    }
 
     if (!TYPE_IS_INTERNAL_PRIVATE(stp)) {
         /*
@@ -4031,7 +4102,6 @@ compile_struct_decl_end()
             }
         }
     }
-
 
     pop_ctl();
 }
@@ -5302,6 +5372,7 @@ compile_procedure_declaration(expr x)
         if (tp == NULL) {
             error("unexpected typeq");
         }
+
         tp = function_type(tp);
 
     } else {
@@ -5370,7 +5441,6 @@ compile_procedure_declaration(expr x)
         }
 
         tp = ID_TYPE(interface);
-
     }
 
     FOR_ITEMS_IN_LIST(lp, decls) {
@@ -5543,9 +5613,18 @@ compile_type_bound_procedure(expr x)
         binding_attr_flags |= TYPE_BOUND_PROCEDURE_PASS;
     }
 
-    if ((binding_attr_flags & TYPE_BOUND_PROCEDURE_DEFERRED) != 0 &&
-        interface_name == NULL) {
-        error("DEFERRED shall appears if and only if interface_name appears.");
+    if ((binding_attr_flags & TYPE_BOUND_PROCEDURE_DEFERRED) != 0) {
+        TYPE_DESC stp;
+        if (interface_name == NULL) {
+            error("DEFERRED shall appears if and only if interface_name appears.");
+        }
+        assert(CTL_TYPE(ctl_top) == CTL_STRUCT);
+
+        stp = CTL_STRUCT_TYPEDESC(ctl_top);
+
+        if (!TYPE_IS_ABSTRACT(stp)) {
+            error("DEFERRED shall appears in ABSTRACT TYPE.");
+        }
     }
 
     if (interface_name) {
@@ -5559,7 +5638,6 @@ compile_type_bound_procedure(expr x)
         if (!(binding_attr_flags & TYPE_BOUND_PROCEDURE_DEFERRED)) {
             error_at_node(x, "require DEFERRED attribute");
         }
-        warning_at_node(x, "NOT IMPLEMENTED YET");
         FOR_ITEMS_IN_LIST(lp, bindings) {
             if (EXPR_CODE(LIST_ITEM(lp)) != IDENT) {
                 error_at_node(x, "unexpected expression");
@@ -5753,4 +5831,36 @@ compile_type_generic_procedure(expr x)
     ID_TYPE(id) = type_bound_procedure_type();
     ID_LINE(id) = EXPR_LINE(x);
     TYPE_BOUND_GENERIC_TYPE_GENERICS(ID_TYPE(id)) = TBP_BINDING(id);
+}
+
+void
+compile_FINAL_statement(expr x)
+{
+    expr id_list = EXPR_ARG1(x);
+
+    ID id = NULL;
+    ID last_ip = NULL;
+    list lp;
+
+    assert(CTL_TYPE(ctl_top) == CTL_STRUCT);
+    id = declare_ident(find_symbol(FINALIZER_PROCEDURE), CL_TYPE_BOUND_PROC);
+
+    FOR_ITEMS_IN_LIST(lp, id_list) {
+        ID binding;
+        if (EXPR_CODE(LIST_ITEM(lp)) != IDENT) {
+            error_at_node(x, "unexpected expression");
+        }
+        if (find_ident_head(EXPR_SYM(LIST_ITEM(lp)), TBP_BINDING(id)) != NULL) {
+            error_at_node(x, "%s is already used as FINAL procedure",
+                          SYM_NAME(EXPR_SYM(LIST_ITEM(lp))));
+            continue;
+        }
+        binding = new_ident_desc(EXPR_SYM(LIST_ITEM(lp)));
+        ID_LINK_ADD(binding, TBP_BINDING(id), last_ip);
+    }
+
+    TBP_BINDING_ATTRS(id) = TYPE_BOUND_PROCEDURE_IS_FINAL;
+
+    ID_TYPE(id) = type_bound_procedure_type();
+    ID_LINE(id) = EXPR_LINE(x);
 }
