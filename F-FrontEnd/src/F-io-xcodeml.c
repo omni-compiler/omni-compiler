@@ -383,7 +383,6 @@ compile_WAIT_statement(expr x)
 void
 compile_FLUSH_statement(expr x)
 {
-    list lp;
     expv v, callArgs;
 
     if (EXPV_CODE(EXPR_ARG1(x)) != LIST) {

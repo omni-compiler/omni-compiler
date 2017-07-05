@@ -1569,7 +1569,7 @@ compile_exec_statement(expr x)
         break;
         
     case F03_FLUSH_STATEMENT:
-        compile_FLUSH_statement(
+        compile_FLUSH_statement(x);
         break;
 
     default:
