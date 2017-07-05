@@ -724,7 +724,7 @@ extern int      type_bound_procedure_type_match _ANSI_ARGS_((EXT_ID f1, EXT_ID f
 extern int      is_procedure_acceptable _ANSI_ARGS_((EXT_ID proc, expv actual_args));
 
 extern int      type_is_soft_compatible _ANSI_ARGS_((TYPE_DESC tp, TYPE_DESC tq));
-extern int      type_is_strict_compatible _ANSI_ARGS_((TYPE_DESC tp, TYPE_DESC tq));
+extern int      type_is_strict_compatible _ANSI_ARGS_((TYPE_DESC tp, TYPE_DESC tq, int issue_error));
 extern int      type_is_compatible_for_assignment
                     _ANSI_ARGS_((TYPE_DESC tp1, TYPE_DESC tp2));
 extern int      type_is_compatible_for_allocation
@@ -736,7 +736,7 @@ extern int      type_is_specific_than
 extern void     function_type_udpate
                     _ANSI_ARGS_((TYPE_DESC ftp, ID idList));
 extern int      function_type_is_appliable
-                    _ANSI_ARGS_((TYPE_DESC ftp, expv args));
+                    _ANSI_ARGS_((TYPE_DESC ftp, expv args, int issue_error));
 extern int      function_type_is_compatible
                     _ANSI_ARGS_((const TYPE_DESC ftp1, const TYPE_DESC ftp2));
 extern int      type_bound_procedure_types_are_compatible
@@ -755,7 +755,7 @@ extern void     replace_or_assign_type
                     _ANSI_ARGS_((TYPE_DESC *tp, const TYPE_DESC new_tp));
 
 extern int      are_dimension_and_shape_conformant_by_type _ANSI_ARGS_((
-    expr x, TYPE_DESC lt, TYPE_DESC rt, expv *shapePtr));
+    expr x, TYPE_DESC lt, TYPE_DESC rt, expv *shapePtr, int issue_error));
 
 extern TYPE_DESC
 	get_binary_numeric_intrinsic_operation_type(TYPE_DESC t0,
