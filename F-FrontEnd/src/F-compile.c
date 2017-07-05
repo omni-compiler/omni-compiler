@@ -137,7 +137,9 @@ static int check_valid_construction_name(expr x, expr y);
 static void move_implicit_vars_to_parent_from_type_guard(void);
 static void check_select_types(expr x, TYPE_DESC tp);
 
-static void unify_submodule_symbol_table(void);
+static ID     unify_id_list(ID parents, ID childs, int overshadow);
+static void   unify_submodule_symbol_table(void);
+static EXT_ID unify_ext_id_list(EXT_ID parents, EXT_ID childs, int overshadow);
 
 void init_for_OMP_pragma();
 void check_for_OMP_pragma(expr x);
@@ -4339,6 +4341,78 @@ static void  compile_DOWHILE_statement(range_st_no, cond, construct_name)
 }
 
 static void
+compile_DO_concurrent_end()
+{
+    ID ip;
+    ENV parent;
+    expv init;
+    list lp;
+    ID forall_local = NULL;
+    BLOCK_ENV current_block;
+
+    if (CTL_TYPE(ctl_top) != CTL_DO) {
+        error("'END DO', out of place");
+        return;
+    }
+
+    if (debug_flag) {
+        fprintf(debug_fp,"\n*** IN END DO:\n");
+        print_IDs(LOCAL_SYMBOLS, debug_fp, TRUE);
+        print_types(LOCAL_STRUCT_DECLS, debug_fp);
+        expv_output(CURRENT_STATEMENTS, debug_fp);
+    }
+
+    EXPR_ARG2(CTL_BLOCK(ctl_top)) = CURRENT_STATEMENTS;
+
+    if (endlineno_flag) {
+        EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+    }
+
+    init = EXPR_ARG1(EXPR_ARG1(CTL_BLOCK(ctl_top)));
+
+    FOR_ITEMS_IN_LIST(lp, init) {
+        ip = find_ident_head(EXPR_SYM(EXPR_ARG1(LIST_ITEM(lp))), LOCAL_SYMBOLS);
+        if (ip) {
+            debug("#### rename %s to %s",
+                  SYM_NAME(ID_SYM(ip)),
+                  SYM_NAME(EXPV_NAME(ID_ADDR(ip))));
+            /*
+             * Rename symbol names those are generated in compile_FORALL_statement()
+             */
+            ID_SYM(ip) = EXPV_NAME(ID_ADDR(ip));
+            EXPR_SYM(EXPR_ARG1(LIST_ITEM(lp))) = EXPV_NAME(ID_ADDR(ip));
+        }
+    }
+
+    parent = ENV_PARENT(current_local_env);
+
+    ENV_SYMBOLS(parent) = unify_id_list(
+        ENV_SYMBOLS(parent),
+        ENV_SYMBOLS(current_local_env),
+        /*overshadow=*/FALSE);
+
+    ENV_EXTERNAL_SYMBOLS(parent) = unify_ext_id_list(
+        ENV_EXTERNAL_SYMBOLS(parent),
+        ENV_EXTERNAL_SYMBOLS(current_local_env),
+        /*overshadow=*/FALSE);
+
+    current_block = XMALLOC(BLOCK_ENV, sizeof(*current_block));
+    BLOCK_LOCAL_SYMBOLS(current_block) = forall_local;
+    EXPR_BLOCK(CTL_BLOCK(ctl_top)) = current_block;
+
+    pop_ctl();
+    pop_env();
+    CURRENT_STATE = INEXEC;
+
+    /*
+     * Close the block construct which is genereted in compile_FORALL_statement().
+     */
+    if (CTL_TYPE(ctl_top) == CTL_BLOCK) {
+        compile_ENDBLOCK_statement(list0(F2008_ENDBLOCK_STATEMENT));
+    }
+}
+
+static void
 check_DO_end(ID label)
 {
     CTL cp;
@@ -4348,6 +4422,10 @@ check_DO_end(ID label)
          * do ... enddo case.
          */
         if (CTL_TYPE(ctl_top) == CTL_DO) {
+            if (endlineno_flag) {
+                EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+            }
+
             if (EXPR_CODE(CTL_BLOCK(ctl_top)) == F_DOWHILE_STATEMENT) {
                 /*
                  * DOWHILE
@@ -4367,12 +4445,13 @@ check_DO_end(ID label)
                             SYM_NAME(ID_SYM(CTL_DO_LABEL(ctl_top))));
                 }
                 EXPR_ARG2(CTL_BLOCK(ctl_top)) = CURRENT_STATEMENTS;
+                pop_ctl();
             } else if (EXPR_CODE(CTL_BLOCK(ctl_top)) == F08_DOCONCURRENT_STATEMENT) {
                 /*
                  * DO CONCURRENT
                  */
-                // TODO(shingo-s): implement
-                EXPR_ARG2(CTL_BLOCK(ctl_top)) = CURRENT_STATEMENTS;
+                compile_DO_concurrent_end();
+
             } else {
                 /*
                  * else DO_STATEMENT
@@ -4392,49 +4471,53 @@ check_DO_end(ID label)
                             SYM_NAME(ID_SYM(CTL_DO_LABEL(ctl_top))));
                 }
                 CTL_DO_BODY(ctl_top) = CURRENT_STATEMENTS;
+                pop_ctl();
             }
-
-	    if (endlineno_flag)
-	      EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
-
-            pop_ctl();
         } else {
             error("'do' is not found for 'enddo'");
         }
+
         return;
-    }
 
-    // do - continue case
+    } else {
+        /*
+         * do - continue case
+         */
+        while (CTL_TYPE(ctl_top) == CTL_DO &&
+               CTL_DO_LABEL(ctl_top) == label) {
 
-    while (CTL_TYPE(ctl_top) == CTL_DO &&
-           CTL_DO_LABEL(ctl_top) == label) {
+            /* close DO block */
+            if (EXPR_CODE(CTL_BLOCK(ctl_top)) == F_DOWHILE_STATEMENT) {
+                /*
+                 * DOWHILE
+                 */
+                EXPR_ARG2(CTL_BLOCK(ctl_top)) = CURRENT_STATEMENTS;
+            } else if (EXPR_CODE(CTL_BLOCK(ctl_top)) == F08_DOCONCURRENT_STATEMENT) {
+                /*
+                 * DO CONCURRENT
+                 */
+                compile_DO_concurrent_end();
+                EXPR_ARG2(CTL_BLOCK(ctl_top)) = CURRENT_STATEMENTS;
+            } else {
+                /*
+                 * else DO
+                 */
+                CTL_DO_BODY(ctl_top) = CURRENT_STATEMENTS;
+            }
 
-      /* close DO block */
-      if (EXPR_CODE(CTL_BLOCK(ctl_top)) == F_DOWHILE_STATEMENT) {
-	/*
-	 * DOWHILE
-	 */
-	EXPR_ARG2(CTL_BLOCK(ctl_top)) = CURRENT_STATEMENTS;
-      }
-      else {
-	/*
-	 * else DO
-	 */
-        CTL_DO_BODY(ctl_top) = CURRENT_STATEMENTS;
-      }
-
-      if (endlineno_flag)
-	EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
-
-      pop_ctl();
-    }
-
-    /* check DO loop which is not propery closed. */
-    FOR_CTLS(cp) {
-        if (CTL_TYPE(cp) == CTL_DO && CTL_DO_LABEL(cp) == label) {
-            error("DO loop or IF-block not closed");
-            ctl_top = cp;
+            if (endlineno_flag) {
+                EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+            }
             pop_ctl();
+        }
+
+        /* check DO loop which is not propery closed. */
+        FOR_CTLS(cp) {
+            if (CTL_TYPE(cp) == CTL_DO && CTL_DO_LABEL(cp) == label) {
+                error("DO loop or IF-block not closed");
+                ctl_top = cp;
+                pop_ctl();
+            }
         }
     }
 }
@@ -8370,67 +8453,33 @@ compile_VALUE_statement(expr x)
 
 
 /*
- * (F_FORALL_STATEMENT
- *   (LIST
- *     (LIST triplet ...)
- *     mask
- *     type)
- *   assignment
- *   construct_name)
+ * x is (LIST
+ *       (LIST triplet ...)
+ *       mask
+ *       type)
  */
-static void
-compile_FORALL_statement(int st_no, expr x)
+static expv
+compile_forall_header(expr x)
 {
-    TYPE_DESC tp;
-    int has_type = FALSE;
-    expr st;
-    expr forall_header;
     expr type;
     expr triplets;
     expr mask;
     expv vmask = NULL;
     expv init;
+    expv forall_header;
     list lp;
+    TYPE_DESC tp;
 
-    forall_header  = EXPR_ARG1(x);
-    triplets       = EXPR_ARG1(forall_header);
-    mask           = EXPR_ARG2(forall_header);
-    type           = EXPR_ARG3(forall_header);
+    triplets       = EXPR_ARG1(x);
+    mask           = EXPR_ARG2(x);
+    type           = EXPR_ARG3(x);
 
     if (type) {
         tp = compile_type(type, /*allow_predecl=*/ FALSE);
-        has_type = TRUE;
     } else {
-        tp = type_INT;
-    }
-
-    /*
-     * Insert a block construct.
-     *
-     * compile_FORALL_statement will rename the index variabls,
-     * so it may be good to confine these index variables with the BLOCK construct.
-     *
-     * ex)
-     *
-     *    FORALL(I = 1:3); ...; ENDFORALL
-     *
-     *  will be transrated into
-     *
-     *    BLOCK
-     *      INTEGER :: omnitmp001
-     *      FORALL(omnitmp001 = 1:3); ...; ENDFORALL
-     *    END BLOCK
-     *
-     */
-    if (CTL_TYPE(ctl_top) != CTL_FORALL) {
-        compile_BLOCK_statement(list0(F2008_BLOCK_STATEMENT));
+        tp = NULL;
     }
     CURRENT_STATE = INEXEC;
-
-    push_ctl(CTL_FORALL);
-    push_env(CTL_FORALL_LOCAL_ENV(ctl_top));
-
-    assert(LOCAL_SYMBOLS == NULL);
 
     init = list0(LIST);
     FOR_ITEMS_IN_LIST(lp, triplets) {
@@ -8451,7 +8500,7 @@ compile_FORALL_statement(int st_no, expr x)
 
         if (find_ident_local(sym) != NULL) {
             error("duplicate index");
-            return;
+            return NULL;
         }
 
         id = declare_ident(sym, CL_VAR);
@@ -8523,15 +8572,63 @@ compile_FORALL_statement(int st_no, expr x)
         }
     }
 
-    st = list4(F_FORALL_STATEMENT, NULL, NULL, NULL, NULL);
-    if (has_type) {
-        EXPV_TYPE(st) = tp;
+    forall_header = list2(LIST, init, vmask);
+
+    return forall_header;
+}
+
+
+/*
+ * (F_FORALL_STATEMENT
+ *   (LIST
+ *     (LIST triplet ...)
+ *     mask
+ *     type)
+ *   assignment
+ *   construct_name)
+ */
+static void
+compile_FORALL_statement(int st_no, expr x)
+{
+    expr st;
+    expv forall_header;
+
+    /*
+     * Insert a block construct.
+     *
+     * compile_FORALL_statement will rename the index variabls,
+     * so it may be good to confine these index variables with the BLOCK construct.
+     *
+     * ex)
+     *
+     *    FORALL(I = 1:3); ...; ENDFORALL
+     *
+     *  will be transrated into
+     *
+     *    BLOCK
+     *      INTEGER :: omnitmp001
+     *      FORALL(omnitmp001 = 1:3); ...; ENDFORALL
+     *    END BLOCK
+     *
+     */
+    if (CTL_TYPE(ctl_top) != CTL_FORALL) {
+        compile_BLOCK_statement(list0(F2008_BLOCK_STATEMENT));
     }
+
+    push_ctl(CTL_FORALL);
+    push_env(CTL_FORALL_LOCAL_ENV(ctl_top));
+
+    assert(LOCAL_SYMBOLS == NULL);
+
+    if ((forall_header = compile_forall_header(EXPR_ARG1(x))) == NULL) {
+        return;
+    }
+
+    st = list3(F_FORALL_STATEMENT, NULL, NULL, NULL);
 
     CTL_BLOCK(ctl_top) = st;
     CTL_FORALL_STATEMENT(ctl_top) = st;
-    CTL_FORALL_INIT(ctl_top) = init;
-    CTL_FORALL_MASK(ctl_top) = vmask;
+    CTL_FORALL_HEADER(ctl_top) = forall_header;
 
     /* save construct name */
     if (EXPR_HAS_ARG3(x)) {
@@ -8798,15 +8895,18 @@ check_select_types(expr x, TYPE_DESC tp)
     }
 }
 
-static void  compile_DOCONCURRENT_statement(expr range_st_no,
-                                            expr forall_header,
-                                            expr construct_name)
+static void
+compile_DOCONCURRENT_statement(expr range_st_no,
+                               expr forall_header,
+                               expr construct_name)
 {
-    expv v = NULL;
-
+    expv vforall_header = NULL;
     int do_stmt_num = -1;
-
     ID do_label = NULL;
+
+    if (CTL_TYPE(ctl_top) != CTL_DO) {
+        compile_BLOCK_statement(list0(F2008_BLOCK_STATEMENT));
+    }
 
     if (range_st_no != NULL) {
         expv stmt_label = expr_label_value(range_st_no);
@@ -8816,8 +8916,6 @@ static void  compile_DOCONCURRENT_statement(expr range_st_no,
         }
         do_stmt_num = EXPV_INT_VALUE(stmt_label);
     }
-
-    if (forall_header == NULL) return; /* error recovery */
 
     if (do_stmt_num > 0) {
         do_label = declare_label(do_stmt_num, LAB_EXEC, FALSE);
@@ -8830,10 +8928,15 @@ static void  compile_DOCONCURRENT_statement(expr range_st_no,
         LAB_IS_USED(do_label) = FALSE;
     }
 
-    // v = compile_expression(forall_header);
     push_ctl(CTL_DO);
+    push_env(CTL_DO_LOCAL_ENV(ctl_top));
+
+    if ((vforall_header = compile_forall_header(forall_header)) == NULL) {
+        return;
+    }
+
     CTL_DO_VAR(ctl_top) = NULL;
     CTL_DO_LABEL(ctl_top) = do_label;
     CTL_BLOCK(ctl_top) = list3(F08_DOCONCURRENT_STATEMENT,
-                               v, NULL, construct_name);
+                               vforall_header, NULL, construct_name);
 }

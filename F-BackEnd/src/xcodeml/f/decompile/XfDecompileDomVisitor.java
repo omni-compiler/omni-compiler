@@ -2734,6 +2734,80 @@ public class XfDecompileDomVisitor {
         }
     }
 
+    // FdoConcurrentStatement
+    class FdoConcurrentStatementVisitor extends XcodeNodeVisitor {
+        /**
+         * Decompile "FdoConcurrentStatement" element in XcodeML/F.
+         */
+        @Override public void enter(Node n) {
+            _writeLineDirective(n);
+
+            XmfWriter writer = _context.getWriter();
+            String constuctName = XmDomUtil.getAttr(n, "construct_name");
+            if (XfUtilForDom.isNullOrEmpty(constuctName) == false) {
+                writer.writeToken(constuctName);
+                writer.writeToken(": ");
+            }
+
+            writer.writeToken("DO");
+            writer.writeToken("CONCURRENT");
+
+            writer.writeToken("(");
+
+            String typeName = XmDomUtil.getAttr(n, "type");
+            if (!XfUtilForDom.isNullOrEmpty(typeName)) {
+                XfType type = XfType.getTypeIdFromXcodemlTypeName(typeName);
+                if (type.isPrimitive()) {
+                    writer.writeToken(type.fortranName());
+                } else {
+                    XfTypeManagerForDom.TypeList typeList = getTypeList(typeName);
+                    _writeTopType(typeList, false);
+                }
+                writer.writeToken("::");
+            }
+
+            Boolean first = true;
+            NodeList list = n.getChildNodes();
+            for (int i = 0; i < list.getLength(); i++) {
+                if (list.item(i).getNodeType() != Node.ELEMENT_NODE) {
+                    continue;
+                }
+                if ("Var".equals(list.item(i).getNodeName())) {
+                    if (!first) {
+                        writer.writeToken(",");
+                    }
+                    first = false;
+                    Node m = list.item(i);
+                    invokeEnter(m);
+                    writer.writeToken("=");
+                } else if ("indexRange".equals(list.item(i).getNodeName())) {
+                    invokeEnter(list.item(i));
+                }
+            }
+
+            Node condition = XmDomUtil.getElement(n, "condition");
+            if (condition != null) {
+                writer.writeToken(",");
+                _invokeChildEnter(condition);
+            }
+
+            writer.writeToken(")");
+            writer.setupNewLine();
+            writer.incrementIndentLevel();
+
+            invokeEnter(XmDomUtil.getElement(n, "body"));
+
+            writer.decrementIndentLevel();
+
+            writer.writeToken("END DO");
+            if (XfUtilForDom.isNullOrEmpty(constuctName) == false) {
+                writer.writeToken(" ");
+                writer.writeToken(constuctName);
+            }
+            writer.setupNewLine();
+        }
+    }
+
     // FdoStatement
     class FdoStatementVisitor extends XcodeNodeVisitor {
         /**
@@ -6867,7 +6941,7 @@ public class XfDecompileDomVisitor {
                 }
                 if ("Var".equals(list.item(i).getNodeName())) {
                     if (!first) {
-                         writer.writeToken(",");
+                        writer.writeToken(",");
                     }
                     first = false;
                     Node m = list.item(i);
@@ -7162,6 +7236,7 @@ public class XfDecompileDomVisitor {
         new Pair("FcycleStatement", new FcycleStatementVisitor()),
         new Pair("FdataDecl", new FdataDeclVisitor()),
         new Pair("FdeallocateStatement", new FdeallocateStatementVisitor()),
+        new Pair("FdoConcurrentStatement", new FdoConcurrentStatementVisitor()),
         new Pair("FdoLoop", new FdoLoopVisitor()),
         new Pair("FdoStatement", new FdoStatementVisitor()),
         new Pair("FdoWhileStatement", new FdoWhileStatementVisitor()),
