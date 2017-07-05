@@ -8392,6 +8392,7 @@ compile_FORALL_statement(int st_no, expr x)
     if (CTL_TYPE(ctl_top) != CTL_FORALL) {
         compile_BLOCK_statement(list0(F2008_BLOCK_STATEMENT));
     }
+    CURRENT_STATE = INEXEC;
 
     push_ctl(CTL_FORALL);
     push_env(CTL_FORALL_LOCAL_ENV(ctl_top));
@@ -8526,7 +8527,6 @@ compile_FORALL_statement(int st_no, expr x)
                           "not allowed statement in the FORALL statement");
         }
         compile_ENDFORALL_statement(NULL);
-        return;
     }
 }
 
