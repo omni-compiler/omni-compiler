@@ -234,6 +234,7 @@ xtag(enum expr_code code)
      * F2003 statement
      */
     case F03_IMPORT_STATEMENT:      return "FimportDecl";
+    case F03_WAIT_STATEMENT:        return "FwaitStatement";
 
     /*
      * invalid or no corresponding tag
@@ -643,6 +644,7 @@ has_attribute_except_func_attrs(TYPE_DESC tp)
         TYPE_IS_VALUE(tp) ||
         TYPE_IS_CLASS(tp) ||
         TYPE_IS_PROCEDURE(tp) ||
+        TYPE_IS_ASYNCHRONOUS(tp) ||
         tp->codims;
 }
 
@@ -800,6 +802,7 @@ outx_typeAttrs(int l, TYPE_DESC tp, const char *tag, int options)
         outx_true(TYPE_IS_VOLATILE(tp),         "is_volatile");
         outx_true(TYPE_IS_VALUE(tp),            "is_value");
         outx_true(TYPE_IS_PROCEDURE(tp),        "is_procedure");
+        outx_true(TYPE_IS_ASYNCHRONOUS(tp),     "is_asynchronous");
 
         if (TYPE_PARENT(tp)) {
             outx_print(" extends=\"%s\"", getTypeID(TYPE_PARENT_TYPE(tp)));
@@ -3605,6 +3608,12 @@ outx_expv(int l, expv v)
     case F_REWIND_STATEMENT:        outx_IO_statement(l, v); break;
 
     case F03_FLUSH_STATEMENT:       outx_FLUSH_statement(l, v); break;
+
+    /*
+     * F03 statements
+     */
+    case F03_WAIT_STATEMENT:        outx_IO_statement(l, v); break;
+
 
     /*
      * F90/95 Pointer related.
