@@ -1,14 +1,7 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package xcodeml.c.type;
 
 import java.util.HashSet;
 import java.util.Set;
-
 import xcodeml.c.decompile.XcRefObj;
 import xcodeml.c.obj.XcNode;
 
