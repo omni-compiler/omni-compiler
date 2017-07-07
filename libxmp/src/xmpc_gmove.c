@@ -157,7 +157,7 @@ xmpc_gmv_do(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp,
   _XMP_unpack_comm_set = _XMPC_unpack_comm_set;
 
 #ifdef _XMPT
-  xmpt_tool_data_t *data = NULL;
+  xmpt_tool_data_t data = NULL;
   struct _xmpt_subscript_t lhs_subsc, rhs_subsc;
   _XMPT_set_gmove_subsc(&lhs_subsc, gmv_desc_leftp);
   _XMPT_set_gmove_subsc(&rhs_subsc, gmv_desc_rightp);
@@ -179,12 +179,12 @@ xmpc_gmv_do(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp,
 	(*(xmpt_event_gmove_begin_t)xmpt_callback[xmpt_event_gmove_begin])
 	  (gmv_desc_leftp->a_desc, &lhs_subsc,
 	   gmv_desc_rightp->a_desc, &rhs_subsc,
-	   kind, data);
+	   kind, &data);
       else if (xmp_is_async() && xmpt_callback[xmpt_event_gmove_begin_async])
 	(*(xmpt_event_gmove_begin_async_t)xmpt_callback[xmpt_event_gmove_begin_async])
 	  (gmv_desc_leftp->a_desc, &lhs_subsc,
 	   gmv_desc_rightp->a_desc, &rhs_subsc,
-	   kind, async_id, data);
+	   kind, async_id, &data);
     }
 #endif
 
@@ -207,12 +207,12 @@ xmpc_gmv_do(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp,
 	  (*(xmpt_event_gmove_begin_t)xmpt_callback[xmpt_event_gmove_begin])
 	    (gmv_desc_leftp->a_desc, &lhs_subsc,
 	     gmv_desc_rightp->a_desc, &rhs_subsc,
-	     kind, data);
+	     kind, &data);
 	else if (xmp_is_async() && xmpt_callback[xmpt_event_gmove_begin_async])
 	  (*(xmpt_event_gmove_begin_async_t)xmpt_callback[xmpt_event_gmove_begin_async])
 	    (gmv_desc_leftp->a_desc, &lhs_subsc,
 	     gmv_desc_rightp->a_desc, &rhs_subsc,
-	     kind, async_id, data);
+	     kind, async_id, &data);
       }
 #endif
 
@@ -241,12 +241,12 @@ xmpc_gmv_do(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp,
 	  (*(xmpt_event_gmove_begin_t)xmpt_callback[xmpt_event_gmove_begin])
 	    (gmv_desc_leftp->a_desc, &lhs_subsc,
 	     gmv_desc_rightp->a_desc, &rhs_subsc,
-	     kind, data);
+	     kind, &data);
 	else if (xmp_is_async() && xmpt_callback[xmpt_event_gmove_begin_async])
 	  (*(xmpt_event_gmove_begin_async_t)xmpt_callback[xmpt_event_gmove_begin_async])
 	    (gmv_desc_leftp->a_desc, &lhs_subsc,
 	     gmv_desc_rightp->a_desc, &rhs_subsc,
-	     kind, async_id, data);
+	     kind, async_id, &data);
       }
 #endif
 
@@ -262,7 +262,7 @@ xmpc_gmv_do(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp,
 #ifdef _XMPT
   if (xmpt_enabled && xmpt_callback[xmpt_event_gmove_end])
     (*(xmpt_event_end_t)xmpt_callback[xmpt_event_gmove_end])(
-     data);
+     &data);
 #endif
 
 }
