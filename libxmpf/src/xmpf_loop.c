@@ -101,7 +101,7 @@ void xmpf_loop_sched__(int *lb, int *ub, int *st, int *r_idx, _XMP_object_ref_t 
 
   }
 
-  if (*unbound_flag > 0){
+  if (*unbound_flag == 0){
 
     _XMP_template_t *t_desc = rp->t_desc;
     int t_idx = rp->REF_INDEX[*r_idx];
