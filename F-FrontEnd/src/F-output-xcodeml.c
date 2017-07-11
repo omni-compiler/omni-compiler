@@ -2255,7 +2255,9 @@ outx_memberRef(int l, expv v)
     expv v_right = EXPV_RIGHT(v);
 
     outx_typeAttrOnly_EXPR(l, v, XTAG(v));
-    outx_print(" member=\"%s\">\n", SYM_NAME(EXPV_NAME(v_right)));
+    outx_print(" member=\"%s\"", SYM_NAME(EXPV_NAME(v_right)));
+    outx_true(IS_COMPLEX(EXPV_TYPE(v_left)), "is_complex_part");
+    outx_print(">\n");
     outx_varRef_EXPR(l + 1, v_left);
     outx_expvClose(l, v);
 }
