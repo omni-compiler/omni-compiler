@@ -42,7 +42,7 @@ public final class XcParamList extends XcIdentList
             for(Iterator<XcIdent> ite = iterator(); ite.hasNext();) {
                 XcIdent ident = ite.next();
                 String symbol = (paramSymbol ? ident.getSymbol() : null);
-                ident.getType().appendDeclCode(w, symbol, true, isPreDecl);
+                ident.getType().appendDeclCode(w, symbol, true, isPreDecl, null, true);
                 if(ite.hasNext())
                     w.add(",");
             }
