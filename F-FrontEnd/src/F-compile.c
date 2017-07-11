@@ -1317,6 +1317,11 @@ compile_statement1(int st_no, expr x)
         check_INEXEC();
         break;
 
+    case F08_CONTIGUOUS_STATEMENT:
+        compile_CONTIGUOUS_statement(x);
+        check_INDCL();
+        break;
+
     default:
         compile_exec_statement(x);
         break;
@@ -2608,6 +2613,11 @@ end_declaration()
                        !(ID_IS_DUMMY_ARG(ip))) {
                 warning_at_id(ip, "INTENT is applied only "
                               "to dummy argument");
+            } else if (ID_STORAGE(ip) != STG_TAGNAME && type_is_nopolymorphic_abstract(tp)) {
+                error_at_id(ip, "No derived type should not have the ABSTRACT attribute");
+            } else if (TYPE_IS_CONTIGUOUS(tp) &&
+                       !(IS_ARRAY_TYPE(tp) && (TYPE_IS_POINTER(tp) || TYPE_IS_ARRAY_ASSUMED_SHAPE(tp)))) {
+                error_at_id(ip, "Only an array pointer or an assumed-shape array can have the CONTIGUOUS attribute");
             } else if (IS_PROCEDURE_TYPE(tp) && TYPE_IS_PROCEDURE(tp)) {
                 if (ID_STORAGE(ip) != STG_ARG) {
                     if (!TYPE_IS_POINTER(tp)) {
@@ -2620,13 +2630,9 @@ end_declaration()
                         error_at_id(ip, "PROCEDURE variable should not have the INTENT attribute");
                     }
                 }
-            } else if (ID_STORAGE(ip) != STG_TAGNAME && type_is_nopolymorphic_abstract(tp)) {
-                error_at_id(ip, "ABSTRACT type");
             }
-
         }
     }
-
 
     if (myId != NULL) {
         /*
@@ -8777,5 +8783,34 @@ check_select_types(expr x, TYPE_DESC tp)
                 return;
             }
         }
+    }
+}
+
+void
+compile_CONTIGUOUS_statement(expr x)
+{
+    list lp;
+    expr ident;
+    ID id;
+
+    assert(EXPR_CODE(x) == F08_CONTIGUOUS_STATEMENT);
+
+    FOR_ITEMS_IN_LIST(lp, EXPR_ARG1(x)) {
+        ident = LIST_ITEM(lp);
+
+        assert(EXPR_CODE(ident) == IDENT);
+
+        id = declare_ident(EXPR_SYM(ident), CL_VAR);
+        if(id == NULL)
+            return;
+        if(ID_IS_OFMODULE(id)) {
+            error("can't change attributes of USE-assoicated symbol '%s'", ID_NAME(id));
+            return;
+        } else if (ID_IS_AMBIGUOUS(id)) {
+            error("an ambiguous reference to symbol '%s'", ID_NAME(id));
+            return;
+        }
+
+        TYPE_SET_CONTIGUOUS(id);
     }
 }

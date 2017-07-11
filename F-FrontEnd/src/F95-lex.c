@@ -3868,6 +3868,7 @@ struct keyword_token keywords[ ] =
     { "common",         COMMON },
     { "complex",        KW_COMPLEX },
     { "contains",       CONTAINS },
+    { "contiguous",     CONTIGUOUS  },   /* F2008 spec */
     { "continue",       CONTINUE  },
     { "critical",       CRITICAL },       /* #060 coarray */
     { "cycle",          CYCLE},

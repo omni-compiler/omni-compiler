@@ -2121,6 +2121,10 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
         case F03_ASYNCHRONOUS_SPEC:
             TYPE_SET_ASYNCHRONOUS(tp);
             break;
+        case F08_CONTIGUOUS_SPEC:
+            TYPE_SET_CONTIGUOUS(tp);
+            break;
+
         default:
             error("incompatible type attribute , code: %d", EXPR_CODE(v));
         }
