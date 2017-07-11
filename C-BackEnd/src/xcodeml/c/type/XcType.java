@@ -229,6 +229,14 @@ public abstract class XcType extends XcObj implements Cloneable, XcGccAttributab
         appendDeclCode(w, null, true, false, _gccAttrs);
     }
 
+    private final boolean isGccAligned() throws XmException
+    {
+      if (_gccAttrs == null)
+        return false;
+      else
+        return _gccAttrs.isGccAligned();
+    }
+    
     public final void appendGccAtrribute(XmcWriter w) throws XmException
     {
         if (_gccAttrs != null)
@@ -492,8 +500,9 @@ public abstract class XcType extends XcObj implements Cloneable, XcGccAttributab
         switch (te) {
         case BASICTYPE:
             {
-              if(!isFromFunc)
+              if(!isFromFunc || !t.isGccAligned())
                 t.appendGccAtrribute(w);
+              
                 t.appendTypeQualCode(w);
 
                 _appendCode(w, decls, symbol, isPreDecl, isAttrGuarded, attr, attrOfArrayTypes);

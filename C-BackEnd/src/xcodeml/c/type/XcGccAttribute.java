@@ -84,4 +84,9 @@ public class XcGccAttribute extends XcObj
     {
         _name = name;
     }
+
+    public String getName()
+    {
+        return _name;
+    }
 }

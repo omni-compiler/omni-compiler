@@ -49,6 +49,18 @@ public class XcGccAttributeList extends XcObj implements XcLazyEvalType
         _attrs.add(attr);
     }
 
+    public boolean isGccAligned() throws XmException
+    {
+      Iterator<XcGccAttribute> iter = _attrs.iterator();
+
+      while (iter.hasNext()) {
+        if(iter.next().getName().equals("aligned"))
+          return true;
+      }
+      
+      return false;
+    }
+  
     @Override
     public void appendCode(XmcWriter w) throws XmException
     {
