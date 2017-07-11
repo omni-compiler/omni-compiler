@@ -2735,76 +2735,19 @@ public class XfDecompileDomVisitor {
     }
 
     // FdoConcurrentStatement
-    class FdoConcurrentStatementVisitor extends XcodeNodeVisitor {
-        /**
-         * Decompile "FdoConcurrentStatement" element in XcodeML/F.
-         */
-        @Override public void enter(Node n) {
-            _writeLineDirective(n);
-
+    class FdoConcurrentStatementVisitor extends ForallLikeTagVisitor {
+        @Override
+        public void startConstruct() {
             XmfWriter writer = _context.getWriter();
-            String constuctName = XmDomUtil.getAttr(n, "construct_name");
-            if (XfUtilForDom.isNullOrEmpty(constuctName) == false) {
-                writer.writeToken(constuctName);
-                writer.writeToken(": ");
-            }
-
             writer.writeToken("DO");
             writer.writeToken("CONCURRENT");
+        }
 
-            writer.writeToken("(");
-
-            String typeName = XmDomUtil.getAttr(n, "type");
-            if (!XfUtilForDom.isNullOrEmpty(typeName)) {
-                XfType type = XfType.getTypeIdFromXcodemlTypeName(typeName);
-                if (type.isPrimitive()) {
-                    writer.writeToken(type.fortranName());
-                } else {
-                    XfTypeManagerForDom.TypeList typeList = getTypeList(typeName);
-                    _writeTopType(typeList, false);
-                }
-                writer.writeToken("::");
-            }
-
-            Boolean first = true;
-            NodeList list = n.getChildNodes();
-            for (int i = 0; i < list.getLength(); i++) {
-                if (list.item(i).getNodeType() != Node.ELEMENT_NODE) {
-                    continue;
-                }
-                if ("Var".equals(list.item(i).getNodeName())) {
-                    if (!first) {
-                        writer.writeToken(",");
-                    }
-                    first = false;
-                    Node m = list.item(i);
-                    invokeEnter(m);
-                    writer.writeToken("=");
-                } else if ("indexRange".equals(list.item(i).getNodeName())) {
-                    invokeEnter(list.item(i));
-                }
-            }
-
-            Node condition = XmDomUtil.getElement(n, "condition");
-            if (condition != null) {
-                writer.writeToken(",");
-                _invokeChildEnter(condition);
-            }
-
-            writer.writeToken(")");
-            writer.setupNewLine();
-            writer.incrementIndentLevel();
-
-            invokeEnter(XmDomUtil.getElement(n, "body"));
-
-            writer.decrementIndentLevel();
-
-            writer.writeToken("END DO");
-            if (XfUtilForDom.isNullOrEmpty(constuctName) == false) {
-                writer.writeToken(" ");
-                writer.writeToken(constuctName);
-            }
-            writer.setupNewLine();
+        @Override
+        public void endConstruct() {
+            XmfWriter writer = _context.getWriter();
+            writer.writeToken("END");
+            writer.writeToken("DO");
         }
     }
 
@@ -6860,7 +6803,7 @@ public class XfDecompileDomVisitor {
     /**
      * Decompile 'blockStatement' element in XcodeML/F.
      */
-    class BlockStatementVisitor extends  XcodeNodeVisitor {
+    class BlockStatementVisitor extends XcodeNodeVisitor {
 
         @Override
         public void enter(Node n) {
@@ -6901,15 +6844,15 @@ public class XfDecompileDomVisitor {
         }
     }
 
-    // forallStatement
-    class ForallStatementVisitor extends XcodeNodeVisitor {
-        /**
-         * Decompile "forallStatement" element in XcodeML/F.
-         */
+    abstract class ForallLikeTagVisitor extends XcodeNodeVisitor {
+
+        abstract public void startConstruct();
+
+        abstract public void endConstruct();
+
         @Override public void enter(Node n) {
             _writeLineDirective(n);
 
-            XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
             XmfWriter writer = _context.getWriter();
 
             String constructName = XmDomUtil.getAttr(n, "construct_name");
@@ -6917,7 +6860,8 @@ public class XfDecompileDomVisitor {
                 writer.writeToken(constructName);
                 writer.writeToken(":");
             }
-            writer.writeToken("FORALL");
+
+            startConstruct();
 
             writer.writeToken("(");
 
@@ -6965,12 +6909,28 @@ public class XfDecompileDomVisitor {
             invokeEnter(XmDomUtil.getElement(n, "body"));
             writer.decrementIndentLevel();
 
-            writer.writeToken("END");
-            writer.writeToken("FORALL");
+            endConstruct();
+
             if (XfUtilForDom.isNullOrEmpty(constructName) == false) {
                 writer.writeToken(constructName);
             }
             writer.setupNewLine();
+        }
+    }
+
+    // forallStatement
+    class ForallStatementVisitor extends ForallLikeTagVisitor {
+        @Override
+        public void startConstruct() {
+            XmfWriter writer = _context.getWriter();
+            writer.writeToken("FORALL");
+        }
+
+        @Override
+        public void endConstruct() {
+            XmfWriter writer = _context.getWriter();
+            writer.writeToken("END");
+            writer.writeToken("FORALL");
         }
     }
 
