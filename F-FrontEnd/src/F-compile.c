@@ -137,6 +137,7 @@ static int check_valid_construction_name(expr x, expr y);
 static void move_implicit_vars_to_parent_from_type_guard(void);
 static void check_select_types(expr x, TYPE_DESC tp);
 
+static void   compile_end_forall_header(expv init);
 static ID     unify_id_list(ID parents, ID childs, int overshadow);
 static void   unify_submodule_symbol_table(void);
 static EXT_ID unify_ext_id_list(EXT_ID parents, EXT_ID childs, int overshadow);
@@ -4343,12 +4344,7 @@ static void  compile_DOWHILE_statement(range_st_no, cond, construct_name)
 static void
 compile_DO_concurrent_end()
 {
-    ID ip;
-    ENV parent;
     expv init;
-    list lp;
-    ID forall_local = NULL;
-    BLOCK_ENV current_block;
 
     if (CTL_TYPE(ctl_top) != CTL_DO) {
         error("'END DO', out of place");
@@ -4370,35 +4366,7 @@ compile_DO_concurrent_end()
 
     init = EXPR_ARG1(EXPR_ARG1(CTL_BLOCK(ctl_top)));
 
-    FOR_ITEMS_IN_LIST(lp, init) {
-        ip = find_ident_head(EXPR_SYM(EXPR_ARG1(LIST_ITEM(lp))), LOCAL_SYMBOLS);
-        if (ip) {
-            debug("#### rename %s to %s",
-                  SYM_NAME(ID_SYM(ip)),
-                  SYM_NAME(EXPV_NAME(ID_ADDR(ip))));
-            /*
-             * Rename symbol names those are generated in compile_FORALL_statement()
-             */
-            ID_SYM(ip) = EXPV_NAME(ID_ADDR(ip));
-            EXPR_SYM(EXPR_ARG1(LIST_ITEM(lp))) = EXPV_NAME(ID_ADDR(ip));
-        }
-    }
-
-    parent = ENV_PARENT(current_local_env);
-
-    ENV_SYMBOLS(parent) = unify_id_list(
-        ENV_SYMBOLS(parent),
-        ENV_SYMBOLS(current_local_env),
-        /*overshadow=*/FALSE);
-
-    ENV_EXTERNAL_SYMBOLS(parent) = unify_ext_id_list(
-        ENV_EXTERNAL_SYMBOLS(parent),
-        ENV_EXTERNAL_SYMBOLS(current_local_env),
-        /*overshadow=*/FALSE);
-
-    current_block = XMALLOC(BLOCK_ENV, sizeof(*current_block));
-    BLOCK_LOCAL_SYMBOLS(current_block) = forall_local;
-    EXPR_BLOCK(CTL_BLOCK(ctl_top)) = current_block;
+    compile_end_forall_header(init);
 
     pop_ctl();
     pop_env();
@@ -8663,14 +8631,76 @@ compile_FORALL_statement(int st_no, expr x)
 
 
 static void
-compile_ENDFORALL_statement(expr x)
+compile_end_forall_header(expv init)
 {
     ID ip;
-    ENV parent;
-    expv init;
     list lp;
-    ID forall_local = NULL;
+    ENV parent;
+    ID local_symbols = NULL;
     BLOCK_ENV current_block;
+
+    FOR_ITEMS_IN_LIST(lp, init) {
+        ip = find_ident_head(EXPR_SYM(EXPR_ARG1(LIST_ITEM(lp))), LOCAL_SYMBOLS);
+        if (ip) {
+            debug("#### rename %s to %s",
+                  SYM_NAME(ID_SYM(ip)),
+                  SYM_NAME(EXPV_NAME(ID_ADDR(ip))));
+            /*
+             * Rename symbol names those are generated in compile_FORALL_statement()
+             */
+            ID_SYM(ip) = EXPV_NAME(ID_ADDR(ip));
+            EXPR_SYM(EXPR_ARG1(LIST_ITEM(lp))) = EXPV_NAME(ID_ADDR(ip));
+
+#if 0
+            /*
+             * NOTE:
+             *  Comment out by specification changed.
+             *
+             *  FORALL will be confined with the BLOCK construct,
+             *  so this code is no longer required.
+             */
+            if (EXPV_TYPE(CTL_FORALL_STATEMENT(ctl_top)) != NULL) {
+                /*
+                 * If the forall statement has type,
+                 * indices are local variables in the forall statement.
+                 *
+                 * ex)
+                 *
+                 *  FORALL (INTEGER :: I = 1:3, J = 1:3)
+                 *    ! I and J live only here
+                 *  END FORALL
+                 *
+                 */
+                (void)id_link_remove(&LOCAL_SYMBOLS, ip);
+                ID_LINK_ADD(ip, local_symbols, forall_last);
+            }
+#endif
+        }
+    }
+
+    parent = ENV_PARENT(current_local_env);
+
+    ENV_SYMBOLS(parent) = unify_id_list(
+        ENV_SYMBOLS(parent),
+        ENV_SYMBOLS(current_local_env),
+        /*overshadow=*/FALSE);
+
+    ENV_EXTERNAL_SYMBOLS(parent) = unify_ext_id_list(
+        ENV_EXTERNAL_SYMBOLS(parent),
+        ENV_EXTERNAL_SYMBOLS(current_local_env),
+        /*overshadow=*/FALSE);
+
+    current_block = XMALLOC(BLOCK_ENV, sizeof(*current_block));
+    BLOCK_LOCAL_SYMBOLS(current_block) = local_symbols;
+    EXPR_BLOCK(CTL_FORALL_STATEMENT(ctl_top)) = current_block;
+}
+
+
+static void
+compile_ENDFORALL_statement(expr x)
+{
+    list lp;
+    expv init;
 
     if (CTL_TYPE(ctl_top) != CTL_FORALL) {
         error("'endforall', out of place");
@@ -8722,56 +8752,7 @@ compile_ENDFORALL_statement(expr x)
 
     init = CTL_FORALL_INIT(ctl_top);
 
-    FOR_ITEMS_IN_LIST(lp, init) {
-        ip = find_ident_head(EXPR_SYM(EXPR_ARG1(LIST_ITEM(lp))), LOCAL_SYMBOLS);
-        if (ip) {
-            debug("#### rename %s to %s",
-                  SYM_NAME(ID_SYM(ip)),
-                  SYM_NAME(EXPV_NAME(ID_ADDR(ip))));
-            /*
-             * Rename symbol names those are generated in compile_FORALL_statement()
-             */
-            ID_SYM(ip) = EXPV_NAME(ID_ADDR(ip));
-            EXPR_SYM(EXPR_ARG1(LIST_ITEM(lp))) = EXPV_NAME(ID_ADDR(ip));
-
-#if 0
-            /*
-             * NOTE:
-             *  Comment out by specification changed.
-             *
-             *  FORALL will be confined with the BLOCK construct,
-             *  so this code is no longer required.
-             */
-            if (EXPV_TYPE(CTL_FORALL_STATEMENT(ctl_top)) != NULL) {
-                /*
-                 * If the forall statement has type,
-                 * indices are local variables in the forall statement.
-                 *
-                 * ex)
-                 *
-                 *  FORALL (INTEGER :: I = 1:3, J = 1:3)
-                 *    ! I and J live only here
-                 *  END FORALL
-                 *
-                 */
-                (void)id_link_remove(&LOCAL_SYMBOLS, ip);
-                ID_LINK_ADD(ip, forall_local, forall_last);
-            }
-#endif
-        }
-    }
-
-    parent = ENV_PARENT(current_local_env);
-
-    ENV_SYMBOLS(parent) = unify_id_list(
-        ENV_SYMBOLS(parent),
-        ENV_SYMBOLS(current_local_env),
-        /*overshadow=*/FALSE);
-
-    ENV_EXTERNAL_SYMBOLS(parent) = unify_ext_id_list(
-        ENV_EXTERNAL_SYMBOLS(parent),
-        ENV_EXTERNAL_SYMBOLS(current_local_env),
-        /*overshadow=*/FALSE);
+    compile_end_forall_header(init);
 
     /* no declarations in the forall construct */
     assert(ENV_STRUCT_DECLS(current_local_env) == NULL);
@@ -8783,10 +8764,6 @@ compile_ENDFORALL_statement(expr x)
 
     /* BLOCK cannot exists in FORALL construct */
     assert(LOCAL_BLOCKS == NULL);
-
-    current_block = XMALLOC(BLOCK_ENV, sizeof(*current_block));
-    BLOCK_LOCAL_SYMBOLS(current_block) = forall_local;
-    EXPR_BLOCK(CTL_FORALL_STATEMENT(ctl_top)) = current_block;
 
     pop_ctl();
     pop_env();
