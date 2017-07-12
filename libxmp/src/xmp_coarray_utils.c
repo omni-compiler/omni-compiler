@@ -51,6 +51,22 @@ size_t _XMP_calc_max_copy_chunk(const int dst_dims, const int src_dims,
   return _XMP_M_MIN(dst_copy_chunk, src_copy_chunk);
 }
 
+
+/**********************************************************************/
+/* DESCRIPTION : Check of dst and src overlap                         */
+/* ARGUMENT    : [IN] *dst_start : Start pointer of destination array */
+/*               [IN] *dst_end   : End pointer of destination array   */
+/*               [IN] *src_start : Start pointer of source array      */
+/*               [IN] *src_end   : End pointer of source array        */
+/* NOTE       : When a[0:5]:[1] = a[1:5], return true.                */
+/**********************************************************************/
+_Bool _XMP_check_overlapping(const char *dst_start, const char *dst_end,
+			     const char *src_start, const char *src_end)
+{
+  return (dst_start <= src_start && src_start < dst_end) ||
+         (src_start <= dst_start && dst_start < src_end);
+}
+
 /********************************************************************************/
 /* DESCRIPTION : Execute copy operation in only local node for contiguous array */
 /* ARGUMENT    : [OUT] *dst     : Pointer of destination array                  */
@@ -60,16 +76,23 @@ size_t _XMP_calc_max_copy_chunk(const int dst_dims, const int src_dims,
 /*               [IN] elmt_size : Element size                                  */
 /* NOTE       : This function is called by both put and get functions           */
 /********************************************************************************/
-void _XMP_local_contiguous_copy(char *dst, const void *src, const size_t dst_elmts,
+void _XMP_local_contiguous_copy(char *dst, const char *src, const size_t dst_elmts,
 				const size_t src_elmts, const size_t elmt_size)
 {
   if(dst_elmts == src_elmts){ /* a[0:100]:[1] = b[1:100]; or a[0:100] = b[1:100]:[1];*/
-    memcpy(dst, src, dst_elmts*elmt_size);
+    size_t offset = dst_elmts * elmt_size;
+    if(_XMP_check_overlapping(dst, dst+offset, src, src+offset)){
+      memmove(dst, src, offset);
+    }
+    else
+      memcpy(dst, src, offset);
   }
   else if(src_elmts == 1){    /* a[0:100]:[1] = b[1]; or a[0:100] = b[1]:[1]; */
     size_t offset = 0;
     for(size_t i=0;i<dst_elmts;i++){
-      memcpy(dst+offset, src, elmt_size);
+      if(dst+offset != src)
+	memcpy(dst+offset, src, elmt_size);
+
       offset += elmt_size;
     }
   }
@@ -150,7 +173,8 @@ void _XMP_stride_memcpy_1dim(char *buf1, const char *buf2, const _XMP_array_sect
   case _XMP_SCALAR_MCOPY:
     for(size_t i=0;i<array_info[0].length;i++){
       tmp = stride_offset * i;
-      memcpy(buf1 + tmp, buf2, element_size);
+      if(buf1 + tmp != buf2)
+	memcpy(buf1 + tmp, buf2, element_size);
     }
     break;
   }
@@ -217,7 +241,8 @@ void _XMP_stride_memcpy_2dim(char *buf1, const char *buf2, const _XMP_array_sect
       tmp[0] = stride_offset[0] * i;
       for(size_t j=0;j<array_info[1].length;j++){
         tmp[1] = stride_offset[1] * j;
-        memcpy(buf1 + tmp[0] + tmp[1], buf2, element_size);
+	if(buf1 + tmp[0] + tmp[1] != buf2)
+	  memcpy(buf1 + tmp[0] + tmp[1], buf2, element_size);
       }
     }
     break;
@@ -301,6 +326,7 @@ void _XMP_stride_memcpy_3dim(char *buf1, const char *buf2, const _XMP_array_sect
         tmp[1] = stride_offset[1] * j;
         for(size_t k=0;k<array_info[2].length;k++){
           tmp[2] = stride_offset[2] * k;
+	  if(buf1 + tmp[0] + tmp[1] + tmp[2] != buf2)
           memcpy(buf1 + tmp[0] + tmp[1] + tmp[2], buf2, element_size);
         }
       }
@@ -401,8 +427,9 @@ void _XMP_stride_memcpy_4dim(char *buf1, const char *buf2, const _XMP_array_sect
           tmp[2] = stride_offset[2] * k;
           for(size_t m=0;m<array_info[3].length;m++){
             tmp[3] = stride_offset[3] * m;
-            memcpy(buf1 + tmp[0] + tmp[1] + tmp[2] + tmp[3],
-                   buf2, element_size);
+	    if(buf1 + tmp[0] + tmp[1] + tmp[2] + tmp[3] != buf2)
+	      memcpy(buf1 + tmp[0] + tmp[1] + tmp[2] + tmp[3],
+		     buf2, element_size);
           }
         }
       }
@@ -520,8 +547,9 @@ void _XMP_stride_memcpy_5dim(char *buf1, const char *buf2, const _XMP_array_sect
             tmp[3] = stride_offset[3] * m;
             for(size_t n=0;n<array_info[4].length;n++){
               tmp[4] = stride_offset[4] * n;
-              memcpy(buf1 + tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4],
-                     buf2, element_size);
+	      if(buf1 + tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4] != buf2)
+		memcpy(buf1 + tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4],
+		       buf2, element_size);
             }
           }
         }
@@ -654,6 +682,7 @@ void _XMP_stride_memcpy_6dim(char *buf1, const char *buf2, const _XMP_array_sect
               tmp[4] = stride_offset[4] * n;
               for(size_t p=0;p<array_info[5].length;p++){
                 tmp[5] = stride_offset[5] * p;
+		if(buf1 + tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4] + tmp[5] != buf2)
                 memcpy(buf1 + tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4] + tmp[5],
                        buf2, element_size);
               }
@@ -803,8 +832,9 @@ void _XMP_stride_memcpy_7dim(char *buf1, const char *buf2, const _XMP_array_sect
                 tmp[5] = stride_offset[5] * p;
                 for(size_t q=0;q<array_info[6].length;q++){
                   tmp[6] = stride_offset[6] * q;
-                  memcpy(buf1 + tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4] + tmp[5] + tmp[6],
-                         buf2, element_size);
+		  if(buf1 + tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4] + tmp[5] + tmp[6] != buf2)
+		    memcpy(buf1 + tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4] + tmp[5] + tmp[6],
+			   buf2, element_size);
                 }
               }
             }
