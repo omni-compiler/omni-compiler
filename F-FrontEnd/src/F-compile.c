@@ -2604,13 +2604,7 @@ end_declaration()
         tp = ID_TYPE(ip);
 
         if (tp) {
-            if (TYPE_IS_ALLOCATABLE(tp) &&
-                !(IS_ARRAY_TYPE(tp) ||
-                  TYPE_IS_COINDEXED(tp) ||
-                  IS_STRUCT_TYPE(tp) ||
-                  (IS_CHAR(tp) && IS_CHAR_LEN_ALLOCATABLE(tp)))) {
-                error_at_id(ip, "ALLOCATABLE is applied only to array/coarray/derived-type/character(:)");
-            } else if (TYPE_IS_OPTIONAL(tp) && !(ID_IS_DUMMY_ARG(ip))) {
+            if (TYPE_IS_OPTIONAL(tp) && !(ID_IS_DUMMY_ARG(ip))) {
                 warning_at_id(ip, "OPTIONAL is applied only "
                               "to dummy argument");
             } else if ((TYPE_IS_INTENT_IN(tp) ||
