@@ -1149,42 +1149,35 @@ public class XMPrewriteExpr {
 
   }
 
-  private Block rewriteSubarrayToLoop(Xobject assignStmt, Block block) throws XMPexception {
-
-    // NOTE: allmost all of the following code comes from XMPtranslatePragma.convertArrrayToLoop
-
-    Xobject left = assignStmt.left();
-
-    List<Ident> varList = new ArrayList<Ident>(XMP.MAX_DIM);
-    List<Xobject> lbList = new ArrayList<Xobject>(XMP.MAX_DIM);
+  // NOTE: allmost all of the following code comes from XMPtranslatePragma.convertArrrayToLoop
+  private Block rewriteSubarrayToLoop(Xobject assignStmt, Block block) throws XMPexception
+  {
+    List<Ident> varList   = new ArrayList<Ident>(XMP.MAX_DIM);
+    List<Xobject> lbList  = new ArrayList<Xobject>(XMP.MAX_DIM);
     List<Xobject> lenList = new ArrayList<Xobject>(XMP.MAX_DIM);
-    List<Xobject> stList = new ArrayList<Xobject>(XMP.MAX_DIM);
+    List<Xobject> stList  = new ArrayList<Xobject>(XMP.MAX_DIM);
+    
+    BlockList body0       = Bcons.emptyBody();
 
-    BlockList body0 = Bcons.emptyBody();
-
-    //
     // convert LHS
-    //
-
+    Xobject left        = assignStmt.left();
     assert left.Opcode() == Xcode.SUB_ARRAY_REF;
-
+    
     String arrayName = left.getArg(0).getSym();
-
-    Xtype arrayType = null;
-    Ident arrayId = block.findVarIdent(arrayName);
-    if (arrayId != null){
-      arrayType = arrayId.Type();
-    }
-	
-    if (arrayType == null) throw new XMPexception("array should be declared statically");
-
-    Xtype elemType = arrayType.getArrayElementType();
+    Ident arrayId    = block.findVarIdent(arrayName);
+    Xtype arrayType  = (arrayId != null)? arrayId.Type() : null;
+    if (arrayType == null)
+      throw new XMPexception("array should be declared statically");
+    
     int n = arrayType.getNumDimensions();
+    if (n == 0)
+      throw new XMPexception("array should be declared statically");
 
+    Xtype elemType      = arrayType.getArrayElementType();
     XobjList subscripts = (XobjList)left.getArg(1);
+    Xobject allSizeExpr = Xcons.IntConstant(1);
 
-    for (int i = 0; i < n; i++, arrayType = arrayType.getRef()){
-
+    for(int i=0; i<n; i++, arrayType=arrayType.getRef()){
       long dimSize = arrayType.getArraySize();
       Xobject sizeExpr;
       if (dimSize == 0 || arrayType.getKind() == Xtype.POINTER){
@@ -1198,24 +1191,23 @@ public class XMPrewriteExpr {
       }
 
       Xobject sub = subscripts.getArg(i);
-
-      Ident var;
-      Xobject lb, len, st;
-
       if (! sub.isIndexRange()) continue;
-
-      var = body0.declLocalIdent("_XMP_loop_i" + Integer.toString(i), Xtype.intType);
+      
+      Ident var = body0.declLocalIdent("_XMP_loop_i" + Integer.toString(i), Xtype.intType);
       varList.add(var);
 
-      lb = ((XobjList)sub).getArg(0);
+      Xobject lb = ((XobjList)sub).getArg(0);
       if (lb == null) lb = Xcons.IntConstant(0);
-      len = ((XobjList)sub).getArg(1);
+      
+      Xobject len = ((XobjList)sub).getArg(1);
       if (len == null) len = sizeExpr;
-      st = ((XobjList)sub).getArg(2);
+      
+      Xobject st = ((XobjList)sub).getArg(2);
       if (st == null) st = Xcons.IntConstant(1);
 
       lbList.add(lb);
       lenList.add(len);
+      allSizeExpr = Xcons.binaryOp(Xcode.MUL_EXPR, allSizeExpr, len);
       stList.add(st);
 
       Xobject expr;
@@ -1223,56 +1215,44 @@ public class XMPrewriteExpr {
       expr = Xcons.binaryOp(Xcode.PLUS_EXPR, expr, lb);
 
       subscripts.setArg(i, expr);
-
     }
 
     Xobject new_left = Xcons.arrayRef(elemType, left.getArg(0), subscripts);
 
-    //
     // convert RHS
-    //
-
     // NOTE: Since the top level object cannot be replaced, the following conversion is applied to
     //       the whole assignment.
+    
     XobjectIterator j = new topdownXobjectIterator(assignStmt);
     for (j.init(); !j.end(); j.next()) {
       Xobject x = j.getXobject();
-
       if (x.Opcode() != Xcode.SUB_ARRAY_REF) continue;
-
       int k = 0;
-
       String arrayName1 = x.getArg(0).getSym();
-
-      Xtype arrayType1 = null;
-      Ident arrayId1 = block.findVarIdent(arrayName1);
-      if (arrayId1 != null){
-	arrayType1 = arrayId1.Type();
-      }
-	
-      if (arrayType1 == null) throw new XMPexception("array should be declared statically");
+      Ident arrayId1    = block.findVarIdent(arrayName1);
+      Xtype arrayType1  = (arrayId1 != null)? arrayId1.Type() : null;
+      if(arrayType1 == null)
+        throw new XMPexception("array should be declared statically");
 
       Xtype elemType1 = arrayType1.getArrayElementType();
-      int m = arrayType1.getNumDimensions();
+      int m           = arrayType1.getNumDimensions();
 
       XobjList subscripts1 = (XobjList)x.getArg(1);
 
-      for (int i = 0; i < m; i++, arrayType1 = arrayType1.getRef()){
-
+      for(int i=0; i<m; i++, arrayType1=arrayType1.getRef()){
 	Xobject sub = subscripts1.getArg(i);
-
-	Xobject lb, st;
-
 	if (! sub.isIndexRange()) continue;
 
-	lb = ((XobjList)sub).getArg(0);
+	Xobject lb = ((XobjList)sub).getArg(0);
 	if (lb == null) lb = Xcons.IntConstant(0);
-	st = ((XobjList)sub).getArg(2);
+        
+	Xobject st = ((XobjList)sub).getArg(2);
 	if (st == null) st = Xcons.IntConstant(1);
 
-	Xobject expr;
 	Ident loopVar = varList.get(k);
 	if (loopVar == null) XMP.fatal("array on rhs does not conform to that on lhs.");
+        
+        Xobject expr;
 	expr = Xcons.binaryOp(Xcode.MUL_EXPR, loopVar.Ref(), st);
 	expr = Xcons.binaryOp(Xcode.PLUS_EXPR, expr, lb);
 
@@ -1282,32 +1262,43 @@ public class XMPrewriteExpr {
 
       Xobject new_x = Xcons.arrayRef(elemType1, x.getArg(0), subscripts1);
       j.setXobject(new_x);
-
     }
 
-    //
     // construct loop
-    //
+    Ident bufVar       = body0.declLocalIdent("_XMP_buf", Xtype.Array(elemType, allSizeExpr));
+    Xobject iterBufVar = body0.declLocalIdent("_XMP_iter_buf", Xtype.intType, StorageClass.AUTO, Xcons.IntConstant(0)).Ref();
+    
+    BlockList body1 = Bcons.emptyBody();
+    body1.add(Xcons.Set(bufVar.Index(iterBufVar), assignStmt.right()));
+    body1.add(Xcons.Set(iterBufVar, Xcons.binaryOp(Xcode.PLUS_EXPR, iterBufVar, Xcons.IntConstant(1))));
 
-    //BlockList loop = body0;
-    BlockList loop = null;
-
-    BlockList body = Bcons.emptyBody();
-    body.add(Xcons.Set(new_left, assignStmt.right()));
-
-    for (int i = varList.size() - 1; i >= 0; i--){
+    BlockList loop = Bcons.emptyBody();
+    for(int i=varList.size()-1;i>=0;i--){
       loop = Bcons.emptyBody();
       loop.add(Bcons.FORall(varList.get(i).Ref(), Xcons.IntConstant(0), lenList.get(i), Xcons.IntConstant(1),
-			    Xcode.LOG_LT_EXPR, body));
-      body = loop;
+			    Xcode.LOG_LT_EXPR, body1));
+      body1 = loop;
     }
 
     loop.setIdentList(body0.getIdentList());
     loop.setDecls(body0.getDecls());
 
-    //return body0.toXobject();
-    return Bcons.COMPOUND(loop);
+    BlockList body2   = Bcons.emptyBody();
+    body2.add(Xcons.Set(new_left, bufVar.Index(iterBufVar)));
+    body2.add(Xcons.Set(iterBufVar,
+                        Xcons.binaryOp(Xcode.PLUS_EXPR, iterBufVar, Xcons.IntConstant(1))));
+    BlockList loop2 = Bcons.emptyBody();
+    for(int i=varList.size()-1;i>=0;i--){
+      loop2 = Bcons.emptyBody();
+      loop2.add(Bcons.FORall(varList.get(i).Ref(), Xcons.IntConstant(0), lenList.get(i), Xcons.IntConstant(1),
+                             Xcode.LOG_LT_EXPR, body2));
+      body2 = loop2;
+    }
 
+    loop.add(Xcons.Set(iterBufVar, Xcons.IntConstant(0)));
+    loop.add(Bcons.COMPOUND(body2));
+    
+    return Bcons.COMPOUND(loop);
   }
   
   private Xobject rewriteExpr(Xobject expr, Block block) throws XMPexception {
