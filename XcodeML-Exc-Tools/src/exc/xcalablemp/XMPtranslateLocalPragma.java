@@ -917,7 +917,7 @@ public class XMPtranslateLocalPragma {
       xmptArgs.add(onRefObj.getDescId().Ref());
 
       Ident xmptDataId = pb.getParentBlock().getBody().declLocalIdent(tmpSym.getStr("xmpt_data"), Xtype.voidPtrType);
-      xmptArgs.add(xmptDataId.Ref());
+      xmptArgs.add(xmptDataId.getAddr());
 
       for (XobjArgs i = onRef.getArg(1).getArgs(); i != null; i = i.nextArgs()){
 	//xmptArgs.add(i.getArg());
@@ -931,7 +931,7 @@ public class XMPtranslateLocalPragma {
 
       // event_loop_end
       xmptFuncId = _globalDecl.declExternFunc("_XMP_loop_end");
-      xmptArgs = Xcons.List(xmptDataId.Ref());
+      xmptArgs = Xcons.List(xmptDataId.getAddr());
       loopBody.add(xmptFuncId.Call(xmptArgs));
     }
 	      
