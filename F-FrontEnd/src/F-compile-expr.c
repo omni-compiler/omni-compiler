@@ -1286,12 +1286,20 @@ compile_lhs_expression(x)
             }
         }
 
-        if(!IS_ARRAY_TYPE(tp)){
+        if (IS_ARRAY_TYPE(tp)) {
+            if ((v = compile_array_ref(id, NULL, EXPR_ARG2(x), TRUE)) == NULL)
+                goto err;
+
+        } else if (IS_FUNCTION_TYPE(tp) &&
+            TYPE_IS_POINTER(FUNCTION_TYPE_RETURN_TYPE(tp))) {
+            /* assign to function result pointer */
+            if ((v = compile_function_call(id, compile_args(EXPR_ARG2(x)))) == NULL)
+                goto err;
+
+        } else {
             error("subscripts on scalar variable, '%s'",ID_NAME(id));
             goto err;
         }
-        if((v = compile_array_ref(id, NULL, EXPR_ARG2(x), TRUE)) == NULL)
-            goto err;
 
         return v;
         }
@@ -1348,14 +1356,22 @@ expv_is_this_func(expv v)
 }
 
 int
+expv_is_function_result_pointer(expv v)
+{
+    return EXPV_CODE(v) == FUNCTION_CALL && TYPE_IS_POINTER(EXPV_TYPE(v));
+}
+
+int
 expv_is_lvalue(expv v)
 {
     if (v == NULL) return FALSE;
     if (EXPV_IS_RVALUE(v) == TRUE) return FALSE;
     if (EXPR_CODE(v) == ARRAY_REF || EXPR_CODE(v) == F_VAR ||
-	EXPR_CODE(v) == F95_MEMBER_REF || EXPR_CODE(v) == XMP_COARRAY_REF)
+        EXPR_CODE(v) == F95_MEMBER_REF || EXPR_CODE(v) == XMP_COARRAY_REF)
         return TRUE;
     if (expv_is_this_func(v))
+        return TRUE;
+    if (expv_is_function_result_pointer(v))
         return TRUE;
     return FALSE;
 }
