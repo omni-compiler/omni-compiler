@@ -1844,6 +1844,8 @@ action_statement_key: ASSIGN  label KW KW_TO IDENTIFIER
         { $$ = list1(F_PAUSE_STATEMENT,$2); }
         | STOP  expr_or_null
         { $$ = list1(F_STOP_STATEMENT,$2); }
+        | KW_ERROR KW STOP  expr_or_null
+        { $$ = list1(F08_ERROR_STOP_STATEMENT,$4); }
         | action_statement95 /* all has first key.  */
         | action_coarray_statement /* all has first key.  */
         | io_statement /* all has first key.  */

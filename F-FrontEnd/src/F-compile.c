@@ -1493,6 +1493,7 @@ compile_exec_statement(expr x)
         break;
 
     case F_STOP_STATEMENT:
+    case F08_ERROR_STOP_STATEMENT:
         if (!check_image_control_statement_available()) return;
     case F_PAUSE_STATEMENT:
         compile_STOP_PAUSE_statement(x);
@@ -6228,6 +6229,7 @@ compile_STOP_PAUSE_statement(expr x)
         if(EXPR_CODE(v1) != INT_CONSTANT &&
             EXPR_CODE(v1) != STRING_CONSTANT) {
             error("bad expression in %s statement",
+                  EXPR_CODE(x) == F08_ERROR_STOP_STATEMENT ? "ERROR STOP":
                   EXPR_CODE(x) == F_STOP_STATEMENT ? "STOP":"PAUSE");
             return;
         }
