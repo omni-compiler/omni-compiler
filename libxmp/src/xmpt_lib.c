@@ -193,3 +193,26 @@ void _XMPT_set_subsc(xmpt_subscript_t subsc, _XMP_object_ref_t *desc){
     subsc->omit = 1;
   }
 }
+
+int xmpt_desc_set_data(xmp_desc_t d, void * data)
+{
+  switch(*(int*)d){
+    case _XMP_DESC_NODES: ((_XMP_nodes_t*)d)->xmpt_nodes_data = data ; break;
+    case _XMP_DESC_ARRAY: ((_XMP_array_t*)d)->xmpt_array_data = data ; break;
+    case _XMP_DESC_TEMPLATE: ((_XMP_template_t*)d)->xmpt_template_data = data ; break;
+    default: return -1;
+  }
+  return 0;
+}
+
+int xmpt_desc_get_data(xmp_desc_t d, void ** data)
+{
+  switch(*(int*)d){
+    case _XMP_DESC_NODES: *data = ((_XMP_nodes_t*)d)->xmpt_nodes_data ; break;
+    case _XMP_DESC_ARRAY: *data = ((_XMP_array_t*)d)->xmpt_array_data ; break;
+    case _XMP_DESC_TEMPLATE: *data = ((_XMP_template_t*)d)->xmpt_template_data ; break;
+    default: return -1;
+  }
+  return 0;
+}
+

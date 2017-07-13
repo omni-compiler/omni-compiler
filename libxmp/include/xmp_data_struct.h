@@ -54,6 +54,7 @@ typedef struct _XMP_nodes_type {
 
 #ifdef _XMPT
   void *xmpt_data;
+  void *xmpt_nodes_data;
 #endif
 
   _XMP_nodes_info_t info[1];
@@ -112,6 +113,10 @@ typedef struct _XMP_template_type {
   // ----------------------------------
 
   _XMP_template_info_t info[1];
+
+#ifdef _XMPT
+  void *xmpt_template_data;
+#endif
 } _XMP_template_t;
 
 // schedule of reflect comm.
@@ -280,6 +285,9 @@ typedef struct _XMP_array_type {
 
 #ifdef _XMP_MPI3_ONESIDED
   struct xmp_coarray *coarray;
+#endif
+#ifdef _XMPT
+  void *xmpt_array_data;
 #endif
 
   _XMP_template_t *align_template;

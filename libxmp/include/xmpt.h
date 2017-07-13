@@ -275,6 +275,8 @@ typedef void (*xmpt_event_sync_images_begin_t)(
 typedef void (*xmpt_callback_t);
 
 int xmpt_set_callback(xmpt_event_t, xmpt_callback_t);
+int xmpt_desc_set_data(xmp_desc_t d, xmpt_tool_data_t data);
+int xmpt_desc_get_data(xmp_desc_t d, xmpt_tool_data_t* data);
 
 extern xmpt_callback_t xmpt_callback[XMPT_EVENT_ALL+1];
 extern int xmpt_enabled;
