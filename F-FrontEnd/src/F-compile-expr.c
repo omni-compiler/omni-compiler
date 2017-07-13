@@ -1290,11 +1290,21 @@ compile_lhs_expression(x)
             if ((v = compile_array_ref(id, NULL, EXPR_ARG2(x), TRUE)) == NULL)
                 goto err;
 
-        } else if (IS_FUNCTION_TYPE(tp) &&
-            TYPE_IS_POINTER(FUNCTION_TYPE_RETURN_TYPE(tp))) {
-            /* assign to function result pointer */
-            if ((v = compile_function_call(id, compile_args(EXPR_ARG2(x)))) == NULL)
-                goto err;
+        } else if (IS_FUNCTION_TYPE(tp)) {
+            /* assign to declared function result pointer */
+            expv args = compile_args(EXPR_ARG2(x));
+
+            if (TYPE_IS_POINTER(FUNCTION_TYPE_RETURN_TYPE(tp))) {
+                if ((v = compile_function_call(id, args)) == NULL)
+                    goto err;
+            } else if (!FUNCTION_TYPE_IS_DEFINED(ID_TYPE(id))) {
+                TYPE_SET_POINTER(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)));
+                PROC_CLASS(id) = P_UNDEFINEDPROC;
+                FUNCTION_TYPE_HAS_EXPLICIT_ARGS(ID_TYPE(id)) = TRUE;
+                ID_STORAGE(id) = STG_AUTO;
+                if ((v = compile_function_call(id, args)) == NULL)
+                    goto err;
+            }
 
         } else {
             error("subscripts on scalar variable, '%s'",ID_NAME(id));
