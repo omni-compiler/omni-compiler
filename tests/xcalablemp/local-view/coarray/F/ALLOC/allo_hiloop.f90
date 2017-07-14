@@ -1,8 +1,8 @@
   program allo_loop
-!!     include "xmp_coarray.h"
     real, allocatable :: abc(:,:)[:]
 
     do i=1,10000
+       if (mod(i,100)==0) write(*,101) this_image(), i
        allocate(abc(1000,1000)[*])
        deallocate(abc)
     end do
@@ -15,6 +15,7 @@
        write(*,100) this_image(), na, ng
     endif
 100 format("[",i0,"] remains allocated ",i0," and gabage ",i0," bytes")
+101 format("[",i0,"] executing ",i0,"-th itefation")
 
     call final_msg(na)
 
@@ -22,7 +23,6 @@
 
 
   subroutine final_msg(nerr)
-!!     include 'xmp_coarray.h'
     if (nerr==0) then 
        print '("[",i0,"] OK")', this_image()
     else
