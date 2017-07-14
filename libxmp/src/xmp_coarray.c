@@ -1433,9 +1433,9 @@ void xmp_sync_images_all(int* status)
 /*     a[0:100]:[1] = b[0:100]; // a[] is a dst, b[] is a src           */
 /************************************************************************/
 void _XMP_coarray_contiguous_put(const int target_image, _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc, 
-			       const long dst_offset, const long src_offset, const long dst_elmts, const long src_elmts)
+				 const long dst_offset, const long src_offset, const long dst_elmts, const long src_elmts)
 {
-  int target_rank = target_image - 1;
+  int target_rank  = target_image - 1;
   size_t elmt_size = dst_desc->elmt_size;
   
   if(target_rank == _XMP_world_rank){
@@ -1474,10 +1474,10 @@ void _XMP_coarray_contiguous_put(const int target_image, _XMP_coarray_t *dst_des
 /*     a[0:100] = b[0:100]:[1]; // a[] is a dst, b[] is a src           */
 /************************************************************************/
 void _XMP_coarray_contiguous_get(const int target_image, _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc,
-			       const long dst_offset, const long src_offset, const long dst_elmts,
-			       const long src_elmts)
+				 const long dst_offset, const long src_offset, const long dst_elmts,
+				 const long src_elmts)
 {
-  int target_rank = target_image - 1;
+  int target_rank  = target_image - 1;
   size_t elmt_size = dst_desc->elmt_size;
  
   if(target_rank == _XMP_world_rank){

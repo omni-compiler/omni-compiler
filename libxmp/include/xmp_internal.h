@@ -426,7 +426,8 @@ extern void _XMP_stride_memcpy_4dim(char *, const char *, const _XMP_array_secti
 extern void _XMP_stride_memcpy_5dim(char *, const char *, const _XMP_array_section_t *, size_t, const int);
 extern void _XMP_stride_memcpy_6dim(char *, const char *, const _XMP_array_section_t *, size_t, const int);
 extern void _XMP_stride_memcpy_7dim(char *, const char *, const _XMP_array_section_t *, size_t, const int);
-extern void _XMP_local_contiguous_copy(char *, const void *, const size_t, const size_t, const size_t);
+extern _Bool _XMP_check_overlapping(const char *dst_start, const char *dst_end, const char *src_start, const char *src_end);
+extern void _XMP_local_contiguous_copy(char *, const char *, const size_t, const size_t, const size_t);
 extern size_t _XMP_calc_max_copy_chunk(const int, const int, const _XMP_array_section_t *, const _XMP_array_section_t *);
 #endif
 

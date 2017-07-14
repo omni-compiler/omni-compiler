@@ -1,9 +1,3 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package xcodeml.c.type;
 
 import java.util.List;
@@ -89,5 +83,10 @@ public class XcGccAttribute extends XcObj
     public void setName(String name)
     {
         _name = name;
+    }
+
+    public String getName()
+    {
+        return _name;
     }
 }
