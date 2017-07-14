@@ -1572,6 +1572,7 @@ classify_statement()
     case PARAMETER:
     case POINTER:
     case VOLATILE:
+    case ASYNCHRONOUS:
     case SAVE:
     case SELECT:
     case SEQUENCE:
@@ -1929,9 +1930,11 @@ get_keyword_optional_blank(int class)
     case KW_TYPE:
         if(get_keyword(keywords) == KW_IS) return TYPEIS;
         break;
-    case KW_SELECT:
-        if(get_keyword(keywords) == CASE) return SELECT;
-        break;
+    case KW_SELECT: {
+        int kwd = get_keyword(keywords);
+        if(kwd == CASE) return SELECT;
+        if(kwd == KW_TYPE) return SELECTTYPE;
+    } break;
     case DO: /* DO WHILE *//* blanks mandatory.  */
         if(get_keyword(keywords) == KW_WHILE) return DOWHILE;
         break;
@@ -3846,11 +3849,13 @@ struct keyword_token dot_keywords[] =
 /* caution!: longger word should be first than short one.  */
 struct keyword_token keywords[ ] =
 {
+    { "abstract",       ABSTRACT  },     /* F2003 spec */
     { "assignment",     ASSIGNMENT  },
     { "assign",         ASSIGN  },
     { "allocatable",    ALLOCATABLE },
     { "allocate",       ALLOCATE },
     { "all",            KW_ALL },       /* #060 coarray */
+    { "asynchronous",   ASYNCHRONOUS  }, /* F2003 spec */
     { "backspace",      BACKSPACE },
     { "bind",           BIND },
     { "blockdata",      BLOCKDATA },
@@ -3906,6 +3911,7 @@ struct keyword_token keywords[ ] =
     { "external",       EXTERNAL  },
     { "extends",        EXTENDS  },      /* F2003 spec */
     { "final",          FINAL },         /* F2003 spec */
+    { "flush",          FLUSH },         /* F2003 spec */
     { "format",         FORMAT  },
     { "formatted",      FORMATTED  },    /* F2003 spec */
     { "function",       FUNCTION  },
@@ -3966,6 +3972,7 @@ struct keyword_token keywords[ ] =
     { "save",           SAVE },
     { "selectcase",     SELECT },
     { "select",         KW_SELECT },
+    { "selecttype",     SELECTTYPE },  /* F2003 spec */
     { "sequence",       SEQUENCE },
     /*    { "static",   KW_STATIC },*/
     { "stop",           STOP },
@@ -3985,6 +3992,7 @@ struct keyword_token keywords[ ] =
     { "unlock",         UNLOCK },        /* #060 coarray */
     { "use",            KW_USE },
     { "value",          VALUE },
+    { "wait",           WAIT },          /* F2003 spec */
     { "where",          WHERE },
     { "while",          KW_WHILE},
     { "write",          WRITE },

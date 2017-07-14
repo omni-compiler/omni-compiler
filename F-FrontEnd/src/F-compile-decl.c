@@ -281,6 +281,13 @@ declare_procedure(enum name_class class,
         is_separate_definition = TRUE;
     }
 
+    if (type != NULL &&
+        ((type_is_nopolymorphic_abstract(type)) ||
+         (FUNCTION_TYPE_RETURN_TYPE(type) != NULL &&
+          type_is_nopolymorphic_abstract(FUNCTION_TYPE_RETURN_TYPE(type))))) {
+        error("%s returns ABSTRACT TYPE", s?SYM_NAME(s):"function");
+    }
+
     if (class != CL_ENTRY){
         CURRENT_PROC_CLASS = class;
         if (name) {
@@ -1570,7 +1577,9 @@ find_ident_block_parent(SYMBOL s)
     int in_block = FALSE;
 
     FOR_CTLS_BACKWARD(cp) {
-        if (CTL_TYPE(cp) == CTL_BLOCK || CTL_TYPE(cp) == CTL_FORALL) {
+        if (CTL_TYPE(cp) == CTL_BLOCK || \
+            CTL_TYPE(cp) == CTL_FORALL || \
+            CTL_TYPE(cp) == CTL_TYPE_GUARD) {
             in_block = TRUE;
             if (CTL_BLOCK_LOCAL_SYMBOLS(cp) == LOCAL_SYMBOLS) {
                 continue;
@@ -2109,6 +2118,9 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
         case F03_VALUE_SPEC:
             TYPE_SET_VALUE(tp);
             break;
+        case F03_ASYNCHRONOUS_SPEC:
+            TYPE_SET_ASYNCHRONOUS(tp);
+            break;
         default:
             error("incompatible type attribute , code: %d", EXPR_CODE(v));
         }
@@ -2330,7 +2342,6 @@ compile_derived_type(expr x, int allow_predecl)
             return NULL;
         }
     }
-
 
     if(id != NULL && ID_IS_AMBIGUOUS(id)) {
         error_at_node(x, "an ambiguous reference to symbol '%s'", ID_NAME(id));
@@ -2673,6 +2684,11 @@ compile_IMPLICIT_decl(expr type,expr l)
                 return;
             }
         }
+    }
+
+    if (type_is_nopolymorphic_abstract(tp)) {
+        error("abstract types in IMPLICIT statement");
+        return;
     }
 
     FOR_ITEMS_IN_LIST(lp,l){
@@ -3833,6 +3849,8 @@ compile_struct_decl(expr ident, expr type, expr type_params)
     list lp = NULL;
     int has_access_spec = FALSE;
     int has_extends_spec = FALSE;
+    int has_abstract_spec = FALSE;
+    int has_bind_spec = FALSE;
     ID last = NULL;
 
     if(ident == NULL)
@@ -3867,8 +3885,26 @@ compile_struct_decl(expr ident, expr type, expr type_params)
                     has_extends_spec = TRUE;
                 }
                 break;
+            case F03_ABSTRACT_SPEC:
+                if (has_abstract_spec) {
+                    error("Dupulicate ABSTRACT spec");
+                } else {
+                    has_abstract_spec = TRUE;
+                }
+                break;
+            case F03_BIND_SPEC:
+                if (has_bind_spec) {
+                    error("Dupulicate BIND spec");
+                } else {
+                    has_bind_spec = TRUE;
+                }
+                break;
             default:
                 break;
+        }
+
+        if (has_abstract_spec && has_bind_spec) {
+            error("non-extensible derived type should not be ABSTRACT");
         }
 
         switch(EXPR_CODE(x)) {
@@ -3903,6 +3939,9 @@ compile_struct_decl(expr ident, expr type, expr type_params)
                 TYPE_PARENT(tp) = new_ident_desc(EXPR_SYM(EXPR_ARG1(x)));
                 TYPE_PARENT_TYPE(tp) = parent_type;
             }; break;
+            case F03_ABSTRACT_SPEC:
+                TYPE_SET_ABSTRACT(tp);
+                break;
             case F03_BIND_SPEC:
                 TYPE_SET_BIND(tp);
                 break;
@@ -3958,6 +3997,34 @@ check_type_bound_generics(TYPE_DESC stp)
     }
 }
 
+/*
+ * Check the bindings of the type-bound generic appear before END TYPE statement.
+ */
+static void
+check_no_abstract_type_bound_procedure(const TYPE_DESC stp)
+{
+    ID mem;
+    ID p;
+    TYPE_DESC tp;
+
+    if (stp == NULL) {
+        return;
+    }
+
+    for (tp = stp; tp != NULL; tp = TYPE_PARENT(tp)?TYPE_PARENT_TYPE(tp):NULL) {
+        if (TYPE_IS_ABSTRACT(tp)) {
+            FOREACH_TYPE_BOUND_PROCEDURE(mem, tp) {
+                if (ID_CLASS(mem) == CL_TYPE_BOUND_PROC && TBP_IS_DEFERRED(mem)) {
+                    p = find_struct_member_allow_private(stp, ID_SYM(mem), TRUE);
+                    if (TBP_IS_DEFERRED(p)) {
+                        error("%s is not implemented", SYM_NAME(ID_SYM(mem)));
+                    }
+                }
+            }
+        }
+    }
+}
+
 /* compile end type statement */
 void
 compile_struct_decl_end()
@@ -3980,6 +4047,14 @@ compile_struct_decl_end()
 
     /* check for type bound generic */
     check_type_bound_generics(stp);
+
+    if (!TYPE_IS_ABSTRACT(stp)) {
+        check_no_abstract_type_bound_procedure(stp);
+    }
+
+    if (TYPE_IS_SEQUENCE(stp) && TYPE_IS_ABSTRACT(stp)) {
+        error("non-extensible derived type should not be ABSTRACT");
+    }
 
     if (!TYPE_IS_INTERNAL_PRIVATE(stp)) {
         /*
@@ -4030,7 +4105,6 @@ compile_struct_decl_end()
             }
         }
     }
-
 
     pop_ctl();
 }
@@ -4711,12 +4785,12 @@ compile_pragma_statement(expr x)
 
 
 /*
- * declare volatile variable
+ * declare variables those have a specified type attribute
  *   OR
- * add volatile attribute (in block scope)
+ * add a specified type attribute (in block scope)
  */
 void
-compile_VOLATILE_statement(expr id_list)
+compile_declare_or_add_attribute_statement(expr id_list, uint32_t type_attr)
 {
     list lp;
     expr ident;
@@ -4724,18 +4798,17 @@ compile_VOLATILE_statement(expr id_list)
 
     FOR_ITEMS_IN_LIST(lp, id_list) {
         ident = LIST_ITEM(lp);
-
         if ((id = find_ident_local(EXPR_SYM(ident))) == NULL) {
             if ((id = find_ident(EXPR_SYM(ident))) == NULL ||
                 (ID_CLASS(id) != CL_VAR && ID_CLASS(id) != CL_UNKNOWN)) {
                 id = declare_ident(EXPR_SYM(ident), CL_VAR);
                 if(id == NULL) {
-                    continue; /* error */
+                    fatal("cannot declare ident %s", SYM_NAME(EXPR_SYM(ident)));
                 }
             } else {
                 /* id is use-/host-associated or out of the current BLOCK */
                 TYPE_DESC tp = ID_TYPE(id);
-                if (TYPE_IS_COINDEXED(tp)) {
+                if (type_attr == TYPE_ATTR_VOLATILE && TYPE_IS_COINDEXED(tp)) {
                     error("the VOLATILE attribute shall not be specified for a coarray that is not local variable");
                     return;
                 }
@@ -4749,10 +4822,33 @@ compile_VOLATILE_statement(expr id_list)
             error("an ambiguous reference to symbol '%s'", ID_NAME(id));
             return;
         }
-        TYPE_SET_VOLATILE(id);
+        TYPE_ATTR_FLAGS(id) |= type_attr;
     }
 }
 
+
+/*
+ * declare volatile variable
+ *   OR
+ * add volatile attribute (in block scope)
+ */
+void
+compile_VOLATILE_statement(expr id_list)
+{
+    compile_declare_or_add_attribute_statement(id_list, TYPE_ATTR_VOLATILE);
+}
+
+
+/*
+ * declare asynchronous variable
+ *   OR
+ * add asynchronous attribute (in block scope)
+ */
+void
+compile_ASYNCHRONOUS_statement(expr id_list)
+{
+    compile_declare_or_add_attribute_statement(id_list, TYPE_ATTR_ASYNCHRONOUS);
+}
 
 
 /*
@@ -5301,6 +5397,7 @@ compile_procedure_declaration(expr x)
         if (tp == NULL) {
             error("unexpected typeq");
         }
+
         tp = function_type(tp);
 
     } else {
@@ -5369,7 +5466,6 @@ compile_procedure_declaration(expr x)
         }
 
         tp = ID_TYPE(interface);
-
     }
 
     FOR_ITEMS_IN_LIST(lp, decls) {
@@ -5542,9 +5638,18 @@ compile_type_bound_procedure(expr x)
         binding_attr_flags |= TYPE_BOUND_PROCEDURE_PASS;
     }
 
-    if ((binding_attr_flags & TYPE_BOUND_PROCEDURE_DEFERRED) != 0 &&
-        interface_name == NULL) {
-        error("DEFERRED shall appears if and only if interface_name appears.");
+    if ((binding_attr_flags & TYPE_BOUND_PROCEDURE_DEFERRED) != 0) {
+        TYPE_DESC stp;
+        if (interface_name == NULL) {
+            error("DEFERRED shall appears if and only if interface_name appears.");
+        }
+        assert(CTL_TYPE(ctl_top) == CTL_STRUCT);
+
+        stp = CTL_STRUCT_TYPEDESC(ctl_top);
+
+        if (!TYPE_IS_ABSTRACT(stp)) {
+            error("DEFERRED shall appears in ABSTRACT TYPE.");
+        }
     }
 
     if (interface_name) {
@@ -5558,7 +5663,6 @@ compile_type_bound_procedure(expr x)
         if (!(binding_attr_flags & TYPE_BOUND_PROCEDURE_DEFERRED)) {
             error_at_node(x, "require DEFERRED attribute");
         }
-        warning_at_node(x, "NOT IMPLEMENTED YET");
         FOR_ITEMS_IN_LIST(lp, bindings) {
             if (EXPR_CODE(LIST_ITEM(lp)) != IDENT) {
                 error_at_node(x, "unexpected expression");

@@ -1156,3 +1156,50 @@ static int _XMP_mpi_trans_rank(const _XMP_coarray_t *coarray, int const world_ra
 
   return rank;
 }
+
+void _XMP_mpi_coarray_regmem(_XMP_coarray_t *coarray_desc, void *real_addr, const size_t coarray_size, bool is_acc)
+{
+  char **each_addr = NULL;
+  MPI_Win win = MPI_WIN_NULL;
+  _XMP_nodes_t *nodes = _XMP_get_execution_nodes();
+  MPI_Comm comm = *(MPI_Comm *)nodes->comm;
+
+  if(! _XMP_flag_multi_win){
+    _XMP_fatal("single window mode does not support coarray regmem");
+  }
+
+  if(coarray_size == 0){
+    _XMP_fatal("_XMP_mpi_coarray_regmem: zero size is not allowed");
+  }
+
+  _XMP_mpi_onesided_create_win(&win, real_addr, coarray_size, comm);
+  MPI_Win_lock_all(MPI_MODE_NOCHECK, win);
+
+  XACC_DEBUG("addr=%p, size=%zd, is_acc=%d", real_addr, coarray_size, is_acc);
+
+  if(is_acc){
+#ifdef _XMP_XACC
+    coarray_desc->addr_dev = each_addr;
+    coarray_desc->real_addr_dev = real_addr;
+    coarray_desc->win_acc = win;
+    coarray_desc->nodes = nodes;
+#endif
+  }else{
+    coarray_desc->addr = each_addr;
+    coarray_desc->real_addr = real_addr;
+    coarray_desc->win = win;
+    coarray_desc->win_acc = MPI_WIN_NULL;
+    coarray_desc->nodes = nodes;
+  }
+}
+
+void _XMP_mpi_coarray_deregmem(_XMP_coarray_t *c)
+{
+  if(! _XMP_flag_multi_win){
+    _XMP_fatal("single window mode does not support coarray deregmem");
+  }
+
+  MPI_Win_unlock_all(c->win);
+  _XMP_barrier_EXEC();
+  _XMP_mpi_onesided_destroy_win(&(c->win));
+}
