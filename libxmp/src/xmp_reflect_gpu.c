@@ -174,7 +174,8 @@ static void _XMP_reflect_sched(_XMP_array_t *a, int *lwidth, int *uwidth,
 	if (reflect->is_periodic == -1 /* not set yet */ ||
 	    lwidth[i] != reflect->lo_width ||
 	    uwidth[i] != reflect->hi_width ||
-	    is_periodic[i] != reflect->is_periodic){
+	    is_periodic[i] != reflect->is_periodic ||
+	    dev_addr != reflect->dev_addr){
 
 	  reflect->lo_width = lwidth[i];
 	  reflect->hi_width = uwidth[i];
@@ -615,6 +616,8 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
   reflect->lo_rank = lo_rank;
   reflect->hi_rank = hi_rank;
 
+  reflect->dev_addr = dev_array_addr;
+
   // gpu async
   reflect->lo_async_id = _XMP_alloc(sizeof(cudaStream_t));
   CUDA_SAFE_CALL(cudaStreamCreate(reflect->lo_async_id));
@@ -975,6 +978,8 @@ void _XMP_init_reflect_sched_gpu(_XMP_reflect_sched_t *sched)
 
   sched->lo_async_id = NULL;
   sched->hi_async_id = NULL;
+
+  sched->dev_addr = NULL;
 }
 
 void _XMP_finalize_reflect_sched_gpu(_XMP_reflect_sched_t *sched, _Bool free_buf)
@@ -1019,6 +1024,8 @@ void _XMP_finalize_reflect_sched_gpu(_XMP_reflect_sched_t *sched, _Bool free_buf
     _XMP_free(sched->hi_async_id);
     sched->hi_async_id = NULL;
   }
+
+  sched->dev_addr = NULL;
 }
 
 
