@@ -848,12 +848,20 @@ compile_expression(expr x)
                     error("an invalid constant expression, which has "
                           "a 'd' exponent and an explicit kind.");
                 }
-            }
+            } 
             /* if kind is differ, make new type desc.
                for example, type desc for l2 and l3 should be differ.
                l2 = .false.
                l3 = .false._1
             */
+
+            /* Constant cannot have function call as kind specifier, this does
+               not make any sense. Therefore, we keep the kind identifier as
+               an identifier. */
+            if(EXPV_CODE(v2) == FUNCTION_CALL) {
+                v2 = expv_sym_term(IDENT, EXPV_TYPE(v2), EXPR_SYM(EXPR_ARG2(x)));
+            }
+            
             TYPE_KIND(EXPV_TYPE(v1)) = v2;
             return v1;
         }
