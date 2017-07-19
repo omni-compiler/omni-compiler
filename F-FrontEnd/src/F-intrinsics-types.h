@@ -172,6 +172,8 @@ typedef enum {
     INTR_KIND,
     INTR_SELECTED_INT_KIND,
     INTR_SELECTED_REAL_KIND,
+    /* F2003 kind function */
+    INTR_SELECTED_CHAR_KIND,
 
     /* 7. Logical function */
 
