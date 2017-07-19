@@ -63,6 +63,19 @@ fincludes/iso_c_binding.xmod: fincludes/iso_c_binding.f90 $(F_FRONT)
 fincludes/iso_fortran_env.xmod: fincludes/iso_fortran_env.f90 $(F_FRONT)
 	./$(F_FRONT) -module-compile $< > $@
 
+ifeq ($(IS_CRAY), $(TRUE))
+fincludes/ieee_features.xmod: fincludes/ieee_features.f90 $(F_FRONT)
+	 $(FC) $(FPPFLAGS) $<
+	 ./$(F_FRONT) -module-compile fincludes/ieee_features.i > $@
+
+fincludes/ieee_exceptions.xmod: fincludes/ieee_exceptions.f90 $(F_FRONT)
+	 $(FC) $(FPPFLAGS) $<
+	 ./$(F_FRONT) -module-compile fincludes/ieee_exceptions.i > $@
+
+fincludes/ieee_arithmetic.xmod: fincludes/ieee_arithmetic.f90 $(F_FRONT)  fincludes/ieee_exceptions.xmod
+	 $(FC) $(FPPFLAGS) $<
+	 ./$(F_FRONT) -module-compile fincludes/ieee_arithmetic.i > $@
+else
 fincludes/ieee_features.xmod: fincludes/ieee_features.f90 $(F_FRONT)
 	 $(FC) $(FPPFLAGS) $< | ./$(F_FRONT) -module-compile > $@
 
@@ -71,6 +84,7 @@ fincludes/ieee_exceptions.xmod: fincludes/ieee_exceptions.f90 $(F_FRONT)
 
 fincludes/ieee_arithmetic.xmod: fincludes/ieee_arithmetic.f90 $(F_FRONT)  fincludes/ieee_exceptions.xmod
 	 $(FC) $(FPPFLAGS) $< | ./$(F_FRONT) -M ./fincludes -module-compile > $@
+endif
 
 install: $(F_FRONT)
 	$(MKDIR_P) $(DESTDIR)$(BINDIR)
