@@ -28,6 +28,7 @@ HEADERS = C-OMP.h C-ACC.h C-XMP.h C-expr.h C-exprcode.h F-datatype.h F-front.h F
 	  F-second-pass.h hash.h module-manager.h xcodeml-module.h xcodeml-node.h xcodeml.h
 CREATE_FILES = C-exprcode.h C-exprcode.c
 
+IS_CRAY     = @CRAY@
 FALSE       = 1
 TRUE        = 0
 IS_MOD2XMOD = @MOD2XMOD@
@@ -66,15 +67,15 @@ fincludes/iso_fortran_env.xmod: fincludes/iso_fortran_env.f90 $(F_FRONT)
 ifeq ($(IS_CRAY), $(TRUE))
 fincludes/ieee_features.xmod: fincludes/ieee_features.f90 $(F_FRONT)
 	 $(FC) $(FPPFLAGS) $<
-	 ./$(F_FRONT) -module-compile fincludes/ieee_features.i > $@
+	 ./$(F_FRONT) -module-compile ieee_features.i > $@
 
 fincludes/ieee_exceptions.xmod: fincludes/ieee_exceptions.f90 $(F_FRONT)
 	 $(FC) $(FPPFLAGS) $<
-	 ./$(F_FRONT) -module-compile fincludes/ieee_exceptions.i > $@
+	 ./$(F_FRONT) -module-compile ieee_exceptions.i > $@
 
 fincludes/ieee_arithmetic.xmod: fincludes/ieee_arithmetic.f90 $(F_FRONT)  fincludes/ieee_exceptions.xmod
 	 $(FC) $(FPPFLAGS) $<
-	 ./$(F_FRONT) -module-compile fincludes/ieee_arithmetic.i > $@
+	 ./$(F_FRONT) -module-compile ieee_arithmetic.i > $@
 else
 fincludes/ieee_features.xmod: fincludes/ieee_features.f90 $(F_FRONT)
 	 $(FC) $(FPPFLAGS) $< | ./$(F_FRONT) -module-compile > $@
