@@ -1,16 +1,20 @@
 .PHONY: all install clean
 
-F_FRONT = F_Front
-CC      = @CC@
-LIBXML2 = @LIBXML2_INCLUDE_DIR@
-CFLAGS  = @CFLAGS@ -DNDEBUG -DBUGFIX -D__XCODEML__ -DYYDEBUG -I$(LIBXML2)/libxml2 -I../../include
-LDFLAGS = -L@LIBXML2_LIB_DIR@ -lxml2 -lm
-MKDIR_P = @MKDIR_P@
-INSTALL = @INSTALL@
-BINDIR  = @OMNI_HOME@/bin
-AWK     = @AWK@
-XMODDIR = @OMNI_HOME@/fincludes
-INTRMOD = fincludes/iso_fortran_env.xmod fincludes/iso_c_binding.xmod
+FC       = @MPI_FC@
+FPPFLAGS = @FPP_FLAGS@
+F_FRONT  = F_Front
+CC       = @CC@
+LIBXML2  = @LIBXML2_INCLUDE_DIR@
+CFLAGS   = @CFLAGS@ -DNDEBUG -DBUGFIX -D__XCODEML__ -DYYDEBUG -I$(LIBXML2)/libxml2 -I../../include
+LDFLAGS  = -L@LIBXML2_LIB_DIR@ -lxml2 -lm
+MKDIR_P  = @MKDIR_P@
+INSTALL  = @INSTALL@
+BINDIR   = @OMNI_HOME@/bin
+AWK      = @AWK@
+XMODDIR  = @OMNI_HOME@/fincludes
+INTRMOD  = fincludes/iso_fortran_env.xmod fincludes/iso_c_binding.xmod \
+           fincludes/ieee_features.xmod fincludes/ieee_exceptions.xmod \
+		   fincludes/ieee_arithmetic.xmod
 
 OBJECTS = F95-main.o C-expr-mem.o C-exprcode.o F-datatype.o F-ident.o \
 	  F95-parser.o F-mem.o F-compile.o F-compile-decl.o F-compile-expr.o \
@@ -58,6 +62,15 @@ fincludes/iso_c_binding.xmod: fincludes/iso_c_binding.f90 $(F_FRONT)
 
 fincludes/iso_fortran_env.xmod: fincludes/iso_fortran_env.f90 $(F_FRONT)
 	./$(F_FRONT) -module-compile $< > $@
+
+fincludes/ieee_features.xmod: fincludes/ieee_features.f90 $(F_FRONT)
+	 $(FC) $(FPPFLAGS) $< | ./$(F_FRONT) -module-compile > $@
+
+fincludes/ieee_exceptions.xmod: fincludes/ieee_exceptions.f90 $(F_FRONT)
+	 $(FC) $(FPPFLAGS) $< | ./$(F_FRONT) -module-compile > $@
+
+fincludes/ieee_arithmetic.xmod: fincludes/ieee_arithmetic.f90 $(F_FRONT)  fincludes/ieee_exceptions.xmod
+	 $(FC) $(FPPFLAGS) $< | ./$(F_FRONT) -M ./fincludes -module-compile > $@
 
 install: $(F_FRONT)
 	$(MKDIR_P) $(DESTDIR)$(BINDIR)
