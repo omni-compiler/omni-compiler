@@ -6463,7 +6463,8 @@ compile_CALL_type_bound_procedure_statement(expr x)
         tp = NULL;
         FOREACH_ID(bind, TBP_BINDING(tpd)) {
             bindto = find_struct_member_allow_private(stp, ID_SYM(bind), TRUE);
-            if (bindto && function_type_is_appliable(ID_TYPE(bindto), a)) {
+            if (bindto && function_type_is_appliable(ID_TYPE(bindto), a, TRUE)) 
+            {
                 tp = ID_TYPE(bindto);
             }
         }
@@ -8546,6 +8547,7 @@ compile_FORALL_statement(int st_no, expr x)
         }
         compile_ENDFORALL_statement(NULL);
     }
+    printf("END OF FORALL compile\n");
 }
 
 
@@ -8769,10 +8771,12 @@ check_select_types(expr x, TYPE_DESC tp)
                 TYPE_DESC btp, btq;
                 btp = get_bottom_ref_type(tp);
                 btq = get_bottom_ref_type(tq);
-                if (type_is_strict_compatible(tp, tq) && TYPE_TAGNAME(btp) == TYPE_TAGNAME(btq)) {
+                if (type_is_strict_compatible(tp, tq, TRUE) 
+                    && TYPE_TAGNAME(btp) == TYPE_TAGNAME(btq)) 
+                {
                     error_at_node(x, "duplicate derived-types in SELECT TYPE construct");
                 }
-            } else if (type_is_strict_compatible(tp, tq)) {
+            } else if (type_is_strict_compatible(tp, tq, TRUE)) {
                 error_at_node(x, "duplicate types in SELECT TYPE construct");
                 return;
             }

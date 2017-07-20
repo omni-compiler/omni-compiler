@@ -187,7 +187,8 @@ force_to_logical_type(expv v)
 int
 are_dimension_and_shape_conformant_by_type(expr x,
                                            TYPE_DESC lt, TYPE_DESC rt,
-                                           expv *shapePtr) {
+                                           expv *shapePtr, int issue_error) 
+{
     int ret = FALSE;
     expv lShape = list0(LIST);
     expv rShape = list0(LIST);
@@ -286,14 +287,15 @@ are_dimension_and_shape_conformant_by_type(expr x,
          */
         ret = TRUE;
     } else {
-        if (x != NULL) {
-            error_at_node(x,
-                          "incompatible dimension for the operation, "
-                          "%d and %d.",
-                          TYPE_N_DIM(lt), TYPE_N_DIM(rt));
-        } else {
-            error("incompatible dimension for the operation, %d and %d.",
-                  TYPE_N_DIM(lt), TYPE_N_DIM(rt));
+        if(issue_error) {
+            if (x != NULL) {
+                error_at_node(x,
+                    "error at node: incompatible dimension for the operation, "
+                    "%d and %d.", TYPE_N_DIM(lt), TYPE_N_DIM(rt));
+            } else {
+                error("error: incompatible dimension for the operation, %d and %d.",
+                    TYPE_N_DIM(lt), TYPE_N_DIM(rt));
+            }
         }
     }
 
@@ -308,8 +310,7 @@ are_dimension_and_shape_conformant(expr x,
                                    expv *shapePtr) {
     TYPE_DESC lt = EXPV_TYPE(left);
     TYPE_DESC rt = EXPV_TYPE(right);
-
-    return are_dimension_and_shape_conformant_by_type(x, lt, rt, shapePtr);
+    return are_dimension_and_shape_conformant_by_type(x, lt, rt, shapePtr, TRUE);
 }
 
 
@@ -2222,7 +2223,7 @@ choose_module_procedure_by_args(EXT_ID mod_procedures, expv args)
 {
     EXT_ID ep;
     FOREACH_EXT_ID(ep, mod_procedures) {
-        if (function_type_is_appliable(EXT_PROC_TYPE(ep), args)) {
+        if (function_type_is_appliable(EXT_PROC_TYPE(ep), args, FALSE)) {
             return EXT_PROC_TYPE(ep);
         }
     }
@@ -3243,7 +3244,8 @@ compile_type_bound_procedure_call(expv memberRef, expr args) {
         FOREACH_ID(bind, TYPE_BOUND_GENERIC_TYPE_GENERICS(ftp)) {
             bindto = find_struct_member_allow_private(stp, ID_SYM(bind), TRUE);
             if (TYPE_REF(ID_TYPE(bindto)) &&
-                function_type_is_appliable(TYPE_REF(ID_TYPE(bindto)), a)) {
+                function_type_is_appliable(TYPE_REF(ID_TYPE(bindto)), a, TRUE)) 
+            {
                 ftp = TYPE_REF(ID_TYPE(bindto));
                 /* EXPV_TYPE(memberRef) = ftp; */
             }
@@ -3262,7 +3264,7 @@ compile_type_bound_procedure_call(expv memberRef, expr args) {
         // for type-bound PROCEDURE
         if (ftp != NULL) {
 #if 0 // to be solved
-            if (function_type_is_appliable(ftp, a)) {
+            if (function_type_is_appliable(ftp, a, TRUE)) {
                 error("argument type mismatch");
             }
 #endif
