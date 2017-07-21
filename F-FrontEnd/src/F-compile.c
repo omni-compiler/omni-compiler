@@ -7271,7 +7271,7 @@ compile_TARGET_POINTER_ALLOCATABLE_statement(expr x)
         if(id == NULL)
             return;
         if(ID_IS_OFMODULE(id)) {
-            error("can't change attributes of USE-assoicated symbol '%s'", ID_NAME(id));
+            error("can't change attributes of USE-associated symbol '%s'", ID_NAME(id));
             return;
         } else if (ID_IS_AMBIGUOUS(id)) {
             error("an ambiguous reference to symbol '%s'", ID_NAME(id));
@@ -7331,7 +7331,7 @@ compile_OPTIONAL_statement(expr x)
         }
 
         if(ID_IS_OFMODULE(id)) {
-            error("can't change attributes of USE-assoicated symbol '%s'",
+            error("can't change attributes of USE-associated symbol '%s'",
                   ID_NAME(id));
             return;
         } else if (ID_IS_AMBIGUOUS(id)) {
@@ -7389,7 +7389,7 @@ compile_INTENT_statement(expr x)
         }
 
         if(ID_IS_OFMODULE(id)) {
-            error("can't change attributes of USE-assoicated symbol '%s'",
+            error("can't change attributes of USE-associated symbol '%s'",
                   ID_NAME(id));
             return;
         } else if (ID_IS_AMBIGUOUS(id)) {
@@ -8344,7 +8344,7 @@ compile_VALUE_statement(expr x)
         }
 
         if(ID_IS_OFMODULE(id)) {
-            error("can't change attributes of USE-assoicated symbol '%s'",
+            error("can't change attributes of USE-associated symbol '%s'",
                   ID_NAME(id));
             return;
         } else if (ID_IS_AMBIGUOUS(id)) {
@@ -8804,7 +8804,7 @@ compile_CONTIGUOUS_statement(expr x)
         if(id == NULL)
             return;
         if(ID_IS_OFMODULE(id)) {
-            error("can't change attributes of USE-assoicated symbol '%s'", ID_NAME(id));
+            error("can't change attributes of USE-associated symbol '%s'", ID_NAME(id));
             return;
         } else if (ID_IS_AMBIGUOUS(id)) {
             error("an ambiguous reference to symbol '%s'", ID_NAME(id));
