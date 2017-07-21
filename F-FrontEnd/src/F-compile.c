@@ -8436,7 +8436,7 @@ compile_forall_header(expr x)
     expv init;
     expv forall_header;
     list lp;
-    TYPE_DESC tp = NULL;
+    TYPE_DESC tp = type_INT;
 
     triplets       = EXPR_ARG1(x);
     mask           = EXPR_ARG2(x);
@@ -8633,8 +8633,6 @@ compile_end_forall_header(expv init)
     ID ip;
     list lp;
     ENV parent;
-    ID local_symbols = NULL;
-    BLOCK_ENV current_block;
 
     FOR_ITEMS_IN_LIST(lp, init) {
         ip = find_ident_head(EXPR_SYM(EXPR_ARG1(LIST_ITEM(lp))), LOCAL_SYMBOLS);
@@ -8643,35 +8641,10 @@ compile_end_forall_header(expv init)
                   SYM_NAME(ID_SYM(ip)),
                   SYM_NAME(EXPV_NAME(ID_ADDR(ip))));
             /*
-             * Rename symbol names those are generated in compile_FORALL_statement()
+             * Rename symbol names those are generated in compile_forall_header()
              */
             ID_SYM(ip) = EXPV_NAME(ID_ADDR(ip));
             EXPR_SYM(EXPR_ARG1(LIST_ITEM(lp))) = EXPV_NAME(ID_ADDR(ip));
-
-#if 0
-            /*
-             * NOTE:
-             *  Comment out by specification changed.
-             *
-             *  FORALL will be confined with the BLOCK construct,
-             *  so this code is no longer required.
-             */
-            if (EXPV_TYPE(CTL_FORALL_STATEMENT(ctl_top)) != NULL) {
-                /*
-                 * If the forall statement has type,
-                 * indices are local variables in the forall statement.
-                 *
-                 * ex)
-                 *
-                 *  FORALL (INTEGER :: I = 1:3, J = 1:3)
-                 *    ! I and J live only here
-                 *  END FORALL
-                 *
-                 */
-                (void)id_link_remove(&LOCAL_SYMBOLS, ip);
-                ID_LINK_ADD(ip, local_symbols, forall_last);
-            }
-#endif
         }
     }
 
@@ -8686,11 +8659,6 @@ compile_end_forall_header(expv init)
         ENV_EXTERNAL_SYMBOLS(parent),
         ENV_EXTERNAL_SYMBOLS(current_local_env),
         /*overshadow=*/FALSE);
-
-    current_block = XMALLOC(BLOCK_ENV, sizeof(*current_block));
-    BLOCK_LOCAL_SYMBOLS(current_block) = local_symbols;
-    // EXPR_BLOCK(CTL_FORALL_STATEMENT(ctl_top)) = current_block;
-    EXPR_BLOCK(CTL_BLOCK(ctl_top)) = current_block;
 }
 
 
