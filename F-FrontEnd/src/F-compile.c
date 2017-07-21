@@ -8436,7 +8436,7 @@ compile_forall_header(expr x)
     expv init;
     expv forall_header;
     list lp;
-    TYPE_DESC tp;
+    TYPE_DESC tp = NULL;
 
     triplets       = EXPR_ARG1(x);
     mask           = EXPR_ARG2(x);
@@ -8444,8 +8444,6 @@ compile_forall_header(expr x)
 
     if (type) {
         tp = compile_type(type, /*allow_predecl=*/ FALSE);
-    } else {
-        tp = NULL;
     }
     CURRENT_STATE = INEXEC;
 
@@ -8588,14 +8586,14 @@ compile_FORALL_statement(int st_no, expr x)
 
     assert(LOCAL_SYMBOLS == NULL);
 
+    st = list3(F_FORALL_STATEMENT, NULL, NULL, NULL);
+
     if ((forall_header = compile_forall_header(EXPR_ARG1(x))) == NULL) {
         return;
     }
 
-    st = list3(F_FORALL_STATEMENT, NULL, NULL, NULL);
-
     CTL_BLOCK(ctl_top) = st;
-    CTL_FORALL_STATEMENT(ctl_top) = st;
+    // CTL_FORALL_STATEMENT(ctl_top) = st;
     CTL_FORALL_HEADER(ctl_top) = forall_header;
 
     /* save construct name */
@@ -8626,7 +8624,6 @@ compile_FORALL_statement(int st_no, expr x)
         }
         compile_ENDFORALL_statement(NULL);
     }
-    printf("END OF FORALL compile\n");
 }
 
 
@@ -8692,7 +8689,8 @@ compile_end_forall_header(expv init)
 
     current_block = XMALLOC(BLOCK_ENV, sizeof(*current_block));
     BLOCK_LOCAL_SYMBOLS(current_block) = local_symbols;
-    EXPR_BLOCK(CTL_FORALL_STATEMENT(ctl_top)) = current_block;
+    // EXPR_BLOCK(CTL_FORALL_STATEMENT(ctl_top)) = current_block;
+    EXPR_BLOCK(CTL_BLOCK(ctl_top)) = current_block;
 }
 
 
@@ -8914,6 +8912,7 @@ compile_DOCONCURRENT_statement(expr range_st_no,
 
     CTL_DO_VAR(ctl_top) = NULL;
     CTL_DO_LABEL(ctl_top) = do_label;
+
     CTL_BLOCK(ctl_top) = list3(F08_DOCONCURRENT_STATEMENT,
                                vforall_header, NULL, construct_name);
 }
