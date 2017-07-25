@@ -235,7 +235,7 @@ release:
 	fi; \
 	cp -a . $(WORKDIR); cd $(WORKDIR); \
 	sh autogen.sh; ./configure; \
-	rm -rf .git .gitignore; make clean; make clean-tests; \
+	rm -rf .git .gitignore config.log; make clean; make clean-tests; \
 	cd /tmp; tar cjf $(PACKAGE_NAME).tar.bz2 $(PACKAGE_NAME); \
 	echo "Created /tmp/$(PACKAGE_NAME).tar.bz2"; \
 	rm -rf $(WORKDIR)
