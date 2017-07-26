@@ -2281,7 +2281,7 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
             } else {
                 /* f_id is function, but it's return type is unknown */
                 tp = function_type(new_type_desc());
-                TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) = TYPE_GNUMERIC;
+                TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) = TYPE_GNUMERIC_ALL;
             }
 
             TYPE_SET_USED_EXPLICIT(tp);
