@@ -3952,6 +3952,7 @@ struct keyword_token keywords[ ] =
     { "import",         IMPORT },
     { "images",         KW_IMAGES },    /* #060 coarray */
     { "implicit",       IMPLICIT },
+    { "impure",         IMPURE },        /* F2008 spec */
     { "include",        INCLUDE },
     { "inout",          KW_INOUT},
     { "inquire",        INQUIRE },

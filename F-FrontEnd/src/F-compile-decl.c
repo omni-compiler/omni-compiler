@@ -269,6 +269,7 @@ declare_procedure(enum name_class class,
     int pure = FALSE;
     int elemental = FALSE;
     int module = FALSE;
+    int impure = FALSE;
     int is_separate_definition = FALSE;
     list lp;
 
@@ -347,6 +348,13 @@ declare_procedure(enum name_class class,
             module = TRUE;
             break;
 
+        case F08_IMPURE_SPEC:
+            if (class != CL_PROC) {
+                error("invalid pure prefix");
+                return;
+            }
+            impure = TRUE;
+            break;
 
         default:
             error("unknown prefix");
@@ -447,6 +455,10 @@ declare_procedure(enum name_class class,
             PROC_CLASS(id) = P_THISPROC;
         }
 
+        if (pure && impure) {
+            error("PURE and IMPURE are specified");
+        }
+
         if (pure == TRUE) {
             PROC_IS_PURE(id) = pure; /* MAY NOT BE REQUIRED */
             TYPE_SET_PURE(id); /* MAY NOT BE REQUIRED */
@@ -459,6 +471,13 @@ declare_procedure(enum name_class class,
             TYPE_SET_ELEMENTAL(id);
             if (type != NULL) {
                 TYPE_SET_ELEMENTAL(ID_TYPE(id));
+            }
+        }
+        if (impure == TRUE) {
+            PROC_IS_PURE(id) = !impure;
+            TYPE_SET_IMPURE(id);
+            if (ID_TYPE(id) != NULL) {
+                TYPE_SET_IMPURE(ID_TYPE(id));
             }
         }
         if (module == TRUE) {
