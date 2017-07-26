@@ -4688,6 +4688,7 @@ struct use_argument {
     SYMBOL use;   /* use name or NULL*/
     SYMBOL local; /* local name, not NULL */
     int used;
+    int is_operator; /* F2003 spec, is operator renaming */
 };
 
 #define FOREACH_USE_ARG(arg, arg_list)\
@@ -5345,7 +5346,7 @@ use_assoc_only(SYMBOL name, struct use_argument * args)
  * compiles use statement.
  */
 static void
-compile_USE_decl (expr x, expr x_args, int is_intrinsic)
+compile_USE_decl(expr x, expr x_args, int is_intrinsic)
 {
     expv args, v;
     struct list_node *lp;
@@ -5361,13 +5362,17 @@ compile_USE_decl (expr x, expr x_args, int is_intrinsic)
         struct use_argument * use_arg = XMALLOC(struct use_argument *, sizeof(struct use_argument));
         *use_arg = (struct use_argument){0};
 
+        if (EXPV_CODE(x) == F03_OPERATOR_RENAMING) {
+            use_arg->is_operator = TRUE;
+        }
+
         useExpr = EXPR_ARG1(x);
         localExpr = EXPR_ARG2(x);
 
         assert(EXPV_CODE(localExpr) == IDENT);
         assert(EXPV_CODE(useExpr) == IDENT);
 
-        args = list_put_last(args, list2(LIST, useExpr, localExpr));
+        args = list_put_last(args, list2(EXPR_CODE(x), useExpr, localExpr));
 
         use_arg->local = EXPV_NAME(localExpr);
         use_arg->use = EXPV_NAME(useExpr);
