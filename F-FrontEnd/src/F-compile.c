@@ -1317,6 +1317,13 @@ compile_statement1(int st_no, expr x)
         check_INEXEC();
         break;
 
+    case F03_ENUM_STATEMENT:
+    case F03_ENDENUM_STATEMENT:
+    case F03_ENUMERATOR_STATEMENT:
+        /* TODO */
+        break;
+
+
     default:
         compile_exec_statement(x);
         break;

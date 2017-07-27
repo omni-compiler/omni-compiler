@@ -181,6 +181,9 @@ state 2058
 %token WAIT
 %token FLUSH
 %token ABSTRACT
+%token ENUM
+%token ENDENUM
+%token ENUMERATOR
 
 /* Coarray keywords #060 */
 %token SYNCALL
@@ -204,7 +207,6 @@ state 2058
 %token SUBMODULE
 %token ENDSUBMODULE
 %token ENDPROCEDURE
-
 
 %token REF_OP
 
@@ -536,6 +538,7 @@ static void type_spec_done();
 %type <val> allocation_list allocation
 %type <val> scene_list scene_range
 %type <val> bind_opt
+%type <val> enumerator_list enumerator
 
 
 %start program
@@ -710,6 +713,16 @@ statement:      /* entry */
           { $$ = list3(F08_SUBMODULE_STATEMENT,$7,$3,$5); }
         | ENDSUBMODULE name_or_null
           { $$ = list1(F08_ENDSUBMODULE_STATEMENT,$2); }
+        | ENUM /* for error */
+          { $$ = list1(F03_ENUM_STATEMENT,NULL); }
+        | ENUM ',' KW BIND '(' IDENTIFIER /* C */ ')'
+          { $$ = list1(F03_ENUM_STATEMENT,$6); }
+        | ENUMERATOR ident_list
+          { $$ = list1(F03_ENUMERATOR_STATEMENT,$2); }
+        | ENUMERATOR COL2 enumerator_list
+          { $$ = list1(F03_ENUMERATOR_STATEMENT,$3); }
+        | ENDENUM
+          { $$ = list0(F03_ENDENUM_STATEMENT); }
         ;
 
 
@@ -1656,6 +1669,19 @@ namelist_decl: '/' IDENTIFIER '/' namelist_list
 namelist_list:  IDENTIFIER
         { $$ = list1(LIST, $1); }
         | namelist_list ',' IDENTIFIER
+        { $$ = list_put_last($1,$3); }
+        ;
+
+enumerator:
+          IDENTIFIER
+        { $$ = $1; }
+        | IDENTIFIER '=' expr
+        { $$ = list2(LIST,$1,$3); }
+        ;
+
+enumerator_list: enumerator
+        { $$ = list1(LIST,$1); }
+        | enumerator_list ',' enumerator
         { $$ = list_put_last($1,$3); }
         ;
 
