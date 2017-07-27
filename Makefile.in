@@ -233,8 +233,9 @@ release:
 	@if [ -e $(WORKDIR) ]; then \
 	  echo "Exist ! $(WORKDIR). Please delete it."; exit 1; \
 	fi; \
-	cp -a . $(WORKDIR); cd $(WORKDIR); \
-	sh autogen.sh; ./configure; \
+	cp -a . $(WORKDIR); cd $(WORKDIR); sh autogen.sh; \
+	if [ "${NIGHTLY_BUILD}" = "true" ]; then ./configure NIGHTLY_BUILD=$(VERSION); \
+	else ./configure; fi; \
 	rm -rf .git .gitignore config.log; make clean; make clean-tests; \
 	cd /tmp; tar cjf $(PACKAGE_NAME).tar.bz2 $(PACKAGE_NAME); \
 	echo "Created /tmp/$(PACKAGE_NAME).tar.bz2"; \
