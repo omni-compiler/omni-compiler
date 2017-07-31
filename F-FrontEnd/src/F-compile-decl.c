@@ -5463,7 +5463,6 @@ compile_procedure_declaration(expr x)
                 declare_id_type(interface, function_type(new_type_desc()));
                 ID_CLASS(interface) = CL_PROC;
                 declare_function(interface);
-
                 TYPE_SET_IMPLICIT(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(interface)));
                 TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(interface))) = TYPE_GENERIC;
             }
