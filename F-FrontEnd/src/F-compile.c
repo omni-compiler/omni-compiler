@@ -131,6 +131,10 @@ static void compile_ENDBLOCK_statement(expr x);
 static void compile_FORALL_statement(int st_no, expr x);
 static void compile_ENDFORALL_statement(expr x);
 
+static void compile_ENUM_statement(expr x);
+static void compile_ENDENUM_statement(expr x);
+static void compile_ENUMERATOR_statement(expr x);
+
 static int check_valid_construction_name(expr x, expr y);
 static void move_implicit_vars_to_parent_from_type_guard(void);
 static void check_select_types(expr x, TYPE_DESC tp);
@@ -1318,11 +1322,19 @@ compile_statement1(int st_no, expr x)
         break;
 
     case F03_ENUM_STATEMENT:
-    case F03_ENDENUM_STATEMENT:
-    case F03_ENUMERATOR_STATEMENT:
-        /* TODO */
+        check_INDCL();
+        compile_ENUM_statement(x);
         break;
 
+    case F03_ENUMERATOR_STATEMENT:
+        check_INENUM();
+        compile_ENUMERATOR_statement(x);
+        break;
+
+    case F03_ENDENUM_STATEMENT:
+        check_INENUM();
+        compile_ENDENUM_statement(x);
+        break;
 
     default:
         compile_exec_statement(x);
@@ -1663,6 +1675,9 @@ check_INDCL()
         CURRENT_STATE = INDCL;
     case INDCL:
         break;
+    case INENUM:
+        error("declaration in the enum construct");
+        break;
     case IN_TYPE_PARAM_DECL:
         error("declaration in TYPE PARAMETER DECLARATION part");
         break;
@@ -1692,6 +1707,14 @@ check_INEXEC()
     if(NOT_INDATA_YET) end_declaration();
 }
 
+
+void
+check_INENUM()
+{
+    if (CURRENT_STATE != INENUM) {
+        error("outside from ENUM construct");
+    }
+}
 
 int
 inblock()
@@ -8789,4 +8812,81 @@ check_select_types(expr x, TYPE_DESC tp)
             }
         }
     }
+}
+
+
+static void
+compile_ENUM_statement(expr x)
+{
+    TYPE_DESC tp;
+    expv v;
+    ID id;
+
+    assert(x != NULL);
+
+    id = declare_ident(gen_temp_symbol("_enum_"), CL_ENUM);
+
+    tp = new_type_desc();
+    TYPE_BASIC_TYPE(tp) = TYPE_ENUM;
+    declare_id_type(id, tp);
+
+    v = list0(F03_ENUM_STATEMENT);
+    EXPV_TYPE(v) = tp;
+
+    push_ctl(CTL_ENUM);
+    CTL_BLOCK(ctl_top) = v;
+
+    CURRENT_STATE = INENUM;
+}
+
+static void
+compile_ENUMERATOR_statement(expr x)
+{
+    ID last_ip = NULL;
+    ID ip;
+    list lp;
+    TYPE_DESC enum_tp;
+
+    enum_tp = EXPV_TYPE(CTL_BLOCK(ctl_top));
+
+    FOREACH_ID(ip, TYPE_MEMBER_LIST(enum_tp)) {
+        last_ip = ip;
+    }
+
+    FOR_ITEMS_IN_LIST(lp, EXPR_ARG1(x)) {
+        ID id;
+        ID enumerator;
+
+        SYMBOL sym;
+        expr ident = NULL;
+        expr value = NULL;
+
+        if (EXPR_CODE(LIST_ITEM(lp)) == LIST) {
+            ident = EXPR_ARG1(LIST_ITEM(lp));
+            value = EXPR_HAS_ARG2(LIST_ITEM(lp))?EXPR_ARG2(LIST_ITEM(lp)):NULL;
+        } else {
+            ident = LIST_ITEM(lp);
+        }
+
+        sym = EXPR_SYM(ident);
+
+        if (sym == NULL) {
+            fprintf(stderr, "HERE\n");
+        }
+
+        id = declare_ident(sym, CL_PARAM);
+        declare_id_type(id, type_INT); /* MAYBE NEED kind */
+
+        enumerator = new_ident_desc(sym);
+        ID_TYPE(enumerator) = ID_TYPE(id);
+        VAR_INIT_VALUE(enumerator) = compile_expression(value);
+        ID_LINK_ADD(enumerator, TYPE_MEMBER_LIST(enum_tp), last_ip);
+    }
+}
+
+static void
+compile_ENDENUM_statement(expr x)
+{
+    pop_ctl();
+    CURRENT_STATE = INDCL;
 }

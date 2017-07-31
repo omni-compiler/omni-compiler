@@ -138,6 +138,7 @@ enum prog_state {
     ININTR,      /* interface */
     IN_TYPE_PARAM_DECL, /* type parameter declarations */
     IN_TYPE_BOUND_PROCS, /* type bound procedure declarations */
+    INENUM,     /* ENUM */
 };
 
 /* procedure states */
@@ -172,6 +173,7 @@ enum control_type {
     CTL_BLOCK,
     CTL_INTERFACE,
     CTL_FORALL,
+    CTL_ENUM,
 };
 
 #define CONTROL_TYPE_NAMES {\
@@ -191,6 +193,7 @@ enum control_type {
     "CTL_BLOCK",\
     "CTL_INTERFACE",\
     "CTL_FORALL",\
+    "CTL_ENUM",\
 }
 
 typedef struct environment {
@@ -578,6 +581,7 @@ extern void     check_INDATA _ANSI_ARGS_((void));
 extern void     check_INDCL _ANSI_ARGS_((void));
 extern void     check_INEXEC _ANSI_ARGS_((void));
 extern void     check_NOT_INBLOCK _ANSI_ARGS_((void));
+extern void     check_INENUM _ANSI_ARGS_((void));
 extern void     include_file(char *name, int inside_use);
 extern void     push_unit_ctl _ANSI_ARGS_((enum prog_state));
 extern void     pop_unit_ctl _ANSI_ARGS_((void));

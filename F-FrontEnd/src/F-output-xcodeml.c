@@ -748,6 +748,7 @@ getTypeID(TYPE_DESC tp)
         case TYPE_LHS:		/* fall through too */
         case TYPE_GNUMERIC_ALL: pfx = 'V'; break;
         case TYPE_NAMELIST:     pfx = 'N'; break;
+        case TYPE_ENUM:         pfx = 'E'; break;
         default: abort();
         }
 
@@ -3697,6 +3698,7 @@ outx_expv(int l, expv v)
     case F95_USE_ONLY_STATEMENT:
     case F03_USE_INTRINSIC_STATEMENT:
     case F03_USE_ONLY_INTRINSIC_STATEMENT:
+    case F03_ENUM_STATEMENT:
         break;
 
     /*
@@ -3897,7 +3899,7 @@ outx_expv(int l, expv v)
       break;
 
     default:
-        fatal("unkown exprcode : %d", code);
+        fatal("unknown exprcode : %d", code);
         abort();
     }
 }
@@ -4569,6 +4571,23 @@ outx_structType(int l, TYPE_DESC tp)
 
 
 /**
+ * output FenumType
+ */
+static void
+outx_enumType(int l, TYPE_DESC tp)
+{
+    ID id;
+    int l1 = l + 1;
+    outx_typeAttrs(l, tp ,"FenumType", TOPT_NEXTLINE);
+    FOREACH_MEMBER(id, tp) {
+        outx_symbolName(l1, ID_SYM(id));
+        outx_value(l1, VAR_INIT_VALUE(id));
+    }
+    outx_close(l,"FenumType");
+}
+
+
+/**
  * output types in typeTable
  */
 static void
@@ -4591,6 +4610,9 @@ outx_type(int l, TYPE_DESC tp)
         } else {
             outx_structType(l, tp);
         }
+
+    } else if(IS_ENUM(tp)) {
+        outx_enumType(l, tp);
 
     } else if(IS_PROCEDURE_TYPE(tp)) {
         outx_functionType(l, tp);

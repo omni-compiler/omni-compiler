@@ -33,6 +33,7 @@ enum name_class {
     CL_TYPE_PARAM, /* type parameter name */
     CL_TYPE_BOUND_PROC, /* type bound procedure */
     CL_MULTI,     /* Both the derived type name and the generic procedure */
+    CL_ENUM,      /* TODO */
 };
 
 extern char *name_class_names[];
@@ -57,6 +58,7 @@ extern char *name_class_names[];
   "CL_TYPE_PARAM", \
   "CL_TYPE_BOUND_PROCS", \
   "CL_MULTI",   \
+  "CL_ENUM",   \
 }
 
 /* for CL_PROC  */

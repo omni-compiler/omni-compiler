@@ -37,6 +37,7 @@ typedef enum datatype {
                          * comforms to the type of the left hand
                          * expression. */
     TYPE_VOID,          /* 18 type of subroutine call */
+    TYPE_ENUM,          /* 19 type of enum */
     TYPE_END
 } BASIC_DATA_TYPE;
 
@@ -475,6 +476,9 @@ extern TYPE_DESC basic_type_desc[];
 
 #define IS_REFFERENCE(tp) \
                 ((tp) != NULL && TYPE_N_DIM(tp) == 0 && TYPE_REF(tp) != NULL)
+
+#define IS_ENUM(tp) \
+                ((tp) != NULL && TYPE_BASIC_TYPE(tp) == TYPE_ENUM)
 
 #define TYPE_IS_MODIFIED(tp) \
                 ((tp) != NULL && (tp)->is_modified)
