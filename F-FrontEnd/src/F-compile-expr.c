@@ -849,21 +849,20 @@ compile_expression(expr x)
                     error("an invalid constant expression, which has "
                           "a 'd' exponent and an explicit kind.");
                 }
-            } 
-            /* if kind is differ, make new type desc.
-               for example, type desc for l2 and l3 should be differ.
-               l2 = .false.
-               l3 = .false._1
-            */
+                /* if kind is differ, make new type desc.
+                   for example, type desc for l2 and l3 should be differ.
+                   l2 = .false.
+                   l3 = .false._1
+                */
 
-            /* Constant cannot have function call as kind specifier, this does
-               not make any sense. Therefore, we keep the kind identifier as
-               an identifier. */
-            if(EXPV_CODE(v2) == FUNCTION_CALL) {
-                v2 = expv_sym_term(IDENT, EXPV_TYPE(v2), EXPR_SYM(EXPR_ARG2(x)));
+                /* Constant cannot have function call as kind specifier, this does
+                   not make any sense. Therefore, we keep the kind identifier as
+                   an identifier. */
+                if(EXPV_CODE(v2) == FUNCTION_CALL) {
+                    v2 = expv_sym_term(IDENT, EXPV_TYPE(v2), EXPR_SYM(EXPR_ARG2(x)));
+                }
+                TYPE_KIND(EXPV_TYPE(v1)) = v2;
             }
-            
-            TYPE_KIND(EXPV_TYPE(v1)) = v2;
             return v1;
         }
 
@@ -2307,7 +2306,7 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
             } else {
                 /* f_id is function, but it's return type is unknown */
                 tp = function_type(new_type_desc());
-                TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) = TYPE_GNUMERIC;
+                TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) = TYPE_GNUMERIC_ALL;
             }
 
             TYPE_SET_USED_EXPLICIT(tp);

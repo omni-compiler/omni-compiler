@@ -985,7 +985,7 @@ declare_function(ID id)
                     if (tp == NULL) {
                         tp = function_type(new_type_desc());
                         TYPE_SET_NOT_FIXED(FUNCTION_TYPE_RETURN_TYPE(tp));
-                        TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) = TYPE_GNUMERIC;
+                        TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) = TYPE_GNUMERIC_ALL;
                         ID_TYPE(id) = tp;
                     } else if (!IS_SUBR(tp) && !IS_FUNCTION_TYPE(tp)) {
                         ID_TYPE(id) = function_type(tp);
@@ -5458,7 +5458,7 @@ compile_procedure_declaration(expr x)
             } else {
                 TYPE_UNSET_SAVE(interface);
                 ID_TYPE(interface) = function_type(new_type_desc());
-                TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(interface))) = TYPE_GNUMERIC;
+                TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(interface))) = TYPE_GNUMERIC_ALL;
                 TYPE_SET_IMPLICIT(ID_TYPE(interface));
             }
 
