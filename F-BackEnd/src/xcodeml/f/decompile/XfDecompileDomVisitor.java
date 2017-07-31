@@ -4984,6 +4984,30 @@ public class XfDecompileDomVisitor {
         }
     }
 
+    // FerrorStopStatement
+    class FerrorStopStatementVisitor extends XcodeNodeVisitor {
+        /**
+         * Decompile "FerrorStopStatement" element in XcodeML/F.
+         */
+        @Override public void enter(Node n) {
+            _writeLineDirective(n);
+
+            XmfWriter writer = _context.getWriter();
+            writer.writeToken("ERROR");
+            writer.writeToken("STOP");
+
+            String code = XmDomUtil.getAttr(n, "code");
+            String message = XmDomUtil.getAttr(n, "message");
+            if (XfUtilForDom.isNullOrEmpty(code) == false) {
+                writer.writeToken(code);
+            } else if (XfUtilForDom.isNullOrEmpty(message) == false) {
+                writer.writeLiteralString(message);
+            }
+
+            writer.setupNewLine();
+        }
+    }
+
     // FpauseStatement
     class FpauseStatementVisitor extends XcodeNodeVisitor {
         /**
@@ -7244,6 +7268,7 @@ public class XfDecompileDomVisitor {
         new Pair("FselectCaseStatement", new FselectCaseStatementVisitor()),
         new Pair("selectTypeStatement", new SelectTypeStatementVisitor()),
         new Pair("FstopStatement", new FstopStatementVisitor()),
+        new Pair("FerrorStopStatement", new FerrorStopStatementVisitor()),
         new Pair("FpauseStatement", new FpauseStatementVisitor()),
         new Pair("FstructConstructor", new FstructConstructorVisitor()),
         new Pair("FstructDecl", new FstructDeclVisitor()),
