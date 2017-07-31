@@ -1144,7 +1144,7 @@ void _XMP_coarray_put(void *remote_coarray, void *local_array, void *local_coarr
 
 #ifdef _XMPT
   struct _xmpt_subscript_t subsc, cosubsc;
-  xmpt_tool_data_t *data = NULL;
+  xmpt_tool_data_t data = NULL;
   if (xmpt_enabled && xmpt_callback[xmpt_event_coarray_remote_write]){
     subsc.ndims = _array_dims;
     subsc.omit = 0;
@@ -1161,7 +1161,7 @@ void _XMP_coarray_put(void *remote_coarray, void *local_array, void *local_coarr
       cosubsc.marker[i] = 0;
     }
     (*(xmpt_event_coarray_remote_t)xmpt_callback[xmpt_event_coarray_remote_write])(
-     (xmpt_coarray_id_t)remote_coarray, &subsc, &cosubsc, data);
+     (xmpt_coarray_id_t)remote_coarray, &subsc, &cosubsc, &data);
   }
 #endif
 
@@ -1225,7 +1225,7 @@ void _XMP_coarray_get(void *remote_coarray, void *local_array, void *local_coarr
 
 #ifdef _XMPT
   struct _xmpt_subscript_t subsc, cosubsc;
-  xmpt_tool_data_t *data = NULL;
+  xmpt_tool_data_t data = NULL;
   if (xmpt_enabled && xmpt_callback[xmpt_event_coarray_remote_read]){
     subsc.ndims = _array_dims;
     subsc.omit = 0;
@@ -1242,7 +1242,7 @@ void _XMP_coarray_get(void *remote_coarray, void *local_array, void *local_coarr
       cosubsc.marker[i] = 0;
     }
     (*(xmpt_event_coarray_remote_t)xmpt_callback[xmpt_event_coarray_remote_read])(
-     (xmpt_coarray_id_t)remote_coarray, &subsc, &cosubsc, data);
+     (xmpt_coarray_id_t)remote_coarray, &subsc, &cosubsc, &data);
   }
 #endif
 
@@ -1406,10 +1406,10 @@ void xmp_sync_memory(const int* status)
 {
 
 #ifdef _XMPT
-  xmpt_tool_data_t *data = NULL;
+  xmpt_tool_data_t data = NULL;
   if (xmpt_enabled && xmpt_callback[xmpt_event_sync_memory_begin])
     (*(xmpt_event_begin_t)xmpt_callback[xmpt_event_sync_memory_begin])(
-     data);
+     &data);
 #endif
 
 #ifdef _XMP_GASNET
@@ -1425,7 +1425,7 @@ void xmp_sync_memory(const int* status)
 #ifdef _XMPT
   if (xmpt_enabled && xmpt_callback[xmpt_event_sync_memory_end])
     (*(xmpt_event_end_t)xmpt_callback[xmpt_event_sync_memory_end])(
-     data);
+     &data);
 #endif
 }
 
@@ -1436,10 +1436,10 @@ void xmp_sync_all(const int* status)
 {
 
 #ifdef _XMPT
-  xmpt_tool_data_t *data = NULL;
+  xmpt_tool_data_t data = NULL;
   if (xmpt_enabled && xmpt_callback[xmpt_event_sync_all_begin])
     (*(xmpt_event_begin_t)xmpt_callback[xmpt_event_sync_all_begin])(
-     data);
+     &data);
 #endif
 
 #ifdef _XMP_GASNET
@@ -1453,7 +1453,7 @@ void xmp_sync_all(const int* status)
 #ifdef _XMPT
   if (xmpt_enabled && xmpt_callback[xmpt_event_sync_all_end])
     (*(xmpt_event_end_t)xmpt_callback[xmpt_event_sync_all_end])(
-     data);
+     &data);
 #endif
 }
 
@@ -1464,10 +1464,10 @@ void xmp_sync_images(const int num, int* image_set, int* status)
 {
 
 #ifdef _XMPT
-  xmpt_tool_data_t *data = NULL;
+  xmpt_tool_data_t data = NULL;
   if (xmpt_enabled && xmpt_callback[xmpt_event_sync_images_begin])
     (*(xmpt_event_sync_images_begin_t)xmpt_callback[xmpt_event_sync_images_begin])(
-     num, image_set, data);
+     num, image_set, &data);
 #endif
 
 #ifdef _XMP_GASNET
@@ -1481,7 +1481,7 @@ void xmp_sync_images(const int num, int* image_set, int* status)
 #ifdef _XMPT
   if (xmpt_enabled && xmpt_callback[xmpt_event_sync_images_end])
     (*(xmpt_event_end_t)xmpt_callback[xmpt_event_sync_images_end])(
-     data);
+     &data);
 #endif
 }
 
@@ -1522,7 +1522,7 @@ void _XMP_coarray_contiguous_put(const int target_image, _XMP_coarray_t *dst_des
   
 #ifdef _XMPT
   struct _xmpt_subscript_t subsc, cosubsc;
-  xmpt_tool_data_t *data = NULL;
+  xmpt_tool_data_t data = NULL;
   if (xmpt_enabled && xmpt_callback[xmpt_event_coarray_remote_write]){
     subsc.ndims = dst_desc->coarray_dims;
     subsc.omit = 0;
@@ -1560,7 +1560,7 @@ void _XMP_coarray_contiguous_put(const int target_image, _XMP_coarray_t *dst_des
     }
 
     (*(xmpt_event_coarray_remote_t)xmpt_callback[xmpt_event_coarray_remote_write])(
-     (xmpt_coarray_id_t)dst_desc, &subsc, &cosubsc, data);
+     (xmpt_coarray_id_t)dst_desc, &subsc, &cosubsc, &data);
   }
 #endif
 
@@ -1608,7 +1608,7 @@ void _XMP_coarray_contiguous_get(const int target_image, _XMP_coarray_t *dst_des
  
 #ifdef _XMPT
   struct _xmpt_subscript_t subsc, cosubsc;
-  xmpt_tool_data_t *data = NULL;
+  xmpt_tool_data_t data = NULL;
   if (xmpt_enabled && xmpt_callback[xmpt_event_coarray_remote_read]){
     subsc.ndims = src_desc->coarray_dims;
     subsc.omit = 0;
@@ -1646,7 +1646,7 @@ void _XMP_coarray_contiguous_get(const int target_image, _XMP_coarray_t *dst_des
     }
 
     (*(xmpt_event_coarray_remote_t)xmpt_callback[xmpt_event_coarray_remote_read])(
-     (xmpt_coarray_id_t)src_desc, &subsc, &cosubsc, data);
+     (xmpt_coarray_id_t)src_desc, &subsc, &cosubsc, &data);
   }
 #endif
 

@@ -5,7 +5,7 @@ void xmpc_create_task_nodes(_XMP_nodes_t **n, _XMP_object_ref_t *r_desc)
   _XMP_create_task_nodes(n, r_desc);
 
 #ifdef _XMPT
-  xmpt_tool_data_t *data = (*n)->xmpt_data;
+  xmpt_tool_data_t *data = &((*n)->xmpt_data); *data=NULL;
   xmp_desc_t on = r_desc->ref_kind == XMP_OBJ_REF_NODES ?
     (xmp_desc_t)r_desc->n_desc : (xmp_desc_t)r_desc->t_desc;
   struct _xmpt_subscript_t on_subsc;
@@ -40,7 +40,7 @@ void xmpc_end_task(void)
 void xmpc_finalize_task_nodes(_XMP_nodes_t *n){
 
 #ifdef _XMPT
-  xmpt_tool_data_t *data = n->xmpt_data;
+  xmpt_tool_data_t *data = &(n->xmpt_data);
   if (xmpt_enabled && xmpt_callback[xmpt_event_task_end])
     (*(xmpt_event_end_t)xmpt_callback[xmpt_event_task_end])(data);
 #endif

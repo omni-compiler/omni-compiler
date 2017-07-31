@@ -436,7 +436,7 @@ void _XMP_bcast(void *data_addr, int count, int size,
 		_XMP_object_ref_t *from_desc, _XMP_object_ref_t *on_desc)
 {
 #ifdef _XMPT
-  xmpt_tool_data_t *data = NULL;
+  xmpt_tool_data_t data = NULL;
 
   xmp_desc_t on;
   if (on_desc){
@@ -474,7 +474,7 @@ void _XMP_bcast(void *data_addr, int count, int size,
 	on,
 	&on_subsc,
         async_id,
-	data);
+	&data);
     }
   }
   else {
@@ -486,7 +486,7 @@ void _XMP_bcast(void *data_addr, int count, int size,
 	&from_subsc,
 	on,
 	&on_subsc,
-	data);
+	&data);
     }
   }
 #endif
@@ -498,7 +498,7 @@ void _XMP_bcast(void *data_addr, int count, int size,
 
 #ifdef _XMPT
   if (xmpt_enabled && xmpt_callback[xmpt_event_bcast_end])
-    (*(xmpt_event_end_t)xmpt_callback[xmpt_event_bcast_end])(data);
+    (*(xmpt_event_end_t)xmpt_callback[xmpt_event_bcast_end])(&data);
 #endif
 
 }

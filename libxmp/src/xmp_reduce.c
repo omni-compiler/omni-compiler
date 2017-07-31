@@ -704,7 +704,7 @@ void _XMP_reduction(void *data_addr, int count, int datatype, int op,
   _XMP_nodes_t *nodes;
 
 #ifdef _XMPT
-  xmpt_tool_data_t *data = NULL;
+  xmpt_tool_data_t data = NULL;
 
   xmp_desc_t on;
   if (r_desc){
@@ -726,7 +726,7 @@ void _XMP_reduction(void *data_addr, int count, int datatype, int op,
 	on,
 	&on_subsc,
         async_id,
-	data);
+	&data);
     }
   }
   else {
@@ -734,7 +734,7 @@ void _XMP_reduction(void *data_addr, int count, int datatype, int op,
       (*(xmpt_event_single_desc_begin_t)xmpt_callback[xmpt_event_reduction_begin])(
 	on,
 	&on_subsc,
-	data);
+	&data);
     }
   }
 #endif
@@ -777,7 +777,7 @@ void _XMP_reduction(void *data_addr, int count, int datatype, int op,
 
 #ifdef _XMPT
   if (xmpt_enabled && xmpt_callback[xmpt_event_reduction_end])
-    (*(xmpt_event_end_t)xmpt_callback[xmpt_event_reduction_end])(data);
+    (*(xmpt_event_end_t)xmpt_callback[xmpt_event_reduction_end])(&data);
 #endif
 
 }

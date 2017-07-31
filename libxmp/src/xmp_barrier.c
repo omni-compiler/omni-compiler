@@ -29,7 +29,7 @@ void _XMP_barrier(_XMP_object_ref_t *desc)
   _XMP_RETURN_IF_SINGLE;
 
 #ifdef _XMPT
-  xmpt_tool_data_t *data = NULL;
+  xmpt_tool_data_t data = NULL;
 
   xmp_desc_t on;
   if (desc){
@@ -46,7 +46,7 @@ void _XMP_barrier(_XMP_object_ref_t *desc)
     (*(xmpt_event_single_desc_begin_t)xmpt_callback[xmpt_event_barrier_begin])(
 	on,
 	&on_subsc,
-	data);
+	&data);
   }
 #endif
 
@@ -75,7 +75,7 @@ void _XMP_barrier(_XMP_object_ref_t *desc)
 
 #ifdef _XMPT
   if (xmpt_enabled && xmpt_callback[xmpt_event_barrier_end])
-    (*(xmpt_event_end_t)xmpt_callback[xmpt_event_barrier_end])(data);
+    (*(xmpt_event_end_t)xmpt_callback[xmpt_event_barrier_end])(&data);
 #endif
   
 }
