@@ -824,6 +824,11 @@ implicit_declaration(ID id)
         tp = FUNCTION_TYPE_RETURN_TYPE(tp);
     }
 
+    if (tp != NULL && TYPE_IS_INTRINSIC(tp)) {
+        /* don't set a type to intrinsic procedures */
+        return;
+    }
+
     if (tp == NULL || TYPE_IS_NOT_FIXED(tp) ||
         (IS_ARRAY_TYPE(tp) && array_element_type(tp) == NULL)) {
         c = ID_NAME(id)[0];
@@ -980,7 +985,7 @@ declare_function(ID id)
                     if (tp == NULL) {
                         tp = function_type(new_type_desc());
                         TYPE_SET_NOT_FIXED(FUNCTION_TYPE_RETURN_TYPE(tp));
-                        TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) = TYPE_GNUMERIC;
+                        TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) = TYPE_GNUMERIC_ALL;
                         ID_TYPE(id) = tp;
                     } else if (!IS_SUBR(tp) && !IS_FUNCTION_TYPE(tp)) {
                         ID_TYPE(id) = function_type(tp);
@@ -2020,6 +2025,7 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
             break;
         case F95_INTRINSIC_SPEC:
             TYPE_SET_INTRINSIC(tp);
+            FUNCTION_TYPE_SET_VISIBLE_INTRINSIC(tp);
             break;
         case F95_OPTIONAL_SPEC:
             TYPE_SET_OPTIONAL(tp);
@@ -2122,6 +2128,10 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
         case F03_ASYNCHRONOUS_SPEC:
             TYPE_SET_ASYNCHRONOUS(tp);
             break;
+        case F08_CONTIGUOUS_SPEC:
+            TYPE_SET_CONTIGUOUS(tp);
+            break;
+
         default:
             error("incompatible type attribute , code: %d", EXPR_CODE(v));
         }
@@ -4626,23 +4636,41 @@ compile_EXTERNAL_decl(expr id_list)
 
 /* declare intrinsic function */
 void
-compile_INTRINSIC_decl(id_list)
-    expr id_list;
+compile_INTRINSIC_decl(expr id_list)
 {
     list lp;
     expr ident;
     ID id;
-
     if(id_list == NULL) return; /* error */
     FOR_ITEMS_IN_LIST(lp,id_list){
         ident = LIST_ITEM(lp);
-        if(ident == NULL) break;
-        if(EXPR_CODE(ident) != IDENT)fatal("compile_INTRINSIC_decl:not ident");
-        if((id = declare_ident(EXPR_SYM(ident),CL_PROC)) == NULL) continue;
-        if(PROC_CLASS(id) == P_UNKNOWN)
+        if (ident == NULL) {
+            break;
+        }
+
+        if (EXPR_CODE(ident) != IDENT) {
+            fatal("compile_INTRINSIC_decl:not ident");
+        }
+        if ((id = declare_ident(EXPR_SYM(ident),CL_PROC)) == NULL) {
+            /* warning("cannot declare intrinsic"); */
+            continue;
+        }
+
+        if (PROC_CLASS(id) == P_UNKNOWN) {
             PROC_CLASS(id) = P_INTRINSIC;
-        else if(PROC_CLASS(id) != P_INTRINSIC)
+        } else if(PROC_CLASS(id) != P_INTRINSIC) {
             error("invalid intrinsic declaration, %s", ID_NAME(id));
+        }
+
+        TYPE_SET_INTRINSIC(id);
+
+        if (ID_TYPE(id) == NULL) {
+            ID_TYPE(id) = wrap_type(BASIC_TYPE_DESC(TYPE_GNUMERIC_ALL));
+        }
+
+        ID_TYPE(id) = intrinsic_function_type(ID_TYPE(id));
+        FUNCTION_TYPE_SET_VISIBLE_INTRINSIC(ID_TYPE(id));
+        ID_LINE(id) = EXPR_LINE(id_list);
     }
 }
 
@@ -4746,7 +4774,7 @@ compile_SAVE_decl(id_list)
             }
         }
         if(ID_IS_OFMODULE(id)) {
-            error("can't change attributes of USE-assoicated symbol '%s'", ID_NAME(id));
+            error("can't change attributes of USE-associated symbol '%s'", ID_NAME(id));
             return;
         } else if (ID_IS_AMBIGUOUS(id)) {
             error("an ambiguous reference to symbol '%s'", ID_NAME(id));
@@ -5431,7 +5459,7 @@ compile_procedure_declaration(expr x)
             } else {
                 TYPE_UNSET_SAVE(interface);
                 ID_TYPE(interface) = function_type(new_type_desc());
-                TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(interface))) = TYPE_GNUMERIC;
+                TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(interface))) = TYPE_GNUMERIC_ALL;
                 TYPE_SET_IMPLICIT(ID_TYPE(interface));
             }
 
@@ -5460,7 +5488,6 @@ compile_procedure_declaration(expr x)
                 declare_id_type(interface, function_type(new_type_desc()));
                 ID_CLASS(interface) = CL_PROC;
                 declare_function(interface);
-
                 TYPE_SET_IMPLICIT(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(interface)));
                 TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(interface))) = TYPE_GENERIC;
             }

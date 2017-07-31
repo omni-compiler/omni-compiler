@@ -438,21 +438,20 @@ public class XMPalignedArray {
 
   
   public static void translateAlign(XobjList alignDecl, XMPglobalDecl globalDecl,
-                                    boolean isLocalPragma, PragmaBlock pb) throws XMPexception {
-
+                                    boolean isLocalPragma, PragmaBlock pb) throws XMPexception
+  {
     String arrayName = alignDecl.getArg(0).getString();
-    Ident arrayId = null;
-
     XMPsymbolTable localXMPsymbolTable = null;
-    Block parentBlock = null;
-
-    Boolean isParameter = isLocalPragma;
-    Boolean isPointer = false;
+    Ident arrayId        = null;
+    Block parentBlock    = null;
+    Boolean isPointer    = false;
     boolean isStaticDesc = false;
+    Boolean isParameter  = isLocalPragma;
 
     if (isLocalPragma) {
       arrayId = XMPlocalDecl.findLocalIdent(pb, arrayName);
-      if (arrayId != null) isParameter = (arrayId.getStorageClass() == StorageClass.PARAM);
+      if (arrayId != null)
+        isParameter = (arrayId.getStorageClass() == StorageClass.PARAM);
 
       parentBlock = pb.getParentBlock();
 
@@ -462,7 +461,6 @@ public class XMPalignedArray {
       else {
 	localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable2(parentBlock);
       }
-      //isStaticDesc = localXMPsymbolTable.isStaticDesc(arrayName);
       isStaticDesc = XMPlocalDecl.declXMPsymbolTable2(parentBlock).isStaticDesc(arrayName);
     }
     else {
@@ -602,7 +600,6 @@ public class XMPalignedArray {
       throw new XMPexception("a pointer cannot have the static_desc attribute.");
 
     if (isLocalPragma) {
-
       if (isStaticDesc){
 	Ident id = parentBlock.getBody().declLocalIdent(XMP.STATIC_DESC_PREFIX_ + arrayName, Xtype.intType,
 							StorageClass.STATIC, Xcons.IntConstant(0));
@@ -628,11 +625,6 @@ public class XMPalignedArray {
     XobjList alignSubscriptList     = (XobjList)alignDecl.getArg(3);
     XobjList alignSubscriptVarList  = (XobjList)alignSubscriptList.left();
     XobjList alignSubscriptExprList = (XobjList)alignSubscriptList.right();
-
-    String kind_bracket = alignSubscriptList.getTail().getString();
-    boolean isSquare    = kind_bracket.equals("SQUARE");
-    alignSubscriptList.removeLastArgs(); // Remove information of ROUND or SQUARE
-    if(isSquare) alignSubscriptVarList.reverse();
 
     // check <align-source> list
     if(arrayType.getRef().getKind() == Xtype.POINTER){

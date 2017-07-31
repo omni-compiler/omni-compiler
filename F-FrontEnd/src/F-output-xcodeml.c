@@ -648,6 +648,7 @@ has_attribute_except_func_attrs(TYPE_DESC tp)
         TYPE_IS_CLASS(tp) ||
         TYPE_IS_PROCEDURE(tp) ||
         TYPE_IS_ASYNCHRONOUS(tp) ||
+        TYPE_IS_CONTIGUOUS(tp) ||
         tp->codims;
 }
 
@@ -806,6 +807,7 @@ outx_typeAttrs(int l, TYPE_DESC tp, const char *tag, int options)
         outx_true(TYPE_IS_VALUE(tp),            "is_value");
         outx_true(TYPE_IS_PROCEDURE(tp),        "is_procedure");
         outx_true(TYPE_IS_ASYNCHRONOUS(tp),     "is_asynchronous");
+        outx_true(TYPE_IS_CONTIGUOUS(tp),       "is_contiguous");
 
         if (TYPE_PARENT(tp)) {
             outx_print(" extends=\"%s\"", getTypeID(TYPE_PARENT_TYPE(tp)));
@@ -1217,7 +1219,10 @@ get_sclass(ID id)
 static void
 outx_id(int l, ID id)
 {
-    if(ID_STORAGE(id) == STG_EXT && !IS_PROCEDURE_TYPE(ID_TYPE(id)) &&  PROC_EXT_ID(id) == NULL) {
+    if (SYM_TYPE(ID_SYM(id)) == S_INTR ||
+        (ID_TYPE(id) && TYPE_IS_INTRINSIC(ID_TYPE(id)))) {
+        // do nothing
+    } else if(ID_STORAGE(id) == STG_EXT && !IS_PROCEDURE_TYPE(ID_TYPE(id)) &&  PROC_EXT_ID(id) == NULL) {
         fatal("outx_id: PROC_EXT_ID is NULL: symbol=%s", ID_NAME(id));
     }
 
@@ -4433,8 +4438,9 @@ outx_functionType(int l, TYPE_DESC tp)
         outx_print(" return_type=\"%s\"", rtid);
         outx_true(FUNCTION_TYPE_IS_PROGRAM(tp), "is_program");
 
-        if (FUNCTION_TYPE_IS_VISIBLE_INTRINSIC(tp))
+        if (FUNCTION_TYPE_IS_VISIBLE_INTRINSIC(tp)) {
             outx_true(TYPE_IS_INTRINSIC(tp), "is_intrinsic");
+        }
 
         outx_true(TYPE_IS_RECURSIVE(tp), "is_recursive");
         outx_true(TYPE_IS_PURE(tp), "is_pure");
@@ -4724,6 +4730,11 @@ id_is_visibleVar(ID id)
                 return FALSE;
             }
         }
+        if (PROC_CLASS(id) == P_INTRINSIC &&
+            ID_TYPE(id) &&
+            FUNCTION_TYPE_IS_VISIBLE_INTRINSIC(ID_TYPE(id))) {
+                return TRUE;
+        }
         if (EXT_IS_DEFINED_IO(PROC_EXT_ID(id))) {
             return FALSE;
         }
@@ -4891,13 +4902,12 @@ genSortedIDs(ID ids, int *retnIDs)
         (FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)) != NULL && \
          !TYPE_IS_IMPLICIT(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)))))) || \
       (ID_TYPE(id) && TYPE_IS_EXTERNAL(ID_TYPE(id))) || \
-      (ID_TYPE(id) && TYPE_IS_INTRINSIC(ID_TYPE(id))) || \
       PROC_CLASS(id) == P_UNDEFINEDPROC || \
       PROC_CLASS(id) == P_DEFINEDPROC)     \
   && (PROC_EXT_ID(id) == NULL ||           \
       PROC_CLASS(id) == P_UNDEFINEDPROC || \
       PROC_CLASS(id) == P_DEFINEDPROC || \
-      (TYPE_IS_PUBLIC(id) || TYPE_IS_PRIVATE(id) || ( \
+      (TYPE_IS_PUBLIC(id) || TYPE_IS_PRIVATE(id)  || ( \
       EXT_PROC_IS_INTERFACE(PROC_EXT_ID(id)) == FALSE && \
       EXT_PROC_IS_INTERFACE_DEF(PROC_EXT_ID(id)) == FALSE)))    \
   && (ID_TYPE(id) \
@@ -4980,6 +4990,14 @@ emit_decl(int l, ID id)
     case CL_ENTRY:
         break;
 
+    case CL_PROC:
+        if (ID_TYPE(id) &&
+            IS_PROCEDURE_TYPE(ID_TYPE(id)) &&
+            FUNCTION_TYPE_IS_VISIBLE_INTRINSIC(ID_TYPE(id))) {
+            outx_varDecl(l, id);
+            break;
+        }
+        /* fall through */
     default:
         switch (ID_STORAGE(id)) {
             case STG_ARG:
@@ -5775,7 +5793,10 @@ output_XcodeML_file()
 static void
 outx_id_mod(int l, ID id)
 {
-    if(ID_STORAGE(id) == STG_EXT && PROC_EXT_ID(id) == NULL) {
+    if (SYM_TYPE(ID_SYM(id)) == S_INTR ||
+        (ID_TYPE(id) && TYPE_IS_INTRINSIC(ID_TYPE(id)))) {
+        // do nothing
+    } else if(ID_STORAGE(id) == STG_EXT && PROC_EXT_ID(id) == NULL) {
         fatal("outx_id: PROC_EXT_ID is NULL: symbol=%s", ID_NAME(id));
     }
 

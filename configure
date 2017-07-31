@@ -12986,19 +12986,22 @@ unset program_transform_name
 
 #--------------------------------------------------------------------
 # Set version file
-VERSIONTXT="./Driver/etc/version"
-
-# If possible, set more information
 if test -d .git || test -f .git; then
-    which git 1>/dev/null 2>/dev/null
-    if test $? -eq 0; then
-        VERSION_INFO=`git log --date=short --pretty=format:"Last Commit Day:%ad, Hash Value:%h" -1`
-        echo -n Version:1.1.3, ${VERSION_INFO} > ${VERSIONTXT}
+  which git 1>/dev/null 2>/dev/null
+  if test $? -eq 0; then
+    VERSION_INFO=`git log --date=short --pretty=format:"Git Hash:%h" -1`
+    if test "${NIGHTLY_BUILD}" != ""; then
+      echo -n Version:1.1.3-${NIGHTLY_BUILD}, ${VERSION_INFO} > ./Driver/etc/version
     else
-        echo -n Version:1.1.3 > ${VERSIONTXT}
+      echo -n Version:1.1.3, ${VERSION_INFO} > ./Driver/etc/version
     fi
-else
-    echo -n Version:1.1.3 > ${VERSIONTXT}
+  else
+    echo -n Version:1.1.3 > ./Driver/etc/version
+  fi
+#else
+# Stable and nightly build version don't have ".git",
+# and already have "./Driver/etc/version".
+# Thus, do nothing.
 fi
 
 # check use one-sided

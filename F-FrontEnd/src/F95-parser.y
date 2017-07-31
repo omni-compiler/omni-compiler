@@ -198,6 +198,7 @@ state 2058
 %token KW_ERROR
 
 /* Fortran 2008 keywords*/
+%token CONTIGUOUS
 %token BLOCK
 %token ENDBLOCK
 
@@ -993,6 +994,8 @@ declaration_statement:
             $$ = list1(F_FORMAT_DECL, GEN_NODE(STRING_CONSTANT, formatString));
             formatString = NULL;
         }
+        | CONTIGUOUS COL2_or_null ident_list
+        { $$ = list1(F08_CONTIGUOUS_STATEMENT, $3); }
         ;
 
 declaration_statement95:
@@ -1051,7 +1054,6 @@ declaration_statement95:
         | ASYNCHRONOUS COL2_or_null access_ident_list
         { $$ = list1(F03_ASYNCHRONOUS_STATEMENT, $3); }
         ;
-
 
 
 array_allocation_list:
@@ -1165,7 +1167,9 @@ attr_spec:
         | BIND '(' IDENTIFIER /* C */ ')'
         { $$ = list0(F03_BIND_SPEC); }
         | VALUE
-        { $$ = list0(F03_VALUE_SPEC); } 
+        { $$ = list0(F03_VALUE_SPEC); }
+        | CONTIGUOUS
+        { $$ = list0(F08_CONTIGUOUS_SPEC); }
         ;
 
 private_or_public_spec:

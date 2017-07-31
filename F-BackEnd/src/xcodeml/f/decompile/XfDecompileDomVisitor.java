@@ -225,7 +225,7 @@ public class XfDecompileDomVisitor {
 
         for (Node basicTypeNode : basicTypeNodeArray) {
             if (XmDomUtil.getAttrBool(basicTypeNode, "is_volatile")) {
-                writer.writeToken(", ");
+                writer.writeToken(",");
                 writer.writeToken("VOLATILE");
                 break;
             }
@@ -234,7 +234,7 @@ public class XfDecompileDomVisitor {
         for (Node basicTypeNode : basicTypeNodeArray) {
             String bind = XmDomUtil.getAttr(basicTypeNode, "bind");
             if (XfUtilForDom.isNullOrEmpty(bind) == false) {
-                writer.writeToken(", ");
+                writer.writeToken(",");
                 writer.writeToken("BIND( " + bind.toUpperCase() + " )");
                 break;
             }
@@ -242,7 +242,7 @@ public class XfDecompileDomVisitor {
 
         for (Node basicTypeNode : basicTypeNodeArray) {
             if (XmDomUtil.getAttrBool(basicTypeNode, "is_value")) {
-                writer.writeToken(", ");
+                writer.writeToken(",");
                 writer.writeToken("VALUE");
                 break;
             }
@@ -250,8 +250,16 @@ public class XfDecompileDomVisitor {
 
         for (Node basicTypeNode : basicTypeNodeArray) {
             if (XmDomUtil.getAttrBool(basicTypeNode, "is_asynchronous")) {
-                writer.writeToken(", ");
+                writer.writeToken(",");
                 writer.writeToken("ASYNCHRONOUS");
+                break;
+            }
+        }
+
+        for (Node basicTypeNode : basicTypeNodeArray) {
+            if (XmDomUtil.getAttrBool(basicTypeNode, "is_contiguous")) {
+                writer.writeToken(",");
+                writer.writeToken("CONTIGUOUS");
                 break;
             }
         }
@@ -282,12 +290,6 @@ public class XfDecompileDomVisitor {
         XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
         XmfWriter writer = _context.getWriter();
         Node lowType = null;
-
-        if (XmDomUtil.getAttrBool(funcTypeNode, "is_intrinsic")) {
-            writer.writeToken("INTRINSIC ");
-            writer.writeToken(symbol.getSymbolName());
-            return;
-        }
 
         boolean isFirstToken = true;
         boolean isPrivateEmit = false;
@@ -374,6 +376,14 @@ public class XfDecompileDomVisitor {
                 writer.writeToken((isFirstToken ? "" : ", ") + "PROTECTED");
                 isFirstToken = false;
             }
+        }
+
+        if (XmDomUtil.getAttrBool(funcTypeNode, "is_intrinsic")) {
+            if (!isFirstToken) {
+                writer.writeToken(",");
+            }
+            writer.writeToken("INTRINSIC");
+            isFirstToken = false;
         }
 
         if (isFirstToken == false) {
