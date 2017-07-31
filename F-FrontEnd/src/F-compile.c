@@ -2378,6 +2378,18 @@ end_declaration()
         if (TYPE_IS_EXTERNAL(tp) && !IS_PROCEDURE_TYPE(tp)) {
             tp = function_type(tp);
             TYPE_UNSET_SAVE(tp);
+            ID_TYPE(ip) = tp;
+        }
+
+        if (FUNCTION_TYPE_IS_VISIBLE_INTRINSIC(tp)) {
+            if (!IS_PROCEDURE_TYPE(tp)) {
+                tp = function_type(tp);
+                TYPE_SET_INTRINSIC(tp);
+                ID_TYPE(ip) = tp;
+            }
+            if (FUNCTION_TYPE_IS_VISIBLE_INTRINSIC(tp)) {
+                ID_STORAGE(ip) = STG_EXT;
+            }
         }
 
         /* copy type attribute flags to EXT_PROC_TYPE */

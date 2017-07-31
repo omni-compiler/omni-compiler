@@ -291,12 +291,6 @@ public class XfDecompileDomVisitor {
         XmfWriter writer = _context.getWriter();
         Node lowType = null;
 
-        if (XmDomUtil.getAttrBool(funcTypeNode, "is_intrinsic")) {
-            writer.writeToken("INTRINSIC ");
-            writer.writeToken(symbol.getSymbolName());
-            return;
-        }
-
         boolean isFirstToken = true;
         boolean isPrivateEmit = false;
         boolean isPublicEmit = false;
@@ -382,6 +376,14 @@ public class XfDecompileDomVisitor {
                 writer.writeToken((isFirstToken ? "" : ", ") + "PROTECTED");
                 isFirstToken = false;
             }
+        }
+
+        if (XmDomUtil.getAttrBool(funcTypeNode, "is_intrinsic")) {
+            if (!isFirstToken) {
+                writer.writeToken(",");
+            }
+            writer.writeToken("INTRINSIC");
+            isFirstToken = false;
         }
 
         if (isFirstToken == false) {
