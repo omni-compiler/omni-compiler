@@ -416,6 +416,12 @@ input_type_and_attr(xmlTextReaderPtr reader, HashTable * ht, char ** retTypeId,
         free(str);
     }
 
+    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_contiguous");
+    if (str != NULL) {
+        TYPE_SET_CONTIGUOUS(*tp);
+        free(str);
+    }
+
     if (retTypeId != NULL)
         *retTypeId = typeId;    /* return typeId */
     else

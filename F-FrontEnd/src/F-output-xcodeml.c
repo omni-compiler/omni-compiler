@@ -645,6 +645,7 @@ has_attribute_except_func_attrs(TYPE_DESC tp)
         TYPE_IS_CLASS(tp) ||
         TYPE_IS_PROCEDURE(tp) ||
         TYPE_IS_ASYNCHRONOUS(tp) ||
+        TYPE_IS_CONTIGUOUS(tp) ||
         tp->codims;
 }
 
@@ -803,6 +804,7 @@ outx_typeAttrs(int l, TYPE_DESC tp, const char *tag, int options)
         outx_true(TYPE_IS_VALUE(tp),            "is_value");
         outx_true(TYPE_IS_PROCEDURE(tp),        "is_procedure");
         outx_true(TYPE_IS_ASYNCHRONOUS(tp),     "is_asynchronous");
+        outx_true(TYPE_IS_CONTIGUOUS(tp),       "is_contiguous");
 
         if (TYPE_PARENT(tp)) {
             outx_print(" extends=\"%s\"", getTypeID(TYPE_PARENT_TYPE(tp)));

@@ -225,7 +225,7 @@ public class XfDecompileDomVisitor {
 
         for (Node basicTypeNode : basicTypeNodeArray) {
             if (XmDomUtil.getAttrBool(basicTypeNode, "is_volatile")) {
-                writer.writeToken(", ");
+                writer.writeToken(",");
                 writer.writeToken("VOLATILE");
                 break;
             }
@@ -234,7 +234,7 @@ public class XfDecompileDomVisitor {
         for (Node basicTypeNode : basicTypeNodeArray) {
             String bind = XmDomUtil.getAttr(basicTypeNode, "bind");
             if (XfUtilForDom.isNullOrEmpty(bind) == false) {
-                writer.writeToken(", ");
+                writer.writeToken(",");
                 writer.writeToken("BIND( " + bind.toUpperCase() + " )");
                 break;
             }
@@ -242,7 +242,7 @@ public class XfDecompileDomVisitor {
 
         for (Node basicTypeNode : basicTypeNodeArray) {
             if (XmDomUtil.getAttrBool(basicTypeNode, "is_value")) {
-                writer.writeToken(", ");
+                writer.writeToken(",");
                 writer.writeToken("VALUE");
                 break;
             }
@@ -250,8 +250,16 @@ public class XfDecompileDomVisitor {
 
         for (Node basicTypeNode : basicTypeNodeArray) {
             if (XmDomUtil.getAttrBool(basicTypeNode, "is_asynchronous")) {
-                writer.writeToken(", ");
+                writer.writeToken(",");
                 writer.writeToken("ASYNCHRONOUS");
+                break;
+            }
+        }
+
+        for (Node basicTypeNode : basicTypeNodeArray) {
+            if (XmDomUtil.getAttrBool(basicTypeNode, "is_contiguous")) {
+                writer.writeToken(",");
+                writer.writeToken("CONTIGUOUS");
                 break;
             }
         }

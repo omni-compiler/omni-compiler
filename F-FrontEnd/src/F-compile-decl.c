@@ -2121,6 +2121,10 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
         case F03_ASYNCHRONOUS_SPEC:
             TYPE_SET_ASYNCHRONOUS(tp);
             break;
+        case F08_CONTIGUOUS_SPEC:
+            TYPE_SET_CONTIGUOUS(tp);
+            break;
+
         default:
             error("incompatible type attribute , code: %d", EXPR_CODE(v));
         }
@@ -4745,7 +4749,7 @@ compile_SAVE_decl(id_list)
             }
         }
         if(ID_IS_OFMODULE(id)) {
-            error("can't change attributes of USE-assoicated symbol '%s'", ID_NAME(id));
+            error("can't change attributes of USE-associated symbol '%s'", ID_NAME(id));
             return;
         } else if (ID_IS_AMBIGUOUS(id)) {
             error("an ambiguous reference to symbol '%s'", ID_NAME(id));
