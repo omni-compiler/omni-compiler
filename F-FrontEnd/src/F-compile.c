@@ -6154,10 +6154,7 @@ compile_member_ref(expr x)
     // TODO:
     //	 should work for all cases (array/substr/plain scalar).
     if (!IS_FUNCTION_TYPE(ID_TYPE(member_id)) && (
-            TYPE_IS_POINTER(stVTyp) ||
-            TYPE_IS_TARGET(stVTyp) ||
-            TYPE_IS_VOLATILE(stVTyp) ||
-            TYPE_IS_ASYNCHRONOUS(stVTyp) ||
+            TYPE_HAS_SUBOBJECT_PROPAGATE_ATTRS(stVTyp) ||
             TYPE_IS_COINDEXED(stVTyp))) {
         /*
          * If type of struct_v has pointer/pointee flags on, members
@@ -6173,32 +6170,14 @@ compile_member_ref(expr x)
         }
         retTyp = wrap_type(mVTyp);
 
-        TYPE_ATTR_FLAGS(retTyp) |= TYPE_IS_POINTER(mVTyp);
-        TYPE_ATTR_FLAGS(retTyp) |= TYPE_IS_TARGET(mVTyp);
-        TYPE_ATTR_FLAGS(retTyp) |= TYPE_IS_VOLATILE(mVTyp);
-        TYPE_ATTR_FLAGS(retTyp) |= TYPE_IS_ASYNCHRONOUS(mVTyp);
+        TYPE_SET_SUBOBJECT_PROPAGATE_ATTRS(retTyp, mVTyp);
         TYPE_ATTR_FLAGS(retTyp) |= TYPE_IS_ALLOCATABLE(mVTyp);
 
+        TYPE_SET_SUBOBJECT_PROPAGATE_ATTRS(retTyp, stVTyp);
         TYPE_CODIMENSION(retTyp) = TYPE_CODIMENSION(stVTyp);
 
-        /*
-         * To avoid overwrite, check original flags before copy.
-         */
-        if (!TYPE_IS_POINTER(retTyp)) {
-            TYPE_ATTR_FLAGS(retTyp) |= TYPE_IS_POINTER(stVTyp);
-        }
-        if (!TYPE_IS_TARGET(retTyp)) {
-            TYPE_ATTR_FLAGS(retTyp) |= TYPE_IS_TARGET(stVTyp);
-        }
-        if (!TYPE_IS_VOLATILE(retTyp)) {
-            TYPE_ATTR_FLAGS(retTyp) |= TYPE_IS_VOLATILE(stVTyp);
-        }
-        if (!TYPE_IS_ASYNCHRONOUS(retTyp)) {
-            TYPE_ATTR_FLAGS(retTyp) |= TYPE_IS_ASYNCHRONOUS(stVTyp);
-        }
-
         tp = retTyp;
-	tp = compile_dimensions(tp, shape);
+        tp = compile_dimensions(tp, shape);
     } else {
         tp = ID_TYPE(member_id);
 

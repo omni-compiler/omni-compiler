@@ -349,6 +349,17 @@ extern TYPE_DESC basic_type_desc[];
      TYPE_ATTR_BIND |                           \
      TYPE_ATTR_VALUE)
 
+#define TYPE_ATTRS_SUBOBJECT_PROPAGATE          \
+   (TYPE_ATTR_POINTER |                         \
+    TYPE_ATTR_TARGET |                          \
+    TYPE_ATTR_VOLATILE |                        \
+    TYPE_ATTR_ASYNCHRONOUS)
+
+#define TYPE_HAS_SUBOBJECT_PROPAGATE_ATTRS(tp)  \
+    ((tp)->attr.type_attr_flags & TYPE_ATTRS_SUBOBJECT_PROPAGATE)
+
+#define TYPE_SET_SUBOBJECT_PROPAGATE_ATTRS(child, parent)               \
+    (TYPE_ATTR_FLAGS(child) |= TYPE_HAS_SUBOBJECT_PROPAGATE_ATTRS(parent))
 
 #define TYPE_HAS_INTENT(tp)      (TYPE_IS_INTENT_IN(tp) || \
                 TYPE_IS_INTENT_OUT(tp) || TYPE_IS_INTENT_INOUT(tp))
