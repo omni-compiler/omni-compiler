@@ -134,7 +134,7 @@ static void compile_FORALL_statement(int st_no, expr x);
 static void compile_ENDFORALL_statement(expr x);
 
 static int check_valid_construction_name(expr x, expr y);
-static void move_implicit_vars_to_parent_from_type_guard(void);
+static void move_vars_to_parent_from_type_guard(void);
 static void check_select_types(expr x, TYPE_DESC tp);
 
 static void   compile_end_forall_header(expv init);
@@ -1083,7 +1083,7 @@ compile_statement1(int st_no, expr x)
                     if (endlineno_flag)
                          EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
                     pop_ctl();
-                    move_implicit_vars_to_parent_from_type_guard();
+                    move_vars_to_parent_from_type_guard();
                     pop_env();
 
                     parent_const_name = CTL_TYPE_GUARD_CONST_NAME(ctl_top);
@@ -1154,7 +1154,7 @@ compile_statement1(int st_no, expr x)
             pop_ctl();
 
             if (CTL_TYPE(ctl_top) == CTL_SELECT_TYPE) {
-                move_implicit_vars_to_parent_from_type_guard();
+                move_vars_to_parent_from_type_guard();
                 pop_env();
             }
 
@@ -8327,6 +8327,35 @@ compile_BLOCK_statement(expr x)
     }
 }
 
+static void
+move_implicit_variables_to_parent()
+{
+    ID ip;
+    ID iq;
+    ID replaced = NULL;
+    ID moved = NULL;
+    ID replaced_last = NULL;
+    ID moved_last;
+    ID last;
+    ID parent = PARENT_LOCAL_SYMBOLS;
+
+    SAFE_FOREACH_ID(ip, iq, LOCAL_SYMBOLS) {
+        if (ID_TYPE(ip) == NULL || TYPE_IS_IMPLICIT(ID_TYPE(ip))) {
+            ID_LINK_ADD(ip, moved, moved_last);
+        } else {
+            ID_LINK_ADD(ip, replaced, replaced_last);
+        }
+    }
+
+    LOCAL_SYMBOLS = replaced;
+    FOREACH_ID(ip, parent) {
+        last = ip;
+    }
+    SAFE_FOREACH_ID(ip, iq, moved) {
+        ID_LINK_ADD(ip, parent, last);
+    }
+}
+
 
 static void
 compile_ENDBLOCK_statement(expr x)
@@ -8366,6 +8395,8 @@ compile_ENDBLOCK_statement(expr x)
     if (endlineno_flag) {
         EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
     }
+
+    move_implicit_variables_to_parent();
 
     current_block = XMALLOC(BLOCK_ENV, sizeof(*current_block));
     BLOCK_LOCAL_SYMBOLS(current_block) = LOCAL_SYMBOLS;
@@ -8447,7 +8478,7 @@ compile_forall_header(expr x)
     expv init;
     expv forall_header;
     list lp;
-    TYPE_DESC tp = type_INT;
+    TYPE_DESC tp;
 
     triplets       = EXPR_ARG1(x);
     mask           = EXPR_ARG2(x);
@@ -8455,6 +8486,9 @@ compile_forall_header(expr x)
 
     if (type) {
         tp = compile_type(type, /*allow_predecl=*/ FALSE);
+    } else {
+        tp = new_type_desc();
+        TYPE_BASIC_TYPE(tp) = TYPE_INT;
     }
     CURRENT_STATE = INEXEC;
 
@@ -8480,13 +8514,30 @@ compile_forall_header(expr x)
             return NULL;
         }
 
-        id = declare_ident(sym, CL_VAR);
-        ID_TYPE(id) = tp;
         if (type) {
+            id = declare_ident(sym, CL_VAR);
             ID_STORAGE(id) = STG_INDEX;
         } else {
+            TYPE_DESC tp;
+            id = find_ident(sym);
+            if (id) {
+                tp = ID_TYPE(id);
+                if (tp == NULL) {
+                    error("%s is not declared", SYM_NAME(sym));
+                } else if (!IS_INT(tp)) {
+                    error("%s is not integer", SYM_NAME(sym));
+                }
+                id = declare_ident(sym, CL_VAR);
+
+            } else {
+                id = declare_ident(sym, CL_VAR);
+                implicit_declaration(id);
+
+            }
+
             ID_STORAGE(id) = STG_AUTO;
         }
+        declare_id_type(id, tp);
         declare_variable(id);
 
         for (;;) {
@@ -8766,10 +8817,10 @@ compile_ENDFORALL_statement(expr x)
  *  6  END SELECT TYPE
  *
  *  'a' in line 3 is declared inside the environment of CTL_TYPE_GUARD,
- *  but it should be moved to the parent ennvironment.
+ *  but it should be moved to the parent environment.
  */
 static void
-move_implicit_vars_to_parent_from_type_guard()
+move_vars_to_parent_from_type_guard()
 {
     ID ip, iq, last = NULL;
     ENV parent = ENV_PARENT(current_local_env);
