@@ -3769,7 +3769,7 @@ ScanFortranLine(src, srcHead, dst, dstHead, dstMax, inQuotePtr, quoteCharPtr,
                 cur = src;
                 --cur; // Char before the h/H
                 while (isdigit((int)*cur)) {
-                    cur--;
+                    --cur;
                 }
                 if(isalpha((int)*cur) || *cur == '_') {
                     goto copyOne;
