@@ -1584,6 +1584,7 @@ find_ident_block_parent(SYMBOL s)
     FOR_CTLS_BACKWARD(cp) {
         if (CTL_TYPE(cp) == CTL_BLOCK || \
             CTL_TYPE(cp) == CTL_FORALL || \
+            CTL_TYPE(cp) == CTL_DO || \
             CTL_TYPE(cp) == CTL_TYPE_GUARD) {
             in_block = TRUE;
             if (CTL_BLOCK_LOCAL_SYMBOLS(cp) == LOCAL_SYMBOLS) {

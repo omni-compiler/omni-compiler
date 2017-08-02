@@ -360,7 +360,7 @@ seems_type_or_func_attr(int kw) {
             kw == KW_INTEGER ||
             kw == KW_LOGICAL ||
             kw == KW_REAL ||
-	    kw == CONSTANT ||
+            kw == CONSTANT ||
             kw == PURE ||
             kw == RECURSIVE) ? TRUE : FALSE;
 }
@@ -1935,8 +1935,10 @@ get_keyword_optional_blank(int class)
         if(kwd == CASE) return SELECT;
         if(kwd == KW_TYPE) return SELECTTYPE;
     } break;
-    case DO: /* DO WHILE *//* blanks mandatory.  */
-        if(get_keyword(keywords) == KW_WHILE) return DOWHILE;
+    case DO: /* DO WHILE or DO CONCURRENT *//* blanks mandatory.  */
+        cl = get_keyword(keywords);
+        if(cl == KW_WHILE)   return DOWHILE;
+        if(cl == CONCURRENT) return DOCONCURRENT;
         break;
     case IMPLICIT: {/* IMPLICIT NONE */ /* in free format */
 	    char *save2 = bufptr;
@@ -3867,6 +3869,7 @@ struct keyword_token keywords[ ] =
     { "codimension",    CODIMENSION  },    /* #060 coarray */
     { "common",         COMMON },
     { "complex",        KW_COMPLEX },
+    { "concurrent",     CONCURRENT },    /* F2008 spec */
     { "contains",       CONTAINS },
     { "contiguous",     CONTIGUOUS  },   /* F2008 spec */
     { "continue",       CONTINUE  },

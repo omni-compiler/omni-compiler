@@ -248,6 +248,8 @@ typedef struct control
 #define CTL_DO_BODY(l)          (EXPR_ARG5(EXPR_ARG2((l)->v1)))
 #define CTL_DO_LABEL(l)         ((l)->dolabel)
 #define CTL_DO_VAR(l)           ((l)->dovar)
+#define CTL_DO_LOCAL_ENV(l)     (&((l)->local_env))
+
 #define CTL_STRUCT_TYPEDESC(l)  (EXPV_TYPE((l)->v1))
 
 #define CTL_CRIT_STATEMENT(l)   ((l)->v2)
@@ -293,10 +295,11 @@ typedef struct control
 #define CTL_BLOCK_LOCAL_BLOCKS(l)                ((CTL_BLOCK_LOCAL_ENV(l))->blocks)
 
 #define CTL_FORALL_STATEMENT(l)                   ((l)->v2)
-#define CTL_FORALL_INIT(l)                        (EXPR_ARG1((l)->v2))
-#define CTL_FORALL_MASK(l)                        (EXPR_ARG2((l)->v2))
-#define CTL_FORALL_BODY(l)                        (EXPR_ARG3((l)->v2))
-#define CTL_FORALL_CONST_NAME(l)                  (EXPR_ARG4((l)->v2))
+#define CTL_FORALL_HEADER(l)                      (EXPR_ARG1((l)->v1))
+#define CTL_FORALL_INIT(l)                        (EXPR_ARG1(CTL_FORALL_HEADER(l)))
+#define CTL_FORALL_MASK(l)                        (EXPR_ARG2(CTL_FORALL_HEADER(l)))
+#define CTL_FORALL_BODY(l)                        (EXPR_ARG2((l)->v1))
+#define CTL_FORALL_CONST_NAME(l)                  (EXPR_ARG3((l)->v1))
 #define CTL_FORALL_LOCAL_ENV(l)                   (&((l)->local_env))
 #define CTL_FORALL_LOCAL_SYMBOLS(l)               ((CTL_FORALL_LOCAL_ENV(l))->symbols)
 #define CTL_FORALL_LOCAL_STRUCT_DECLS(l)          ((CTL_FORALL_LOCAL_ENV(l))->struct_decls)

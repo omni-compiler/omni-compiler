@@ -216,6 +216,9 @@ xtag(enum expr_code code)
 
     case F2008_BLOCK_STATEMENT:      return "blockStatement";
 
+    case F08_DOCONCURRENT_STATEMENT: return "FdoConcurrentStatement";
+
+
     /*                          
      * misc.                    
      */                         
@@ -3429,7 +3432,7 @@ outx_BLOCK_statement(int l, expv v)
             break;
         case F03_USE_ONLY_INTRINSIC_STATEMENT:
             outx_useOnlyDecl(l2, u, TRUE);
-            break;            
+            break;
         case F95_USE_ONLY_STATEMENT:
             outx_useOnlyDecl(l2, u, FALSE);
             break;
@@ -3460,9 +3463,9 @@ outx_FORALL_statement(int l, expv v)
 {
     list lp;
     int l1 = l + 1;
-    expv init = EXPR_ARG1(v);
-    expv mask = EXPR_ARG2(v);
-    expv body = EXPR_ARG3(v);
+    expv init = EXPR_ARG1(EXPR_ARG1(v));
+    expv mask = EXPR_ARG2(EXPR_ARG1(v));
+    expv body = EXPR_ARG2(v);
     const char *tid = NULL;
 
     outx_vtagLineno(l, XTAG(v), EXPR_LINE(v), NULL);
@@ -3471,8 +3474,8 @@ outx_FORALL_statement(int l, expv v)
         outx_print(" construct_name=\"%s\"",
                    SYM_NAME(EXPR_SYM(EXPR_ARG4(v))));
     }
-    if (EXPV_TYPE(v)) {
-        tid = getTypeID(EXPV_TYPE(v));
+    if (EXPV_TYPE(EXPR_ARG1(v))) {
+        tid = getTypeID(EXPV_TYPE(EXPR_ARG1(v)));
         outx_print(" type=\"%s\"", tid);
     }
     outx_print(">\n");
@@ -3504,6 +3507,50 @@ outx_FORALL_statement(int l, expv v)
     }
 #endif
 
+
+    FOR_ITEMS_IN_LIST(lp, init) {
+        expv name = EXPR_ARG1(LIST_ITEM(lp));
+        expv indexRange = EXPR_ARG2(LIST_ITEM(lp));
+
+        outx_varOrFunc(l1, name);
+        outx_indexRange(l1,
+                        EXPR_ARG1(indexRange),
+                        EXPR_ARG2(indexRange),
+                        EXPR_ARG3(indexRange));
+    }
+
+    if (mask) {
+        outx_condition(l1, mask);
+    }
+
+    outx_body(l1, body);
+    outx_expvClose(l, v);
+}
+
+/*
+ * output doConcurrentStatement
+ */
+static void
+outx_DOCONCURRENT_statement(int l, expv v)
+{
+    list lp;
+    int l1 = l + 1;
+    expv init = EXPR_ARG1(EXPR_ARG1(v));
+    expv mask = EXPR_ARG2(EXPR_ARG1(v));
+    expv body = EXPR_ARG2(v);
+    const char *tid = NULL;
+
+    outx_vtagLineno(l, XTAG(v), EXPR_LINE(v), NULL);
+
+    if (EXPR_HAS_ARG4(v) && EXPR_ARG4(v) != NULL) {
+        outx_print(" construct_name=\"%s\"",
+                   SYM_NAME(EXPR_SYM(EXPR_ARG4(v))));
+    }
+    if (EXPV_TYPE(EXPR_ARG1(v))) {
+        tid = getTypeID(EXPV_TYPE(EXPR_ARG1(v)));
+        outx_print(" type=\"%s\"", tid);
+    }
+    outx_print(">\n");
 
     FOR_ITEMS_IN_LIST(lp, init) {
         expv name = EXPR_ARG1(LIST_ITEM(lp));
@@ -3900,6 +3947,11 @@ outx_expv(int l, expv v)
     case F_FORALL_STATEMENT:
       outx_FORALL_statement(l, v);
       break;
+
+    case F08_DOCONCURRENT_STATEMENT:
+      outx_DOCONCURRENT_statement(l, v);
+      break;
+
 
     default:
         fatal("unkown exprcode : %d", code);
