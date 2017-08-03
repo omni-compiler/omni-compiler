@@ -355,7 +355,7 @@ void _XMPF_getVector_DMA(void *descPtr, char *baseAddr, int bytes, int coindex,
                           nameDMA, offsetDMA);
 
   // ACTION
-  _XMP_coarray_contiguous_get(coindex,
+  _XMP_coarray_contiguous_get(coindex-1,
                             descDMA,   desc,
                             offsetDMA, offset,
                             bytes,     bytes);
@@ -421,7 +421,7 @@ void _getVector(void *descPtr, char *baseAddr, int bytes, int coindex,
                             _localBuf_offset);
 
     // ACTION
-    _XMP_coarray_contiguous_get(coindex,
+    _XMP_coarray_contiguous_get(coindex-1,
                               _localBuf_desc,   desc,
                               _localBuf_offset, offset,
                               bytes,            bytes);
@@ -438,7 +438,7 @@ void _getVector(void *descPtr, char *baseAddr, int bytes, int coindex,
     // ACTION
     _XMP_coarray_rdma_coarray_set_1(offset, bytes, 1);    // coindexed-object
     _XMP_coarray_rdma_array_set_1(0, bytes, 1, 1, 1);    // result
-    _XMP_coarray_rdma_image_set_1(coindex);
+    _XMP_coarray_rdma_image_set_1(coindex-1);
     _XMP_coarray_rdma_do(COARRAY_GET_CODE, desc, dst, NULL);
   }
 }
