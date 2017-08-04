@@ -620,7 +620,7 @@ fixIdTypesInDataDecl(expr x)
 
 
 static int
-compile_DATA_decl0(expv varAndVal)
+compile_DATA_decl_or_statement0(expv varAndVal, int is_declaration)
 {
     expv v, vVars, vVals, vLp;
     list lp;
@@ -658,7 +658,11 @@ compile_DATA_decl0(expv varAndVal)
         list_put_last(vVals, v);
     }
 
-    v = list2(F_DATA_DECL, vVars, vVals);
+    if(is_declaration){
+        v = list2(F_DATA_DECL, vVars, vVals);
+    } else {
+        v = list2(F_DATA_STATEMENT, vVars, vVals);
+    }
     EXPR_LINE(v) = EXPR_LINE(varAndVal);
 
     output_statement(v);
@@ -668,7 +672,7 @@ compile_DATA_decl0(expv varAndVal)
 
 
 void
-compile_DATA_decl(expr x)
+compile_DATA_decl_or_statement(expr x, int is_declaration)
 {
     list lp;
     list lp1;
@@ -697,9 +701,9 @@ compile_DATA_decl(expr x)
         }
 #endif /* DATA_C_IMPL */
 
-        if (compile_DATA_decl0(varAndVal) == FALSE) {
+        if (compile_DATA_decl_or_statement0(varAndVal, is_declaration) == FALSE) 
+        {
             return;
         }
     }
 }
-
