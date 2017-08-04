@@ -677,7 +677,6 @@ compile_statement1(int st_no, expr x)
 
     case F_DATA_DECL:
         if(CURRENT_STATE == INEXEC) {
-            printf("DATA statement in EXECUTABLE statements\n");
             compile_DATA_decl_or_statement(EXPR_ARG1(x), FALSE);
         } else {
             check_INDCL();
