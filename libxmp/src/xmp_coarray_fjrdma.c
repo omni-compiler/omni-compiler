@@ -2256,5 +2256,5 @@ void _XMP_fjrdma_sync_images(const int num, int* image_set, int* status)
 
   // Update table for post-processing
   for(int i=0;i<num;i++)
-    _sync_images_table[rank_set[i]]--;
+    _sync_images_table[image_set[i]]--;
 }
