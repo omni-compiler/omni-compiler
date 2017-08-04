@@ -3248,7 +3248,7 @@ KeepOnGoin:
             error("bad CONDCOMPL sentinel continuation line");
             return (ST_INIT);
         }
-	if (st_OCL_flag || local_OCL_flag) return (ST_INIT); // no continuation line for ocl
+	if (st_OCL_flag && local_OCL_flag) return (ST_INIT); // no continuation line for ocl
     }
 
     if (check_cont && IS_CONT_LINE(stn_cols)){

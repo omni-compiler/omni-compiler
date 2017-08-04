@@ -101,7 +101,7 @@ static void _atomic_define_remote_core(void *descPtr, int coindex, int *moldAddr
 
   /* action
    */
-  _XMP_atomic_define_1(atomDesc, atomOffset/sizeof(int), image,
+  _XMP_atomic_define_1(atomDesc, atomOffset/sizeof(int), image-1,
                        *srcAddr, srcDesc, srcOffset/sizeof(int), sizeof(int));
 }
 
@@ -183,7 +183,7 @@ static void _atomic_ref_remote_core(void *descPtr, int coindex, int *moldAddr,
 
   /* action
    */
-  _XMP_atomic_ref_1(atomDesc, atomOffset/sizeof(int), image,
+  _XMP_atomic_ref_1(atomDesc, atomOffset/sizeof(int), image-1,
                     dstAddr, dstDesc, dstOffset/sizeof(int), sizeof(int));
 }
 

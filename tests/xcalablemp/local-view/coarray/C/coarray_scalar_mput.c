@@ -2,7 +2,7 @@
 #define FALSE 0
 #include <stdio.h>
 #include <xmp.h>
-#pragma xmp nodes p(2)
+#pragma xmp nodes p[2]
 #define N 10
 long a[N], a_ans[N];
 float b[N][N], b_ans[N][N];
@@ -10,7 +10,7 @@ double c[N][N][N], c_ans[N][N][N];
 int d[N], d_ans[N];
 int e[N][N][N], e_ans[N][N][N];
 #pragma xmp coarray a,b,c,d,e : [*]
-int status, return_val = 0;
+int return_val = 0;
 
 void initialize_coarrays(int me)
 {
@@ -27,28 +27,28 @@ void initialize_coarrays(int me)
 	c[i][j][k] = c_ans[i][j][k] = 0;
 
   for(int i=0;i<N;i++)
-    d[i] = d_ans[i] = i + me * 100;
+    d[i] = d_ans[i] = i + (me+1) * 100;
 
   for(int i=0;i<N;i++)
-    d[i] = d_ans[i] = i + me * 100;
+    d[i] = d_ans[i] = i + (me+1) * 100;
 
-  xmp_sync_all(&status);
+  xmp_sync_all(NULL);
 }
 
 void test_1(int me){
 
-  if(me == 2){
+  if(me == 1){
     long tmp = 99;
-    a[0:5]:[1] = tmp;   // put
-    xmp_sync_memory(&status);
+    a[0:5]:[0] = tmp;   // put
+    xmp_sync_memory(NULL);
   }
 
-  if(me == 1){
+  if(me == 0){
     for(int i=0;i<5;i++)
       a_ans[i] = (long)99;
   }
   
-  xmp_sync_all(&status);
+  xmp_sync_all(NULL);
 }
 
 void check_1(int me){
@@ -62,7 +62,7 @@ void check_1(int me){
     }
   }
   
-  if(flag == TRUE && me == 2)   printf("check_1 : PASS\n");
+  if(flag == TRUE && me == 1)   printf("check_1 : PASS\n");
   if(flag == FALSE) return_val = 1;
 }
 
@@ -70,17 +70,17 @@ void test_2(int me){
   float tmp[2][3];
   tmp[0][1] = 9.1;
 
-  xmp_sync_all(&status);
+  xmp_sync_all(NULL);
 
-  if(me == 1)
-    b[1:5:2][1]:[2] = tmp[0][1]; // put
+  if(me == 0)
+    b[1:5:2][1]:[1] = tmp[0][1]; // put
   
-  if(me == 2){
+  if(me == 1){
     for(int i=0;i<5;i++)
       b_ans[1+i*2][1] = 9.1;
   }
 
-  xmp_sync_all(&status);
+  xmp_sync_all(NULL);
 }
 
 void check_2(int me){
@@ -96,14 +96,14 @@ void check_2(int me){
     }
   }
   
-  if(flag == TRUE && me == 2)  printf("check_2 : PASS\n");
+  if(flag == TRUE && me == 1)  printf("check_2 : PASS\n");
   if(flag == FALSE) return_val = 1;
 }
 
 void test_3(int me){
-  int dest = 1, src = 2;
+  int dest = 0, src = 1;
 
-  xmp_sync_all(&status);
+  xmp_sync_all(NULL);
   if(me == src){
     double tmp = 3.14;
     c[0][1][2] = tmp;
@@ -117,7 +117,7 @@ void test_3(int me){
     c_ans[1][8][3] = 3.14;
   } 
 
-  xmp_sync_all(&status);
+  xmp_sync_all(NULL);
 }
 
 void check_3(int me){
@@ -135,23 +135,23 @@ void check_3(int me){
     }
   }
   
-  if(flag == TRUE && me == 1)  printf("check_3 : PASS\n");
+  if(flag == TRUE && me == 0)  printf("check_3 : PASS\n");
   if(flag == FALSE) return_val = 1;
 }
 
 void test_4(int me){
   //test for shortcut_put
-  if(me == 2){
-    d[0:5]:[1] = d[5];   // put
-    xmp_sync_memory(&status);
+  if(me == 1){
+    d[0:5]:[0] = d[5];   // put
+    xmp_sync_memory(NULL);
   }
 
-  if(me == 1){
+  if(me == 0){
     for(int i=0;i<5;i++)
       d_ans[i] = 205;
   }
   
-  xmp_sync_all(&status);
+  xmp_sync_all(NULL);
 }
 
 void check_4(int me){
@@ -170,19 +170,19 @@ void check_4(int me){
 }
 
 void test_5(int me){
-  if(me == 2){
+  if(me == 1){
     int local = 333;
-    e[1:4:2][2][:]:[1] = local;   // put
-    xmp_sync_memory(&status);
+    e[1:4:2][2][:]:[0] = local;   // put
+    xmp_sync_memory(NULL);
   }
 
-  if(me == 1){
+  if(me == 0){
     for(int i=1;i<=7;i+=2)
       for(int k=0;k<N;k++)
 	e_ans[i][2][k] = 333;
   }
   
-  xmp_sync_all(&status);
+  xmp_sync_all(NULL);
 }
 
 void check_5(int me){
@@ -200,12 +200,12 @@ void check_5(int me){
     }
   }
   
-  if(flag == TRUE && me == 2)   printf("check_5 : PASS\n");
+  if(flag == TRUE && me == 1)   printf("check_5 : PASS\n");
   if(flag == FALSE) return_val = 1;
 }
 
 int main(){
-  int me = xmp_node_num();
+  int me = xmpc_this_image();
   
   initialize_coarrays(me);
   

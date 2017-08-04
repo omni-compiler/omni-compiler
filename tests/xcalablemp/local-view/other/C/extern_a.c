@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 int a[10];
-#pragma xmp nodes p(2)
 #pragma xmp coarray a:[*]
 extern void hoge(int i, int node, int value);
 
@@ -11,12 +10,12 @@ int main(){
     a[i] = 0;
   
   xmp_sync_all(NULL);
-  if(xmp_node_num() == 1)
-    hoge(3, 2, -9);
+  if(xmpc_this_image() == 0)
+    hoge(3, 1, -9);
   
   xmp_sync_all(NULL);
 
-  if(xmp_node_num() == 2){
+  if(xmpc_this_image() == 1){
     if(a[3] == -9){
       printf("PASS\n");
     }

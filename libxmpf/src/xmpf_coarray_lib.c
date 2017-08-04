@@ -446,7 +446,7 @@ void xmpf_sync_image_nostat_(int *image)
   int image0 = _XMPF_transImage_current2initial(*image);
 
   _XMPF_coarrayDebugPrint("SYNC IMAGES(image=%d) starts...\n", image0);
-  xmp_sync_image(image0, &state);
+  xmp_sync_image(image0-1, &state);
   _XMPF_coarrayDebugPrint("SYNC IMAGES(image=%d) ends. (stat=%d)\n",
                           image0, state);
   _XMPF_coarray_clean_image_nodes();
@@ -457,6 +457,9 @@ void xmpf_sync_images_nostat_(int *images, int *size)
   int state;
 
   int *images0 = (int*)malloc((sizeof(int)*(*size)));
+  for(int i=0;i<*size;i++)
+    images[i]--;
+  
   _get_initial_image_vector(*size, images, images0);
 
   _XMPF_coarrayDebugPrint("SYNC IMAGES 1-to-N starts...\n");
@@ -475,6 +478,8 @@ void xmpf_sync_allimages_nostat_(void)
     int size = _XMPF_num_images_current() - 1;    // #of images except myself
     int *images0 = (int*)malloc((sizeof(int)*size));
     _get_initial_allimages(size, images0);
+    for(int i=0;i<size;i++)
+      images0[i]--;
 
     _XMPF_coarrayDebugPrint("SYNC IMAGES 1-to-SUBSET starts...\n");
     xmp_sync_images(size, images0, &state);
