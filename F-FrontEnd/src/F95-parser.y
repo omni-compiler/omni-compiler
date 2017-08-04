@@ -680,12 +680,26 @@ statement:      /* entry */
           { $$ = list6(F_FUNCTION_STATEMENT, $3, $4, NULL, $1, $6, $7); }
         | type_spec KW FUNCTION IDENTIFIER dummy_arg_list KW result_opt bind_opt
           { $$ = list6(F_FUNCTION_STATEMENT, $4, $5, $1, NULL, $7, $8); }
+        // Trick to allow keyword as identifier. Almost same rule as the one
+        // above.
+        | type_spec FUNCTION IDENTIFIER dummy_arg_list KW result_opt bind_opt
+          { $$ = list6(F_FUNCTION_STATEMENT, $3, $4, $1, NULL, $6, $7); }  
         | type_spec KW func_prefix FUNCTION IDENTIFIER dummy_arg_list
           KW result_opt bind_opt
           { $$ = list6(F_FUNCTION_STATEMENT, $5, $6, $1, $3, $8, $9); }
+        // Trick to allow keyword as identifier. Almost same rule as the one
+        // above.          
+        | type_spec func_prefix FUNCTION IDENTIFIER dummy_arg_list
+          KW result_opt bind_opt
+          { $$ = list6(F_FUNCTION_STATEMENT, $4, $5, $1, $2, $7, $8); }
         | func_prefix type_spec KW FUNCTION IDENTIFIER dummy_arg_list
           KW result_opt bind_opt
           { $$ = list6(F_FUNCTION_STATEMENT, $5, $6, $2, $1, $8, $9); }
+        // Trick to allow keyword as identifier. Almost same rule as the one
+        // above.
+        | func_prefix type_spec FUNCTION IDENTIFIER dummy_arg_list
+          KW result_opt bind_opt
+          { $$ = list6(F_FUNCTION_STATEMENT, $4, $5, $2, $1, $7, $8); }
 /* END: FUNCTION */
         | ENDFUNCTION name_or_null
           { $$ = list1(F95_ENDFUNCTION_STATEMENT,$2); }
