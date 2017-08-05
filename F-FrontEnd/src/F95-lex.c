@@ -360,7 +360,7 @@ seems_type_or_func_attr(int kw) {
             kw == KW_INTEGER ||
             kw == KW_LOGICAL ||
             kw == KW_REAL ||
-	    kw == CONSTANT ||
+            kw == CONSTANT ||
             kw == PURE ||
             kw == RECURSIVE) ? TRUE : FALSE;
 }
@@ -1935,8 +1935,10 @@ get_keyword_optional_blank(int class)
         if(kwd == CASE) return SELECT;
         if(kwd == KW_TYPE) return SELECTTYPE;
     } break;
-    case DO: /* DO WHILE *//* blanks mandatory.  */
-        if(get_keyword(keywords) == KW_WHILE) return DOWHILE;
+    case DO: /* DO WHILE or DO CONCURRENT *//* blanks mandatory.  */
+        cl = get_keyword(keywords);
+        if(cl == KW_WHILE)   return DOWHILE;
+        if(cl == CONCURRENT) return DOCONCURRENT;
         break;
     case IMPLICIT: {/* IMPLICIT NONE */ /* in free format */
 	    char *save2 = bufptr;
@@ -3246,7 +3248,7 @@ KeepOnGoin:
             error("bad CONDCOMPL sentinel continuation line");
             return (ST_INIT);
         }
-	if (st_OCL_flag || local_OCL_flag) return (ST_INIT); // no continuation line for ocl
+	if (st_OCL_flag && local_OCL_flag) return (ST_INIT); // no continuation line for ocl
     }
 
     if (check_cont && IS_CONT_LINE(stn_cols)){
@@ -3867,7 +3869,9 @@ struct keyword_token keywords[ ] =
     { "codimension",    CODIMENSION  },    /* #060 coarray */
     { "common",         COMMON },
     { "complex",        KW_COMPLEX },
+    { "concurrent",     CONCURRENT },    /* F2008 spec */
     { "contains",       CONTAINS },
+    { "contiguous",     CONTIGUOUS  },   /* F2008 spec */
     { "continue",       CONTINUE  },
     { "critical",       CRITICAL },       /* #060 coarray */
     { "cycle",          CYCLE},

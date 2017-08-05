@@ -93,6 +93,11 @@ function_type(TYPE_DESC tp)
             TYPE_UNSET_MODULE(tp);
         }
         TYPE_UNSET_SAVE(tp);
+
+        if (FUNCTION_TYPE_IS_VISIBLE_INTRINSIC(tp)) {
+            FUNCTION_TYPE_SET_VISIBLE_INTRINSIC(ftp);
+        }
+        FUNCTION_TYPE_UNSET_VISIBLE_INTRINSIC(tp);
     }
 
 
@@ -1017,7 +1022,7 @@ type_is_compatible(TYPE_DESC left, TYPE_DESC right,
                    int is_strict,
                    int for_argunemt,
                    int for_assignment,
-                   int is_pointer_assignment)
+                   int is_pointer_assignment, int issue_error)
 {
     TYPE_DESC left_basic, right_basic;
 
@@ -1118,10 +1123,8 @@ rank_compatibility:
         goto attribute_compatibility;
 
     } else if (TYPE_N_DIM(left) > 0 && TYPE_N_DIM(right) > 0 &&
-         are_dimension_and_shape_conformant_by_type(NULL,
-                                                    left,
-                                                    right,
-                                                    NULL)) {
+         are_dimension_and_shape_conformant_by_type(NULL, left, right, NULL, issue_error)) 
+    {
         goto attribute_compatibility;
     } else {
         goto incompatible;
@@ -1159,9 +1162,10 @@ incompatible:
 
 
 int
-type_is_strict_compatible(TYPE_DESC left, TYPE_DESC right)
+type_is_strict_compatible(TYPE_DESC left, TYPE_DESC right, int issue_error)
 {
-    return type_is_compatible(left, right, TRUE, FALSE, FALSE, FALSE);
+    return type_is_compatible(left, right, TRUE, FALSE, FALSE, FALSE, 
+        issue_error);
 }
 
 
@@ -1172,7 +1176,7 @@ type_is_compatible_for_allocation(TYPE_DESC left, TYPE_DESC right)
                               /*is_strict=*/TRUE,
                               /*for_argument=*/FALSE,
                               /*for_assignment=*/FALSE,
-                              /*is_pointer_assignment=*/TRUE);
+                              /*is_pointer_assignment=*/TRUE, TRUE);
 }
 
 
@@ -1215,7 +1219,8 @@ function_type_is_compatible0(const TYPE_DESC ftp1, const TYPE_DESC ftp2,
      * compare return types
      */
     if (!type_is_strict_compatible(FUNCTION_TYPE_RETURN_TYPE(bftp1),
-                                   FUNCTION_TYPE_RETURN_TYPE(bftp2))) {
+                                   FUNCTION_TYPE_RETURN_TYPE(bftp2), TRUE)) 
+    {
         if (debug_flag) {
             fprintf(debug_fp, "return types are not match\n");
         }
@@ -1297,7 +1302,7 @@ function_type_is_compatible0(const TYPE_DESC ftp1, const TYPE_DESC ftp2,
             }
         }
 
-        if (!type_is_strict_compatible(ID_TYPE(arg1), ID_TYPE(arg2))) {
+        if (!type_is_strict_compatible(ID_TYPE(arg1), ID_TYPE(arg2), TRUE)) {
             if (debug_flag) {
                 fprintf(debug_fp, "argument types are not match ('%s' and '%s')\n",
                         SYM_NAME(ID_SYM(arg1)), SYM_NAME(ID_SYM(arg2)));
@@ -1501,7 +1506,7 @@ procedure_is_assignable(const TYPE_DESC left, const TYPE_DESC right)
 
         return type_is_strict_compatible(
             FUNCTION_TYPE_RETURN_TYPE(left_ftp),
-            FUNCTION_TYPE_RETURN_TYPE(right_ftp));
+            FUNCTION_TYPE_RETURN_TYPE(right_ftp), TRUE);
 
     } else {
 
@@ -1541,7 +1546,7 @@ function_type_udpate(TYPE_DESC ftp, ID idList)
  * so this function is insufficient normal function/subroutine call.
  */
 int
-function_type_is_appliable(TYPE_DESC ftp, expv actual_args)
+function_type_is_appliable(TYPE_DESC ftp, expv actual_args, int issue_error)
 {
     expv actual_arg = NULL;
     ID dummy_arg;
@@ -1592,7 +1597,9 @@ function_type_is_appliable(TYPE_DESC ftp, expv actual_args)
             return FALSE;
         }
 
-        if (!type_is_strict_compatible(EXPV_TYPE(actual_arg), ID_TYPE(dummy_arg))) {
+        if (!type_is_strict_compatible(EXPV_TYPE(actual_arg), 
+            ID_TYPE(dummy_arg), issue_error)) 
+        {
             return FALSE;
         }
 

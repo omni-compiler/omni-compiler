@@ -198,6 +198,7 @@ state 2058
 %token KW_ERROR
 
 /* Fortran 2008 keywords*/
+%token CONTIGUOUS
 %token BLOCK
 %token ENDBLOCK
 
@@ -205,6 +206,8 @@ state 2058
 %token ENDSUBMODULE
 %token ENDPROCEDURE
 
+%token DOCONCURRENT
+%token CONCURRENT
 
 %token REF_OP
 
@@ -991,6 +994,8 @@ declaration_statement:
             $$ = list1(F_FORMAT_DECL, GEN_NODE(STRING_CONSTANT, formatString));
             formatString = NULL;
         }
+        | CONTIGUOUS COL2_or_null ident_list
+        { $$ = list1(F08_CONTIGUOUS_STATEMENT, $3); }
         ;
 
 declaration_statement95:
@@ -1049,7 +1054,6 @@ declaration_statement95:
         | ASYNCHRONOUS COL2_or_null access_ident_list
         { $$ = list1(F03_ASYNCHRONOUS_STATEMENT, $3); }
         ;
-
 
 
 array_allocation_list:
@@ -1163,7 +1167,9 @@ attr_spec:
         | BIND '(' IDENTIFIER /* C */ ')'
         { $$ = list0(F03_BIND_SPEC); }
         | VALUE
-        { $$ = list0(F03_VALUE_SPEC); } 
+        { $$ = list0(F03_VALUE_SPEC); }
+        | CONTIGUOUS
+        { $$ = list0(F08_CONTIGUOUS_SPEC); }
         ;
 
 private_or_public_spec:
@@ -1664,18 +1670,26 @@ namelist_list:  IDENTIFIER
  */
 executable_statement:
           action_statement
-        | DO label KW_WHILE '(' expr ')'
-        { $$ = list3(F_DOWHILE_STATEMENT, $2, $5, st_name); }
-        | DO label do_spec
-        { $$ = list3(F_DO_STATEMENT, $2, $3, st_name); }
-        | DO label ',' do_spec  /* for dusty deck */
+        | DO label KW KW_WHILE '(' expr ')'
+        { $$ = list3(F_DOWHILE_STATEMENT, $2, $6, st_name); }
+        | DO label KW do_spec
         { $$ = list3(F_DO_STATEMENT, $2, $4, st_name); }
-        | DO label
+        | DO label KW ',' KW do_spec  /* for dusty deck */
+        { $$ = list3(F_DO_STATEMENT, $2, $6, st_name); }
+        | DO label KW
         { $$ = list3(F_DO_STATEMENT, $2, NULL, st_name); }
         | DO do_spec
         { $$ = list3(F_DO_STATEMENT,NULL, $2, st_name); }
         | DO
         { $$ = list3(F_DO_STATEMENT,NULL, NULL, st_name); }
+        | DOCONCURRENT '(' forall_header ')'
+        { $$ = list3(F08_DOCONCURRENT_STATEMENT, NULL, $3, st_name); }
+        | DO ',' KW CONCURRENT '(' forall_header ')'
+        { $$ = list3(F08_DOCONCURRENT_STATEMENT, NULL, $6, st_name); }
+        | DO label KW CONCURRENT '(' forall_header ')'
+        { $$ = list3(F08_DOCONCURRENT_STATEMENT, $2,   $6, st_name); }
+        | DO label KW ',' KW CONCURRENT '(' forall_header ')'
+        { $$ = list3(F08_DOCONCURRENT_STATEMENT, $2,   $8, st_name); }
         | ENDDO name_or_null
         { $$ = list1(F_ENDDO_STATEMENT,$2); }
         | LOGIF '(' expr ')' action_statement_key /* with keyword */

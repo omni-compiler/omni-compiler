@@ -225,7 +225,7 @@ public class XfDecompileDomVisitor {
 
         for (Node basicTypeNode : basicTypeNodeArray) {
             if (XmDomUtil.getAttrBool(basicTypeNode, "is_volatile")) {
-                writer.writeToken(", ");
+                writer.writeToken(",");
                 writer.writeToken("VOLATILE");
                 break;
             }
@@ -234,7 +234,7 @@ public class XfDecompileDomVisitor {
         for (Node basicTypeNode : basicTypeNodeArray) {
             String bind = XmDomUtil.getAttr(basicTypeNode, "bind");
             if (XfUtilForDom.isNullOrEmpty(bind) == false) {
-                writer.writeToken(", ");
+                writer.writeToken(",");
                 writer.writeToken("BIND( " + bind.toUpperCase() + " )");
                 break;
             }
@@ -242,7 +242,7 @@ public class XfDecompileDomVisitor {
 
         for (Node basicTypeNode : basicTypeNodeArray) {
             if (XmDomUtil.getAttrBool(basicTypeNode, "is_value")) {
-                writer.writeToken(", ");
+                writer.writeToken(",");
                 writer.writeToken("VALUE");
                 break;
             }
@@ -250,8 +250,16 @@ public class XfDecompileDomVisitor {
 
         for (Node basicTypeNode : basicTypeNodeArray) {
             if (XmDomUtil.getAttrBool(basicTypeNode, "is_asynchronous")) {
-                writer.writeToken(", ");
+                writer.writeToken(",");
                 writer.writeToken("ASYNCHRONOUS");
+                break;
+            }
+        }
+
+        for (Node basicTypeNode : basicTypeNodeArray) {
+            if (XmDomUtil.getAttrBool(basicTypeNode, "is_contiguous")) {
+                writer.writeToken(",");
+                writer.writeToken("CONTIGUOUS");
                 break;
             }
         }
@@ -282,12 +290,6 @@ public class XfDecompileDomVisitor {
         XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
         XmfWriter writer = _context.getWriter();
         Node lowType = null;
-
-        if (XmDomUtil.getAttrBool(funcTypeNode, "is_intrinsic")) {
-            writer.writeToken("INTRINSIC ");
-            writer.writeToken(symbol.getSymbolName());
-            return;
-        }
 
         boolean isFirstToken = true;
         boolean isPrivateEmit = false;
@@ -374,6 +376,14 @@ public class XfDecompileDomVisitor {
                 writer.writeToken((isFirstToken ? "" : ", ") + "PROTECTED");
                 isFirstToken = false;
             }
+        }
+
+        if (XmDomUtil.getAttrBool(funcTypeNode, "is_intrinsic")) {
+            if (!isFirstToken) {
+                writer.writeToken(",");
+            }
+            writer.writeToken("INTRINSIC");
+            isFirstToken = false;
         }
 
         if (isFirstToken == false) {
@@ -2731,6 +2741,23 @@ public class XfDecompileDomVisitor {
             invokeEnter(XmDomUtil.getElement(n, "indexRange"));
 
             writer.writeToken(")");
+        }
+    }
+
+    // FdoConcurrentStatement
+    class FdoConcurrentStatementVisitor extends ForallLikeTagVisitor {
+        @Override
+        public void startConstruct() {
+            XmfWriter writer = _context.getWriter();
+            writer.writeToken("DO");
+            writer.writeToken("CONCURRENT");
+        }
+
+        @Override
+        public void endConstruct() {
+            XmfWriter writer = _context.getWriter();
+            writer.writeToken("END");
+            writer.writeToken("DO");
         }
     }
 
@@ -6786,7 +6813,7 @@ public class XfDecompileDomVisitor {
     /**
      * Decompile 'blockStatement' element in XcodeML/F.
      */
-    class BlockStatementVisitor extends  XcodeNodeVisitor {
+    class BlockStatementVisitor extends XcodeNodeVisitor {
 
         @Override
         public void enter(Node n) {
@@ -6827,15 +6854,15 @@ public class XfDecompileDomVisitor {
         }
     }
 
-    // forallStatement
-    class ForallStatementVisitor extends XcodeNodeVisitor {
-        /**
-         * Decompile "forallStatement" element in XcodeML/F.
-         */
+    abstract class ForallLikeTagVisitor extends XcodeNodeVisitor {
+
+        abstract public void startConstruct();
+
+        abstract public void endConstruct();
+
         @Override public void enter(Node n) {
             _writeLineDirective(n);
 
-            XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
             XmfWriter writer = _context.getWriter();
 
             String constructName = XmDomUtil.getAttr(n, "construct_name");
@@ -6843,7 +6870,8 @@ public class XfDecompileDomVisitor {
                 writer.writeToken(constructName);
                 writer.writeToken(":");
             }
-            writer.writeToken("FORALL");
+
+            startConstruct();
 
             writer.writeToken("(");
 
@@ -6867,7 +6895,7 @@ public class XfDecompileDomVisitor {
                 }
                 if ("Var".equals(list.item(i).getNodeName())) {
                     if (!first) {
-                         writer.writeToken(",");
+                        writer.writeToken(",");
                     }
                     first = false;
                     Node m = list.item(i);
@@ -6891,12 +6919,28 @@ public class XfDecompileDomVisitor {
             invokeEnter(XmDomUtil.getElement(n, "body"));
             writer.decrementIndentLevel();
 
-            writer.writeToken("END");
-            writer.writeToken("FORALL");
+            endConstruct();
+
             if (XfUtilForDom.isNullOrEmpty(constructName) == false) {
                 writer.writeToken(constructName);
             }
             writer.setupNewLine();
+        }
+    }
+
+    // forallStatement
+    class ForallStatementVisitor extends ForallLikeTagVisitor {
+        @Override
+        public void startConstruct() {
+            XmfWriter writer = _context.getWriter();
+            writer.writeToken("FORALL");
+        }
+
+        @Override
+        public void endConstruct() {
+            XmfWriter writer = _context.getWriter();
+            writer.writeToken("END");
+            writer.writeToken("FORALL");
         }
     }
 
@@ -7162,6 +7206,7 @@ public class XfDecompileDomVisitor {
         new Pair("FcycleStatement", new FcycleStatementVisitor()),
         new Pair("FdataDecl", new FdataDeclVisitor()),
         new Pair("FdeallocateStatement", new FdeallocateStatementVisitor()),
+        new Pair("FdoConcurrentStatement", new FdoConcurrentStatementVisitor()),
         new Pair("FdoLoop", new FdoLoopVisitor()),
         new Pair("FdoStatement", new FdoStatementVisitor()),
         new Pair("FdoWhileStatement", new FdoWhileStatementVisitor()),

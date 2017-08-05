@@ -216,6 +216,9 @@ xtag(enum expr_code code)
 
     case F2008_BLOCK_STATEMENT:      return "blockStatement";
 
+    case F08_DOCONCURRENT_STATEMENT: return "FdoConcurrentStatement";
+
+
     /*                          
      * misc.                    
      */                         
@@ -645,6 +648,7 @@ has_attribute_except_func_attrs(TYPE_DESC tp)
         TYPE_IS_CLASS(tp) ||
         TYPE_IS_PROCEDURE(tp) ||
         TYPE_IS_ASYNCHRONOUS(tp) ||
+        TYPE_IS_CONTIGUOUS(tp) ||
         tp->codims;
 }
 
@@ -803,6 +807,7 @@ outx_typeAttrs(int l, TYPE_DESC tp, const char *tag, int options)
         outx_true(TYPE_IS_VALUE(tp),            "is_value");
         outx_true(TYPE_IS_PROCEDURE(tp),        "is_procedure");
         outx_true(TYPE_IS_ASYNCHRONOUS(tp),     "is_asynchronous");
+        outx_true(TYPE_IS_CONTIGUOUS(tp),       "is_contiguous");
 
         if (TYPE_PARENT(tp)) {
             outx_print(" extends=\"%s\"", getTypeID(TYPE_PARENT_TYPE(tp)));
@@ -1214,7 +1219,10 @@ get_sclass(ID id)
 static void
 outx_id(int l, ID id)
 {
-    if(ID_STORAGE(id) == STG_EXT && !IS_PROCEDURE_TYPE(ID_TYPE(id)) &&  PROC_EXT_ID(id) == NULL) {
+    if (SYM_TYPE(ID_SYM(id)) == S_INTR ||
+        (ID_TYPE(id) && TYPE_IS_INTRINSIC(ID_TYPE(id)))) {
+        // do nothing
+    } else if(ID_STORAGE(id) == STG_EXT && !IS_PROCEDURE_TYPE(ID_TYPE(id)) &&  PROC_EXT_ID(id) == NULL) {
         fatal("outx_id: PROC_EXT_ID is NULL: symbol=%s", ID_NAME(id));
     }
 
@@ -2501,7 +2509,7 @@ getKindParameter(TYPE_DESC tp)
 
     if(IS_DOUBLED_TYPE(tp)) {
         sprintf(buf, "%d", KIND_PARAM_DOUBLE);
-    } else if(v && EXPV_CODE(v) == INT_CONSTANT) {
+    } else if(v && (EXPV_CODE(v) == INT_CONSTANT || EXPV_CODE(v) == IDENT)) {
         strcpy(buf, getRawString(v));
     } else {
         return NULL;
@@ -3424,7 +3432,7 @@ outx_BLOCK_statement(int l, expv v)
             break;
         case F03_USE_ONLY_INTRINSIC_STATEMENT:
             outx_useOnlyDecl(l2, u, TRUE);
-            break;            
+            break;
         case F95_USE_ONLY_STATEMENT:
             outx_useOnlyDecl(l2, u, FALSE);
             break;
@@ -3455,9 +3463,9 @@ outx_FORALL_statement(int l, expv v)
 {
     list lp;
     int l1 = l + 1;
-    expv init = EXPR_ARG1(v);
-    expv mask = EXPR_ARG2(v);
-    expv body = EXPR_ARG3(v);
+    expv init = EXPR_ARG1(EXPR_ARG1(v));
+    expv mask = EXPR_ARG2(EXPR_ARG1(v));
+    expv body = EXPR_ARG2(v);
     const char *tid = NULL;
 
     outx_vtagLineno(l, XTAG(v), EXPR_LINE(v), NULL);
@@ -3466,8 +3474,8 @@ outx_FORALL_statement(int l, expv v)
         outx_print(" construct_name=\"%s\"",
                    SYM_NAME(EXPR_SYM(EXPR_ARG4(v))));
     }
-    if (EXPV_TYPE(v)) {
-        tid = getTypeID(EXPV_TYPE(v));
+    if (EXPV_TYPE(EXPR_ARG1(v))) {
+        tid = getTypeID(EXPV_TYPE(EXPR_ARG1(v)));
         outx_print(" type=\"%s\"", tid);
     }
     outx_print(">\n");
@@ -3499,6 +3507,50 @@ outx_FORALL_statement(int l, expv v)
     }
 #endif
 
+
+    FOR_ITEMS_IN_LIST(lp, init) {
+        expv name = EXPR_ARG1(LIST_ITEM(lp));
+        expv indexRange = EXPR_ARG2(LIST_ITEM(lp));
+
+        outx_varOrFunc(l1, name);
+        outx_indexRange(l1,
+                        EXPR_ARG1(indexRange),
+                        EXPR_ARG2(indexRange),
+                        EXPR_ARG3(indexRange));
+    }
+
+    if (mask) {
+        outx_condition(l1, mask);
+    }
+
+    outx_body(l1, body);
+    outx_expvClose(l, v);
+}
+
+/*
+ * output doConcurrentStatement
+ */
+static void
+outx_DOCONCURRENT_statement(int l, expv v)
+{
+    list lp;
+    int l1 = l + 1;
+    expv init = EXPR_ARG1(EXPR_ARG1(v));
+    expv mask = EXPR_ARG2(EXPR_ARG1(v));
+    expv body = EXPR_ARG2(v);
+    const char *tid = NULL;
+
+    outx_vtagLineno(l, XTAG(v), EXPR_LINE(v), NULL);
+
+    if (EXPR_HAS_ARG4(v) && EXPR_ARG4(v) != NULL) {
+        outx_print(" construct_name=\"%s\"",
+                   SYM_NAME(EXPR_SYM(EXPR_ARG4(v))));
+    }
+    if (EXPV_TYPE(EXPR_ARG1(v))) {
+        tid = getTypeID(EXPV_TYPE(EXPR_ARG1(v)));
+        outx_print(" type=\"%s\"", tid);
+    }
+    outx_print(">\n");
 
     FOR_ITEMS_IN_LIST(lp, init) {
         expv name = EXPR_ARG1(LIST_ITEM(lp));
@@ -3895,6 +3947,11 @@ outx_expv(int l, expv v)
     case F_FORALL_STATEMENT:
       outx_FORALL_statement(l, v);
       break;
+
+    case F08_DOCONCURRENT_STATEMENT:
+      outx_DOCONCURRENT_statement(l, v);
+      break;
+
 
     default:
         fatal("unkown exprcode : %d", code);
@@ -4381,8 +4438,9 @@ outx_functionType(int l, TYPE_DESC tp)
         outx_print(" return_type=\"%s\"", rtid);
         outx_true(FUNCTION_TYPE_IS_PROGRAM(tp), "is_program");
 
-        if (FUNCTION_TYPE_IS_VISIBLE_INTRINSIC(tp))
+        if (FUNCTION_TYPE_IS_VISIBLE_INTRINSIC(tp)) {
             outx_true(TYPE_IS_INTRINSIC(tp), "is_intrinsic");
+        }
 
         outx_true(TYPE_IS_RECURSIVE(tp), "is_recursive");
         outx_true(TYPE_IS_PURE(tp), "is_pure");
@@ -4672,6 +4730,11 @@ id_is_visibleVar(ID id)
                 return FALSE;
             }
         }
+        if (PROC_CLASS(id) == P_INTRINSIC &&
+            ID_TYPE(id) &&
+            FUNCTION_TYPE_IS_VISIBLE_INTRINSIC(ID_TYPE(id))) {
+                return TRUE;
+        }
         if (EXT_IS_DEFINED_IO(PROC_EXT_ID(id))) {
             return FALSE;
         }
@@ -4839,13 +4902,12 @@ genSortedIDs(ID ids, int *retnIDs)
         (FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)) != NULL && \
          !TYPE_IS_IMPLICIT(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)))))) || \
       (ID_TYPE(id) && TYPE_IS_EXTERNAL(ID_TYPE(id))) || \
-      (ID_TYPE(id) && TYPE_IS_INTRINSIC(ID_TYPE(id))) || \
       PROC_CLASS(id) == P_UNDEFINEDPROC || \
       PROC_CLASS(id) == P_DEFINEDPROC)     \
   && (PROC_EXT_ID(id) == NULL ||           \
       PROC_CLASS(id) == P_UNDEFINEDPROC || \
       PROC_CLASS(id) == P_DEFINEDPROC || \
-      (TYPE_IS_PUBLIC(id) || TYPE_IS_PRIVATE(id) || ( \
+      (TYPE_IS_PUBLIC(id) || TYPE_IS_PRIVATE(id)  || ( \
       EXT_PROC_IS_INTERFACE(PROC_EXT_ID(id)) == FALSE && \
       EXT_PROC_IS_INTERFACE_DEF(PROC_EXT_ID(id)) == FALSE)))    \
   && (ID_TYPE(id) \
@@ -4928,6 +4990,14 @@ emit_decl(int l, ID id)
     case CL_ENTRY:
         break;
 
+    case CL_PROC:
+        if (ID_TYPE(id) &&
+            IS_PROCEDURE_TYPE(ID_TYPE(id)) &&
+            FUNCTION_TYPE_IS_VISIBLE_INTRINSIC(ID_TYPE(id))) {
+            outx_varDecl(l, id);
+            break;
+        }
+        /* fall through */
     default:
         switch (ID_STORAGE(id)) {
             case STG_ARG:
@@ -5723,7 +5793,10 @@ output_XcodeML_file()
 static void
 outx_id_mod(int l, ID id)
 {
-    if(ID_STORAGE(id) == STG_EXT && PROC_EXT_ID(id) == NULL) {
+    if (SYM_TYPE(ID_SYM(id)) == S_INTR ||
+        (ID_TYPE(id) && TYPE_IS_INTRINSIC(ID_TYPE(id)))) {
+        // do nothing
+    } else if(ID_STORAGE(id) == STG_EXT && PROC_EXT_ID(id) == NULL) {
         fatal("outx_id: PROC_EXT_ID is NULL: symbol=%s", ID_NAME(id));
     }
 

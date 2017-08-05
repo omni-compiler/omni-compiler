@@ -187,7 +187,8 @@ force_to_logical_type(expv v)
 int
 are_dimension_and_shape_conformant_by_type(expr x,
                                            TYPE_DESC lt, TYPE_DESC rt,
-                                           expv *shapePtr) {
+                                           expv *shapePtr, int issue_error) 
+{
     int ret = FALSE;
     expv lShape = list0(LIST);
     expv rShape = list0(LIST);
@@ -286,14 +287,15 @@ are_dimension_and_shape_conformant_by_type(expr x,
          */
         ret = TRUE;
     } else {
-        if (x != NULL) {
-            error_at_node(x,
-                          "incompatible dimension for the operation, "
-                          "%d and %d.",
-                          TYPE_N_DIM(lt), TYPE_N_DIM(rt));
-        } else {
-            error("incompatible dimension for the operation, %d and %d.",
-                  TYPE_N_DIM(lt), TYPE_N_DIM(rt));
+        if(issue_error) {
+            if (x != NULL) {
+                error_at_node(x,
+                    "error at node: incompatible dimension for the operation, "
+                    "%d and %d.", TYPE_N_DIM(lt), TYPE_N_DIM(rt));
+            } else {
+                error("error: incompatible dimension for the operation, %d and %d.",
+                    TYPE_N_DIM(lt), TYPE_N_DIM(rt));
+            }
         }
     }
 
@@ -308,8 +310,7 @@ are_dimension_and_shape_conformant(expr x,
                                    expv *shapePtr) {
     TYPE_DESC lt = EXPV_TYPE(left);
     TYPE_DESC rt = EXPV_TYPE(right);
-
-    return are_dimension_and_shape_conformant_by_type(x, lt, rt, shapePtr);
+    return are_dimension_and_shape_conformant_by_type(x, lt, rt, shapePtr, TRUE);
 }
 
 
@@ -848,13 +849,20 @@ compile_expression(expr x)
                     error("an invalid constant expression, which has "
                           "a 'd' exponent and an explicit kind.");
                 }
+                /* if kind is differ, make new type desc.
+                   for example, type desc for l2 and l3 should be differ.
+                   l2 = .false.
+                   l3 = .false._1
+                */
+
+                /* Constant cannot have function call as kind specifier, this does
+                   not make any sense. Therefore, we keep the kind identifier as
+                   an identifier. */
+                if(EXPV_CODE(v2) == FUNCTION_CALL) {
+                    v2 = expv_sym_term(IDENT, EXPV_TYPE(v2), EXPR_SYM(EXPR_ARG2(x)));
+                }
+                TYPE_KIND(EXPV_TYPE(v1)) = v2;
             }
-            /* if kind is differ, make new type desc.
-               for example, type desc for l2 and l3 should be differ.
-               l2 = .false.
-               l3 = .false._1
-            */
-            TYPE_KIND(EXPV_TYPE(v1)) = v2;
             return v1;
         }
 
@@ -1286,12 +1294,30 @@ compile_lhs_expression(x)
             }
         }
 
-        if(!IS_ARRAY_TYPE(tp)){
+        if (IS_ARRAY_TYPE(tp)) {
+            if ((v = compile_array_ref(id, NULL, EXPR_ARG2(x), TRUE)) == NULL)
+                goto err;
+
+        } else if (IS_FUNCTION_TYPE(tp)) {
+            /* assign to declared function result pointer */
+            expv args = compile_args(EXPR_ARG2(x));
+
+            if (TYPE_IS_POINTER(FUNCTION_TYPE_RETURN_TYPE(tp))) {
+                if ((v = compile_function_call(id, args)) == NULL)
+                    goto err;
+            } else if (!FUNCTION_TYPE_IS_DEFINED(ID_TYPE(id))) {
+                TYPE_SET_POINTER(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)));
+                PROC_CLASS(id) = P_UNDEFINEDPROC;
+                FUNCTION_TYPE_HAS_EXPLICIT_ARGS(ID_TYPE(id)) = TRUE;
+                ID_STORAGE(id) = STG_AUTO;
+                if ((v = compile_function_call(id, args)) == NULL)
+                    goto err;
+            }
+
+        } else {
             error("subscripts on scalar variable, '%s'",ID_NAME(id));
             goto err;
         }
-        if((v = compile_array_ref(id, NULL, EXPR_ARG2(x), TRUE)) == NULL)
-            goto err;
 
         return v;
         }
@@ -1348,14 +1374,22 @@ expv_is_this_func(expv v)
 }
 
 int
+expv_is_function_result_pointer(expv v)
+{
+    return EXPV_CODE(v) == FUNCTION_CALL && TYPE_IS_POINTER(EXPV_TYPE(v));
+}
+
+int
 expv_is_lvalue(expv v)
 {
     if (v == NULL) return FALSE;
     if (EXPV_IS_RVALUE(v) == TRUE) return FALSE;
     if (EXPR_CODE(v) == ARRAY_REF || EXPR_CODE(v) == F_VAR ||
-	EXPR_CODE(v) == F95_MEMBER_REF || EXPR_CODE(v) == XMP_COARRAY_REF)
+        EXPR_CODE(v) == F95_MEMBER_REF || EXPR_CODE(v) == XMP_COARRAY_REF)
         return TRUE;
     if (expv_is_this_func(v))
+        return TRUE;
+    if (expv_is_function_result_pointer(v))
         return TRUE;
     return FALSE;
 }
@@ -2214,7 +2248,7 @@ choose_module_procedure_by_args(EXT_ID mod_procedures, expv args)
 {
     EXT_ID ep;
     FOREACH_EXT_ID(ep, mod_procedures) {
-        if (function_type_is_appliable(EXT_PROC_TYPE(ep), args)) {
+        if (function_type_is_appliable(EXT_PROC_TYPE(ep), args, FALSE)) {
             return EXT_PROC_TYPE(ep);
         }
     }
@@ -2272,7 +2306,7 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
             } else {
                 /* f_id is function, but it's return type is unknown */
                 tp = function_type(new_type_desc());
-                TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) = TYPE_GNUMERIC;
+                TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) = TYPE_GNUMERIC_ALL;
             }
 
             TYPE_SET_USED_EXPLICIT(tp);
@@ -3235,7 +3269,8 @@ compile_type_bound_procedure_call(expv memberRef, expr args) {
         FOREACH_ID(bind, TYPE_BOUND_GENERIC_TYPE_GENERICS(ftp)) {
             bindto = find_struct_member_allow_private(stp, ID_SYM(bind), TRUE);
             if (TYPE_REF(ID_TYPE(bindto)) &&
-                function_type_is_appliable(TYPE_REF(ID_TYPE(bindto)), a)) {
+                function_type_is_appliable(TYPE_REF(ID_TYPE(bindto)), a, TRUE)) 
+            {
                 ftp = TYPE_REF(ID_TYPE(bindto));
                 /* EXPV_TYPE(memberRef) = ftp; */
             }
@@ -3254,7 +3289,7 @@ compile_type_bound_procedure_call(expv memberRef, expr args) {
         // for type-bound PROCEDURE
         if (ftp != NULL) {
 #if 0 // to be solved
-            if (function_type_is_appliable(ftp, a)) {
+            if (function_type_is_appliable(ftp, a, TRUE)) {
                 error("argument type mismatch");
             }
 #endif

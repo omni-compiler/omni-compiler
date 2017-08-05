@@ -721,11 +721,40 @@ public class XcodeMLtools_F extends XcodeMLtools {
 
     case F_ALLOCATE_STATEMENT:
     case F_DEALLOCATE_STATEMENT:
-      x = Xcons.List(code, type);
-      x.add(getSymbol(n, "stat_name"));
-      x.add(getChildList(n));
-      return setCommonAttributes(n, x);
+      {
+	x = Xcons.List(code, type);
+	//x.add(getSymbol(n, "stat_name"));
+	//x.add(getChildList(n));
 
+	XobjList xx = Xcons.List();
+	
+	NodeList list = n.getChildNodes();
+	for (int i = 0; i < list.getLength(); i++) {
+	  Node nn = list.item(i);
+	  String name = nn.getNodeName();
+	  if (name == "allocOpt"){
+	    switch (getAttr(nn, "kind")){
+	    case "stat":
+	      XobjList v = getChildList(nn);
+	      x.add(v.getArg(0));
+	      break;
+	    default:
+	      // for this moment, do nothing.
+	    }
+	    continue;
+	  }
+	  else if (name == "alloc"){
+	    xx.add(toXobject(nn));
+	  }
+	  else
+	    continue;
+	}
+
+	if (x.Nargs() == 0) x.add(null);
+	x.add(xx);
+      
+	return setCommonAttributes(n, x);
+      }
     case F_CONTAINS_STATEMENT:
       {
 	XobjList xx = Xcons.List(code, type);

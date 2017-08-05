@@ -91,42 +91,43 @@ compile_intrinsic_call0(ID id, expv args, int ignoreTypeMismatch) {
     EXT_ID extid;
 
     if (SYM_TYPE(ID_SYM(id)) != S_INTR) {
-        //fatal("%s: not intrinsic symbol", __func__);
-
-        // declarea as intrinsic but not defined in the intrinc table
-
-        SYM_TYPE(ID_SYM(id)) = S_INTR;
-
         if (args == NULL) {
             args = list0(LIST);
         }
 
-        if (ID_TYPE(id) == NULL) implicit_declaration(id);
         tp = ID_TYPE(id);
-        //tp = BASIC_TYPE_DESC(TYPE_SUBR);
-        if(tp == NULL){
-            error_at_node(args, 
+
+        if (tp == NULL) {
+            warning_at_node(args,
                           "unknown type of '%s' declared as intrinsic",
                           SYM_NAME(ID_SYM(id)));
-            return NULL;
+            ID_TYPE(id) = BASIC_TYPE_DESC(TYPE_GNUMERIC_ALL);
+            TYPE_ATTR_FLAGS(ID_TYPE(id)) = TYPE_ATTR_FLAGS(id);
+            tp = ID_TYPE(id);
         }
 
         expv symV = expv_sym_term(F_FUNC, NULL, ID_SYM(id));
 
-        ftp = intrinsic_function_type(tp);
+        if (IS_PROCEDURE_TYPE(tp)) {
+            ftp = tp;
+            tp = FUNCTION_TYPE_RETURN_TYPE(ftp);
 
-        extid = new_external_id_for_external_decl(ID_SYM(id), ftp);
-        ID_TYPE(id) = ftp;
-        PROC_EXT_ID(id) = extid;
-        if (TYPE_IS_EXTERNAL(tp)){
-            ID_STORAGE(id) = STG_EXT;
-        }
-        else {
-            EXT_PROC_CLASS(extid) = EP_INTRINSIC;
+        } else {
+            ftp = intrinsic_function_type(tp);
+
+            extid = new_external_id_for_external_decl(ID_SYM(id), ftp);
+            ID_TYPE(id) = ftp;
+            PROC_EXT_ID(id) = extid;
+            if (TYPE_IS_EXTERNAL(tp)){
+                ID_STORAGE(id) = STG_EXT;
+            }
+            else {
+                EXT_PROC_CLASS(extid) = EP_INTRINSIC;
+            }
         }
 
-        ret = expv_cons(FUNCTION_CALL, tp, symV, args);
-        return ret;
+        EXPV_TYPE(symV) = ftp;
+        return expv_cons(FUNCTION_CALL, tp, symV, args);
     }
 
     ep = &(intrinsic_table[SYM_VAL(ID_SYM(id))]);
@@ -255,10 +256,6 @@ compile_intrinsic_call0(ID id, expv args, int ignoreTypeMismatch) {
         } else {
             ftp = intrinsic_function_type(tp);
         }
-        if (ep->langSpec != LANGSPEC_NONSTD && ep->langSpec != LANGSPEC_UNKNOWN) {
-            FUNCTION_TYPE_SET_VISIBLE_INTRINSIC(ftp);
-        }
-
 
         /* set external id for functionType's type ID.
          * dont call declare_external_id() */

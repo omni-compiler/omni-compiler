@@ -14,12 +14,14 @@ int flag;
 void check()
 {
 #pragma xmp reduction(min:flag)
-  if(flag == FALSE)
+  if(flag == FALSE){
+    if(xmpc_this_image() == 0)
+      printf("ERROR\n");
     exit(1);
+  }
   else
-    if(xmp_node_num() == 1)
+    if(xmpc_this_image() == 0)
       printf("PASS\n");
-  xmp_sync_all(NULL);
 }
 
 void test1(int value)
@@ -28,12 +30,12 @@ void test1(int value)
   flag = TRUE;
 
   xmp_sync_all(NULL);
-  if(xmp_node_num() == 2){
-    xmp_atomic_define(atom0:[1], value);
+  if(xmpc_this_image() == 1){
+    xmp_atomic_define(atom0:[0], value);
   }
   xmp_sync_all(NULL);
   
-  if(xmp_node_num() == 1)
+  if(xmpc_this_image() == 0)
     if(atom0 != 2)
       flag = FALSE;
 
@@ -51,12 +53,12 @@ void test1_c(int value)
   value0 = value;
 
   xmp_sync_all(NULL);
-  if(xmp_node_num() == 2){
-    xmp_atomic_define(atom0:[1], value0);
+  if(xmpc_this_image() == 1){
+    xmp_atomic_define(atom0:[0], value0);
   }
   xmp_sync_all(NULL);
 
-  if(xmp_node_num() == 1)
+  if(xmpc_this_image() == 0)
     if(atom0 != 2)
       flag = FALSE;
 
@@ -73,12 +75,12 @@ void test2(int value)
   flag = TRUE;
 
   xmp_sync_all(NULL);
-  if(xmp_node_num() == 2){
-    xmp_atomic_define(atom1[2]:[1], value);
-  }
+  if(xmpc_this_image() == 1)
+    xmp_atomic_define(atom1[2]:[0], value);
+
   xmp_sync_all(NULL);
 
-  if(xmp_node_num() == 1)
+  if(xmpc_this_image() == 0)
     if(atom1[2] != 2)
       flag = FALSE;
 
@@ -95,12 +97,12 @@ void test2_c(int value)
   value1[1] = value;
 
   xmp_sync_all(NULL);
-  if(xmp_node_num() == 2){
-    xmp_atomic_define(atom1[2]:[1], value1[1]);
-  }
+  if(xmpc_this_image() == 1)
+    xmp_atomic_define(atom1[2]:[0], value1[1]);
+
   xmp_sync_all(NULL);
 
-  if(xmp_node_num() == 1)
+  if(xmpc_this_image() == 0)
     if(atom1[2] != 2)
       flag = FALSE;
 
@@ -116,12 +118,12 @@ void test3(int value)
   flag = TRUE;
 
   xmp_sync_all(NULL);
-  if(xmp_node_num() == 2){
-    xmp_atomic_define(atom2[2][1]:[1], value);
-  }
+  if(xmpc_this_image() == 1)
+    xmp_atomic_define(atom2[2][1]:[0], value);
+
   xmp_sync_all(NULL);
 
-  if(xmp_node_num() == 1)
+  if(xmpc_this_image() == 0)
     if(atom2[2][1] != 2)
       flag = FALSE;
 
@@ -138,12 +140,12 @@ void test3_c(int value)
   value2[2][2] = value;
 
   xmp_sync_all(NULL);
-  if(xmp_node_num() == 2){
-    xmp_atomic_define(atom2[2][1]:[1], value2[2][2]);
-  }
+  if(xmpc_this_image() == 1)
+    xmp_atomic_define(atom2[2][1]:[0], value2[2][2]);
+
   xmp_sync_all(NULL);
 
-  if(xmp_node_num() == 1)
+  if(xmpc_this_image() == 0)
     if(atom2[2][1] != 2)
       flag = FALSE;
 
