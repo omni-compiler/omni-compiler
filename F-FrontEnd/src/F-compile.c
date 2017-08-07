@@ -1389,81 +1389,81 @@ compile_exec_statement(expr x)
         OMP_check_LET_statement();
         XMP_check_LET_statement();
 
-      if (CURRENT_STATE == OUTSIDE) {
-          begin_procedure();
-          //declare_procedure(CL_MAIN, NULL, NULL, NULL, NULL, NULL);
-          declare_procedure(CL_MAIN, make_enode(IDENT, find_symbol(NAME_FOR_NONAME_PROGRAM)),
-                            NULL, NULL, NULL, NULL, NULL);
-      }
+        if (CURRENT_STATE == OUTSIDE) {
+            begin_procedure();
+            //declare_procedure(CL_MAIN, NULL, NULL, NULL, NULL, NULL);
+            declare_procedure(CL_MAIN, make_enode(IDENT, find_symbol(NAME_FOR_NONAME_PROGRAM)),
+                              NULL, NULL, NULL, NULL, NULL);
+        }
 
-      x1 = EXPR_ARG1(x);
-      switch (EXPR_CODE(x1)){
+        x1 = EXPR_ARG1(x);
+        switch (EXPR_CODE(x1)) {
 
-      case F_ARRAY_REF: /* for a statement function because it looks like an array reference. */
+            case F_ARRAY_REF: /* for a statement function because it looks like an array reference. */
 
-	if (EXPR_CODE(EXPR_ARG1(x1)) == IDENT){
-	  s = EXPR_SYM(EXPR_ARG1(x1));
-	  v1 = EXPR_ARG2(x1);
-	  v2 = EXPR_ARG2(x);
+                if (EXPR_CODE(EXPR_ARG1(x1)) == IDENT){
+                    s = EXPR_SYM(EXPR_ARG1(x1));
+                    v1 = EXPR_ARG2(x1);
+                    v2 = EXPR_ARG2(x);
 
-	  /* If the first argument is a triplet,
-	   * it is not a function statement .*/
-	  if (EXPR_LIST(v1) == NULL ||
-	      EXPR_ARG1(v1) == NULL ||
-	      EXPR_CODE(EXPR_ARG1(v1)) != F95_TRIPLET_EXPR){
-	    id = find_ident(s);
-	    if (id == NULL)
-	      id = declare_ident(s, CL_UNKNOWN);
-            if (ID_IS_AMBIGUOUS(id)) {
-                error_at_node(x, "an ambiguous reference to symbol '%s'", ID_NAME(id));
-                return;
-            }
-	    if (ID_CLASS(id) == CL_UNKNOWN){
-            if (CURRENT_STATE != INEXEC) {
-                declare_statement_function(id,v1,v2);
+                    /* If the first argument is a triplet,
+                     * it is not a function statement .*/
+                    if (EXPR_LIST(v1) == NULL ||
+                        EXPR_ARG1(v1) == NULL ||
+                        EXPR_CODE(EXPR_ARG1(v1)) != F95_TRIPLET_EXPR){
+                        id = find_ident(s);
+                        if (id == NULL)
+                            id = declare_ident(s, CL_UNKNOWN);
+                        if (ID_IS_AMBIGUOUS(id)) {
+                            error_at_node(x, "an ambiguous reference to symbol '%s'", ID_NAME(id));
+                            return;
+                        }
+                        if (ID_CLASS(id) == CL_UNKNOWN){
+                            if (CURRENT_STATE != INEXEC) {
+                                declare_statement_function(id,v1,v2);
+                                break;
+                            }
+                        }
+                    }
+                }
+                /* fall through */
+
+            case IDENT:
+            case F_SUBSTR_REF:
+            case F95_MEMBER_REF:
+            case XMP_COARRAY_REF:
+
+                if (NOT_INDATA_YET) end_declaration();
+                if ((v1 = compile_lhs_expression(x1)) == NULL ||
+                    (v2 = compile_expression(EXPR_ARG2(x))) == NULL) {
+                    break;
+                }
+
+                if (TYPE_BASIC_TYPE(EXPV_TYPE(v1)) == TYPE_FUNCTION) {
+                    /*
+                     * If a left expression is a function result,
+                     * the type of compile_lhs_expression(x) is a non-function type.
+                     */
+                    error_at_node(x, "a lhs expression is function or subroutine");
+                    break;
+                }
+
+                if (!expv_is_lvalue(v1) && !expv_is_str_lvalue(v1)) {
+                    error_at_node(x, "bad lhs expression in assignment");
+                    break;
+                }
+                if ((w = expv_assignment(v1,v2)) == NULL) {
+                    break;
+                }
+
+                if(OMP_output_st_pragma(w)) break;
+                if(XMP_output_st_pragma(w)) break;
+
+                output_statement(w);
                 break;
-            }
-	    }
-	  }
-	}
-	/* fall through */
 
-      case IDENT:
-      case F_SUBSTR_REF:
-      case F95_MEMBER_REF:
-      case XMP_COARRAY_REF:
-
-          if (NOT_INDATA_YET) end_declaration();
-          if ((v1 = compile_lhs_expression(x1)) == NULL ||
-              (v2 = compile_expression(EXPR_ARG2(x))) == NULL) {
-              break;
-          }
-
-          if (TYPE_BASIC_TYPE(EXPV_TYPE(v1)) == TYPE_FUNCTION) {
-              /*
-               * If a left expression is a function result,
-               * the type of compile_lhs_expression(x) is a non-function type.
-               */
-              error_at_node(x, "a lhs expression is function or subroutine");
-              break;
-          }
-
-          if (!expv_is_lvalue(v1) && !expv_is_str_lvalue(v1)) {
-              error_at_node(x, "bad lhs expression in assignment");
-              break;
-          }
-          if ((w = expv_assignment(v1,v2)) == NULL) {
-              break;
-          }
-
-          if(OMP_output_st_pragma(w)) break;
-          if(XMP_output_st_pragma(w)) break;
-
-          output_statement(w);
-          break;
-
-      default:
-	error("assignment to a non-variable");
+            default:
+                error("assignment to a non-variable");
       }
 
       break;
