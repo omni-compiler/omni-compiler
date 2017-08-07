@@ -232,14 +232,14 @@ expr_is_constant_typeof(x, bt)
         }
         return TRUE;
 
-    case ARRAY_REF:
+    case ARRAY_REF: /* acutually, ARRAY_REF is for expv */
     case F_ARRAY_REF: {
         list lp;
         expr x1 = EXPR_ARG1(x);
         expv v;
         TYPE_DESC tp;
         ID id;
-        if (EXPR_CODE(x1) == IDENT) {
+        if (EXPR_CODE(x1) == IDENT || EXPR_CODE(x1) == F_VAR) {
             /*
              * expr may be array ref or character ref or intrinsic call
              */
@@ -275,7 +275,8 @@ expr_is_constant_typeof(x, bt)
                         return FALSE;
                     }
                 } else {
-                    if (ID_CLASS(id) != CL_PARAM && !TYPE_IS_PARAMETER(id)) {
+                    if (ID_CLASS(id) != CL_PARAM && !TYPE_IS_PARAMETER(id) &&
+                        (!ID_TYPE(id) && !TYPE_IS_PARAMETER(ID_TYPE(id)))) {
                         return FALSE;
                     }
                 }
