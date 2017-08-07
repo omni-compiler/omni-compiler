@@ -1597,7 +1597,7 @@ find_ident_block_parent(SYMBOL s)
         }
     }
 
-    if (in_block) {
+    if (in_block &&  UNIT_CTL_LOCAL_SYMBOLS(CURRENT_UNIT_CTL) != LOCAL_SYMBOLS) {
         ip = find_ident_head(s, UNIT_CTL_LOCAL_SYMBOLS(CURRENT_UNIT_CTL));
     }
 
