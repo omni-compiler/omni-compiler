@@ -3739,6 +3739,7 @@ ScanFortranLine(src, srcHead, dst, dstHead, dstMax, inQuotePtr, quoteCharPtr,
      char **newDstPtr;
 {
     char *cpDst = dst;
+    char *cur;
 
     while (*src != '\0' && dst <= dstMax) {
         if (isspace((int)*src)) {
@@ -3762,9 +3763,21 @@ ScanFortranLine(src, srcHead, dst, dstHead, dstMax, inQuotePtr, quoteCharPtr,
             }
         } else if (*src == 'h' || *src == 'H') {
             if (*inHollerithPtr == FALSE && *inQuotePtr == FALSE) {
-                unHollerith(src, srcHead, dst, dstHead, dstMax,
-                            inQuotePtr, *quoteCharPtr,
-                            inHollerithPtr, hollerithLenPtr, &src, &dst);
+                /*
+                 * check backward if only digit before the H
+                 */
+                cur = src;
+                --cur; // Char before the h/H
+                while (isdigit((int)*cur)) {
+                    --cur;
+                }
+                if(isalpha((int)*cur) || *cur == '_') {
+                    goto copyOne;
+                } else {
+                    unHollerith(src, srcHead, dst, dstHead, dstMax,
+                                inQuotePtr, *quoteCharPtr,
+                                inHollerithPtr, hollerithLenPtr, &src, &dst);
+                }
             } else {
                 goto copyOne;
             }
