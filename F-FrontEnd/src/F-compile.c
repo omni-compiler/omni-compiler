@@ -729,22 +729,47 @@ compile_statement1(int st_no, expr x)
 
         /* construct name */
         if (EXPR_HAS_ARG3(x)) {
-	  //list_put_last(st, EXPR_ARG3(x));
-	  EXPR_ARG4(st) = EXPR_ARG3(x);
+	        //list_put_last(st, EXPR_ARG3(x));
+	        EXPR_ARG4(st) = EXPR_ARG3(x);
         }
         /* set current IF_STATEMENT */
         CTL_IF_STATEMENT(ctl_top) = st;
         if(EXPR_ARG2(x)){
-            compile_exec_statement(EXPR_ARG2(x));
+            if(EXPR_CODE(EXPR_ARG2(x)) == F_WHERE_STATEMENT) {
+                check_INEXEC();
+                push_ctl(CTL_WHERE);
+
+                /* evaluate condition and make WHERE_STATEMENT clause */
+                v = compile_logical_expression_with_array(EXPR_ARG1(x));
+
+                st = list5(F_WHERE_STATEMENT,v,NULL,NULL,NULL,NULL);
+                output_statement(st);
+
+                CTL_BLOCK(ctl_top) = CURRENT_STATEMENTS;
+                CURRENT_STATEMENTS = NULL;
+
+                /* set current WHERE_STATEMENT */
+                CTL_WHERE_STATEMENT(ctl_top) = st;
+                if(EXPR_ARG2(x) != NULL) {
+                    compile_statement1(st_no, EXPR_ARG2(x));
+                    /* TODO x must be array assignment expression,
+                    * and shape of array is equal to v
+                    */
+
+                    CTL_WHERE_THEN(ctl_top) = CURRENT_STATEMENTS;
+                    pop_ctl();  /* pop and output */
+                }
+            } else {
+                compile_exec_statement(EXPR_ARG2(x));
+            }
             CTL_IF_THEN(ctl_top) = CURRENT_STATEMENTS;
-	    if (endlineno_flag){
-	      if (current_line->end_ln_no){
-		EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->end_ln_no;
-	      }
-	      else {
-		EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
-	      }
-	    }
+	        if (endlineno_flag){
+	            if (current_line->end_ln_no){
+		            EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->end_ln_no;
+	            } else {
+		            EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+	            }
+	        }
             pop_ctl();  /* pop and output */
             break;
         }

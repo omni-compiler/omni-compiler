@@ -1851,6 +1851,8 @@ action_statement_key: ASSIGN  label KW KW_TO IDENTIFIER
                      GEN_NODE(STRING_CONSTANT, pragmaString));
          pragmaString = NULL;
         }
+        | WHERE '(' expr ')' assign_statement_or_null
+        { $$ = list2(F_WHERE_STATEMENT, $3, $5); }
         ;
 
 action_statement95:
