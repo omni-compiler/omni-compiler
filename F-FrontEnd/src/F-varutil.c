@@ -275,8 +275,9 @@ expr_is_constant_typeof(x, bt)
                         return FALSE;
                     }
                 } else {
-                    if (ID_CLASS(id) != CL_PARAM && !TYPE_IS_PARAMETER(id) &&
-                        (!ID_TYPE(id) && !TYPE_IS_PARAMETER(ID_TYPE(id)))) {
+                    if (ID_CLASS(id) != CL_PARAM &&
+                        !TYPE_IS_PARAMETER(id) &&
+                        !(ID_TYPE(id) && TYPE_IS_PARAMETER(ID_TYPE(id)))) {
                         return FALSE;
                     }
                 }
