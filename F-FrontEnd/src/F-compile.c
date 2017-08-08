@@ -7115,6 +7115,12 @@ compile_POINTER_SET_statement(expr x) {
         return;
     }
 
+    if (TYPE_IS_PROTECTED(vPtrTyp)) {
+        error_at_node(x, "'%s' is PROTECTED.",
+                      SYM_NAME(EXPR_SYM(EXPR_ARG1(x))));
+        return;
+    }
+
     if (IS_PROCEDURE_TYPE(EXPV_TYPE(vPointer)) &&
         FUNCTION_TYPE_IS_TYPE_BOUND(EXPV_TYPE(vPointer))) {
             error("lhs expr is type bound procedure.");
