@@ -1097,10 +1097,15 @@ compile_ident_expression(expr x)
         goto done;
     }
 
-
     if(ID_CLASS(id) == CL_PARAM){
-        if(VAR_INIT_VALUE(id) != NULL) 
-            return VAR_INIT_VALUE(id);
+        if ((id = declare_variable(id)) != NULL) {
+            tp = ID_TYPE(id);
+        }
+        if(VAR_INIT_VALUE(id) != NULL){
+            if(EXPV_CODE(VAR_INIT_VALUE(id)) != F95_STRUCT_CONSTRUCTOR) {
+                return VAR_INIT_VALUE(id);
+            }
+        }
     }
 
 
