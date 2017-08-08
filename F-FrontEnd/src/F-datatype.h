@@ -139,6 +139,7 @@ typedef struct type_descriptor
                                                   contains undefined function. */
 #define TYPE_EXFLAGS_FOR_FUNC_SELF  0x00000010 /* type is for the function itself */
 #define TYPE_EXFLAGS_UNCHANGABLE    0x00000020 /* type is not able to change */
+#define TYPE_EXFLAGS_READONLY       0x00000040 /* type is for read only */
         uint32_t exflags;
     } attr; /* FbasicType */
     struct {
@@ -328,9 +329,13 @@ extern TYPE_DESC basic_type_desc[];
 #define TYPE_SET_FOR_FUNC_SELF(tp)  ((tp)->attr.exflags |=  TYPE_EXFLAGS_FOR_FUNC_SELF)
 #define TYPE_UNSET_FOR_FUNC_SELF(tp) ((tp)->attr.exflags &= ~TYPE_EXFLAGS_FOR_FUNC_SELF)
 
-#define TYPE_IS_UNCHANGABLE(tp)   ((tp)->attr.exflags &   TYPE_EXFLAGS_UNCHANGABLE)
-#define TYPE_SET_UNCHANGABLE(tp)  ((tp)->attr.exflags |=  TYPE_EXFLAGS_UNCHANGABLE)
-#define TYPE_UNSET_UNCHANGABLE(tp) ((tp)->attr.exflags &= ~TYPE_EXFLAGS_UNCHANGABLE)
+#define TYPE_IS_UNCHANGABLE(tp)     ((tp)->attr.exflags &   TYPE_EXFLAGS_UNCHANGABLE)
+#define TYPE_SET_UNCHANGABLE(tp)    ((tp)->attr.exflags |=  TYPE_EXFLAGS_UNCHANGABLE)
+#define TYPE_UNSET_UNCHANGABLE(tp)  ((tp)->attr.exflags &= ~TYPE_EXFLAGS_UNCHANGABLE)
+
+#define TYPE_IS_READONLY(tp)        ((tp)->attr.exflags &   TYPE_EXFLAGS_READONLY)
+#define TYPE_SET_READONLY(tp)       ((tp)->attr.exflags |=  TYPE_EXFLAGS_READONLY)
+#define TYPE_UNSET_READONLY(tp)     ((tp)->attr.exflags &= ~TYPE_EXFLAGS_READONLY)
 
 #define TYPE_ATTR_FOR_COMPARE \
     (TYPE_ATTR_PARAMETER |                      \
@@ -362,9 +367,22 @@ extern TYPE_DESC basic_type_desc[];
 #define TYPE_SET_SUBOBJECT_PROPAGATE_ATTRS(child, parent)               \
     (TYPE_ATTR_FLAGS(child) |= TYPE_HAS_SUBOBJECT_PROPAGATE_ATTRS(parent))
 
+#define TYPE_EXTATTRS_SUBOBJECT_PROPAGATE    \
+   (TYPE_EXFLAGS_READONLY)
+
+#define TYPE_HAS_SUBOBJECT_PROPAGATE_EXTATTRS(tp)  \
+    ((tp)->attr.exflags & TYPE_EXTATTRS_SUBOBJECT_PROPAGATE)
+
+#define TYPE_SET_SUBOBJECT_PROPAGATE_EXTATTRS(child, parent)               \
+    (TYPE_EXTATTR_FLAGS(child) |= TYPE_HAS_SUBOBJECT_PROPAGATE_EXTATTRS(parent))
+
 #define TYPE_HAS_INTENT(tp)      (TYPE_IS_INTENT_IN(tp) || \
                 TYPE_IS_INTENT_OUT(tp) || TYPE_IS_INTENT_INOUT(tp))
-// TODO PROTECTED 
+
+/*
+ * Just PUBLIC or PRIVATE, no PROTECTED.
+ * (PROTECTED can be used with PUBLIC or PRIVATE)
+ */
 #define IS_TYPE_PUBLICORPRIVATE(tp)  \
                 ((TYPE_IS_PUBLIC(tp)) || (TYPE_IS_PRIVATE(tp)))
 

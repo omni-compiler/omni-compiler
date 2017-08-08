@@ -3349,6 +3349,7 @@ compile_member_array_ref(expr x, expv v)
                 generate_shape_expr(new_tp, shape);
             btp = wrap_type(btp);
             TYPE_SET_SUBOBJECT_PROPAGATE_ATTRS(btp, tp);
+            TYPE_SET_SUBOBJECT_PROPAGATE_EXTATTRS(btp, tp);
             new_tp = btp;
         }
         new_tp = compile_dimensions(new_tp, shape);

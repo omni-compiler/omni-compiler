@@ -1439,7 +1439,7 @@ compile_exec_statement(expr x)
                     break;
                 }
 
-                if (TYPE_IS_PROTECTED(EXPV_TYPE(v1))) {
+                if (TYPE_IS_PROTECTED(EXPV_TYPE(v1)) && TYPE_IS_READONLY(EXPV_TYPE(v1))) {
                     error_at_node(x, "assignment to a PROTECTED variable");
                 }
 
@@ -4255,11 +4255,10 @@ compile_DO_statement(range_st_no, construct_name, var, init, limit, incr)
             error("bad type on do variable");
             return;
         }
-        if (TYPE_IS_PROTECTED(var_tp)) {
+        if (TYPE_IS_PROTECTED(var_tp) && TYPE_IS_READONLY(var_tp)) {
             error("do variable is PROTECTED");
             return;
         }
-
 
         if (!IS_INT_OR_REAL(EXPV_TYPE(do_init)) &&
             !IS_GNUMERIC(EXPV_TYPE(do_init)) &&
@@ -5197,11 +5196,23 @@ import_module_id(ID mid,
      * attribute. OR, If id is tagname and rename required, then type
      * will be given different tagname.
      */
-    if(need_wrap_type || (ID_STORAGE(id) == STG_TAGNAME && use_name)) {
+    if(need_wrap_type ||
+       (ID_STORAGE(id) == STG_TAGNAME && use_name) ||
+       TYPE_IS_PROTECTED(ID_TYPE(id))) {
         // shallow copy type from module
         ID_TYPE(id) = shallow_copy_type_for_module_id(ID_TYPE(id));
         TYPE_UNSET_PUBLIC(id);
         TYPE_UNSET_PRIVATE(id);
+
+        /*
+         * If type is PROTECTED and id is not imported to SUBMODULE,
+         * id should be READ ONLY
+         */
+        if (TYPE_IS_PROTECTED(ID_TYPE(id)) && !fromParentModule) {
+            TYPE_SET_READONLY(ID_TYPE(id));
+        }
+
+        ID_ADDR(id) = expv_sym_term(F_VAR, ID_TYPE(id), ID_SYM(id));
     }
 
     if(ID_TYPE(id) != NULL &&
@@ -6180,9 +6191,11 @@ compile_member_ref(expr x)
         retTyp = wrap_type(mVTyp);
 
         TYPE_SET_SUBOBJECT_PROPAGATE_ATTRS(retTyp, mVTyp);
+        TYPE_SET_SUBOBJECT_PROPAGATE_EXTATTRS(retTyp, mVTyp);
         TYPE_ATTR_FLAGS(retTyp) |= TYPE_IS_ALLOCATABLE(mVTyp);
 
         TYPE_SET_SUBOBJECT_PROPAGATE_ATTRS(retTyp, stVTyp);
+        TYPE_SET_SUBOBJECT_PROPAGATE_EXTATTRS(retTyp, stVTyp);
         TYPE_CODIMENSION(retTyp) = TYPE_CODIMENSION(stVTyp);
 
         tp = retTyp;
@@ -6243,7 +6256,7 @@ compile_NULLIFY_statement (expr x)
             error("argument is not a pointer type");
             continue;
         }
-        if (TYPE_IS_PROTECTED(EXPV_TYPE(ev))) {
+        if (TYPE_IS_PROTECTED(EXPV_TYPE(ev)) && TYPE_IS_READONLY(EXPV_TYPE(ev))) {
             error("argument is a PROTECTED type");
             continue;
         }
@@ -6924,10 +6937,6 @@ static int markAsPublic(ID id)
         error("'%s' is already specified as private.", ID_NAME(id));
         return FALSE;
     }
-    if (TYPE_IS_PROTECTED(id) || (tp != NULL && TYPE_IS_PROTECTED(tp))) {
-        error("'%s' is already specified as protected.", ID_NAME(id));
-        return FALSE;
-    }
     TYPE_SET_PUBLIC(id);
     TYPE_UNSET_PRIVATE(id);
 
@@ -6939,10 +6948,6 @@ static int markAsPrivate(ID id)
     TYPE_DESC tp = ID_TYPE(id);
     if (TYPE_IS_PUBLIC(id) || (tp != NULL && TYPE_IS_PUBLIC(tp))) {
         error("'%s' is already specified as public.", ID_NAME(id));
-        return FALSE;
-    }
-    if (TYPE_IS_PROTECTED(id) || (tp != NULL && TYPE_IS_PROTECTED(tp))) {
-        error("'%s' is already specified as protected.", ID_NAME(id));
         return FALSE;
     }
     TYPE_UNSET_PUBLIC(id);
@@ -7120,7 +7125,7 @@ compile_POINTER_SET_statement(expr x) {
         return;
     }
 
-    if (TYPE_IS_PROTECTED(vPtrTyp)) {
+    if (TYPE_IS_PROTECTED(vPtrTyp) && TYPE_IS_READONLY(vPtrTyp)) {
         error_at_node(x, "'%s' is PROTECTED.",
                       SYM_NAME(EXPR_SYM(EXPR_ARG1(x))));
         return;
