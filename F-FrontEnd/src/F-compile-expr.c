@@ -527,7 +527,7 @@ compile_expression(expr x)
             lt = EXPV_TYPE(left);
             rt = EXPV_TYPE(right);
             if(rt == NULL)
-                right = compile_expression(EXPR_ARG2(x));
+                right = compile_expression(EXPR_ARG2(x));                
 
             bLType = bottom_type(lt);
             bRType = bottom_type(rt);
@@ -742,9 +742,26 @@ compile_expression(expr x)
             doEmit:
 /* FEAST CHANGE start */
             /* if (type_is_not_fixed) */
-            if(type_is_not_fixed && tp)
+            if(type_is_not_fixed && tp) {
 /* FEAST CHANGE end */
+                // Save the TYPE_IS_FIXED attribute for left and right operand.
+                // Fix issue #207
+                int bLtype_fixed = TYPE_IS_FIXED(bLType);
+                int bRtype_fixed = TYPE_IS_FIXED(bRType);
+
+                // Apply the attribute NOT FIXED on the result type if one 
+                // operand type is NOT FIXED.
                 TYPE_SET_NOT_FIXED(bottom_type(tp));
+                
+                // Re-apply the attribute on the left operand
+                if(bLtype_fixed) {
+                    TYPE_UNSET_NOT_FIXED(bLType);
+                } 
+                // Re-apply the attribute on the right operand
+                if(bRtype_fixed) {
+                    TYPE_UNSET_NOT_FIXED(bRType);
+                }
+            }
             return expv_cons(op, tp, left, right);
         }
 
