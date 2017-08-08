@@ -2276,17 +2276,10 @@ again:
     current_line = new_line_info(read_lineno.file_id,read_lineno.ln_no);
 
     q = st_buffer;
-    if ((!OMP_flag && !cond_compile_enabled)
-        &&(st_OMP_flag||st_XMP_flag||st_ACC_flag||st_PRAGMA_flag||st_CONDCOMPL_flag)) {
-        /* dumb copy */
-        st_len = strlen( p );
-        strcpy( q, p );
-    }else{
-        st_len = ScanFortranLine(p, p, q, q, bufMax,
-                                 &inQuote, &qChar, &inH, &hLen, &p, &q);
-        if (st_len >= ST_BUF_SIZE){
-            goto Done;
-        }
+    st_len = ScanFortranLine(p, p, q, q, bufMax, &inQuote, &qChar, &inH, &hLen, 
+                             &p, &q);
+    if (st_len >= ST_BUF_SIZE){
+        goto Done;
     }
 
     int cont_line_num = 0;
