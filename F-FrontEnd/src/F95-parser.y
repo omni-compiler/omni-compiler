@@ -556,6 +556,8 @@ NEED_CHECK: {	      need_check_user_defined = FALSE; };
 
 TYPE_KW_COL2: { if (lookup_col2()) need_type_keyword = TRUE;  }
 
+DO_KW: { need_do_keyword = TRUE; }
+
 one_statement:
           STATEMENT_LABEL_NO  /* null statement */
         | STATEMENT_LABEL_NO statement
@@ -1670,13 +1672,13 @@ namelist_list:  IDENTIFIER
  */
 executable_statement:
           action_statement
-        | DO label KW KW_WHILE '(' expr ')'
+        | DO label DO_KW KW_WHILE '(' expr ')'
         { $$ = list3(F_DOWHILE_STATEMENT, $2, $6, st_name); }
-        | DO label KW do_spec
+        | DO label DO_KW do_spec
         { $$ = list3(F_DO_STATEMENT, $2, $4, st_name); }
-        | DO label KW ',' KW do_spec  /* for dusty deck */
+        | DO label DO_KW ',' KW do_spec  /* for dusty deck */
         { $$ = list3(F_DO_STATEMENT, $2, $6, st_name); }
-        | DO label KW
+        | DO label DO_KW
         { $$ = list3(F_DO_STATEMENT, $2, NULL, st_name); }
         | DO do_spec
         { $$ = list3(F_DO_STATEMENT,NULL, $2, st_name); }
@@ -1684,11 +1686,11 @@ executable_statement:
         { $$ = list3(F_DO_STATEMENT,NULL, NULL, st_name); }
         | DOCONCURRENT '(' forall_header ')'
         { $$ = list3(F08_DOCONCURRENT_STATEMENT, NULL, $3, st_name); }
-        | DO ',' KW CONCURRENT '(' forall_header ')'
+        | DO ',' DO_KW CONCURRENT '(' forall_header ')'
         { $$ = list3(F08_DOCONCURRENT_STATEMENT, NULL, $6, st_name); }
-        | DO label KW CONCURRENT '(' forall_header ')'
+        | DO label DO_KW CONCURRENT '(' forall_header ')'
         { $$ = list3(F08_DOCONCURRENT_STATEMENT, $2,   $6, st_name); }
-        | DO label KW ',' KW CONCURRENT '(' forall_header ')'
+        | DO label DO_KW ',' KW CONCURRENT '(' forall_header ')'
         { $$ = list3(F08_DOCONCURRENT_STATEMENT, $2,   $8, st_name); }
         | ENDDO name_or_null
         { $$ = list1(F_ENDDO_STATEMENT,$2); }
@@ -1772,7 +1774,7 @@ assign_statement: lhs '=' expr
 do_spec:
           IDENTIFIER '=' expr ',' expr
         { $$ = list4(LIST,$1,$3,$5,NULL); }
-        |  IDENTIFIER '=' expr ',' expr ',' expr
+        | IDENTIFIER '=' expr ',' expr ',' expr
         { $$ = list4(LIST,$1,$3,$5,$7); }
         ;
 

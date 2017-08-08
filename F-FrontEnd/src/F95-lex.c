@@ -36,6 +36,7 @@ int st_class;           /* token for classify statement */
 int need_keyword = FALSE;
 int need_type_keyword = FALSE;
 int need_type_len = FALSE;
+int need_do_keyword = FALSE;
 int need_check_user_defined = TRUE; /* check the user defined dot id */
 
 int may_generic_spec = FALSE;
@@ -60,6 +61,7 @@ struct keyword_token {
 extern struct keyword_token dot_keywords[],keywords[];
 extern struct keyword_token end_keywords[];
 extern struct keyword_token type_keywords[];
+extern struct keyword_token do_keywords[];
 
 extern int ocl_flag;
 extern int cdir_flag;
@@ -788,6 +790,16 @@ token()
         t = get_keyword(type_keywords);
         if (t != UNKNOWN) return(t);
     }
+
+    if (need_do_keyword == TRUE) {
+        /*
+         * require do keyword
+         */
+        need_do_keyword = FALSE;
+        t = get_keyword(do_keywords);
+        if (t != UNKNOWN) return(t);
+    }
+
 
     if(need_type_len == TRUE){  /* for type_length */
         need_type_len = FALSE;
@@ -4038,6 +4050,11 @@ struct keyword_token type_keywords[ ] =
     { "character",        KW_CHARACTER, },
     { 0, 0 }};
 
+struct keyword_token do_keywords[ ] =
+{
+    { "while",            KW_WHILE },
+    { "concurrent",       CONCURRENT },
+    { 0, 0 }};
 
 /*
  * lex for OpenMP part
