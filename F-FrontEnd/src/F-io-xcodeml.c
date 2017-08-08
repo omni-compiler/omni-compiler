@@ -185,6 +185,15 @@ compile_IO_statement(x)
             list_put_last(v2, expv_reduce(compile_expression(x2), FALSE));
     }
 
+    if (EXPR_CODE(x) == F_READ_STATEMENT) {
+        FOR_ITEMS_IN_LIST(lp, v2) {
+            if (TYPE_IS_PROTECTED(EXPV_TYPE(LIST_ITEM(lp)))) {
+                error("an input item is PROTECTED");
+                break;
+            }
+        }
+    }
+
     switch (EXPR_CODE(x)) {
         case F_PRINT_STATEMENT: {
             v = expv_cons(F_PRINT_STATEMENT, NULL, callArgs, v2);
@@ -194,7 +203,7 @@ compile_IO_statement(x)
             v = expv_cons(F_WRITE_STATEMENT, NULL, callArgs, v2);
             break;
         }
-        case F_READ_STATEMENT: 
+        case F_READ_STATEMENT:
         case F_READ1_STATEMENT: {
             v = expv_cons(F_READ_STATEMENT, NULL, callArgs, v2);
             break;
