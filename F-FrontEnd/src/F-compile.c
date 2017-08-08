@@ -1439,6 +1439,10 @@ compile_exec_statement(expr x)
                     break;
                 }
 
+                if (TYPE_IS_PROTECTED(EXPV_TYPE(v1))) {
+                    error_at_node(x, "assignment to a PROTECTED variable");
+                }
+
                 if (TYPE_BASIC_TYPE(EXPV_TYPE(v1)) == TYPE_FUNCTION) {
                     /*
                      * If a left expression is a function result,
@@ -6232,6 +6236,10 @@ compile_NULLIFY_statement (expr x)
         }
         if (!TYPE_IS_POINTER(EXPV_TYPE(ev))) {
             error("argument is not a pointer type");
+            continue;
+        }
+        if (TYPE_IS_PROTECTED(EXPV_TYPE(ev))) {
+            error("argument is a PROTECTED type");
             continue;
         }
         args = list_put_last(args, ev);
