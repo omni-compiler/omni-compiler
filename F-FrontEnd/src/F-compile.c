@@ -4255,6 +4255,11 @@ compile_DO_statement(range_st_no, construct_name, var, init, limit, incr)
             error("bad type on do variable");
             return;
         }
+        if (TYPE_IS_PROTECTED(var_tp)) {
+            error("do variable is PROTECTED");
+            return;
+        }
+
 
         if (!IS_INT_OR_REAL(EXPV_TYPE(do_init)) &&
             !IS_GNUMERIC(EXPV_TYPE(do_init)) &&
