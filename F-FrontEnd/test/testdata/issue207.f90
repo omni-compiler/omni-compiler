@@ -1,0 +1,24 @@
+MODULE mod1
+
+LOGICAL :: logext
+
+IMPLICIT NONE
+
+CONTAINS
+
+SUBROUTINE sub1
+IMPLICIT NONE
+  LOGICAL :: log1
+  REAL :: r1
+
+  logext = .TRUE.
+  log1 = (rmod() < 2.0) .OR. logext
+
+END SUBROUTINE sub2
+
+ELEMENTAL REAL FUNCTION rmod()
+  IMPLICIT NONE
+  rmod  =  2.0
+END FUNCTION rmod
+
+END MODULE mod1
