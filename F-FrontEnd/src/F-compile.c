@@ -7935,6 +7935,11 @@ compile_stat_args(expv st, expr x, int expect_acquired_lock) {
                 return FALSE;
             }
 
+            if (TYPE_IS_PROTECTED(EXPV_TYPE(arg)) && TYPE_IS_READONLY(EXPV_TYPE(arg))) {
+                error("acquired_lock variable is PROTECTED");
+                return FALSE;
+            }
+
 
         } else {
             error("unexpected specifier '%s'", keyword);
@@ -8115,6 +8120,10 @@ compile_LOCK_statement(expr x) {
         error("The first argument of lock statement must be LOCK_TYPE");
         return;
     }
+    if (TYPE_IS_PROTECTED(EXPV_TYPE(lock_variable)) &&
+        TYPE_IS_READONLY(EXPV_TYPE(lock_variable))) {
+        error("an argument is PROTECTED");
+    }
 
     sync_stat_list = list0(LIST);
     /* Check and compile lock stat args */
@@ -8154,6 +8163,10 @@ compile_UNLOCK_statement(expr x) {
     if (!type_is_LOCK_TYPE(EXPV_TYPE(lock_variable))) {
         error("The first argument of unlock statement must be LOCK_TYPE");
         return;
+    }
+    if (TYPE_IS_PROTECTED(EXPV_TYPE(lock_variable)) &&
+        TYPE_IS_READONLY(EXPV_TYPE(lock_variable))) {
+        error("an argument is PROTECTED");
     }
 
     sync_stat_list = list0(LIST);
