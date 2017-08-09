@@ -317,6 +317,8 @@ public enum Xcode
      // Fortran2003: FORALL STATEMENT
     F_FORALL_STATEMENT              ( 232, 'L', null, null),
 
+    F_DATA_STATEMENT                ( 234, 'L', null, null),
+
      // Codes dynamically assignable
     DYN_1                           ( 1001, 'L', null, null),
     DYN_2                           ( 1002, 'L', null, null),
@@ -532,6 +534,7 @@ public enum Xcode
         case F_LOCK_STATEMENT:              case F_UNLOCK_STATEMENT:
         case F_BLOCK_STATEMENT:
         case SELECT_TYPE_STATEMENT:         case TYPE_GUARD:
+        case F_DATA_STATEMENT:
             return true;
         }
         return false;
