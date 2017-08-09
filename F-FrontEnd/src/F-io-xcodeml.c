@@ -46,11 +46,12 @@ FormatVariableNameToStatusLineStr(name)
 static SYMBOL nml = (struct symbol []){{NULL, "nml", 0, 0}};
 
 static expv
-compile_io_arguments(expr args)
+compile_io_arguments(enum expr_code code, expr args)
 {
     list lp;
     expr arg;
     expv varg, vargs;
+    expv unit_arg = NULL;
 
     vargs = list0(LIST);
 
@@ -77,23 +78,57 @@ compile_io_arguments(expr args)
 
             vkey = rkey;
 
-            if(rval && (EXPR_CODE(rval) == IDENT)) {
+            if (rval && (EXPR_CODE(rval) == IDENT)) {
                 vval = rval;
 
             } else if(rval == NULL) {
                 vval = NULL;
 
-            }else {
+            } else {
                 vval = expv_reduce(compile_expression(rval), FALSE);
 
                 if(vval == NULL) {
                     return NULL;
                 }
             }
+
+            if (strcmp("unit", SYM_NAME(EXPR_SYM(vkey))) == 0) {
+                unit_arg = vval;
+
+            } else if (strcmp("iostat", SYM_NAME(EXPR_SYM(vkey))) == 0 ||
+                       strcmp("size",   SYM_NAME(EXPR_SYM(vkey))) == 0 ||
+                       strcmp("iomsg",  SYM_NAME(EXPR_SYM(vkey))) == 0) {
+                if (vval && EXPV_TYPE(vval) &&
+                    TYPE_IS_PROTECTED(EXPV_TYPE(vval)) && TYPE_IS_READONLY(EXPV_TYPE(vval))) {
+                    error("an argument is PROTECTED");
+                }
+            }
+
             varg = list2(F_SET_EXPR, vkey, vval);
         }
 
         list_put_last(vargs, varg);
+    }
+
+    if (unit_arg == NULL) {
+        FOR_ITEMS_IN_LIST(lp, vargs) {
+            if (LIST_ITEM(lp) &&
+                EXPR_CODE(LIST_ITEM(lp)) != F_SET_EXPR) {
+                unit_arg = LIST_ITEM(lp);
+                break;
+            }
+        }
+    }
+
+    if (unit_arg != NULL && EXPR_CODE(unit_arg) == IDENT) {
+        ID id = find_ident(EXPR_SYM(unit_arg));
+        if (id != NULL) {
+            if (code == F_WRITE_STATEMENT) {
+                if (TYPE_IS_PROTECTED(ID_TYPE(id)) && TYPE_IS_READONLY(ID_TYPE(id))) {
+                    error("an argument is PROTECTED");
+                }
+            }
+        }
     }
 
     return vargs;
@@ -161,7 +196,6 @@ FinalizeFormat()
     }
 }
 
-
 void
 compile_IO_statement(x)
      expr x;
@@ -173,7 +207,7 @@ compile_IO_statement(x)
     if (EXPR_CODE(x) == F_PRINT_STATEMENT) {
         callArgs = list1(LIST, EXPR_ARG1(x));
     } else {
-        callArgs = compile_io_arguments(EXPR_ARG1(x));
+        callArgs = compile_io_arguments(EXPR_CODE(x), EXPR_ARG1(x));
     }
 
     expv v2 = list0(LIST);
@@ -227,7 +261,7 @@ compile_OPEN_statement(x)
         fatal("syntax error in OPEN???");
     }
 
-    callArgs = compile_io_arguments(EXPR_ARG1(x));
+    callArgs = compile_io_arguments(EXPR_CODE(x), EXPR_ARG1(x));
     v = expv_cons(F_OPEN_STATEMENT, NULL, callArgs, NULL);
     output_statement(v);
     return;
@@ -244,7 +278,7 @@ compile_CLOSE_statement(x)
         fatal("syntax error in CLOSE ???");
     }
 
-    callArgs = compile_io_arguments(EXPR_ARG1(x));
+    callArgs = compile_io_arguments(EXPR_CODE(x), EXPR_ARG1(x));
     v = expv_cons(F_CLOSE_STATEMENT, NULL, callArgs, NULL);
     output_statement(v);
     return;
@@ -270,7 +304,7 @@ compile_FPOS_statement(expr x)
         list_put_last(callArgs,
                       expv_reduce(compile_expression(EXPR_ARG1(x)), FALSE));
     } else {
-        callArgs = compile_io_arguments(EXPR_ARG1(x));
+        callArgs = compile_io_arguments(EXPR_CODE(x), EXPR_ARG1(x));
     }
 
     switch (EXPR_CODE(x)) {
@@ -308,7 +342,7 @@ compile_INQUIRE_statement(x)
         fatal("syntax error in INQUIRE???");
     }
 
-    callArgs = compile_io_arguments(EXPR_ARG1(x));
+    callArgs = compile_io_arguments(EXPR_CODE(x), EXPR_ARG1(x));
 
     outputList = list0(LIST);
     FOR_ITEMS_IN_LIST(lp,EXPR_ARG2(x)){
@@ -383,7 +417,7 @@ compile_WAIT_statement(expr x)
         fatal("syntax error in WAIT");
     }
 
-    callArgs = compile_io_arguments(EXPR_ARG1(x));
+    callArgs = compile_io_arguments(EXPR_CODE(x), EXPR_ARG1(x));
     v = expv_cons(F03_WAIT_STATEMENT, NULL, callArgs, NULL);
     output_statement(v);
     return;
@@ -398,7 +432,7 @@ compile_FLUSH_statement(expr x)
         fatal("syntax error in FLUSH???");
     }
 
-    callArgs = compile_io_arguments(EXPR_ARG1(x));
+    callArgs = compile_io_arguments(EXPR_CODE(x), EXPR_ARG1(x));
 
     v = expv_cons(F03_FLUSH_STATEMENT, NULL, callArgs, NULL);
     output_statement(v);
