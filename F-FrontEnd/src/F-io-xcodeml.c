@@ -104,6 +104,15 @@ compile_io_arguments(enum expr_code code, expr args)
                 }
             }
 
+            if (code == F_OPEN_STATEMENT) {
+                if (strcmp("newopen", SYM_NAME(EXPR_SYM(vkey))) == 0) {
+                    if (vval && EXPV_TYPE(vval) &&
+                        TYPE_IS_PROTECTED(EXPV_TYPE(vval)) && TYPE_IS_READONLY(EXPV_TYPE(vval))) {
+                        error("an argument is PROTECTED");
+                    }
+                }
+            }
+
             if (code == F_INQUIRE_STATEMENT) {
                 if (strcmp("file", SYM_NAME(EXPR_SYM(vkey))) != 0 &&
                     strcmp("id",   SYM_NAME(EXPR_SYM(vkey))) != 0 &&
@@ -112,10 +121,8 @@ compile_io_arguments(enum expr_code code, expr args)
                         TYPE_IS_PROTECTED(EXPV_TYPE(vval)) && TYPE_IS_READONLY(EXPV_TYPE(vval))) {
                         error("an argument is PROTECTED");
                     }
-
+                }
             }
-
-
 
             varg = list2(F_SET_EXPR, vkey, vval);
         }
