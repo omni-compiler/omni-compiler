@@ -6419,6 +6419,17 @@ compile_ALLOCATE_DEALLOCATE_statement(expr x)
         tp = compile_type(type, /*allow_predecl=*/FALSE);
     }
 
+    if (vstat) {
+        if (TYPE_IS_PROTECTED(EXPV_TYPE(vstat)) && TYPE_IS_READONLY(EXPV_TYPE(vstat))) {
+            error("an argument for STAT is PROTECTED");
+        }
+    }
+    if (verrmsg) {
+        if (TYPE_IS_PROTECTED(EXPV_TYPE(verrmsg)) && TYPE_IS_READONLY(EXPV_TYPE(verrmsg))) {
+            error("an argument for ERRMSG is PROTECTED");
+        }
+    }
+
     /*
      * Now check type for allocation
      */
@@ -6430,7 +6441,12 @@ compile_ALLOCATE_DEALLOCATE_statement(expr x)
                 error("type incompatible");
                 return;
             }
+
+            if (TYPE_IS_PROTECTED(tp) && TYPE_IS_READONLY(tp)) {
+                error("an argument for STAT is PROTECTED");
+            }
         }
+
         if (vsource) {
             if (type_is_compatible_for_allocation(EXPV_TYPE(LIST_ITEM(lp)),
                                                   EXPV_TYPE(vsource))) {
