@@ -526,7 +526,7 @@ static void type_spec_done();
 %type <val> string_const_substr
 %type <val> binding_attr_list binding_attr type_bound_proc_decl_list type_bound_proc_decl
 %type <val> proc_attr_list proc_def_attr proc_attr proc_decl proc_decl_list name_or_type_spec_or_null0 name_or_type_spec_or_null
-%type <val> name name_or_null name_list generic_name defined_operator intrinsic_operator func_prefix prefix_spec
+%type <val> name name_or_null name_list generic_name defined_operator intrinsic_operator func_prefix prefix_spec func_suffix
 %type <val> forall_header forall_triplet forall_triplet_list
 %type <val> declaration_statement95 attr_spec_list attr_spec private_or_public_spec access_spec type_attr_spec_list type_attr_spec
 %type <val> declaration_statement2003 type_param_list
@@ -673,19 +673,18 @@ statement:      /* entry */
           { $$ = list4(F_SUBROUTINE_STATEMENT, $3, $4, $1, $6); }
         | ENDSUBROUTINE name_or_null
           { $$ = list1(F95_ENDSUBROUTINE_STATEMENT,$2); }
+
 /* FUNCTION declaration */
-        | FUNCTION IDENTIFIER dummy_arg_list KW result_opt bind_opt
-          { $$ = list6(F_FUNCTION_STATEMENT, $2, $3, NULL, NULL, $5, $6); }
-        | func_prefix FUNCTION IDENTIFIER dummy_arg_list KW result_opt bind_opt
-          { $$ = list6(F_FUNCTION_STATEMENT, $3, $4, NULL, $1, $6, $7); }
-        | type_spec KW FUNCTION IDENTIFIER dummy_arg_list KW result_opt bind_opt
-          { $$ = list6(F_FUNCTION_STATEMENT, $4, $5, $1, NULL, $7, $8); }
-        | type_spec KW func_prefix FUNCTION IDENTIFIER dummy_arg_list
-          KW result_opt bind_opt
-          { $$ = list6(F_FUNCTION_STATEMENT, $5, $6, $1, $3, $8, $9); }
-        | func_prefix type_spec KW FUNCTION IDENTIFIER dummy_arg_list
-          KW result_opt bind_opt
-          { $$ = list6(F_FUNCTION_STATEMENT, $5, $6, $2, $1, $8, $9); }
+        | FUNCTION IDENTIFIER dummy_arg_list KW func_suffix
+          { $$ = list6(F_FUNCTION_STATEMENT, $2, $3, NULL, NULL, EXPR_ARG1($5), EXPR_ARG2($5)); }
+        | func_prefix FUNCTION IDENTIFIER dummy_arg_list KW func_suffix
+          { $$ = list6(F_FUNCTION_STATEMENT, $3, $4, NULL, $1, EXPR_ARG1($6), EXPR_ARG2($6)); }
+        | type_spec KW FUNCTION IDENTIFIER dummy_arg_list KW func_suffix
+          { $$ = list6(F_FUNCTION_STATEMENT, $4, $5, $1, NULL, EXPR_ARG1($7), EXPR_ARG2($7)); }
+        | type_spec KW func_prefix FUNCTION IDENTIFIER dummy_arg_list KW func_suffix
+          { $$ = list6(F_FUNCTION_STATEMENT, $5, $6, $1, $3, EXPR_ARG1($8), EXPR_ARG2($8)); }
+        | func_prefix type_spec KW FUNCTION IDENTIFIER dummy_arg_list KW func_suffix
+          { $$ = list6(F_FUNCTION_STATEMENT, $5, $6, $2, $1, EXPR_ARG1($8), EXPR_ARG2($8)); }
 /* END: FUNCTION */
         | ENDFUNCTION name_or_null
           { $$ = list1(F95_ENDFUNCTION_STATEMENT,$2); }
@@ -714,6 +713,13 @@ statement:      /* entry */
         | ENDSUBMODULE name_or_null
           { $$ = list1(F08_ENDSUBMODULE_STATEMENT,$2); }
         ;
+
+func_suffix: 
+        result_opt KW bind_opt
+        { $$ = list2(LIST, $1, $3); }
+        | bind_opt KW result_opt
+        { $$ = list2(LIST, $3, $1); }
+
 
 
 name_or_type_spec_or_null:
