@@ -715,12 +715,12 @@ statement:      /* entry */
         ;
 
 func_suffix: 
-        result_opt KW bind_opt
+        /* empty */
+        { $$ = list2(LIST, NULL, NULL); }
+        | result_opt KW bind_opt
         { $$ = list2(LIST, $1, $3); }
         | bind_opt KW result_opt
         { $$ = list2(LIST, $3, $1); }
-
-
 
 name_or_type_spec_or_null:
         TYPE_KW name_or_type_spec_or_null0 { $$ = $2;};
