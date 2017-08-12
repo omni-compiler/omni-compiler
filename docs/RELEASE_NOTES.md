@@ -1,7 +1,7 @@
 Omni Compiler Software RELEASE NOTES
 
-# ver. 1.2
-* Change to 0-origin from 1-origin for coindex in XMP/C.
+# ver. 1.2.0    2017/08/12
+* Change to 0-origin from 1-origin for coindex in XMP/C for the XMP specification 1.3.
 * Fixed lots of bugs.
 
 # ver. 1.1.3     2017/07/03
