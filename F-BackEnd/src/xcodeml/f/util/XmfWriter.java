@@ -319,6 +319,9 @@ public class XmfWriter
             _setupLine(_getColumnCount(chArray));
         }
 
+        if (_needSeparator)
+            _out.print(" ");
+
         _writeCharacterArray(chArray);
     }
 
