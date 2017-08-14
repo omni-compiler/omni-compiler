@@ -531,14 +531,14 @@ static void type_spec_done();
 %type <val> declaration_statement95 attr_spec_list attr_spec private_or_public_spec access_spec type_attr_spec_list type_attr_spec
 %type <val> declaration_statement2003 type_param_list
 %type <val> intent_spec kind_selector kind_or_len_selector char_selector len_key_spec len_spec kind_key_spec array_allocation_list  array_allocation defered_shape_list defered_shape
-%type <val> result_opt type_keyword
+%type <val> result_opt func_result type_keyword
 %type <val> action_statement95
 %type <val> action_coarray_statement other_coarray_keyword
 %type <val> sync_stat_arg_list sync_stat_arg image_set
 %type <val> use_rename_list use_rename use_only_list use_only 
 %type <val> allocation_list allocation
 %type <val> scene_list scene_range
-%type <val> bind_opt
+%type <val> bind_opt bind_c
 
 
 %start program
@@ -714,13 +714,14 @@ statement:      /* entry */
           { $$ = list1(F08_ENDSUBMODULE_STATEMENT,$2); }
         ;
 
-func_suffix: 
+func_suffix:        
         /* empty */
         { $$ = list2(LIST, NULL, NULL); }
-        | result_opt KW bind_opt
+        | func_result KW bind_opt // Result with optional BIND(C)
         { $$ = list2(LIST, $1, $3); }
-        | bind_opt KW result_opt
+        | bind_c KW result_opt    // BIND(C) with optional result
         { $$ = list2(LIST, $3, $1); }
+        ;
 
 name_or_type_spec_or_null:
         TYPE_KW name_or_type_spec_or_null0 { $$ = $2;};
@@ -842,20 +843,30 @@ program_name:   /* null */
         | IDENTIFIER
         ;
 
+func_result:
+        RESULT '(' name ')'
+        { $$ = $3; printf("FUNC RESULT OK\n"); }
+        ;
+
 result_opt:    /* null */
           { $$ = NULL; }
-        | RESULT '(' name ')'
-          { $$ = $3; }
+        | func_result
+          {$$ = $1; } 
+        ;
+
+bind_c: 
+        /* BIND(C) */
+        BIND '(' IDENTIFIER /* C */ ')'
+        { $$ = list1(LIST, NULL); need_keyword = FALSE;}
+        /* BIND (C, NAME='<ident>') */
+        | BIND '(' IDENTIFIER /* C */ ',' KW KW_NAME '=' CONSTANT ')'
+        { $$ = list1(LIST, $8); need_keyword = FALSE;}
         ;
 
 bind_opt: /* null */
           { $$ = NULL; need_keyword = FALSE; }
-        /* BIND(C) */
-        | BIND '(' IDENTIFIER /* C */ ')'
-          { $$ = list1(LIST, NULL); need_keyword = FALSE;}
-        /* BIND (C, NAME='<ident>') */
-        | BIND '(' IDENTIFIER /* C */ ',' KW KW_NAME '=' CONSTANT ')'
-          { $$ = list1(LIST, $8); need_keyword = FALSE;}
+        | bind_c
+          { $$ = $1; }
         ;
 
 intrinsic_operator: '.'
