@@ -24,6 +24,11 @@ contains
   subroutine dummy() bind(C, name="dummySleep")
   end subroutine dummy
 
+  function fct5() result(res)
+    integer :: res
+    res = 1
+  end function fct5
+
   function fct1() result(res) bind(C, name='c_fct1')
     integer :: res
     res = 1
