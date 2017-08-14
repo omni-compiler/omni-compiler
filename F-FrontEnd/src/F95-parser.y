@@ -845,7 +845,7 @@ program_name:   /* null */
 
 func_result:
         RESULT '(' name ')'
-        { $$ = $3; printf("FUNC RESULT OK\n"); }
+        { $$ = $3; }
         ;
 
 result_opt:    /* null */
