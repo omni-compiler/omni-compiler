@@ -8872,11 +8872,13 @@ compile_ENUMERATOR_statement(expr x)
 
         id = declare_ident(sym, CL_PARAM);
         /* Currently ignore KIND */
-        declare_id_type(id, type_INT);
+        declare_id_type(id, wrap_type(type_INT));
+        TYPE_SET_PARAMETER(ID_TYPE(id));
 
         enumerator = new_ident_desc(sym);
         ID_TYPE(enumerator) = ID_TYPE(id);
-        VAR_INIT_VALUE(enumerator) = compile_expression(value);
+        VAR_INIT_VALUE(id) = compile_expression(value);
+        VAR_INIT_VALUE(enumerator) = VAR_INIT_VALUE(id);
         ID_LINK_ADD(enumerator, TYPE_MEMBER_LIST(enum_tp), last_ip);
 
         ENUMERATOR_DEFINE(enumerator) = id;
