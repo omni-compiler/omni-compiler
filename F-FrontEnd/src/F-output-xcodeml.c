@@ -4814,6 +4814,24 @@ outx_equivalenceDecl(int l, expv v)
 }
 
 
+
+/**
+ * output FenumDecl
+ */
+static void
+outx_enumDecl(int l, ID id)
+{
+    if(id == NULL)
+        return;
+
+    outx_tagOfDeclNoChild(l,
+                          "%s type=\"%s\"",
+                          ID_LINE(id),
+                          "FenumDecl",
+                          getTypeID(ID_TYPE(id)));
+}
+
+
 static int
 qsort_compare_id(const void *v1, const void *v2)
 {
@@ -4950,6 +4968,10 @@ emit_decl(int l, ID id)
     case CL_ENTRY:
         break;
 
+    case CL_ENUM:
+        outx_enumDecl(l, id);
+        break;
+
     default:
         switch (ID_STORAGE(id)) {
             case STG_ARG:
@@ -5006,6 +5028,13 @@ outx_id_declarations(int l, ID id_list, int hasResultVar, const char * functionN
                 modname = ID_SYM(id);
             }
 
+            if (ID_CLASS(id) == CL_ENUM) {
+                ID enumerator;
+                FOREACH_MEMBER(enumerator, ID_TYPE(id)) {
+                    ID_IS_EMITTED(ENUMERATOR_DEFINE(enumerator)) = TRUE;
+                }
+            }
+
             if (ID_CLASS(id) != CL_TAGNAME) {
                 continue;
             }
@@ -5038,6 +5067,7 @@ outx_id_declarations(int l, ID id_list, int hasResultVar, const char * functionN
                 outx_structDecl(l, id);
                 ID_IS_EMITTED(id) = TRUE;
             }
+
         }
 
         /*

@@ -33,7 +33,7 @@ enum name_class {
     CL_TYPE_PARAM, /* type parameter name */
     CL_TYPE_BOUND_PROC, /* type bound procedure */
     CL_MULTI,     /* Both the derived type name and the generic procedure */
-    CL_ENUM,      /* TODO */
+    CL_ENUM,      /* enum (dummy name) */
 };
 
 extern char *name_class_names[];
@@ -266,6 +266,10 @@ typedef struct ident_descriptor
             /* for CL_MULTI */
             struct ident_descriptor * id_list;
         } multi_info;
+        struct {
+            /* for enumerator */
+            struct ident_descriptor * define;
+        } enumerator_info;
     } info;
 } *ID;
 
@@ -415,6 +419,8 @@ struct use_assoc_info {
      TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_DEFERRED)
 
 #define MULTI_ID_LIST(id)     ((id)->info.multi_info.id_list)
+
+#define ENUMERATOR_DEFINE(id) ((id)->info.enumerator_info.define)
 
 struct interface_info {
     enum {
