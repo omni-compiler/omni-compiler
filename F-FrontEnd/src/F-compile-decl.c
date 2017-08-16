@@ -2121,6 +2121,10 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
             break;
         case F03_BIND_SPEC:
             TYPE_SET_BIND(tp);
+            if(EXPR_ARG1(v) != NULL) {
+                // BIND(C, NAME='')
+                TYPE_BIND_NAME(tp) = EXPR_ARG1(v);
+            }
             break;
         case F03_VALUE_SPEC:
             TYPE_SET_VALUE(tp);
