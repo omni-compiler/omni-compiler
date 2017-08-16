@@ -449,6 +449,7 @@ int check_ident_context(char *name)
     case RECURSIVE:
     case ELEMENTAL:
     case MODULE:
+    case IMPURE:
         if(fixed_format_flag){
             if (strncasecmp(name, "function", 8) == 0 &&
                 is_function_statement_context()){
@@ -470,6 +471,8 @@ int check_ident_context(char *name)
                     ret = RECURSIVE;
                 } else if (strcasecmp(name, "module") == 0) {
                     ret = MODULE;
+                } else if(strcasecmp(name, "impure") == 0) {
+                    ret = IMPURE;
                 }
             }
         }
