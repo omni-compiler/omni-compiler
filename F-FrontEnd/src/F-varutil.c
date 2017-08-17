@@ -218,6 +218,7 @@ expr_is_constant_typeof(x, bt)
     case MUL_EXPR:
     case DIV_EXPR:
     case POWER_EXPR:
+    case F_CONCAT_EXPR:
         if (EXPR_ARG1(x) == NULL) {
             fatal("internal compiler error.");
         }
