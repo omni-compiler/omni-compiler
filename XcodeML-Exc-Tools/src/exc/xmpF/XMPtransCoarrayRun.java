@@ -1590,6 +1590,7 @@ public class XMPtransCoarrayRun
   //-----------------------------------------------------
   //  TRANSLATION p.
   //  add coarrays as actual arguments to syncall library call
+  //  If the coarray x is allocatable, add loc(x) instead of x.
   //  TRANSLATION p1.
   //  add an argument as the number of images (for syncimages)
   //-----------------------------------------------------
@@ -1687,8 +1688,15 @@ public class XMPtransCoarrayRun
 
   private Xobject _getCoarrayNamesIntoArgs(ArrayList<XMPcoarray> coarrays) {
     Xobject args = Xcons.List();
-    for (XMPcoarray coarray: coarrays)
-      args.add(Xcons.FvarRef(coarray.getIdent()));
+    for (XMPcoarray coarray: coarrays) {
+      Xobject arg = Xcons.FvarRef(coarray.getIdent());
+      if (coarray.isAllocatable()) {
+        Ident locId = declInt8IntrinsicIdent("loc");
+        args.add(locId.Call(Xcons.List(arg)));
+      } else {
+        args.add(arg);
+      }
+    }
     return args;
   }
 
@@ -3796,6 +3804,13 @@ public class XMPtransCoarrayRun
 
   private Ident declIntIntrinsicIdent(String name) { 
     FunctionType ftype = new FunctionType(Xtype.FintType, Xtype.TQ_FINTRINSIC);
+    Ident ident = env.declIntrinsicIdent(name, ftype);
+    return ident;
+  }
+
+
+  private Ident declInt8IntrinsicIdent(String name) { 
+    FunctionType ftype = new FunctionType(Xtype.Fint8Type, Xtype.TQ_FINTRINSIC);
     Ident ident = env.declIntrinsicIdent(name, ftype);
     return ident;
   }

@@ -4042,7 +4042,6 @@ static void _XMP_gmove_inout(_XMP_gmv_desc_t *gmv_desc_org, _XMP_gmv_desc_t *gmv
 
       int ncoord[_XMP_N_MAX_DIM];
       _XMP_calc_rank_array(gmv_nodes, ncoord, tgt_node);
-      for (int i = 0; i < ndims_gmv_nodes; i++) ncoord[i]++; // to one-based.
       _XMP_coarray_rdma_image_set_n(ndims_gmv_nodes, ncoord);
 
       long *org_lbound = gmv_inout_list->org.lb;
@@ -4150,7 +4149,6 @@ void _XMP_gmove_inout_scalar(void *scalar, _XMP_gmv_desc_t *gmv_desc, int rdma_t
 
       int ncoord[_XMP_N_MAX_DIM];
       _XMP_calc_rank_array(gmv_nodes, ncoord, tgt_node);
-      for (int i = 0; i < ndims_gmv_nodes; i++) ncoord[i]++; // to one-based.
       _XMP_coarray_rdma_image_set_n(ndims_gmv_nodes, ncoord);
 
       long *tgt_lbound = gmv_inout_list->tgt.lb;

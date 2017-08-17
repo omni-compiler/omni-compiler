@@ -6346,14 +6346,13 @@ void _XMP_atomic_define_1(void *dst_desc, size_t dst_offset, int image0, int val
 			  size_t src_offset, size_t elmt_size)
 {
   _XMP_coarray_t* c = (_XMP_coarray_t*)dst_desc;
-  int target_rank = image0 - 1;
   
 #ifdef _XMP_GASNET
-  _XMP_gasnet_atomic_define(target_rank, c, dst_offset, value, src_desc, src_offset, elmt_size);
+  _XMP_gasnet_atomic_define(image0, c, dst_offset, value, src_desc, src_offset, elmt_size);
 #elif _XMP_FJRDMA
-  _XMP_fjrdma_atomic_define(target_rank, c, dst_offset, value, src_desc, src_offset, elmt_size);
+  _XMP_fjrdma_atomic_define(image0, c, dst_offset, value, src_desc, src_offset, elmt_size);
 #elif _XMP_MPI3_ONESIDED
-  _XMP_mpi_atomic_define(target_rank, c, dst_offset, value, elmt_size);
+  _XMP_mpi_atomic_define(image0, c, dst_offset, value, elmt_size);
 #endif
 }
 
@@ -6361,15 +6360,14 @@ void _XMP_atomic_define_2(void *dst_desc, size_t dst_offset, int image0, int ima
 			  size_t src_offset, size_t elmt_size)
 {
   _XMP_coarray_t* c = (_XMP_coarray_t*)dst_desc;
-  int target_rank = c->distance_of_image_elmts[0] * (image0 - 1)
-                  + c->distance_of_image_elmts[1] * (image1 - 1);
+  int image = c->distance_of_image_elmts[0] * image0 + c->distance_of_image_elmts[1] * image1;
   
 #ifdef _XMP_GASNET
-  _XMP_gasnet_atomic_define(target_rank, c, dst_offset, value, src_desc, src_offset, elmt_size);
+  _XMP_gasnet_atomic_define(image, c, dst_offset, value, src_desc, src_offset, elmt_size);
 #elif _XMP_FJRDMA
-  _XMP_fjrdma_atomic_define(target_rank, c, dst_offset, value, src_desc, src_offset, elmt_size);
+  _XMP_fjrdma_atomic_define(image, c, dst_offset, value, src_desc, src_offset, elmt_size);
 #elif _XMP_MPI3_ONESIDED
-  _XMP_mpi_atomic_define(target_rank, c, dst_offset, value, elmt_size);
+  _XMP_mpi_atomic_define(image, c, dst_offset, value, elmt_size);
 #endif
 }
 
@@ -6377,16 +6375,16 @@ void _XMP_atomic_define_3(void *dst_desc, size_t dst_offset, int image0, int ima
 			  int value, void *src_desc, size_t src_offset, size_t elmt_size)
 {
   _XMP_coarray_t* c = (_XMP_coarray_t*)dst_desc;
-  int target_rank = c->distance_of_image_elmts[0] * (image0 - 1)
-                  + c->distance_of_image_elmts[1] * (image1 - 1)
-                  + c->distance_of_image_elmts[2] * (image2 - 1);
+  int image = c->distance_of_image_elmts[0] * image0
+    + c->distance_of_image_elmts[1] * image1
+    + c->distance_of_image_elmts[2] * image2;
   
 #ifdef _XMP_GASNET
-  _XMP_gasnet_atomic_define(target_rank, c, dst_offset, value, src_desc, src_offset, elmt_size);
+  _XMP_gasnet_atomic_define(image, c, dst_offset, value, src_desc, src_offset, elmt_size);
 #elif _XMP_FJRDMA
-  _XMP_fjrdma_atomic_define(target_rank, c, dst_offset, value, src_desc, src_offset, elmt_size);
+  _XMP_fjrdma_atomic_define(image, c, dst_offset, value, src_desc, src_offset, elmt_size);
 #elif _XMP_MPI3_ONESIDED
-  _XMP_mpi_atomic_define(target_rank, c, dst_offset, value, elmt_size);
+  _XMP_mpi_atomic_define(image, c, dst_offset, value, elmt_size);
 #endif
 }
 
@@ -6394,17 +6392,17 @@ void _XMP_atomic_define_4(void *dst_desc, size_t dst_offset, int image0, int ima
 			  int image3, int value, void *src_desc, size_t src_offset, size_t elmt_size)
 {
   _XMP_coarray_t* c = (_XMP_coarray_t*)dst_desc;
-  int target_rank = c->distance_of_image_elmts[0] * (image0 - 1)
-                  + c->distance_of_image_elmts[1] * (image1 - 1)
-                  + c->distance_of_image_elmts[2] * (image2 - 1)
-                  + c->distance_of_image_elmts[3] * (image3 - 1);
+  int image = c->distance_of_image_elmts[0] * image0 
+    + c->distance_of_image_elmts[1] * image1
+    + c->distance_of_image_elmts[2] * image2
+    + c->distance_of_image_elmts[3] * image3;
   
 #ifdef _XMP_GASNET
-  _XMP_gasnet_atomic_define(target_rank, c, dst_offset, value, src_desc, src_offset, elmt_size);
+  _XMP_gasnet_atomic_define(image, c, dst_offset, value, src_desc, src_offset, elmt_size);
 #elif _XMP_FJRDMA
-  _XMP_fjrdma_atomic_define(target_rank, c, dst_offset, value, src_desc, src_offset, elmt_size);
+  _XMP_fjrdma_atomic_define(image, c, dst_offset, value, src_desc, src_offset, elmt_size);
 #elif _XMP_MPI3_ONESIDED
-  _XMP_mpi_atomic_define(target_rank, c, dst_offset, value, elmt_size);
+  _XMP_mpi_atomic_define(image, c, dst_offset, value, elmt_size);
 #endif
 }
 
@@ -6412,18 +6410,18 @@ void _XMP_atomic_define_5(void *dst_desc, size_t dst_offset, int image0, int ima
 			  int image3, int image4, int value, void *src_desc, size_t src_offset, size_t elmt_size)
 {
   _XMP_coarray_t* c = (_XMP_coarray_t*)dst_desc;
-  int target_rank = c->distance_of_image_elmts[0] * (image0 - 1)
-                  + c->distance_of_image_elmts[1] * (image1 - 1)
-                  + c->distance_of_image_elmts[2] * (image2 - 1)
-                  + c->distance_of_image_elmts[3] * (image3 - 1)
-                  + c->distance_of_image_elmts[4] * (image4 - 1);
+  int image = c->distance_of_image_elmts[0] * image0
+    + c->distance_of_image_elmts[1] * image1
+    + c->distance_of_image_elmts[2] * image2
+    + c->distance_of_image_elmts[3] * image3
+    + c->distance_of_image_elmts[4] * image4;
   
 #ifdef _XMP_GASNET
-  _XMP_gasnet_atomic_define(target_rank, c, dst_offset, value, src_desc, src_offset, elmt_size);
+  _XMP_gasnet_atomic_define(image, c, dst_offset, value, src_desc, src_offset, elmt_size);
 #elif _XMP_FJRDMA
-  _XMP_fjrdma_atomic_define(target_rank, c, dst_offset, value, src_desc, src_offset, elmt_size);
+  _XMP_fjrdma_atomic_define(image, c, dst_offset, value, src_desc, src_offset, elmt_size);
 #elif _XMP_MPI3_ONESIDED
-  _XMP_mpi_atomic_define(target_rank, c, dst_offset, value, elmt_size);
+  _XMP_mpi_atomic_define(image, c, dst_offset, value, elmt_size);
 #endif
 }
 
@@ -6432,19 +6430,19 @@ void _XMP_atomic_define_6(void *dst_desc, size_t dst_offset, int image0, int ima
 			  size_t elmt_size)
 {
   _XMP_coarray_t* c = (_XMP_coarray_t*)dst_desc;
-  int target_rank = c->distance_of_image_elmts[0] * (image0 - 1)
-                  + c->distance_of_image_elmts[1] * (image1 - 1)
-                  + c->distance_of_image_elmts[2] * (image2 - 1)
-                  + c->distance_of_image_elmts[3] * (image3 - 1)
-                  + c->distance_of_image_elmts[4] * (image4 - 1)
-                  + c->distance_of_image_elmts[5] * (image5 - 1);
+  int image = c->distance_of_image_elmts[0] * image0 
+    + c->distance_of_image_elmts[1] * image1
+    + c->distance_of_image_elmts[2] * image2
+    + c->distance_of_image_elmts[3] * image3
+    + c->distance_of_image_elmts[4] * image4
+    + c->distance_of_image_elmts[5] * image5;
   
 #ifdef _XMP_GASNET
-  _XMP_gasnet_atomic_define(target_rank, c, dst_offset, value, src_desc, src_offset, elmt_size);
+  _XMP_gasnet_atomic_define(image, c, dst_offset, value, src_desc, src_offset, elmt_size);
 #elif _XMP_FJRDMA
-  _XMP_fjrdma_atomic_define(target_rank, c, dst_offset, value, src_desc, src_offset, elmt_size);
+  _XMP_fjrdma_atomic_define(image, c, dst_offset, value, src_desc, src_offset, elmt_size);
 #elif _XMP_MPI3_ONESIDED
-  _XMP_mpi_atomic_define(target_rank, c, dst_offset, value, elmt_size);
+  _XMP_mpi_atomic_define(image, c, dst_offset, value, elmt_size);
 #endif
 }
 
@@ -6453,20 +6451,20 @@ void _XMP_atomic_define_7(void *dst_desc, size_t dst_offset, int image0, int ima
 			  size_t src_offset, size_t elmt_size)
 {
   _XMP_coarray_t* c = (_XMP_coarray_t*)dst_desc;
-  int target_rank = c->distance_of_image_elmts[0] * (image0 - 1)
-                  + c->distance_of_image_elmts[1] * (image1 - 1)
-                  + c->distance_of_image_elmts[2] * (image2 - 1)
-                  + c->distance_of_image_elmts[3] * (image3 - 1)
-                  + c->distance_of_image_elmts[4] * (image4 - 1)
-                  + c->distance_of_image_elmts[5] * (image5 - 1)
-                  + c->distance_of_image_elmts[6] * (image6 - 1);
+  int image = c->distance_of_image_elmts[0] * image0
+    + c->distance_of_image_elmts[1] * image1
+    + c->distance_of_image_elmts[2] * image2
+    + c->distance_of_image_elmts[3] * image3
+    + c->distance_of_image_elmts[4] * image4
+    + c->distance_of_image_elmts[5] * image5
+    + c->distance_of_image_elmts[6] * image6;
   
 #ifdef _XMP_GASNET
-  _XMP_gasnet_atomic_define(target_rank, c, dst_offset, value, src_desc, src_offset, elmt_size);
+  _XMP_gasnet_atomic_define(image, c, dst_offset, value, src_desc, src_offset, elmt_size);
 #elif _XMP_FJRDMA
-  _XMP_fjrdma_atomic_define(target_rank, c, dst_offset, value, src_desc, src_offset, elmt_size);
+  _XMP_fjrdma_atomic_define(image, c, dst_offset, value, src_desc, src_offset, elmt_size);
 #elif _XMP_MPI3_ONESIDED
-  _XMP_mpi_atomic_define(target_rank, c, dst_offset, value, elmt_size);
+  _XMP_mpi_atomic_define(image, c, dst_offset, value, elmt_size);
 #endif
 }
 
@@ -6485,18 +6483,17 @@ void _XMP_atomic_ref_0(void *dst_desc, size_t dst_offset, int *value, void *src_
 #endif
 }
 
-void _XMP_atomic_ref_1(void *dst_desc, size_t dst_offset, int image0, int *value, void *src_desc, 
+void _XMP_atomic_ref_1(void *dst_desc, size_t dst_offset, int image, int *value, void *src_desc, 
 		       size_t src_offset, size_t elmt_size)
 {
   _XMP_coarray_t* c = (_XMP_coarray_t*)dst_desc;
-  int target_rank = image0 - 1;
 
 #ifdef _XMP_GASNET
-  _XMP_gasnet_atomic_ref(target_rank, c, dst_offset, value, elmt_size);
+  _XMP_gasnet_atomic_ref(image, c, dst_offset, value, elmt_size);
 #elif _XMP_FJRDMA
-  _XMP_fjrdma_atomic_ref(target_rank, c, dst_offset, value, src_desc, src_offset, elmt_size);
+  _XMP_fjrdma_atomic_ref(image, c, dst_offset, value, src_desc, src_offset, elmt_size);
 #elif _XMP_MPI3_ONESIDED
-  _XMP_mpi_atomic_ref(target_rank, c, dst_offset, value, elmt_size);
+  _XMP_mpi_atomic_ref(image, c, dst_offset, value, elmt_size);
 #endif
 }
 
@@ -6504,15 +6501,15 @@ void _XMP_atomic_ref_2(void *dst_desc, size_t dst_offset, int image0, int image1
 		       size_t src_offset, size_t elmt_size)
 {
   _XMP_coarray_t* c = (_XMP_coarray_t*)dst_desc;
-  int target_rank = c->distance_of_image_elmts[0] * (image0 - 1)
-    + c->distance_of_image_elmts[1] * (image1 - 1);
+  int image = c->distance_of_image_elmts[0] * image0
+    + c->distance_of_image_elmts[1] * image1;
 
 #ifdef _XMP_GASNET
-  _XMP_gasnet_atomic_ref(target_rank, c, dst_offset, value, elmt_size);
+  _XMP_gasnet_atomic_ref(image, c, dst_offset, value, elmt_size);
 #elif _XMP_FJRDMA
-  _XMP_fjrdma_atomic_ref(target_rank, c, dst_offset, value, src_desc, src_offset, elmt_size);
+  _XMP_fjrdma_atomic_ref(image, c, dst_offset, value, src_desc, src_offset, elmt_size);
 #elif _XMP_MPI3_ONESIDED
-  _XMP_mpi_atomic_ref(target_rank, c, dst_offset, value, elmt_size);
+  _XMP_mpi_atomic_ref(image, c, dst_offset, value, elmt_size);
 #endif
 }
 
@@ -6520,16 +6517,16 @@ void _XMP_atomic_ref_3(void *dst_desc, size_t dst_offset, int image0, int image1
 		       int *value, void *src_desc, size_t src_offset, size_t elmt_size)
 {
   _XMP_coarray_t* c = (_XMP_coarray_t*)dst_desc;
-  int target_rank = c->distance_of_image_elmts[0] * (image0 - 1)
-    + c->distance_of_image_elmts[1] * (image1 - 1)
-    + c->distance_of_image_elmts[2] * (image2 - 1);
+  int image = c->distance_of_image_elmts[0] * image0
+    + c->distance_of_image_elmts[1] * image1
+    + c->distance_of_image_elmts[2] * image2;
 
 #ifdef _XMP_GASNET
-  _XMP_gasnet_atomic_ref(target_rank, c, dst_offset, value, elmt_size);
+  _XMP_gasnet_atomic_ref(image, c, dst_offset, value, elmt_size);
 #elif _XMP_FJRDMA
-  _XMP_fjrdma_atomic_ref(target_rank, c, dst_offset, value, src_desc, src_offset, elmt_size);
+  _XMP_fjrdma_atomic_ref(image, c, dst_offset, value, src_desc, src_offset, elmt_size);
 #elif _XMP_MPI3_ONESIDED
-  _XMP_mpi_atomic_ref(target_rank, c, dst_offset, value, elmt_size);
+  _XMP_mpi_atomic_ref(image, c, dst_offset, value, elmt_size);
 #endif
 }
 
@@ -6537,17 +6534,17 @@ void _XMP_atomic_ref_4(void *dst_desc, size_t dst_offset, int image0, int image1
 		       int image3, int *value, void *src_desc, size_t src_offset, size_t elmt_size)
 {
   _XMP_coarray_t* c = (_XMP_coarray_t*)dst_desc;
-  int target_rank = c->distance_of_image_elmts[0] * (image0 - 1)
-    + c->distance_of_image_elmts[1] * (image1 - 1)
-    + c->distance_of_image_elmts[2] * (image2 - 1)
-    + c->distance_of_image_elmts[3] * (image3 - 1);
+  int image = c->distance_of_image_elmts[0] * image0 
+    + c->distance_of_image_elmts[1] * image1
+    + c->distance_of_image_elmts[2] * image2
+    + c->distance_of_image_elmts[3] * image3;
 
 #ifdef _XMP_GASNET
-  _XMP_gasnet_atomic_ref(target_rank, c, dst_offset, value, elmt_size);
+  _XMP_gasnet_atomic_ref(image, c, dst_offset, value, elmt_size);
 #elif _XMP_FJRDMA
-  _XMP_fjrdma_atomic_ref(target_rank, c, dst_offset, value, src_desc, src_offset, elmt_size);
+  _XMP_fjrdma_atomic_ref(image, c, dst_offset, value, src_desc, src_offset, elmt_size);
 #elif _XMP_MPI3_ONESIDED
-  _XMP_mpi_atomic_ref(target_rank, c, dst_offset, value, elmt_size);
+  _XMP_mpi_atomic_ref(image, c, dst_offset, value, elmt_size);
 #endif
 }
 
@@ -6556,18 +6553,18 @@ void _XMP_atomic_ref_5(void *dst_desc, size_t dst_offset, int image0, int image1
 		       size_t elmt_size)
 {
   _XMP_coarray_t* c = (_XMP_coarray_t*)dst_desc;
-  int target_rank = c->distance_of_image_elmts[0] * (image0 - 1)
-    + c->distance_of_image_elmts[1] * (image1 - 1)
-    + c->distance_of_image_elmts[2] * (image2 - 1)
-    + c->distance_of_image_elmts[3] * (image3 - 1)
-    + c->distance_of_image_elmts[4] * (image4 - 1);
+  int image = c->distance_of_image_elmts[0] * image0
+    + c->distance_of_image_elmts[1] * image1
+    + c->distance_of_image_elmts[2] * image2
+    + c->distance_of_image_elmts[3] * image3
+    + c->distance_of_image_elmts[4] * image4;
 
 #ifdef _XMP_GASNET
-  _XMP_gasnet_atomic_ref(target_rank, c, dst_offset, value, elmt_size);
+  _XMP_gasnet_atomic_ref(image, c, dst_offset, value, elmt_size);
 #elif _XMP_FJRDMA
-  _XMP_fjrdma_atomic_ref(target_rank, c, dst_offset, value, src_desc, src_offset, elmt_size);
+  _XMP_fjrdma_atomic_ref(image, c, dst_offset, value, src_desc, src_offset, elmt_size);
 #elif _XMP_MPI3_ONESIDED
-  _XMP_mpi_atomic_ref(target_rank, c, dst_offset, value, elmt_size);
+  _XMP_mpi_atomic_ref(image, c, dst_offset, value, elmt_size);
 #endif
 }
 
@@ -6576,19 +6573,19 @@ void _XMP_atomic_ref_6(void *dst_desc, size_t dst_offset, int image0, int image1
 		       size_t src_offset, size_t elmt_size)
 {
   _XMP_coarray_t* c = (_XMP_coarray_t*)dst_desc;
-  int target_rank = c->distance_of_image_elmts[0] * (image0 - 1)
-    + c->distance_of_image_elmts[1] * (image1 - 1)
-    + c->distance_of_image_elmts[2] * (image2 - 1)
-    + c->distance_of_image_elmts[3] * (image3 - 1)
-    + c->distance_of_image_elmts[4] * (image4 - 1)
-    + c->distance_of_image_elmts[5] * (image5 - 1);
+  int image = c->distance_of_image_elmts[0] * image0 
+    + c->distance_of_image_elmts[1] * image1
+    + c->distance_of_image_elmts[2] * image2
+    + c->distance_of_image_elmts[3] * image3
+    + c->distance_of_image_elmts[4] * image4
+    + c->distance_of_image_elmts[5] * image5;
 
 #ifdef _XMP_GASNET
-  _XMP_gasnet_atomic_ref(target_rank, c, dst_offset, value, elmt_size);
+  _XMP_gasnet_atomic_ref(image, c, dst_offset, value, elmt_size);
 #elif _XMP_FJRDMA
-  _XMP_fjrdma_atomic_ref(target_rank, c, dst_offset, value, src_desc, src_offset, elmt_size);
+  _XMP_fjrdma_atomic_ref(image, c, dst_offset, value, src_desc, src_offset, elmt_size);
 #elif _XMP_MPI3_ONESIDED
-  _XMP_mpi_atomic_ref(target_rank, c, dst_offset, value, elmt_size);
+  _XMP_mpi_atomic_ref(image, c, dst_offset, value, elmt_size);
 #endif
 }
 
@@ -6597,19 +6594,19 @@ void _XMP_atomic_ref_7(void *dst_desc, size_t dst_offset, int image0, int image1
 		       size_t src_offset, size_t elmt_size)
 {
   _XMP_coarray_t* c = (_XMP_coarray_t*)dst_desc;
-  int target_rank = c->distance_of_image_elmts[0] * (image0 - 1)
-    + c->distance_of_image_elmts[1] * (image1 - 1)
-    + c->distance_of_image_elmts[2] * (image2 - 1)
-    + c->distance_of_image_elmts[3] * (image3 - 1)
-    + c->distance_of_image_elmts[4] * (image4 - 1)
-    + c->distance_of_image_elmts[5] * (image5 - 1)
-    + c->distance_of_image_elmts[6] * (image6 - 1);
+  int image = c->distance_of_image_elmts[0] * image0
+    + c->distance_of_image_elmts[1] * image1
+    + c->distance_of_image_elmts[2] * image2
+    + c->distance_of_image_elmts[3] * image3
+    + c->distance_of_image_elmts[4] * image4
+    + c->distance_of_image_elmts[5] * image5
+    + c->distance_of_image_elmts[6] * image6;
 
 #ifdef _XMP_GASNET
-  _XMP_gasnet_atomic_ref(target_rank, c, dst_offset, value, elmt_size);
+  _XMP_gasnet_atomic_ref(image, c, dst_offset, value, elmt_size);
 #elif _XMP_FJRDMA
-  _XMP_fjrdma_atomic_ref(target_rank, c, dst_offset, value, src_desc, src_offset, elmt_size);
+  _XMP_fjrdma_atomic_ref(image, c, dst_offset, value, src_desc, src_offset, elmt_size);
 #elif _XMP_MPI3_ONESIDED
-  _XMP_mpi_atomic_ref(target_rank, c, dst_offset, value, elmt_size);
+  _XMP_mpi_atomic_ref(image, c, dst_offset, value, elmt_size);
 #endif
 }

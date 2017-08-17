@@ -63,6 +63,7 @@ extern int lineno;
 extern int need_keyword;
 extern int enable_need_type_keyword;
 extern int need_type_keyword;
+extern int need_do_keyword;
 extern int need_type_len;
 extern int need_check_user_defined;
 

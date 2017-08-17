@@ -8,12 +8,11 @@ float b[3][5]:[*], b_test[3][5];
 double c[2][3][4]:[*], c_test[2][3][4];
 long d[3][4][3][2]:[*], d_test[3][4][3][2];
 int e[5][7]:[*], e_test[5][7];
-int status, return_val = 0;
-#pragma xmp nodes p(2)
-
+int return_val = 0;
+#pragma xmp nodes p[2]
 
 void initialize(int me){
-  int i, j, m, n, t = (me-1) * 100;
+  int i, j, m, n, t = me * 100;
   
   for(i=0;i<10;i++){
     a[i] = i + t;
@@ -56,25 +55,25 @@ void initialize(int me){
 }
 
 void communicate_1(int me){
-  xmp_sync_all(&status);
-  if(me == 2){
+  xmp_sync_all(NULL);
+  if(me == 1){
     int tmp[100];
-    tmp[3:5] = a[2:5]:[1]; // get
+    tmp[3:5] = a[2:5]:[0]; // get
     memcpy(&a[3], &tmp[3], sizeof(int)*5);
   }
-  if(me == 1){
+  if(me == 0){
     int tmp[50];
     tmp[8] = 999; tmp[9] = 1000;
-    a[0:2]:[2] = tmp[8:2]; // put
+    a[0:2]:[1] = tmp[8:2]; // put
   }
   
-  if(me == 2){
+  if(me == 1){
     a_test[3] = 2; a_test[4] = 3; a_test[5] = 4;
     a_test[6] = 5; a_test[7] = 6; 
     a_test[0] = 999; a_test[1] = 1000;
   }
   
-  xmp_sync_all(&status);
+  xmp_sync_all(NULL);
 }
 
 void check_1(int me){
@@ -87,34 +86,34 @@ void check_1(int me){
 	     me, i, i, a[i], a_test[i]);
     }
   }
-  xmp_sync_all(&status);
+  xmp_sync_all(NULL);
   if(flag == TRUE)   printf("[%d] check_1 : PASS\n", me);
   else return_val = 1;
 }
 
 void communicate_2(int me){
-  xmp_sync_all(&status);
-  if(me == 1){
+  xmp_sync_all(NULL);
+  if(me == 0){
     int a1, a2, a3, a4, a5, a6, a7;
     a1 = 1; a2 = 2; a3 = 3;
     a4 = 0; a5 = 1; a6 = 3;
-    a7 = 2;
+    a7 = 1;
     b[a1][a2:a3] = b[a4][a5:a6]:[a7];  // get
-    b[2][:1]:[2] = b[0][:1];           // put
+    b[2][:1]:[1] = b[0][:1];           // put
   }
   
-  if(me == 1){
+  if(me == 0){
     b_test[1][2] = 101; b_test[1][3] = 102; b_test[1][4] = 103;
   }
-  if(me == 2){
+  if(me == 1){
     b_test[2][0] = 0;
   }
   
-  xmp_sync_all(&status);
+  xmp_sync_all(NULL);
 }
 
 void check_2(int me){
-  xmp_sync_all(&status);
+  xmp_sync_all(NULL);
   int i, j, flag = TRUE;
   
   for(i=0;i<3;i++){
@@ -126,32 +125,32 @@ void check_2(int me){
       }
     }
   }
-  xmp_sync_all(&status);
+  xmp_sync_all(NULL);
   if(flag == TRUE)   printf("[%d] check_2 : PASS\n", me);
   else return_val = 1;
 }
 
 void communicate_3(int me){
-  xmp_sync_all(&status);
-  if(me == 2){
-    c[1][2][0:1]:[1] = c[1][1][1];     // put
-  }
+  xmp_sync_all(NULL);
   if(me == 1){
+    c[1][2][0:1]:[0] = c[1][1][1];     // put
+  }
+  if(me == 0){
     double tmp[2][5];
-    tmp[1][0:5] = c[0][2][1:5]:[2];       // get
+    tmp[1][0:5] = c[0][2][1:5]:[1];       // get
     memcpy(&c[0][2][1], &tmp[1][0], sizeof(double) * 3);
   }
   
-  if(me == 1){
+  if(me == 0){
     c_test[1][2][0] = 117;
     c_test[0][2][1] = 109; c_test[0][2][2] = 110; c_test[0][2][3] = 111;
   }
   
-  xmp_sync_all(&status);
+  xmp_sync_all(NULL);
 }
 
 void check_3(int me){
-  xmp_sync_all(&status);
+  xmp_sync_all(NULL);
   int i, j, m, flag = TRUE;
 
   for(i=0;i<2;i++){
@@ -165,34 +164,34 @@ void check_3(int me){
       }
     }
   }
-  xmp_sync_all(&status);
+  xmp_sync_all(NULL);
   if(flag == TRUE)   printf("[%d] check_3 : PASS\n", me);
   else return_val = 1;
 }
 
 void communicate_4(int me){
-  xmp_sync_all(&status);
-  if(me == 2){
+  xmp_sync_all(NULL);
+  if(me == 1){
     long tmp[2] = {5, 9};
-    d[1][2][1][:]:[1] = tmp[:];          // put
+    d[1][2][1][:]:[0] = tmp[:];          // put
   }
-  if(me == 2){
-    d[0][1][1][:] = d[0][2][1][:]:[1];   // get 
+  if(me == 1){
+    d[0][1][1][:] = d[0][2][1][:]:[0];   // get 
   }
 
-  if(me == 1){
+  if(me == 0){
     d_test[1][2][1][0] = 5; d_test[1][2][1][1] = 9;
   }
-  if(me == 2){
+  if(me == 1){
     d_test[0][1][1][0] = 14; d_test[0][1][1][1] = 15;
   }
 
-  xmp_sync_all(&status);
+  xmp_sync_all(NULL);
 }
 
 
 void check_4(int me){
-  xmp_sync_all(&status);
+  xmp_sync_all(NULL);
 
   int i, j, m, n, flag = TRUE;
   for(i=0;i<3;i++){
@@ -209,32 +208,32 @@ void check_4(int me){
     }
   }
 
-  xmp_sync_all(&status);
+  xmp_sync_all(NULL);
   if(flag == TRUE)   printf("[%d] check_4 : PASS\n", me);
   else return_val = 1;
 }
 
 void communicate_5(int me){
-  xmp_sync_all(&status);
+  xmp_sync_all(NULL);
   const int e1 = 1, e2 = 2;
   const int e3 = 2, e4 = 3;
 
-  if(me == 1){
-    e[e1+1][e2+1:2]:[2] = e[e3+1][e4+1:2];
+  if(me == 0){
+    e[e1+1][e2+1:2]:[1] = e[e3+1][e4+1:2];
     e_test[3][5] = 132;
     e_test[4][5] = 141;
   }
 
-  if(me == 2){
-    e[3:2][e4+2]:[1] = e[3:2][e4+2];
+  if(me == 1){
+    e[3:2][e4+2]:[0] = e[3:2][e4+2];
     e_test[2][3] = 31;
     e_test[2][4] = 32;
   }
-  xmp_sync_all(&status);
+  xmp_sync_all(NULL);
 }
 
 void check_5(int me){
-  xmp_sync_all(&status);
+  xmp_sync_all(NULL);
   int i, j, flag = TRUE;
 
   for(i=0;i<5;i++){
@@ -246,7 +245,7 @@ void check_5(int me){
       }
     }
   }
-  xmp_sync_all(&status);
+  xmp_sync_all(NULL);
   if(flag == TRUE)   printf("[%d] check_5 : PASS\n", me);
   else return_val = 1;
 }
@@ -257,9 +256,7 @@ void bug_107()
 }
 
 int main(){
-  int me;
-  
-  me = xmp_node_num();
+  int me = xmpc_this_image();
   initialize(me);
   
   communicate_1(me);

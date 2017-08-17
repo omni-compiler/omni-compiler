@@ -36,6 +36,7 @@ int st_class;           /* token for classify statement */
 int need_keyword = FALSE;
 int need_type_keyword = FALSE;
 int need_type_len = FALSE;
+int need_do_keyword = FALSE;
 int need_check_user_defined = TRUE; /* check the user defined dot id */
 
 int may_generic_spec = FALSE;
@@ -60,6 +61,7 @@ struct keyword_token {
 extern struct keyword_token dot_keywords[],keywords[];
 extern struct keyword_token end_keywords[];
 extern struct keyword_token type_keywords[];
+extern struct keyword_token do_keywords[];
 
 extern int ocl_flag;
 extern int cdir_flag;
@@ -447,6 +449,7 @@ int check_ident_context(char *name)
     case RECURSIVE:
     case ELEMENTAL:
     case MODULE:
+    case IMPURE:
         if(fixed_format_flag){
             if (strncasecmp(name, "function", 8) == 0 &&
                 is_function_statement_context()){
@@ -468,6 +471,8 @@ int check_ident_context(char *name)
                     ret = RECURSIVE;
                 } else if (strcasecmp(name, "module") == 0) {
                     ret = MODULE;
+                } else if(strcasecmp(name, "impure") == 0) {
+                    ret = IMPURE;
                 }
             }
         }
@@ -788,6 +793,16 @@ token()
         t = get_keyword(type_keywords);
         if (t != UNKNOWN) return(t);
     }
+
+    if (need_do_keyword == TRUE) {
+        /*
+         * require do keyword
+         */
+        need_do_keyword = FALSE;
+        t = get_keyword(do_keywords);
+        if (t != UNKNOWN) return(t);
+    }
+
 
     if(need_type_len == TRUE){  /* for type_length */
         need_type_len = FALSE;
@@ -3248,7 +3263,7 @@ KeepOnGoin:
             error("bad CONDCOMPL sentinel continuation line");
             return (ST_INIT);
         }
-	if (st_OCL_flag || local_OCL_flag) return (ST_INIT); // no continuation line for ocl
+	if (st_OCL_flag && local_OCL_flag) return (ST_INIT); // no continuation line for ocl
     }
 
     if (check_cont && IS_CONT_LINE(stn_cols)){
@@ -3739,6 +3754,7 @@ ScanFortranLine(src, srcHead, dst, dstHead, dstMax, inQuotePtr, quoteCharPtr,
      char **newDstPtr;
 {
     char *cpDst = dst;
+    char *cur;
 
     while (*src != '\0' && dst <= dstMax) {
         if (isspace((int)*src)) {
@@ -3762,9 +3778,21 @@ ScanFortranLine(src, srcHead, dst, dstHead, dstMax, inQuotePtr, quoteCharPtr,
             }
         } else if (*src == 'h' || *src == 'H') {
             if (*inHollerithPtr == FALSE && *inQuotePtr == FALSE) {
-                unHollerith(src, srcHead, dst, dstHead, dstMax,
-                            inQuotePtr, *quoteCharPtr,
-                            inHollerithPtr, hollerithLenPtr, &src, &dst);
+                /*
+                 * check backward if only digit before the H
+                 */
+                cur = src;
+                --cur; // Char before the h/H
+                while (isdigit((int)*cur)) {
+                    --cur;
+                }
+                if(isalpha((int)*cur) || *cur == '_') {
+                    goto copyOne;
+                } else {
+                    unHollerith(src, srcHead, dst, dstHead, dstMax,
+                                inQuotePtr, *quoteCharPtr,
+                                inHollerithPtr, hollerithLenPtr, &src, &dst);
+                }
             } else {
                 goto copyOne;
             }
@@ -3927,6 +3955,7 @@ struct keyword_token keywords[ ] =
     { "import",         IMPORT },
     { "images",         KW_IMAGES },    /* #060 coarray */
     { "implicit",       IMPLICIT },
+    { "impure",         IMPURE },        /* F2008 spec */
     { "include",        INCLUDE },
     { "inout",          KW_INOUT},
     { "inquire",        INQUIRE },
@@ -4038,6 +4067,11 @@ struct keyword_token type_keywords[ ] =
     { "character",        KW_CHARACTER, },
     { 0, 0 }};
 
+struct keyword_token do_keywords[ ] =
+{
+    { "while",            KW_WHILE },
+    { "concurrent",       CONCURRENT },
+    { 0, 0 }};
 
 /*
  * lex for OpenMP part

@@ -209,6 +209,8 @@ state 2058
 %token DOCONCURRENT
 %token CONCURRENT
 
+%token IMPURE
+
 %token REF_OP
 
 %token L_ARRAY_CONSTRUCTOR /* /( */
@@ -526,19 +528,19 @@ static void type_spec_done();
 %type <val> string_const_substr
 %type <val> binding_attr_list binding_attr type_bound_proc_decl_list type_bound_proc_decl
 %type <val> proc_attr_list proc_def_attr proc_attr proc_decl proc_decl_list name_or_type_spec_or_null0 name_or_type_spec_or_null
-%type <val> name name_or_null name_list generic_name defined_operator intrinsic_operator func_prefix prefix_spec
+%type <val> name name_or_null name_list generic_name defined_operator intrinsic_operator func_prefix prefix_spec func_suffix
 %type <val> forall_header forall_triplet forall_triplet_list
 %type <val> declaration_statement95 attr_spec_list attr_spec private_or_public_spec access_spec type_attr_spec_list type_attr_spec
 %type <val> declaration_statement2003 type_param_list
 %type <val> intent_spec kind_selector kind_or_len_selector char_selector len_key_spec len_spec kind_key_spec array_allocation_list  array_allocation defered_shape_list defered_shape
-%type <val> result_opt type_keyword
+%type <val> result_opt func_result type_keyword
 %type <val> action_statement95
 %type <val> action_coarray_statement other_coarray_keyword
 %type <val> sync_stat_arg_list sync_stat_arg image_set
 %type <val> use_rename_list use_rename use_only_list use_only 
 %type <val> allocation_list allocation
 %type <val> scene_list scene_range
-%type <val> bind_opt
+%type <val> bind_opt bind_c
 
 
 %start program
@@ -555,6 +557,8 @@ TYPE_KW: { if (enable_need_type_keyword == TRUE) need_type_keyword = TRUE; };
 NEED_CHECK: {	      need_check_user_defined = FALSE; };
 
 TYPE_KW_COL2: { if (lookup_col2()) need_type_keyword = TRUE;  }
+
+DO_KW: { need_do_keyword = TRUE; }
 
 one_statement:
           STATEMENT_LABEL_NO  /* null statement */
@@ -674,32 +678,28 @@ statement:      /* entry */
         | ENDSUBROUTINE name_or_null
           { $$ = list1(F95_ENDSUBROUTINE_STATEMENT,$2); }
 /* FUNCTION declaration */
-        | FUNCTION IDENTIFIER dummy_arg_list KW result_opt bind_opt
-          { $$ = list6(F_FUNCTION_STATEMENT, $2, $3, NULL, NULL, $5, $6); }
-        | func_prefix FUNCTION IDENTIFIER dummy_arg_list KW result_opt bind_opt
-          { $$ = list6(F_FUNCTION_STATEMENT, $3, $4, NULL, $1, $6, $7); }
-        | type_spec KW FUNCTION IDENTIFIER dummy_arg_list KW result_opt bind_opt
-          { $$ = list6(F_FUNCTION_STATEMENT, $4, $5, $1, NULL, $7, $8); }
+        | FUNCTION IDENTIFIER dummy_arg_list KW func_suffix
+          { $$ = list6(F_FUNCTION_STATEMENT, $2, $3, NULL, NULL, EXPR_ARG1($5), EXPR_ARG2($5)); }
+        | func_prefix FUNCTION IDENTIFIER dummy_arg_list KW func_suffix
+          { $$ = list6(F_FUNCTION_STATEMENT, $3, $4, NULL, $1, EXPR_ARG1($6), EXPR_ARG2($6)); }
+        | type_spec KW FUNCTION IDENTIFIER dummy_arg_list KW func_suffix
+          { $$ = list6(F_FUNCTION_STATEMENT, $4, $5, $1, NULL, EXPR_ARG1($7), EXPR_ARG2($7)); }
         // Trick to allow keyword as identifier. Almost same rule as the one
         // above.
-        | type_spec FUNCTION IDENTIFIER dummy_arg_list KW result_opt bind_opt
-          { $$ = list6(F_FUNCTION_STATEMENT, $3, $4, $1, NULL, $6, $7); }  
-        | type_spec KW func_prefix FUNCTION IDENTIFIER dummy_arg_list
-          KW result_opt bind_opt
-          { $$ = list6(F_FUNCTION_STATEMENT, $5, $6, $1, $3, $8, $9); }
+        | type_spec FUNCTION IDENTIFIER dummy_arg_list KW func_suffix
+        { $$ = list6(F_FUNCTION_STATEMENT, $3, $4, $1, NULL, EXPR_ARG1($6), EXPR_ARG2($6)); }  
+        | type_spec KW func_prefix FUNCTION IDENTIFIER dummy_arg_list KW func_suffix
+          { $$ = list6(F_FUNCTION_STATEMENT, $5, $6, $1, $3, EXPR_ARG1($8), EXPR_ARG2($8)); }
         // Trick to allow keyword as identifier. Almost same rule as the one
         // above.          
-        | type_spec func_prefix FUNCTION IDENTIFIER dummy_arg_list
-          KW result_opt bind_opt
-          { $$ = list6(F_FUNCTION_STATEMENT, $4, $5, $1, $2, $7, $8); }
-        | func_prefix type_spec KW FUNCTION IDENTIFIER dummy_arg_list
-          KW result_opt bind_opt
-          { $$ = list6(F_FUNCTION_STATEMENT, $5, $6, $2, $1, $8, $9); }
+        | type_spec func_prefix FUNCTION IDENTIFIER dummy_arg_list KW func_suffix
+        { $$ = list6(F_FUNCTION_STATEMENT, $4, $5, $1, $2, EXPR_ARG1($7), EXPR_ARG2($7)); }
+        | func_prefix type_spec KW FUNCTION IDENTIFIER dummy_arg_list KW func_suffix
+          { $$ = list6(F_FUNCTION_STATEMENT, $5, $6, $2, $1, EXPR_ARG1($8), EXPR_ARG2($8)); }
         // Trick to allow keyword as identifier. Almost same rule as the one
         // above.
-        | func_prefix type_spec FUNCTION IDENTIFIER dummy_arg_list
-          KW result_opt bind_opt
-          { $$ = list6(F_FUNCTION_STATEMENT, $4, $5, $2, $1, $7, $8); }
+        | func_prefix type_spec FUNCTION IDENTIFIER dummy_arg_list KW func_suffix
+        { $$ = list6(F_FUNCTION_STATEMENT, $4, $5, $2, $1, EXPR_ARG1($7), EXPR_ARG2($7)); }
 /* END: FUNCTION */
         | ENDFUNCTION name_or_null
           { $$ = list1(F95_ENDFUNCTION_STATEMENT,$2); }
@@ -729,6 +729,14 @@ statement:      /* entry */
           { $$ = list1(F08_ENDSUBMODULE_STATEMENT,$2); }
         ;
 
+func_suffix:        
+        /* empty */
+        { $$ = list2(LIST, NULL, NULL); }
+        | func_result KW bind_opt // Result with optional BIND(C)
+        { $$ = list2(LIST, $1, $3); }
+        | bind_c KW result_opt    // BIND(C) with optional result
+        { $$ = list2(LIST, $3, $1); }
+        ;
 
 name_or_type_spec_or_null:
         TYPE_KW name_or_type_spec_or_null0 { $$ = $2;};
@@ -850,20 +858,30 @@ program_name:   /* null */
         | IDENTIFIER
         ;
 
+func_result:
+        RESULT '(' name ')'
+        { $$ = $3; }
+        ;
+
 result_opt:    /* null */
           { $$ = NULL; }
-        | RESULT '(' name ')'
-          { $$ = $3; }
+        | func_result
+          {$$ = $1; } 
+        ;
+
+bind_c: 
+        /* BIND(C) */
+        BIND '(' IDENTIFIER /* C */ ')'
+        { $$ = list1(LIST, NULL); need_keyword = FALSE;}
+        /* BIND (C, NAME='<ident>') */
+        | BIND '(' IDENTIFIER /* C */ ',' KW KW_NAME '=' CONSTANT ')'
+        { $$ = list1(LIST, $8); need_keyword = FALSE;}
         ;
 
 bind_opt: /* null */
           { $$ = NULL; need_keyword = FALSE; }
-        /* BIND(C) */
-        | BIND '(' IDENTIFIER /* C */ ')'
-          { $$ = list1(LIST, NULL); need_keyword = FALSE;}
-        /* BIND (C, NAME='<ident>') */
-        | BIND '(' IDENTIFIER /* C */ ',' KW KW_NAME '=' CONSTANT ')'
-          { $$ = list1(LIST, $8); need_keyword = FALSE;}
+        | bind_c
+          { $$ = $1; }
         ;
 
 intrinsic_operator: '.'
@@ -925,6 +943,8 @@ prefix_spec:
         { $$ = list0(F95_RECURSIVE_SPEC); }
         | PURE
         { $$ = list0(F95_PURE_SPEC); }
+        | IMPURE
+        { $$ = list0(F08_IMPURE_SPEC); }
         | ELEMENTAL
         { $$ = list0(F95_ELEMENTAL_SPEC); }
         | MODULE
@@ -1098,15 +1118,19 @@ defered_shape: ':'
         ;
 
 use_rename_list:
-          use_rename
-        { $$ = list1(LIST,$1); }
-        | use_rename_list ',' use_rename
-        { $$ = list_put_last($1,$3); }
+          KW use_rename
+        { $$ = list1(LIST,$2); }
+        | use_rename_list ',' KW use_rename
+        { $$ = list_put_last($1,$4); }
         ;
 
 use_rename:
           IDENTIFIER REF_OP IDENTIFIER
         { $$ = list2(LIST,$1,$3); }
+        | OPERATOR REF_OP IDENTIFIER
+        { $$ = list2(LIST,GEN_NODE(IDENT, find_symbol("operator")),$3); }
+        | OPERATOR '(' USER_DEFINED_OP ')' REF_OP KW OPERATOR '(' USER_DEFINED_OP ')'
+        { $$ = list2(F03_OPERATOR_RENAMING,$3,$9); }
         ;
 
 use_only_list:
@@ -1684,13 +1708,13 @@ namelist_list:  IDENTIFIER
  */
 executable_statement:
           action_statement
-        | DO label KW KW_WHILE '(' expr ')'
+        | DO label DO_KW KW_WHILE '(' expr ')'
         { $$ = list3(F_DOWHILE_STATEMENT, $2, $6, st_name); }
-        | DO label KW do_spec
+        | DO label DO_KW do_spec
         { $$ = list3(F_DO_STATEMENT, $2, $4, st_name); }
-        | DO label KW ',' KW do_spec  /* for dusty deck */
+        | DO label DO_KW ',' KW do_spec  /* for dusty deck */
         { $$ = list3(F_DO_STATEMENT, $2, $6, st_name); }
-        | DO label KW
+        | DO label DO_KW
         { $$ = list3(F_DO_STATEMENT, $2, NULL, st_name); }
         | DO do_spec
         { $$ = list3(F_DO_STATEMENT,NULL, $2, st_name); }
@@ -1698,11 +1722,11 @@ executable_statement:
         { $$ = list3(F_DO_STATEMENT,NULL, NULL, st_name); }
         | DOCONCURRENT '(' forall_header ')'
         { $$ = list3(F08_DOCONCURRENT_STATEMENT, NULL, $3, st_name); }
-        | DO ',' KW CONCURRENT '(' forall_header ')'
+        | DO ',' DO_KW CONCURRENT '(' forall_header ')'
         { $$ = list3(F08_DOCONCURRENT_STATEMENT, NULL, $6, st_name); }
-        | DO label KW CONCURRENT '(' forall_header ')'
+        | DO label DO_KW CONCURRENT '(' forall_header ')'
         { $$ = list3(F08_DOCONCURRENT_STATEMENT, $2,   $6, st_name); }
-        | DO label KW ',' KW CONCURRENT '(' forall_header ')'
+        | DO label DO_KW ',' KW CONCURRENT '(' forall_header ')'
         { $$ = list3(F08_DOCONCURRENT_STATEMENT, $2,   $8, st_name); }
         | ENDDO name_or_null
         { $$ = list1(F_ENDDO_STATEMENT,$2); }
@@ -1786,7 +1810,7 @@ assign_statement: lhs '=' expr
 do_spec:
           IDENTIFIER '=' expr ',' expr
         { $$ = list4(LIST,$1,$3,$5,NULL); }
-        |  IDENTIFIER '=' expr ',' expr ',' expr
+        | IDENTIFIER '=' expr ',' expr ',' expr
         { $$ = list4(LIST,$1,$3,$5,$7); }
         ;
 

@@ -699,13 +699,13 @@ void _putVector_DMA(void *descPtr, char *baseAddr, int bytes, int coindex,
       _XMPF_coarrayFatal("RESTRICSION: boundary error: "
                          "the 1-st argument of atomic_define");
     }
-    _XMP_atomic_define_1(desc, offset / 4, coindex, 0,
+    _XMP_atomic_define_1(desc, offset / 4, coindex-1, 0,
                          descDMA, offsetDMA, 4);
     return;
   }
 
   // ACTION (case asynchronous: definition of a coindexed variable)
-  _XMP_coarray_contiguous_put(coindex,
+  _XMP_coarray_contiguous_put(coindex-1,
                               desc,   descDMA,
                               offset, offsetDMA,
                               bytes,  bytes);
@@ -759,7 +759,7 @@ void _putVector_buffer_SAFE(void *descPtr, char *baseAddr, int bytesRU,
   // ACTION
   _XMP_coarray_rdma_coarray_set_1(offset, bytes, 1);    // LHS (remote)
   _XMP_coarray_rdma_array_set_1(0, bytes, 1, 1, 1);    // RHS (local)
-  _XMP_coarray_rdma_image_set_1(coindex);
+  _XMP_coarray_rdma_image_set_1(coindex-1);
   _XMP_coarray_put(desc, buf, NULL);
 
   // NOT FREE for safe
