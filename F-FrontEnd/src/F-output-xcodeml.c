@@ -613,6 +613,13 @@ outx_true(int cond, const char *flagname)
         outx_print(" %s=\"true\"", flagname);
 }
 
+static void
+outx_false(int cond, const char *flagname)
+{
+    if(cond)
+        outx_print(" %s=\"false\"", flagname);
+}
+
 
 #define TOPT_TYPEONLY   (1 << 0)
 #define TOPT_NEXTLINE   (1 << 1)
@@ -663,7 +670,8 @@ has_attribute(TYPE_DESC tp)
         TYPE_IS_RECURSIVE(tp) ||
         TYPE_IS_PURE(tp) ||
         TYPE_IS_ELEMENTAL(tp) ||
-        TYPE_IS_MODULE(tp);
+        TYPE_IS_MODULE(tp) ||
+        TYPE_IS_IMPURE(tp);
 }
 
 static int
@@ -4454,6 +4462,8 @@ outx_functionType(int l, TYPE_DESC tp)
         outx_true(TYPE_IS_PURE(tp), "is_pure");
         outx_true(TYPE_IS_ELEMENTAL(tp), "is_elemental");
         outx_true(TYPE_IS_MODULE(tp), "is_module");
+
+        outx_false(TYPE_IS_IMPURE(tp), "is_pure");
 
         if (is_emitting_for_submodule) {
             /*

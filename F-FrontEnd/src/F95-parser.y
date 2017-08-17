@@ -209,6 +209,8 @@ state 2058
 %token DOCONCURRENT
 %token CONCURRENT
 
+%token IMPURE
+
 %token REF_OP
 
 %token L_ARRAY_CONSTRUCTOR /* /( */
@@ -930,6 +932,8 @@ prefix_spec:
         { $$ = list0(F95_RECURSIVE_SPEC); }
         | PURE
         { $$ = list0(F95_PURE_SPEC); }
+        | IMPURE
+        { $$ = list0(F08_IMPURE_SPEC); }
         | ELEMENTAL
         { $$ = list0(F95_ELEMENTAL_SPEC); }
         | MODULE

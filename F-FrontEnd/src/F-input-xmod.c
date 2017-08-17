@@ -1829,7 +1829,11 @@ input_FfunctionType(xmlTextReaderPtr reader, HashTable * ht)
 
     attr = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_pure");
     if (attr != NULL) {
-        TYPE_SET_PURE(ftp);
+        if (strncmp(attr, "true", 4)) {
+            TYPE_SET_PURE(ftp);
+        } else {
+            TYPE_SET_IMPURE(ftp);
+        }
         free(attr);
     }
 
