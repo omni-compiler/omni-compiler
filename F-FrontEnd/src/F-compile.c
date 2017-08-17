@@ -315,6 +315,39 @@ pop_ctl()
     CURRENT_BLK_LEVEL--;
 }
 
+static expr
+list_find_type_expr(const expr lst)
+{
+    list lp;
+    expr x;
+    expr type_expr = NULL;
+
+    if (lst == NULL)
+        return NULL;
+
+    FOR_ITEMS_IN_LIST(lp, lst) {
+        x = LIST_ITEM(lp);
+        switch (EXPR_CODE(x)) {
+            case LIST:
+                if (EXPR_HAS_ARG1(x) &&
+                    EXPR_ARG1(x) &&
+                    EXPR_CODE(EXPR_ARG1(x)) == F_TYPE_NODE)
+                    type_expr = x;
+                break;
+            case IDENT:
+            case F03_PARAMETERIZED_TYPE:
+            case F03_CLASS:
+                type_expr = x;
+                break;
+            default:
+                continue;
+        }
+        if (type_expr)
+            break;
+    }
+
+    return type_expr;
+}
 
 
 void
@@ -488,12 +521,17 @@ compile_statement1(int st_no, expr x)
     case F_FUNCTION_STATEMENT: {
         /* (F_FUNCTION_STATEMENT name dummy_arg_list type) */
         TYPE_DESC tp;
+        expr type_expr;
+        expr prefixes = EXPR_ARG3(x);
         begin_procedure();
-        tp = compile_type(EXPR_ARG3(x), TRUE);
+        type_expr = list_find_type_expr(prefixes);
+        if (type_expr)
+            prefixes = list_delete_item(prefixes, type_expr);
+        tp = compile_type(type_expr, TRUE);
         declare_procedure(CL_PROC, EXPR_ARG1(x),
                           function_type(tp),
-                          EXPR_ARG2(x), EXPR_ARG4(x), EXPR_ARG5(x),
-                          EXPR_ARG6(x));
+                          EXPR_ARG2(x), prefixes, EXPR_ARG4(x),
+                          EXPR_ARG5(x));
         break;
     }
     case F_ENTRY_STATEMENT:

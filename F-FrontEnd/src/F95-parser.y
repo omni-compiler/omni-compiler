@@ -680,15 +680,9 @@ statement:      /* entry */
 
 /* FUNCTION declaration */
         | FUNCTION IDENTIFIER dummy_arg_list KW func_suffix
-          { $$ = list6(F_FUNCTION_STATEMENT, $2, $3, NULL, NULL, EXPR_ARG1($5), EXPR_ARG2($5)); }
+          { $$ = list5(F_FUNCTION_STATEMENT, $2, $3, NULL, EXPR_ARG1($5), EXPR_ARG2($5)); }
         | func_prefix FUNCTION IDENTIFIER dummy_arg_list KW func_suffix
-          { $$ = list6(F_FUNCTION_STATEMENT, $3, $4, NULL, $1, EXPR_ARG1($6), EXPR_ARG2($6)); }
-        | type_spec KW FUNCTION IDENTIFIER dummy_arg_list KW func_suffix
-          { $$ = list6(F_FUNCTION_STATEMENT, $4, $5, $1, NULL, EXPR_ARG1($7), EXPR_ARG2($7)); }
-        | type_spec KW func_prefix FUNCTION IDENTIFIER dummy_arg_list KW func_suffix
-          { $$ = list6(F_FUNCTION_STATEMENT, $5, $6, $1, $3, EXPR_ARG1($8), EXPR_ARG2($8)); }
-        | func_prefix type_spec KW FUNCTION IDENTIFIER dummy_arg_list KW func_suffix
-          { $$ = list6(F_FUNCTION_STATEMENT, $5, $6, $2, $1, EXPR_ARG1($8), EXPR_ARG2($8)); }
+          { $$ = list5(F_FUNCTION_STATEMENT, $3, $4, $1, EXPR_ARG1($6), EXPR_ARG2($6)); }
 /* END: FUNCTION */
         | ENDFUNCTION name_or_null
           { $$ = list1(F95_ENDFUNCTION_STATEMENT,$2); }
@@ -938,6 +932,7 @@ prefix_spec:
         { $$ = list0(F95_ELEMENTAL_SPEC); }
         | MODULE
         { $$ = list0(F08_MODULE_SPEC); }
+        | type_spec
         ;
 
 name:  IDENTIFIER;

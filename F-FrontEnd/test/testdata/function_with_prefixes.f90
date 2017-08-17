@@ -1,0 +1,21 @@
+      ELEMENTAL INTEGER PURE FUNCTION k(a)
+        INTENT(IN) :: a
+      END FUNCTION
+
+      INTEGER ELEMENTAL FUNCTION j(a)
+        INTENT(IN) :: a
+      END FUNCTION
+
+      ELEMENTAL INTEGER FUNCTION i(a)
+        INTENT(IN) :: a
+      END FUNCTION
+
+      INTEGER FUNCTION h(a)
+      END FUNCTION
+
+      ELEMENTAL FUNCTION g(a)
+        INTENT(IN) :: a
+      END FUNCTION g
+
+      FUNCTION f(a)
+      END FUNCTION f
