@@ -3181,8 +3181,13 @@ public class XfDecompileDomVisitor {
                     writer.writeToken("RECURSIVE");
                     writer.writeToken(" ");
                 }
-                if (XmDomUtil.getAttrBool(functionTypeNode, "is_pure")) {
-                    writer.writeToken("PURE");
+
+                if (XmDomUtil.hasAttr(functionTypeNode, "is_pure")) {
+                    if (XmDomUtil.getAttrBool(functionTypeNode, "is_pure")) {
+                        writer.writeToken("PURE");
+                    } else {
+                        writer.writeToken("IMPURE");
+                    }
                     writer.writeToken(" ");
                 }
                 if (XmDomUtil.getAttrBool(functionTypeNode, "is_elemental")) {
@@ -3232,8 +3237,13 @@ public class XfDecompileDomVisitor {
                     writer.writeToken("RECURSIVE");
                     writer.writeToken(" ");
                 }
-                if (XmDomUtil.getAttrBool(functionTypeNode, "is_pure")) {
-                    writer.writeToken("PURE");
+
+                if (XmDomUtil.hasAttr(functionTypeNode, "is_pure")) {
+                    if (XmDomUtil.getAttrBool(functionTypeNode, "is_pure")) {
+                        writer.writeToken("PURE");
+                    } else {
+                        writer.writeToken("IMPURE");
+                    }
                     writer.writeToken(" ");
                 }
                 if (XmDomUtil.getAttrBool(functionTypeNode, "is_elemental")) {
@@ -3396,8 +3406,12 @@ public class XfDecompileDomVisitor {
                     writer.writeToken("RECURSIVE");
                     writer.writeToken(" ");
                 }
-                if (XmDomUtil.getAttrBool(functionTypeNode, "is_pure")) {
-                    writer.writeToken("PURE");
+                if (XmDomUtil.hasAttr(functionTypeNode, "is_pure")) {
+                    if (XmDomUtil.getAttrBool(functionTypeNode, "is_pure")) {
+                        writer.writeToken("PURE");
+                    } else {
+                        writer.writeToken("IMPURE");
+                    }
                     writer.writeToken(" ");
                 }
                 if (XmDomUtil.getAttrBool(functionTypeNode, "is_elemental")) {
@@ -3447,8 +3461,12 @@ public class XfDecompileDomVisitor {
                     writer.writeToken("RECURSIVE");
                     writer.writeToken(" ");
                 }
-                if (XmDomUtil.getAttrBool(functionTypeNode, "is_pure")) {
-                    writer.writeToken("PURE");
+                if (XmDomUtil.hasAttr(functionTypeNode, "is_pure")) {
+                    if (XmDomUtil.getAttrBool(functionTypeNode, "is_pure")) {
+                        writer.writeToken("PURE");
+                    } else {
+                        writer.writeToken("IMPURE");
+                    }
                     writer.writeToken(" ");
                 }
                 if (XmDomUtil.getAttrBool(functionTypeNode, "is_elemental")) {
@@ -5408,15 +5426,30 @@ public class XfDecompileDomVisitor {
                     _context.setLastErrorMessage(_validator.getErrDesc());
                     fail(n);
                 }
+                boolean isOperator = XmDomUtil.getAttrBool(renameNode, "is_operator");
                 String localName = XmDomUtil.getAttr(renameNode, "local_name");
                 String useName = XmDomUtil.getAttr(renameNode, "use_name");
                 writer.writeToken(", ");
                 if (XfUtilForDom.isNullOrEmpty(localName) == false) {
-                    writer.writeToken(localName);
+                    if (isOperator) {
+                        writer.writeToken("OPERATOR");
+                        writer.writeToken("(");
+                        writer.writeToken(localName);
+                        writer.writeToken(")");
+                    } else {
+                        writer.writeToken(localName);
+                    }
                     writer.writeToken(" => ");
                 }
                 if (XfUtilForDom.isNullOrEmpty(useName) == false) {
-                    writer.writeToken(useName);
+                    if (isOperator) {
+                        writer.writeToken("OPERATOR");
+                        writer.writeToken("(");
+                        writer.writeToken(useName);
+                        writer.writeToken(")");
+                    } else {
+                        writer.writeToken(useName);
+                    }
                 }
             }
             writer.setupNewLine();

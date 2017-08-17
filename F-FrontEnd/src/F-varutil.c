@@ -912,7 +912,8 @@ expv_is_specification_function_call(expv x)
         return FALSE;
 
     /* must be pure */
-    if (!PROC_IS_PURE(id) && !TYPE_IS_PURE(tp))
+    if ((!PROC_IS_PURE(id) && !TYPE_IS_PURE(tp)) ||
+        (TYPE_IS_ELEMENTAL(tp) && !TYPE_IS_IMPURE(tp)))
         return FALSE;
 
     /* NOT IMPLEMENTED: not an internal function. but we can't check this */
