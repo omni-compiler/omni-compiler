@@ -1382,6 +1382,16 @@ public class XfDecompileDomVisitor {
         public abstract void enter(Node n);
     }
 
+    // No for specific nodes
+    class PassThroughVisitor extends XcodeNodeVisitor {
+        /**
+         * Just invoke enter to its children
+         */
+        @Override public void enter(Node n) {
+            _invokeChildEnter(n);
+        }
+    }
+
     // XcodeProgram
     class XcodeProgramVisitor extends XcodeNodeVisitor {
         /**
@@ -4970,7 +4980,7 @@ public class XfDecompileDomVisitor {
             _writeLineDirective(n);
 
             XmfWriter writer = _context.getWriter();
-            writer.writeToken("STOP ");
+            writer.writeToken("STOP");
 
             String code = XmDomUtil.getAttr(n, "code");
             String message = XmDomUtil.getAttr(n, "message");
@@ -4979,7 +4989,7 @@ public class XfDecompileDomVisitor {
             } else if (XfUtilForDom.isNullOrEmpty(message) == false) {
                 writer.writeLiteralString(message);
             }
-
+            _invokeChildEnter(n);
             writer.setupNewLine();
         }
     }
@@ -5004,6 +5014,7 @@ public class XfDecompileDomVisitor {
                 writer.writeLiteralString(message);
             }
 
+            _invokeChildEnter(n);
             writer.setupNewLine();
         }
     }
@@ -5037,6 +5048,7 @@ public class XfDecompileDomVisitor {
                 writer.writeToken("0");
             }
 
+            _invokeChildEnter(n);
             writer.setupNewLine();
         }
     }
@@ -7267,6 +7279,8 @@ public class XfDecompileDomVisitor {
         new Pair("FrewindStatement", new FrewindStatementVisitor()),
         new Pair("FselectCaseStatement", new FselectCaseStatementVisitor()),
         new Pair("selectTypeStatement", new SelectTypeStatementVisitor()),
+        new Pair("code", new PassThroughVisitor()),
+        new Pair("message", new PassThroughVisitor()),
         new Pair("FstopStatement", new FstopStatementVisitor()),
         new Pair("FerrorStopStatement", new FerrorStopStatementVisitor()),
         new Pair("FpauseStatement", new FpauseStatementVisitor()),
