@@ -1103,15 +1103,19 @@ defered_shape: ':'
         ;
 
 use_rename_list:
-          use_rename
-        { $$ = list1(LIST,$1); }
-        | use_rename_list ',' use_rename
-        { $$ = list_put_last($1,$3); }
+          KW use_rename
+        { $$ = list1(LIST,$2); }
+        | use_rename_list ',' KW use_rename
+        { $$ = list_put_last($1,$4); }
         ;
 
 use_rename:
           IDENTIFIER REF_OP IDENTIFIER
         { $$ = list2(LIST,$1,$3); }
+        | OPERATOR REF_OP IDENTIFIER
+        { $$ = list2(LIST,GEN_NODE(IDENT, find_symbol("operator")),$3); }
+        | OPERATOR '(' USER_DEFINED_OP ')' REF_OP KW OPERATOR '(' USER_DEFINED_OP ')'
+        { $$ = list2(F03_OPERATOR_RENAMING,$3,$9); }
         ;
 
 use_only_list:

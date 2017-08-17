@@ -3195,12 +3195,20 @@ outx_unaryOp(int l, expv v)
  * output rename
  */
 static void
-outx_useRename(int l, expv local, expv use)
+outx_useRename(int l, expv x)
 {
+    expv local, use;
+    local = EXPR_ARG1(x);
+    use = EXPR_ARG2(x);
+
     assert(local != NULL);
     assert(use != NULL);
 
-    outx_printi(l, "<rename local_name=\"%s\"", getRawString(local));
+    outx_printi(l, "<rename");
+    if (EXPR_CODE(x) == F03_OPERATOR_RENAMING) {
+        outx_true(TRUE, "is_operator");
+    }
+    outx_printi(0, " local_name=\"%s\"", getRawString(local));
     outx_printi(0, " use_name=\"%s\"/>\n", getRawString(use));
 }
 
@@ -3221,7 +3229,7 @@ outx_useDecl(int l, expv v, int is_intrinsic)
 
     FOR_ITEMS_IN_LIST(lp, EXPR_ARG2(v)) {
         expv x = LIST_ITEM(lp);
-        outx_useRename(l+1, EXPR_ARG1(x), EXPR_ARG2(x));
+        outx_useRename(l+1, x);
     }
 
     include_module_file(print_fp,EXPV_NAME(EXPR_ARG1(v)));
