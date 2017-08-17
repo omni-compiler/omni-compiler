@@ -1283,7 +1283,7 @@ compile_statement1(int st_no, expr x)
         if (CURRENT_STATE != IN_TYPE_BOUND_PROCS) {
             error("TYPE-BOUND GENERIC out of the derived-type declaration");
         }
-        compile_type_generic_procedure(x);
+        compile_type_bound_generic_procedure(x);
         break;
 
     case F03_TYPE_BOUND_FINAL_STATEMENT:
