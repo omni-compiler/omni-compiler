@@ -722,7 +722,7 @@ extern void     compile_CONTIGUOUS_statement _ANSI_ARGS_((expr id_list));
 
 extern void     compile_procedure_declaration _ANSI_ARGS_((expr x));
 extern void     compile_type_bound_procedure _ANSI_ARGS_((expr x));
-extern void     compile_type_generic_procedure _ANSI_ARGS_((expr x));
+extern void     compile_type_bound_generic_procedure _ANSI_ARGS_((expr x));
 extern void     compile_FINAL_statement _ANSI_ARGS_((expr x));
 #define FINALIZER_PROCEDURE "_final"
 extern void     update_type_bound_procedures_forall _ANSI_ARGS_((TYPE_DESC struct_decls, ID local_symbols));

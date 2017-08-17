@@ -5734,7 +5734,7 @@ compile_type_bound_procedure(expr x)
 }
 
 void
-compile_type_generic_procedure(expr x)
+compile_type_bound_generic_procedure(expr x)
 {
     expr generics_spec = EXPR_ARG1(x);
     expr id_list = EXPR_ARG2(x);
