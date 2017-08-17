@@ -209,6 +209,8 @@ state 2058
 %token DOCONCURRENT
 %token CONCURRENT
 
+%token IMPURE
+
 %token REF_OP
 
 %token L_ARRAY_CONSTRUCTOR /* /( */
@@ -526,19 +528,19 @@ static void type_spec_done();
 %type <val> string_const_substr
 %type <val> binding_attr_list binding_attr type_bound_proc_decl_list type_bound_proc_decl
 %type <val> proc_attr_list proc_def_attr proc_attr proc_decl proc_decl_list name_or_type_spec_or_null0 name_or_type_spec_or_null
-%type <val> name name_or_null name_list generic_name defined_operator intrinsic_operator func_prefix prefix_spec
+%type <val> name name_or_null name_list generic_name defined_operator intrinsic_operator func_prefix prefix_spec func_suffix
 %type <val> forall_header forall_triplet forall_triplet_list
 %type <val> declaration_statement95 attr_spec_list attr_spec private_or_public_spec access_spec type_attr_spec_list type_attr_spec
 %type <val> declaration_statement2003 type_param_list
 %type <val> intent_spec kind_selector kind_or_len_selector char_selector len_key_spec len_spec kind_key_spec array_allocation_list  array_allocation defered_shape_list defered_shape
-%type <val> result_opt type_keyword
+%type <val> result_opt func_result type_keyword
 %type <val> action_statement95
 %type <val> action_coarray_statement other_coarray_keyword
 %type <val> sync_stat_arg_list sync_stat_arg image_set
 %type <val> use_rename_list use_rename use_only_list use_only 
 %type <val> allocation_list allocation
 %type <val> scene_list scene_range
-%type <val> bind_opt
+%type <val> bind_opt bind_c
 
 
 %start program
@@ -675,19 +677,18 @@ statement:      /* entry */
           { $$ = list4(F_SUBROUTINE_STATEMENT, $3, $4, $1, $6); }
         | ENDSUBROUTINE name_or_null
           { $$ = list1(F95_ENDSUBROUTINE_STATEMENT,$2); }
+
 /* FUNCTION declaration */
-        | FUNCTION IDENTIFIER dummy_arg_list KW result_opt bind_opt
-          { $$ = list6(F_FUNCTION_STATEMENT, $2, $3, NULL, NULL, $5, $6); }
-        | func_prefix FUNCTION IDENTIFIER dummy_arg_list KW result_opt bind_opt
-          { $$ = list6(F_FUNCTION_STATEMENT, $3, $4, NULL, $1, $6, $7); }
-        | type_spec KW FUNCTION IDENTIFIER dummy_arg_list KW result_opt bind_opt
-          { $$ = list6(F_FUNCTION_STATEMENT, $4, $5, $1, NULL, $7, $8); }
-        | type_spec KW func_prefix FUNCTION IDENTIFIER dummy_arg_list
-          KW result_opt bind_opt
-          { $$ = list6(F_FUNCTION_STATEMENT, $5, $6, $1, $3, $8, $9); }
-        | func_prefix type_spec KW FUNCTION IDENTIFIER dummy_arg_list
-          KW result_opt bind_opt
-          { $$ = list6(F_FUNCTION_STATEMENT, $5, $6, $2, $1, $8, $9); }
+        | FUNCTION IDENTIFIER dummy_arg_list KW func_suffix
+          { $$ = list6(F_FUNCTION_STATEMENT, $2, $3, NULL, NULL, EXPR_ARG1($5), EXPR_ARG2($5)); }
+        | func_prefix FUNCTION IDENTIFIER dummy_arg_list KW func_suffix
+          { $$ = list6(F_FUNCTION_STATEMENT, $3, $4, NULL, $1, EXPR_ARG1($6), EXPR_ARG2($6)); }
+        | type_spec KW FUNCTION IDENTIFIER dummy_arg_list KW func_suffix
+          { $$ = list6(F_FUNCTION_STATEMENT, $4, $5, $1, NULL, EXPR_ARG1($7), EXPR_ARG2($7)); }
+        | type_spec KW func_prefix FUNCTION IDENTIFIER dummy_arg_list KW func_suffix
+          { $$ = list6(F_FUNCTION_STATEMENT, $5, $6, $1, $3, EXPR_ARG1($8), EXPR_ARG2($8)); }
+        | func_prefix type_spec KW FUNCTION IDENTIFIER dummy_arg_list KW func_suffix
+          { $$ = list6(F_FUNCTION_STATEMENT, $5, $6, $2, $1, EXPR_ARG1($8), EXPR_ARG2($8)); }
 /* END: FUNCTION */
         | ENDFUNCTION name_or_null
           { $$ = list1(F95_ENDFUNCTION_STATEMENT,$2); }
@@ -717,6 +718,14 @@ statement:      /* entry */
           { $$ = list1(F08_ENDSUBMODULE_STATEMENT,$2); }
         ;
 
+func_suffix:        
+        /* empty */
+        { $$ = list2(LIST, NULL, NULL); }
+        | func_result KW bind_opt // Result with optional BIND(C)
+        { $$ = list2(LIST, $1, $3); }
+        | bind_c KW result_opt    // BIND(C) with optional result
+        { $$ = list2(LIST, $3, $1); }
+        ;
 
 name_or_type_spec_or_null:
         TYPE_KW name_or_type_spec_or_null0 { $$ = $2;};
@@ -838,20 +847,30 @@ program_name:   /* null */
         | IDENTIFIER
         ;
 
+func_result:
+        RESULT '(' name ')'
+        { $$ = $3; }
+        ;
+
 result_opt:    /* null */
           { $$ = NULL; }
-        | RESULT '(' name ')'
-          { $$ = $3; }
+        | func_result
+          {$$ = $1; } 
+        ;
+
+bind_c: 
+        /* BIND(C) */
+        BIND '(' IDENTIFIER /* C */ ')'
+        { $$ = list1(LIST, NULL); need_keyword = FALSE;}
+        /* BIND (C, NAME='<ident>') */
+        | BIND '(' IDENTIFIER /* C */ ',' KW KW_NAME '=' CONSTANT ')'
+        { $$ = list1(LIST, $8); need_keyword = FALSE;}
         ;
 
 bind_opt: /* null */
           { $$ = NULL; need_keyword = FALSE; }
-        /* BIND(C) */
-        | BIND '(' IDENTIFIER /* C */ ')'
-          { $$ = list1(LIST, NULL); need_keyword = FALSE;}
-        /* BIND (C, NAME='<ident>') */
-        | BIND '(' IDENTIFIER /* C */ ',' KW KW_NAME '=' CONSTANT ')'
-          { $$ = list1(LIST, $8); need_keyword = FALSE;}
+        | bind_c
+          { $$ = $1; }
         ;
 
 intrinsic_operator: '.'
@@ -913,6 +932,8 @@ prefix_spec:
         { $$ = list0(F95_RECURSIVE_SPEC); }
         | PURE
         { $$ = list0(F95_PURE_SPEC); }
+        | IMPURE
+        { $$ = list0(F08_IMPURE_SPEC); }
         | ELEMENTAL
         { $$ = list0(F95_ELEMENTAL_SPEC); }
         | MODULE
@@ -1086,15 +1107,19 @@ defered_shape: ':'
         ;
 
 use_rename_list:
-          use_rename
-        { $$ = list1(LIST,$1); }
-        | use_rename_list ',' use_rename
-        { $$ = list_put_last($1,$3); }
+          KW use_rename
+        { $$ = list1(LIST,$2); }
+        | use_rename_list ',' KW use_rename
+        { $$ = list_put_last($1,$4); }
         ;
 
 use_rename:
           IDENTIFIER REF_OP IDENTIFIER
         { $$ = list2(LIST,$1,$3); }
+        | OPERATOR REF_OP IDENTIFIER
+        { $$ = list2(LIST,GEN_NODE(IDENT, find_symbol("operator")),$3); }
+        | OPERATOR '(' USER_DEFINED_OP ')' REF_OP KW OPERATOR '(' USER_DEFINED_OP ')'
+        { $$ = list2(F03_OPERATOR_RENAMING,$3,$9); }
         ;
 
 use_only_list:
