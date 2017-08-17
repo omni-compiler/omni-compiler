@@ -65,7 +65,7 @@ struct type_attr_check type_attr_checker[] = {
          TYPE_ATTR_INTERNAL_PRIVATE|TYPE_ATTR_SAVE|TYPE_ATTR_TARGET|
          TYPE_ATTR_SEQUENCE|TYPE_ATTR_RECURSIVE|TYPE_ATTR_PURE|
          TYPE_ATTR_VOLATILE|TYPE_ATTR_VALUE|TYPE_ATTR_CONTIGUOUS|
-         TYPE_ATTR_BIND
+         TYPE_ATTR_ABSTRACT|TYPE_ATTR_BIND
         ),
         "public",
     },
@@ -76,7 +76,7 @@ struct type_attr_check type_attr_checker[] = {
          TYPE_ATTR_INTERNAL_PRIVATE|TYPE_ATTR_SAVE|TYPE_ATTR_TARGET|
          TYPE_ATTR_SEQUENCE|TYPE_ATTR_RECURSIVE|TYPE_ATTR_PURE|
          TYPE_ATTR_VOLATILE|TYPE_ATTR_VALUE|TYPE_ATTR_CONTIGUOUS|
-         TYPE_ATTR_BIND
+         TYPE_ATTR_ABSTRACT|TYPE_ATTR_BIND
         ),
         "private",
     },
