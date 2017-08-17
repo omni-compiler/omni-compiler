@@ -266,9 +266,9 @@ expr_is_constant_typeof(x, bt)
             } else if (id != NULL) {
                 if (bt != TYPE_UNKNOWN) {
                     if (ID_TYPE(id) != NULL) {
-                        if (ID_CLASS(id) != CL_PARAM ||
-                            (!TYPE_IS_PARAMETER(ID_TYPE(id))) ||
-                            (bt != TYPE_BASIC_TYPE(ID_TYPE(id)))) {
+                        if ((ID_CLASS(id) != CL_PARAM ||
+                             (!TYPE_IS_PARAMETER(ID_TYPE(id)))) &&
+                            (bt != get_basic_type(ID_TYPE(id)))) {
                             return FALSE;
                         }
                     } else {

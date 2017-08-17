@@ -2023,6 +2023,20 @@ outx_continueStatement(int l, expv v)
 }
 
 
+static void
+outx_STOPPAUSE_statement_with_expression_code(int l, expv v)
+{
+    const int l1 = l + 1, l2 = l1 + 1;
+    int is_int = IS_INT(EXPV_TYPE(EXPR_ARG1(v)));
+    const char * child = is_int?"code":"message";
+
+    outx_tagOfStatement(l, v);
+    outx_tag(l1, child);
+    outx_expv(l2, EXPR_ARG1(v));
+    outx_close(l1, child);
+    outx_expvClose(l, v);
+}
+
 /**
  * output FstopStatement/FerrorStopStatement/FpauseStatement
  */
@@ -2030,19 +2044,19 @@ static void
 outx_STOPPAUSE_statement(int l, expv v)
 {
     char buf[CHAR_BUF_SIZE];
-    expv x1 = EXPR_ARG1(v);
+    expv v1 = EXPR_ARG1(v);
     buf[0] = '\0';
 
-    if(x1) {
-        switch(EXPV_CODE(x1)) {
+    if (v1) {
+        switch(EXPV_CODE(v1)) {
         case INT_CONSTANT:
-            sprintf(buf, " code=\""OMLL_DFMT"\"", EXPV_INT_VALUE(x1));
+            sprintf(buf, " code=\""OMLL_DFMT"\"", EXPV_INT_VALUE(v1));
             break;
         case STRING_CONSTANT:
-            sprintf(buf, " message=\"%s\"", getXmlEscapedStr(EXPV_STR(x1)));
+            sprintf(buf, " message=\"%s\"", getXmlEscapedStr(EXPV_STR(v1)));
             break;
         default:
-            abort();
+            return outx_STOPPAUSE_statement_with_expression_code(l, v);
         }
     }
 
