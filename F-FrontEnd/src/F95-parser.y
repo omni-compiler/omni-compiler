@@ -1192,7 +1192,9 @@ attr_spec:
         | KW_LEN
         { $$ = list0(F03_LEN_SPEC); }
         | BIND '(' IDENTIFIER /* C */ ')'
-        { $$ = list0(F03_BIND_SPEC); }
+        { $$ = list1(F03_BIND_SPEC, NULL); }
+        | BIND '(' IDENTIFIER /* C */ ',' KW KW_NAME '=' CONSTANT ')'
+        { $$ = list1(F03_BIND_SPEC, $8); }
         | VALUE
         { $$ = list0(F03_VALUE_SPEC); }
         | CONTIGUOUS
@@ -1223,7 +1225,7 @@ type_attr_spec:
           EXTENDS '(' IDENTIFIER ')'
         { $$ = list1(F03_EXTENDS_SPEC, $3); }
         | BIND '(' IDENTIFIER /* C */ ')'
-        { $$ = list0(F03_BIND_SPEC); }        
+        { $$ = list0(F03_BIND_SPEC); }
         | ABSTRACT
         { $$ = list0(F03_ABSTRACT_SPEC); }
         | access_spec
