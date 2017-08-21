@@ -16,6 +16,7 @@ static void     declare_dummy_args _ANSI_ARGS_((expr l,
                                                 enum name_class class));
 static int      markAsSave _ANSI_ARGS_((ID id));
 
+
 /* for module and use statement */
 extern char line_buffer[];
 extern SYMBOL current_module_name;
