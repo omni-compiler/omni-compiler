@@ -381,51 +381,72 @@ static void type_spec_done()
     /* printf("type_spec_done!\n"); */
 }
 
-int is_function_statement_context()
+int
+is_function_statement_context()
 {
     int i = 0;
-    int plevel = 0;
-    
-    switch(token_history_buf[0]){
-        /* func_prefix */
-    case PURE: 
-    case RECURSIVE:
-    case ELEMENTAL:
-    case MODULE:
-        i++;
-        /* type_spec */
-    case CLASS:
-    case KW_TYPE:
-    case KW_CHARACTER:
-    case KW_COMPLEX:
-    case KW_DOUBLE:
-    case KW_DCOMPLEX:
-    case KW_INTEGER:
-    case KW_LOGICAL:
-    case KW_REAL:
-        i++;
-        /* SET_KIND and SET_LEN include a left parenthesis directly */
-        if(token_history_buf[i] == '(' || token_history_buf[i] == SET_KIND 
-            || token_history_buf[i] == SET_LEN) 
-        {
-            plevel++;
-            for(i++; i < token_history_count; i++){
-                if(token_history_buf[i] == ')') plevel--;
-                if(token_history_buf[i] == '(') plevel++;
-                if(plevel == 0) {
-                    i++;
-                    break;
+    int paran_level;
+
+    for (i = 0;i < token_history_count-1; ) {
+        switch(token_history_buf[i]){
+            /* func_prefix */
+            case PURE:
+            case RECURSIVE:
+            case ELEMENTAL:
+            case MODULE:
+            case IMPURE:
+                i++;
+                continue;
+                /* type_spec */
+            case CLASS:
+            case KW_TYPE:
+            case KW_CHARACTER:
+            case KW_COMPLEX:
+            case KW_DOUBLE:
+            case KW_DCOMPLEX:
+            case KW_INTEGER:
+            case KW_LOGICAL:
+            case KW_REAL:
+                i++;
+                paran_level = 0;
+                /* SET_KIND and SET_LEN include a left parenthesis directly */
+                if (token_history_buf[i] == '(' ||
+                    token_history_buf[i] == SET_KIND ||
+                    token_history_buf[i] == SET_LEN) {
+                    paran_level++;
+                    for (i++; i < token_history_count; i++){
+                        if(token_history_buf[i] == ')') paran_level--;
+                        if(token_history_buf[i] == '(') paran_level++;
+                        if(paran_level == 0) {
+                            i++;
+                            break;
+                        }
+                    }
+                    if(paran_level != 0) {
+                        /* parenthesis is not closed! */
+                        return FALSE;
+                    }
                 }
-            }
-            if(plevel != 0) {
-                return FALSE;
-            }
+                continue;
+            default:
+                break;
         }
-        if(i == (token_history_count-1)) {
-            return TRUE;
-        }
+        break;
     }
-    return FALSE;
+
+    if (i == (token_history_count-1) &&
+        (i > 0 && token_history_buf[i-1] != KW_TYPE)) {
+        /*
+         * If i reaches the current token like:
+         *
+         *  ELENTAL TYPE(t) . FUNCTION
+         *  INTEGER ELEMENTAL IMPURE . FUNCTION
+         *
+         */
+        return TRUE;
+    } else {
+        return FALSE;
+    }
 }
 
 
@@ -445,7 +466,7 @@ int check_ident_context(char *name)
     case KW_LOGICAL:
     case KW_REAL:
         /* func_prefix */
-    case PURE: 
+    case PURE:
     case RECURSIVE:
     case ELEMENTAL:
     case MODULE:
@@ -460,7 +481,7 @@ int check_ident_context(char *name)
                 }
             }
         } else { // free format
-            if(is_function_statement_context()){
+            if (is_function_statement_context()){
                 if (strcasecmp(name,"function") == 0) {
                     ret = FUNCTION;
                 } else if(strcasecmp(name, "elemental") == 0) {
