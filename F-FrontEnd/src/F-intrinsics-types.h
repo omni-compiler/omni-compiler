@@ -376,6 +376,25 @@ typedef struct {
                             may assume INTR_TYPE_INT. */
 
     int langSpec;
+    int intrinsicClass;
+#define INTRINSIC_CLASS_NONE           0x0000
+#define INTRINSIC_CLASS_ATOMIC         0x0001
+#define INTRINSIC_CLASS_ELEMENTAL_FUN  0x0002
+#define INTRINSIC_CLASS_ELEMENTAL_SUB  0x0004
+#define INTRINSIC_CLASS_INQUIRY        0x0008
+#define INTRINSIC_CLASS_PURE_SUB       0x0010
+#define INTRINSIC_CLASS_SUB            0x0020
+#define INTRINSIC_CLASS_TRANS          0x0040
+
+#define INTR_CLASS_N       INTRINSIC_CLASS_NONE
+#define INTR_CLASS_A       INTRINSIC_CLASS_ATOMIC
+#define INTR_CLASS_E       INTRINSIC_CLASS_ELEMENTAL_FUN
+#define INTR_CLASS_ES      INTRINSIC_CLASS_ELEMENTAL_SUB
+#define INTR_CLASS_I       INTRINSIC_CLASS_INQUIRY
+#define INTR_CLASS_PS      INTRINSIC_CLASS_PURE_SUB
+#define INTR_CLASS_S       INTRINSIC_CLASS_SUB
+#define INTR_CLASS_T       INTRINSIC_CLASS_TRANS
+
 } intrinsic_entry;
 #define INTR_OP(ep)             ((ep)->ops)
 #define INTR_NAMETYPE(ep)       ((ep)->nameType)
@@ -387,6 +406,7 @@ typedef struct {
 #define INTR_RETURN_TYPE(ep)    ((ep)->returnType)
 #define INTR_N_ARGS(ep)         ((ep)->nArgs)
 #define INTR_RETURN_TYPE_SAME_AS(ep)    ((ep)->retTypeSameAs)
+#define INTR_CLASS(ep)          ((ep)->intrinsicClass)
 
 #define INTR_IS_RETURN_TYPE_DYNAMIC(ep) \
     (INTR_RETURN_TYPE(ep) == INTR_TYPE_INT_DYNAMIC_ARRAY || \
