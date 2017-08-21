@@ -535,7 +535,7 @@ static void type_spec_done();
 %type <val> intent_spec kind_selector kind_or_len_selector char_selector len_key_spec len_spec kind_key_spec array_allocation_list  array_allocation defered_shape_list defered_shape
 %type <val> result_opt func_result type_keyword
 %type <val> action_statement95
-%type <val> action_coarray_statement other_coarray_keyword
+%type <val> action_coarray_statement
 %type <val> sync_stat_arg_list sync_stat_arg image_set
 %type <val> use_rename_list use_rename use_only_list use_only 
 %type <val> allocation_list allocation
@@ -1866,6 +1866,8 @@ action_statement_key: ASSIGN  label KW KW_TO IDENTIFIER
         { $$ = list1(F_PAUSE_STATEMENT,$2); }
         | STOP  expr_or_null
         { $$ = list1(F_STOP_STATEMENT,$2); }
+        | KW_ERROR KW STOP  expr_or_null
+        { $$ = list1(F08_ERROR_STOP_STATEMENT,$4); }
         | action_statement95 /* all has first key.  */
         | action_coarray_statement /* all has first key.  */
         | io_statement /* all has first key.  */
@@ -1935,8 +1937,6 @@ action_coarray_statement:
         { $$ = list2(F2008_UNLOCK_STATEMENT,$3, NULL); }
         | UNLOCK '(' expr ',' sync_stat_arg_list ')'
         { $$ = list2(F2008_UNLOCK_STATEMENT,$3, $5); }
-        | other_coarray_keyword parenthesis_arg_list_or_null
-        { $$ = list2(F_CALL_STATEMENT,$1,$2); }
         ;
 
 
@@ -1957,11 +1957,6 @@ image_set:
         { $$ = $1; }
         | '*'
         { $$ = NULL; }
-        ;
-
-other_coarray_keyword:
-          ERRORSTOP
-        { $$ = GEN_NODE(IDENT, find_symbol("xmpf_error_stop")); }
         ;
 
 comma_or_null:

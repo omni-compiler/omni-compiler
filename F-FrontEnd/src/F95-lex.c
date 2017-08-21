@@ -2007,8 +2007,6 @@ get_keyword_optional_blank(int class)
         case KW_MEMORY: return SYNCMEMORY;
         }
         break;
-    case KW_ERROR: /* module procedure */
-        if (get_keyword(keywords) == STOP) return ERRORSTOP;
 	break;
     default:
         break;
@@ -3959,7 +3957,6 @@ struct keyword_token keywords[ ] =
     { "end",            END  },
     { "entry",          ENTRY },
     { "equivalence",    EQUIV  },
-    { "errorstop",      ERRORSTOP },     /* #060 coarray */
     { "error",          KW_ERROR },      /* #060 coarray */
     { "external",       EXTERNAL  },
     { "extends",        EXTENDS  },      /* F2003 spec */
