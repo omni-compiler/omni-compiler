@@ -6964,6 +6964,9 @@ public class XfDecompileDomVisitor {
             NodeList list = type.getChildNodes();
             for (int i = 0; i < list.getLength(); i++) {
                 Node elm = list.item(i);
+                if (elm.getNodeType() != Node.ELEMENT_NODE) {
+                    continue;
+                }
                 String name = elm.getNodeName();
                 if (name.equals("name")) {
                     writer.setupNewLine();
