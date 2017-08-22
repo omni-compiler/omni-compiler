@@ -1,5 +1,5 @@
 /**
- * \file F-coc
+ * \file F-compile.c
  */
 
 #include "F-front.h"
@@ -8870,6 +8870,13 @@ compile_ENUMERATOR_statement(expr x)
         }
 
         sym = EXPR_SYM(ident);
+
+        if ((id = find_ident_local(sym)) != NULL) {
+            if (ID_CLASS(id) != CL_UNKNOWN) {
+                error("'%s' is already declared", SYM_NAME(sym));
+                return;
+            }
+        }
 
         id = declare_ident(sym, CL_PARAM);
         /* Currently ignore KIND */
