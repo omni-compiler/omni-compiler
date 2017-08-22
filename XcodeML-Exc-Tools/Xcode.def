@@ -255,6 +255,7 @@ L   OMP_BCAST_THDPRV
 L   OMP_SHARE
 L   OMP_REDUCTION
 L   OMP_LAST_UPDATE
+L   OMP_SCHEDULE
 
 # -----------------
 # Using Internally
@@ -272,6 +273,85 @@ B   JOIN
 # XcalableMP Pragma
 L   XMP_PRAGMA
 U   XMP_DESC_OF
+
+# -----------------
+# OpenACC Pragma
+L   ACC_PRAGMA 
+
+# -----------------
+L   INDEX_RANGE
+L   LOWER_BOUND
+L   UPPER_BOUND
+L   STEP
+
+# -----------------
+# added for coarray
+L   F_CO_SHAPE
+
+# -----------------
+# Fortran2008: SYNCXX, CRITICAL, LOCK.
+S   F_SYNCALL_STATEMENT
+S   F_SYNCIMAGE_STATEMENT
+S   F_SYNCMEMORY_STATEMENT
+S   F_CRITICAL_STATEMENT
+S   F_LOCK_STATEMENT
+S   F_UNLOCK_STATEMENT
+S   F_SYNC_STAT
+
+# -----------------
+# C++11
+L   CPP_DECL_NAMESPACE
+L   CPP_CLASS_DECL
+L   CPP_CONSTRUCT_EXPR_CLASS_STATEMENT
+L   CPP_THIS_EXPR
+T   ID
+L   CPP_NESTEDNAMESPECIFIER_TYPESPEC
+
+# -----------------
+# Fortran2008: BLOCK, VOLATILE.
+L   F_BLOCK_STATEMENT
+
+# -----------------
+# C++11
+L   CPP_CONST_CAST_EXPR
+L   CPP_STATIC_CAST_EXPR
+L   CPP_REINTERPRET_CAST_EXPR
+L   CPP_DYNAMIC_CAST_EXPR
+T   CPP_OPERATOR_ADDR
+L   CPP_TRY_STATEMENT
+L   CPP_THROW_STATEMENT
+L   CPP_CATCH_STATEMENT
+
+# -----------------
+# Fortran2008: PARAMETERIZED DERIVED TYPE.
+L   F_TYPE_PARAM
+L   F_TYPE_PARAMS
+L   F_TYPE_PARAM_VALUES
+L   F_LEN
+
+# -----------------
+# Fortran2003: IMPORT Statement
+L   F_IMPORT_STATEMENT
+
+# -----------------
+# Fortran2003: SELECT TYPE
+L   SELECT_TYPE_STATEMENT
+L   TYPE_GUARD
+
+# -----------------
+# Fortran2003: TYPE BOUND PROCEDURES
+L   F_TYPE_BOUND_PROCEDURES
+L   F_TYPE_BOUND_PROCEDURE
+L   F_TYPE_BOUND_GENERIC_PROCEDURE
+L   F_BINDING
+
+# -----------------
+# Fortran2008: SUBMODULE
+L   F_MODULE_PROCEDURE_DEFINITION
+
+# -----------------
+# Fortran2003: FORALL STATEMENT
+L   F_FORALL_STATEMENT
 
 # -----------------
 # Codes dynamically assignable

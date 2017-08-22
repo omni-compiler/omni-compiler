@@ -34,8 +34,9 @@ while(<IN>) {
     s/^\s*//;
     s/\s*$//;
     next if(/^$/);
-    split(/\s+/);
-    my($k, $xc, $cl, $clf) = @_;
+
+    my ($k, $xc, $cl, $clf) = split(/\s+/);
+
     if(length($cl) == 0 || $cl eq "-") {
         $cl = "null";
     } else {
@@ -116,7 +117,7 @@ print OUT<<_EOL_;
     {
         return toInt() < ASSIGN_START_NUM;
     }
-    
+
     public boolean isAssignedCode()
     {
         return !isBuiltinCode();
@@ -167,6 +168,11 @@ print OUT<<_EOL_;
         case F_ENTRY_DECL:                  case F_FORMAT_DECL:
         case F_DATA_DECL:
         case PRAGMA_LINE:                   case TEXT:
+        case F_SYNCALL_STATEMENT:           case F_SYNCIMAGE_STATEMENT:
+        case F_SYNCMEMORY_STATEMENT:        case F_CRITICAL_STATEMENT:
+        case F_LOCK_STATEMENT:              case F_UNLOCK_STATEMENT:
+        case F_BLOCK_STATEMENT:
+        case SELECT_TYPE_STATEMENT:         case TYPE_GUARD:
             return true;
         }
         return false;
