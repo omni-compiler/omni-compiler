@@ -379,6 +379,9 @@ expr_is_constant_typeof(x, bt)
         if(fId != NULL && PROC_CLASS(fId) == P_INTRINSIC){
             name = SYM_NAME(ID_SYM(fId));
         } else if(SYM_TYPE(s) == S_INTR){
+            fId = declare_ident(s, CL_PROC);
+            PROC_CLASS(fId) = P_INTRINSIC;
+            declare_function(fId);
             name = SYM_NAME(s);
         }
 
