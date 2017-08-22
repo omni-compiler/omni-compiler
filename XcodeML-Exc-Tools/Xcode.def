@@ -9,31 +9,31 @@ L   LIST
 T   ID_LIST
 T   IDENT		
 T   STRING_CONSTANT            XbcStringConstant
-T   INT_CONSTANT	           XbcIntConstant               XbfFintConstant
-T   FLOAT_CONSTANT	           XbcFloatConstant             XbfFrealConstant
-T   LONGLONG_CONSTANT	       XbcLonglongConstant          XbfFintConstant
+T   INT_CONSTANT               XbcIntConstant              XbfFintConstant
+T   FLOAT_CONSTANT             XbcFloatConstant            XbfFrealConstant
+T   LONGLONG_CONSTANT	       XbcLonglongConstant         XbfFintConstant
 T   MOE_CONSTANT               XbcMoeConstant
 
 # -----------------
 # C: Declaration / Definition
-L   FUNCTION_DEFINITION        XbcFunctionDefinition        XbfFfunctionDefinition
-L   VAR_DECL                   XbcVarDecl                   XbfVarDecl
-L   FUNCTION_DECL              XbcFunctionDecl              XbfFfunctionDecl
+L   FUNCTION_DEFINITION        XbcFunctionDefinition       XbfFfunctionDefinition
+L   VAR_DECL                   XbcVarDecl                  XbfVarDecl
+L   FUNCTION_DECL              XbcFunctionDecl             XbfFfunctionDecl
 
 # -----------------
-# C: Statement               
+# C: Statement
 S   COMPOUND_STATEMENT         XbcCompoundStatement
-S   EXPR_STATEMENT             XbcExprStatement             XbfExprStatement
+S   EXPR_STATEMENT             XbcExprStatement            XbfExprStatement
 S   WHILE_STATEMENT            XbcWhileStatement
 S   DO_STATEMENT               XbcDoStatement
 S   FOR_STATEMENT              XbcForStatement
 S   IF_STATEMENT               XbcIfStatement
 S   SWITCH_STATEMENT           XbcSwitchStatement
 S   BREAK_STATEMENT            XbcBreakStatement
-S   RETURN_STATEMENT           XbcReturnStatement           XbfFreturnStatement
+S   RETURN_STATEMENT           XbcReturnStatement          XbfFreturnStatement
 S   GOTO_STATEMENT             XbcGotoStatement
 S   CONTINUE_STATEMENT         XbcContinueStatement
-S   STATEMENT_LABEL            XbcStatementLabel            XbfStatementLabel
+S   STATEMENT_LABEL            XbcStatementLabel           XbfStatementLabel
 S   CASE_LABEL                 XbcCaseLabel
 S   DEFAULT_LABEL              XbcDefaultLabel
 
@@ -42,14 +42,14 @@ S   DEFAULT_LABEL              XbcDefaultLabel
 L   CONDITIONAL_EXPR           XbcCondExpr
 L   COMMA_EXPR                 XbcCommaExpr
 A   ASSIGN_EXPR                XbcAssignExpr
-B   PLUS_EXPR                  XbcPlusExpr                  XbfPlusExpr
+B   PLUS_EXPR                  XbcPlusExpr                 XbfPlusExpr
 A   ASG_PLUS_EXPR              XbcAsgPlusExpr
-B   MINUS_EXPR                 XbcMinusExpr                 XbfMinusExpr
+B   MINUS_EXPR                 XbcMinusExpr                XbfMinusExpr
 A   ASG_MINUS_EXPR             XbcAsgMinusExpr
-U   UNARY_MINUS_EXPR           XbcUnaryMinusExpr            XbfUnaryMinusExpr
-B   MUL_EXPR                   XbcMulExpr                   XbfMulExpr
+U   UNARY_MINUS_EXPR           XbcUnaryMinusExpr           XbfUnaryMinusExpr
+B   MUL_EXPR                   XbcMulExpr                  XbfMulExpr
 A   ASG_MUL_EXPR               XbcAsgMulExpr
-B   DIV_EXPR                   XbcDivExpr                   XbfDivExpr
+B   DIV_EXPR                   XbcDivExpr                  XbfDivExpr
 A   ASG_DIV_EXPR               XbcAsgDivExpr
 B   MOD_EXPR                   XbcModExpr
 A   ASG_MOD_EXPR               XbcAsgModExpr
@@ -87,9 +87,9 @@ P   POINTER_REF	               XbcPointerRef
 P   SIZE_OF_EXPR               XbcSizeOfExpr
 P   CAST_EXPR                  XbcCastExpr
 P   PRE_INCR_EXPR              XbcPreIncrExpr
-P   PRE_DECR_EXPR	           XbcPreDecrExpr
-A   POST_INCR_EXPR	           XbcPostIncrExpr
-A   POST_DECR_EXPR	           XbcPostDecrExpr
+P   PRE_DECR_EXPR              XbcPreDecrExpr
+A   POST_INCR_EXPR             XbcPostIncrExpr
+A   POST_DECR_EXPR             XbcPostDecrExpr
 P   ADDR_OF                  
 L   TYPE_NAME                  XbcTypeName
 
@@ -192,7 +192,7 @@ L   F_VAR_REF                  -                            XbfVarRef
 L   F_ARRAY_REF                -                            XbfFarrayRef
 
 # -----------------
-# Unary Expression			
+# Unary Expression
 U   F_USER_UNARY_EXPR          -                            XbfUserUnaryExpr
 
 # -----------------
@@ -208,13 +208,13 @@ L   F_CHARACTER_REF            -                            XbfFcharacterRef
 L   F_CONCAT_EXPR              -                            XbfFconcatExpr
 
 # -----------------
-# Fortran: Constant Expression			
+# Fortran: Constant Expression
 T   F_LOGICAL_CONSTATNT        -                            XbfFlogicalConstant
 T   F_CHARACTER_CONSTATNT      -                            XbfFcharacterConstant
 L   F_COMPLEX_CONSTATNT        -                            XbfFcomplexConstant
 
 # -----------------
-# Fortran: Other Expression			
+# Fortran: Other Expression
 L   F_ARRAY_CONSTRUCTOR        -                            XbfFarrayConstructor
 L   F_STRUCT_CONSTRUCTOR       -                            XbfFstructConstructor
 
@@ -296,7 +296,7 @@ S   F_SYNCMEMORY_STATEMENT
 S   F_CRITICAL_STATEMENT
 S   F_LOCK_STATEMENT
 S   F_UNLOCK_STATEMENT
-S   F_SYNC_STAT
+L   F_SYNC_STAT
 
 # -----------------
 # C++11
