@@ -8825,6 +8825,7 @@ compile_ENUM_statement(expr x)
     assert(x != NULL);
 
     id = declare_ident(gen_temp_symbol("_enum_"), CL_ENUM);
+    ID_LINE(id) = EXPR_LINE(x);
 
     tp = new_type_desc();
     TYPE_BASIC_TYPE(tp) = TYPE_ENUM;
