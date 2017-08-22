@@ -164,6 +164,7 @@ typedef struct ident_descriptor
                                            of this ID, otherwise
                                            NULL */
     int from_parent_module;             /* ID is imported from parent module  */
+    int imported;                       /* ID imported with the IMPORT statement */
 
     union {
         struct {
@@ -283,6 +284,10 @@ typedef struct ident_descriptor
 #define ID_LINE(id)     ((id)->line)
 #define ID_ORDER(id)    ((id)->order)
 #define ID_DEFINED_BY(id)       ((id)->defined_by)
+
+#define ID_IS_IMPORTED(id)       ((id)->imported)
+#define ID_SET_IMPORTED(id)      ((id)->imported = TRUE)
+#define ID_UNSET_IMPORTED(id)    ((id)->imported = FALSE)
 
 #define ID_INTF(id)     ((id)->interfaceId)
 

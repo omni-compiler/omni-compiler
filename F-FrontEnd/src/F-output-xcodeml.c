@@ -4989,6 +4989,9 @@ emit_decl(int l, ID id)
     if (ID_IS_OFMODULE(id) == TRUE && ID_CLASS(id) != CL_PARAM) {
         return;
     }
+    if (ID_IS_IMPORTED(id)) {
+        return;
+    }
 
     if (CRT_FUNCEP != NULL && EXT_PROC_IS_PROCEDUREDECL(CRT_FUNCEP)) {
         /*
@@ -5100,6 +5103,10 @@ outx_id_declarations(int l, ID id_list, int hasResultVar, const char * functionN
             }
 
             if (TYPE_IS_MODIFIED(ID_TYPE(id)) == TRUE) {
+                continue;
+            }
+
+            if (ID_IS_IMPORTED(id) == TRUE) {
                 continue;
             }
 

@@ -8320,25 +8320,56 @@ check_image_control_statement_available() {
     return TRUE;
 }
 
+static void
+import_ident(ID id)
+{
+    ID ip;
+    ID last_ip = NULL;
+    ID imported = new_ident_desc(ID_SYM(id));
+    *imported = *id;
+    ID_SET_IMPORTED(imported);
+
+    FOREACH_ID(ip, LOCAL_SYMBOLS) {
+        last_ip = ip;
+    }
+    ID_LINK_ADD(imported, LOCAL_SYMBOLS, last_ip);
+
+    if (ID_CLASS(id) == CL_TAGNAME) {
+        TYPE_DESC stp;
+        TYPE_DESC tp;
+        TYPE_DESC last_tp = NULL;
+
+        for (tp = LOCAL_STRUCT_DECLS; tp != NULL; tp = TYPE_SLINK(tp)) {
+            last_tp = tp;
+        }
+        stp = wrap_type(ID_TYPE(id));
+        TYPE_TAGNAME(stp) = TYPE_TAGNAME(ID_TYPE(id));
+        TYPE_SLINK_ADD(stp, LOCAL_STRUCT_DECLS, last_tp);
+    }
+}
+
 /*
  * IMPORT statement
  */
 static void
 compile_IMPORT_statement(expr x)
 {
-    if(check_inside_INTERFACE_body() == FALSE){
-        error("IMPORT statement allowed only in interface body");
-    }
     expv ident_list, arg;
     list lp;
+    ID ident;
+    if (check_inside_INTERFACE_body() == FALSE){
+        error("IMPORT statement allowed only in interface body");
+    }
+
     ident_list = EXPR_ARG1(x);
-    if(EXPR_LIST(ident_list)) {
+    if (EXPR_LIST(ident_list)) {
         FOR_ITEMS_IN_LIST(lp, ident_list) {
             arg = LIST_ITEM(lp);
-            ID ident = find_ident(EXPR_SYM(arg));
-            if(ident == NULL){
-                error("%s part of the IMPORT statement has not been declared yet.", SYM_NAME(EXPR_SYM(arg)));
+            if ((ident = find_ident_parent(EXPR_SYM(arg))) == NULL){
+                error("%s part of the IMPORT statement has not been declared yet.",
+                      SYM_NAME(EXPR_SYM(arg)));
             }
+            import_ident(ident);
         }
     }
     output_statement(list1(F03_IMPORT_STATEMENT, EXPR_ARG1(x)));
