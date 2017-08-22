@@ -1760,7 +1760,6 @@ inblock()
     return FALSE;
 }
 
-
 void
 check_NOT_INBLOCK()
 {
