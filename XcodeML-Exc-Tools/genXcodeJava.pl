@@ -35,20 +35,25 @@ while(<IN>) {
     s/\s*$//;
     next if(/^$/);
 
-    my ($k, $xc, $cl, $clf) = split(/\s+/);
+    #my ($k, $xc, $cl, $clf) = split(/\s+/);
 
-    if(length($cl) == 0 || $cl eq "-") {
+    # ignore class.
+    my ($k, $xc) = split(/\s+/);
+    my $cl = "";
+    my $clf = "";
+    
+    if (length($cl) == 0 || $cl eq "-") {
         $cl = "null";
     } else {
         $cl = "${cl}.class";
     }
-    if(length($clf) == 0 || $clf eq "-") {
+    if (length($clf) == 0 || $clf eq "-") {
         $clf = "null";
     } else {
         $clf = "${clf}.class";
     }
 
-    if(!$dynStarted && $xc =~ /^DYN_/) {
+    if (!$dynStarted && $xc =~ /^DYN_/) {
         $dynStarted = 1;
         $n = $DYN_START_NUM;
     }
