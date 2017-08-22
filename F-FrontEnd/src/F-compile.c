@@ -1,5 +1,5 @@
 /**
- * \file F-compile.c
+ * \file F-coc
  */
 
 #include "F-front.h"
@@ -8889,6 +8889,12 @@ compile_ENUMERATOR_statement(expr x)
 static void
 compile_ENDENUM_statement(expr x)
 {
+    TYPE_DESC enum_tp = EXPV_TYPE(CTL_BLOCK(ctl_top));
+
+    if (TYPE_MEMBER_LIST(enum_tp) == NULL) {
+        error("ENUM declaration has no enumerators");
+    }
+
     pop_ctl();
     CURRENT_STATE = INDCL;
 }
