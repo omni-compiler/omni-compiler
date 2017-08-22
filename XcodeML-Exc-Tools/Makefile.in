@@ -10,8 +10,17 @@ INSTALL      = @INSTALL@
 OM_EXC_TOOLS = build/om-exc-tools.jar
 SOURCE       = $(wildcard src/exc/*/*.java)
 
+XCODE_JAVA	=	src/exc/object/Xcode.java
+XCODE_DEF	=	./Xcode.def
+XCODE_GEN	=	./genXcodeJava.pl
+
 all: $(OM_EXC_TOOLS)
-$(OM_EXC_TOOLS): $(SOURCE)
+
+$(XCODE_JAVA):	$(XCODE_DEF) $(XCODE_GEN)
+	rm -f $@
+	perl $(XCODE_GEN)
+
+$(OM_EXC_TOOLS): $(SOURCE) $(XCODE_JAVA)
 	$(JAVAC) $(JAVAC_OPT) src/exc/*/*.java src/xcodeml/*/*.java -classpath ./src
 	$(MKDIR_P) build
 	cd src; $(JAR) $(JAR_OPT) cf ../$@ ./exc/*/*.class ./xcodeml/*/*.class
