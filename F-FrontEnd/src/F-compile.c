@@ -8872,7 +8872,7 @@ compile_ENUMERATOR_statement(expr x)
         sym = EXPR_SYM(ident);
 
         if ((id = find_ident_local(sym)) != NULL) {
-            if (ID_CLASS(id) != CL_UNKNOWN) {
+            if (ID_CLASS(id) != CL_UNKNOWN || ID_TYPE(id) != NULL) {
                 error("'%s' is already declared", SYM_NAME(sym));
                 return;
             }
