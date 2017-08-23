@@ -185,6 +185,7 @@ S   F_REWIND_STATEMENT         -                            XbfFrewindStatement
 S   F_WRITE_STATEMENT          -                            XbfFwriteStatement
 S   F_PAUSE_STATEMENT          -                            XbfFpauseStatement
 S   F_STOP_STATEMENT           -                            XbfFstopStatement
+S   F_DATA_STATEMENT           -                            XbfFdataStatement
 
 # -----------------
 # Fortran: Variable Reference
