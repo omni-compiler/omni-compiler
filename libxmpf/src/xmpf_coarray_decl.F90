@@ -103,7 +103,7 @@ contains
   !-----------------------------------------------------------------
   !   inquery functions
   !-----------------------------------------------------------------
-  integer function xmpf_image_index_dim1(descptr, &
+  function xmpf_image_index_dim1(descptr, &
        cs1) result(index)
     integer :: index
     integer(8), intent(in) :: descptr
@@ -112,7 +112,7 @@ contains
          (descptr, (/cs1/))
   end function xmpf_image_index_dim1
 
-  integer function xmpf_image_index_dim2(descptr, &
+  function xmpf_image_index_dim2(descptr, &
        cs1, cs2) result(index)
     integer :: index
     integer(8), intent(in) :: descptr
@@ -121,7 +121,7 @@ contains
          (descptr, (/cs1, cs2/))
   end function xmpf_image_index_dim2
 
-  integer function xmpf_image_index_dim3(descptr, &
+  function xmpf_image_index_dim3(descptr, &
        cs1, cs2, cs3) result(index)
     integer :: index
     integer(8), intent(in) :: descptr
@@ -130,7 +130,7 @@ contains
          (descptr, (/cs1, cs2, cs3/))
   end function xmpf_image_index_dim3
 
-  integer function xmpf_image_index_dim4(descptr, &
+  function xmpf_image_index_dim4(descptr, &
        cs1, cs2, cs3, cs4) result(index)
     integer :: index
     integer(8), intent(in) :: descptr
@@ -139,7 +139,7 @@ contains
          (descptr, (/cs1, cs2, cs3, cs4/))
   end function xmpf_image_index_dim4
 
-  integer function xmpf_image_index_dim5(descptr, &
+  function xmpf_image_index_dim5(descptr, &
        cs1, cs2, cs3, cs4, cs5) result(index)
     integer :: index
     integer(8), intent(in) :: descptr
@@ -148,7 +148,7 @@ contains
          (descptr, (/cs1, cs2, cs3, cs4, cs5/))
   end function xmpf_image_index_dim5
 
-  integer function xmpf_image_index_dim6(descptr, &
+  function xmpf_image_index_dim6(descptr, &
        cs1, cs2, cs3, cs4, cs5, cs6) result(index)
     integer :: index
     integer(8), intent(in) :: descptr
@@ -157,7 +157,7 @@ contains
          (descptr, (/cs1, cs2, cs3, cs4, cs5, cs6/))
   end function xmpf_image_index_dim6
 
-  integer function xmpf_image_index_dim7(descptr, &
+  function xmpf_image_index_dim7(descptr, &
        cs1, cs2, cs3, cs4, cs5, cs6, cs7) result(index)
     integer :: index
     integer(8), intent(in) :: descptr
