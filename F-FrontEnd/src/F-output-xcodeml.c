@@ -141,6 +141,7 @@ xtag(enum expr_code code)
     case F95_EXIT_STATEMENT:        return "FexitStatement";
     case F_ENTRY_STATEMENT:         return "FentryDecl";
     case F_FORALL_STATEMENT:        return "forallStatement";
+    case F_DATA_STATEMENT:          return "FdataStatement";
     case F08_ERROR_STOP_STATEMENT:  return "FerrorStopStatement";
 
     /*
@@ -3676,6 +3677,7 @@ outx_expv(int l, expv v)
     case F95_CYCLE_STATEMENT:
     case F95_EXIT_STATEMENT:        outx_EXITCYCLE_statement(l, v); break;
     case F_ENTRY_STATEMENT:         outx_entryDecl(l, v); break;
+    case F_DATA_STATEMENT:          outx_dataDecl(l, v); break;
 
     /*
      * IO statements
