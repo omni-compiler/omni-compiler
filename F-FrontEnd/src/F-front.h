@@ -889,7 +889,7 @@ extern void     fix_type _ANSI_ARGS_((ID id));
 extern void     compile_FORMAT_decl _ANSI_ARGS_((int st_no, expr x));
 extern void     FinalizeFormat _ANSI_ARGS_((void));
 
-extern void     compile_DATA_decl _ANSI_ARGS_((expr x));
+extern void     compile_DATA_decl_or_statement _ANSI_ARGS_((expr x, int is_declaration));
 extern void     compile_EXTERNAL_decl _ANSI_ARGS_((expr x));
 
 extern void     compile_IO_statement _ANSI_ARGS_((expr x));
