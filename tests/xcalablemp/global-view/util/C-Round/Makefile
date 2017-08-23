@@ -24,7 +24,7 @@ sub_mpi.o: ./sub/sub_mpi.c
 	$(XCC) -o $@ $<
 
 mpi_xmp.x: mpi_xmp.c ixmp_sub.o
-	$(MPI_CC) -o $@ mpi_xmp.c ixmp_sub.o $(XMP_LINK_FLAGS)
+	$(XCC) -o $@ mpi_xmp.c ixmp_sub.o $(XMP_LINK_FLAGS)
 
 xmp_mpi.x: xmp_mpi.c sub_mpi.o
 	$(XCC) -o $@ xmp_mpi.c sub_mpi.o

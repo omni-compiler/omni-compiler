@@ -22,3 +22,11 @@
       !! incl. FJMPI_Rdma_finalize(), _XMP_finalize, etc.
       call xmpf_finalize_all_
       end
+
+
+      subroutine xmpc_traverse_init
+      end subroutine xmpc_traverse_init
+
+      subroutine xmpc_traverse_finalize
+      end subroutine xmpc_traverse_finalize
+      

@@ -41,6 +41,12 @@ extern int _XMPF_running;
   } \
 }
 
+extern int xmp_get_ruuning();
+#define _XMP_RETURN_IF_AFTER_FINALIZATION \
+  { \
+    if (! xmp_get_ruuning()) return; \
+  }
+
 #define _XMP_IS_SINGLE \
 (_XMP_world_size == 1)
 

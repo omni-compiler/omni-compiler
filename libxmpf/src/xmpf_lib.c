@@ -1,9 +1,3 @@
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
-
 #include "xmpf_internal.h"
 #include "xmp_internal.h"
 #include "xmp.h"
@@ -28,14 +22,12 @@ void xmp_init_() {
 }
 
 void xmp_finalize_(void) {
-  xmp_finalize();
+  xmp_finalize(0);
 }
-
 
 int xmpf_desc_kind_(xmp_desc_t **d, int *kind) {
   return xmp_desc_kind(*d, kind);
 }
-
 
 int xmp_num_nodes_(void) {
   return _XMP_get_execution_nodes()->comm_size;

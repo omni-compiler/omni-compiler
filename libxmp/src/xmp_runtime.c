@@ -11,11 +11,18 @@
 static int _XMP_runtime_working = _XMP_N_INT_FALSE;
 int _XMPC_running = 1;
 int _XMPF_running = 0;
+extern void xmpc_traverse_init_();
+extern void xmpc_traverse_finalize_();
 
 void (*_xmp_pack_array)(void *buffer, void *src, int array_type, size_t array_type_size,
 			int array_dim, int *l, int *u, int *s, unsigned long long *d) = _XMPC_pack_array;
 void (*_xmp_unpack_array)(void *dst, void *buffer, int array_type, size_t array_type_size,
 			  int array_dim, int *l, int *u, int *s, unsigned long long *d) = _XMPC_unpack_array;
+
+int xmp_get_ruuning()
+{
+  return _XMP_runtime_working;
+}
 
 void _XMP_init(int argc, char** argv)
 {
@@ -36,16 +43,23 @@ void _XMP_init(int argc, char** argv)
 #endif
     xmp_reduce_initialize();
   }
+
   _XMP_init_world(NULL, NULL);
-  _XMP_runtime_working = _XMP_N_INT_TRUE;
   _XMP_check_reflect_type();
+  
+  if (!_XMP_runtime_working) {
+    xmpc_traverse_init_();
+  }
+  _XMP_runtime_working = _XMP_N_INT_TRUE;
 }
 
-void _XMP_finalize(int return_val)
+void _XMP_finalize(int exitcode)
 {
   if (_XMP_runtime_working) {
+    xmpc_traverse_finalize_();
+    
 #if defined(_XMP_GASNET) || defined(_XMP_FJRDMA) || defined(_XMP_TCA) || defined(_XMP_MPI3_ONESIDED)
-    _XMP_finalize_onesided_functions(return_val);
+    _XMP_finalize_onesided_functions(exitcode);
 #endif
     _XMP_finalize_world();
     _XMP_runtime_working = _XMP_N_INT_FALSE;
@@ -57,14 +71,14 @@ char *_XMP_desc_of(void *p)
   return (char *)p;
 }
 
-void xmpc_init_all(int argc, char** argv)
+void xmp_init_auto(int argc, char** argv)
 {
   _XMP_init(argc, argv);
 }
 
-void xmpc_finalize_all(int return_val)
+void xmp_finalize_auto(int exitcode)
 {
-  _XMP_finalize(return_val);
+  _XMP_finalize(exitcode);
 }
 
 #include "config.h"

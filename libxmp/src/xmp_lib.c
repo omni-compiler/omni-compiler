@@ -17,23 +17,21 @@ MPI_Comm xmp_get_mpi_comm(void)
 void xmp_init_mpi(int *argc, char ***argv) {}
 void xmp_finalize_mpi(void) {}
 
-void xmp_init(int *argc, char ***argv)
+void xmp_init(int argc, char **argv)
 {
-  _XMP_init(*argc, *argv);
+  _XMP_init(argc, argv);
 }
 
-void xmp_finalize(void)
+void xmp_finalize(int exitcode)
 {
-  _XMP_finalize(0);
+  _XMP_finalize(exitcode);
 }
-
 
 int xmp_desc_kind(xmp_desc_t d, int *kind) 
 {
   *kind = *(int*)d;
   return 0;
 }
-
 
 int xmp_num_nodes(void)
 {

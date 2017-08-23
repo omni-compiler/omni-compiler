@@ -29,17 +29,14 @@ void xmpf_init_all__()
 }
 
 //extern double t_sched, t_start, t_wait;
-
 void xmpf_finalize_all__()
 {
-
   //  xmpf_dbg_printf("sched = %f, start = %f, wait = %f\n", t_sched, t_start, t_wait);
-
 #if defined(_XMP_GASNET) || defined(_XMP_FJRDMA) || defined(_XMP_MPI3_ONESIDED)
-  _XMPF_coarray_finalize();
+    _XMPF_coarray_finalize();
 #endif
-
-  xmpf_finalize_each__();
+  
+    xmpf_finalize_each__();
 }
 
 void xmpf_finalize_each__()
