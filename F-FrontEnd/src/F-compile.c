@@ -714,9 +714,13 @@ compile_statement1(int st_no, expr x)
         break;
 
     case F_DATA_DECL:
-        check_INDCL();
-        /* compilataion is executed later in end_declaration */
-        list_put_last(CURRENT_INITIALIZE_DECLS, x);
+        if(CURRENT_STATE == INEXEC) {
+            compile_DATA_decl_or_statement(EXPR_ARG1(x), FALSE);
+        } else {
+            check_INDCL();
+            /* compilataion is executed later in end_declaration */
+            list_put_last(CURRENT_INITIALIZE_DECLS, x);
+        }
         break;
 
     case F_INTRINSIC_DECL:
@@ -2764,7 +2768,7 @@ end_declaration()
             postproc_PARAM_decl(EXPR_ARG1(v), EXPR_ARG2(v));
             break;
         case F_DATA_DECL:
-            compile_DATA_decl(EXPR_ARG1(v));
+            compile_DATA_decl_or_statement(EXPR_ARG1(v), TRUE);
             break;
         default:
             continue;

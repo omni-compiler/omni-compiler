@@ -112,6 +112,7 @@ public class XcodeMLNameTable_F extends XcodeMLNameTable {
 			new XcodeMLName(Xcode.F_INQUIRE_STATEMENT, "FinquireStatement"),
 			new XcodeMLName(Xcode.F_FORMAT_DECL, "FformatDecl"),
 			new XcodeMLName(Xcode.F_DATA_DECL, "FdataDecl"),
+			new XcodeMLName(Xcode.F_DATA_STATEMENT, "FdataStatement"),
 			new XcodeMLName(Xcode.F_NAMELIST_DECL, "FnamelistDecl"),
 			new XcodeMLName(Xcode.F_EQUIVALENCE_DECL, "FequivalenceDecl"),
 			new XcodeMLName(Xcode.F_COMMON_DECL, "FcommonDecl"),
