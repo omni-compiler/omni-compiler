@@ -16,6 +16,7 @@ static void     declare_dummy_args _ANSI_ARGS_((expr l,
                                                 enum name_class class));
 static int      markAsSave _ANSI_ARGS_((ID id));
 
+
 /* for module and use statement */
 extern char line_buffer[];
 extern SYMBOL current_module_name;
@@ -269,6 +270,7 @@ declare_procedure(enum name_class class,
     int pure = FALSE;
     int elemental = FALSE;
     int module = FALSE;
+    int impure = FALSE;
     int is_separate_definition = FALSE;
     list lp;
 
@@ -347,6 +349,13 @@ declare_procedure(enum name_class class,
             module = TRUE;
             break;
 
+        case F08_IMPURE_SPEC:
+            if (class != CL_PROC) {
+                error("invalid pure prefix");
+                return;
+            }
+            impure = TRUE;
+            break;
 
         default:
             error("unknown prefix");
@@ -447,6 +456,10 @@ declare_procedure(enum name_class class,
             PROC_CLASS(id) = P_THISPROC;
         }
 
+        if (pure && impure) {
+            error("PURE and IMPURE are specified");
+        }
+
         if (pure == TRUE) {
             PROC_IS_PURE(id) = pure; /* MAY NOT BE REQUIRED */
             TYPE_SET_PURE(id); /* MAY NOT BE REQUIRED */
@@ -459,6 +472,13 @@ declare_procedure(enum name_class class,
             TYPE_SET_ELEMENTAL(id);
             if (type != NULL) {
                 TYPE_SET_ELEMENTAL(ID_TYPE(id));
+            }
+        }
+        if (impure == TRUE) {
+            PROC_IS_PURE(id) = !impure;
+            TYPE_SET_IMPURE(id);
+            if (ID_TYPE(id) != NULL) {
+                TYPE_SET_IMPURE(ID_TYPE(id));
             }
         }
         if (module == TRUE) {
@@ -1597,7 +1617,7 @@ find_ident_block_parent(SYMBOL s)
         }
     }
 
-    if (in_block) {
+    if (in_block &&  UNIT_CTL_LOCAL_SYMBOLS(CURRENT_UNIT_CTL) != LOCAL_SYMBOLS) {
         ip = find_ident_head(s, UNIT_CTL_LOCAL_SYMBOLS(CURRENT_UNIT_CTL));
     }
 
@@ -2121,6 +2141,10 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
             break;
         case F03_BIND_SPEC:
             TYPE_SET_BIND(tp);
+            if(EXPR_ARG1(v) != NULL) {
+                // BIND(C, NAME='')
+                TYPE_BIND_NAME(tp) = EXPR_ARG1(v);
+            }
             break;
         case F03_VALUE_SPEC:
             TYPE_SET_VALUE(tp);
@@ -5734,7 +5758,7 @@ compile_type_bound_procedure(expr x)
 }
 
 void
-compile_type_generic_procedure(expr x)
+compile_type_bound_generic_procedure(expr x)
 {
     expr generics_spec = EXPR_ARG1(x);
     expr id_list = EXPR_ARG2(x);

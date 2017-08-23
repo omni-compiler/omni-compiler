@@ -233,7 +233,14 @@ public class XfDecompileDomVisitor {
 
         for (Node basicTypeNode : basicTypeNodeArray) {
             String bind = XmDomUtil.getAttr(basicTypeNode, "bind");
-            if (XfUtilForDom.isNullOrEmpty(bind) == false) {
+            String bind_name = XmDomUtil.getAttr(basicTypeNode, "bind_name");
+            if (XfUtilForDom.isNullOrEmpty(bind) == false 
+                && XfUtilForDom.isNullOrEmpty(bind_name) == false) 
+            {
+                writer.writeToken(",");
+                writer.writeToken("BIND( " + bind.toUpperCase() + ", NAME='" + bind_name + "' )");
+                break;
+            } else if(XfUtilForDom.isNullOrEmpty(bind) == false) {
                 writer.writeToken(",");
                 writer.writeToken("BIND( " + bind.toUpperCase() + " )");
                 break;
@@ -1380,6 +1387,16 @@ public class XfDecompileDomVisitor {
 
     abstract class XcodeNodeVisitor {
         public abstract void enter(Node n);
+    }
+
+    // No for specific nodes
+    class PassThroughVisitor extends XcodeNodeVisitor {
+        /**
+         * Just invoke enter to its children
+         */
+        @Override public void enter(Node n) {
+            _invokeChildEnter(n);
+        }
     }
 
     // XcodeProgram
@@ -3225,8 +3242,13 @@ public class XfDecompileDomVisitor {
                     writer.writeToken("RECURSIVE");
                     writer.writeToken(" ");
                 }
-                if (XmDomUtil.getAttrBool(functionTypeNode, "is_pure")) {
-                    writer.writeToken("PURE");
+
+                if (XmDomUtil.hasAttr(functionTypeNode, "is_pure")) {
+                    if (XmDomUtil.getAttrBool(functionTypeNode, "is_pure")) {
+                        writer.writeToken("PURE");
+                    } else {
+                        writer.writeToken("IMPURE");
+                    }
                     writer.writeToken(" ");
                 }
                 if (XmDomUtil.getAttrBool(functionTypeNode, "is_elemental")) {
@@ -3276,8 +3298,13 @@ public class XfDecompileDomVisitor {
                     writer.writeToken("RECURSIVE");
                     writer.writeToken(" ");
                 }
-                if (XmDomUtil.getAttrBool(functionTypeNode, "is_pure")) {
-                    writer.writeToken("PURE");
+
+                if (XmDomUtil.hasAttr(functionTypeNode, "is_pure")) {
+                    if (XmDomUtil.getAttrBool(functionTypeNode, "is_pure")) {
+                        writer.writeToken("PURE");
+                    } else {
+                        writer.writeToken("IMPURE");
+                    }
                     writer.writeToken(" ");
                 }
                 if (XmDomUtil.getAttrBool(functionTypeNode, "is_elemental")) {
@@ -3440,8 +3467,12 @@ public class XfDecompileDomVisitor {
                     writer.writeToken("RECURSIVE");
                     writer.writeToken(" ");
                 }
-                if (XmDomUtil.getAttrBool(functionTypeNode, "is_pure")) {
-                    writer.writeToken("PURE");
+                if (XmDomUtil.hasAttr(functionTypeNode, "is_pure")) {
+                    if (XmDomUtil.getAttrBool(functionTypeNode, "is_pure")) {
+                        writer.writeToken("PURE");
+                    } else {
+                        writer.writeToken("IMPURE");
+                    }
                     writer.writeToken(" ");
                 }
                 if (XmDomUtil.getAttrBool(functionTypeNode, "is_elemental")) {
@@ -3491,8 +3522,12 @@ public class XfDecompileDomVisitor {
                     writer.writeToken("RECURSIVE");
                     writer.writeToken(" ");
                 }
-                if (XmDomUtil.getAttrBool(functionTypeNode, "is_pure")) {
-                    writer.writeToken("PURE");
+                if (XmDomUtil.hasAttr(functionTypeNode, "is_pure")) {
+                    if (XmDomUtil.getAttrBool(functionTypeNode, "is_pure")) {
+                        writer.writeToken("PURE");
+                    } else {
+                        writer.writeToken("IMPURE");
+                    }
                     writer.writeToken(" ");
                 }
                 if (XmDomUtil.getAttrBool(functionTypeNode, "is_elemental")) {
@@ -5024,7 +5059,31 @@ public class XfDecompileDomVisitor {
             _writeLineDirective(n);
 
             XmfWriter writer = _context.getWriter();
-            writer.writeToken("STOP ");
+            writer.writeToken("STOP");
+
+            String code = XmDomUtil.getAttr(n, "code");
+            String message = XmDomUtil.getAttr(n, "message");
+            if (XfUtilForDom.isNullOrEmpty(code) == false) {
+                writer.writeToken(code);
+            } else if (XfUtilForDom.isNullOrEmpty(message) == false) {
+                writer.writeLiteralString(message);
+            }
+            _invokeChildEnter(n);
+            writer.setupNewLine();
+        }
+    }
+
+    // FerrorStopStatement
+    class FerrorStopStatementVisitor extends XcodeNodeVisitor {
+        /**
+         * Decompile "FerrorStopStatement" element in XcodeML/F.
+         */
+        @Override public void enter(Node n) {
+            _writeLineDirective(n);
+
+            XmfWriter writer = _context.getWriter();
+            writer.writeToken("ERROR");
+            writer.writeToken("STOP");
 
             String code = XmDomUtil.getAttr(n, "code");
             String message = XmDomUtil.getAttr(n, "message");
@@ -5034,6 +5093,7 @@ public class XfDecompileDomVisitor {
                 writer.writeLiteralString(message);
             }
 
+            _invokeChildEnter(n);
             writer.setupNewLine();
         }
     }
@@ -5067,6 +5127,7 @@ public class XfDecompileDomVisitor {
                 writer.writeToken("0");
             }
 
+            _invokeChildEnter(n);
             writer.setupNewLine();
         }
     }
@@ -5426,15 +5487,30 @@ public class XfDecompileDomVisitor {
                     _context.setLastErrorMessage(_validator.getErrDesc());
                     fail(n);
                 }
+                boolean isOperator = XmDomUtil.getAttrBool(renameNode, "is_operator");
                 String localName = XmDomUtil.getAttr(renameNode, "local_name");
                 String useName = XmDomUtil.getAttr(renameNode, "use_name");
                 writer.writeToken(", ");
                 if (XfUtilForDom.isNullOrEmpty(localName) == false) {
-                    writer.writeToken(localName);
+                    if (isOperator) {
+                        writer.writeToken("OPERATOR");
+                        writer.writeToken("(");
+                        writer.writeToken(localName);
+                        writer.writeToken(")");
+                    } else {
+                        writer.writeToken(localName);
+                    }
                     writer.writeToken(" => ");
                 }
                 if (XfUtilForDom.isNullOrEmpty(useName) == false) {
-                    writer.writeToken(useName);
+                    if (isOperator) {
+                        writer.writeToken("OPERATOR");
+                        writer.writeToken("(");
+                        writer.writeToken(useName);
+                        writer.writeToken(")");
+                    } else {
+                        writer.writeToken(useName);
+                    }
                 }
             }
             writer.setupNewLine();
@@ -7298,7 +7374,10 @@ public class XfDecompileDomVisitor {
         new Pair("FrewindStatement", new FrewindStatementVisitor()),
         new Pair("FselectCaseStatement", new FselectCaseStatementVisitor()),
         new Pair("selectTypeStatement", new SelectTypeStatementVisitor()),
+        new Pair("code", new PassThroughVisitor()),
+        new Pair("message", new PassThroughVisitor()),
         new Pair("FstopStatement", new FstopStatementVisitor()),
+        new Pair("FerrorStopStatement", new FerrorStopStatementVisitor()),
         new Pair("FpauseStatement", new FpauseStatementVisitor()),
         new Pair("FstructConstructor", new FstructConstructorVisitor()),
         new Pair("FstructDecl", new FstructDeclVisitor()),
