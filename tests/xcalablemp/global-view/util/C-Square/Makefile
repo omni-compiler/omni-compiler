@@ -1,6 +1,7 @@
 INCDIR = ../../../../../Driver/etc
 XMP_LINK_FLAGS=$(shell xmpcc --show-env | sed -n '/OMNI_LINKER_OPT=/p' | sed 's/OMNI_LINKER_OPT=//' | sed "s/\"//g")
 MPI_CC=$(shell xmpcc --show-env         | sed -n '/OMNI_MPICC_CMD=/p'  | sed 's/OMNI_MPICC_CMD=//'  | sed "s/\"//g")
+OMNI_HOME=$(shell xmpcc --show-env      | sed -n '/OMNI_HOME=/p'       | sed 's/OMNI_HOME=//'  | sed "s/\"//g")
 
 XCC     = xmpcc
 XRUN    = mpiexec
@@ -23,8 +24,11 @@ sub_mpi.o: ./sub/sub_mpi.c
 %.x: %.c 
 	$(XCC) -o $@ $<
 
-mpi_xmp.x: mpi_xmp.c ixmp_sub.o
-	$(MPI_CC) -o $@ mpi_xmp.c ixmp_sub.o $(XMP_LINK_FLAGS)
+mpi_xmp.o: mpi_xmp.c
+	$(MPI_CC) -o $@ -c mpi_xmp.c -I$(OMNI_HOME)/include
+
+mpi_xmp.x: mpi_xmp.o ixmp_sub.o
+	$(XCC) -o $@ mpi_xmp.o ixmp_sub.o
 
 xmp_mpi.x: xmp_mpi.c sub_mpi.o
 	$(XCC) -o $@ xmp_mpi.c sub_mpi.o
