@@ -77,11 +77,6 @@ fi
 trav_cands=`$NM $NM_OPT "${INFILES[@]}" | \
     awk 'NF >= 2 && $(NF-1) ~ "^[U]$" { print $NF }'`
 traversers=()
-
-if test "$LANG" = "C"; then
-    traversers+=(xmpc_traverse_init)
-    traversers+=(xmpc_traverse_finalize)
-fi
 for name in $trav_cands; do
     name=${name#_}                # re-mangling for MacOS
     case $name in
@@ -110,7 +105,6 @@ for name in $proc_cands; do
             error=yes;;
     esac
 done
-
 if [ "${error}" = "yes" ]; then
     exit 1
 fi
@@ -178,7 +172,7 @@ fortran_output_MODE2() {
 
 c_output_MODE1() {
     for groupname in "${groupnames[@]}"; do
-        echo "extern void ${groupname}_(void);"
+        echo "extern void ${groupname}(void);"
         for name in "${procedures[@]}"; do
             if [[ ${name} =~ ${groupname}_* ]]; then
                 echo "extern void ${name}(void);"
@@ -188,7 +182,7 @@ c_output_MODE1() {
     echo
 
     for groupname in "${groupnames[@]}"; do
-        echo "void ${groupname}_() {"
+        echo "void ${groupname}() {"
         for name in "${procedures[@]}"; do
             if [[ ${name} =~ ${groupname}_* ]]; then
                 echo "  ${name}();"

@@ -212,7 +212,7 @@ OMNI_TRAVERSE_OPT="--C --nm ${NM}"
 [ "${TARGET}" = "powerpc-hitachi-aix" ] && OMNI_TRAVERSE_OPT="${OMNI_TRAVERSE_OPT} --sr"
 [ $ENABLE_OPENACC = true ] && OMNI_TRAVERSE_ACC_OPT="${OMNI_TRAVERSE_OPT} --prefix acc"
 OMNI_TRAVERSE_OPT="${OMNI_TRAVERSE_OPT} --prefix xmpc"
-omni_exec $OMNI_TRAVERSE $OMNI_TRAVERSE_OPT -o $TRAVERSE_FILE_C "${obj_files[@]}" "${archive_files[@]}"
+omni_exec $OMNI_TRAVERSE $OMNI_TRAVERSE_OPT -o $TRAVERSE_FILE_C "${obj_files[@]}" "${archive_files[@]}" ${OMNI_HOME}/lib/libxmp.a
 
 omni_exec $OMNI_MPICC_CMD -c $TRAVERSE_FILE_C -o $TRAVERSE_FILE_O
 

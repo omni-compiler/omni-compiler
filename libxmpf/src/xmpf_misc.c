@@ -8,7 +8,7 @@
 
 void xmpf_init_all__()
 {
-  _XMP_init(0, NULL);
+  _XMP_init(0, NULL, MPI_COMM_WORLD);
 
   _XMP_check_reflect_type();
 
@@ -31,6 +31,8 @@ void xmpf_init_all__()
 //extern double t_sched, t_start, t_wait;
 void xmpf_finalize_all__()
 {
+  if(! xmp_get_ruuning()) return;
+
   //  xmpf_dbg_printf("sched = %f, start = %f, wait = %f\n", t_sched, t_start, t_wait);
 #if defined(_XMP_GASNET) || defined(_XMP_FJRDMA) || defined(_XMP_MPI3_ONESIDED)
     _XMPF_coarray_finalize();
@@ -118,4 +120,12 @@ void xmpf_array___(_XMP_array_t **a_desc)
 
 
 void xmp_desc_of_(){
+}
+
+void xmpc_traverse_init()
+{
+}
+
+void xmpc_traverse_finalize()
+{
 }

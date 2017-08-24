@@ -17,14 +17,14 @@ MPI_Comm xmp_get_mpi_comm(void)
 void xmp_init_mpi(int *argc, char ***argv) {}
 void xmp_finalize_mpi(void) {}
 
-void xmp_init(int argc, char **argv)
+void xmp_init(MPI_Comm comm)
 {
-  _XMP_init(argc, argv);
+  _XMP_init(1, NULL, comm);
 }
 
-void xmp_finalize(int exitcode)
+void xmp_finalize()
 {
-  _XMP_finalize(exitcode);
+  _XMP_finalize(false);
 }
 
 int xmp_desc_kind(xmp_desc_t d, int *kind) 
@@ -617,6 +617,6 @@ void xmp_free(xmp_desc_t d){
 
 
 void xmp_exit(int status){
-  _XMP_finalize(0);
+  _XMP_finalize(true);
   exit(status);
 }

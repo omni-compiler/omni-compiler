@@ -18,11 +18,11 @@ void xmp_finalize_mpi_(void) {
 }
 
 void xmp_init_() {
-  _XMP_init(0, NULL);
+  _XMP_init(1, NULL, MPI_COMM_WORLD);
 }
 
 void xmp_finalize_(void) {
-  xmp_finalize(0);
+  xmp_finalize();
 }
 
 int xmpf_desc_kind_(xmp_desc_t **d, int *kind) {

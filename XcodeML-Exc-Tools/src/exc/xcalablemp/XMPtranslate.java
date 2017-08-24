@@ -108,15 +108,15 @@ public class XMPtranslate implements XobjectDefVisitor {
   
   // Create a new function xmpc_main() and copy main() to the new function
   private void create_new_main(FuncDefBlock fd) throws XMPexception {
-    Ident mainId           = _globalDecl.findVarIdent("main");
-    Xtype mainType         = ((FunctionType)mainId.Type()).getBaseRefType();
-    Xobject mainIdList     = fd.getDef().getFuncIdList();
-    Xobject mainDecls      = fd.getDef().getFuncDecls();
-    Xobject mainBody       = fd.getDef().getFuncBody();
-    XobjectFile _env       = _globalDecl.getEnv();
-    Ident xmpcInitAuto     = _env.declExternIdent("xmp_init_auto", Xtype.Function(Xtype.voidType));
-    Ident xmpcMain         = _env.declStaticIdent("xmpc_main", Xtype.Function(mainType));
-    Ident xmpcFinalizeAuto = _env.declExternIdent("xmp_finalize_auto", Xtype.Function(Xtype.voidType));
+    Ident mainId          = _globalDecl.findVarIdent("main");
+    Xtype mainType        = ((FunctionType)mainId.Type()).getBaseRefType();
+    Xobject mainIdList    = fd.getDef().getFuncIdList();
+    Xobject mainDecls     = fd.getDef().getFuncDecls();
+    Xobject mainBody      = fd.getDef().getFuncBody();
+    XobjectFile _env      = _globalDecl.getEnv();
+    Ident xmpcInitAll     = _env.declExternIdent("xmp_init_all", Xtype.Function(Xtype.voidType));
+    Ident xmpcMain        = _env.declStaticIdent("xmpc_main", Xtype.Function(mainType));
+    Ident xmpcFinalizeAll = _env.declExternIdent("xmp_finalize_all", Xtype.Function(Xtype.voidType));
 
     _env.add(XobjectDef.Func(xmpcMain, mainIdList, mainDecls, mainBody));
 
@@ -126,16 +126,16 @@ public class XMPtranslate implements XobjectDefVisitor {
     Ident secondArg         = (Ident)fd.getDef().getFuncIdList().getArg(1);
     XobjList mainIdAddrList = Xcons.List(firstArg, secondArg);
     
-    newFuncBody.add(xmpcInitAuto.Call(mainIdAddrList));
+    newFuncBody.add(xmpcInitAll.Call(mainIdAddrList));
     if(mainType.equals(Xtype.voidType)){
       newFuncBody.add(xmpcMain.Call(mainIdList));
-      newFuncBody.add(xmpcFinalizeAuto.Call(null));
+      newFuncBody.add(xmpcFinalizeAll.Call(null));
     }
     else{
       Ident r = Ident.Local("r", mainType);
       newFuncBody.addIdent(r);
       newFuncBody.add(Xcons.Set(r.Ref(), xmpcMain.Call(mainIdList)));
-      newFuncBody.add(xmpcFinalizeAuto.Call(Xcons.List(r)));
+      newFuncBody.add(xmpcFinalizeAll.Call(null));
       newFuncBody.add(Xcons.List(Xcode.RETURN_STATEMENT, r.Ref()));
     }
 
