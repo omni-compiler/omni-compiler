@@ -294,8 +294,6 @@ extern void _XMP_wait_async__(int async_id);
 extern void _XMP_reflect_async__(void *a, int async_id);
 
 // xmp_runtime.c
-extern void _XMP_init(int, char**, MPI_Comm); 
-extern void _XMP_finalize(bool);
 extern char *_XMP_desc_of(void *p);
 
 // xmp_shadow.c
