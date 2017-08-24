@@ -22,7 +22,7 @@ void xmp_init_() {
 }
 
 void xmp_finalize_(void) {
-  xmp_finalize();
+  _XMP_finalize(true);
 }
 
 int xmpf_desc_kind_(xmp_desc_t **d, int *kind) {

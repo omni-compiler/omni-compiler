@@ -53,6 +53,7 @@ void _XMP_init(int argc, char** argv, MPI_Comm comm)
     xmp_reduce_initialize();
   }
 
+
   _XMP_init_world(NULL, NULL);
   _XMP_check_reflect_type();
   
