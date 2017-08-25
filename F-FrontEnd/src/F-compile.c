@@ -750,15 +750,16 @@ compile_statement1(int st_no, expr x)
 
                 /* set current WHERE_STATEMENT */
                 CTL_WHERE_STATEMENT(ctl_top) = st;
-                if(EXPR_ARG2(x) != NULL) {
-                    compile_statement1(st_no, EXPR_ARG2(x));
-                    /* TODO x must be array assignment expression,
-                    * and shape of array is equal to v
-                    */
+                if(EXPR_ARG2(EXPR_ARG2(x)) != NULL) {
+                     compile_statement1(st_no, EXPR_ARG2(EXPR_ARG2(x)));
+                     /* TODO x must be array assignment expression,
+                     * and shape of array is equal to v
+                     */
 
                     CTL_WHERE_THEN(ctl_top) = CURRENT_STATEMENTS;
                     pop_ctl();  /* pop and output */
                 }
+
             } else {
                 compile_exec_statement(EXPR_ARG2(x));
             }
