@@ -122,6 +122,8 @@ public class XMPtranslate implements XobjectDefVisitor {
 
     XobjectDef mainXobjDef  = fd.getDef();
     BlockList newFuncBody   = Bcons.emptyBody();
+    newFuncBody.setIdentList(Xcons.IDList());
+    newFuncBody.setDecls(Xcons.List());
     Ident firstArg          = (Ident)fd.getDef().getFuncIdList().getArg(0);
     Ident secondArg         = (Ident)fd.getDef().getFuncIdList().getArg(1);
     XobjList mainIdAddrList = Xcons.List(firstArg, secondArg);
