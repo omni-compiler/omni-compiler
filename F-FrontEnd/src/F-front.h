@@ -149,7 +149,7 @@ extern enum procedure_state current_proc_state;
 #define INDCL_OVER      ((int)CURRENT_STATE >= (int)INDATA)
 
 /* module visible state */
-enum module_state { M_DEFAULT, M_PUBLIC, M_PRIVATE, M_PROTECTED };
+enum module_state { M_DEFAULT, M_PUBLIC, M_PRIVATE };
 extern enum module_state current_module_state;
 
 /* control stack codes */

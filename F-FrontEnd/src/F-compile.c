@@ -98,6 +98,7 @@ static void compile_COMPGOTO_statement(expr x);
 static void compile_ASSIGN_LABEL_statement(expr x);
 static void compile_ASGOTO_statement(expr x);
 static void compile_PUBLIC_PRIVATE_statement(expr x, int (*markAs)(ID));
+static void compile_PROTECTED_statement(expr x);
 static void compile_TARGET_POINTER_ALLOCATABLE_statement(expr x);
 static void compile_OPTIONAL_statement(expr x);
 static void compile_INTENT_statement(expr x);
@@ -1244,7 +1245,7 @@ compile_statement1(int st_no, expr x)
 
     case F03_PROTECTED_STATEMENT:
         check_INDCL();
-        compile_PUBLIC_PRIVATE_statement(EXPR_ARG1(x), markAsProtected);
+        compile_PROTECTED_statement(EXPR_ARG1(x));
         break;
 
     case F03_IMPORT_STATEMENT: // IMPORT statement
@@ -2365,9 +2366,6 @@ end_declaration()
                 }
                 if (current_module_state == M_PRIVATE) {
                     TYPE_SET_PRIVATE(ip);
-                }
-                if (current_module_state == M_PROTECTED) {
-                    TYPE_SET_PROTECTED(ip);
                 }
             }
         }
@@ -4016,9 +4014,6 @@ end_procedure()
                     }
                     if (current_module_state == M_PRIVATE) {
                         TYPE_SET_PRIVATE(ID_TYPE(id));
-                    }
-                    if (current_module_state == M_PROTECTED) {
-                        TYPE_SET_PROTECTED(ID_TYPE(id));
                     }
                 }
                 ID_DEFINED_BY(id_in_parent) = id;
@@ -6972,23 +6967,6 @@ static int markAsPrivate(ID id)
     return TRUE;
 }
 
-static int markAsProtected(ID id)
-{
-    TYPE_DESC tp = ID_TYPE(id);
-    if (TYPE_IS_PRIVATE(id) || (tp != NULL && TYPE_IS_PRIVATE(tp))) {
-        error("'%s' is already specified as private.", ID_NAME(id));
-        return FALSE;
-    }
-    if (TYPE_IS_PUBLIC(id) || (tp != NULL && TYPE_IS_PUBLIC(tp))) {
-        error("'%s' is already specified as public.", ID_NAME(id));
-        return FALSE;
-    }
-    TYPE_UNSET_PUBLIC(id);
-    TYPE_SET_PROTECTED(id);
-
-    return TRUE;
-}
-
 static int
 have_type_bound_procedure(ID ids)
 {
@@ -7030,8 +7008,6 @@ compile_PUBLIC_PRIVATE_statement(expr id_list, int (*markAs)(ID))
             current_module_state = M_PUBLIC;
         } else if (markAs == markAsPrivate)  {
             current_module_state = M_PRIVATE;
-        } else if (markAs == markAsProtected) {
-            current_module_state = M_PROTECTED;
         }
 
         /* private/public is set to ids, later in end_declaration */
@@ -7089,6 +7065,39 @@ compile_PUBLIC_PRIVATE_statement(expr id_list, int (*markAs)(ID))
     }
 }
 
+
+static void
+compile_PROTECTED_statement(expr id_list)
+{
+    list lp;
+    expr ident;
+    ID id;
+
+    if (!INMODULE()) {
+        error("not in module.");
+        return;
+    }
+
+    FOR_ITEMS_IN_LIST(lp, id_list) {
+        ident = LIST_ITEM(lp);
+        if (EXPR_CODE(ident) != IDENT) {
+            error("unexpected expression in the PROTECTED statement");
+        }
+
+        if ((id = find_ident_local(EXPR_SYM(ident)))) {
+            if (ID_IS_OFMODULE(id)) {
+                error("setting a type to USE-associated symbol '%s'", ID_NAME(id));
+            }
+        } else {
+            id = declare_ident(EXPR_SYM(ident), CL_UNKNOWN);
+            if (id == NULL) {
+                /* must not happen. */
+                continue;
+            }
+        }
+        TYPE_SET_PROTECTED(id);
+    }
+}
 
 static void
 compile_POINTER_SET_statement(expr x) {
