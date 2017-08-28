@@ -204,6 +204,9 @@ class ACCglobalDecl{
     _env.add(XobjectDef.Func(accMain, mainIdList, mainDecls, mainBody));
 
     BlockList newMainBody = Bcons.emptyBody();
+    newMainBody.setIdentList(Xcons.IDList());
+    newMainBody.setDecls(Xcons.List());
+
     XobjList args = ACCutil.getRefs(mainIdList);
     newMainBody.add(accInit.Call(args));
     newMainBody.add(accTraverseInit.Call());
