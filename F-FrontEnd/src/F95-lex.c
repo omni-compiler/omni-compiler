@@ -2151,18 +2151,45 @@ read_initial_line()
     return ret;
 }
 
+/* static int */
+/* find_last_ampersand(char *buf,int *len) */
+/* { */
+/*     int l; */
+/*     for(l = *len - 1; l > 0; l--){ */
+/*         if(isspace(buf[l])) continue; */
+/*         if(buf[l] == '&'){ */
+/*             *len = l; */
+/*             return TRUE; */
+/*         } else return FALSE; */
+/*     } */
+/*     return FALSE; */
+/* } */
+
 static int
 find_last_ampersand(char *buf,int *len)
 {
-    int l;
-    for(l = *len - 1; l > 0; l--){
-        if(isspace(buf[l])) continue;
-        if(buf[l] == '&'){
-            *len = l;
-            return TRUE;
-        } else return FALSE;
+  int l;
+  int flag = FALSE;
+
+  for (l = *len - 1; l > 0; l--){
+    if (isspace(buf[l])) continue;
+    if (buf[l] == '&'){
+      *len = l;
+      flag = TRUE;
     }
-    return FALSE;
+    break;
+  }
+
+  if (flag){
+    for (; l > 0; l--){
+      if (buf[l] == '!'){
+	flag = FALSE;
+	break;
+      }
+    }
+  }
+
+  return flag;
 }
 
 /* check sentinel in line */
@@ -2310,7 +2337,7 @@ again:
     current_line = new_line_info(read_lineno.file_id,read_lineno.ln_no);
 
     q = st_buffer;
-    if ((!OMP_flag && !cond_compile_enabled)
+    if ((!OMP_flag && !XMP_flag && !ACC_flag && !cond_compile_enabled)
         &&(st_OMP_flag||st_XMP_flag||st_ACC_flag||st_PRAGMA_flag||st_CONDCOMPL_flag)) {
         /* dumb copy */
         st_len = strlen( p );
@@ -2403,7 +2430,7 @@ again:
 	}
 
         /* oBuf => st_buffer */
-        if (!OMP_flag && !cond_compile_enabled &&
+        if (!OMP_flag && !XMP_flag && !ACC_flag && !cond_compile_enabled &&
             (st_OMP_flag||st_XMP_flag||st_ACC_flag||st_PRAGMA_flag||st_CONDCOMPL_flag)) {
             /* dumb copy */
             strcpy( st_buffer, oBuf );
@@ -2715,7 +2742,7 @@ copy_body:
     /* copy to statement buffer */
     p = line_buffer;
     q = st_buffer;
-    if (!OMP_flag && !cond_compile_enabled &&
+    if (!OMP_flag && !XMP_flag && !ACC_flag && !cond_compile_enabled &&
         (st_OMP_flag||st_XMP_flag||st_ACC_flag||st_PRAGMA_flag||st_CONDCOMPL_flag)) {
         /* dumb copy */
         newLen = strlen( p );
@@ -2821,7 +2848,7 @@ copy_body:
 	  *(p + lnLen) = '\0';
 	}
 
-        if ((!OMP_flag && !cond_compile_enabled)
+        if ((!OMP_flag && !XMP_flag && !ACC_flag && !cond_compile_enabled)
             &&(st_OMP_flag||st_XMP_flag||st_ACC_flag||st_PRAGMA_flag||st_CONDCOMPL_flag)) {
             /* dumb copy */
             if ( p-oBuf + strlen(line_buffer) >= ST_BUF_SIZE) {
