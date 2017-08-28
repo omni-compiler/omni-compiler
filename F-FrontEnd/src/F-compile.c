@@ -8875,6 +8875,7 @@ compile_ENUMERATOR_statement(expr x)
         SYMBOL sym;
         expr ident = NULL;
         expr value = NULL;
+        expv v = NULL;
 
         if (EXPR_CODE(LIST_ITEM(lp)) == LIST) {
             ident = EXPR_ARG1(LIST_ITEM(lp));
@@ -8899,7 +8900,14 @@ compile_ENUMERATOR_statement(expr x)
 
         enumerator = new_ident_desc(sym);
         ID_TYPE(enumerator) = ID_TYPE(id);
-        VAR_INIT_VALUE(id) = compile_expression(value);
+
+        v = compile_expression(value);
+
+        if (v != NULL && expr_is_constant_typeof(v, TYPE_INT) == FALSE) {
+            error("bad expression in the enumerator");
+        }
+
+        VAR_INIT_VALUE(id) = expv_reduce(v, FALSE);
         VAR_INIT_VALUE(enumerator) = VAR_INIT_VALUE(id);
         ID_LINK_ADD(enumerator, TYPE_MEMBER_LIST(enum_tp), last_ip);
 
