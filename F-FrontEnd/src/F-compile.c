@@ -8834,6 +8834,11 @@ compile_ENUM_statement(expr x)
     assert(x != NULL);
 
     id = declare_ident(gen_temp_symbol("_enum_"), CL_ENUM);
+
+    if (EXPR_ARG1(x) == NULL) {
+        error("ENUM requires BIND(C) option");
+    }
+
     ID_LINE(id) = EXPR_LINE(x);
 
     tp = new_type_desc();
