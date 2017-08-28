@@ -1655,6 +1655,9 @@ check_INDATA()
         begin_procedure();
         declare_procedure(CL_MAIN, NULL, NULL, NULL, NULL, NULL, NULL);
     }
+    if (CURRENT_STATE == INENUM) {
+        error("unexpected DATA in the ENUM construct");
+    }
     if(NOT_INDATA_YET){
         end_declaration();
         CURRENT_STATE = INDATA;
@@ -1676,7 +1679,7 @@ check_INDCL()
     case INDCL:
         break;
     case INENUM:
-        error("declaration in the enum construct");
+        error("declaration in the ENUM construct");
         break;
     case IN_TYPE_PARAM_DECL:
         error("declaration in TYPE PARAMETER DECLARATION part");
@@ -1692,6 +1695,9 @@ check_INDCL()
 void
 check_INEXEC()
 {
+    if (CURRENT_STATE == INENUM)
+        error("an action statement in the ENUM construct");
+
     if (CURRENT_STATE == OUTSIDE) {
         begin_procedure();
         if (unit_ctl_level == 0)
@@ -2142,6 +2148,9 @@ end_declaration()
     expv v;
     TYPE_DESC tp;
     UNIT_CTL uc = CURRENT_UNIT_CTL;
+
+    if (CURRENT_STATE == INENUM)
+        error("expects END ENUM");
 
     CURRENT_STATE = INEXEC; /* the next status is EXEC */
 
