@@ -381,51 +381,72 @@ static void type_spec_done()
     /* printf("type_spec_done!\n"); */
 }
 
-int is_function_statement_context()
+int
+is_function_statement_context()
 {
     int i = 0;
-    int plevel = 0;
-    
-    switch(token_history_buf[0]){
-        /* func_prefix */
-    case PURE: 
-    case RECURSIVE:
-    case ELEMENTAL:
-    case MODULE:
-        i++;
-        /* type_spec */
-    case CLASS:
-    case KW_TYPE:
-    case KW_CHARACTER:
-    case KW_COMPLEX:
-    case KW_DOUBLE:
-    case KW_DCOMPLEX:
-    case KW_INTEGER:
-    case KW_LOGICAL:
-    case KW_REAL:
-        i++;
-        /* SET_KIND and SET_LEN include a left parenthesis directly */
-        if(token_history_buf[i] == '(' || token_history_buf[i] == SET_KIND 
-            || token_history_buf[i] == SET_LEN) 
-        {
-            plevel++;
-            for(i++; i < token_history_count; i++){
-                if(token_history_buf[i] == ')') plevel--;
-                if(token_history_buf[i] == '(') plevel++;
-                if(plevel == 0) {
-                    i++;
-                    break;
+    int paran_level;
+
+    for (i = 0;i < token_history_count-1; ) {
+        switch(token_history_buf[i]){
+            /* func_prefix */
+            case PURE:
+            case RECURSIVE:
+            case ELEMENTAL:
+            case MODULE:
+            case IMPURE:
+                i++;
+                continue;
+                /* type_spec */
+            case CLASS:
+            case KW_TYPE:
+            case KW_CHARACTER:
+            case KW_COMPLEX:
+            case KW_DOUBLE:
+            case KW_DCOMPLEX:
+            case KW_INTEGER:
+            case KW_LOGICAL:
+            case KW_REAL:
+                i++;
+                paran_level = 0;
+                /* SET_KIND and SET_LEN include a left parenthesis directly */
+                if (token_history_buf[i] == '(' ||
+                    token_history_buf[i] == SET_KIND ||
+                    token_history_buf[i] == SET_LEN) {
+                    paran_level++;
+                    for (i++; i < token_history_count; i++){
+                        if(token_history_buf[i] == ')') paran_level--;
+                        if(token_history_buf[i] == '(') paran_level++;
+                        if(paran_level == 0) {
+                            i++;
+                            break;
+                        }
+                    }
+                    if(paran_level != 0) {
+                        /* parenthesis is not closed! */
+                        return FALSE;
+                    }
                 }
-            }
-            if(plevel != 0) {
-                return FALSE;
-            }
+                continue;
+            default:
+                break;
         }
-        if(i == (token_history_count-1)) {
-            return TRUE;
-        }
+        break;
     }
-    return FALSE;
+
+    if (i == (token_history_count-1) &&
+        (i > 0 && token_history_buf[i-1] != KW_TYPE)) {
+        /*
+         * If i reaches the current token like:
+         *
+         *  ELENTAL TYPE(t) . FUNCTION
+         *  INTEGER ELEMENTAL IMPURE . FUNCTION
+         *
+         */
+        return TRUE;
+    } else {
+        return FALSE;
+    }
 }
 
 
@@ -445,7 +466,7 @@ int check_ident_context(char *name)
     case KW_LOGICAL:
     case KW_REAL:
         /* func_prefix */
-    case PURE: 
+    case PURE:
     case RECURSIVE:
     case ELEMENTAL:
     case MODULE:
@@ -460,7 +481,7 @@ int check_ident_context(char *name)
                 }
             }
         } else { // free format
-            if(is_function_statement_context()){
+            if (is_function_statement_context()){
                 if (strcasecmp(name,"function") == 0) {
                     ret = FUNCTION;
                 } else if(strcasecmp(name, "elemental") == 0) {
@@ -1986,8 +2007,6 @@ get_keyword_optional_blank(int class)
         case KW_MEMORY: return SYNCMEMORY;
         }
         break;
-    case KW_ERROR: /* module procedure */
-        if (get_keyword(keywords) == STOP) return ERRORSTOP;
 	break;
     default:
         break;
@@ -2132,18 +2151,45 @@ read_initial_line()
     return ret;
 }
 
+/* static int */
+/* find_last_ampersand(char *buf,int *len) */
+/* { */
+/*     int l; */
+/*     for(l = *len - 1; l > 0; l--){ */
+/*         if(isspace(buf[l])) continue; */
+/*         if(buf[l] == '&'){ */
+/*             *len = l; */
+/*             return TRUE; */
+/*         } else return FALSE; */
+/*     } */
+/*     return FALSE; */
+/* } */
+
 static int
 find_last_ampersand(char *buf,int *len)
 {
-    int l;
-    for(l = *len - 1; l > 0; l--){
-        if(isspace(buf[l])) continue;
-        if(buf[l] == '&'){
-            *len = l;
-            return TRUE;
-        } else return FALSE;
+  int l;
+  int flag = FALSE;
+
+  for (l = *len - 1; l > 0; l--){
+    if (isspace(buf[l])) continue;
+    if (buf[l] == '&'){
+      *len = l;
+      flag = TRUE;
     }
-    return FALSE;
+    break;
+  }
+
+  if (flag){
+    for (; l > 0; l--){
+      if (buf[l] == '!'){
+	flag = FALSE;
+	break;
+      }
+    }
+  }
+
+  return flag;
 }
 
 /* check sentinel in line */
@@ -2291,7 +2337,7 @@ again:
     current_line = new_line_info(read_lineno.file_id,read_lineno.ln_no);
 
     q = st_buffer;
-    if ((!OMP_flag && !cond_compile_enabled)
+    if ((!OMP_flag && !XMP_flag && !ACC_flag && !cond_compile_enabled)
         &&(st_OMP_flag||st_XMP_flag||st_ACC_flag||st_PRAGMA_flag||st_CONDCOMPL_flag)) {
         /* dumb copy */
         st_len = strlen( p );
@@ -2384,7 +2430,7 @@ again:
 	}
 
         /* oBuf => st_buffer */
-        if (!OMP_flag && !cond_compile_enabled &&
+        if (!OMP_flag && !XMP_flag && !ACC_flag && !cond_compile_enabled &&
             (st_OMP_flag||st_XMP_flag||st_ACC_flag||st_PRAGMA_flag||st_CONDCOMPL_flag)) {
             /* dumb copy */
             strcpy( st_buffer, oBuf );
@@ -2696,7 +2742,7 @@ copy_body:
     /* copy to statement buffer */
     p = line_buffer;
     q = st_buffer;
-    if (!OMP_flag && !cond_compile_enabled &&
+    if (!OMP_flag && !XMP_flag && !ACC_flag && !cond_compile_enabled &&
         (st_OMP_flag||st_XMP_flag||st_ACC_flag||st_PRAGMA_flag||st_CONDCOMPL_flag)) {
         /* dumb copy */
         newLen = strlen( p );
@@ -2802,7 +2848,7 @@ copy_body:
 	  *(p + lnLen) = '\0';
 	}
 
-        if ((!OMP_flag && !cond_compile_enabled)
+        if ((!OMP_flag && !XMP_flag && !ACC_flag && !cond_compile_enabled)
             &&(st_OMP_flag||st_XMP_flag||st_ACC_flag||st_PRAGMA_flag||st_CONDCOMPL_flag)) {
             /* dumb copy */
             if ( p-oBuf + strlen(line_buffer) >= ST_BUF_SIZE) {
@@ -3938,7 +3984,6 @@ struct keyword_token keywords[ ] =
     { "end",            END  },
     { "entry",          ENTRY },
     { "equivalence",    EQUIV  },
-    { "errorstop",      ERRORSTOP },     /* #060 coarray */
     { "error",          KW_ERROR },      /* #060 coarray */
     { "external",       EXTERNAL  },
     { "extends",        EXTENDS  },      /* F2003 spec */

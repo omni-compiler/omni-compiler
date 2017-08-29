@@ -16,6 +16,7 @@ static void     declare_dummy_args _ANSI_ARGS_((expr l,
                                                 enum name_class class));
 static int      markAsSave _ANSI_ARGS_((ID id));
 
+
 /* for module and use statement */
 extern char line_buffer[];
 extern SYMBOL current_module_name;
@@ -2140,6 +2141,10 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
             break;
         case F03_BIND_SPEC:
             TYPE_SET_BIND(tp);
+            if(EXPR_ARG1(v) != NULL) {
+                // BIND(C, NAME='')
+                TYPE_BIND_NAME(tp) = EXPR_ARG1(v);
+            }
             break;
         case F03_VALUE_SPEC:
             TYPE_SET_VALUE(tp);
@@ -5753,7 +5758,7 @@ compile_type_bound_procedure(expr x)
 }
 
 void
-compile_type_generic_procedure(expr x)
+compile_type_bound_generic_procedure(expr x)
 {
     expr generics_spec = EXPR_ARG1(x);
     expr id_list = EXPR_ARG2(x);

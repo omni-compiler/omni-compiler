@@ -1869,7 +1869,7 @@ public class XmcXcodeToXcTranslator {
                 if (childNode.getNodeType() != Node.ELEMENT_NODE) {
                     continue;
                 }
-		enterNodes(tc, parent, childNode);
+		enterNodes(tc, obj, childNode);
             }
 
 	    //            writer.decrementIndentLevel();
@@ -1987,7 +1987,7 @@ public class XmcXcodeToXcTranslator {
 		if (childNode.getNodeType() != Node.ELEMENT_NODE) {
 		    continue;
 		}
-		enterNodes(tc, parent, childNode);
+		enterNodes(tc, obj, childNode);
 	    }
 	}
 

@@ -233,7 +233,14 @@ public class XfDecompileDomVisitor {
 
         for (Node basicTypeNode : basicTypeNodeArray) {
             String bind = XmDomUtil.getAttr(basicTypeNode, "bind");
-            if (XfUtilForDom.isNullOrEmpty(bind) == false) {
+            String bind_name = XmDomUtil.getAttr(basicTypeNode, "bind_name");
+            if (XfUtilForDom.isNullOrEmpty(bind) == false 
+                && XfUtilForDom.isNullOrEmpty(bind_name) == false) 
+            {
+                writer.writeToken(",");
+                writer.writeToken("BIND( " + bind.toUpperCase() + ", NAME='" + bind_name + "' )");
+                break;
+            } else if(XfUtilForDom.isNullOrEmpty(bind) == false) {
                 writer.writeToken(",");
                 writer.writeToken("BIND( " + bind.toUpperCase() + " )");
                 break;
@@ -1380,6 +1387,16 @@ public class XfDecompileDomVisitor {
 
     abstract class XcodeNodeVisitor {
         public abstract void enter(Node n);
+    }
+
+    // No for specific nodes
+    class PassThroughVisitor extends XcodeNodeVisitor {
+        /**
+         * Just invoke enter to its children
+         */
+        @Override public void enter(Node n) {
+            _invokeChildEnter(n);
+        }
     }
 
     // XcodeProgram
@@ -2638,6 +2655,60 @@ public class XfDecompileDomVisitor {
          * </div>
          * </div></code>
          * @see xcodeml.f.binding.gen.RVisitorBase#enter(xcodeml.f.binding.gen.XbfFdataDecl
+         *      )
+         */
+        @Override public void enter(Node n) {
+            _writeLineDirective(n);
+
+            XmfWriter writer = _context.getWriter();
+            writer.writeToken("DATA ");
+
+            ArrayList<Node> childNodes = XmDomUtil.collectChildNodes(n);
+            int childCount = 0;
+            //for (Node childNode : childNodes) {
+            for (Iterator<Node> iter = childNodes.iterator(); iter.hasNext(); ) {
+                Node varListNode = iter.next();
+                if (!"varList".equals(varListNode.getNodeName())) {
+                    throw new XmTranslationException(n,
+                                                     "Invalid contents");
+                }
+                if (!iter.hasNext()) {
+                    throw new XmTranslationException(n,
+                                                     "Invalid contents");
+                }
+                Node valueListNode = iter.next();
+                if (!"valueList".equals(valueListNode.getNodeName())) {
+                    throw new XmTranslationException(n,
+                                                     "Invalid contents");
+                }
+
+                invokeEnter(varListNode);
+                writer.writeToken(" /");
+                invokeEnter(valueListNode);
+                writer.writeToken("/");
+
+                if (childCount > 0) {
+                    writer.writeToken(", ");
+                }
+                ++childCount;
+            }
+            writer.setupNewLine();
+        }
+    }
+
+    // FdataStatement
+    class FdataStatementVisitor extends XcodeNodeVisitor {
+        /**
+         * Decompile "FdataStatement" element in XcodeML/F.
+         *
+         * @example <code><div class="Example">
+         * <div class="Strong">
+         * DATA variable1, variable2 /2*0/, &<br/>
+         *      array1 /10*1/, &<br/>
+         *      (array2(i), i = 1, 10, 2) /5*1/<br/>
+         * </div>
+         * </div></code>
+         * @see xcodeml.f.binding.gen.RVisitorBase#enter(xcodeml.f.binding.gen.XbfFdataStatement
          *      )
          */
         @Override public void enter(Node n) {
@@ -4988,7 +5059,31 @@ public class XfDecompileDomVisitor {
             _writeLineDirective(n);
 
             XmfWriter writer = _context.getWriter();
-            writer.writeToken("STOP ");
+            writer.writeToken("STOP");
+
+            String code = XmDomUtil.getAttr(n, "code");
+            String message = XmDomUtil.getAttr(n, "message");
+            if (XfUtilForDom.isNullOrEmpty(code) == false) {
+                writer.writeToken(code);
+            } else if (XfUtilForDom.isNullOrEmpty(message) == false) {
+                writer.writeLiteralString(message);
+            }
+            _invokeChildEnter(n);
+            writer.setupNewLine();
+        }
+    }
+
+    // FerrorStopStatement
+    class FerrorStopStatementVisitor extends XcodeNodeVisitor {
+        /**
+         * Decompile "FerrorStopStatement" element in XcodeML/F.
+         */
+        @Override public void enter(Node n) {
+            _writeLineDirective(n);
+
+            XmfWriter writer = _context.getWriter();
+            writer.writeToken("ERROR");
+            writer.writeToken("STOP");
 
             String code = XmDomUtil.getAttr(n, "code");
             String message = XmDomUtil.getAttr(n, "message");
@@ -4998,6 +5093,7 @@ public class XfDecompileDomVisitor {
                 writer.writeLiteralString(message);
             }
 
+            _invokeChildEnter(n);
             writer.setupNewLine();
         }
     }
@@ -5031,6 +5127,7 @@ public class XfDecompileDomVisitor {
                 writer.writeToken("0");
             }
 
+            _invokeChildEnter(n);
             writer.setupNewLine();
         }
     }
@@ -7238,6 +7335,7 @@ public class XfDecompileDomVisitor {
         new Pair("FcontainsStatement", new FcontainsStatementVisitor()),
         new Pair("FcycleStatement", new FcycleStatementVisitor()),
         new Pair("FdataDecl", new FdataDeclVisitor()),
+        new Pair("FdataStatement", new FdataStatementVisitor()),
         new Pair("FdeallocateStatement", new FdeallocateStatementVisitor()),
         new Pair("FdoConcurrentStatement", new FdoConcurrentStatementVisitor()),
         new Pair("FdoLoop", new FdoLoopVisitor()),
@@ -7276,7 +7374,10 @@ public class XfDecompileDomVisitor {
         new Pair("FrewindStatement", new FrewindStatementVisitor()),
         new Pair("FselectCaseStatement", new FselectCaseStatementVisitor()),
         new Pair("selectTypeStatement", new SelectTypeStatementVisitor()),
+        new Pair("code", new PassThroughVisitor()),
+        new Pair("message", new PassThroughVisitor()),
         new Pair("FstopStatement", new FstopStatementVisitor()),
+        new Pair("FerrorStopStatement", new FerrorStopStatementVisitor()),
         new Pair("FpauseStatement", new FpauseStatementVisitor()),
         new Pair("FstructConstructor", new FstructConstructorVisitor()),
         new Pair("FstructDecl", new FstructDeclVisitor()),

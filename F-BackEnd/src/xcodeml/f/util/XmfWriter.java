@@ -309,6 +309,13 @@ public class XmfWriter
             s = _toStringLiteral(s);
         }
 
+        if (_needSeparator) {
+            StringBuilder buf = new StringBuilder();
+            buf.append(" ");
+            buf.append(s);
+            s = buf.toString();
+        }
+
         char[] chArray = s.toCharArray();
 
         if (_wrapStringLiteral == false) {

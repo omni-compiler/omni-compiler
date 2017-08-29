@@ -535,7 +535,7 @@ static void type_spec_done();
 %type <val> intent_spec kind_selector kind_or_len_selector char_selector len_key_spec len_spec kind_key_spec array_allocation_list  array_allocation defered_shape_list defered_shape
 %type <val> result_opt func_result type_keyword
 %type <val> action_statement95
-%type <val> action_coarray_statement other_coarray_keyword
+%type <val> action_coarray_statement
 %type <val> sync_stat_arg_list sync_stat_arg image_set
 %type <val> use_rename_list use_rename use_only_list use_only 
 %type <val> allocation_list allocation
@@ -679,27 +679,9 @@ statement:      /* entry */
           { $$ = list1(F95_ENDSUBROUTINE_STATEMENT,$2); }
 /* FUNCTION declaration */
         | FUNCTION IDENTIFIER dummy_arg_list KW func_suffix
-          { $$ = list6(F_FUNCTION_STATEMENT, $2, $3, NULL, NULL, EXPR_ARG1($5), EXPR_ARG2($5)); }
+          { $$ = list5(F_FUNCTION_STATEMENT, $2, $3, NULL, EXPR_ARG1($5), EXPR_ARG2($5)); }
         | func_prefix FUNCTION IDENTIFIER dummy_arg_list KW func_suffix
-          { $$ = list6(F_FUNCTION_STATEMENT, $3, $4, NULL, $1, EXPR_ARG1($6), EXPR_ARG2($6)); }
-        | type_spec KW FUNCTION IDENTIFIER dummy_arg_list KW func_suffix
-          { $$ = list6(F_FUNCTION_STATEMENT, $4, $5, $1, NULL, EXPR_ARG1($7), EXPR_ARG2($7)); }
-        // Trick to allow keyword as identifier. Almost same rule as the one
-        // above.
-        | type_spec FUNCTION IDENTIFIER dummy_arg_list KW func_suffix
-        { $$ = list6(F_FUNCTION_STATEMENT, $3, $4, $1, NULL, EXPR_ARG1($6), EXPR_ARG2($6)); }  
-        | type_spec KW func_prefix FUNCTION IDENTIFIER dummy_arg_list KW func_suffix
-          { $$ = list6(F_FUNCTION_STATEMENT, $5, $6, $1, $3, EXPR_ARG1($8), EXPR_ARG2($8)); }
-        // Trick to allow keyword as identifier. Almost same rule as the one
-        // above.          
-        | type_spec func_prefix FUNCTION IDENTIFIER dummy_arg_list KW func_suffix
-        { $$ = list6(F_FUNCTION_STATEMENT, $4, $5, $1, $2, EXPR_ARG1($7), EXPR_ARG2($7)); }
-        | func_prefix type_spec KW FUNCTION IDENTIFIER dummy_arg_list KW func_suffix
-          { $$ = list6(F_FUNCTION_STATEMENT, $5, $6, $2, $1, EXPR_ARG1($8), EXPR_ARG2($8)); }
-        // Trick to allow keyword as identifier. Almost same rule as the one
-        // above.
-        | func_prefix type_spec FUNCTION IDENTIFIER dummy_arg_list KW func_suffix
-        { $$ = list6(F_FUNCTION_STATEMENT, $4, $5, $2, $1, EXPR_ARG1($7), EXPR_ARG2($7)); }
+          { $$ = list5(F_FUNCTION_STATEMENT, $3, $4, $1, EXPR_ARG1($6), EXPR_ARG2($6)); }
 /* END: FUNCTION */
         | ENDFUNCTION name_or_null
           { $$ = list1(F95_ENDFUNCTION_STATEMENT,$2); }
@@ -949,6 +931,7 @@ prefix_spec:
         { $$ = list0(F95_ELEMENTAL_SPEC); }
         | MODULE
         { $$ = list0(F08_MODULE_SPEC); }
+        | type_spec
         ;
 
 name:  IDENTIFIER;
@@ -1203,7 +1186,9 @@ attr_spec:
         | KW_LEN
         { $$ = list0(F03_LEN_SPEC); }
         | BIND '(' IDENTIFIER /* C */ ')'
-        { $$ = list0(F03_BIND_SPEC); }
+        { $$ = list1(F03_BIND_SPEC, NULL); }
+        | BIND '(' IDENTIFIER /* C */ ',' KW KW_NAME '=' CONSTANT ')'
+        { $$ = list1(F03_BIND_SPEC, $8); }
         | VALUE
         { $$ = list0(F03_VALUE_SPEC); }
         | CONTIGUOUS
@@ -1234,7 +1219,7 @@ type_attr_spec:
           EXTENDS '(' IDENTIFIER ')'
         { $$ = list1(F03_EXTENDS_SPEC, $3); }
         | BIND '(' IDENTIFIER /* C */ ')'
-        { $$ = list0(F03_BIND_SPEC); }        
+        { $$ = list0(F03_BIND_SPEC); }
         | ABSTRACT
         { $$ = list0(F03_ABSTRACT_SPEC); }
         | access_spec
@@ -1880,6 +1865,8 @@ action_statement_key: ASSIGN  label KW KW_TO IDENTIFIER
         { $$ = list1(F_PAUSE_STATEMENT,$2); }
         | STOP  expr_or_null
         { $$ = list1(F_STOP_STATEMENT,$2); }
+        | KW_ERROR KW STOP  expr_or_null
+        { $$ = list1(F08_ERROR_STOP_STATEMENT,$4); }
         | action_statement95 /* all has first key.  */
         | action_coarray_statement /* all has first key.  */
         | io_statement /* all has first key.  */
@@ -1889,6 +1876,8 @@ action_statement_key: ASSIGN  label KW KW_TO IDENTIFIER
                      GEN_NODE(STRING_CONSTANT, pragmaString));
          pragmaString = NULL;
         }
+        | WHERE '(' expr ')' assign_statement_or_null
+        { $$ = list2(F_WHERE_STATEMENT, $3, $5); }
         ;
 
 action_statement95:
@@ -1949,8 +1938,6 @@ action_coarray_statement:
         { $$ = list2(F2008_UNLOCK_STATEMENT,$3, NULL); }
         | UNLOCK '(' expr ',' sync_stat_arg_list ')'
         { $$ = list2(F2008_UNLOCK_STATEMENT,$3, $5); }
-        | other_coarray_keyword parenthesis_arg_list_or_null
-        { $$ = list2(F_CALL_STATEMENT,$1,$2); }
         ;
 
 
@@ -1971,11 +1958,6 @@ image_set:
         { $$ = $1; }
         | '*'
         { $$ = NULL; }
-        ;
-
-other_coarray_keyword:
-          ERRORSTOP
-        { $$ = GEN_NODE(IDENT, find_symbol("xmpf_error_stop")); }
         ;
 
 comma_or_null:
