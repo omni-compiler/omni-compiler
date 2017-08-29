@@ -3500,14 +3500,15 @@ outx_FORALL_statement(int l, expv v)
     expv body = EXPR_ARG2(v);
     const char *tid = NULL;
 
+
     outx_vtagLineno(l, XTAG(v), EXPR_LINE(v), NULL);
 
     if (EXPR_HAS_ARG4(v) && EXPR_ARG4(v) != NULL) {
         outx_print(" construct_name=\"%s\"",
                    SYM_NAME(EXPR_SYM(EXPR_ARG4(v))));
     }
-    if (EXPV_TYPE(EXPR_ARG1(v))) {
-        tid = getTypeID(EXPV_TYPE(EXPR_ARG1(v)));
+    if (EXPV_TYPE(init)) {
+        tid = getTypeID(EXPV_TYPE(init));
         outx_print(" type=\"%s\"", tid);
     }
     outx_print(">\n");

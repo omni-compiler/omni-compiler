@@ -8538,15 +8538,16 @@ compile_forall_header(expr x)
     mask           = EXPR_ARG2(x);
     type           = EXPR_ARG3(x);
 
+    init = list0(LIST);
+
     if (type) {
         tp = compile_type(type, /*allow_predecl=*/ FALSE);
+        EXPV_TYPE(init) = tp;
     } else {
-        tp = new_type_desc();
-        TYPE_BASIC_TYPE(tp) = TYPE_INT;
+        tp = wrap_type(type_INT);
     }
     CURRENT_STATE = INEXEC;
 
-    init = list0(LIST);
     FOR_ITEMS_IN_LIST(lp, triplets) {
         ID id;
         SYMBOL sym;
