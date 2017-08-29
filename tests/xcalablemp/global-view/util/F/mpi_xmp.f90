@@ -4,5 +4,4 @@ program main
   call ixmp_sub()
 
   call xmp_finalize()
-
 end program

@@ -6,14 +6,14 @@ int val = true;
 
 int main()
 {
-  int iam = xmp_node_num();
+  int iam = xmpc_this_image();
   locked = true;
   
-  if(iam == 1){
+  if(iam == 0){
     xmp_sync_memory(NULL);
-    xmp_atomic_define(locked:[2], false);
+    xmp_atomic_define(locked:[1], false);
   }
-  else if(iam == 2){
+  else if(iam == 1){
     val = true;
     while(val){
       xmp_atomic_ref(&val, locked);
@@ -21,7 +21,7 @@ int main()
     xmp_sync_memory(NULL);
   }
 
-  if(xmp_node_num() == 1)
+  if(xmpc_this_image() == 0)
     printf("PASS\n");
   
   return 0;

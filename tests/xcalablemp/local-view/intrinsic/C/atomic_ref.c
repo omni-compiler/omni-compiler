@@ -17,7 +17,7 @@ void check()
   if(flag == FALSE)
     exit(1);
   else
-    if(xmp_node_num() == 1)
+    if(xmpc_this_image() == 0)
       printf("PASS\n");
 }
 
@@ -27,12 +27,12 @@ void test1(int value)
   flag = TRUE;
   
   xmp_sync_all(NULL);
-  if(xmp_node_num() == 2){
-    xmp_atomic_ref(&value, atom0:[1]);
+  if(xmpc_this_image() == 1){
+    xmp_atomic_ref(&value, atom0:[0]);
   }
   xmp_sync_all(NULL);
   
-  if(xmp_node_num() == 2)
+  if(xmpc_this_image() == 1)
     if(value != -1)
       flag = FALSE;
 
@@ -52,11 +52,11 @@ void test1_c(int value)
   value0 = value;
 
   xmp_sync_all(NULL);
-  if(xmp_node_num() == 2)
-    xmp_atomic_ref(&value0, atom0:[1]);
+  if(xmpc_this_image() == 1)
+    xmp_atomic_ref(&value0, atom0:[0]);
 
   xmp_sync_all(NULL);
-  if(xmp_node_num() == 2){
+  if(xmpc_this_image() == 1){
     if(value0 != -1)
       flag = FALSE;
   }
@@ -75,11 +75,11 @@ void test2(int value)
   flag = TRUE;
 
   xmp_sync_all(NULL);
-  if(xmp_node_num() == 2)
-    xmp_atomic_ref(&value, atom1[2]:[1]);
+  if(xmpc_this_image() == 1)
+    xmp_atomic_ref(&value, atom1[2]:[0]);
 
   xmp_sync_all(NULL);
-  if(xmp_node_num() == 2)
+  if(xmpc_this_image() == 1)
     if(value != -1)
       flag = FALSE;
   
@@ -98,12 +98,11 @@ void test2_c(int value)
   value1[2] = value;
 
   xmp_sync_all(NULL);
-  if(xmp_node_num() == 2){
-    xmp_atomic_ref(&value1[2], atom1[2]:[1]);
-  }
+  if(xmpc_this_image() == 1)
+    xmp_atomic_ref(&value1[2], atom1[2]:[0]);
 
   xmp_sync_all(NULL);
-  if(xmp_node_num() == 2)
+  if(xmpc_this_image() == 1)
     if(value1[2] != -1)
       flag = FALSE;
 
@@ -121,12 +120,12 @@ void test3(int value)
   flag = TRUE;
 
   xmp_sync_all(NULL);
-  if(xmp_node_num() == 2)
-    xmp_atomic_ref(&value, atom2[2][1]:[1]);
+  if(xmpc_this_image() == 1)
+    xmp_atomic_ref(&value, atom2[2][1]:[0]);
   
   xmp_sync_all(NULL);
 
-  if(xmp_node_num() == 2)
+  if(xmpc_this_image() == 1)
     if(value != -1)
       flag = FALSE;
 
@@ -145,12 +144,12 @@ void test3_c(int value)
   value2[2][2] = value;
 
   xmp_sync_all(NULL);
-  if(xmp_node_num() == 2)
-    xmp_atomic_ref(&value2[2][2], atom2[2][1]:[1]);
+  if(xmpc_this_image() == 1)
+    xmp_atomic_ref(&value2[2][2], atom2[2][1]:[0]);
 
   xmp_sync_all(NULL);
 
-  if(xmp_node_num() == 2)
+  if(xmpc_this_image() == 1)
     if(value2[2][2] != -1)
       flag = FALSE;
 

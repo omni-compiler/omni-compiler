@@ -7,7 +7,6 @@
 #define FALSE 0
 int a[I]:[*], b[I][J]:[*], c[I][J][K]:[*];
 int a_normal[I], b_normal[I][J], c_normal[I][J][K];
-#pragma xmp nodes p(1)
 
 void test_ok(int flag)
 {
@@ -35,12 +34,12 @@ void initialize()
 
 int scalar_put()
 {
-  a[0]:[1]            = a_normal[0];
-  a[3]:[1]            = b[1][2];
-  a[4:2:2]:[1]        = b[2][2];
-  b[0][3]:[1]         = a_normal[0];
-  b[3][2]:[1]         = c[1][2][2];
-  b[4:2:2][2:2:4]:[1] = c[2][2][1];
+  a[0]:[0]            = a_normal[0];
+  a[3]:[0]            = b[1][2];
+  a[4:2:2]:[0]        = b[2][2];
+  b[0][3]:[0]         = a_normal[0];
+  b[3][2]:[0]         = c[1][2][2];
+  b[4:2:2][2:2:4]:[0] = c[2][2][1];
 
   int flag = TRUE;
   if(a[0] != a_normal[0]) flag = FALSE;
@@ -56,9 +55,9 @@ int scalar_put()
 
 int vector_put()
 {
-  a[0:5]:[1]      = a_normal[2:5];
-  b[0:4][3]:[1]   = a[5:4];
-  b[3][2:2:2]:[1] = c[1:2:3][2][2];
+  a[0:5]:[0]      = a_normal[2:5];
+  b[0:4][3]:[0]   = a[5:4];
+  b[3][2:2:2]:[0] = c[1:2:3][2][2];
 
   int flag = TRUE;
   for(int i=0;i<5;i++)

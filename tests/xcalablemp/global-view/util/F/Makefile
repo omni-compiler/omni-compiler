@@ -23,7 +23,7 @@ sub_mpi.o: ./sub/sub_mpi.f90
 	$(XFC) -o $@ $<
 
 mpi_xmp.x: mpi_xmp.f90 ixmp_sub.o
-	$(MPI_FC) -o $@ mpi_xmp.f90 ixmp_sub.o $(XMPF_LINK_FLAGS)
+	$(XFC) -o $@ mpi_xmp.f90 ixmp_sub.o
 
 xmp_mpi.x: xmp_mpi.f90 sub_mpi.o
 	$(XFC) -o $@ xmp_mpi.f90 sub_mpi.o

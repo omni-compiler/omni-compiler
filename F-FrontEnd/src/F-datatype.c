@@ -92,7 +92,16 @@ function_type(TYPE_DESC tp)
             TYPE_SET_MODULE(ftp);
             TYPE_UNSET_MODULE(tp);
         }
+        if (TYPE_IS_IMPURE(tp)) {
+            TYPE_SET_IMPURE(ftp);
+            TYPE_UNSET_IMPURE(tp);
+        }
         TYPE_UNSET_SAVE(tp);
+
+        if (FUNCTION_TYPE_IS_VISIBLE_INTRINSIC(tp)) {
+            FUNCTION_TYPE_SET_VISIBLE_INTRINSIC(ftp);
+        }
+        FUNCTION_TYPE_UNSET_VISIBLE_INTRINSIC(tp);
     }
 
 

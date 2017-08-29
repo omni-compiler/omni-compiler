@@ -5,6 +5,7 @@
 *.xmod
 *.so
 a.out
+Xcode.java
 
 # Top directory
 autom4te.cache

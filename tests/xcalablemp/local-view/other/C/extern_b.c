@@ -2,7 +2,7 @@
 extern int a[10];
 #pragma xmp coarray a:[*]
 
-void hoge(int i, int node, int value)
+void hoge(int i, int image, int value)
 {
-  a[i]:[node] = value;
+  a[i]:[image] = value;
 }

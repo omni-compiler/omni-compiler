@@ -14,7 +14,7 @@ void test_1dim()
     a2[i] = a1[i];
   }
   
-  a1[1:N-1]:[1] = a1[0:N-1];
+  a1[1:N-1]:[0] = a1[0:N-1];
   memmove(&a2[1], &a2[0], sizeof(int)*(N-1));
   
   for(int i=0;i<N;i++)
@@ -31,7 +31,7 @@ void test_2dim()
     }
   }
 
-  b1[1:N-1][1:N-1]:[1] = b1[0:N-1][0:N-1];
+  b1[1:N-1][1:N-1]:[0] = b1[0:N-1][0:N-1];
   char *tmp = malloc(sizeof(int)*(N-1)*(N-1));
   size_t offset = 0;
   for(int i=0;i<N-1;i++)
@@ -55,8 +55,8 @@ void test_2dim()
 
 int main()
 {
-  test_1dim();
-  test_2dim();
+    test_1dim();
+  //  test_2dim();
 
   if(flag)
     printf("PASS\n");
