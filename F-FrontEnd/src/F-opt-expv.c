@@ -253,6 +253,19 @@ expv_reduce(expv v, int doParamReduce)
         rcode = EXPV_CODE(right);
     }
 
+    if (lcode == FUNCTION_CALL ||
+        rcode == FUNCTION_CALL ||
+        lcode == F95_MEMBER_REF ||
+        rcode == F95_MEMBER_REF ||
+        lcode == F_ARRAY_REF ||
+        rcode == F_ARRAY_REF ||
+        lcode == ARRAY_REF ||
+        rcode == ARRAY_REF) {
+        return v;
+    }
+
+
+
     /* constant folding */
     switch(code){
     /*

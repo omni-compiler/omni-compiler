@@ -50,6 +50,12 @@ public class XmDomUtil {
         return n.getFirstChild().getNodeValue();
     }
 
+    public static boolean hasAttr(Node n, String name) {
+        if (n == null)
+            return false;
+        return n.getAttributes().getNamedItem(name) != null;
+    }
+
     public static String getAttr(Node n, String name) {
         if (n == null)
             return null;

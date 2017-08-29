@@ -713,6 +713,7 @@ public class XcodeMLtools_F extends XcodeMLtools {
       x = Xcons.String(t);
       return setCommonAttributes(n, Xcons.List(code, type, x));
 
+    case F_DATA_STATEMENT:
     case F_DATA_DECL:
       return setCommonAttributes(n, Xcons.List(code, type, Xcons.List(toXobject(getElement(n, "varList")), toXobject(getElement(n, "valueList")))));
 
@@ -727,7 +728,7 @@ public class XcodeMLtools_F extends XcodeMLtools {
 	//x.add(getChildList(n));
 
 	XobjList xx = Xcons.List();
-	
+
 	NodeList list = n.getChildNodes();
 	for (int i = 0; i < list.getLength(); i++) {
 	  Node nn = list.item(i);
@@ -752,7 +753,7 @@ public class XcodeMLtools_F extends XcodeMLtools {
 
 	if (x.Nargs() == 0) x.add(null);
 	x.add(xx);
-      
+
 	return setCommonAttributes(n, x);
       }
     case F_CONTAINS_STATEMENT:

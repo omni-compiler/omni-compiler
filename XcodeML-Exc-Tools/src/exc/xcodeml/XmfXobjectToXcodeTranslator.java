@@ -150,6 +150,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         }
             break;
 
+        case F_DATA_STATEMENT:
         case F_DATA_DECL: {
             e = createElement(name);
             for (Xobject xseq : (XobjList)xobj) {

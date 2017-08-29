@@ -192,8 +192,8 @@ void _XMP_gmove_larray_garray(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *
 
 
 /* From xmp_runtime.c */
-void _XMP_init(int argc, char** argv);
-void _XMP_finalize(int);
+void _XMP_init(int argc, char** argv, MPI_Comm comm);
+void _XMP_finalize(bool isFinalize);
 size_t _XMP_get_datatype_size(int datatype);
 
 /* From xmp_reflect.c */

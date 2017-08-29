@@ -141,6 +141,8 @@ xtag(enum expr_code code)
     case F95_EXIT_STATEMENT:        return "FexitStatement";
     case F_ENTRY_STATEMENT:         return "FentryDecl";
     case F_FORALL_STATEMENT:        return "forallStatement";
+    case F_DATA_STATEMENT:          return "FdataStatement";
+    case F08_ERROR_STOP_STATEMENT:  return "FerrorStopStatement";
 
     /*
      * IO statements
@@ -613,6 +615,13 @@ outx_true(int cond, const char *flagname)
         outx_print(" %s=\"true\"", flagname);
 }
 
+static void
+outx_false(int cond, const char *flagname)
+{
+    if(cond)
+        outx_print(" %s=\"false\"", flagname);
+}
+
 
 #define TOPT_TYPEONLY   (1 << 0)
 #define TOPT_NEXTLINE   (1 << 1)
@@ -663,7 +672,8 @@ has_attribute(TYPE_DESC tp)
         TYPE_IS_RECURSIVE(tp) ||
         TYPE_IS_PURE(tp) ||
         TYPE_IS_ELEMENTAL(tp) ||
-        TYPE_IS_MODULE(tp);
+        TYPE_IS_MODULE(tp) ||
+        TYPE_IS_IMPURE(tp);
 }
 
 static int
@@ -2022,26 +2032,40 @@ outx_continueStatement(int l, expv v)
 }
 
 
+static void
+outx_STOPPAUSE_statement_with_expression_code(int l, expv v)
+{
+    const int l1 = l + 1, l2 = l1 + 1;
+    int is_int = IS_INT(EXPV_TYPE(EXPR_ARG1(v)));
+    const char * child = is_int?"code":"message";
+
+    outx_tagOfStatement(l, v);
+    outx_tag(l1, child);
+    outx_expv(l2, EXPR_ARG1(v));
+    outx_close(l1, child);
+    outx_expvClose(l, v);
+}
+
 /**
- * output FstopStatement/FpauseStatement
+ * output FstopStatement/FerrorStopStatement/FpauseStatement
  */
 static void
 outx_STOPPAUSE_statement(int l, expv v)
 {
     char buf[CHAR_BUF_SIZE];
-    expv x1 = EXPR_ARG1(v);
+    expv v1 = EXPR_ARG1(v);
     buf[0] = '\0';
 
-    if(x1) {
-        switch(EXPV_CODE(x1)) {
+    if (v1) {
+        switch(EXPV_CODE(v1)) {
         case INT_CONSTANT:
-            sprintf(buf, " code=\""OMLL_DFMT"\"", EXPV_INT_VALUE(x1));
+            sprintf(buf, " code=\""OMLL_DFMT"\"", EXPV_INT_VALUE(v1));
             break;
         case STRING_CONSTANT:
-            sprintf(buf, " message=\"%s\"", getXmlEscapedStr(EXPV_STR(x1)));
+            sprintf(buf, " message=\"%s\"", getXmlEscapedStr(EXPV_STR(v1)));
             break;
         default:
-            abort();
+            return outx_STOPPAUSE_statement_with_expression_code(l, v);
         }
     }
 
@@ -3195,12 +3219,20 @@ outx_unaryOp(int l, expv v)
  * output rename
  */
 static void
-outx_useRename(int l, expv local, expv use)
+outx_useRename(int l, expv x)
 {
+    expv local, use;
+    local = EXPR_ARG1(x);
+    use = EXPR_ARG2(x);
+
     assert(local != NULL);
     assert(use != NULL);
 
-    outx_printi(l, "<rename local_name=\"%s\"", getRawString(local));
+    outx_printi(l, "<rename");
+    if (EXPR_CODE(x) == F03_OPERATOR_RENAMING) {
+        outx_true(TRUE, "is_operator");
+    }
+    outx_printi(0, " local_name=\"%s\"", getRawString(local));
     outx_printi(0, " use_name=\"%s\"/>\n", getRawString(use));
 }
 
@@ -3221,7 +3253,7 @@ outx_useDecl(int l, expv v, int is_intrinsic)
 
     FOR_ITEMS_IN_LIST(lp, EXPR_ARG2(v)) {
         expv x = LIST_ITEM(lp);
-        outx_useRename(l+1, EXPR_ARG1(x), EXPR_ARG2(x));
+        outx_useRename(l+1, x);
     }
 
     include_module_file(print_fp,EXPV_NAME(EXPR_ARG1(v)));
@@ -3638,12 +3670,14 @@ outx_expv(int l, expv v)
     case F03_CLASSIS_STATEMENT:     outx_typeGuard(l, v, 1); break;
     case F03_TYPEIS_STATEMENT:      outx_typeGuard(l, v, 0); break;
     case F_STOP_STATEMENT:
+    case F08_ERROR_STOP_STATEMENT:
     case F_PAUSE_STATEMENT:         outx_STOPPAUSE_statement(l, v); break;
     case F_LET_STATEMENT:           outx_assignStatement(l, v); break;
     case F_PRAGMA_STATEMENT:        outx_pragmaStatement(l, v); break;
     case F95_CYCLE_STATEMENT:
     case F95_EXIT_STATEMENT:        outx_EXITCYCLE_statement(l, v); break;
     case F_ENTRY_STATEMENT:         outx_entryDecl(l, v); break;
+    case F_DATA_STATEMENT:          outx_dataDecl(l, v); break;
 
     /*
      * IO statements
@@ -4446,6 +4480,8 @@ outx_functionType(int l, TYPE_DESC tp)
         outx_true(TYPE_IS_PURE(tp), "is_pure");
         outx_true(TYPE_IS_ELEMENTAL(tp), "is_elemental");
         outx_true(TYPE_IS_MODULE(tp), "is_module");
+
+        outx_false(TYPE_IS_IMPURE(tp), "is_pure");
 
         if (is_emitting_for_submodule) {
             /*
