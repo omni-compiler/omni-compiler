@@ -723,11 +723,40 @@ public class XcodeMLtools_F extends XcodeMLtools {
     case F_ALLOCATE_STATEMENT:
     case F_DEALLOCATE_STATEMENT:
       {
-	x = Xcons.List(code, type);
-	//x.add(getSymbol(n, "stat_name"));
-	//x.add(getChildList(n));
+	// x = Xcons.List(code, type);
+	// //x.add(getSymbol(n, "stat_name"));
+	// //x.add(getChildList(n));
 
+	// XobjList xx = Xcons.List();
+
+	// NodeList list = n.getChildNodes();
+	// for (int i = 0; i < list.getLength(); i++) {
+	//   Node nn = list.item(i);
+	//   String name = nn.getNodeName();
+	//   if (name == "allocOpt"){
+	//     switch (getAttr(nn, "kind")){
+	//     case "stat":
+	//       XobjList v = getChildList(nn);
+	//       x.add(v.getArg(0));
+	//       break;
+	//     default:
+	//       // for this moment, do nothing.
+	//     }
+	//     continue;
+	//   }
+	//   else if (name == "alloc"){
+	//     xx.add(toXobject(nn));
+	//   }
+	//   else
+	//     continue;
+	// }
+
+	// if (x.Nargs() == 0) x.add(null);
+	// x.add(xx);
+
+	x = Xcons.List(code, type, null, null, null, null, null);
 	XobjList xx = Xcons.List();
+	Xobject v = null;
 
 	NodeList list = n.getChildNodes();
 	for (int i = 0; i < list.getLength(); i++) {
@@ -736,11 +765,23 @@ public class XcodeMLtools_F extends XcodeMLtools {
 	  if (name == "allocOpt"){
 	    switch (getAttr(nn, "kind")){
 	    case "stat":
-	      XobjList v = getChildList(nn);
-	      x.add(v.getArg(0));
+	      v = getChildList(nn);
+	      x.setArg(0, v.getArg(0));
+	      break;
+	    case "source":
+	      v = getChildList(nn);
+	      x.setArg(2, v.getArg(0));
+	      break;
+	    case "mold":
+	      v = getChildList(nn);
+	      x.setArg(3, v.getArg(0));
+	      break;
+	    case "errmsg":
+	      v = getChildList(nn);
+	      x.setArg(4, v.getArg(0));
 	      break;
 	    default:
-	      // for this moment, do nothing.
+	      fatal("Unknown AllocOpt: " + nn);
 	    }
 	    continue;
 	  }
@@ -751,9 +792,8 @@ public class XcodeMLtools_F extends XcodeMLtools {
 	    continue;
 	}
 
-	if (x.Nargs() == 0) x.add(null);
-	x.add(xx);
-
+	x.setArg(1, xx);
+	  
 	return setCommonAttributes(n, x);
       }
     case F_CONTAINS_STATEMENT:

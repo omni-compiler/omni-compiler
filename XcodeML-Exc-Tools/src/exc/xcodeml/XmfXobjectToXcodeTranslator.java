@@ -504,7 +504,6 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             break;
 
         case F_ALLOCATE_STATEMENT:
-	  // System.out.println("xobj="+xobj);
              // e = createElement(name,
 	     // 		       "stat_name", getArg0Name(xobj));
 	    e = createElement(name);
@@ -516,20 +515,44 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
 	      addToBody(o, xobj.getArg(0));
 	      addChildNode(e, o);
 	    }
-
-// 	  e = createElement(name);
-// 	  for (Xobject a : (XobjList)xobj.getArg(0)) {
-// 	    addChildNode(e, trans(a));
-// 	  }
-	    break
-	      ;
+	    if (xobj.Nargs() > 2){ // Now generated allocate statements have xobj of just two items.
+	      if (xobj.getArg(2) != null){
+		Element o = createElement("allocOpt", "kind", "source");
+		addToBody(o, xobj.getArg(2));
+		addChildNode(e, o);
+	      }
+	      if (xobj.getArg(3) != null){
+		Element o = createElement("allocOpt", "kind", "mold");
+		addToBody(o, xobj.getArg(3));
+		addChildNode(e, o);
+	      }
+	      if (xobj.getArg(4) != null){
+		Element o = createElement("allocOpt", "kind", "errmsg");
+		addToBody(o, xobj.getArg(4));
+		addChildNode(e, o);
+	      }
+	    }
+	    break;
 
         case F_DEALLOCATE_STATEMENT:
-            e = createElement(name,
-                              "stat_name", getArg0Name(xobj));
+            // e = createElement(name,
+            //                   "stat_name", getArg0Name(xobj));
+	    e = createElement(name);
             for (Xobject a : (XobjList)xobj.getArg(1)) {
                 addChildNode(e, trans(a));
             }
+	    if (xobj.getArg(0) != null){
+	      Element o = createElement("allocOpt", "kind", "stat");
+	      addToBody(o, xobj.getArg(0));
+	      addChildNode(e, o);
+	    }
+	    if (xobj.Nargs() > 2){ // Now generated allocate statements have xobj of just two items.
+	      if (xobj.getArg(4) != null){
+		Element o = createElement("allocOpt", "kind", "errmsg");
+		addToBody(o, xobj.getArg(4));
+		addChildNode(e, o);
+	      }
+	    }
             break;
 
         case F_NULLIFY_STATEMENT:
