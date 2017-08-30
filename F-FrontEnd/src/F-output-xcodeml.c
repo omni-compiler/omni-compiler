@@ -762,6 +762,7 @@ getTypeID(TYPE_DESC tp)
         case TYPE_LHS:		/* fall through too */
         case TYPE_GNUMERIC_ALL: pfx = 'V'; break;
         case TYPE_NAMELIST:     pfx = 'N'; break;
+        case TYPE_ENUM:         pfx = 'E'; break;
         default: abort();
         }
 
@@ -3783,6 +3784,7 @@ outx_expv(int l, expv v)
     case F95_USE_ONLY_STATEMENT:
     case F03_USE_INTRINSIC_STATEMENT:
     case F03_USE_ONLY_INTRINSIC_STATEMENT:
+    case F03_ENUM_STATEMENT:
         break;
 
     /*
@@ -3988,7 +3990,7 @@ outx_expv(int l, expv v)
 
 
     default:
-        fatal("unkown exprcode : %d", code);
+        fatal("unknown exprcode : %d", code);
         abort();
     }
 }
@@ -4663,6 +4665,23 @@ outx_structType(int l, TYPE_DESC tp)
 
 
 /**
+ * output FenumType
+ */
+static void
+outx_enumType(int l, TYPE_DESC tp)
+{
+    ID id;
+    int l1 = l + 1;
+    outx_typeAttrs(l, tp ,"FenumType", TOPT_NEXTLINE);
+    FOREACH_MEMBER(id, tp) {
+        outx_symbolName(l1, ID_SYM(id));
+        outx_value(l1, VAR_INIT_VALUE(id));
+    }
+    outx_close(l,"FenumType");
+}
+
+
+/**
  * output types in typeTable
  */
 static void
@@ -4685,6 +4704,9 @@ outx_type(int l, TYPE_DESC tp)
         } else {
             outx_structType(l, tp);
         }
+
+    } else if(IS_ENUM(tp)) {
+        outx_enumType(l, tp);
 
     } else if(IS_PROCEDURE_TYPE(tp)) {
         outx_functionType(l, tp);
@@ -4891,6 +4913,24 @@ outx_equivalenceDecl(int l, expv v)
 }
 
 
+
+/**
+ * output FenumDecl
+ */
+static void
+outx_enumDecl(int l, ID id)
+{
+    if(id == NULL)
+        return;
+
+    outx_tagOfDeclNoChild(l,
+                          "%s type=\"%s\"",
+                          ID_LINE(id),
+                          "FenumDecl",
+                          getTypeID(ID_TYPE(id)));
+}
+
+
 static int
 qsort_compare_id(const void *v1, const void *v2)
 {
@@ -5026,6 +5066,10 @@ emit_decl(int l, ID id)
     case CL_ENTRY:
         break;
 
+    case CL_ENUM:
+        outx_enumDecl(l, id);
+        break;
+
     case CL_PROC:
         if (ID_TYPE(id) &&
             IS_PROCEDURE_TYPE(ID_TYPE(id)) &&
@@ -5090,6 +5134,13 @@ outx_id_declarations(int l, ID id_list, int hasResultVar, const char * functionN
                 modname = ID_SYM(id);
             }
 
+            if (ID_CLASS(id) == CL_ENUM) {
+                ID enumerator;
+                FOREACH_MEMBER(enumerator, ID_TYPE(id)) {
+                    ID_IS_EMITTED(ENUMERATOR_DEFINE(enumerator)) = TRUE;
+                }
+            }
+
             if (ID_CLASS(id) != CL_TAGNAME) {
                 continue;
             }
@@ -5122,6 +5173,7 @@ outx_id_declarations(int l, ID id_list, int hasResultVar, const char * functionN
                 outx_structDecl(l, id);
                 ID_IS_EMITTED(id) = TRUE;
             }
+
         }
 
         /*

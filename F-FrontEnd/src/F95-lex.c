@@ -3963,12 +3963,15 @@ struct keyword_token keywords[ ] =
     { "elseif",         ELSEIFTHEN },
     { "elsewhere",      ELSEWHERE },
     { "else",           ELSE },
+    { "enum",           ENUM },          /* F2003 spec */
+    { "enumerator",     ENUMERATOR },          /* F2003 spec */
     { "exit",           EXIT },
     { "endblock",       ENDBLOCK },
     { "endcritical",    ENDCRITICAL },     /* #060 coarray */
     { "enddo",          ENDDO },
     { "endfile",        ENDFILE  },
     { "endif",          ENDIF },
+    { "endenum",        ENDENUM },       /* F2003 spec */
     { "endforall",      ENDFORALL },
     { "endfunction",    ENDFUNCTION },
     { "endinterface",   ENDINTERFACE },
@@ -4082,6 +4085,7 @@ struct keyword_token end_keywords[ ] =
     { "blockdata",      BLOCKDATA },
     { "critical",       ENDCRITICAL },     /* #060 coarray */
     { "do",             ENDDO },
+    { "enum",           ENDENUM },
     { "file",           ENDFILE },
     { "forall",         ENDFORALL },
     { "function",       ENDFUNCTION },

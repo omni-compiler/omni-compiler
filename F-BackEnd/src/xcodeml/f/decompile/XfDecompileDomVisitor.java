@@ -450,9 +450,9 @@ public class XfDecompileDomVisitor {
                     "A 'len' element is included in a definition of '%s' type.%n",
                     refTypeId.xcodemlName());
                 _context.setLastErrorMessage(
-                    XfUtilForDom.formatError(lenNode,
-                                             XfError.XCODEML_SEMANTICS,
-                                             lenNode.getNodeName()));
+                        XfUtilForDom.formatError(lenNode,
+                                XfError.XCODEML_SEMANTICS,
+                                lenNode.getNodeName()));
                 fail(lenNode);
             }
         }
@@ -1482,9 +1482,28 @@ public class XfDecompileDomVisitor {
                 XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
                 typeManager.addType(n);
             } else {
-                // Note:
-                // Because handle it at a upper level element,
-                // warn it when this method was called it.
+                // invalid XcodeML
+                assert false;
+            }
+        }
+    }
+
+    // FenumType
+    class FenumTypeVisitor extends XcodeNodeVisitor {
+        /**
+         * Decompile "FstructType" element in XcodeML/F.
+         * <p>
+         * The decompilation result depends on a child element.
+         * </p>
+         *
+         * @see xcodeml.f.binding.gen.RVisitorBase#enter(xcodeml.f.binding.gen.XbfFstructType
+         *      )
+         */
+        @Override public void enter(Node n) {
+            if (_isInvokeAncestorNodeOf("typeTable")) {
+                XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
+                typeManager.addType(n);
+            } else {
                 assert false;
             }
         }
@@ -2995,9 +3014,9 @@ public class XfDecompileDomVisitor {
             Node typeChoice = typeManager.findType(functionNameNode);
             if (typeChoice == null) {
                 _context.setLastErrorMessage(
-                    XfUtilForDom.formatError(n,
-                                       XfError.XCODEML_TYPE_NOT_FOUND,
-                                       XmDomUtil.getAttr(functionNameNode, "type")));
+                        XfUtilForDom.formatError(n,
+                                XfError.XCODEML_TYPE_NOT_FOUND,
+                                XmDomUtil.getAttr(functionNameNode, "type")));
                 fail(n);
             } else if ("FfunctionType".equals(typeChoice.getNodeName()) == false) {
                 _context.setLastErrorMessage(
@@ -7075,6 +7094,80 @@ public class XfDecompileDomVisitor {
     }
 
 
+    // FenumDecl
+    class FenumDeclVisitor extends XcodeNodeVisitor {
+        /**
+         * Decompile "FenumDecl" element in XcodeML/F.
+         */
+        @Override public void enter(Node n) {
+            _writeLineDirective(n);
+
+            XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
+            XmfWriter writer = _context.getWriter();
+
+            String constructName = XmDomUtil.getAttr(n, "construct_name");
+            if (XfUtilForDom.isNullOrEmpty(constructName) == false) {
+                writer.writeToken(constructName);
+                writer.writeToken(":");
+            }
+            writer.writeToken("ENUM");
+            writer.writeToken(",");
+            writer.writeToken("BIND");
+            writer.writeToken("(");
+            writer.writeToken("C");
+            writer.writeToken(")");
+            writer.incrementIndentLevel();
+
+            String typeName = XmDomUtil.getAttr(n, "type");
+            if (XfUtilForDom.isNullOrEmpty(typeName)) {
+                _context.setLastErrorMessage(
+                        XfUtilForDom.formatError(n,
+                                XfError.XCODEML_SEMANTICS,
+                                n.getNodeName()));
+                fail(n);
+            }
+            Node type = typeManager.findType(typeName);
+            if (type == null) {
+                _context.setLastErrorMessage(
+                        XfUtilForDom.formatError(n,
+                                XfError.XCODEML_TYPE_NOT_FOUND,
+                                typeName));
+                fail(n);
+            }
+
+            NodeList list = type.getChildNodes();
+            for (int i = 0; i < list.getLength(); i++) {
+                Node elm = list.item(i);
+                if (elm.getNodeType() != Node.ELEMENT_NODE) {
+                    continue;
+                }
+                String name = elm.getNodeName();
+                if (name.equals("name")) {
+                    writer.setupNewLine();
+                    writer.writeToken("ENUMERATOR");
+                    writer.writeToken("::");
+                    writer.writeToken(XmDomUtil.getContentText(elm));
+                } else if (name.equals("value")) {
+                    writer.writeToken("=");
+                    invokeEnter(elm);
+                } else {
+                    _context.setLastErrorMessage(
+                            XfUtilForDom.formatError(type,
+                                    XfError.XCODEML_SEMANTICS,
+                                    type.getNodeName()));
+                    fail(type);
+                }
+            }
+
+            writer.setupNewLine();
+            writer.decrementIndentLevel();
+            writer.writeToken("END");
+            writer.writeToken("ENUM");
+            writer.setupNewLine();
+        }
+    }
+
+
     /* Check if the name is declared in the runtime library declaration file xmpf_coarray_decl.
      * To avoid double-declaration of the name at the compile time in the native compiler, the
      * declaration of the name should be suppressed if the result of this method is true.
@@ -7297,6 +7390,7 @@ public class XfDecompileDomVisitor {
         new Pair("FbasicType", new BasicTypeVisitor()),
         new Pair("coShape", new CoShapeVisitor()),
         new Pair("FfunctionType", new FfunctionTypeVisitor()),
+        new Pair("FenumType", new FenumTypeVisitor()),
         new Pair("FstructType", new FstructTypeVisitor()),
         new Pair("typeParams", new TypeParamsVisitor()),
         new Pair("typeParam", new TypeParamVisitor()),
@@ -7437,5 +7531,6 @@ public class XfDecompileDomVisitor {
         new Pair("FmoduleProcedureDefinition", new FmoduleProcedureDefinitionVisitor()),
         new Pair("forallStatement", new ForallStatementVisitor()),
         new Pair("FwaitStatement", new FwaitStatementVisitor()),
+        new Pair("FenumDecl", new FenumDeclVisitor()),
     };
 }
