@@ -317,7 +317,24 @@ public class XMPtransPragma
       if(isVarUsed(for_block.getBody(),org_loop_ind_var)){
 	// if global variable is used in this block, convert local to global
         if(XmOption.isXcalableACC()) {
-          for_block.getBody().insert(Xcons.Set(org_loop_ind_var, calcLtoG(t, t_idx, local_loop_var.Ref())));
+          switch (t.getDistMannerAt(t_idx)){
+          case XMPtemplate.BLOCK:
+          case XMPtemplate.GBLOCK:
+          {
+            Ident l2g_off_var = env.declIdent(XMP.genSym("XMP_l2g_off"), Xtype.FintType, pb);
+            Ident l2g_f =
+                    env.declInternIdent(XMP.l2g_f, Xtype.FsubroutineType);
+            args = Xcons.List(l2g_off_var.Ref(),
+                    Xcons.IntConstant(0),
+                    Xcons.IntConstant(k),
+                    on_ref.getDescId().Ref());
+            entry_bb.add(l2g_f.callSubroutine(args));
+            for_block.getBody().insert(Xcons.Set(org_loop_ind_var, Xcons.binaryOp(Xcode.PLUS_EXPR, l2g_off_var.Ref(), local_loop_var.Ref())));
+            break;
+          }
+          default:
+            for_block.getBody().insert(Xcons.Set(org_loop_ind_var, calcLtoG(t, t_idx, local_loop_var.Ref())));
+          }
         }else {
           Ident l2g_f =
                   env.declInternIdent(XMP.l2g_f, Xtype.FsubroutineType);
