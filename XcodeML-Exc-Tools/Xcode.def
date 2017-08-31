@@ -355,6 +355,15 @@ L   F_MODULE_PROCEDURE_DEFINITION
 L   F_FORALL_STATEMENT
 
 # -----------------
+# Fortran2003
+S   F_FLUSH_STATEMENT
+
+# -----------------
+# Fortran2008
+S   F_ERROR_STOP_STATEMENT
+S   F_DO_CONCURRENT_STATEMENT
+
+# -----------------
 # Codes dynamically assignable
 L    DYN_1
 L    DYN_2

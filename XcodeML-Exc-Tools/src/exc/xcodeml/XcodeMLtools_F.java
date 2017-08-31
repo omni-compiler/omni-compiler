@@ -97,7 +97,8 @@ public class XcodeMLtools_F extends XcodeMLtools {
       | (getAttrBool(n, "is_volatile") ? Xtype.TQ_FVOLATILE : 0)
       | (getAttrBool(n, "is_class") ? Xtype.TQ_FCLASS : 0)
       | (getAttrBool(n, "is_value") ? Xtype.TQ_FVALUE : 0)
-      | (getAttrBool(n, "is_procedure") ? Xtype.TQ_FPROCEDURE : 0);
+      | (getAttrBool(n, "is_procedure") ? Xtype.TQ_FPROCEDURE : 0)
+      | (getAttrBool(n, "is_contiguous") ? Xtype.TQ_FCONTIGUOUS : 0);
 
     String intent = getAttr(n, "intent");
 
@@ -654,11 +655,19 @@ public class XcodeMLtools_F extends XcodeMLtools {
       return setCommonAttributes(n, x);
 
     case F_STOP_STATEMENT:
+    case F_ERROR_STOP_STATEMENT:
       {
 	t = getAttr(n, "code");
 	Xobject cd = (t == null ? null : Xcons.String(t));
 	t = getAttr(n, "message");
-	Xobject mes = (t == null ? null : Xcons.FcharacterConstant(Xtype.FcharacterType, t, null));
+	Xobject mes = null;
+	if (t != null){
+	  mes = Xcons.FcharacterConstant(Xtype.FcharacterType, t, null);
+	}
+	else {
+	  mes = toXobject(getContent(getElement(n, "message")));
+	}
+	//	Xobject mes = (t == null ? null : Xcons.FcharacterConstant(Xtype.FcharacterType, t, null));
 	return setCommonAttributes(n, Xcons.List(code, type, cd, mes));
       }
 
@@ -683,6 +692,11 @@ public class XcodeMLtools_F extends XcodeMLtools {
       return setCommonAttributes(n, Xcons.List(code, type,
 					       Xcons.String(t),
 					       toXobject(getElement(n, "valueList"))
+					       ));
+
+    case F_FLUSH_STATEMENT:
+      return setCommonAttributes(n, Xcons.List(code, type,
+					       toXobject(getElement(n, "namedValueList"))
 					       ));
 
     case F_DO_LOOP:
@@ -885,6 +899,7 @@ public class XcodeMLtools_F extends XcodeMLtools {
       return toXobject(getContent(n));
 
     case F_FORALL_STATEMENT:
+    case F_DO_CONCURRENT_STATEMENT:
       {
         XobjList xobj = new XobjList(code, type);
         xobj.add(getSymbol(n, "construct_name"));
