@@ -5199,9 +5199,10 @@ type_apply_type_parameter(TYPE_DESC tp, expv type_param_values)
 
 void
 compile_procedure_attributes(expr attrs,
-                          uint32_t *type_attr_flags_p,
-                          uint32_t *binding_attr_flags_p,
-                          ID *pass_arg_p)
+                             uint32_t *type_attr_flags_p,
+                             uint32_t *binding_attr_flags_p,
+                             ID *pass_arg_p,
+                             expr *bind_name)
 {
     uint32_t type_attr_flags = 0;
     uint32_t binding_attr_flags = 0;
@@ -5303,6 +5304,11 @@ compile_procedure_attributes(expr attrs,
                         break;
                 }
                 break;
+            case LIST:
+                type_attr_flags |= TYPE_ATTR_BIND;
+                if (bind_name != NULL)
+                    *bind_name = EXPR_ARG1(v);
+                break;
             default:
                 error("unexpected expression");
                 break;
@@ -5356,6 +5362,7 @@ compile_procedure_declaration(expr x)
 
     uint32_t type_attr_flags = 0;
     uint32_t binding_attr_flags = 0;
+    expr bind_name = NULL;
 
     int is_inside_struct = CTL_TYPE(ctl_top) == CTL_STRUCT;
 
@@ -5366,7 +5373,8 @@ compile_procedure_declaration(expr x)
     compile_procedure_attributes(attrs,
                                  &type_attr_flags,
                                  &binding_attr_flags,
-                                 &pass_arg);
+                                 &pass_arg,
+                                 &bind_name);
 
     if (is_inside_struct) {
         if (!(type_attr_flags & TYPE_ATTR_POINTER)) {
@@ -5619,6 +5627,7 @@ compile_procedure_declaration(expr x)
         ID_LINE(id) = EXPR_LINE(x);
 
         TYPE_ATTR_FLAGS(ID_TYPE(id)) |= type_attr_flags;
+        TYPE_BIND_NAME(ID_TYPE(id)) = bind_name;
         VAR_REF_PROC(id) = interface;
         if (CTL_TYPE(ctl_top) == CTL_STRUCT) {
             FUNCTION_TYPE_HAS_BINDING_ARG(ID_TYPE(id)) = TRUE;
@@ -5654,10 +5663,16 @@ compile_type_bound_procedure(expr x)
     compile_procedure_attributes(binding_attrs,
                                  &access_attr_flags,
                                  &binding_attr_flags,
-                                 &pass_arg);
+                                 &pass_arg,
+                                 NULL);
 
     if ((access_attr_flags & !(TYPE_ATTR_PUBLIC | TYPE_ATTR_PRIVATE)) != 0) {
         error("type-bound procedure cannot have type attributes");
+        return;
+    }
+
+    if (binding_attr_flags & TYPE_ATTR_BIND) {
+        error("type-bound procedure cannot have a BIND attribute");
         return;
     }
 

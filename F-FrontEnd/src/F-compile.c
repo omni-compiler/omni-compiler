@@ -106,7 +106,6 @@ static void compile_INTERFACE_statement(expr x);
 static void compile_MODULEPROCEDURE_statement(expr x);
 static int  markAsPublic(ID id);
 static int  markAsPrivate(ID id);
-static int  markAsProtected(ID id);
 static void compile_POINTER_SET_statement(expr x);
 static void compile_USE_decl(expr x, expr x_args, int is_intrinsic);
 static void compile_USE_ONLY_decl(expr x, expr x_args, int is_intrinsic);
@@ -2751,8 +2750,8 @@ end_declaration()
                 error_at_id(ip, "Only an array pointer or an assumed-shape array can have the CONTIGUOUS attribute");
             } else if (IS_PROCEDURE_TYPE(tp) && TYPE_IS_PROCEDURE(tp)) {
                 if (ID_STORAGE(ip) != STG_ARG) {
-                    if (!TYPE_IS_POINTER(tp)) {
-                        error_at_id(ip, "PROCEDURE variable should have the POINTER attribute");
+                    if (VAR_INIT_VALUE(ip) && !TYPE_IS_POINTER(tp)) {
+                        error_at_id(ip, "PROCEDURE variable with an inilial pointer should have the POINTER attribute");
                     }
                     if (TYPE_IS_OPTIONAL(tp)) {
                         error_at_id(ip, "PROCEDURE variable should not have the OPTINAL attribute");
