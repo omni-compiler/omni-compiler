@@ -514,6 +514,10 @@ pg_unary_expr()
     CExprCodeEnum code;
 
     switch(pg_tok){
+    case '+':
+        pg_get_token();
+        return pg_factor_expr();
+
     case '-':
         pg_get_token();
         if((e = pg_factor_expr()) == NULL)
