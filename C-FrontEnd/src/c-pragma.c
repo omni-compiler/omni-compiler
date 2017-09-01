@@ -539,11 +539,20 @@ pg_unary_expr()
         code = EC_BIT_NOT;
         break;
 
+    case '*':
+        pg_get_token();
+	if((e = pg_factor_expr()) == NULL)
+	    goto error;
+	code = EC_POINTER_REF;
+	break;
+
     default:
         return pg_factor_expr();
     }
 
-    return exprUnary(code, e);
+    e = exprUnary(code, e);
+    exprSetExprsType(e, &s_numTypeDescs[BT_INT]);
+    return e;
 
   error:
     if(e)
