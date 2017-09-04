@@ -723,10 +723,11 @@ compile_expression(expr x)
                  * if operator is logical operator,
                  * don't care about type but only shape.
                  */
-                if((biop == LOGIB || bType == bLType) && shape == lshape) {
-                    tp = lt;
+                 if((biop == LOGIB || bType == bLType) && shape == lshape) {
+                    tp = wrap_type(lt); // This `tp` turns into `bottom_type(tp)` 
+                    // later and `lt` == `bLType` if lt is not an array type
                 } else if ((biop == LOGIB || bType == bRType) && shape == rshape) {
-                    tp = rt;
+                    tp = wrap_type(rt); // same as above
                 } else {
                     /* NOTE:
                      * if shape is scalar (list0(LIST)), tp = bType.
@@ -744,23 +745,9 @@ compile_expression(expr x)
             /* if (type_is_not_fixed) */
             if(type_is_not_fixed && tp) {
 /* FEAST CHANGE end */
-                // Save the TYPE_IS_FIXED attribute for left and right operand.
-                // Fix issue #207
-                int bLtype_fixed = TYPE_IS_FIXED(bLType);
-                int bRtype_fixed = TYPE_IS_FIXED(bRType);
-
                 // Apply the attribute NOT FIXED on the result type if one 
                 // operand type is NOT FIXED.
                 TYPE_SET_NOT_FIXED(bottom_type(tp));
-                
-                // Re-apply the attribute on the left operand
-                if(bLtype_fixed) {
-                    TYPE_UNSET_NOT_FIXED(bLType);
-                } 
-                // Re-apply the attribute on the right operand
-                if(bRtype_fixed) {
-                    TYPE_UNSET_NOT_FIXED(bRType);
-                }
             }
             return expv_cons(op, tp, left, right);
         }
