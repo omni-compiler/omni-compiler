@@ -8,6 +8,7 @@ public class StructType extends CompositeType
 {
     private boolean is_class = false;
     protected XobjList fTypeParams;
+    protected Xobject finalProcedure;
 
     public StructType(String id, String parent_id, XobjList id_list, int typeQualFlags, Xobject gccAttrs,
                       Xobject[] codimensions)
@@ -15,11 +16,13 @@ public class StructType extends CompositeType
         super(Xtype.STRUCT, id, parent_id, id_list, typeQualFlags, gccAttrs, codimensions);
     }
 
-    public StructType(String id, String parent_id, XobjList id_list, XobjList proc_list, int typeQualFlags, Xobject gccAttrs, XobjList typeParams)
+    public StructType(String id, String parent_id, XobjList id_list, XobjList proc_list, int typeQualFlags,
+		      Xobject gccAttrs, XobjList typeParams, Xobject finalProcedure)
     {
         this(id, parent_id, id_list, typeQualFlags, gccAttrs, (Xobject[])null);
         this.proc_list = proc_list;
         this.fTypeParams = typeParams;
+	this.finalProcedure = finalProcedure;
     }
 
     public StructType(String id, boolean is_class, XobjString tag_names, 
@@ -39,6 +42,11 @@ public class StructType extends CompositeType
         return fTypeParams;
     }
 
+    public Xobject getFinalProcedure()
+    {
+        return finalProcedure;
+    }
+    
     @Override
     public Xobject getTotalArraySizeExpr(Block block)
     {

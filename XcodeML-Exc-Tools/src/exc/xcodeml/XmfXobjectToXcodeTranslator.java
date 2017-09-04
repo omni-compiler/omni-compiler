@@ -1498,6 +1498,9 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             addAttributes(e, "is_public", "true");
           addChildNode(e, addChildNode(createElement("binding"), transName(xobj.getArg(4))));
           addAttributes(e, "is_non_overridable", intFlagToBoolStr(xobj.getArgOrNull(5)));
+        } else if (xobj.Opcode() == Xcode.F_FINAL_PROCEDURE) {
+          e = createElement("finalProcedure");
+          addChildNode(e, transName(xobj.getArg(0)));
         } else if (xobj.Opcode() == Xcode.F_TYPE_BOUND_GENERIC_PROCEDURE) {
           e = createElement("typeBoundGenericProcedure");
           addAttributes(e, "is_operator"  , intFlagToBoolStr(xobj.getArgOrNull(0)));
