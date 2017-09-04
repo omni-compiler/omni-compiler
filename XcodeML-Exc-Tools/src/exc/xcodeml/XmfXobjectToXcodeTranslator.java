@@ -1067,12 +1067,15 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
 
         if (type.copied != null) {
             typeElem = createElement("FbasicType", "ref",
-                                     (type.isFclass() || type.isFprocedure() && type.isFpointer())
+                                     (type.isFclass() || type.isFprocedure())
                                       && type.isBasic() && (type.getBasicType() == BasicType.VOID) ?
                                        null : type.copied.getXcodeFId(),
                                      "is_procedure", toBoolStr(type.isFprocedure()),
                                      "pass", type.getPass(),
-                                     "pass_arg_name", type.getPassArgName());
+                                     "pass_arg_name", type.getPassArgName(),
+				     "bind", type.getBind(),
+				     "bind_name", type.getBindName()
+				     );
             setBasicTypeFlags(typeElem, type);
             XobjList typeParams = type.getFTypeParamValues();
             if (typeParams != null) {
@@ -1084,10 +1087,13 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             case Xtype.BASIC:
                 typeElem = createElement("FbasicType");
                 addAttributes(typeElem,
-                              "ref", (type.isFclass() || type.isFprocedure() && type.isFpointer())
+                              "ref", (type.isFclass() || type.isFprocedure())
                                       && type.isBasic() && (type.getBasicType() == BasicType.VOID) ?
                                        null : BasicType.getTypeInfo(type.getBasicType()).fname,
-                              "is_procedure", toBoolStr(type.isFprocedure()));
+                              "is_procedure", toBoolStr(type.isFprocedure()),
+			      "bind", type.getBind(),
+			      "bind_name", type.getBindName()
+			      );
                 addChildNodes(typeElem,
                               transKind(type.getFkind()),
                               transLen(type));
