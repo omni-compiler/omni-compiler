@@ -7217,6 +7217,9 @@ compile_PROTECTED_statement(expr id_list)
     }
 }
 
+/*
+ * Check if the array is specified with bounds-remapping-list
+ */
 static int
 is_array_with_bounds_remapping_list(expv v)
 {
@@ -7226,8 +7229,16 @@ is_array_with_bounds_remapping_list(expv v)
         return FALSE;
     }
 
+    /*
+     * If all elements of the bounds-spec-list are bounds-spec,
+     * it is a bounds-remapping-list
+     */
     FOR_ITEMS_IN_LIST(lp, EXPR_ARG2(v)) {
         expv bounds_spec = LIST_ITEM(lp);
+        /*
+         * If bounds-spec has a lower bound and an upper bound,
+         * it is bounds remapping
+         */
         if (EXPR_CODE(bounds_spec) == F_INDEX_RANGE &&
             EXPR_ARG1(bounds_spec) != NULL &&
             EXPR_ARG2(bounds_spec) != NULL &&
@@ -7235,7 +7246,7 @@ is_array_with_bounds_remapping_list(expv v)
             continue;
         } else {
             return FALSE;
-        }    
+        }
     }
 
     return TRUE;
@@ -7446,7 +7457,7 @@ compile_POINTER_SET_statement(expr x) {
     }
 
     if (is_array_with_bounds_remapping_list(vPointer)) {
-        // This statement is pointer remapping!
+        /* This statement is pointer remapping! */
         if (TYPE_N_DIM(IS_REFFERENCE(vPteTyp)?TYPE_REF(vPteTyp):vPteTyp) != 1 &&
             !type_is_contiguous(vPteTyp)) {
             error_at_node(x, "POINTEE is not contiguous or one-rank array.");
