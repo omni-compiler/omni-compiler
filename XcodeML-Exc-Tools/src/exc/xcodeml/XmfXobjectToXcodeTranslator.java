@@ -577,6 +577,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         case F_END_FILE_STATEMENT:
         case F_REWIND_STATEMENT:
         case F_BACKSPACE_STATEMENT:
+	case F_FLUSH_STATEMENT:
             e = addChildNode(createElement(name),
                              trans(xobj.getArgOrNull(0)));
             break;
@@ -616,7 +617,8 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             break;
 
         case F_PAUSE_STATEMENT:
-        case F_STOP_STATEMENT: {
+        case F_STOP_STATEMENT:
+	case F_ERROR_STOP_STATEMENT: {
             e = createElement(name);
             Xobject code = xobj.getArgOrNull(0);
             Xobject msg = xobj.getArgOrNull(1);
@@ -625,8 +627,14 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
                               "code", code.getString());
             }
             if (msg != null) {
-                addAttributes(e,
-                              "message", msg.getString());
+	      if (msg.Opcode() == Xcode.F_CHARACTER_CONSTATNT)
+		addAttributes(e,
+			      "message", msg.getString());
+	      else {
+		Element e1 = createElement("message");
+		addChildNode(e1, trans(msg));
+		addChildNode(e, e1);
+	      }
             }
         }
             break;
@@ -809,7 +817,8 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             e = transValue(xobj);
             break;
 
-        case F_FORALL_STATEMENT: {
+        case F_FORALL_STATEMENT:
+        case F_DO_CONCURRENT_STATEMENT: {
               e = createElement(name, "type", (xobj.Type() != null) ? xobj.Type().getXcodeFId() : null,
                                       "construct_name", (xobj.getArg(0) != null) ? xobj.getArg(0).getName() : null);
               addChildNode(e, trans(xobj.getArg(1))); // VAR 1
@@ -1048,7 +1057,8 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
                       "is_cray_pointer", toBoolStr(type.isFcrayPointer()),
                       "is_volatile", toBoolStr(type.isFvolatile()),
                       "is_class", toBoolStr(type.isFclass()),
-                      "is_value", toBoolStr(type.isFvalue()));
+                      "is_value", toBoolStr(type.isFvalue()),
+		      "is_contiguous", toBoolStr(type.isFcontiguous()));
 
         if (type.isFintentIN()) {
             addAttributes(basicTypeElem, "intent", "in");

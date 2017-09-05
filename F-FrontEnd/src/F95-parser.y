@@ -531,7 +531,7 @@ static void type_spec_done();
 %type <val> string_const_substr
 %type <val> binding_attr_list binding_attr type_bound_proc_decl_list type_bound_proc_decl
 %type <val> proc_attr_list proc_def_attr proc_attr proc_decl proc_decl_list name_or_type_spec_or_null0 name_or_type_spec_or_null
-%type <val> name name_or_null name_list generic_name defined_operator intrinsic_operator func_prefix prefix_spec func_suffix
+%type <val> name name_or_null name_list generic_name defined_operator intrinsic_operator func_prefix func_prefix0 prefix_spec func_suffix
 %type <val> forall_header forall_triplet forall_triplet_list
 %type <val> declaration_statement95 attr_spec_list attr_spec private_or_public_spec access_spec type_attr_spec_list type_attr_spec
 %type <val> declaration_statement2003 type_param_list
@@ -681,7 +681,6 @@ statement:      /* entry */
           { $$ = list4(F_SUBROUTINE_STATEMENT, $3, $4, $1, $6); }
         | ENDSUBROUTINE name_or_null
           { $$ = list1(F95_ENDSUBROUTINE_STATEMENT,$2); }
-
 /* FUNCTION declaration */
         | FUNCTION IDENTIFIER dummy_arg_list KW func_suffix
           { $$ = list5(F_FUNCTION_STATEMENT, $2, $3, NULL, EXPR_ARG1($5), EXPR_ARG2($5)); }
@@ -928,10 +927,12 @@ generic_name:
         name
         ;
 
-func_prefix:
+func_prefix: func_prefix0 { $$ = $1; need_keyword = FALSE; }
+
+func_prefix0:
           prefix_spec
         { $$ = list1(LIST,$1); need_keyword = TRUE; }
-        | func_prefix prefix_spec
+        | func_prefix0 prefix_spec
         { $$ = list_put_last($1,$2); need_keyword = TRUE; }
         ;
 

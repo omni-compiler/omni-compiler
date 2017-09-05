@@ -72,6 +72,7 @@ public class Xtype
     public static final int TQ_FVALUE               = 1 << 27;  // value
     public static final int TQ_FMODULE              = 1 << 28;  // module
     public static final int TQ_FPROCEDURE           = 1 << 29;  // procedure
+    public static final int TQ_FCONTIGUOUS          = 1 << 30;  // procedure
 
     private String type_id;
     private int type_kind;
@@ -716,6 +717,18 @@ public class Xtype
     public final void setIsFprocedure(boolean enabled)
     {
         setTypeQualFlag(TQ_FPROCEDURE, enabled);
+    }
+
+    /** Fortran : return if is contiguous */
+    public final boolean isFcontiguous()
+    {
+      return getTypeQualFlag(TQ_FCONTIGUOUS);
+    }
+
+    /** Fortran : set attribute 'is_contiguous' */
+    public final void setIsFcontiguous(boolean enabled)
+    {
+        setTypeQualFlag(TQ_FCONTIGUOUS, enabled);
     }
 
     /** Fortran : return if is qualified by 'bind' in pointer decl */

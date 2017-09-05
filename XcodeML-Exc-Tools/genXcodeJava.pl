@@ -157,6 +157,7 @@ print OUT<<_EOL_;
         switch(this) {
         case RETURN_STATEMENT:              case GOTO_STATEMENT:
         case F_DO_STATEMENT:                case F_DO_WHILE_STATEMENT:
+        case F_DO_CONCURRENT_STATEMENT:
         case F_IF_STATEMENT:                case F_WHERE_STATEMENT:
         case F_SELECT_CASE_STATEMENT:       case STATEMENT_LABEL:
         case F_CASE_LABEL:
@@ -169,7 +170,8 @@ print OUT<<_EOL_;
         case F_NULLIFY_STATEMENT:           case F_OPEN_STATEMENT:
         case F_PRINT_STATEMENT:             case F_READ_STATEMENT:
         case F_REWIND_STATEMENT:            case F_WRITE_STATEMENT:
-        case F_PAUSE_STATEMENT:             case F_STOP_STATEMENT:
+        case F_PAUSE_STATEMENT:             case F_FLUSH_STATEMENT:
+        case F_STOP_STATEMENT:              case F_ERROR_STOP_STATEMENT:
         case F_ENTRY_DECL:                  case F_FORMAT_DECL:
         case F_DATA_DECL:
         case PRAGMA_LINE:                   case TEXT:
