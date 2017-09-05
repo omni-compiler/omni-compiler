@@ -5504,6 +5504,13 @@ compile_procedure_declaration(expr x)
         tp = ID_TYPE(interface);
     }
 
+    if (bind_name) {
+        if (EXPR_HAS_ARG2(decls)) {
+            error("multiple identifiers are declared with NAME=");
+            return;
+        }
+    }
+
     FOR_ITEMS_IN_LIST(lp, decls) {
         if (EXPR_CODE(LIST_ITEM(lp)) == F03_BIND_PROCEDURE) {
             /*
