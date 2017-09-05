@@ -282,6 +282,11 @@ typedef enum {
     INTR_ATOMIC_DEFINE,
     INTR_ATOMIC_REF,
 
+    /* F08 intrinsic subroutins */
+    INTR_EXTENDS_TYPE_OF,
+    INTR_SAME_TYPE_AS,
+    INTR_MOVE_ALLOC,
+
     INTR_COARRAY_MALLOC_BYTES,       // hidden interface
     INTR_COARRAY_ALLOCATED_BYTES,    // hidden interface
     INTR_COARRAY_GARBAGE_BYTES,      // hidden interface
