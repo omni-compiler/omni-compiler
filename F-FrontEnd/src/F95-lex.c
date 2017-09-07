@@ -2170,6 +2170,7 @@ find_last_ampersand(char *buf,int *len)
 {
   int l;
   int flag = FALSE;
+  int inStringConst = FALSE;
 
   for (l = *len - 1; l > 0; l--){
     if (isspace(buf[l])) continue;
@@ -2182,9 +2183,12 @@ find_last_ampersand(char *buf,int *len)
 
   if (flag){
     for (; l > 0; l--){
-      if (buf[l] == '!'){
-	flag = FALSE;
-	break;
+        if(buf[l] == QUOTE){
+            inStringConst = !inStringConst;
+        }
+      if (buf[l] == '!' && !inStringConst){
+	    flag = FALSE;
+	    break;
       }
     }
   }
