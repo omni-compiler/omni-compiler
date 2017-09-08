@@ -986,6 +986,12 @@ declare_function(ID id)
         }
     }
 
+    if(SYM_TYPE(ID_SYM(id)) == S_INTR) {
+        // intrinsic function used but not declared yet.
+        ID_CLASS(id) = CL_PROC;
+        PROC_CLASS(id) = P_INTRINSIC;
+    }
+
     if (ID_CLASS(id) == CL_UNKNOWN) {
         /* if name class is unknown, define it as CL_PROC */
         ID_CLASS(id) = CL_PROC;
