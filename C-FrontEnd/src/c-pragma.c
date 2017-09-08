@@ -414,12 +414,12 @@ pg_get_token()
 }
 
 PRIVATE_STATIC void
-pg_compile_expr(CExpr *expr)
+pg_set_exprs_type(CExpr *expr)
 {
     switch(EXPR_CODE(expr)){
     case EC_MEMBER_REF:
     case EC_POINTS_AT:
-	pg_compile_expr(EXPR_B(expr)->e_nodes[0]);
+	pg_set_exprs_type(EXPR_B(expr)->e_nodes[0]);
 	goto end;
     case EC_IDENT:
 	goto end;
@@ -429,7 +429,7 @@ pg_compile_expr(CExpr *expr)
 
     CExprIterator ite;
     EXPR_FOREACH_MULTI(ite, expr)
-	pg_compile_expr(ite.node);
+	pg_set_exprs_type(ite.node);
 
  end:
     exprSetExprsType(expr, &s_numTypeDescs[BT_INT]);
@@ -450,7 +450,7 @@ pg_parse_expr()
     case PK_XMP:
     case PK_OMP:
     case PK_NOT_PARSABLE:
-	pg_compile_expr(e);
+	pg_set_exprs_type(e);
 	break;
     default:
 	break;
