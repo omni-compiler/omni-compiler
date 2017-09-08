@@ -2180,11 +2180,14 @@ find_last_ampersand(char *buf,int *len)
     break;
   }
 
-  if (flag){
+
+  if (flag) {
     for (; l > 0; l--){
-      if (buf[l] == '!'){
-	flag = FALSE;
-	break;
+      if (buf[l] == '!' && (st_PRAGMA_flag|st_ACC_flag|st_OMP_flag|
+        st_XMP_flag|st_CONDCOMPL_flag|st_OCL_flag))
+      {
+	    flag = FALSE;
+	    break;
       }
     }
   }
