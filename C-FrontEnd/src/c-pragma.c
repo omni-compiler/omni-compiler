@@ -619,6 +619,7 @@ PRIVATE_STATIC CExpr*
 pg_factor_expr()
 {
     CExpr *e, *ee = NULL, *args;
+    CExpr *e1 = NULL, *e2 = NULL, *e3 = NULL;
 
     e = pg_primary_expr();
 
@@ -632,16 +633,53 @@ pg_factor_expr()
     case '[':
         pg_get_token();
 
-        if((ee = pg_term_expr(0)) == NULL)
+        if(pg_tok == ':'){
+            e1 = NULL;
+        }else{
+            if((e1 = pg_term_expr(0)) == NULL){
+                goto error;
+            }
+        }
+	if(pg_tok == ']'){
+            //array dimension, [index]
+            ee = exprList1(EC_ARRAY_DIMENSION, e1);
+            goto end_array_dim;
+        }
+	if(pg_tok != ':'){
+            addExpectedCharError(":");
             goto error;
+        }
+        pg_get_token();
+        if(pg_tok == ':' || pg_tok == ']'){
+            e2 = NULL;
+        }else{
+            if((e2 = pg_term_expr(0)) == NULL){
+                goto error;
+            }
+        }
+	if(pg_tok == ']'){
+            //subarray dimension, [lower:length]
+            ee = exprSubArrayDimension(e1, e2, NULL);
+            goto end_array_dim;
+        }
+	if(pg_tok != ':'){
+            addExpectedCharError(":");
+            goto error;
+        }
+        pg_get_token();
+        if((e3 = pg_term_expr(0)) == NULL){
+            goto error;
+        }
+	//subarray dimension, [lower:length:step]
+        ee = exprSubArrayDimension(e1, e2, e3);
 
+    end_array_dim:
         if(pg_tok != ']') {
             addExpectedCharError("]");
             goto error;
         }
 
-        //e = exprList2(EC_ARRAY_REF, e, ee);
-	e = exprBinary(EC_ARRAY_REF, e, exprList1(EC_ARRAY_DIMENSION, exprList1(EC_EXPRS,ee)));
+        e = exprBinary(EC_ARRAY_REF, e, ee);
         pg_get_token();
         break;
 
