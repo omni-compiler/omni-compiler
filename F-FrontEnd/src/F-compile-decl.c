@@ -1060,9 +1060,21 @@ declare_function(ID id)
         }
     } else if (ID_CLASS(id) != CL_PROC &&
                ID_CLASS(id) != CL_ENTRY &&
-               !(ID_CLASS(id) == CL_VAR && ID_TYPE(id) != NULL && IS_PROCEDURE_TYPE(ID_TYPE(id)))) {
-        error("identifier '%s' is used as a function", ID_NAME(id));
-        return NULL;
+               !(ID_CLASS(id) == CL_VAR && ID_TYPE(id) != NULL 
+               && IS_PROCEDURE_TYPE(ID_TYPE(id)))) 
+    {
+        if(SYM_TYPE(ID_SYM(id)) == S_INTR) {
+            // Not user defined function and intrinsic function used 
+            // but not declared yet. So let's declare it.
+            ID_CLASS(id) = CL_PROC;
+            PROC_CLASS(id) = P_INTRINSIC;
+            TYPE_SET_INTRINSIC(id);
+            ID_STORAGE(id) = STG_NONE;
+            ID_IS_DECLARED(id) = TRUE;
+        } else {
+            error("identifier '%s' is used as a function", ID_NAME(id));
+            return NULL;
+        }
     }
 
     if (ID_STORAGE(id) == STG_UNKNOWN) {
