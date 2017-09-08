@@ -8,6 +8,9 @@ program test
   PRINT *,'(''CAUTION !!!!! flight number '',A,'' : multi-level ODR'',''&
            size'',I5,'' too small'')'
 
+  PRINT *, 'WARNING !!! skahjdkahdhkjaskjdkjksalj ',   &
+           'zero, check values of , sakljdklsaj'
+
   ! Comment ' jdkskjadk ' asdkljlkjd &
   DO i = 1, 10
   END DO
