@@ -645,6 +645,7 @@ intrinsic_entry intrinsic_table[] = {
     // DATE_AND_TIME ([DATE, TIME, ZONE, VALUES])
     { INTR_DATE_AND_TIME,       INTR_NAME_GENERIC,      "date_and_time",        0,      { INTR_TYPE_NONE },                                     INTR_TYPE_NONE, 0, -1, LANGSPEC_F90, INTR_CLASS_S },
     { INTR_DATE_AND_TIME,       INTR_NAME_GENERIC,      "",                     0,      { INTR_TYPE_CHAR },                                     INTR_TYPE_NONE, 1, -1, LANGSPEC_F90, INTR_CLASS_S },
+    { INTR_DATE_AND_TIME,       INTR_NAME_GENERIC,      "",                     0,      { INTR_TYPE_INT_ARRAY },                                INTR_TYPE_NONE, 1, -1, LANGSPEC_F90, INTR_CLASS_S },
     { INTR_DATE_AND_TIME,       INTR_NAME_GENERIC,      "",                     0,      { INTR_TYPE_CHAR, INTR_TYPE_CHAR },                     INTR_TYPE_NONE, 2, -1, LANGSPEC_F90, INTR_CLASS_S },
     { INTR_DATE_AND_TIME,       INTR_NAME_GENERIC,      "",                     0,      { INTR_TYPE_CHAR, INTR_TYPE_CHAR, INTR_TYPE_CHAR },     INTR_TYPE_NONE, 3, -1, LANGSPEC_F90, INTR_CLASS_S },
     { INTR_DATE_AND_TIME,       INTR_NAME_GENERIC,      "",                     0,      { INTR_TYPE_CHAR, INTR_TYPE_CHAR, INTR_TYPE_CHAR, INTR_TYPE_INT_ARRAY },        INTR_TYPE_NONE, 4, -1, LANGSPEC_F90, INTR_CLASS_S },
