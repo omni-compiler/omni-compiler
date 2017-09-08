@@ -30,6 +30,9 @@ int     pg_hasError;
 //! token value
 CExpr*  pg_tok_val = NULL;
 
+//! pragma kind
+CPragmaKind pg_pk = PK_NOT_PARSABLE;
+
 PRIVATE_STATIC CExpr* pg_parse_number(void);
 PRIVATE_STATIC CExpr* pg_parse_string_constant(void);
 PRIVATE_STATIC CExpr* pg_parse_char_constant(void);
@@ -305,6 +308,7 @@ pg_get_token()
     case ')':
     case '(':
     case ',':
+    case '.':
     case '[':
     case ']':
         pg_tok = *pg_cp++;
@@ -409,6 +413,29 @@ pg_get_token()
     pg_hasError = 1;
 }
 
+PRIVATE_STATIC void
+pg_compile_expr(CExpr *expr)
+{
+    switch(EXPR_CODE(expr)){
+    case EC_MEMBER_REF:
+    case EC_POINTS_AT:
+	pg_compile_expr(EXPR_B(expr)->e_nodes[0]);
+	goto end;
+    case EC_IDENT:
+	goto end;
+    default:
+	break;
+    }
+
+    CExprIterator ite;
+    EXPR_FOREACH_MULTI(ite, expr)
+	pg_compile_expr(ite.node);
+
+ end:
+    exprSetExprsType(expr, &s_numTypeDescs[BT_INT]);
+
+    EXPR_ISCOMPILED(expr) = 1;
+}
 
 /**
  * \brief
@@ -417,7 +444,19 @@ pg_get_token()
 CExpr*
 pg_parse_expr()
 {
-    return pg_term_expr(0);
+    CExpr *e = pg_term_expr(0);
+
+    switch(pg_pk){
+    case PK_XMP:
+    case PK_OMP:
+    case PK_NOT_PARSABLE:
+	pg_compile_expr(e);
+	break;
+    default:
+	break;
+    }
+
+    return e;
 }
 
 extern CExprOfTypeDesc s_voidTypeDesc;
@@ -481,7 +520,6 @@ pg_term_expr(int pre)
         break;
     }
 
-    exprSetExprsType(e, &s_numTypeDescs[BT_INT]);
     return e;
 
   next:
@@ -497,7 +535,6 @@ pg_term_expr(int pre)
 
     e = exprBinary(code, e, ee);
     //exprSetExprsType(e, &s_voidTypeDesc);
-    exprSetExprsType(e, &s_numTypeDescs[BT_INT]);
 
     goto again;
 }
@@ -514,6 +551,10 @@ pg_unary_expr()
     CExprCodeEnum code;
 
     switch(pg_tok){
+    case '+':
+        pg_get_token();
+        return pg_factor_expr();
+
     case '-':
         pg_get_token();
         if((e = pg_factor_expr()) == NULL)
@@ -535,11 +576,19 @@ pg_unary_expr()
         code = EC_BIT_NOT;
         break;
 
+    case '*':
+        pg_get_token();
+	if((e = pg_factor_expr()) == NULL)
+	    goto error;
+	code = EC_POINTER_REF;
+	break;
+
     default:
         return pg_factor_expr();
     }
 
-    return exprUnary(code, e);
+    e = exprUnary(code, e);
+    return e;
 
   error:
     if(e)
@@ -570,6 +619,7 @@ PRIVATE_STATIC CExpr*
 pg_factor_expr()
 {
     CExpr *e, *ee = NULL, *args;
+    CExpr *e1 = NULL, *e2 = NULL, *e3 = NULL;
 
     e = pg_primary_expr();
 
@@ -583,22 +633,59 @@ pg_factor_expr()
     case '[':
         pg_get_token();
 
-        if((ee = pg_term_expr(0)) == NULL)
+        if(pg_tok == ':'){
+            e1 = NULL;
+        }else{
+            if((e1 = pg_term_expr(0)) == NULL){
+                goto error;
+            }
+        }
+	if(pg_tok == ']'){
+            //array dimension, [index]
+            ee = exprList1(EC_ARRAY_DIMENSION, e1);
+            goto end_array_dim;
+        }
+	if(pg_tok != ':'){
+            addExpectedCharError(":");
             goto error;
+        }
+        pg_get_token();
+        if(pg_tok == ':' || pg_tok == ']'){
+            e2 = NULL;
+        }else{
+            if((e2 = pg_term_expr(0)) == NULL){
+                goto error;
+            }
+        }
+	if(pg_tok == ']'){
+            //subarray dimension, [lower:length]
+            ee = exprSubArrayDimension(e1, e2, NULL);
+            goto end_array_dim;
+        }
+	if(pg_tok != ':'){
+            addExpectedCharError(":");
+            goto error;
+        }
+        pg_get_token();
+        if((e3 = pg_term_expr(0)) == NULL){
+            goto error;
+        }
+	//subarray dimension, [lower:length:step]
+        ee = exprSubArrayDimension(e1, e2, e3);
 
+    end_array_dim:
         if(pg_tok != ']') {
             addExpectedCharError("]");
             goto error;
         }
 
-        //e = exprList2(EC_ARRAY_REF, e, ee);
-	e = exprBinary(EC_ARRAY_REF, e, exprList1(EC_ARRAY_DIMENSION, exprList1(EC_EXPRS,ee)));
+        e = exprBinary(EC_ARRAY_REF, e, ee);
         pg_get_token();
         break;
 
     case '(':
       pg_get_token();
-      args = (CExpr *)allocExprOfList(EC_UNDEF);
+      args = (CExpr *)allocExprOfList(EC_EXPRS);
       if (pg_tok != ')'){
 	while (1){
 	  if ((ee = pg_term_expr(0)) == NULL) {
@@ -616,7 +703,6 @@ pg_factor_expr()
 	pg_get_token();
 	e = exprBinary(EC_FUNCTION_CALL, e, args);
 	//exprSetExprsType(e, &s_voidTypeDesc);
-	exprSetExprsType(e, &s_numTypeDescs[BT_INT]);
 	break;
       }
       goto error;
@@ -1196,7 +1282,7 @@ lexParsePragmaPack(char *p)
 CExpr*
 lexParsePragma(char *p, int *token)
 {
-    CPragmaKind pk = getPragmaKind(p);
+    CPragmaKind pk = pg_pk = getPragmaKind(p);
 
     if(pk == PK_PACK) {
         *token = PRAGMA_PACK;
