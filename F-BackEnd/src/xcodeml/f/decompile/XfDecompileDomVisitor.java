@@ -4095,9 +4095,7 @@ public class XfDecompileDomVisitor {
             // ======
             invokeEnter(XmDomUtil.getElement(n, "symbols"));
 
-            Node declarations = XmDomUtil.getElement(n, "declarations");
-            invokeEnter(declarations);
-            writePublicOrPrivateStatements(declarations);
+            invokeEnter(XmDomUtil.getElement(n, "declarations"));
 
             invokeEnter(XmDomUtil.getElement(n, "FcontainsStatement"));
 
@@ -7311,7 +7309,7 @@ public class XfDecompileDomVisitor {
     }
 
 
-    class CollectDeclaredNameVisitor {
+    class CollectDeclaredNameVistor {
         private Set<String> _names;
 
         public Set<String> collect(Node n) {
@@ -7323,23 +7321,18 @@ public class XfDecompileDomVisitor {
         private void enter(Node n) {
             String nodeName = n.getNodeName();
             if ("name".equals(nodeName)) {
-                String name = n.getTextContent();
-                if (name == null) return;
-
                 Node parent = n.getParentNode();
-                if (parent == null)
-                    return;
-
-                if (!"varDecl".equals(parent.getNodeName()))
-                    return;
-
-                _names.add(name);
-
-            } else {
-                NodeList list = n.getChildNodes();
-                for (int i = 0; i < list.getLength(); i++) {
-                    this.enter(list.item(i));
+                if (parent != null && "varDecl".equals(parent.getNodeName())) {
+                    String name = n.getTextContent();
+                    if (name == null) return;
+                    _names.add(name);
                 }
+                return;
+            }
+
+            NodeList list = n.getChildNodes();
+            for (int i = 0; i < list.getLength(); i++) {
+                this.enter(list.item(i));
             }
         }
     }
@@ -7354,8 +7347,10 @@ public class XfDecompileDomVisitor {
         XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
         XmfWriter writer = _context.getWriter();
 
-        CollectDeclaredNameVisitor vistor = new CollectDeclaredNameVisitor();
+        CollectDeclaredNameVistor vistor = new CollectDeclaredNameVistor();
         Set<String> declaredSymbols = vistor.collect(declarationsNode);
+
+        writer.setupNewLine();
         Set<String> volatiles = typeManager.findSymbolFromCurrentScope(new XfTypeManagerForDom.SymbolMatcher() {
             @Override
             public boolean match(Node symbol, Node type) {
@@ -7363,12 +7358,12 @@ public class XfDecompileDomVisitor {
             }
         });
         for (String volatileSymbol : volatiles) {
-            if (!declaredSymbols.contains(volatileSymbol)) {
-                writer.writeToken("VOLATILE");
-                writer.writeToken("::");
-                writer.writeToken(volatileSymbol);
-                writer.setupNewLine();
-            }
+            if (declaredSymbols.contains(volatileSymbol))
+                continue;
+            writer.writeToken("VOLATILE");
+            writer.writeToken("::");
+            writer.writeToken(volatileSymbol);
+            writer.setupNewLine();
         }
         Set<String> asynchs = typeManager.findSymbolFromCurrentScope(new XfTypeManagerForDom.SymbolMatcher() {
             @Override
@@ -7377,59 +7372,14 @@ public class XfDecompileDomVisitor {
             }
         });
         for (String asynchronousSymbol : asynchs) {
-            if (!declaredSymbols.contains(asynchronousSymbol)) {
-                writer.writeToken("ASYNCHRONOUS");
-                writer.writeToken("::");
-                writer.writeToken(asynchronousSymbol);
-                writer.setupNewLine();
-            }
+            if (declaredSymbols.contains(asynchronousSymbol))
+                continue;
+            writer.writeToken("ASYNCHRONOUS");
+            writer.writeToken("::");
+            writer.writeToken(asynchronousSymbol);
+            writer.setupNewLine();
         }
-    }
 
-    /**
-     * Write PUBLIC/PRIVATE statements for symbols those have is_public/is_private attribute.
-     */
-    private void writePublicOrPrivateStatements(Node declarationsNode) {
-        XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
-        XmfWriter writer = _context.getWriter();
-
-        CollectDeclaredNameVisitor vistor = new CollectDeclaredNameVisitor();
-        Set<String> declaredSymbols = vistor.collect(declarationsNode);
-        Set<String> symbolsFromOtherModule = typeManager.findSymbolFromCurrentScope(new XfTypeManagerForDom.SymbolMatcher() {
-            @Override
-            public boolean match(Node symbol, Node type) {
-                return XmDomUtil.hasAttr(symbol, "declared_in");
-            }
-        });
-
-        Set<String> publics = typeManager.findSymbolFromCurrentScope(new XfTypeManagerForDom.SymbolMatcher() {
-            @Override
-            public boolean match(Node symbol, Node type) {
-                return XmDomUtil.getAttrBool(type, "is_public");
-            }
-        });
-        for (String publicSymbol : publics) {
-            if (!declaredSymbols.contains(publicSymbol) || symbolsFromOtherModule.contains(publicSymbol)) {
-                writer.writeToken("PUBLIC");
-                writer.writeToken("::");
-                writer.writeToken(publicSymbol);
-                writer.setupNewLine();
-            }
-        }
-        Set<String> privates = typeManager.findSymbolFromCurrentScope(new XfTypeManagerForDom.SymbolMatcher() {
-            @Override
-            public boolean match(Node symbol, Node type) {
-                return XmDomUtil.getAttrBool(type, "is_private");
-            }
-        });
-        for (String privateSymbol : privates) {
-            if (!declaredSymbols.contains(privateSymbol) || symbolsFromOtherModule.contains(privateSymbol)) {
-                writer.writeToken("PRIVATE");
-                writer.writeToken("::");
-                writer.writeToken(privateSymbol);
-                writer.setupNewLine();
-            }
-        }
     }
 
 
