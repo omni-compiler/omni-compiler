@@ -730,14 +730,14 @@ public class Xtype
     {
         setTypeQualFlag(TQ_FCONTIGUOUS, enabled);
     }
-    
-    /** Fortran : return if is qualified by 'value' in pointer decl */
+
+    /** Fortran : return if is qualified by 'bind' in pointer decl */
     public final String getBind()
     {
       return bind;
     }
 
-    /** Fortran : return if is qualified by 'value' in pointer decl */
+    /** Fortran : return if is qualified by 'bind_name' in pointer decl */
     public final String getBindName()
     {
       return bind_name;

@@ -273,7 +273,8 @@ public class XcodeMLtools_F extends XcodeMLtools {
     XobjList tparam_list = (XobjList) toXobject(getElement(n, "typeParams"));
     XobjList id_list = (XobjList) toXobject(getElement(n, "symbols"));
     XobjList proc_list = (XobjList) toXobject(getElement(n, "typeBoundProcedures"));
-    StructType type = new StructType(tid, parent_tid, id_list, proc_list, tq, null, tparam_list);
+    Xobject finalProcedure = toXobject(getElement(n, "finalProcedure"));
+    StructType type = new StructType(tid, parent_tid, id_list, proc_list, tq, null, tparam_list, finalProcedure);
 
     String bind = getAttr(n, "bind");
     if(bind != null){
@@ -865,6 +866,12 @@ public class XcodeMLtools_F extends XcodeMLtools {
                                                 ));
       }
 
+    case F_FINAL_PROCEDURE:
+      {
+	return setCommonAttributes(n, Xcons.List(code, toXobject(getElement(n, "name"))
+                                                ));
+      }
+      
     case F_TYPE_BOUND_GENERIC_PROCEDURE:
       {
         int tq = (getAttrBool(n, "is_private") ? Xtype.TQ_FPRIVATE : 0)
