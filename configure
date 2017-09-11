@@ -821,6 +821,7 @@ infodir
 docdir
 oldincludedir
 includedir
+runstatedir
 localstatedir
 sharedstatedir
 sysconfdir
@@ -928,6 +929,7 @@ datadir='${datarootdir}'
 sysconfdir='${prefix}/etc'
 sharedstatedir='${prefix}/com'
 localstatedir='${prefix}/var'
+runstatedir='${localstatedir}/run'
 includedir='${prefix}/include'
 oldincludedir='/usr/include'
 docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
@@ -1180,6 +1182,15 @@ do
   | -silent | --silent | --silen | --sile | --sil)
     silent=yes ;;
 
+  -runstatedir | --runstatedir | --runstatedi | --runstated \
+  | --runstate | --runstat | --runsta | --runst | --runs \
+  | --run | --ru | --r)
+    ac_prev=runstatedir ;;
+  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
+  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
+  | --run=* | --ru=* | --r=*)
+    runstatedir=$ac_optarg ;;
+
   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
     ac_prev=sbindir ;;
   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
@@ -1317,7 +1328,7 @@ fi
 for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
 		datadir sysconfdir sharedstatedir localstatedir includedir \
 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
-		libdir localedir mandir
+		libdir localedir mandir runstatedir
 do
   eval ac_val=\$$ac_var
   # Remove trailing slashes.
@@ -1470,6 +1481,7 @@ Fine tuning of the installation directories:
   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
+  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
   --libdir=DIR            object code libraries [EPREFIX/lib]
   --includedir=DIR        C header files [PREFIX/include]
   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
@@ -12901,7 +12913,7 @@ if test -z "${MAKE}"; then
     MAKE=make
 fi
 
-API_FLAVOR=NATA_API_POSIX
+API_FLAVOR=OMNI_API_POSIX
 TARGET_ARCH=POSIX
 case $OS in
 sunos*)
@@ -12927,7 +12939,7 @@ cygwin*)
 mingw32ce)
     OS=windowsce
     TARGET_ARCH=WINDOWS
-    API_FLAVOR=NATA_API_WIN32API;;
+    API_FLAVOR=OMNI_API_WIN32API;;
 mingw32*)
     case $CPU in
     x86_64*)
@@ -12939,7 +12951,7 @@ mingw32*)
     esac
     OS_LIBS="-lpthread -loleaut32 -lws2_32 -lwinmm"
     TARGET_ARCH=WINDOWS
-    API_FLAVOR=NATA_API_WIN32API;;
+    API_FLAVOR=OMNI_API_WIN32API;;
 esac
 
 OS_CXXFLAGS=${OS_CFLAGS}
@@ -12951,8 +12963,8 @@ OS_CXXFLAGS=${OS_CFLAGS}
 
 
 
-CPUDEF=NATA_CPU_`echo $CPU | tr '[a-z]' '[A-Z]'`
-OSDEF=NATA_OS_`echo $OS | tr '[a-z]' '[A-Z]'`
+CPUDEF=OMNI_CPU_`echo $CPU | tr '[a-z]' '[A-Z]'`
+OSDEF=OMNI_OS_`echo $OS | tr '[a-z]' '[A-Z]'`
 
 
 
