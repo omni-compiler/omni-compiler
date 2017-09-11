@@ -2140,7 +2140,7 @@ if test -z "${MAKE}"; then
     MAKE=make
 fi
 
-API_FLAVOR=NATA_API_POSIX
+API_FLAVOR=OMNI_API_POSIX
 TARGET_ARCH=POSIX
 case $OS in
 sunos*)
@@ -2166,7 +2166,7 @@ cygwin*)
 mingw32ce)
     OS=windowsce
     TARGET_ARCH=WINDOWS
-    API_FLAVOR=NATA_API_WIN32API;;
+    API_FLAVOR=OMNI_API_WIN32API;;
 mingw32*)
     case $CPU in
     x86_64*)
@@ -2178,7 +2178,7 @@ mingw32*)
     esac
     OS_LIBS="-lpthread -loleaut32 -lws2_32 -lwinmm"
     TARGET_ARCH=WINDOWS
-    API_FLAVOR=NATA_API_WIN32API;;
+    API_FLAVOR=OMNI_API_WIN32API;;
 esac
 
 OS_CXXFLAGS=${OS_CFLAGS}
@@ -2190,8 +2190,8 @@ AC_SUBST(OS_LDFLAGS)
 AC_SUBST(OS_LIBS)
 
 changequote(<<, >>)
-CPUDEF=NATA_CPU_`echo $CPU | tr '[a-z]' '[A-Z]'`
-OSDEF=NATA_OS_`echo $OS | tr '[a-z]' '[A-Z]'`
+CPUDEF=OMNI_CPU_`echo $CPU | tr '[a-z]' '[A-Z]'`
+OSDEF=OMNI_OS_`echo $OS | tr '[a-z]' '[A-Z]'`
 changequote([, ])
 AC_SUBST(CPUDEF)
 AC_SUBST(OSDEF)
