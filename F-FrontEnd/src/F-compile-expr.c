@@ -403,7 +403,7 @@ compile_expression(expr x)
                 }
             }
 
-            ID_LINE(id) = EXPR_LINE(x); // set line number
+            if (!ID_LINE(id)) ID_LINE(id) = EXPR_LINE(x); // set line number if not set
 
             if (ID_CLASS(id) == CL_PROC ||
                 ID_CLASS(id) == CL_ENTRY ||
