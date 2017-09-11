@@ -7,6 +7,7 @@
 package xcodeml.util;
 
 import org.w3c.dom.*;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 
@@ -50,12 +51,6 @@ public class XmDomUtil {
         return n.getFirstChild().getNodeValue();
     }
 
-    public static boolean hasAttr(Node n, String name) {
-        if (n == null)
-            return false;
-        return n.getAttributes().getNamedItem(name) != null;
-    }
-
     public static String getAttr(Node n, String name) {
         if (n == null)
             return null;
@@ -64,6 +59,13 @@ public class XmDomUtil {
         if (nn != null)
             return nn.getNodeValue();
         return null;
+    }
+
+    public static boolean hasAttr(Node n, String name) {
+        if (n == null)
+            return false;
+        String attr = getAttr(n, name);
+        return attr != null && !attr.isEmpty();
     }
 
     /* get boolean attribute value whose default value is false(F)/0(C). */
