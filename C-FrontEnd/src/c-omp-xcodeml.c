@@ -9,6 +9,8 @@
 
 void outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause);
 void out_OMP_name_list(FILE *fp,int indent, CExprOfList *list);
+void out_OMP_arrayRef(FILE *fp,int indent, CExprOfBinaryNode *arrayRef);
+void out_OMP_subscript(FILE *fp,int indent, CExpr *subscript);
 
 void
 out_OMP_PRAGMA(FILE *fp, int indent, int pragma_code, CExpr* expr)
@@ -78,11 +80,11 @@ outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause)
       outxPrint(fp,indent1+1,"<string>%s</string>\n",
 		ompDataDefaultName(((CExprOfList *)arg)->e_aux));
       break;
-      
+
   default:
       namelist = (CExprOfList *)arg;
       if(EXPR_L_SIZE(namelist) != 0)
-	  out_OMP_name_list(fp, indent, namelist);
+	  out_OMP_name_list(fp, indent1, namelist);
   }
   outxPrint(fp,indent,"</list>\n");
 }
@@ -93,12 +95,61 @@ void out_OMP_name_list(FILE *fp,int indent, CExprOfList *list)
     CCOL_DListNode *ite;
     outxPrint(fp,indent,"<list>\n");
     EXPR_FOREACH(ite, list) {
-	CExpr *node = EXPR_L_DATA(ite);
-	// outx_IDENT(fp,indent1+1,(CExprOfSymbol *)node);
-	outxPrint(fp,indent1,"<Var>%s</Var>\n",
-		  ((CExprOfSymbol *)node)->e_symName);
+      CExpr *node = EXPR_L_DATA(ite);
+    // outx_IDENT(fp,indent1+1,(CExprOfSymbol *)node);
+      if (EXPR_CODE(node) == EC_ARRAY_REF) {
+        out_OMP_arrayRef(fp, indent1, (CExprOfBinaryNode*)node);
+      } else {
+        outxPrint(fp,indent1,"<Var>%s</Var>\n",
+            ((CExprOfSymbol *)node)->e_symName);
+      }
     }
     outxPrint(fp,indent,"</list>\n");
+}
+
+void out_OMP_arrayRef(FILE *fp,int indent, CExprOfBinaryNode *arrayRef)
+{
+    int indent1 = indent+1;
+    CCOL_DListNode *ite;
+    CExpr *arrayExpr = arrayRef->e_nodes[0];
+    CExpr *subscripts = arrayRef->e_nodes[1];
+
+    outxPrint(fp, indent, "<list>\n");
+    outxPrint(fp, indent1,"<Var>%s</Var>\n", ((CExprOfSymbol *)arrayExpr)->e_symName);
+    EXPR_FOREACH(ite, subscripts){
+      CExpr *node = EXPR_L_DATA(ite);
+      out_OMP_subscript(fp, indent1, node);
+    }
+    outxPrint(fp,indent,"</list>\n");
+}
+
+void out_OMP_subscript(FILE *fp,int indent, CExpr *subscript)
+{
+    int indent1 = indent + 1;
+    if (EXPR_CODE(subscript) != EC_UNDEF) {
+      outxContext(fp, indent, subscript); //single subscript
+    } else {
+      outxPrint(fp, indent, "<list>\n");
+
+      CExpr *lower = exprListHeadData(subscript);
+      CExpr *tmpLower = NULL;
+      if (EXPR_ISNULL(lower)) {
+        lower = tmpLower = (CExpr*)allocExprOfNumberConst2(0, BT_INT);
+      }
+
+      outxContext(fp, indent1, lower);
+      if (tmpLower) {
+        freeExpr(tmpLower);
+      }
+
+      if (EXPR_L_SIZE(subscript) > 1) {
+        CExpr *length = exprListNextNData(subscript, 1);
+        if (! EXPR_ISNULL(length)){
+          outxContext(fp, indent1, length);
+        }
+      }
+      outxPrint(fp, indent, "</list>\n");
+    }
 }
 
 char *ompDirectiveName(int c)
@@ -118,6 +169,7 @@ char *ompDirectiveName(int c)
   case OMP_THREADPRIVATE:return "THREADPRIVATE";
   case OMP_PARALLEL_FOR:return "PARALLEL_FOR";
   case OMP_PARALLEL_SECTIONS:return "PARALLEL_SECTIONS";
+  case OMP_TASK: return "TASK";
   default: return "OMP???";
   }
 }
@@ -149,6 +201,10 @@ char *ompClauseName(int c)
   case OMP_DIR_SCHEDULE: return "DIR_SCHEDULE";
   case OMP_DIR_NUM_THREADS: return "DIR_NUM_THREADS";
   case OMP_COLLAPSE: return "COLLAPSE";
+
+  case OMP_DATA_DEPEND_IN: return "DATA_DEPEND_IN";
+  case OMP_DATA_DEPEND_OUT: return "DATA_DEPEND_OUT";
+  case OMP_DATA_DEPEND_INOUT: return "DATA_DEPEND_INOUT";
   default:  return "???OMP???";
   }
 }

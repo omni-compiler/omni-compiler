@@ -53,8 +53,11 @@ static int parse_OMP_pragma(void);
 static CExpr* parse_OMP_clauses(void);
 static CExpr* parse_OMP_namelist(void);
 static CExpr* parse_OMP_reduction_namelist(int *r);
+static CExpr* parse_OMP_depend_namelist(int *r);
+static CExpr* parse_OMP_C_subscript_list();
 
 #define OMP_PG_LIST(pg,args) _omp_pg_list(pg,args)
+#define OMP_LIST2(arg1,arg2) (CExpr*)allocExprOfList2(EC_UNDEF,arg1,arg2)
 
 static CExpr* _omp_pg_list(int omp_code,CExpr* args)
 {
@@ -204,6 +207,14 @@ int parse_OMP_pragma()
       ret = PRAGMA_EXEC;
       goto chk_end;
   }
+
+  if(PG_IS_IDENT("task")){
+      pg_OMP_pragma = OMP_TASK;
+      pg_get_token();
+      if((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
+      goto chk_end;
+  }
+
   addError(NULL,"OMP:unknown OMP directive, '%s'",pg_tok_buf);
  syntax_err:
     return 0;
@@ -316,6 +327,10 @@ static CExpr* parse_OMP_clauses()
 	    if(pg_tok != ')') goto syntax_err;
 	    pg_get_token();
 	    c = OMP_PG_LIST(OMP_COLLAPSE,v);
+    } else if(PG_IS_IDENT("depend")){
+        pg_get_token();
+        if((v = parse_OMP_depend_namelist(&r)) == NULL) goto syntax_err;
+        c = OMP_PG_LIST(r,v);
 	} else {
 	  addError(NULL,"unknown OMP directive clause '%s'",pg_tok_buf);
 	    goto syntax_err;
@@ -403,6 +418,106 @@ static CExpr* parse_OMP_reduction_namelist(int *r)
 
     addError(NULL,"syntax error in OMP directive clause");
     return NULL;
+}
+
+static CExpr* parse_OMP_depend_namelist(int *r)
+{
+  CExpr *args, *list, *v;
+
+  args = EMPTY_LIST;
+  if (pg_tok != '(') {
+    addError(NULL,"OMP depend clause requires name list");
+    return NULL;
+  }
+  pg_get_token();
+  if (PG_IS_IDENT("in"))         *r = OMP_DATA_DEPEND_IN;
+  else if (PG_IS_IDENT("out"))   *r = OMP_DATA_DEPEND_OUT;
+  else if (PG_IS_IDENT("inout")) *r = OMP_DATA_DEPEND_INOUT;
+  else return NULL;
+
+  pg_get_token();
+  if (pg_tok != ':') return NULL;
+  pg_get_token();
+
+ next:
+  if (pg_tok != PG_IDENT) {
+    addError(NULL,"empty name list in OMP depend clause");
+    return NULL;
+  }
+
+  v = pg_tok_val;
+  pg_get_token();
+  if (pg_tok != '[') {
+    args = exprListAdd(args, v);
+  } else {
+    list = parse_OMP_C_subscript_list();
+    CExpr *arrayRef = exprBinary(EC_ARRAY_REF, v, list);
+    args = exprListAdd(args, (CExpr *)arrayRef);
+  }
+
+  if (pg_tok == ',') {
+    pg_get_token();
+    goto next;
+  } else if(pg_tok == ')') {
+    pg_get_token();
+    return args;
+  }
+
+  addError(NULL,"syntax error in OMP directive clause");
+  return NULL;
+}
+
+static CExpr* parse_OMP_C_subscript_list()
+{
+  CExpr *list, *v1, *v2;
+
+  list = EMPTY_LIST;
+  if (pg_tok != '[') {
+    addError(NULL,"parse_OMP_C_subscript_list: first token= '['");
+  }
+  pg_get_token();
+
+  while (1) {
+    v1 = v2 = NULL;
+    switch (pg_tok) {
+    case ']': goto err;
+    case ',': goto err;
+      break;
+    case ':':
+      v1 = (CExpr*)allocExprOfNumberConst2(0, BT_INT);
+      break;
+    default:
+      v1 = pg_parse_expr();
+    }
+
+    if(pg_tok == ':') goto subarray;
+    list = exprListAdd(list, v1);
+    goto next;
+
+  subarray:
+    pg_get_token();
+    if(pg_tok != ']'){
+      v2 = pg_parse_expr();
+    }
+    list = exprListAdd(list, OMP_LIST2(v1, v2));
+
+  next:
+    if (pg_tok == ']') {
+      pg_get_token();
+    } else goto err;
+
+    if (pg_tok != '[') {
+      break;
+    } else {
+      pg_get_token();
+    }
+  }
+
+  return list;
+
+ err:
+  addError(NULL, "Syntax error in scripts of OMP directive");
+  return NULL;
 }
 
 #ifdef not

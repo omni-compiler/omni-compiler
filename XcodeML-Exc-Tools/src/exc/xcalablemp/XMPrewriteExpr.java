@@ -1307,7 +1307,7 @@ public class XMPrewriteExpr {
     }
     switch (expr.Opcode()) {
     case ARRAY_REF:
-      return rewriteArrayRef(expr, block);
+      return rewriteArrayRef(expr, block, true);
     case VAR:
       return rewriteVarRef(expr, block, true);
     case ARRAY_ADDR:
@@ -1329,7 +1329,7 @@ public class XMPrewriteExpr {
 	    iter.setXobject(rewriteArrayAddr(myExpr, block));
 	    break;
 	  case ARRAY_REF:
-	    iter.setXobject(rewriteArrayRef(myExpr, block));
+	    iter.setXobject(rewriteArrayRef(myExpr, block, true));
 	    break;
 	  case SUB_ARRAY_REF:
 	    break;
@@ -1434,7 +1434,7 @@ public class XMPrewriteExpr {
         funcArgs.add(rewriteVarRef(localExpr, block, false));
       }
       else{  //  else if(localExpr.Opcode() == Xcode.ARRAY_REF){
-        funcArgs.add(Xcons.AddrOf(rewriteArrayRef(localExpr, block)));
+        funcArgs.add(Xcons.AddrOf(rewriteArrayRef(localExpr, block, true)));
       }
       String localName = (localExpr.Opcode() == Xcode.VAR)? localExpr.getName() : localExpr.getArg(0).getName();
       funcArgs.add(_globalDecl.getXMPcoarray(localName, block).getDescId());
@@ -1506,7 +1506,7 @@ public class XMPrewriteExpr {
           funcArgs.add(rewriteVarRef(localExpr, block, true));
         }
         else{ //  else if(localExpr.Opcode() == Xcode.ARRAY_REF){
-          funcArgs.add(rewriteArrayRef(localExpr, block));
+          funcArgs.add(rewriteArrayRef(localExpr, block, true));
         }
         String localName = (localExpr.Opcode() == Xcode.VAR)? localExpr.getName() : localExpr.getArg(0).getName();
         funcArgs.add(_globalDecl.getXMPcoarray(localName, block).getDescId());
@@ -1611,7 +1611,7 @@ public class XMPrewriteExpr {
     }
   }
   
-  private Xobject rewriteArrayRef(Xobject myExpr, Block block) throws XMPexception {
+  private Xobject rewriteArrayRef(Xobject myExpr, Block block, boolean isPointerRef) throws XMPexception {
     Xobject arrayAddr = myExpr.getArg(0);
     String arrayName = arrayAddr.getSym();
     XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, block);
@@ -1626,7 +1626,7 @@ public class XMPrewriteExpr {
 
       if (alignedArray.checkRealloc() || (alignedArray.isLocal() && !alignedArray.isParameter()) ||
 	  alignedArray.isParameter()){
-	newExpr = rewriteAlignedArrayExpr(arrayRefList, alignedArray);
+	newExpr = rewriteAlignedArrayExpr(arrayRefList, alignedArray, isPointerRef);
       } 
       else {
         newExpr = Xcons.arrayRef(myExpr.Type(), arrayAddr, arrayRefList);
@@ -1778,7 +1778,7 @@ public class XMPrewriteExpr {
   }
 
   private Xobject rewriteAlignedArrayExpr(XobjList refExprList,
-                                          XMPalignedArray alignedArray) throws XMPexception {
+                                          XMPalignedArray alignedArray, boolean isPointerRef) throws XMPexception {
     int arrayDimCount = 0;
     XobjList args = Xcons.List(alignedArray.getAddrId().Ref());
     if (refExprList != null) {
@@ -1787,12 +1787,11 @@ public class XMPrewriteExpr {
         arrayDimCount++;
       }
     }
-
-    return createRewriteAlignedArrayFunc(alignedArray, arrayDimCount, args);
+    return createRewriteAlignedArrayFunc(alignedArray, arrayDimCount, args, isPointerRef);
   }
 
   public static Xobject createRewriteAlignedArrayFunc(XMPalignedArray alignedArray, int arrayDimCount,
-                                                      XobjList getAddrFuncArgs) throws XMPexception {
+                                                      XobjList getAddrFuncArgs, boolean isPointerRef) throws XMPexception {
     int arrayDim = alignedArray.getDim();
     Ident getAddrFuncId = null;
     XobjList args = Xcons.List();
@@ -1842,31 +1841,56 @@ public class XMPrewriteExpr {
       }
     }
 
-    if (arrayDim < arrayDimCount) {
-      throw new XMPexception("wrong array ref");
-    }
-    else if (arrayDim == arrayDimCount) {
-      getAddrFuncId = XMP.getMacroId("_XMP_M_GET_ADDR_E_" + arrayDim, Xtype.Pointer(alignedArray.getType()));
-      for (int i=0; i<arrayDim-1; i++)
-        if(alignedArray.canBeOptimized){
-          getAddrFuncArgs.add(args.getArg(i));
-        }
-        else{
-          getAddrFuncArgs.add(alignedArray.getAccIdAt(i).Ref());
-	}
-    }
-    else {
-      getAddrFuncId = XMP.getMacroId("_XMP_M_GET_ADDR_" + arrayDimCount, Xtype.Pointer(alignedArray.getType()));
-      for (int i = 0; i < arrayDimCount; i++)
-        getAddrFuncArgs.add(alignedArray.getAccIdAt(i).Ref());
-    }
+    if (isPointerRef) {
 
-    Xobject retObj = getAddrFuncId.Call(getAddrFuncArgs);
-    if (arrayDim == arrayDimCount) {
-      return Xcons.PointerRef(retObj);
-    }
-    else {
-      return retObj;
+      if (arrayDim < arrayDimCount) {
+        throw new XMPexception("wrong array ref");
+      } else if (arrayDim == arrayDimCount) {
+        getAddrFuncId = XMP.getMacroId("_XMP_M_GET_ADDR_E_" + arrayDim, Xtype.Pointer(alignedArray.getType()));
+        for (int i = 0; i < arrayDim - 1; i++)
+          if (alignedArray.canBeOptimized) {
+            getAddrFuncArgs.add(args.getArg(i));
+          } else {
+            getAddrFuncArgs.add(alignedArray.getAccIdAt(i).Ref());
+          }
+      } else {
+        getAddrFuncId = XMP.getMacroId("_XMP_M_GET_ADDR_" + arrayDimCount, Xtype.Pointer(alignedArray.getType()));
+        for (int i = 0; i < arrayDimCount; i++)
+          getAddrFuncArgs.add(alignedArray.getAccIdAt(i).Ref());
+      }
+      Xobject retObj = getAddrFuncId.Call(getAddrFuncArgs);
+      if (arrayDim == arrayDimCount) {
+        return Xcons.PointerRef(retObj);
+      } else {
+        return retObj;
+      }
+
+    } else {
+
+      if (arrayDim < arrayDimCount) {
+        throw new XMPexception("wrong array ref");
+      } else if (arrayDim == arrayDimCount) {
+        getAddrFuncId = XMP.getMacroId("_XMP_M_GET_INDEX_" + arrayDim, Xtype.Pointer(alignedArray.getType()));
+        for (int i = 0; i < arrayDim - 1; i++)
+          if (alignedArray.canBeOptimized) {
+            getAddrFuncArgs.add(args.getArg(i));
+          } else {
+            getAddrFuncArgs.add(alignedArray.getAccIdAt(i).Ref());
+          }
+      } else {
+        getAddrFuncId = XMP.getMacroId("_XMP_M_GET_INDEX_" + arrayDimCount + "_N", Xtype.Pointer(alignedArray.getType()));
+        for (int i = 0; i < arrayDimCount; i++)
+          getAddrFuncArgs.add(alignedArray.getAccIdAt(i).Ref());
+      }
+
+       XobjList pointerRef = Xcons.List();
+       Xobject arrayAddr = getAddrFuncArgs.getArg(0).copy();
+       getAddrFuncArgs.removeFirstArgs();
+
+       Xobject funcCall = getAddrFuncId.Call(getAddrFuncArgs);
+       pointerRef.add(arrayAddr);
+       pointerRef.add(funcCall);
+       return pointerRef;
     }
   }
 
@@ -2055,7 +2079,7 @@ public class XMPrewriteExpr {
       }
     }
 
-    return XMPrewriteExpr.createRewriteAlignedArrayFunc(alignedArray, arrayDimCount, args);
+    return XMPrewriteExpr.createRewriteAlignedArrayFunc(alignedArray, arrayDimCount, args, true);
   }
 
   public static void rewriteLoopIndexInLoop(Xobject expr, String loopIndexName, XMPtemplate templateObj,
@@ -2302,27 +2326,21 @@ public class XMPrewriteExpr {
 				 XMPsymbolTable localXMPsymbolTable)
   {
     bottomupXobjectIterator iter = new bottomupXobjectIterator(expr);
-    
+
     for (iter.init(); !iter.end();iter.next()){
     	
       Xobject x = iter.getXobject();
       if (x == null)  continue;
-      if (x.Opcode() == Xcode.VAR){
-        try {
-          iter.setXobject(rewriteArrayAddr(x, pragmaBlock));
-        }
-        catch (XMPexception e){
-          XMP.error(x.getLineNo(), e.getMessage());
-        }
-      }
-      else if (x.Opcode() == Xcode.LIST){
-        if (x.left() != null && x.left().Opcode() == Xcode.STRING &&
-            x.left().getString().equals("DATA_PRIVATE")){
-          
+
+      if (x.Opcode() == Xcode.LIST) {
+        if (x.left() == null || x.left().Opcode() != Xcode.STRING) continue;
+
+        String clauseName = x.left().getString();
+        if (clauseName.equals("DATA_PRIVATE")) {
           if (!pragmaBlock.getPragma().equals("FOR")) continue;
-          
+
           XobjList itemList = (XobjList)x.right();
-          
+
           // find loop variable
           Xobject loop_var = null;
           BasicBlockIterator i = new BasicBlockIterator(pragmaBlock.getBody());
@@ -2332,7 +2350,7 @@ public class XMPrewriteExpr {
             }
           }
           if (loop_var == null) continue;
-          
+
           // check if the clause has contained the loop variable
           boolean flag = false;
           Iterator<Xobject> j = itemList.iterator();
@@ -2342,16 +2360,56 @@ public class XMPrewriteExpr {
               flag = true;
             }
           }
-          
+
           // add the loop variable to the clause
           if (!flag){
             itemList.add(loop_var);
+          }
+        } else {
+          if (x.right() != null) {
+            XobjList itemList  = (XobjList)x.right();
+            for (int i = 0; i < itemList.Nargs(); i++) {
+              Xobject item = itemList.getArg(i);
+              if (item.Opcode() == Xcode.VAR) {
+                //item is variable or arrayAddr
+                try {
+                  itemList.setArg(i, rewriteArrayAddr(item, pragmaBlock));
+                } catch (XMPexception e) {
+                  XMP.error(x.getLineNo(), e.getMessage());
+                }
+              } else if (item.Opcode() == Xcode.LIST) {
+                //item is arrayRef
+                try {
+                  Xobject arrayAddr = item.getArg(0);
+                  String arrayName = arrayAddr.getSym();
+                  XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, block);
+
+                  if (alignedArray != null) {
+                    XobjList arrayRefList = Xcons.List();
+                    for (int j = 1; j < item.Nargs(); j++) {
+                      Xobject arrayRef = item.getArg(j);
+                      if (arrayRef.Opcode() == Xcode.LIST) {
+                        arrayRef = arrayRef.getArg(0);
+                      }
+                      arrayRefList.add(arrayRef);
+                    }
+                    item.setArg(1, arrayRefList);
+                    itemList.setArg(i, rewriteArrayRef(item, pragmaBlock, false));
+                  } else {
+                    itemList.setArg(i, rewriteArrayRef(item, pragmaBlock, true));
+
+                  }
+                } catch (XMPexception e) {
+                  XMP.error(x.getLineNo(), e.getMessage());
+                }
+              }
+            }
           }
         }
       }
     }
   }
-  
+
   /*
    * rewrite ACC pragmas
    */

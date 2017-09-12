@@ -93,6 +93,10 @@ enum OMP_pragma_clause {
     OMP_DATA_COPYPRIVATE=28,
     OMP_DATA_MAP=29,
     OMP_DATA_DEFAULT_MAP=30,
+
+    OMP_DATA_DEPEND_IN = 31,
+    OMP_DATA_DEPEND_OUT = 32,
+    OMP_DATA_DEPEND_INOUT = 33,
 };
 
 enum OMP_sched_clause {

@@ -1020,7 +1020,7 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
 			    else {
 			      Element g1 = createElement("list");
 			      for (Xobject b : (XobjList)vars){
-				addChildNode(g1, trans(b));
+				addChildNode(g1, transACCPragmaVarOrArray(b));
 			      }
 			      addChildNode(g, g1);
 			    }

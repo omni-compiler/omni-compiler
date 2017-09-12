@@ -1651,10 +1651,10 @@ public class XmcXcodeToXcTranslator {
         @Override
         public void enter(TranslationContext tc, Node n, XcNode parent) {
             XcFuncCallObj obj = new XcFuncCallObj();
-            addChild(parent, obj);
             enterNodes(tc, obj,
                        getElement(n, "function"),
                        getElement(n, "arguments"));
+            addChild(parent, obj);
         }
     }
 
@@ -1815,6 +1815,9 @@ public class XmcXcodeToXcTranslator {
                 else if (clauseName.equals("dir_nowait"))            clauseName = "nowait";
                 else if (clauseName.equals("dir_schedule"))          clauseName = "schedule";
                 else if (clauseName.equals("dir_num_threads"))       clauseName = "num_threads";
+                else if (clauseName.equals("data_depend_in"))       {clauseName = "depend"; operator = "in";}
+                else if (clauseName.equals("data_depend_out"))      {clauseName = "depend"; operator = "out";}
+                else if (clauseName.equals("data_depend_inout"))    {clauseName = "depend"; operator = "inout";}
             
 		obj.addToken(clauseName);
                 
@@ -1836,28 +1839,33 @@ public class XmcXcodeToXcTranslator {
                 }
             }
             else {
-		      NodeList varList = arg.getChildNodes();
 
-		      String kind = XmDomUtil.getContentText(varList.item(0)).toLowerCase();
-		      
-		      if (kind.equals("sched_static")) obj.addToken("static");
-		      else if (kind.equals("sched_dynamic")) obj.addToken("static");
-		      else if (kind.equals("sched_guided")) obj.addToken("guided");
-		      else if (kind.equals("sched_auto")) obj.addToken("auto");
-		      else if (kind.equals("sched_runtime")) obj.addToken("runtime");
-		      else enterNodes(tc, obj, varList.item(0));
+		        NodeList varList = arg.getChildNodes();
 
-		      for (int j = 1; j < varList.getLength(); j++){
-			Node var = varList.item(j);
-			obj.addToken(",");
-			enterNodes(tc, obj, var);
-		      }
+                if (clauseName.equals("schedule")) {
+                    String kind = XmDomUtil.getContentText(varList.item(0)).toLowerCase();
+
+                    if (kind.equals("sched_static")) obj.addToken("static");
+                    else if (kind.equals("sched_dynamic")) obj.addToken("static");
+                    else if (kind.equals("sched_guided")) obj.addToken("guided");
+                    else if (kind.equals("sched_auto")) obj.addToken("auto");
+                    else if (kind.equals("sched_runtime")) obj.addToken("runtime");
+                    //else enterNodes(tc, obj, varList.item(0));
+                } else {
+                    enterVarNode(tc, obj, varList.item(0));
+                }
+
+                for (int j = 1; j < varList.getLength(); j++){
+			        Node var = varList.item(j);
+			        obj.addToken(",");
+                    enterVarNode(tc, obj, var);
+		        }
 		    }
 
 		    obj.addToken(")");
 		}
 	    }
-                
+
             // body
             Node body = clause.getNextSibling();
 
@@ -1874,6 +1882,34 @@ public class XmcXcodeToXcTranslator {
 
 	    //            writer.decrementIndentLevel();
             
+        }
+
+        private void enterVarNode(TranslationContext tc, XcDirectiveObj obj, Node n){
+            if(n.getNodeName().equals("list")){
+                //array
+                String arrayDim = "";
+                NodeList array = n.getChildNodes();
+                enterNodes(tc, obj, array.item(0));
+                for (int j = 1; j < array.getLength(); j++){
+                    Node index = array.item(j);
+                    obj.addToken("[");
+                    if(index.getNodeName().equals("list")){
+                        NodeList range = index.getChildNodes();
+                        enterNodes(tc, obj, range.item(0));
+                        obj.addToken(":");
+                        if(range.item(1) != null){
+                            enterNodes(tc, obj, range.item(1));
+                        }
+                    }else{
+                        enterNodes(tc,  obj, array.item(j));
+                    }
+                    obj.addToken("]");
+                }
+                obj.addToken(arrayDim);
+            }else{
+                //var
+                enterNodes(tc, obj, n);
+            }
         }
     }
     
