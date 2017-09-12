@@ -358,7 +358,7 @@ void _XMPF_coarrayFatal(char *format, ...)
   vsprintf(work, format, list);
   va_end(list);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  fprintf(stderr, "CAF[%d] %s\n", rank, work);
+  fprintf(stderr, "CAF[%d] %s\n", rank+1, work);
 
   _XMP_fatal("...fatal error in XMP/F Coarray runtime");
 }

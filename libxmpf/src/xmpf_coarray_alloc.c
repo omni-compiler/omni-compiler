@@ -377,10 +377,12 @@ void xmpf_coarray_malloc_(void **descPtr, char **crayPtr,
 void xmpf_coarray_regmem_(void **descPtr, void *var,
                           int *count, int *element, void **tag)
 {
+  size_t nbytes = (unsigned)(*count) * (size_t)(*element);
+
   _XMPF_coarrayDebugPrint("XMPF_COARRAY_REGMEM entry\n");
 
   // regmem
-  MemoryChunk_t *chunk = _regmemMemoryChunk_core(var, *count);
+  MemoryChunk_t *chunk = _regmemMemoryChunk_core(var, nbytes);
   _XMPF_coarrayDebugPrint("*** new MemoryChunk for RegMem variable %s\n",
                           _dispMemoryChunk(chunk));
 
@@ -428,11 +430,8 @@ size_t _roundUpElementSize(int count, size_t element, char *name, int namelen)
 MemoryChunk_t *_mallocMemoryChunk(int count, size_t element)
 {
   MemoryChunk_t *chunk;
-  //static char *name = "(unk)";
-  //static const int namelen = 5;
-
-  unsigned nbytes = (unsigned)count * element;
-  unsigned nbytesRU = ROUND_UP_MALLOC(nbytes);
+  size_t nbytes = count * element;
+  size_t nbytesRU = ROUND_UP_MALLOC(nbytes);
 
   // make memory-chunk even if size nbyte=0
   chunk = _mallocMemoryChunk_core(nbytesRU);

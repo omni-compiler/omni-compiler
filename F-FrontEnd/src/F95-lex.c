@@ -36,6 +36,7 @@ int st_class;           /* token for classify statement */
 int need_keyword = FALSE;
 int need_type_keyword = FALSE;
 int need_type_len = FALSE;
+int need_do_keyword = FALSE;
 int need_check_user_defined = TRUE; /* check the user defined dot id */
 
 int may_generic_spec = FALSE;
@@ -60,6 +61,7 @@ struct keyword_token {
 extern struct keyword_token dot_keywords[],keywords[];
 extern struct keyword_token end_keywords[];
 extern struct keyword_token type_keywords[];
+extern struct keyword_token do_keywords[];
 
 extern int ocl_flag;
 extern int cdir_flag;
@@ -379,51 +381,72 @@ static void type_spec_done()
     /* printf("type_spec_done!\n"); */
 }
 
-int is_function_statement_context()
+int
+is_function_statement_context()
 {
     int i = 0;
-    int plevel = 0;
-    
-    switch(token_history_buf[0]){
-        /* func_prefix */
-    case PURE: 
-    case RECURSIVE:
-    case ELEMENTAL:
-    case MODULE:
-        i++;
-        /* type_spec */
-    case CLASS:
-    case KW_TYPE:
-    case KW_CHARACTER:
-    case KW_COMPLEX:
-    case KW_DOUBLE:
-    case KW_DCOMPLEX:
-    case KW_INTEGER:
-    case KW_LOGICAL:
-    case KW_REAL:
-        i++;
-        /* SET_KIND and SET_LEN include a left parenthesis directly */
-        if(token_history_buf[i] == '(' || token_history_buf[i] == SET_KIND 
-            || token_history_buf[i] == SET_LEN) 
-        {
-            plevel++;
-            for(i++; i < token_history_count; i++){
-                if(token_history_buf[i] == ')') plevel--;
-                if(token_history_buf[i] == '(') plevel++;
-                if(plevel == 0) {
-                    i++;
-                    break;
+    int paran_level;
+
+    for (i = 0;i < token_history_count-1; ) {
+        switch(token_history_buf[i]){
+            /* func_prefix */
+            case PURE:
+            case RECURSIVE:
+            case ELEMENTAL:
+            case MODULE:
+            case IMPURE:
+                i++;
+                continue;
+                /* type_spec */
+            case CLASS:
+            case KW_TYPE:
+            case KW_CHARACTER:
+            case KW_COMPLEX:
+            case KW_DOUBLE:
+            case KW_DCOMPLEX:
+            case KW_INTEGER:
+            case KW_LOGICAL:
+            case KW_REAL:
+                i++;
+                paran_level = 0;
+                /* SET_KIND and SET_LEN include a left parenthesis directly */
+                if (token_history_buf[i] == '(' ||
+                    token_history_buf[i] == SET_KIND ||
+                    token_history_buf[i] == SET_LEN) {
+                    paran_level++;
+                    for (i++; i < token_history_count; i++){
+                        if(token_history_buf[i] == ')') paran_level--;
+                        if(token_history_buf[i] == '(') paran_level++;
+                        if(paran_level == 0) {
+                            i++;
+                            break;
+                        }
+                    }
+                    if(paran_level != 0) {
+                        /* parenthesis is not closed! */
+                        return FALSE;
+                    }
                 }
-            }
-            if(plevel != 0) {
-                return FALSE;
-            }
+                continue;
+            default:
+                break;
         }
-        if(i == (token_history_count-1)) {
-            return TRUE;
-        }
+        break;
     }
-    return FALSE;
+
+    if (i == (token_history_count-1) &&
+        (i > 0 && token_history_buf[i-1] != KW_TYPE)) {
+        /*
+         * If i reaches the current token like:
+         *
+         *  ELENTAL TYPE(t) . FUNCTION
+         *  INTEGER ELEMENTAL IMPURE . FUNCTION
+         *
+         */
+        return TRUE;
+    } else {
+        return FALSE;
+    }
 }
 
 
@@ -443,10 +466,11 @@ int check_ident_context(char *name)
     case KW_LOGICAL:
     case KW_REAL:
         /* func_prefix */
-    case PURE: 
+    case PURE:
     case RECURSIVE:
     case ELEMENTAL:
     case MODULE:
+    case IMPURE:
         if(fixed_format_flag){
             if (strncasecmp(name, "function", 8) == 0 &&
                 is_function_statement_context()){
@@ -457,7 +481,7 @@ int check_ident_context(char *name)
                 }
             }
         } else { // free format
-            if(is_function_statement_context()){
+            if (is_function_statement_context()){
                 if (strcasecmp(name,"function") == 0) {
                     ret = FUNCTION;
                 } else if(strcasecmp(name, "elemental") == 0) {
@@ -468,6 +492,8 @@ int check_ident_context(char *name)
                     ret = RECURSIVE;
                 } else if (strcasecmp(name, "module") == 0) {
                     ret = MODULE;
+                } else if(strcasecmp(name, "impure") == 0) {
+                    ret = IMPURE;
                 }
             }
         }
@@ -788,6 +814,16 @@ token()
         t = get_keyword(type_keywords);
         if (t != UNKNOWN) return(t);
     }
+
+    if (need_do_keyword == TRUE) {
+        /*
+         * require do keyword
+         */
+        need_do_keyword = FALSE;
+        t = get_keyword(do_keywords);
+        if (t != UNKNOWN) return(t);
+    }
+
 
     if(need_type_len == TRUE){  /* for type_length */
         need_type_len = FALSE;
@@ -1971,8 +2007,6 @@ get_keyword_optional_blank(int class)
         case KW_MEMORY: return SYNCMEMORY;
         }
         break;
-    case KW_ERROR: /* module procedure */
-        if (get_keyword(keywords) == STOP) return ERRORSTOP;
 	break;
     default:
         break;
@@ -2117,18 +2151,48 @@ read_initial_line()
     return ret;
 }
 
+/* static int */
+/* find_last_ampersand(char *buf,int *len) */
+/* { */
+/*     int l; */
+/*     for(l = *len - 1; l > 0; l--){ */
+/*         if(isspace(buf[l])) continue; */
+/*         if(buf[l] == '&'){ */
+/*             *len = l; */
+/*             return TRUE; */
+/*         } else return FALSE; */
+/*     } */
+/*     return FALSE; */
+/* } */
+
 static int
 find_last_ampersand(char *buf,int *len)
 {
-    int l;
-    for(l = *len - 1; l > 0; l--){
-        if(isspace(buf[l])) continue;
-        if(buf[l] == '&'){
-            *len = l;
-            return TRUE;
-        } else return FALSE;
+  int l;
+  int flag = FALSE;
+
+  for (l = *len - 1; l > 0; l--){
+    if (isspace(buf[l])) continue;
+    if (buf[l] == '&'){
+      *len = l;
+      flag = TRUE;
     }
-    return FALSE;
+    break;
+  }
+
+
+  if (flag) {
+    for (; l > 0; l--){
+      if (buf[l] == '!' && (st_PRAGMA_flag|st_ACC_flag|st_OMP_flag|
+        st_XMP_flag|st_CONDCOMPL_flag|st_OCL_flag))
+      {
+	    flag = FALSE;
+	    break;
+      }
+    }
+  }
+
+  return flag;
 }
 
 /* check sentinel in line */
@@ -2276,7 +2340,7 @@ again:
     current_line = new_line_info(read_lineno.file_id,read_lineno.ln_no);
 
     q = st_buffer;
-    if ((!OMP_flag && !cond_compile_enabled)
+    if ((!OMP_flag && !XMP_flag && !ACC_flag && !cond_compile_enabled)
         &&(st_OMP_flag||st_XMP_flag||st_ACC_flag||st_PRAGMA_flag||st_CONDCOMPL_flag)) {
         /* dumb copy */
         st_len = strlen( p );
@@ -2369,7 +2433,7 @@ again:
 	}
 
         /* oBuf => st_buffer */
-        if (!OMP_flag && !cond_compile_enabled &&
+        if (!OMP_flag && !XMP_flag && !ACC_flag && !cond_compile_enabled &&
             (st_OMP_flag||st_XMP_flag||st_ACC_flag||st_PRAGMA_flag||st_CONDCOMPL_flag)) {
             /* dumb copy */
             strcpy( st_buffer, oBuf );
@@ -2681,7 +2745,7 @@ copy_body:
     /* copy to statement buffer */
     p = line_buffer;
     q = st_buffer;
-    if (!OMP_flag && !cond_compile_enabled &&
+    if (!OMP_flag && !XMP_flag && !ACC_flag && !cond_compile_enabled &&
         (st_OMP_flag||st_XMP_flag||st_ACC_flag||st_PRAGMA_flag||st_CONDCOMPL_flag)) {
         /* dumb copy */
         newLen = strlen( p );
@@ -2787,7 +2851,7 @@ copy_body:
 	  *(p + lnLen) = '\0';
 	}
 
-        if ((!OMP_flag && !cond_compile_enabled)
+        if ((!OMP_flag && !XMP_flag && !ACC_flag && !cond_compile_enabled)
             &&(st_OMP_flag||st_XMP_flag||st_ACC_flag||st_PRAGMA_flag||st_CONDCOMPL_flag)) {
             /* dumb copy */
             if ( p-oBuf + strlen(line_buffer) >= ST_BUF_SIZE) {
@@ -3739,6 +3803,7 @@ ScanFortranLine(src, srcHead, dst, dstHead, dstMax, inQuotePtr, quoteCharPtr,
      char **newDstPtr;
 {
     char *cpDst = dst;
+    char *cur;
 
     while (*src != '\0' && dst <= dstMax) {
         if (isspace((int)*src)) {
@@ -3762,9 +3827,21 @@ ScanFortranLine(src, srcHead, dst, dstHead, dstMax, inQuotePtr, quoteCharPtr,
             }
         } else if (*src == 'h' || *src == 'H') {
             if (*inHollerithPtr == FALSE && *inQuotePtr == FALSE) {
-                unHollerith(src, srcHead, dst, dstHead, dstMax,
-                            inQuotePtr, *quoteCharPtr,
-                            inHollerithPtr, hollerithLenPtr, &src, &dst);
+                /*
+                 * check backward if only digit before the H
+                 */
+                cur = src;
+                --cur; // Char before the h/H
+                while (isdigit((int)*cur)) {
+                    --cur;
+                }
+                if(isalpha((int)*cur) || *cur == '_') {
+                    goto copyOne;
+                } else {
+                    unHollerith(src, srcHead, dst, dstHead, dstMax,
+                                inQuotePtr, *quoteCharPtr,
+                                inHollerithPtr, hollerithLenPtr, &src, &dst);
+                }
             } else {
                 goto copyOne;
             }
@@ -3889,12 +3966,15 @@ struct keyword_token keywords[ ] =
     { "elseif",         ELSEIFTHEN },
     { "elsewhere",      ELSEWHERE },
     { "else",           ELSE },
+    { "enum",           ENUM },          /* F2003 spec */
+    { "enumerator",     ENUMERATOR },          /* F2003 spec */
     { "exit",           EXIT },
     { "endblock",       ENDBLOCK },
     { "endcritical",    ENDCRITICAL },     /* #060 coarray */
     { "enddo",          ENDDO },
     { "endfile",        ENDFILE  },
     { "endif",          ENDIF },
+    { "endenum",        ENDENUM },       /* F2003 spec */
     { "endforall",      ENDFORALL },
     { "endfunction",    ENDFUNCTION },
     { "endinterface",   ENDINTERFACE },
@@ -3910,7 +3990,6 @@ struct keyword_token keywords[ ] =
     { "end",            END  },
     { "entry",          ENTRY },
     { "equivalence",    EQUIV  },
-    { "errorstop",      ERRORSTOP },     /* #060 coarray */
     { "error",          KW_ERROR },      /* #060 coarray */
     { "external",       EXTERNAL  },
     { "extends",        EXTENDS  },      /* F2003 spec */
@@ -3927,6 +4006,7 @@ struct keyword_token keywords[ ] =
     { "import",         IMPORT },
     { "images",         KW_IMAGES },    /* #060 coarray */
     { "implicit",       IMPLICIT },
+    { "impure",         IMPURE },        /* F2008 spec */
     { "include",        INCLUDE },
     { "inout",          KW_INOUT},
     { "inquire",        INQUIRE },
@@ -4008,6 +4088,7 @@ struct keyword_token end_keywords[ ] =
     { "blockdata",      BLOCKDATA },
     { "critical",       ENDCRITICAL },     /* #060 coarray */
     { "do",             ENDDO },
+    { "enum",           ENDENUM },
     { "file",           ENDFILE },
     { "forall",         ENDFORALL },
     { "function",       ENDFUNCTION },
@@ -4038,6 +4119,11 @@ struct keyword_token type_keywords[ ] =
     { "character",        KW_CHARACTER, },
     { 0, 0 }};
 
+struct keyword_token do_keywords[ ] =
+{
+    { "while",            KW_WHILE },
+    { "concurrent",       CONCURRENT },
+    { 0, 0 }};
 
 /*
  * lex for OpenMP part

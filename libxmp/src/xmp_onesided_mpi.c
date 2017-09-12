@@ -33,7 +33,7 @@ int _XMP_flag_multi_win = 0;
   } while (0)
 
 
-void _XMP_mpi_onesided_initialize(int argc, char **argv, const size_t heap_size)
+void _XMP_mpi_onesided_initialize(const size_t heap_size)
 {
   XACC_DEBUG("_XMP_mpi_onesided_initialize start");
   {
@@ -49,6 +49,8 @@ void _XMP_mpi_onesided_initialize(int argc, char **argv, const size_t heap_size)
 
   XACC_DEBUG("alloc memory size=%zd\n", heap_size);
   XACC_DEBUG("alloced _xmp_mpi_onesided_buf(%p)\n", _xmp_mpi_onesided_buf);
+  int a = 0;
+  MPI_Initialized(&a);
   _XMP_mpi_onesided_alloc_win(&_xmp_mpi_onesided_win, (void**)&_xmp_mpi_onesided_buf, heap_size, MPI_COMM_WORLD, false);
 
   _XMP_mpi_build_shift_queue(false);

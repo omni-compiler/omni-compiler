@@ -16,6 +16,7 @@ static void     declare_dummy_args _ANSI_ARGS_((expr l,
                                                 enum name_class class));
 static int      markAsSave _ANSI_ARGS_((ID id));
 
+
 /* for module and use statement */
 extern char line_buffer[];
 extern SYMBOL current_module_name;
@@ -269,6 +270,7 @@ declare_procedure(enum name_class class,
     int pure = FALSE;
     int elemental = FALSE;
     int module = FALSE;
+    int impure = FALSE;
     int is_separate_definition = FALSE;
     list lp;
 
@@ -347,6 +349,13 @@ declare_procedure(enum name_class class,
             module = TRUE;
             break;
 
+        case F08_IMPURE_SPEC:
+            if (class != CL_PROC) {
+                error("invalid pure prefix");
+                return;
+            }
+            impure = TRUE;
+            break;
 
         default:
             error("unknown prefix");
@@ -447,6 +456,10 @@ declare_procedure(enum name_class class,
             PROC_CLASS(id) = P_THISPROC;
         }
 
+        if (pure && impure) {
+            error("PURE and IMPURE are specified");
+        }
+
         if (pure == TRUE) {
             PROC_IS_PURE(id) = pure; /* MAY NOT BE REQUIRED */
             TYPE_SET_PURE(id); /* MAY NOT BE REQUIRED */
@@ -459,6 +472,13 @@ declare_procedure(enum name_class class,
             TYPE_SET_ELEMENTAL(id);
             if (type != NULL) {
                 TYPE_SET_ELEMENTAL(ID_TYPE(id));
+            }
+        }
+        if (impure == TRUE) {
+            PROC_IS_PURE(id) = !impure;
+            TYPE_SET_IMPURE(id);
+            if (ID_TYPE(id) != NULL) {
+                TYPE_SET_IMPURE(ID_TYPE(id));
             }
         }
         if (module == TRUE) {
@@ -1040,9 +1060,21 @@ declare_function(ID id)
         }
     } else if (ID_CLASS(id) != CL_PROC &&
                ID_CLASS(id) != CL_ENTRY &&
-               !(ID_CLASS(id) == CL_VAR && ID_TYPE(id) != NULL && IS_PROCEDURE_TYPE(ID_TYPE(id)))) {
-        error("identifier '%s' is used as a function", ID_NAME(id));
-        return NULL;
+               !(ID_CLASS(id) == CL_VAR && ID_TYPE(id) != NULL 
+               && IS_PROCEDURE_TYPE(ID_TYPE(id)))) 
+    {
+        if(SYM_TYPE(ID_SYM(id)) == S_INTR) {
+            // Not user defined function and intrinsic function used 
+            // but not declared yet. So let's declare it.
+            ID_CLASS(id) = CL_PROC;
+            PROC_CLASS(id) = P_INTRINSIC;
+            TYPE_SET_INTRINSIC(id);
+            ID_STORAGE(id) = STG_NONE;
+            ID_IS_DECLARED(id) = TRUE;
+        } else {
+            error("identifier '%s' is used as a function", ID_NAME(id));
+            return NULL;
+        }
     }
 
     if (ID_STORAGE(id) == STG_UNKNOWN) {
@@ -1597,7 +1629,7 @@ find_ident_block_parent(SYMBOL s)
         }
     }
 
-    if (in_block) {
+    if (in_block &&  UNIT_CTL_LOCAL_SYMBOLS(CURRENT_UNIT_CTL) != LOCAL_SYMBOLS) {
         ip = find_ident_head(s, UNIT_CTL_LOCAL_SYMBOLS(CURRENT_UNIT_CTL));
     }
 
@@ -2045,13 +2077,7 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
                               "private.", ID_NAME(id));
                 return NULL;
             }
-            if (TYPE_IS_PROTECTED(tp)) {
-                error_at_node(attributes, "'%s' is already specified as "
-                              "protected.", ID_NAME(id));
-                return NULL;
-            }
             TYPE_SET_PUBLIC(tp);
-            TYPE_UNSET_PROTECTED(tp);
             TYPE_UNSET_PRIVATE(tp);
             break;
         case F95_PRIVATE_SPEC:
@@ -2060,28 +2086,10 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
                               "public.", ID_NAME(id));
                 return NULL;
             }
-            if (TYPE_IS_PROTECTED(tp)) {
-                error_at_node(attributes, "'%s' is already specified as "
-                              "protected.", ID_NAME(id));
-                return NULL;
-            }
             TYPE_UNSET_PUBLIC(tp);
-            TYPE_UNSET_PROTECTED(tp);
             TYPE_SET_PRIVATE(tp);
             break;
         case F03_PROTECTED_SPEC:
-            if (TYPE_IS_PUBLIC(tp)) {
-                error_at_node(attributes, "'%s' is already specified as "
-                              "public.", ID_NAME(id));
-                return NULL;
-            }
-            if (TYPE_IS_PRIVATE(tp)) {
-                error_at_node(attributes, "'%s' is already specified as "
-                              "private.", ID_NAME(id));
-                return NULL;
-            }
-            TYPE_UNSET_PUBLIC(tp);
-            TYPE_UNSET_PRIVATE(tp);
             TYPE_SET_PROTECTED(tp);
             break;
         case F03_VOLATILE_SPEC:
@@ -2121,6 +2129,10 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
             break;
         case F03_BIND_SPEC:
             TYPE_SET_BIND(tp);
+            if(EXPR_ARG1(v) != NULL) {
+                // BIND(C, NAME='')
+                TYPE_BIND_NAME(tp) = EXPR_ARG1(v);
+            }
             break;
         case F03_VALUE_SPEC:
             TYPE_SET_VALUE(tp);
@@ -5199,9 +5211,10 @@ type_apply_type_parameter(TYPE_DESC tp, expv type_param_values)
 
 void
 compile_procedure_attributes(expr attrs,
-                          uint32_t *type_attr_flags_p,
-                          uint32_t *binding_attr_flags_p,
-                          ID *pass_arg_p)
+                             uint32_t *type_attr_flags_p,
+                             uint32_t *binding_attr_flags_p,
+                             ID *pass_arg_p,
+                             expr *bind_name)
 {
     uint32_t type_attr_flags = 0;
     uint32_t binding_attr_flags = 0;
@@ -5303,6 +5316,11 @@ compile_procedure_attributes(expr attrs,
                         break;
                 }
                 break;
+            case LIST:
+                type_attr_flags |= TYPE_ATTR_BIND;
+                if (bind_name != NULL)
+                    *bind_name = EXPR_ARG1(v);
+                break;
             default:
                 error("unexpected expression");
                 break;
@@ -5356,6 +5374,7 @@ compile_procedure_declaration(expr x)
 
     uint32_t type_attr_flags = 0;
     uint32_t binding_attr_flags = 0;
+    expr bind_name = NULL;
 
     int is_inside_struct = CTL_TYPE(ctl_top) == CTL_STRUCT;
 
@@ -5366,7 +5385,8 @@ compile_procedure_declaration(expr x)
     compile_procedure_attributes(attrs,
                                  &type_attr_flags,
                                  &binding_attr_flags,
-                                 &pass_arg);
+                                 &pass_arg,
+                                 &bind_name);
 
     if (is_inside_struct) {
         if (!(type_attr_flags & TYPE_ATTR_POINTER)) {
@@ -5496,6 +5516,13 @@ compile_procedure_declaration(expr x)
         tp = ID_TYPE(interface);
     }
 
+    if (bind_name) {
+        if (EXPR_HAS_ARG2(decls)) {
+            error("multiple identifiers are declared with NAME=");
+            return;
+        }
+    }
+
     FOR_ITEMS_IN_LIST(lp, decls) {
         if (EXPR_CODE(LIST_ITEM(lp)) == F03_BIND_PROCEDURE) {
             /*
@@ -5619,6 +5646,7 @@ compile_procedure_declaration(expr x)
         ID_LINE(id) = EXPR_LINE(x);
 
         TYPE_ATTR_FLAGS(ID_TYPE(id)) |= type_attr_flags;
+        TYPE_BIND_NAME(ID_TYPE(id)) = bind_name;
         VAR_REF_PROC(id) = interface;
         if (CTL_TYPE(ctl_top) == CTL_STRUCT) {
             FUNCTION_TYPE_HAS_BINDING_ARG(ID_TYPE(id)) = TRUE;
@@ -5654,10 +5682,16 @@ compile_type_bound_procedure(expr x)
     compile_procedure_attributes(binding_attrs,
                                  &access_attr_flags,
                                  &binding_attr_flags,
-                                 &pass_arg);
+                                 &pass_arg,
+                                 NULL);
 
     if ((access_attr_flags & !(TYPE_ATTR_PUBLIC | TYPE_ATTR_PRIVATE)) != 0) {
         error("type-bound procedure cannot have type attributes");
+        return;
+    }
+
+    if (binding_attr_flags & TYPE_ATTR_BIND) {
+        error("type-bound procedure cannot have a BIND attribute");
         return;
     }
 
@@ -5734,7 +5768,7 @@ compile_type_bound_procedure(expr x)
 }
 
 void
-compile_type_generic_procedure(expr x)
+compile_type_bound_generic_procedure(expr x)
 {
     expr generics_spec = EXPR_ARG1(x);
     expr id_list = EXPR_ARG2(x);

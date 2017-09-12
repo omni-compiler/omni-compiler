@@ -63,6 +63,7 @@ extern int lineno;
 extern int need_keyword;
 extern int enable_need_type_keyword;
 extern int need_type_keyword;
+extern int need_do_keyword;
 extern int need_type_len;
 extern int need_check_user_defined;
 
@@ -138,6 +139,7 @@ enum prog_state {
     ININTR,      /* interface */
     IN_TYPE_PARAM_DECL, /* type parameter declarations */
     IN_TYPE_BOUND_PROCS, /* type bound procedure declarations */
+    INENUM,     /* ENUM */
 };
 
 /* procedure states */
@@ -149,7 +151,7 @@ extern enum procedure_state current_proc_state;
 #define INDCL_OVER      ((int)CURRENT_STATE >= (int)INDATA)
 
 /* module visible state */
-enum module_state { M_DEFAULT, M_PUBLIC, M_PRIVATE, M_PROTECTED };
+enum module_state { M_DEFAULT, M_PUBLIC, M_PRIVATE };
 extern enum module_state current_module_state;
 
 /* control stack codes */
@@ -172,6 +174,7 @@ enum control_type {
     CTL_BLOCK,
     CTL_INTERFACE,
     CTL_FORALL,
+    CTL_ENUM,
 };
 
 #define CONTROL_TYPE_NAMES {\
@@ -191,6 +194,7 @@ enum control_type {
     "CTL_BLOCK",\
     "CTL_INTERFACE",\
     "CTL_FORALL",\
+    "CTL_ENUM",\
 }
 
 typedef struct environment {
@@ -478,6 +482,23 @@ extern int unit_ctl_level;
 #define LANGSPEC_DEFAULT_SET        LANGSPEC_F2008_SET
 extern int langSpecSet;
 
+#define INTRINSIC_CLASS_NONE           0x0000
+#define INTRINSIC_CLASS_ATOMIC         0x0001
+#define INTRINSIC_CLASS_ELEMENTAL_FUN  0x0002
+#define INTRINSIC_CLASS_ELEMENTAL_SUB  0x0004
+#define INTRINSIC_CLASS_INQUIRY        0x0008
+#define INTRINSIC_CLASS_PURE_SUB       0x0010
+#define INTRINSIC_CLASS_SUB            0x0020
+#define INTRINSIC_CLASS_TRANS          0x0040
+
+#define INTR_CLASS_A       INTRINSIC_CLASS_ATOMIC
+#define INTR_CLASS_E       INTRINSIC_CLASS_ELEMENTAL_FUN
+#define INTR_CLASS_ES      INTRINSIC_CLASS_ELEMENTAL_SUB
+#define INTR_CLASS_I       INTRINSIC_CLASS_INQUIRY
+#define INTR_CLASS_PS      INTRINSIC_CLASS_PURE_SUB
+#define INTR_CLASS_S       INTRINSIC_CLASS_SUB
+#define INTR_CLASS_T       INTRINSIC_CLASS_TRANS
+
 extern ID this_label;
 
 extern TYPE_DESC type_REAL, type_INT, type_SUBR, type_CHAR, type_LOGICAL;
@@ -581,6 +602,7 @@ extern void     check_INDATA _ANSI_ARGS_((void));
 extern void     check_INDCL _ANSI_ARGS_((void));
 extern void     check_INEXEC _ANSI_ARGS_((void));
 extern void     check_NOT_INBLOCK _ANSI_ARGS_((void));
+extern void     check_INENUM _ANSI_ARGS_((void));
 extern void     include_file(char *name, int inside_use);
 extern void     push_unit_ctl _ANSI_ARGS_((enum prog_state));
 extern void     pop_unit_ctl _ANSI_ARGS_((void));
@@ -721,7 +743,7 @@ extern void     compile_CONTIGUOUS_statement _ANSI_ARGS_((expr id_list));
 
 extern void     compile_procedure_declaration _ANSI_ARGS_((expr x));
 extern void     compile_type_bound_procedure _ANSI_ARGS_((expr x));
-extern void     compile_type_generic_procedure _ANSI_ARGS_((expr x));
+extern void     compile_type_bound_generic_procedure _ANSI_ARGS_((expr x));
 extern void     compile_FINAL_statement _ANSI_ARGS_((expr x));
 #define FINALIZER_PROCEDURE "_final"
 extern void     update_type_bound_procedures_forall _ANSI_ARGS_((TYPE_DESC struct_decls, ID local_symbols));
@@ -871,7 +893,7 @@ extern void     fix_type _ANSI_ARGS_((ID id));
 extern void     compile_FORMAT_decl _ANSI_ARGS_((int st_no, expr x));
 extern void     FinalizeFormat _ANSI_ARGS_((void));
 
-extern void     compile_DATA_decl _ANSI_ARGS_((expr x));
+extern void     compile_DATA_decl_or_statement _ANSI_ARGS_((expr x, int is_declaration));
 extern void     compile_EXTERNAL_decl _ANSI_ARGS_((expr x));
 
 extern void     compile_IO_statement _ANSI_ARGS_((expr x));

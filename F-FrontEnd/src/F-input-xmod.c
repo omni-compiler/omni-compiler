@@ -1829,7 +1829,11 @@ input_FfunctionType(xmlTextReaderPtr reader, HashTable * ht)
 
     attr = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_pure");
     if (attr != NULL) {
-        TYPE_SET_PURE(ftp);
+        if (strncmp(attr, "true", 4)) {
+            TYPE_SET_PURE(ftp);
+        } else {
+            TYPE_SET_IMPURE(ftp);
+        }
         free(attr);
     }
 
@@ -2173,7 +2177,10 @@ input_typeBoundGenericProcedure(xmlTextReaderPtr reader, HashTable * ht, ID *id)
     uint32_t binding_attr_flags = TYPE_BOUND_PROCEDURE_IS_GENERIC;
 
     if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT,
-                       "typeBoundProcedure"))
+                       "typeBoundGenericProcedure"))
+        return FALSE;
+
+    if (!xmlSkipWhiteSpace(reader))
         return FALSE;
 
     if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "name"))
@@ -2183,11 +2190,14 @@ input_typeBoundGenericProcedure(xmlTextReaderPtr reader, HashTable * ht, ID *id)
     if (name != NULL) {
         name = strdup(name);
     }
+
     if (!xmlSkipWhiteSpace(reader)) {
         return FALSE;
     }
 
     *id = new_ident_desc(find_symbol(name));
+    ID_CLASS(*id) = CL_TYPE_BOUND_PROC;
+    ID_TYPE(*id) = type_bound_procedure_type();
     TBP_BINDING_ATTRS(*id) |= TYPE_BOUND_PROCEDURE_IS_GENERIC;
 
     str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_public");
@@ -2214,6 +2224,7 @@ input_typeBoundGenericProcedure(xmlTextReaderPtr reader, HashTable * ht, ID *id)
 
     str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_defined_io");
     if (str != NULL) {
+
         if (strcmp("WRITE(FORMATTED)", str) == 0) {
             binding_attr_flags |= TYPE_BOUND_PROCEDURE_WRITE;
             binding_attr_flags |= TYPE_BOUND_PROCEDURE_FORMATTED;
@@ -2242,16 +2253,22 @@ input_typeBoundGenericProcedure(xmlTextReaderPtr reader, HashTable * ht, ID *id)
     TBP_BINDING(*id) = NULL;
     TBP_BINDING_ATTRS(*id) = binding_attr_flags;
 
+    /* if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "name")) */
+    /*     return FALSE; */
+
+    if (!xmlSkipWhiteSpace(reader)) {
+        return FALSE;
+    }
+
     if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "binding"))
         return FALSE;
 
     while (TRUE) {
-        if (xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "name")) {
-            name = (char *)xmlTextReaderConstValue(reader);
-            if (!xmlSkipWhiteSpace(reader)) {
-                return FALSE;
-            }
+        if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "name")) {
+            return FALSE;
         }
+
+        name = (char *)xmlTextReaderConstValue(reader);
 
         if (name != NULL) {
             name = strdup(name);
@@ -2260,10 +2277,13 @@ input_typeBoundGenericProcedure(xmlTextReaderPtr reader, HashTable * ht, ID *id)
         binding = new_ident_desc(find_symbol(name));
         ID_LINK_ADD(binding, TBP_BINDING(*id), last_ip);
 
+        if (!xmlSkipWhiteSpace(reader))
+            return FALSE;
+
         if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "name"))
             return FALSE;
 
-        if (!xmlMatchNode(reader, XML_READER_TYPE_END_ELEMENT, "binding"))
+        if (xmlMatchNode(reader, XML_READER_TYPE_END_ELEMENT, "binding"))
             break;
     }
 
@@ -2271,7 +2291,7 @@ input_typeBoundGenericProcedure(xmlTextReaderPtr reader, HashTable * ht, ID *id)
         return FALSE;
 
     if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT,
-                       "typeBoundProcedure"))
+                       "typeBoundGenericProcedure"))
         return FALSE;
 
     return TRUE;

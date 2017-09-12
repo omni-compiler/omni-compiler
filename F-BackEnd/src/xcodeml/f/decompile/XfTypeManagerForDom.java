@@ -416,6 +416,9 @@ class XfTypeManagerForDom {
                 if (XmDomUtil.getAttrBool(basicType, "is_pointer") && XfUtilForDom.isNullOrEmpty(refType))
                     break;
 
+                if (XmDomUtil.getAttrBool(basicType, "is_procedure") && XfUtilForDom.isNullOrEmpty(refType))
+                    break;
+
                 if (XfType.DERIVED != XfType.getTypeIdFromXcodemlTypeName(refType))
                     break;
 

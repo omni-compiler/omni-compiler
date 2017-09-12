@@ -403,7 +403,7 @@ compile_expression(expr x)
                 }
             }
 
-            ID_LINE(id) = EXPR_LINE(x); // set line number
+            if (!ID_LINE(id)) ID_LINE(id) = EXPR_LINE(x); // set line number if not set
 
             if (ID_CLASS(id) == CL_PROC ||
                 ID_CLASS(id) == CL_ENTRY ||
@@ -527,7 +527,7 @@ compile_expression(expr x)
             lt = EXPV_TYPE(left);
             rt = EXPV_TYPE(right);
             if(rt == NULL)
-                right = compile_expression(EXPR_ARG2(x));
+                right = compile_expression(EXPR_ARG2(x));                
 
             bLType = bottom_type(lt);
             bRType = bottom_type(rt);
@@ -723,10 +723,11 @@ compile_expression(expr x)
                  * if operator is logical operator,
                  * don't care about type but only shape.
                  */
-                if((biop == LOGIB || bType == bLType) && shape == lshape) {
-                    tp = lt;
+                 if((biop == LOGIB || bType == bLType) && shape == lshape) {
+                    tp = wrap_type(lt); // This `tp` turns into `bottom_type(tp)` 
+                    // later and `lt` == `bLType` if lt is not an array type
                 } else if ((biop == LOGIB || bType == bRType) && shape == rshape) {
-                    tp = rt;
+                    tp = wrap_type(rt); // same as above
                 } else {
                     /* NOTE:
                      * if shape is scalar (list0(LIST)), tp = bType.
@@ -742,9 +743,12 @@ compile_expression(expr x)
             doEmit:
 /* FEAST CHANGE start */
             /* if (type_is_not_fixed) */
-            if(type_is_not_fixed && tp)
+            if(type_is_not_fixed && tp) {
 /* FEAST CHANGE end */
+                // Apply the attribute NOT FIXED on the result type if one 
+                // operand type is NOT FIXED.
                 TYPE_SET_NOT_FIXED(bottom_type(tp));
+            }
             return expv_cons(op, tp, left, right);
         }
 
@@ -1097,10 +1101,12 @@ compile_ident_expression(expr x)
         goto done;
     }
 
-
-    if(ID_CLASS(id) == CL_PARAM){
-        if(VAR_INIT_VALUE(id) != NULL) 
-            return VAR_INIT_VALUE(id);
+    if(ID_CLASS(id) == CL_PARAM) {
+        if(VAR_INIT_VALUE(id) != NULL) {
+            if(EXPV_CODE(VAR_INIT_VALUE(id)) != F95_STRUCT_CONSTRUCTOR) {
+                return VAR_INIT_VALUE(id);
+            }
+        }
     }
 
 
@@ -1856,32 +1862,10 @@ compile_array_ref(ID id, expv vary, expr args, int isLeft) {
      * copy type attributes from original type
      */
     if (id != NULL) {
-        if (TYPE_IS_POINTER(id)) {
-            TYPE_ATTR_FLAGS(tq) |= TYPE_IS_POINTER(id);
-        }
-        if (TYPE_IS_TARGET(id)) {
-            TYPE_ATTR_FLAGS(tq) |= TYPE_IS_TARGET(id);
-        }
-        if (TYPE_IS_VOLATILE(id)) {
-            TYPE_ATTR_FLAGS(tq) |= TYPE_IS_VOLATILE(id);
-        }
-        if (TYPE_IS_ASYNCHRONOUS(id)) {
-            TYPE_ATTR_FLAGS(tq) |= TYPE_IS_ASYNCHRONOUS(id);
-        }
+        TYPE_SET_SUBOBJECT_PROPAGATE_ATTRS(tq, id);
     }
     while (tp != NULL) {
-        if (TYPE_IS_POINTER(tp)) {
-            TYPE_ATTR_FLAGS(tq) |= TYPE_IS_POINTER(tp);
-        }
-        if (TYPE_IS_TARGET(tp)) {
-            TYPE_ATTR_FLAGS(tq) |= TYPE_IS_TARGET(tp);
-        }
-        if (TYPE_IS_VOLATILE(tp)) {
-            TYPE_ATTR_FLAGS(tq) |= TYPE_IS_VOLATILE(tp);
-        }
-        if (TYPE_IS_ASYNCHRONOUS(tp)) {
-            TYPE_ATTR_FLAGS(tq) |= TYPE_IS_ASYNCHRONOUS(tp);
-        }
+        TYPE_SET_SUBOBJECT_PROPAGATE_ATTRS(tq, tp);
         tp = TYPE_REF(tp);
     }
 
@@ -3364,17 +3348,14 @@ compile_member_array_ref(expr x, expv v)
         expv new_v = compile_array_ref(NULL, v, indices, TRUE);
         new_tp = EXPV_TYPE(new_v);
 
-        if ((TYPE_IS_POINTER(tp) || TYPE_IS_TARGET(tp) ||
-             TYPE_IS_VOLATILE(tp) || TYPE_IS_ASYNCHRONOUS(tp)) &&
-           !(TYPE_IS_POINTER(new_tp) || TYPE_IS_TARGET(new_tp)
-             || TYPE_IS_VOLATILE(new_tp) || TYPE_IS_ASYNCHRONOUS(new_tp))) {
+        if (TYPE_HAS_SUBOBJECT_PROPAGATE_ATTRS(tp) &&
+            !TYPE_HAS_SUBOBJECT_PROPAGATE_ATTRS(new_tp)) {
             TYPE_DESC btp = bottom_type(new_tp);
             if(!EXPR_HAS_ARG1(shape))
                 generate_shape_expr(new_tp, shape);
             btp = wrap_type(btp);
-            TYPE_ATTR_FLAGS(btp) |=
-                    TYPE_IS_POINTER(tp) | TYPE_IS_TARGET(tp) |
-                    TYPE_IS_VOLATILE(tp) | TYPE_IS_ASYNCHRONOUS(tp);
+            TYPE_SET_SUBOBJECT_PROPAGATE_ATTRS(btp, tp);
+            TYPE_SET_SUBOBJECT_PROPAGATE_EXTATTRS(btp, tp);
             new_tp = btp;
         }
         new_tp = compile_dimensions(new_tp, shape);

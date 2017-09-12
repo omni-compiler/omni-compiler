@@ -1137,9 +1137,9 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             break;
         case INDEX_RANGE:
             e = addChildNodes(createElement(name),
-                              trans(xobj.getArg(0)),
-                              trans(xobj.getArg(1)),
-                              trans(xobj.getArg(2)));
+                    addChildNode(createElement("base"),   trans(xobj.getArg(0))),
+                    addChildNode(createElement("length"), trans(xobj.getArg(1))),
+                    addChildNode(createElement("step"),   trans(xobj.getArg(2))));
             break;
         case LOWER_BOUND:
         case UPPER_BOUND:

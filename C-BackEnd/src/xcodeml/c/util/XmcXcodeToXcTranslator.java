@@ -1869,7 +1869,7 @@ public class XmcXcodeToXcTranslator {
                 if (childNode.getNodeType() != Node.ELEMENT_NODE) {
                     continue;
                 }
-		enterNodes(tc, parent, childNode);
+		enterNodes(tc, obj, childNode);
             }
 
 	    //            writer.decrementIndentLevel();
@@ -1987,7 +1987,7 @@ public class XmcXcodeToXcTranslator {
 		if (childNode.getNodeType() != Node.ELEMENT_NODE) {
 		    continue;
 		}
-		enterNodes(tc, parent, childNode);
+		enterNodes(tc, obj, childNode);
 	    }
 	}
 
@@ -2342,29 +2342,27 @@ public class XmcXcodeToXcTranslator {
             addChild(parent, obj);
 
             enterNodes(tc, obj,
-                       getElement(n, "lowerBound"),
-                       getElement(n, "upperBound"),
+                       getElement(n, "base"),
+                       getElement(n, "length"),
                        getElement(n, "step"));
         }
     }
 
-    // lowerBound
-    class LowerBoundVisitor extends XcodeNodeVisitor {
+    // base
+    class BaseVisitor extends XcodeNodeVisitor {
         @Override
         public void enter(TranslationContext tc, Node n, XcNode parent) {
-            XcIndexRangeObj.LowerBound obj = new XcIndexRangeObj.LowerBound();
-            addChild(parent, obj);
-            transChildren(tc, n, obj);
+            enterNodesWithNull(tc, parent,
+                    getContent(n));
         }
     }
 
-    // upperBound
-    class UpperBoundVisitor extends XcodeNodeVisitor {
+    // length
+    class LengthVisitor extends XcodeNodeVisitor {
         @Override
         public void enter(TranslationContext tc, Node n, XcNode parent) {
-            XcIndexRangeObj.UpperBound obj = new XcIndexRangeObj.UpperBound();
-            addChild(parent, obj);
-            transChildren(tc, n, obj);
+            enterNodesWithNull(tc, parent,
+                    getContent(n));
         }
     }
 
@@ -2372,9 +2370,8 @@ public class XmcXcodeToXcTranslator {
     class StepBoundVisitor extends XcodeNodeVisitor {
         @Override
         public void enter(TranslationContext tc, Node n, XcNode parent) {
-            XcIndexRangeObj.Step obj = new XcIndexRangeObj.Step();
-            addChild(parent, obj);
-            transChildren(tc, n, obj);
+            enterNodesWithNull(tc, parent,
+                    getContent(n));
         }
     }
 
@@ -3049,8 +3046,8 @@ public class XmcXcodeToXcTranslator {
         new Pair("coArrayType", new CoArrayTypeVisitor()),
         new Pair("subArrayRef", new SubArrayRefVisitor()),
         new Pair("indexRange", new IndexRangeVisitor()),
-        new Pair("lowerBound", new LowerBoundVisitor()),
-        new Pair("upperBound", new UpperBoundVisitor()),
+        new Pair("base", new BaseVisitor()),
+        new Pair("length", new LengthVisitor()),
         new Pair("step", new StepBoundVisitor()),
     };
 

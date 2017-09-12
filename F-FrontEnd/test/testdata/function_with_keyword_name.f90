@@ -1,0 +1,42 @@
+MODULE mod1
+CONTAINS
+
+  FUNCTION IF(a, b)
+    INTEGER :: a, b
+  END FUNCTION
+
+  LOGICAL FUNCTION CASE(a, b)
+    INTEGER :: a, b
+    CASE = .FALSE.
+  END FUNCTION
+  
+  ELEMENTAL LOGICAL FUNCTION THEN(a,b)
+    INTEGER :: a,b
+    THEN = .TRUE.
+  END FUNCTION
+
+  ELEMENTAL INTEGER FUNCTION SELECT(a, b)
+    INTEGER, INTENT(IN) :: a, b
+    SELECT = 1
+  END FUNCTION
+
+  FUNCTION func1(a, b)
+    INTEGER :: a, b
+  END FUNCTION
+
+  LOGICAL FUNCTION func2(a, b)
+    INTEGER :: a, b
+    func2 = .FALSE.
+  END FUNCTION
+  
+  ELEMENTAL LOGICAL FUNCTION func3(a,b)
+    INTEGER :: a,b
+    func3 = .TRUE.
+  END FUNCTION
+
+  ELEMENTAL INTEGER FUNCTION func4(a, b)
+    INTEGER, INTENT(IN) :: a, b
+    func4 = 1
+  END FUNCTION
+
+END MODULE mod1
