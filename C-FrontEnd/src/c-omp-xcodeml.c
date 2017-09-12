@@ -170,6 +170,7 @@ char *ompDirectiveName(int c)
   case OMP_PARALLEL_FOR:return "PARALLEL_FOR";
   case OMP_PARALLEL_SECTIONS:return "PARALLEL_SECTIONS";
   case OMP_TASK: return "TASK";
+  case OMP_TASKWAIT: return "TASKWAIT";
   default: return "OMP???";
   }
 }

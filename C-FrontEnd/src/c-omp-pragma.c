@@ -215,6 +215,13 @@ int parse_OMP_pragma()
       goto chk_end;
   }
 
+  if(PG_IS_IDENT("taskwait")){
+    pg_OMP_pragma = OMP_TASKWAIT;
+    ret = PRAGMA_EXEC;
+    pg_get_token();
+    goto chk_end;
+  }
+
   addError(NULL,"OMP:unknown OMP directive, '%s'",pg_tok_buf);
  syntax_err:
     return 0;
