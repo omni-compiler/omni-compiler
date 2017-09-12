@@ -86,6 +86,11 @@ public class Xcons
         return new XobjLong(code, type, high, low);
     }
 
+    public static XobjLong LongConstant(long value)
+    {
+        return Long(Xcode.LONG_CONSTANT, Xtype.longType, value);
+    }
+
     public static XobjLong LongLongConstant(long high, long low)
     {
         return new XobjLong(high, low);

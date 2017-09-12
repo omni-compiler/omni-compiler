@@ -85,7 +85,7 @@ public class XcodeMLtools_F extends XcodeMLtools {
                               getAttrBool(n, "is_procedure")) &&
                              (getAttr(n, "ref") == null) ?
                                "Fvoid" : getAttr(n, "ref"));
-    int tq = (getAttrBool(n, "is_allocatable") ? Xtype.TQ_FALLOCATABLE : 0)
+    long tq = (getAttrBool(n, "is_allocatable") ? Xtype.TQ_FALLOCATABLE : 0)
       | (getAttrBool(n, "is_optional") ? Xtype.TQ_FOPTIONAL : 0)
       | (getAttrBool(n, "is_parameter") ? Xtype.TQ_FPARAMETER : 0)
       | (getAttrBool(n, "is_pointer") ? Xtype.TQ_FPOINTER : 0)
@@ -226,15 +226,19 @@ public class XcodeMLtools_F extends XcodeMLtools {
     String tid = getAttr(n, "type");
     Xtype retType = getType(getAttr(n, "return_type"));
 
-    int tq = (getAttrBool(n, "is_external") ? Xtype.TQ_FEXTERNAL : 0)
+    long tq = (getAttrBool(n, "is_external") ? Xtype.TQ_FEXTERNAL : 0)
       | (getAttrBool(n, "is_internal") ? Xtype.TQ_FINTERNAL : 0)
       | (getAttrBool(n, "is_intrinsic") ? Xtype.TQ_FINTRINSIC : 0)
       | (getAttrBool(n, "is_private") ? Xtype.TQ_FPRIVATE : 0)
       | (getAttrBool(n, "is_public") ? Xtype.TQ_FPUBLIC : 0)
       | (getAttrBool(n, "is_program") ? Xtype.TQ_FPROGRAM : 0)
+      | (getAttrBool(n, "is_elemental") ? Xtype.TQ_FELEMENTAL : 0)
       | (getAttrBool(n, "is_recursive") ? Xtype.TQ_FRECURSIVE : 0)
       | (getAttrBool(n, "is_module") ? Xtype.TQ_FMODULE : 0);
 
+    if (getAttr(n, "is_pure") != null)
+      tq |= (getAttrBool(n, "is_pure") ? Xtype.TQ_FPURE : Xtype.TQ_FIMPURE);
+    
     Xobject params = toXobject(getElement(n, "params"));
     FunctionType type = new FunctionType(tid, retType, params, tq, false,
         null, getAttr(n, "result_name"));
@@ -264,7 +268,7 @@ public class XcodeMLtools_F extends XcodeMLtools {
   private void declFstructType(Node n) {
     String tid = getAttr(n, "type");
     String parent_tid = getAttr(n, "extends");
-    int tq = (getAttrBool(n, "is_internal_private") ? Xtype.TQ_FINTERNAL_PRIVATE
+    long tq = (getAttrBool(n, "is_internal_private") ? Xtype.TQ_FINTERNAL_PRIVATE
 	      : 0)
       | (getAttrBool(n, "is_private") ? Xtype.TQ_FPRIVATE : 0)
       | (getAttrBool(n, "is_public") ? Xtype.TQ_FPUBLIC : 0)
@@ -855,12 +859,12 @@ public class XcodeMLtools_F extends XcodeMLtools {
       {
         XobjString pass     = Xcons.String(getAttr(n, "pass"         ));
         XobjString pass_arg = Xcons.String(getAttr(n, "pass_arg_name"));
-        int tq = (getAttrBool(n, "is_private") ? Xtype.TQ_FPRIVATE : 0)
+        long tq = (getAttrBool(n, "is_private") ? Xtype.TQ_FPRIVATE : 0)
                | (getAttrBool(n, "is_public" ) ? Xtype.TQ_FPUBLIC  : 0);
         Node bdg = getElement(n, "binding");
         return setCommonAttributes(n, Xcons.List(code, type, pass, pass_arg,
                                                  toXobject(getElement(n, "name")),
-                                                 Xcons.IntConstant(tq),
+                                                 Xcons.LongConstant(tq),
                                                  (bdg != null) ? toXobject(getContent(bdg)) : null,
                                                  getAttrIntFlag(n, "is_non_overridable")
                                                 ));
@@ -874,14 +878,14 @@ public class XcodeMLtools_F extends XcodeMLtools {
       
     case F_TYPE_BOUND_GENERIC_PROCEDURE:
       {
-        int tq = (getAttrBool(n, "is_private") ? Xtype.TQ_FPRIVATE : 0)
+        long tq = (getAttrBool(n, "is_private") ? Xtype.TQ_FPRIVATE : 0)
                | (getAttrBool(n, "is_public" ) ? Xtype.TQ_FPUBLIC  : 0);
         Node bdg = getElement(n, "binding");
         return setCommonAttributes(n, Xcons.List(code, (Xtype)null,
                                                  getAttrIntFlag(n, "is_operator"),
                                                  getAttrIntFlag(n, "is_assignment"),
                                                  toXobject(getElement(n, "name")),
-                                                 Xcons.IntConstant(tq),
+                                                 Xcons.LongConstant(tq),
                                                  toXobject(bdg)
                                                 ));
       }

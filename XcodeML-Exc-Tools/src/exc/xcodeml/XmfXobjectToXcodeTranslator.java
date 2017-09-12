@@ -1141,6 +1141,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
                     "FfunctionType",
                     "return_type", type.getRef().getXcodeFId(),
                     "result_name", type.getFuncResultName(),
+		    "is_elemental", toBoolStr(type.isFelemental()),
                     "is_recursive", toBoolStr(type.isFrecursive()),
                     "is_program", toBoolStr(type.isFprogram()),
                     "is_internal", toBoolStr(type.isFinternal()),
@@ -1151,6 +1152,8 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
                     "bind", type.getBind(),
                     "bind_name", type.getBindName(),
                     "is_module", toBoolStr(type.isFmodule()));
+		if (type.isFpure()) addAttributes(typeElem, "is_pure", "1");
+		else if (type.isFimpure()) addAttributes(typeElem, "is_pure", "0");
                 addChildNode(typeElem,
                              transParams((XobjList)type.getFuncParam()));
                 break;
@@ -1501,7 +1504,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
           addAttributes(e, "pass"         , getArgString(xobj, 0));
           addAttributes(e, "pass_arg_name", getArgString(xobj, 1));
           addChildNode(e, transName(xobj.getArg(2)));
-          int tq = ((XobjInt)xobj.getArg(3)).getInt();
+          long tq = ((XobjLong)xobj.getArg(3)).getLongLow();
           if ((tq & Xtype.TQ_FPRIVATE) != 0)
             addAttributes(e, "is_private", "true");
           else if ((tq & Xtype.TQ_FPUBLIC) != 0)
@@ -1516,7 +1519,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
           addAttributes(e, "is_operator"  , intFlagToBoolStr(xobj.getArgOrNull(0)));
           addAttributes(e, "is_assignment", intFlagToBoolStr(xobj.getArgOrNull(1)));
           addChildNode(e, transName(xobj.getArg(2)));
-          int tq = ((XobjInt)xobj.getArg(3)).getInt();
+          long tq = ((XobjLong)xobj.getArg(3)).getLongLow();
           if ((tq & Xtype.TQ_FPRIVATE) != 0)
             addAttributes(e, "is_private", "true");
           else if ((tq & Xtype.TQ_FPUBLIC) != 0)

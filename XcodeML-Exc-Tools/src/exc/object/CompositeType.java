@@ -16,7 +16,7 @@ public abstract class CompositeType extends Xtype
     protected String parent_type_id;
 
     protected CompositeType(int type_kind, String id, String parent_id, XobjString tag_names, XobjList id_list, XobjList proc_list,
-                            int typeQualFlags, Xobject gccAttrs, Xobject[] codimensions)
+                            long typeQualFlags, Xobject gccAttrs, Xobject[] codimensions)
     {
         super(type_kind, id, typeQualFlags, gccAttrs, codimensions);
         if(id_list == null)
@@ -28,18 +28,18 @@ public abstract class CompositeType extends Xtype
     }
 
     protected CompositeType(int type_kind, String id, String parent_id, XobjString tag_names, XobjList id_list,
-                            int typeQualFlags, Xobject gccAttrs, Xobject[] codimensions)
+                            long typeQualFlags, Xobject gccAttrs, Xobject[] codimensions)
     {
         this(type_kind, id, parent_id, tag_names, id_list, null, typeQualFlags, gccAttrs, codimensions);
     }
 
-    protected CompositeType(int type_kind, String id, String parent_id, XobjList id_list, int typeQualFlags,
+    protected CompositeType(int type_kind, String id, String parent_id, XobjList id_list, long typeQualFlags,
                             Xobject gccAttrs, Xobject[] codimensions)
     {
         this(type_kind, id, parent_id, null, id_list, typeQualFlags, gccAttrs, codimensions);
     }
 
-    protected CompositeType(int type_kind, String id, XobjList id_list, int typeQualFlags,
+    protected CompositeType(int type_kind, String id, XobjList id_list, long typeQualFlags,
                             Xobject gccAttrs)
     {
         this(type_kind, id, null, id_list, typeQualFlags, gccAttrs, null);
