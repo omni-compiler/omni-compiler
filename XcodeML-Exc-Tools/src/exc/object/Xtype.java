@@ -38,47 +38,50 @@ public class Xtype
     //
     // Qualifiers for C
     //
-    public static final int TQ_CONST            = 1 << 0;   // const
-    public static final int TQ_VOLATILE         = 1 << 1;   // volatile
-    public static final int TQ_RESTRICT         = 1 << 2;   // restrict
-    public static final int TQ_INLINE           = 1 << 3;   // inline
-    public static final int TQ_ARRAY_STATIC     = 1 << 4;   // static at array specifier
-    public static final int TQ_FUNC_STATIC      = 1 << 5;   // static at function definition
+    public static final long TQ_CONST            = 1 << 0;   // const
+    public static final long TQ_VOLATILE         = 1 << 1;   // volatile
+    public static final long TQ_RESTRICT         = 1 << 2;   // restrict
+    public static final long TQ_INLINE           = 1 << 3;   // inline
+    public static final long TQ_ARRAY_STATIC     = 1 << 4;   // static at array specifier
+    public static final long TQ_FUNC_STATIC      = 1 << 5;   // static at function definition
 
     //
     // Qualifiers for Fortran
     //
-    public static final int TQ_FPUBLIC              = 1 << 6;   // public
-    public static final int TQ_FPRIVATE             = 1 << 7;   // private
-    public static final int TQ_FPOINTER             = 1 << 8;   // pointer
-    public static final int TQ_FOPTIONAL            = 1 << 9;   // optional
-    public static final int TQ_FTARGET              = 1 << 10;  // target
-    public static final int TQ_FSAVE                = 1 << 11;  // save
-    public static final int TQ_FPARAMETER           = 1 << 12;  // parameter
-    public static final int TQ_FALLOCATABLE         = 1 << 13;  // allocatable
-    public static final int TQ_FINTENT_IN           = 1 << 14;  // intent(in)
-    public static final int TQ_FINTENT_OUT          = 1 << 15;  // intent(out)
-    public static final int TQ_FINTENT_INOUT        = 1 << 16;  // intent(inout)
-    public static final int TQ_FPROGRAM             = 1 << 17;  // program
-    public static final int TQ_FINTRINSIC           = 1 << 18;  // intrinsic
-    public static final int TQ_FRECURSIVE           = 1 << 19;  // recursive
-    public static final int TQ_FINTERNAL            = 1 << 20;  // internal
-    public static final int TQ_FEXTERNAL            = 1 << 21;  // external
-    public static final int TQ_FSEQUENCE            = 1 << 22;  // sequence
-    public static final int TQ_FINTERNAL_PRIVATE    = 1 << 23;  // private in structure decl
-    public static final int TQ_FCRAY_POINTER        = 1 << 24;  // cray pointer (ID=060c)
-    public static final int TQ_FVOLATILE            = 1 << 25;  // volatile
-    public static final int TQ_FCLASS               = 1 << 26;  // class
-    public static final int TQ_FVALUE               = 1 << 27;  // value
-    public static final int TQ_FMODULE              = 1 << 28;  // module
-    public static final int TQ_FPROCEDURE           = 1 << 29;  // procedure
-    public static final int TQ_FCONTIGUOUS          = 1 << 30;  // procedure
+    public static final long TQ_FPUBLIC              = 1 << 6;   // public
+    public static final long TQ_FPRIVATE             = 1 << 7;   // private
+    public static final long TQ_FPOINTER             = 1 << 8;   // pointer
+    public static final long TQ_FOPTIONAL            = 1 << 9;   // optional
+    public static final long TQ_FTARGET              = 1 << 10;  // target
+    public static final long TQ_FSAVE                = 1 << 11;  // save
+    public static final long TQ_FPARAMETER           = 1 << 12;  // parameter
+    public static final long TQ_FALLOCATABLE         = 1 << 13;  // allocatable
+    public static final long TQ_FINTENT_IN           = 1 << 14;  // intent(in)
+    public static final long TQ_FINTENT_OUT          = 1 << 15;  // intent(out)
+    public static final long TQ_FINTENT_INOUT        = 1 << 16;  // intent(inout)
+    public static final long TQ_FPROGRAM             = 1 << 17;  // program
+    public static final long TQ_FINTRINSIC           = 1 << 18;  // intrinsic
+    public static final long TQ_FELEMENTAL           = 1 << 19;  // elemental
+    public static final long TQ_FIMPURE              = 1 << 20;  // impure
+    public static final long TQ_FPURE                = 1 << 21;  // pure
+    public static final long TQ_FRECURSIVE           = 1 << 22;  // recursive
+    public static final long TQ_FINTERNAL            = 1 << 23;  // internal
+    public static final long TQ_FEXTERNAL            = 1 << 24;  // external
+    public static final long TQ_FSEQUENCE            = 1 << 25;  // sequence
+    public static final long TQ_FINTERNAL_PRIVATE    = 1 << 26;  // private in structure decl
+    public static final long TQ_FCRAY_POINTER        = 1 << 27;  // cray pointer (ID=060c)
+    public static final long TQ_FVOLATILE            = 1 << 28;  // volatile
+    public static final long TQ_FCLASS               = 1 << 29;  // class
+    public static final long TQ_FVALUE               = 1 << 30;  // value
+    public static final long TQ_FMODULE              = 1 << 31;  // module
+    public static final long TQ_FPROCEDURE           = 1 << 32;  // procedure
+    public static final long TQ_FCONTIGUOUS          = 1 << 33;  // procedure
 
     private String type_id;
     private int type_kind;
 
     /* Type Qualifiers */
-    private int type_qual_flags;
+    private long type_qual_flags;
 
     /** for marking */
     boolean is_marked;
@@ -242,7 +245,7 @@ public class Xtype
     };
 
     // constructor
-    public Xtype(int kind, String id, int typeQualFlags, Xobject gccAttrs,
+    public Xtype(int kind, String id, long typeQualFlags, Xobject gccAttrs,
                  Ident tag, Xobject[] codimensions)
     {
         this.type_kind = kind;
@@ -271,19 +274,19 @@ public class Xtype
         setCodimensions(op2.getCodimensions());
     }
 
-    public Xtype(int kind, String id, int typeQualFlags, Xobject gccAttrs,
+    public Xtype(int kind, String id, long typeQualFlags, Xobject gccAttrs,
                  Ident tag)
     {
         this(kind, id, typeQualFlags, gccAttrs, tag, null);
     }
 
-    public Xtype(int kind, String id, int typeQualFlags, Xobject gccAttrs,
+    public Xtype(int kind, String id, long typeQualFlags, Xobject gccAttrs,
                  Xobject[] codimensions)
     {
         this(kind, id, typeQualFlags, gccAttrs, null, codimensions);
     }
 
-    public Xtype(int kind, String id, int typeQualFlags, Xobject gccAttrs)
+    public Xtype(int kind, String id, long typeQualFlags, Xobject gccAttrs)
     {
         this(kind, id, typeQualFlags, gccAttrs, null, null);
     }
@@ -339,7 +342,7 @@ public class Xtype
     }
 
     /** set type qualifier flag (TQ_*). */
-    private final void setTypeQualFlag(int flag, boolean enabled)
+    private final void setTypeQualFlag(long flag, boolean enabled)
     {
         if(enabled)
             type_qual_flags |= flag;
@@ -348,19 +351,19 @@ public class Xtype
     }
 
     /** get type qualifier flags (TQ_*). */
-    public final int getTypeQualFlags()
+    public final long getTypeQualFlags()
     {
         return type_qual_flags;
     }
 
     /** get type qualifier flag (TQ_*). */
-    private final boolean getTypeQualFlag(int flag)
+    private final boolean getTypeQualFlag(long flag)
     {
         return (type_qual_flags & flag) > 0;
     }
 
     /** set type qualifier flags (TQ_*). */
-    public final void setTypeQualFlags(int flags)
+    public final void setTypeQualFlags(long flags)
     {
         type_qual_flags = flags;
     }
@@ -609,6 +612,42 @@ public class Xtype
     public final void setIsFintrinsic(boolean enabled)
     {
         setTypeQualFlag(TQ_FINTRINSIC, enabled);
+    }
+
+    /** Fortran : return if is qualified by 'elemental' */
+    public final boolean isFelemental()
+    {
+        return getTypeQualFlag(TQ_FELEMENTAL);
+    }
+
+    /** Fortran : set qualifier 'elemental' */
+    public final void setIsFelemental(boolean enabled)
+    {
+        setTypeQualFlag(TQ_FELEMENTAL, enabled);
+    }
+
+    /** Fortran : return if is qualified by 'impure' */
+    public final boolean isFimpure()
+    {
+        return getTypeQualFlag(TQ_FIMPURE);
+    }
+
+    /** Fortran : set qualifier 'impure' */
+    public final void setIsFimpure(boolean enabled)
+    {
+        setTypeQualFlag(TQ_FIMPURE, enabled);
+    }
+
+    /** Fortran : return if is qualified by 'pure' */
+    public final boolean isFpure()
+    {
+        return getTypeQualFlag(TQ_FPURE);
+    }
+
+    /** Fortran : set qualifier 'pure' */
+    public final void setIsFpure(boolean enabled)
+    {
+        setTypeQualFlag(TQ_FPURE, enabled);
     }
 
     /** Fortran : return if is qualified by 'recursive' */

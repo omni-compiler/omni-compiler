@@ -19,7 +19,7 @@ public class FarrayType extends Xtype
     private Xobject[] sizeExprs;
     
     /** constructor */
-    public FarrayType(String id, Xtype ref, int typeQualFlags, Xobject[] sizeExprs,
+    public FarrayType(String id, Xtype ref, long typeQualFlags, Xobject[] sizeExprs,
                       Xobject[] codimensions)
     {
         super(Xtype.F_ARRAY, id, typeQualFlags, null, codimensions);
@@ -27,7 +27,7 @@ public class FarrayType extends Xtype
         this.sizeExprs = sizeExprs;
     }
 
-    public FarrayType(String id, Xtype ref, int typeQualFlags, Xobject[] sizeExprs)
+    public FarrayType(String id, Xtype ref, long typeQualFlags, Xobject[] sizeExprs)
     {
         this(id, ref, typeQualFlags, sizeExprs, null);
     }
