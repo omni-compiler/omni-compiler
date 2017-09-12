@@ -31,6 +31,7 @@ run:
 	$(XRUN) -n 2 ./coarray_get_4dims.x
 	$(XRUN) -n 1 ./coarray_local_put.x
 	$(XRUN) -n 1 ./coarray_local_get.x
+	$(XRUN) -n 1 ./coarray_local_overlap.x
 
 RUN:
 	mkdir RUN

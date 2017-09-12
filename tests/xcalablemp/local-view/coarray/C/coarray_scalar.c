@@ -2,16 +2,15 @@
 #define FALSE 0
 #include <stdio.h>
 #include <xmp.h>
-#pragma xmp nodes p(2)
+#pragma xmp nodes p[2]
 int a:[*], a_test;
 long b[2]:[*], b_test[2];
 float c[2][3]:[*], c_test[2][3];
 double d[2][3][4]:[*], d_test[2][3][4];
-
-int status, return_val = 0;
+int return_val = 0;
 
 void initialize_coarrays(int me){
-  int i, j, k, n = 100 * (me - 1);
+  int i, j, k, n = 100 * me;
 
   a = n + 1;
   a_test = a;
@@ -36,29 +35,29 @@ void initialize_coarrays(int me){
       }
     }
   }
-  xmp_sync_all(&status);
+  xmp_sync_all(NULL);
 }
 
 void communicate_1(int me){
   int tmp;
 
-  if(me == 1){   // get
+  if(me == 0){   // get
     tmp = a;
-    a = a:[2];
+    a = a:[1];
   }
-  xmp_sync_all(&status);
-  if(me == 1){  // put
-    a:[2] = tmp;
+  xmp_sync_all(NULL);
+  if(me == 0){  // put
+    a:[1] = tmp;
   }
   
-  if(me == 1){
+  if(me == 0){
     a_test = 101;
   }
-  else if(me == 2){
+  else if(me == 1){
     a_test = 1;
   }
   
-  xmp_sync_all(&status);
+  xmp_sync_all(NULL);
 }
 
 void check_1(int me){
@@ -71,21 +70,21 @@ void check_1(int me){
 }
 
 void communicate_2(int me){
-  if(me == 2){
+  if(me == 1){
     long tmp = 99;
-    b[0]:[1] = tmp;   // put
-    xmp_sync_memory(&status);
-    b[1] = b[0]:[1];  // get
+    b[0]:[0] = tmp;   // put
+    xmp_sync_memory(NULL);
+    b[1] = b[0]:[0];  // get
   }
   
-  if(me == 1){
+  if(me == 0){
     b_test[0] = 99;
   }
-  else if(me == 2){
+  else if(me == 1){
     b_test[1] = 99;
   }
   
-  xmp_sync_all(&status);
+  xmp_sync_all(NULL);
 }
 
 void check_2(int me){
@@ -107,19 +106,19 @@ void communicate_3(int me){
   float tmp[2][3];
 
   tmp[0][0] = 9.1;
-  xmp_sync_all(&status);
+  xmp_sync_all(NULL);
+  if(me == 0){
+    c[1][1]:[1] = tmp[0][0]; // put
+  } 
   if(me == 1){
-    c[1][1]:[2] = tmp[0][0]; // put
-	} 
-  if(me == 2){
-    c[1][2] = c[1][0]:[1];  // get
+    c[1][2] = c[1][0]:[0];  // get
   }
   
-  if(me == 2){
+  if(me == 1){
     c_test[1][1] = 9.1;
     c_test[1][2] = 3;
   }
-  xmp_sync_all(&status);
+  xmp_sync_all(NULL);
 }
 
 void check_3(int me){
@@ -140,9 +139,9 @@ void check_3(int me){
 }
 
 void communicate_4(int me){
-  int dest = 2, src = 1;
+  int dest = 1, src = 0;
 
-  xmp_sync_all(&status);
+  xmp_sync_all(NULL);
   if(me == src){
     double tmp;
     tmp = d[0][1][2];
@@ -163,7 +162,7 @@ void communicate_4(int me){
   else if(me == src){
     d_test[1][1][2] = 118;
   }
-  xmp_sync_all(&status);
+  xmp_sync_all(NULL);
 }
 
 void check_4(int me){
@@ -186,7 +185,7 @@ void check_4(int me){
 }
 
 int main(){
-  int me = xmp_node_num();
+  int me = xmpc_this_image();
   
   initialize_coarrays(me);
   

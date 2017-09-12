@@ -92,7 +92,16 @@ function_type(TYPE_DESC tp)
             TYPE_SET_MODULE(ftp);
             TYPE_UNSET_MODULE(tp);
         }
+        if (TYPE_IS_IMPURE(tp)) {
+            TYPE_SET_IMPURE(ftp);
+            TYPE_UNSET_IMPURE(tp);
+        }
         TYPE_UNSET_SAVE(tp);
+
+        if (FUNCTION_TYPE_IS_VISIBLE_INTRINSIC(tp)) {
+            FUNCTION_TYPE_SET_VISIBLE_INTRINSIC(ftp);
+        }
+        FUNCTION_TYPE_UNSET_VISIBLE_INTRINSIC(tp);
     }
 
 
@@ -336,6 +345,31 @@ type_is_class_of(TYPE_DESC derived_type, TYPE_DESC class)
     }
 }
 
+
+/*
+ * Retrun TRUE if the type is ABSTRACT and is not polymorphic = CLASS
+ */
+int
+type_is_nopolymorphic_abstract(TYPE_DESC tp)
+{
+    TYPE_DESC btp;
+
+    if (tp == NULL || !IS_STRUCT_TYPE(tp)) {
+        return FALSE;
+    }
+
+    if (TYPE_IS_CLASS(tp)) {
+        return FALSE;
+    }
+
+    btp = get_bottom_ref_type(tp);
+
+    if (TYPE_IS_ABSTRACT(btp)) {
+        return TRUE;
+    }
+
+    return FALSE;
+}
 
 /**
  * check type is omissible, such that
@@ -586,20 +620,8 @@ find_struct_member_allow_private(TYPE_DESC struct_td, SYMBOL sym, int allow_priv
     if (!IS_STRUCT_TYPE(struct_td)) {
         return NULL;
     }
-    struct_td = getBaseParameterizedType(struct_td);
 
-    if (TYPE_PARENT(struct_td)) {
-        ID parent = TYPE_PARENT(struct_td);
-        if (ID_SYM(parent) != NULL && (strcmp(ID_NAME(parent), SYM_NAME(sym)) == 0)) {
-            member = TYPE_PARENT(struct_td);
-        }
-        if (member == NULL) {
-            member = find_struct_member_allow_private(ID_TYPE(parent), sym, allow_private_member);
-        }
-    }
-    if (member) {
-        return member;
-    }
+    struct_td = getBaseParameterizedType(struct_td);
 
     FOREACH_MEMBER(member, struct_td) {
         if (strcmp(ID_NAME(member), SYM_NAME(sym)) == 0) {
@@ -627,6 +649,17 @@ find_struct_member_allow_private(TYPE_DESC struct_td, SYMBOL sym, int allow_priv
             return member;
         }
     }
+
+    if (TYPE_PARENT(struct_td)) {
+        ID parent = TYPE_PARENT(struct_td);
+        if (ID_SYM(parent) != NULL && (strcmp(ID_NAME(parent), SYM_NAME(sym)) == 0)) {
+            return TYPE_PARENT(struct_td);
+        }
+        if (member == NULL) {
+            return find_struct_member_allow_private(ID_TYPE(parent), sym, allow_private_member);
+        }
+    }
+
     return NULL;
 }
 
@@ -993,7 +1026,7 @@ type_is_compatible(TYPE_DESC left, TYPE_DESC right,
                    int is_strict,
                    int for_argunemt,
                    int for_assignment,
-                   int is_pointer_assignment)
+                   int is_pointer_assignment, int issue_error)
 {
     TYPE_DESC left_basic, right_basic;
 
@@ -1094,10 +1127,8 @@ rank_compatibility:
         goto attribute_compatibility;
 
     } else if (TYPE_N_DIM(left) > 0 && TYPE_N_DIM(right) > 0 &&
-         are_dimension_and_shape_conformant_by_type(NULL,
-                                                    left,
-                                                    right,
-                                                    NULL)) {
+         are_dimension_and_shape_conformant_by_type(NULL, left, right, NULL, issue_error)) 
+    {
         goto attribute_compatibility;
     } else {
         goto incompatible;
@@ -1135,9 +1166,21 @@ incompatible:
 
 
 int
-type_is_strict_compatible(TYPE_DESC left, TYPE_DESC right)
+type_is_strict_compatible(TYPE_DESC left, TYPE_DESC right, int issue_error)
 {
-    return type_is_compatible(left, right, TRUE, FALSE, FALSE, FALSE);
+    return type_is_compatible(left, right, TRUE, FALSE, FALSE, FALSE, 
+        issue_error);
+}
+
+
+int
+type_is_compatible_for_allocation(TYPE_DESC left, TYPE_DESC right)
+{
+    return type_is_compatible(left, right,
+                              /*is_strict=*/TRUE,
+                              /*for_argument=*/FALSE,
+                              /*for_assignment=*/FALSE,
+                              /*is_pointer_assignment=*/TRUE, TRUE);
 }
 
 
@@ -1180,7 +1223,8 @@ function_type_is_compatible0(const TYPE_DESC ftp1, const TYPE_DESC ftp2,
      * compare return types
      */
     if (!type_is_strict_compatible(FUNCTION_TYPE_RETURN_TYPE(bftp1),
-                                   FUNCTION_TYPE_RETURN_TYPE(bftp2))) {
+                                   FUNCTION_TYPE_RETURN_TYPE(bftp2), TRUE)) 
+    {
         if (debug_flag) {
             fprintf(debug_fp, "return types are not match\n");
         }
@@ -1262,7 +1306,7 @@ function_type_is_compatible0(const TYPE_DESC ftp1, const TYPE_DESC ftp2,
             }
         }
 
-        if (!type_is_strict_compatible(ID_TYPE(arg1), ID_TYPE(arg2))) {
+        if (!type_is_strict_compatible(ID_TYPE(arg1), ID_TYPE(arg2), TRUE)) {
             if (debug_flag) {
                 fprintf(debug_fp, "argument types are not match ('%s' and '%s')\n",
                         SYM_NAME(ID_SYM(arg1)), SYM_NAME(ID_SYM(arg2)));
@@ -1466,7 +1510,7 @@ procedure_is_assignable(const TYPE_DESC left, const TYPE_DESC right)
 
         return type_is_strict_compatible(
             FUNCTION_TYPE_RETURN_TYPE(left_ftp),
-            FUNCTION_TYPE_RETURN_TYPE(right_ftp));
+            FUNCTION_TYPE_RETURN_TYPE(right_ftp), TRUE);
 
     } else {
 
@@ -1506,7 +1550,7 @@ function_type_udpate(TYPE_DESC ftp, ID idList)
  * so this function is insufficient normal function/subroutine call.
  */
 int
-function_type_is_appliable(TYPE_DESC ftp, expv actual_args)
+function_type_is_appliable(TYPE_DESC ftp, expv actual_args, int issue_error)
 {
     expv actual_arg = NULL;
     ID dummy_arg;
@@ -1557,7 +1601,9 @@ function_type_is_appliable(TYPE_DESC ftp, expv actual_args)
             return FALSE;
         }
 
-        if (!type_is_strict_compatible(EXPV_TYPE(actual_arg), ID_TYPE(dummy_arg))) {
+        if (!type_is_strict_compatible(EXPV_TYPE(actual_arg), 
+            ID_TYPE(dummy_arg), issue_error)) 
+        {
             return FALSE;
         }
 

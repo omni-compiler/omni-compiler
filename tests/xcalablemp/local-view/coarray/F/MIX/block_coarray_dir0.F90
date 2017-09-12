@@ -13,7 +13,7 @@ block
      integer p1ok, q1ok, s1ok
 
 block
-     !integer nerr, me, me1
+     integer nerr, me, me1
 !$xmp coarray on p :: p1
       me=this_image()
 block

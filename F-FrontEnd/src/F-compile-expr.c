@@ -187,7 +187,8 @@ force_to_logical_type(expv v)
 int
 are_dimension_and_shape_conformant_by_type(expr x,
                                            TYPE_DESC lt, TYPE_DESC rt,
-                                           expv *shapePtr) {
+                                           expv *shapePtr, int issue_error) 
+{
     int ret = FALSE;
     expv lShape = list0(LIST);
     expv rShape = list0(LIST);
@@ -286,14 +287,15 @@ are_dimension_and_shape_conformant_by_type(expr x,
          */
         ret = TRUE;
     } else {
-        if (x != NULL) {
-            error_at_node(x,
-                          "incompatible dimension for the operation, "
-                          "%d and %d.",
-                          TYPE_N_DIM(lt), TYPE_N_DIM(rt));
-        } else {
-            error("incompatible dimension for the operation, %d and %d.",
-                  TYPE_N_DIM(lt), TYPE_N_DIM(rt));
+        if(issue_error) {
+            if (x != NULL) {
+                error_at_node(x,
+                    "error at node: incompatible dimension for the operation, "
+                    "%d and %d.", TYPE_N_DIM(lt), TYPE_N_DIM(rt));
+            } else {
+                error("error: incompatible dimension for the operation, %d and %d.",
+                    TYPE_N_DIM(lt), TYPE_N_DIM(rt));
+            }
         }
     }
 
@@ -308,8 +310,7 @@ are_dimension_and_shape_conformant(expr x,
                                    expv *shapePtr) {
     TYPE_DESC lt = EXPV_TYPE(left);
     TYPE_DESC rt = EXPV_TYPE(right);
-
-    return are_dimension_and_shape_conformant_by_type(x, lt, rt, shapePtr);
+    return are_dimension_and_shape_conformant_by_type(x, lt, rt, shapePtr, TRUE);
 }
 
 
@@ -402,7 +403,7 @@ compile_expression(expr x)
                 }
             }
 
-            ID_LINE(id) = EXPR_LINE(x); // set line number
+            if (!ID_LINE(id)) ID_LINE(id) = EXPR_LINE(x); // set line number if not set
 
             if (ID_CLASS(id) == CL_PROC ||
                 ID_CLASS(id) == CL_ENTRY ||
@@ -526,7 +527,7 @@ compile_expression(expr x)
             lt = EXPV_TYPE(left);
             rt = EXPV_TYPE(right);
             if(rt == NULL)
-                right = compile_expression(EXPR_ARG2(x));
+                right = compile_expression(EXPR_ARG2(x));                
 
             bLType = bottom_type(lt);
             bRType = bottom_type(rt);
@@ -722,10 +723,11 @@ compile_expression(expr x)
                  * if operator is logical operator,
                  * don't care about type but only shape.
                  */
-                if((biop == LOGIB || bType == bLType) && shape == lshape) {
-                    tp = lt;
+                 if((biop == LOGIB || bType == bLType) && shape == lshape) {
+                    tp = wrap_type(lt); // This `tp` turns into `bottom_type(tp)` 
+                    // later and `lt` == `bLType` if lt is not an array type
                 } else if ((biop == LOGIB || bType == bRType) && shape == rshape) {
-                    tp = rt;
+                    tp = wrap_type(rt); // same as above
                 } else {
                     /* NOTE:
                      * if shape is scalar (list0(LIST)), tp = bType.
@@ -741,9 +743,12 @@ compile_expression(expr x)
             doEmit:
 /* FEAST CHANGE start */
             /* if (type_is_not_fixed) */
-            if(type_is_not_fixed && tp)
+            if(type_is_not_fixed && tp) {
 /* FEAST CHANGE end */
+                // Apply the attribute NOT FIXED on the result type if one 
+                // operand type is NOT FIXED.
                 TYPE_SET_NOT_FIXED(bottom_type(tp));
+            }
             return expv_cons(op, tp, left, right);
         }
 
@@ -848,13 +853,20 @@ compile_expression(expr x)
                     error("an invalid constant expression, which has "
                           "a 'd' exponent and an explicit kind.");
                 }
+                /* if kind is differ, make new type desc.
+                   for example, type desc for l2 and l3 should be differ.
+                   l2 = .false.
+                   l3 = .false._1
+                */
+
+                /* Constant cannot have function call as kind specifier, this does
+                   not make any sense. Therefore, we keep the kind identifier as
+                   an identifier. */
+                if(EXPV_CODE(v2) == FUNCTION_CALL) {
+                    v2 = expv_sym_term(IDENT, EXPV_TYPE(v2), EXPR_SYM(EXPR_ARG2(x)));
+                }
+                TYPE_KIND(EXPV_TYPE(v1)) = v2;
             }
-            /* if kind is differ, make new type desc.
-               for example, type desc for l2 and l3 should be differ.
-               l2 = .false.
-               l3 = .false._1
-            */
-            TYPE_KIND(EXPV_TYPE(v1)) = v2;
             return v1;
         }
 
@@ -1089,10 +1101,12 @@ compile_ident_expression(expr x)
         goto done;
     }
 
-
-    if(ID_CLASS(id) == CL_PARAM){
-        if(VAR_INIT_VALUE(id) != NULL) 
-            return VAR_INIT_VALUE(id);
+    if(ID_CLASS(id) == CL_PARAM) {
+        if(VAR_INIT_VALUE(id) != NULL) {
+            if(EXPV_CODE(VAR_INIT_VALUE(id)) != F95_STRUCT_CONSTRUCTOR) {
+                return VAR_INIT_VALUE(id);
+            }
+        }
     }
 
 
@@ -1286,12 +1300,30 @@ compile_lhs_expression(x)
             }
         }
 
-        if(!IS_ARRAY_TYPE(tp)){
+        if (IS_ARRAY_TYPE(tp)) {
+            if ((v = compile_array_ref(id, NULL, EXPR_ARG2(x), TRUE)) == NULL)
+                goto err;
+
+        } else if (IS_FUNCTION_TYPE(tp)) {
+            /* assign to declared function result pointer */
+            expv args = compile_args(EXPR_ARG2(x));
+
+            if (TYPE_IS_POINTER(FUNCTION_TYPE_RETURN_TYPE(tp))) {
+                if ((v = compile_function_call(id, args)) == NULL)
+                    goto err;
+            } else if (!FUNCTION_TYPE_IS_DEFINED(ID_TYPE(id))) {
+                TYPE_SET_POINTER(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)));
+                PROC_CLASS(id) = P_UNDEFINEDPROC;
+                FUNCTION_TYPE_HAS_EXPLICIT_ARGS(ID_TYPE(id)) = TRUE;
+                ID_STORAGE(id) = STG_AUTO;
+                if ((v = compile_function_call(id, args)) == NULL)
+                    goto err;
+            }
+
+        } else {
             error("subscripts on scalar variable, '%s'",ID_NAME(id));
             goto err;
         }
-        if((v = compile_array_ref(id, NULL, EXPR_ARG2(x), TRUE)) == NULL)
-            goto err;
 
         return v;
         }
@@ -1348,14 +1380,22 @@ expv_is_this_func(expv v)
 }
 
 int
+expv_is_function_result_pointer(expv v)
+{
+    return EXPV_CODE(v) == FUNCTION_CALL && TYPE_IS_POINTER(EXPV_TYPE(v));
+}
+
+int
 expv_is_lvalue(expv v)
 {
     if (v == NULL) return FALSE;
     if (EXPV_IS_RVALUE(v) == TRUE) return FALSE;
     if (EXPR_CODE(v) == ARRAY_REF || EXPR_CODE(v) == F_VAR ||
-	EXPR_CODE(v) == F95_MEMBER_REF || EXPR_CODE(v) == XMP_COARRAY_REF)
+        EXPR_CODE(v) == F95_MEMBER_REF || EXPR_CODE(v) == XMP_COARRAY_REF)
         return TRUE;
     if (expv_is_this_func(v))
+        return TRUE;
+    if (expv_is_function_result_pointer(v))
         return TRUE;
     return FALSE;
 }
@@ -1489,6 +1529,16 @@ expv_assignment(expv v1, expv v2)
         type_is_compatible_for_assignment(tp1, tp2) == FALSE) {
         error("incompatible type in assignment.");
         return NULL;
+    }
+    if (IS_PROCEDURE_TYPE(EXPV_TYPE(v1)) &&
+        FUNCTION_TYPE_IS_TYPE_BOUND(EXPV_TYPE(v1))) {
+            error("lhs expr is type bound procedure.");
+            return NULL;
+    }
+    if (IS_PROCEDURE_TYPE(EXPV_TYPE(v2)) &&
+        FUNCTION_TYPE_IS_TYPE_BOUND(EXPV_TYPE(v2))) {
+            error("rhs expr is type bound procedure.");
+            return NULL;
     }
 
     if (TYPE_IS_RESHAPED(tp2) == FALSE &&
@@ -1812,26 +1862,10 @@ compile_array_ref(ID id, expv vary, expr args, int isLeft) {
      * copy type attributes from original type
      */
     if (id != NULL) {
-        if (TYPE_IS_POINTER(id)) {
-            TYPE_ATTR_FLAGS(tq) |= TYPE_IS_POINTER(id);
-        }
-        if (TYPE_IS_TARGET(id)) {
-            TYPE_ATTR_FLAGS(tq) |= TYPE_IS_TARGET(id);
-        }
-        if (TYPE_IS_VOLATILE(id)) {
-            TYPE_ATTR_FLAGS(tq) |= TYPE_IS_VOLATILE(id);
-        }
+        TYPE_SET_SUBOBJECT_PROPAGATE_ATTRS(tq, id);
     }
     while (tp != NULL) {
-        if (TYPE_IS_POINTER(tp)) {
-            TYPE_ATTR_FLAGS(tq) |= TYPE_IS_POINTER(tp);
-        }
-        if (TYPE_IS_TARGET(tp)) {
-            TYPE_ATTR_FLAGS(tq) |= TYPE_IS_TARGET(tp);
-        }
-        if (TYPE_IS_VOLATILE(tp)) {
-            TYPE_ATTR_FLAGS(tq) |= TYPE_IS_VOLATILE(tp);
-        }
+        TYPE_SET_SUBOBJECT_PROPAGATE_ATTRS(tq, tp);
         tp = TYPE_REF(tp);
     }
 
@@ -2198,7 +2232,7 @@ choose_module_procedure_by_args(EXT_ID mod_procedures, expv args)
 {
     EXT_ID ep;
     FOREACH_EXT_ID(ep, mod_procedures) {
-        if (function_type_is_appliable(EXT_PROC_TYPE(ep), args)) {
+        if (function_type_is_appliable(EXT_PROC_TYPE(ep), args, FALSE)) {
             return EXT_PROC_TYPE(ep);
         }
     }
@@ -2256,7 +2290,7 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
             } else {
                 /* f_id is function, but it's return type is unknown */
                 tp = function_type(new_type_desc());
-                TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) = TYPE_GNUMERIC;
+                TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) = TYPE_GNUMERIC_ALL;
             }
 
             TYPE_SET_USED_EXPLICIT(tp);
@@ -2309,6 +2343,11 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
                 tp = function_type(tp);
                 ID_TYPE(f_id) = tp;
                 EXPV_TYPE(ID_ADDR(f_id)) = ID_TYPE(f_id);
+            }
+
+            if (TYPE_IS_ABSTRACT(ID_TYPE(f_id))) {
+                error("'%s' is abstract", ID_NAME(f_id));
+                goto err;
             }
 
             TYPE_SET_USED_EXPLICIT(tp);
@@ -2623,8 +2662,10 @@ get_struct_members(TYPE_DESC struct_tp)
 }
 
 
-static int
-compile_struct_constructor_components(ID struct_id, TYPE_DESC struct_tp, expr args, expv components)
+static expv
+compile_struct_constructor_with_components(const ID struct_id,
+                                           const TYPE_DESC stp,
+                                           const expr args)
 {
     int has_keyword = FALSE;
     list lp;
@@ -2632,16 +2673,16 @@ compile_struct_constructor_components(ID struct_id, TYPE_DESC struct_tp, expr ar
     ID match = NULL;
     SYMBOL sym;
     expv v;
+    expv result, components;
+    TYPE_DESC tp;
+    components = list0(LIST);
+    result = list2(F95_STRUCT_CONSTRUCTOR, NULL, components);
 
     // Check PRIVATE components
     // (PRIVATE works if the derived type is use-associated)
     int is_use_associated = ID_USEASSOC_INFO(struct_id) != NULL;
 
-    if (struct_tp == NULL) {
-        struct_tp = ID_TYPE(struct_id);
-    }
-
-    members = get_struct_members(struct_tp);
+    members = get_struct_members(stp?:ID_TYPE(struct_id));
     cur = members;
 
     FOR_ITEMS_IN_LIST(lp, args) {
@@ -2658,12 +2699,12 @@ compile_struct_constructor_components(ID struct_id, TYPE_DESC struct_tp, expr ar
             // check keyword is duplicate
             if (find_ident_head(sym, used) != NULL) {
                 error("member'%s' is already specified", SYM_NAME(sym));
-                return FALSE;
+                return NULL;
             }
 
             if ((match = find_ident_head(sym, members)) == NULL) {
                 error("'%s' is not member", SYM_NAME(sym));
-                return FALSE;
+                return NULL;
             }
         } else {
             sym = NULL;
@@ -2671,12 +2712,12 @@ compile_struct_constructor_components(ID struct_id, TYPE_DESC struct_tp, expr ar
             if (has_keyword == TRUE) {
                 // KEYWORD connot be ommit after KEYWORD-ed arg
                 error("KEYWORD connot be ommited after the component with a keyword");
-                return FALSE;
+                return NULL;
             }
 
             if (cur == NULL) {
                 error("unexpected member");
-                return FALSE;
+                return NULL;
             }
 
             match = cur;
@@ -2688,7 +2729,7 @@ compile_struct_constructor_components(ID struct_id, TYPE_DESC struct_tp, expr ar
              !(TYPE_IS_PUBLIC(match) ||
                TYPE_IS_PUBLIC(ID_TYPE(match))))) {
             error("accessing a private component");
-            return FALSE;
+            return NULL;
         }
 
         v = compile_expression(arg);
@@ -2696,7 +2737,7 @@ compile_struct_constructor_components(ID struct_id, TYPE_DESC struct_tp, expr ar
         if (!type_is_compatible_for_assignment(ID_TYPE(match),
                                                EXPV_TYPE(v))) {
             error("type is not applicable in struct constructor");
-            return FALSE;
+            return NULL;
         }
 
         if (!has_keyword) {
@@ -2708,15 +2749,26 @@ compile_struct_constructor_components(ID struct_id, TYPE_DESC struct_tp, expr ar
         list_put_last(components, v);
     }
 
-    // check not initialized type parameters
+    /*
+     * check all members are initialized
+     */
     FOREACH_ID(ip, members) {
-        if (ID_CLASS(ip) != CL_TYPE_BOUND_PROC && !VAR_INIT_VALUE(ip)) {
+        if (ID_CLASS(ip) != CL_TYPE_BOUND_PROC && (
+                !VAR_INIT_VALUE(ip) &&
+                !TYPE_IS_ALLOCATABLE(ID_TYPE(ip)))) {
             error("member %s is not initialized", ID_NAME(ip));
-            return FALSE;
         }
     }
-    return TRUE;
 
+    if (TYPE_REF(stp)) {
+        tp = stp;
+    } else {
+        tp = wrap_type(stp);
+    }
+
+    EXPV_TYPE(result) = tp;
+
+    return result;
 }
 
 
@@ -2734,6 +2786,9 @@ compile_struct_constructor(ID struct_id, expr type_param_args, expr args)
 
     base_stp = find_struct_decl(ID_SYM(struct_id));
     assert(EXPV_TYPE(result) != NULL);
+    if (TYPE_IS_ABSTRACT(base_stp)) {
+        error("abstract type in an derived-type constructor");
+    }
 
     if (type_param_args) {
         tp = type_apply_type_parameter(base_stp, type_param_args);
@@ -2746,12 +2801,9 @@ compile_struct_constructor(ID struct_id, expr type_param_args, expr args)
         tp = base_stp;
     }
 
-    if(args) {
+    if (args) {
         EXPV_LINE(result) = EXPR_LINE(args);
-        if (!compile_struct_constructor_components(struct_id, tp,
-                                                   args, component)) {
-            return NULL;
-        }
+        return compile_struct_constructor_with_components(struct_id, tp, args);
     }
 
     if (tp == base_stp) {
@@ -2786,6 +2838,10 @@ compile_args(expr args)
                 error("an ambiguous reference to symbol '%s'", ID_NAME(id));
                 continue;
             }
+            if (type_is_nopolymorphic_abstract(ID_TYPE(id))) {
+                error("an abstract interface '%s' in the actual argument", ID_NAME(id));
+            }
+
             switch (ID_CLASS(id)) {
             case CL_PROC:
             case CL_ENTRY:
@@ -3121,11 +3177,15 @@ compile_array_constructor(expr x)
 
     l = list0(LIST);
     if ((base_type = compile_type(EXPR_ARG2(x), /*allow_predecl=*/FALSE)) != NULL) {
+        if (type_is_nopolymorphic_abstract(base_type)) {
+            error("abstract type in an array constructor");
+        }
         elem_type = get_basic_type(base_type);
         res = list1(F03_TYPED_ARRAY_CONSTRUCTOR, l);
     } else {
         res = list1(F95_ARRAY_CONSTRUCTOR, l);
     }
+
 
     FOR_ITEMS_IN_LIST(lp, EXPR_ARG1(x)) {
         nElems++;
@@ -3193,7 +3253,8 @@ compile_type_bound_procedure_call(expv memberRef, expr args) {
         FOREACH_ID(bind, TYPE_BOUND_GENERIC_TYPE_GENERICS(ftp)) {
             bindto = find_struct_member_allow_private(stp, ID_SYM(bind), TRUE);
             if (TYPE_REF(ID_TYPE(bindto)) &&
-                function_type_is_appliable(TYPE_REF(ID_TYPE(bindto)), a)) {
+                function_type_is_appliable(TYPE_REF(ID_TYPE(bindto)), a, TRUE)) 
+            {
                 ftp = TYPE_REF(ID_TYPE(bindto));
                 /* EXPV_TYPE(memberRef) = ftp; */
             }
@@ -3212,7 +3273,7 @@ compile_type_bound_procedure_call(expv memberRef, expr args) {
         // for type-bound PROCEDURE
         if (ftp != NULL) {
 #if 0 // to be solved
-            if (function_type_is_appliable(ftp, a)) {
+            if (function_type_is_appliable(ftp, a, TRUE)) {
                 error("argument type mismatch");
             }
 #endif
@@ -3287,14 +3348,14 @@ compile_member_array_ref(expr x, expv v)
         expv new_v = compile_array_ref(NULL, v, indices, TRUE);
         new_tp = EXPV_TYPE(new_v);
 
-        if ((TYPE_IS_POINTER(tp) || TYPE_IS_TARGET(tp) || TYPE_IS_VOLATILE(tp)) &&
-           !(TYPE_IS_POINTER(new_tp) || TYPE_IS_TARGET(new_tp) || TYPE_IS_VOLATILE(new_tp))) {
+        if (TYPE_HAS_SUBOBJECT_PROPAGATE_ATTRS(tp) &&
+            !TYPE_HAS_SUBOBJECT_PROPAGATE_ATTRS(new_tp)) {
             TYPE_DESC btp = bottom_type(new_tp);
             if(!EXPR_HAS_ARG1(shape))
                 generate_shape_expr(new_tp, shape);
             btp = wrap_type(btp);
-            TYPE_ATTR_FLAGS(btp) |=
-                    TYPE_IS_POINTER(tp) | TYPE_IS_TARGET(tp) | TYPE_IS_VOLATILE(tp);
+            TYPE_SET_SUBOBJECT_PROPAGATE_ATTRS(btp, tp);
+            TYPE_SET_SUBOBJECT_PROPAGATE_EXTATTRS(btp, tp);
             new_tp = btp;
         }
         new_tp = compile_dimensions(new_tp, shape);

@@ -920,7 +920,7 @@ public class XMParray {
       Xobject offset = info.getAlignSubscriptOffset();
       Xobject alb = info.getLower();
       Xobject tlb = this.getAlignTemplate().getLowerAt(info.getAlignSubscriptIndex());
-      if ((offset != null && !offset.isZeroConstant()) || !alb.equals(tlb))
+      if ((offset != null && !offset.isZeroConstant()) || !alb.equals(tlb) || !getAlignTemplate().isFixed())
 	  return info.getArrayOffsetVar().Ref();
       else
 	  return null;

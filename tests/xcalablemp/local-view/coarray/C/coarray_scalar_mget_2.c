@@ -2,7 +2,7 @@
 #define FALSE 0
 #include <stdio.h>
 #include <xmp.h>
-#pragma xmp nodes p(2)
+#pragma xmp nodes p[2]
 #define N 10
 long a[N];
 float b[N][N];
@@ -18,25 +18,25 @@ int status, return_val = 0;
 void initialize_coarrays(int me)
 {
   for(int i=0;i<N;i++){
-    a[i] = i + me*100;
+    a[i] = i + (me+1)*100;
     a_test[i] = a[i];
   }
 
   for(int i=0;i<N;i++)
     for(int j=0;j<N;j++){
-      b[i][j] = i*N + j + me*100;
+      b[i][j] = i*N + j + (me+1)*100;
       b_test[i][j] = b[i][j];
     }
 
   for(int i=0;i<N;i++)
     for(int j=0;j<N;j++)
       for(int k=0;k<N;k++){
-	c[i][j][k] = i*N*N + j*N + k + me*100;
+	c[i][j][k] = i*N*N + j*N + k + (me+1)*100;
 	c_test[i][j][k] = c[i][j][k];
       }
 
   for(int i=0;i<N;i++){
-    d[i] = i + me*100;
+    d[i] = i + (me+1)*100;
     d_test[i] = d[i];
   }
 
@@ -45,10 +45,9 @@ void initialize_coarrays(int me)
 
 void test_1(int me)
 {
-  if(me == 2){
+  if(me == 1){
     long tmp;
-    tmp = a[1]:[1];
-    //    xmp_sync_memory(&status);
+    tmp = a[1]:[0];
     a[1] = tmp;
 
     a_test[1] = 101;
@@ -74,15 +73,15 @@ void check_1(int me){
 
 void test_2(int me)
 {
-  if(me == 1){
+  if(me == 0){
     float tmp[2][3];
-    tmp[0:2][0] = b[1][1]:[2];
+    tmp[0:2][0] = b[1][1]:[1];
 
     b[0][0] = tmp[0][0];
     b[1][0] = tmp[1][0];
   }
 
-  if(me == 1){
+  if(me == 0){
     b_test[0][0] = 211;
     b_test[1][0] = 211;
   }
@@ -110,12 +109,9 @@ void check_2(int me){
 void test_3(int me){
 
   xmp_sync_all(&status);
-  if(me == 2){
-    c[0][1:3:3][2] = c[1][2][3]:[1];
-
-  }
-  
-  if(me == 2){
+  if(me == 1){
+    c[0][1:3:3][2] = c[1][2][3]:[0];
+    
     c_test[0][1][2] = 223;
     c_test[0][4][2] = 223;
     c_test[0][7][2] = 223;
@@ -145,8 +141,8 @@ void check_3(int me){
 
 void test_4(int me)
 {
-  if(me == 2){
-    d[1:5] = d[4]:[1];
+  if(me == 1){
+    d[1:5] = d[4]:[0];
 
     d_test[1] = 104;
     d_test[2] = 104;
@@ -174,18 +170,14 @@ void check_4(int me){
 }
 
 int main(){
-  int me = xmp_node_num();
+  int me = xmpc_this_image();
   
   initialize_coarrays(me);
   
-  test_1(me);
-  check_1(me);
-  test_2(me);
-  check_2(me);
-  test_3(me);
-  check_3(me);
-  test_4(me);
-  check_4(me);
+  test_1(me);  check_1(me);
+  test_2(me);  check_2(me);
+  test_3(me);  check_3(me);
+  test_4(me);  check_4(me);
 
 #pragma xmp barrier
 #pragma xmp reduction(MAX:return_val)

@@ -35,6 +35,7 @@ run: $(EXES)
 	$(XRUN) -n 2 $(XRUN_ENV) ./reflect_array4d_dist4d.x
 	$(XRUN) -n 2 $(XRUN_ENV) ./reflect_array4d_dist4d_width2.x
 	$(XRUN) -n 2 $(XRUN_ENV) ./reflect_array4d_dist4d_lxux.x
+	$(XRUN) -n 4 $(XRUN_ENV) ./reflect_reallocated.x
 	$(XRUN) -n 4 $(XRUN_ENV) ./shadow_reflect_mem.x
 
 submit: $(EXES) $(XSCRIPT)

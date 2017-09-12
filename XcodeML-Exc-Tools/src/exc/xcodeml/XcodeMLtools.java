@@ -101,7 +101,8 @@ public abstract class XcodeMLtools {
     // process type table part
     n = getElement(rootNode, "typeTable");
     list = n.getChildNodes();
-    for (int i = 0; i < list.getLength(); i++) {
+    int len =  list.getLength();
+    for (int i = 0; i < len; i++) {
       nn = list.item(i);
       if (nn.getNodeType() != Node.ELEMENT_NODE)
 	continue;
@@ -118,7 +119,8 @@ public abstract class XcodeMLtools {
     // process global declarations
     n = getElement(rootNode, "globalDeclarations");
     list = n.getChildNodes();
-    for (int i = 0; i < list.getLength(); i++) {
+    len = list.getLength();
+    for (int i = 0; i < len; i++) {
       nn = list.item(i);
       if (nn.getNodeType() != Node.ELEMENT_NODE)
         continue;
@@ -127,8 +129,8 @@ public abstract class XcodeMLtools {
 
     setIdentDecl(xobjFile);
     xobjFile.setParentRecursively(null);
-
-     return xobjFile;
+    
+    return xobjFile;
   }
 
   Xobject toIdentList(Node n) {

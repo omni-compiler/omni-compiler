@@ -1,13 +1,15 @@
-extern void	xmp_init(int *argc, char ***argv);
+#include "mpi.h"
+#include "xmp.h"
 extern int ixmp_sub();
-extern void xmp_finalize();
-int main(int argc, char **argv) {
 
-  xmp_init(&argc, &argv);
+int main(int argc, char **argv)
+{
+  MPI_Init(&argc, &argv);
+  xmp_init(MPI_COMM_WORLD);
 
   ixmp_sub();
 
   xmp_finalize();
-
+  MPI_Finalize();
   return 0;
 }

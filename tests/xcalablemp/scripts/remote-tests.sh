@@ -53,6 +53,7 @@ cd ${TMP_DIR}/${OMNI}
 make clean-tests > /dev/null
 make clean-tests-F2003 > /dev/null
 make clean > /dev/null
+rm -rf .git .gitignore
 cd ..
 tar cfj ${ARCHIVE} ${OMNI}
 

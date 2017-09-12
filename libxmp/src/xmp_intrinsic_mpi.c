@@ -7,7 +7,7 @@ void _XMP_mpi_atomic_define(int target_rank, _XMP_coarray_t *c, size_t offset, i
   }
 
   MPI_Win win = _XMP_mpi_coarray_get_window(c, /*is_acc*/false);
-  MPI_Aint raddr = (MPI_Aint)( (char*)c->addr[target_rank] + elmt_size * offset );
+  MPI_Aint raddr = (MPI_Aint)( _XMP_mpi_coarray_get_remote_addr(c, target_rank, /*is_acc*/false) + elmt_size * offset );
 
   // MPI RMA is used even if the target is same to the origin because of avoiding public/private window synchronization
   // MPI_Accumulate with MPI_REPLACE act as MPI_Put
@@ -25,7 +25,7 @@ void _XMP_mpi_atomic_ref(int target_rank, _XMP_coarray_t *c, size_t offset, int 
   }
 
   MPI_Win win = _XMP_mpi_coarray_get_window(c, /*is_acc*/false);
-  MPI_Aint raddr = (MPI_Aint)( (char*)c->addr[target_rank] + elmt_size * offset );
+  MPI_Aint raddr = (MPI_Aint)( _XMP_mpi_coarray_get_remote_addr(c, target_rank, /*is_acc*/false) + elmt_size * offset );
 
   // MPI RMA is used even if the target is same to the origin because of avoiding public/private window synchronization
   // MPI_Fetch_and_op or MPI_Get_accumulate with MPI_NO_OP act as MPI_Get

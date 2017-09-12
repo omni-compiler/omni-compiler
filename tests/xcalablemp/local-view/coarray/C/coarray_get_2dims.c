@@ -1,19 +1,16 @@
 #include <stdio.h>
 #include <xmp.h>
-#pragma xmp nodes p(*)
+#pragma xmp nodes p[*]
 #define SIZE 10
 #define DIMS 2
 int a[SIZE][SIZE]:[*], b[SIZE][SIZE]:[*], ret = 0;
 
-
-
 int main(){
   int start[DIMS], len[DIMS], stride[DIMS];
-  int status;
-
+  
   for(int i=0;i<SIZE;i++)
     for(int j=0;j<SIZE;j++)
-      b[i][j] = xmp_node_num();
+      b[i][j] = xmpc_this_image();
 
   for(start[0]=0;start[0]<2;start[0]++){
     for(len[0]=1;len[0]<=SIZE;len[0]++){
@@ -27,17 +24,17 @@ int main(){
 		  for(int j=0;j<SIZE;j++)
 		    a[i][j] = -1;
 
-		xmp_sync_all(&status);
+		xmp_sync_all(NULL);
 
-		if(xmp_node_num() == 1){
+		if(xmpc_this_image() == 0){
 		  a[start[0]:len[0]:stride[0]][start[1]:len[1]:stride[1]] 
-		    = b[start[0]:len[0]:stride[0]][start[1]:len[1]:stride[1]]:[2];
+		    = b[start[0]:len[0]:stride[0]][start[1]:len[1]:stride[1]]:[1];
 
 		  for(int i=0;i<len[0];i++){
 		    for(int j=0;j<len[1];j++){
 		      int position0 = start[0]+i*stride[0];
 		      int position1 = start[1]+j*stride[1];
-		      if(a[position0][position1] != 2){
+		      if(a[position0][position1] != 1){
 			fprintf(stderr, "a[%d:%d:%d][%d:%d:%d] ", 
 				start[0], len[0], stride[0], start[1], len[1], stride[1]);
 			ret = -1;
@@ -55,9 +52,9 @@ int main(){
   }
 
  end:
-  xmp_sync_all(&status);
+  xmp_sync_all(NULL);
 #pragma xmp bcast(ret)
-  if(xmp_node_num() == 1)
+  if(xmpc_this_image() == 0)
     if(ret == 0) printf("PASS\n");
     else fprintf(stderr, "ERROR\n");
 

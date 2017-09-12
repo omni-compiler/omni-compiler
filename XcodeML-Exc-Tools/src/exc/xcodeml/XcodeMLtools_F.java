@@ -97,7 +97,8 @@ public class XcodeMLtools_F extends XcodeMLtools {
       | (getAttrBool(n, "is_volatile") ? Xtype.TQ_FVOLATILE : 0)
       | (getAttrBool(n, "is_class") ? Xtype.TQ_FCLASS : 0)
       | (getAttrBool(n, "is_value") ? Xtype.TQ_FVALUE : 0)
-      | (getAttrBool(n, "is_procedure") ? Xtype.TQ_FPROCEDURE : 0);
+      | (getAttrBool(n, "is_procedure") ? Xtype.TQ_FPROCEDURE : 0)
+      | (getAttrBool(n, "is_contiguous") ? Xtype.TQ_FCONTIGUOUS : 0);
 
     String intent = getAttr(n, "intent");
 
@@ -272,7 +273,8 @@ public class XcodeMLtools_F extends XcodeMLtools {
     XobjList tparam_list = (XobjList) toXobject(getElement(n, "typeParams"));
     XobjList id_list = (XobjList) toXobject(getElement(n, "symbols"));
     XobjList proc_list = (XobjList) toXobject(getElement(n, "typeBoundProcedures"));
-    StructType type = new StructType(tid, parent_tid, id_list, proc_list, tq, null, tparam_list);
+    Xobject finalProcedure = toXobject(getElement(n, "finalProcedure"));
+    StructType type = new StructType(tid, parent_tid, id_list, proc_list, tq, null, tparam_list, finalProcedure);
 
     String bind = getAttr(n, "bind");
     if(bind != null){
@@ -654,11 +656,19 @@ public class XcodeMLtools_F extends XcodeMLtools {
       return setCommonAttributes(n, x);
 
     case F_STOP_STATEMENT:
+    case F_ERROR_STOP_STATEMENT:
       {
 	t = getAttr(n, "code");
 	Xobject cd = (t == null ? null : Xcons.String(t));
 	t = getAttr(n, "message");
-	Xobject mes = (t == null ? null : Xcons.FcharacterConstant(Xtype.FcharacterType, t, null));
+	Xobject mes = null;
+	if (t != null){
+	  mes = Xcons.FcharacterConstant(Xtype.FcharacterType, t, null);
+	}
+	else {
+	  mes = toXobject(getContent(getElement(n, "message")));
+	}
+	//	Xobject mes = (t == null ? null : Xcons.FcharacterConstant(Xtype.FcharacterType, t, null));
 	return setCommonAttributes(n, Xcons.List(code, type, cd, mes));
       }
 
@@ -683,6 +693,11 @@ public class XcodeMLtools_F extends XcodeMLtools {
       return setCommonAttributes(n, Xcons.List(code, type,
 					       Xcons.String(t),
 					       toXobject(getElement(n, "valueList"))
+					       ));
+
+    case F_FLUSH_STATEMENT:
+      return setCommonAttributes(n, Xcons.List(code, type,
+					       toXobject(getElement(n, "namedValueList"))
 					       ));
 
     case F_DO_LOOP:
@@ -713,6 +728,7 @@ public class XcodeMLtools_F extends XcodeMLtools {
       x = Xcons.String(t);
       return setCommonAttributes(n, Xcons.List(code, type, x));
 
+    case F_DATA_STATEMENT:
     case F_DATA_DECL:
       return setCommonAttributes(n, Xcons.List(code, type, Xcons.List(toXobject(getElement(n, "varList")), toXobject(getElement(n, "valueList")))));
 
@@ -721,11 +737,80 @@ public class XcodeMLtools_F extends XcodeMLtools {
 
     case F_ALLOCATE_STATEMENT:
     case F_DEALLOCATE_STATEMENT:
-      x = Xcons.List(code, type);
-      x.add(getSymbol(n, "stat_name"));
-      x.add(getChildList(n));
-      return setCommonAttributes(n, x);
+      {
+	// x = Xcons.List(code, type);
+	// //x.add(getSymbol(n, "stat_name"));
+	// //x.add(getChildList(n));
 
+	// XobjList xx = Xcons.List();
+
+	// NodeList list = n.getChildNodes();
+	// for (int i = 0; i < list.getLength(); i++) {
+	//   Node nn = list.item(i);
+	//   String name = nn.getNodeName();
+	//   if (name == "allocOpt"){
+	//     switch (getAttr(nn, "kind")){
+	//     case "stat":
+	//       XobjList v = getChildList(nn);
+	//       x.add(v.getArg(0));
+	//       break;
+	//     default:
+	//       // for this moment, do nothing.
+	//     }
+	//     continue;
+	//   }
+	//   else if (name == "alloc"){
+	//     xx.add(toXobject(nn));
+	//   }
+	//   else
+	//     continue;
+	// }
+
+	// if (x.Nargs() == 0) x.add(null);
+	// x.add(xx);
+
+	x = Xcons.List(code, type, null, null, null, null, null);
+	XobjList xx = Xcons.List();
+	Xobject v = null;
+
+	NodeList list = n.getChildNodes();
+	for (int i = 0; i < list.getLength(); i++) {
+	  Node nn = list.item(i);
+	  String name = nn.getNodeName();
+	  if (name == "allocOpt"){
+	    switch (getAttr(nn, "kind")){
+	    case "stat":
+	      v = getChildList(nn);
+	      x.setArg(0, v.getArg(0));
+	      break;
+	    case "source":
+	      v = getChildList(nn);
+	      x.setArg(2, v.getArg(0));
+	      break;
+	    case "mold":
+	      v = getChildList(nn);
+	      x.setArg(3, v.getArg(0));
+	      break;
+	    case "errmsg":
+	      v = getChildList(nn);
+	      x.setArg(4, v.getArg(0));
+	      break;
+	    default:
+	      fatal("Unknown AllocOpt: " + nn);
+	    }
+	    continue;
+	  }
+	  else if (name == "alloc"){
+	    xx.add(toXobject(nn));
+	  }
+	  else
+	    continue;
+	}
+
+	x.setArg(1, xx);
+	  
+	return setCommonAttributes(n, x);
+      }
     case F_CONTAINS_STATEMENT:
       {
 	XobjList xx = Xcons.List(code, type);
@@ -781,6 +866,12 @@ public class XcodeMLtools_F extends XcodeMLtools {
                                                 ));
       }
 
+    case F_FINAL_PROCEDURE:
+      {
+	return setCommonAttributes(n, Xcons.List(code, toXobject(getElement(n, "name"))
+                                                ));
+      }
+      
     case F_TYPE_BOUND_GENERIC_PROCEDURE:
       {
         int tq = (getAttrBool(n, "is_private") ? Xtype.TQ_FPRIVATE : 0)
@@ -815,6 +906,7 @@ public class XcodeMLtools_F extends XcodeMLtools {
       return toXobject(getContent(n));
 
     case F_FORALL_STATEMENT:
+    case F_DO_CONCURRENT_STATEMENT:
       {
         XobjList xobj = new XobjList(code, type);
         xobj.add(getSymbol(n, "construct_name"));

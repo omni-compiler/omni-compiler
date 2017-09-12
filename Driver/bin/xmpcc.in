@@ -175,6 +175,7 @@ for c_file in "${c_files[@]}"; do
 	    FILE_CU=${TEMP_DIR}/"${FILE_NAME}"_pp.cu
 	    if [ -e "${FILE_CU}" ]; then
 		GPUCC_ADD_ARGS=(`omni_acc_cuda_get_args ${other_args[@]}`)
+		GPUCC_ADD_ARGS+=("-arch=sm_`omni_acc_cuda_get_cc_version ${OPENACC_DEVICE}`")
 		omni_acc_cuda_compile ${FILE_CU} ${FILE_O} ${GPUCC_ADD_ARGS[@]}
 	    fi
 	elif [ $OPENACC_PLATFORM = "OpenCL" ]; then
@@ -211,7 +212,7 @@ OMNI_TRAVERSE_OPT="--C --nm ${NM}"
 [ "${TARGET}" = "powerpc-hitachi-aix" ] && OMNI_TRAVERSE_OPT="${OMNI_TRAVERSE_OPT} --sr"
 [ $ENABLE_OPENACC = true ] && OMNI_TRAVERSE_ACC_OPT="${OMNI_TRAVERSE_OPT} --prefix acc"
 OMNI_TRAVERSE_OPT="${OMNI_TRAVERSE_OPT} --prefix xmpc"
-omni_exec $OMNI_TRAVERSE $OMNI_TRAVERSE_OPT -o $TRAVERSE_FILE_C "${obj_files[@]}" "${archive_files[@]}"
+omni_exec $OMNI_TRAVERSE $OMNI_TRAVERSE_OPT -o $TRAVERSE_FILE_C "${obj_files[@]}" "${archive_files[@]}" ${OMNI_HOME}/lib/libxmp.a
 
 omni_exec $OMNI_MPICC_CMD -c $TRAVERSE_FILE_C -o $TRAVERSE_FILE_O
 

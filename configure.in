@@ -1,5 +1,5 @@
 AC_PREREQ([2.69])
-AC_INIT([Omni Compiler], [1.1.2], [omni-compiler@googlegroups.com], [omni])
+AC_INIT([Omni Compiler], [1.2.1], [omni-compiler@googlegroups.com], [omni])
 AC_CONFIG_AUX_DIR([./buildutils])
 AC_CONFIG_MACRO_DIR([./buildutils])
 AC_CANONICAL_TARGET
@@ -2140,7 +2140,7 @@ if test -z "${MAKE}"; then
     MAKE=make
 fi
 
-API_FLAVOR=NATA_API_POSIX
+API_FLAVOR=OMNI_API_POSIX
 TARGET_ARCH=POSIX
 case $OS in
 sunos*)
@@ -2166,7 +2166,7 @@ cygwin*)
 mingw32ce)
     OS=windowsce
     TARGET_ARCH=WINDOWS
-    API_FLAVOR=NATA_API_WIN32API;;
+    API_FLAVOR=OMNI_API_WIN32API;;
 mingw32*)
     case $CPU in
     x86_64*)
@@ -2178,7 +2178,7 @@ mingw32*)
     esac
     OS_LIBS="-lpthread -loleaut32 -lws2_32 -lwinmm"
     TARGET_ARCH=WINDOWS
-    API_FLAVOR=NATA_API_WIN32API;;
+    API_FLAVOR=OMNI_API_WIN32API;;
 esac
 
 OS_CXXFLAGS=${OS_CFLAGS}
@@ -2190,8 +2190,8 @@ AC_SUBST(OS_LDFLAGS)
 AC_SUBST(OS_LIBS)
 
 changequote(<<, >>)
-CPUDEF=NATA_CPU_`echo $CPU | tr '[a-z]' '[A-Z]'`
-OSDEF=NATA_OS_`echo $OS | tr '[a-z]' '[A-Z]'`
+CPUDEF=OMNI_CPU_`echo $CPU | tr '[a-z]' '[A-Z]'`
+OSDEF=OMNI_OS_`echo $OS | tr '[a-z]' '[A-Z]'`
 changequote([, ])
 AC_SUBST(CPUDEF)
 AC_SUBST(OSDEF)
@@ -2234,19 +2234,22 @@ unset program_transform_name
 
 #--------------------------------------------------------------------
 # Set version file
-VERSIONTXT="./Driver/etc/version"
-
-# If possible, set more information
 if test -d .git || test -f .git; then
-    which git 1>/dev/null 2>/dev/null
-    if test $? -eq 0; then
-        VERSION_INFO=`git log --date=short --pretty=format:"Last Commit Day:%ad, Hash Value:%h" -1`
-        echo -n Version:AC_PACKAGE_VERSION, ${VERSION_INFO} > ${VERSIONTXT}
+  which git 1>/dev/null 2>/dev/null
+  if test $? -eq 0; then
+    VERSION_INFO=`git log --date=short --pretty=format:"Git Hash:%h" -1`
+    if test "${NIGHTLY_BUILD}" != ""; then
+      echo -n Version:AC_PACKAGE_VERSION-${NIGHTLY_BUILD}, ${VERSION_INFO} > ./Driver/etc/version
     else
-        echo -n Version:AC_PACKAGE_VERSION > ${VERSIONTXT}
+      echo -n Version:AC_PACKAGE_VERSION, ${VERSION_INFO} > ./Driver/etc/version
     fi
-else
-    echo -n Version:AC_PACKAGE_VERSION > ${VERSIONTXT}
+  else
+    echo -n Version:AC_PACKAGE_VERSION > ./Driver/etc/version
+  fi
+#else
+# Stable and nightly build version don't have ".git",
+# and already have "./Driver/etc/version".
+# Thus, do nothing.
 fi
 
 # check use one-sided

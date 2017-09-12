@@ -359,10 +359,17 @@ public class XMPtranslateLocalPragma {
   private void translateAlign(PragmaBlock pb) throws XMPexception {
     checkDeclPragmaLocation(pb);
 
-    XobjList alignDecl = (XobjList)pb.getClauses();
-    XobjList alignNameList = (XobjList)alignDecl.getArg(0);
-    XobjList alignDeclCopy = (XobjList)alignDecl.copy();
+    XobjList alignDecl             = (XobjList)pb.getClauses();
+    XobjList alignNameList         = (XobjList)alignDecl.getArg(0);
+    XobjList alignSubscriptList    = (XobjList)alignDecl.getArg(3);
+    XobjList alignSubscriptVarList = (XobjList)alignSubscriptList.left();
+    
+    String kind_bracket = alignSubscriptList.getTail().getString();
+    boolean isSquare    = kind_bracket.equals("SQUARE");
+    alignSubscriptList.removeLastArgs(); // Remove information of ROUND or SQUARE
+    if(isSquare) alignSubscriptVarList.reverse();
 
+    XobjList alignDeclCopy = (XobjList)alignDecl.copy();
     Iterator<Xobject> iter = alignNameList.iterator();
     while (iter.hasNext()) {
       Xobject x = iter.next();
