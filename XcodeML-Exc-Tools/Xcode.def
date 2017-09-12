@@ -11,6 +11,7 @@ T   IDENT
 T   STRING_CONSTANT            XbcStringConstant
 T   INT_CONSTANT               XbcIntConstant              XbfFintConstant
 T   FLOAT_CONSTANT             XbcFloatConstant            XbfFrealConstant
+T   LONG_CONSTANT
 T   LONGLONG_CONSTANT	       XbcLonglongConstant         XbfFintConstant
 T   MOE_CONSTANT               XbcMoeConstant
 
