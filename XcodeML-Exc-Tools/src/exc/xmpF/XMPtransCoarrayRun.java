@@ -148,7 +148,7 @@ public class XMPtransCoarrayRun
     = new ArrayList<XMPtransCoarrayRun>();
 
   // coarrays in the Ident List are divied into two:
-  private ArrayList<XMPcoarray> localCoarrays;    // procedire-local coarrays
+  private ArrayList<XMPcoarray> localCoarrays;    // procedure-local coarrays
   private ArrayList<XMPcoarray> moduleCoarrays;   // coarrays copied into this procedure
   // localCoarrays are divided into four:
   private ArrayList<XMPcoarray> staticLocalCoarrays;
