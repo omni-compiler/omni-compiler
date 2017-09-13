@@ -1,11 +1,6 @@
 module mod1
+  use issue268_mod, ONLY: sub1, fct1
 contains
-  subroutine sub1()
-  end subroutine
-
-  function fct1()
-    real :: fct1
-  end function
 
   subroutine sub2(sub1, fct1)
     external sub1, fct1
