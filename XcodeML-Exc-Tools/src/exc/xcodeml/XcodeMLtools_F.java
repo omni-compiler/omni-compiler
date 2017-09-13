@@ -98,7 +98,8 @@ public class XcodeMLtools_F extends XcodeMLtools {
       | (getAttrBool(n, "is_class") ? Xtype.TQ_FCLASS : 0)
       | (getAttrBool(n, "is_value") ? Xtype.TQ_FVALUE : 0)
       | (getAttrBool(n, "is_procedure") ? Xtype.TQ_FPROCEDURE : 0)
-      | (getAttrBool(n, "is_contiguous") ? Xtype.TQ_FCONTIGUOUS : 0);
+      | (getAttrBool(n, "is_contiguous") ? Xtype.TQ_FCONTIGUOUS : 0)
+      | (getAttrBool(n, "is_asynchronous") ? Xtype.TQ_FASYNCHRONOUS : 0);
 
     String intent = getAttr(n, "intent");
 

@@ -578,6 +578,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         case F_REWIND_STATEMENT:
         case F_BACKSPACE_STATEMENT:
 	case F_FLUSH_STATEMENT:
+	case F_WAIT_STATEMENT:
             e = addChildNode(createElement(name),
                              trans(xobj.getArgOrNull(0)));
             break;
@@ -1058,7 +1059,8 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
                       "is_volatile", toBoolStr(type.isFvolatile()),
                       "is_class", toBoolStr(type.isFclass()),
                       "is_value", toBoolStr(type.isFvalue()),
-		      "is_contiguous", toBoolStr(type.isFcontiguous()));
+		      "is_contiguous", toBoolStr(type.isFcontiguous()),
+		      "is_asynchronous", toBoolStr(type.isFasynchronous()));
 
         if (type.isFintentIN()) {
             addAttributes(basicTypeElem, "intent", "in");

@@ -75,7 +75,8 @@ public class Xtype
     public static final long TQ_FVALUE               = 1 << 30;  // value
     public static final long TQ_FMODULE              = 1 << 31;  // module
     public static final long TQ_FPROCEDURE           = 1 << 32;  // procedure
-    public static final long TQ_FCONTIGUOUS          = 1 << 33;  // procedure
+    public static final long TQ_FCONTIGUOUS          = 1 << 33;  // contiguous
+    public static final long TQ_FASYNCHRONOUS        = 1 << 34;  // asynchronous
 
     private String type_id;
     private int type_kind;
@@ -770,6 +771,18 @@ public class Xtype
         setTypeQualFlag(TQ_FCONTIGUOUS, enabled);
     }
 
+    /** Fortran : return if is asynchronous */
+    public final boolean isFasynchronous()
+    {
+      return getTypeQualFlag(TQ_FASYNCHRONOUS);
+    }
+
+    /** Fortran : set attribute 'is_asynchronous' */
+    public final void setIsFasynchronous(boolean enabled)
+    {
+        setTypeQualFlag(TQ_FASYNCHRONOUS, enabled);
+    }
+    
     /** Fortran : return if is qualified by 'bind' in pointer decl */
     public final String getBind()
     {
