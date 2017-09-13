@@ -5187,10 +5187,6 @@ outx_id_declarations(int l, ID id_list, int hasResultVar, const char * functionN
                 continue;
             }
 
-            if(ID_IS_OFMODULE(id) == TRUE && ID_MODULE_NAME(id) != modname){
-                continue;
-            }
-
             if (TYPE_IS_MODIFIED(ID_TYPE(id)) == TRUE) {
                 continue;
             }
