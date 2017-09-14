@@ -4633,12 +4633,16 @@ compile_EXTERNAL_decl(expr id_list)
             if (ID_TYPE(id) != NULL && !IS_PROCEDURE_TYPE(ID_TYPE(id))) {
                 ID_TYPE(id) = function_type(ID_TYPE(id));
             }
-
             TYPE_SET_EXTERNAL(id);
         } else if (PROC_CLASS(id) != P_EXTERNAL) {
             error_at_node(id_list,
                           "invalid external declaration, %s", ID_NAME(id));
             continue;
+        }
+
+        if(ID_IS_DUMMY_ARG(id)){
+            // Force void dummy args
+            ID_TYPE(id) = type_VOID;
         }
 
         if(!(ID_IS_DUMMY_ARG(id)))

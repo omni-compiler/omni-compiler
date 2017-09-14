@@ -5181,7 +5181,7 @@ outx_id_declarations(int l, ID id_list, int hasResultVar, const char * functionN
          */
         for (i = 0; i < nIDs; ++i) {
             id = ids[i];
-
+            
             if (hasResultVar == TRUE && functionName != NULL &&
                 strcasecmp(functionName, SYM_NAME(ID_SYM(id))) == 0) {
                 continue;
