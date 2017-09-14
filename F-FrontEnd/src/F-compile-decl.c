@@ -1739,6 +1739,22 @@ find_external_cont_ident_head(SYMBOL s)
     return NULL;
 }
 
+static int
+in_interface()
+{
+    int i;
+    CTL cp;
+    FOR_CTLS_BACKWARD(cp) {
+        if (CTL_TYPE(cp) == CTL_INTERFACE)
+            return TRUE;
+    }
+    for (i = 0; i < unit_ctl_level; i++) {
+        if (UNIT_CTL_CURRENT_STATE(unit_ctls[i]) == ININTR)
+            return TRUE;
+    }
+    return FALSE;
+}
+
 
 /*
  * Find an identifier from the outiside of the current scope.
@@ -1776,6 +1792,9 @@ find_ident(SYMBOL s)
     ip = find_ident_local(s);
     if (ip != NULL) {
         return ip;
+    }
+    if (in_interface()) {
+        return NULL;
     }
     return find_ident_outer_scope(s);
 }
@@ -3851,6 +3870,9 @@ find_struct_decl(SYMBOL s)
     if (tp != NULL) {
         return tp;
     }
+    if (in_interface()) {
+        return NULL;
+    }
     tp = find_struct_decl_block_parent(s);
     if (tp != NULL) {
         return tp;
@@ -4633,12 +4655,16 @@ compile_EXTERNAL_decl(expr id_list)
             if (ID_TYPE(id) != NULL && !IS_PROCEDURE_TYPE(ID_TYPE(id))) {
                 ID_TYPE(id) = function_type(ID_TYPE(id));
             }
-
             TYPE_SET_EXTERNAL(id);
         } else if (PROC_CLASS(id) != P_EXTERNAL) {
             error_at_node(id_list,
                           "invalid external declaration, %s", ID_NAME(id));
             continue;
+        }
+
+        if(ID_IS_DUMMY_ARG(id)){
+            // Force void dummy args
+            ID_TYPE(id) = type_VOID;
         }
 
         if(!(ID_IS_DUMMY_ARG(id)))

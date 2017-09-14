@@ -91,6 +91,7 @@ public class XcodeMLtools_F extends XcodeMLtools {
       | (getAttrBool(n, "is_pointer") ? Xtype.TQ_FPOINTER : 0)
       | (getAttrBool(n, "is_private") ? Xtype.TQ_FPRIVATE : 0)
       | (getAttrBool(n, "is_public") ? Xtype.TQ_FPUBLIC : 0)
+      | (getAttrBool(n, "is_protected") ? Xtype.TQ_FPROTECTED : 0)
       | (getAttrBool(n, "is_save") ? Xtype.TQ_FSAVE : 0)
       | (getAttrBool(n, "is_target") ? Xtype.TQ_FTARGET : 0)
       | (getAttrBool(n, "is_cray_pointer") ? Xtype.TQ_FCRAY_POINTER : 0) //#060c
@@ -98,7 +99,8 @@ public class XcodeMLtools_F extends XcodeMLtools {
       | (getAttrBool(n, "is_class") ? Xtype.TQ_FCLASS : 0)
       | (getAttrBool(n, "is_value") ? Xtype.TQ_FVALUE : 0)
       | (getAttrBool(n, "is_procedure") ? Xtype.TQ_FPROCEDURE : 0)
-      | (getAttrBool(n, "is_contiguous") ? Xtype.TQ_FCONTIGUOUS : 0);
+      | (getAttrBool(n, "is_contiguous") ? Xtype.TQ_FCONTIGUOUS : 0)
+      | (getAttrBool(n, "is_asynchronous") ? Xtype.TQ_FASYNCHRONOUS : 0);
 
     String intent = getAttr(n, "intent");
 
@@ -231,6 +233,7 @@ public class XcodeMLtools_F extends XcodeMLtools {
       | (getAttrBool(n, "is_intrinsic") ? Xtype.TQ_FINTRINSIC : 0)
       | (getAttrBool(n, "is_private") ? Xtype.TQ_FPRIVATE : 0)
       | (getAttrBool(n, "is_public") ? Xtype.TQ_FPUBLIC : 0)
+      | (getAttrBool(n, "is_protected") ? Xtype.TQ_FPROTECTED : 0)
       | (getAttrBool(n, "is_program") ? Xtype.TQ_FPROGRAM : 0)
       | (getAttrBool(n, "is_elemental") ? Xtype.TQ_FELEMENTAL : 0)
       | (getAttrBool(n, "is_recursive") ? Xtype.TQ_FRECURSIVE : 0)
@@ -272,6 +275,7 @@ public class XcodeMLtools_F extends XcodeMLtools {
 	      : 0)
       | (getAttrBool(n, "is_private") ? Xtype.TQ_FPRIVATE : 0)
       | (getAttrBool(n, "is_public") ? Xtype.TQ_FPUBLIC : 0)
+      | (getAttrBool(n, "is_protected") ? Xtype.TQ_FPROTECTED : 0)
       | (getAttrBool(n, "is_sequence") ? Xtype.TQ_FSEQUENCE : 0);
 
     XobjList tparam_list = (XobjList) toXobject(getElement(n, "typeParams"));
@@ -860,7 +864,8 @@ public class XcodeMLtools_F extends XcodeMLtools {
         XobjString pass     = Xcons.String(getAttr(n, "pass"         ));
         XobjString pass_arg = Xcons.String(getAttr(n, "pass_arg_name"));
         long tq = (getAttrBool(n, "is_private") ? Xtype.TQ_FPRIVATE : 0)
-               | (getAttrBool(n, "is_public" ) ? Xtype.TQ_FPUBLIC  : 0);
+               | (getAttrBool(n, "is_public" ) ? Xtype.TQ_FPUBLIC  : 0)
+	       | (getAttrBool(n, "is_protected") ? Xtype.TQ_FPROTECTED : 0);
         Node bdg = getElement(n, "binding");
         return setCommonAttributes(n, Xcons.List(code, type, pass, pass_arg,
                                                  toXobject(getElement(n, "name")),
@@ -879,7 +884,8 @@ public class XcodeMLtools_F extends XcodeMLtools {
     case F_TYPE_BOUND_GENERIC_PROCEDURE:
       {
         long tq = (getAttrBool(n, "is_private") ? Xtype.TQ_FPRIVATE : 0)
-               | (getAttrBool(n, "is_public" ) ? Xtype.TQ_FPUBLIC  : 0);
+               | (getAttrBool(n, "is_public" ) ? Xtype.TQ_FPUBLIC  : 0)
+	       | (getAttrBool(n, "is_protected") ? Xtype.TQ_FPROTECTED : 0);
         Node bdg = getElement(n, "binding");
         return setCommonAttributes(n, Xcons.List(code, (Xtype)null,
                                                  getAttrIntFlag(n, "is_operator"),
