@@ -50,32 +50,34 @@ public class Xtype
     //
     public static final long TQ_FPUBLIC              = 1 << 6;   // public
     public static final long TQ_FPRIVATE             = 1 << 7;   // private
-    public static final long TQ_FPOINTER             = 1 << 8;   // pointer
-    public static final long TQ_FOPTIONAL            = 1 << 9;   // optional
-    public static final long TQ_FTARGET              = 1 << 10;  // target
-    public static final long TQ_FSAVE                = 1 << 11;  // save
-    public static final long TQ_FPARAMETER           = 1 << 12;  // parameter
-    public static final long TQ_FALLOCATABLE         = 1 << 13;  // allocatable
-    public static final long TQ_FINTENT_IN           = 1 << 14;  // intent(in)
-    public static final long TQ_FINTENT_OUT          = 1 << 15;  // intent(out)
-    public static final long TQ_FINTENT_INOUT        = 1 << 16;  // intent(inout)
-    public static final long TQ_FPROGRAM             = 1 << 17;  // program
-    public static final long TQ_FINTRINSIC           = 1 << 18;  // intrinsic
-    public static final long TQ_FELEMENTAL           = 1 << 19;  // elemental
-    public static final long TQ_FIMPURE              = 1 << 20;  // impure
-    public static final long TQ_FPURE                = 1 << 21;  // pure
-    public static final long TQ_FRECURSIVE           = 1 << 22;  // recursive
-    public static final long TQ_FINTERNAL            = 1 << 23;  // internal
-    public static final long TQ_FEXTERNAL            = 1 << 24;  // external
-    public static final long TQ_FSEQUENCE            = 1 << 25;  // sequence
-    public static final long TQ_FINTERNAL_PRIVATE    = 1 << 26;  // private in structure decl
-    public static final long TQ_FCRAY_POINTER        = 1 << 27;  // cray pointer (ID=060c)
-    public static final long TQ_FVOLATILE            = 1 << 28;  // volatile
-    public static final long TQ_FCLASS               = 1 << 29;  // class
-    public static final long TQ_FVALUE               = 1 << 30;  // value
-    public static final long TQ_FMODULE              = 1 << 31;  // module
-    public static final long TQ_FPROCEDURE           = 1 << 32;  // procedure
-    public static final long TQ_FCONTIGUOUS          = 1 << 33;  // procedure
+    public static final long TQ_FPROTECTED           = 1 << 8;   // protected
+    public static final long TQ_FPOINTER             = 1 << 9;   // pointer
+    public static final long TQ_FOPTIONAL            = 1 << 10;  // optional
+    public static final long TQ_FTARGET              = 1 << 11;  // target
+    public static final long TQ_FSAVE                = 1 << 12;  // save
+    public static final long TQ_FPARAMETER           = 1 << 13;  // parameter
+    public static final long TQ_FALLOCATABLE         = 1 << 14;  // allocatable
+    public static final long TQ_FINTENT_IN           = 1 << 15;  // intent(in)
+    public static final long TQ_FINTENT_OUT          = 1 << 16;  // intent(out)
+    public static final long TQ_FINTENT_INOUT        = 1 << 17;  // intent(inout)
+    public static final long TQ_FPROGRAM             = 1 << 18;  // program
+    public static final long TQ_FINTRINSIC           = 1 << 19;  // intrinsic
+    public static final long TQ_FELEMENTAL           = 1 << 20;  // elemental
+    public static final long TQ_FIMPURE              = 1 << 21;  // impure
+    public static final long TQ_FPURE                = 1 << 22;  // pure
+    public static final long TQ_FRECURSIVE           = 1 << 23;  // recursive
+    public static final long TQ_FINTERNAL            = 1 << 24;  // internal
+    public static final long TQ_FEXTERNAL            = 1 << 25;  // external
+    public static final long TQ_FSEQUENCE            = 1 << 26;  // sequence
+    public static final long TQ_FINTERNAL_PRIVATE    = 1 << 27;  // private in structure decl
+    public static final long TQ_FCRAY_POINTER        = 1 << 28;  // cray pointer (ID=060c)
+    public static final long TQ_FVOLATILE            = 1 << 29;  // volatile
+    public static final long TQ_FCLASS               = 1 << 30;  // class
+    public static final long TQ_FVALUE               = 1 << 31;  // value
+    public static final long TQ_FMODULE              = 1 << 32;  // module
+    public static final long TQ_FPROCEDURE           = 1 << 33;  // procedure
+    public static final long TQ_FCONTIGUOUS          = 1 << 34;  // contiguous
+    public static final long TQ_FASYNCHRONOUS        = 1 << 35;  // asynchronous
 
     private String type_id;
     private int type_kind;
@@ -464,6 +466,18 @@ public class Xtype
         setTypeQualFlag(TQ_FPRIVATE, enabled);
     }
 
+    /** Fortran : return if is qualified by 'protected' */
+    public final boolean isFprotected()
+    {
+        return getTypeQualFlag(TQ_FPROTECTED);
+    }
+
+    /** Fortran : set qualifier 'protected' */
+    public final void setIsFprotected(boolean enabled)
+    {
+        setTypeQualFlag(TQ_FPROTECTED, enabled);
+    }
+    
     /** Fortran : return if is qualified by 'pointer' */
     public final boolean isFpointer()
     {
@@ -770,6 +784,18 @@ public class Xtype
         setTypeQualFlag(TQ_FCONTIGUOUS, enabled);
     }
 
+    /** Fortran : return if is asynchronous */
+    public final boolean isFasynchronous()
+    {
+      return getTypeQualFlag(TQ_FASYNCHRONOUS);
+    }
+
+    /** Fortran : set attribute 'is_asynchronous' */
+    public final void setIsFasynchronous(boolean enabled)
+    {
+        setTypeQualFlag(TQ_FASYNCHRONOUS, enabled);
+    }
+    
     /** Fortran : return if is qualified by 'bind' in pointer decl */
     public final String getBind()
     {

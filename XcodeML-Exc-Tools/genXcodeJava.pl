@@ -180,6 +180,7 @@ print OUT<<_EOL_;
         case F_LOCK_STATEMENT:              case F_UNLOCK_STATEMENT:
         case F_BLOCK_STATEMENT:
         case SELECT_TYPE_STATEMENT:         case TYPE_GUARD:
+        case F_WAIT_STATEMENT:
             return true;
         }
         return false;

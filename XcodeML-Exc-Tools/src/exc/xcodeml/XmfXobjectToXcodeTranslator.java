@@ -578,6 +578,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         case F_REWIND_STATEMENT:
         case F_BACKSPACE_STATEMENT:
 	case F_FLUSH_STATEMENT:
+	case F_WAIT_STATEMENT:
             e = addChildNode(createElement(name),
                              trans(xobj.getArgOrNull(0)));
             break;
@@ -1048,6 +1049,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         addAttributes(basicTypeElem,
                       "is_public", toBoolStr(type.isFpublic()),
                       "is_private", toBoolStr(type.isFprivate()),
+		      "is_protected", toBoolStr(type.isFprotected()),
                       "is_pointer", toBoolStr(type.isFpointer()),
                       "is_target", toBoolStr(type.isFtarget()),
                       "is_optional", toBoolStr(type.isFoptional()),
@@ -1058,7 +1060,8 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
                       "is_volatile", toBoolStr(type.isFvolatile()),
                       "is_class", toBoolStr(type.isFclass()),
                       "is_value", toBoolStr(type.isFvalue()),
-		      "is_contiguous", toBoolStr(type.isFcontiguous()));
+		      "is_contiguous", toBoolStr(type.isFcontiguous()),
+		      "is_asynchronous", toBoolStr(type.isFasynchronous()));
 
         if (type.isFintentIN()) {
             addAttributes(basicTypeElem, "intent", "in");
@@ -1127,6 +1130,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
                     "FstructType",
                     "is_public", toBoolStr(type.isFpublic()),
                     "is_private", toBoolStr(type.isFprivate()),
+		    "is_protected", toBoolStr(type.isFprotected()),
                     "is_sequence", toBoolStr(type.isFsequence()),
                     "is_internal_private", toBoolStr(type.isFinternalPrivate()),
                     "extends", ((CompositeType)type).parentId(),
@@ -1149,6 +1153,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
                     "is_external", toBoolStr(type.isFexternal()),
                     "is_public", toBoolStr(type.isFpublic()),
                     "is_private", toBoolStr(type.isFprivate()),
+		    "is_protected", toBoolStr(type.isFprotected()),
                     "bind", type.getBind(),
                     "bind_name", type.getBindName(),
                     "is_module", toBoolStr(type.isFmodule()));
@@ -1509,6 +1514,8 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             addAttributes(e, "is_private", "true");
           else if ((tq & Xtype.TQ_FPUBLIC) != 0)
             addAttributes(e, "is_public", "true");
+          else if ((tq & Xtype.TQ_FPROTECTED) != 0)
+            addAttributes(e, "is_protected", "true");
           addChildNode(e, addChildNode(createElement("binding"), transName(xobj.getArg(4))));
           addAttributes(e, "is_non_overridable", intFlagToBoolStr(xobj.getArgOrNull(5)));
         } else if (xobj.Opcode() == Xcode.F_FINAL_PROCEDURE) {
@@ -1524,6 +1531,8 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             addAttributes(e, "is_private", "true");
           else if ((tq & Xtype.TQ_FPUBLIC) != 0)
             addAttributes(e, "is_public", "true");
+          else if ((tq & Xtype.TQ_FPROTECTED) != 0)
+            addAttributes(e, "is_protected", "true");
           Element bdgn = createElement("binding");
           if (xobj.getArg(4) != null) {
               for (Xobject a : (XobjList)xobj.getArg(4)) {
