@@ -5,11 +5,13 @@
 #ifndef XMPF_INTERNAL_COARRAY_H
 #define XMPF_INTERNAL_COARRAY_H
 
-#include "xmpf_internal.h"
-
 #define BOOL   int
 #define TRUE   1
 #define FALSE  0
+
+#include "xmpf_internal.h"
+#include "xmp_co_internal.h"
+
 
 // GET/PUT Interface types
 // (see also XcodeML-Exc-Tools/src/exc/xmpF/XMPcoindexObj.java)
@@ -80,8 +82,6 @@ extern void xmpf_this_image_coarray_(void **descPtr, int *corank, int image[]);
 extern int xmpf_this_image_coarray_dim_(void **descPtr, int *corank, int *dim);
 
 /* xmpf_coarray_alloc.c */
-typedef struct _coarrayInfo_t CoarrayInfo_t;
-
 extern void xmpf_coarray_malloc_(void **descPtr, char **crayPtr,
                                  int *count, int *element, void **tag);
 extern void xmpf_coarray_regmem_(void **descPtr, void *var,
@@ -113,27 +113,6 @@ extern int xmpf_coarray_get_image_index_(void **descPtr, int *corank, ...);
 extern int xmpf_coarray_malloc_bytes_(void);
 extern int xmpf_coarray_allocated_bytes_(void);
 extern int xmpf_coarray_garbage_bytes_(void);
-
-// xmp_co_alloc.c
-extern char *_XMP_CO_get_coarrayName(void *descPtr);
-extern char *_XMP_CO_get_coarrayBaseAddr(void *descPtr);
-extern size_t _XMP_CO_get_coarraySize(void *descPtr);
-extern size_t _XMP_CO_get_coarrayOffset(void *descPtr, char *addr);
-
-extern void *_XMP_CO_get_coarrayChunkDesc(void *descPtr);
-extern char *_XMP_CO_get_coarrayChunkOrgAddr(void *descPtr);
-extern size_t _XMP_CO_get_coarrayChunkSize(void *descPtr);
-extern size_t _XMP_CO_get_coarrayChunkOffset(void *descPtr, char *addr);
-
-extern void *_XMP_CO_get_cntlDataCoarrayDesc(char **baseAddr, size_t *offset,
-                                           char **name);
-extern void *_XMP_CO_get_localBufCoarrayDesc(char **baseAddr, size_t *offset,
-                                           char **name);
-//extern BOOL _XMP_CO_isAddrInRangeOfCoarray(char *localAddr, void *descPtr);    // obsolated ?
-extern BOOL _XMP_CO_isAddrInCoarrayChunk(char *localAddr, void *descPtr);
-extern void *_XMP_CO_get_coarrayDescFromAddr(char *localAddr, char **orgAddr,
-                                           size_t *offset, char **nameAddr);
-extern MPI_Comm _XMP_CO_get_communicatorFromDescPtr(void *descPtr);
 
 // for COARRAY directive
 extern void _XMPF_coarray_set_nodes(CoarrayInfo_t *cinfo, _XMP_nodes_t *nodes);

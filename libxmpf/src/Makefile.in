@@ -18,7 +18,9 @@ INCDIR       = @OMNI_HOME@/include
 WORKDIR      = ./include_work
 LIBXMPF      = libxmpf.a
 F_MAIN_O     = xmpf_main.o
-HEADERS   = $(XMPF_INC_DIR)/xmpf_internal.h $(XMPF_INC_DIR)/xmpf_internal_coarray.h                       $(XMPF_INC_DIR)/xmpf_internal_co_alloc.h \
+HEADERS   = $(XMPF_INC_DIR)/xmpf_internal.h \
+	    $(XMPF_INC_DIR)/xmpf_internal_coarray.h \
+	    $(XMP_INC_DIR)/xmp_co_internal.h \
 	    $(XMP_INC_DIR)/xmp.h $(XMP_INC_DIR)/xmp_internal.h $(XMP_INC_DIR)/xmp_func_decl.h \
 	    ../../include/config.h
 OBJECTS   = xmpf_array.o xmpf_async.o xmpf_gcomm.o xmpf_gmove.o xmpf_index.o xmpf_lib.o \

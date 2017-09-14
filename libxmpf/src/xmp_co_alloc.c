@@ -1,7 +1,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include "xmpf_internal_coarray.h"
-#include "xmpf_internal_co_alloc.h"
+#include "xmp_co_alloc.h"
 
 /*****************************************\
   static variables

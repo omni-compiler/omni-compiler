@@ -1,7 +1,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include "xmpf_internal_coarray.h"
-#include "xmpf_internal_co_alloc.h"
+#include "xmp_co_alloc.h"
 
 
 static char* _to_Nth(int n);
@@ -98,7 +98,7 @@ void xmpf_coarray_malloc_pool_()
 
 void xmpf_coarray_count_size_(int *count, int *element)
 {
-  xmp_coarray_count_size(*count, (size_t)(*element));
+  _XMP_CO_count_size(*count, (size_t)(*element));
 }
 
 
@@ -128,9 +128,8 @@ void xmpf_coarray_epilog_(void **tag)
 void xmpf_coarray_find_descptr_(void **descPtr, char *addr,
                                 int *namelen, char *name)
 {
-  *descPtr = xmp_coarray_find_descptr(addr, *namelen, name);
+  *descPtr = _XMP_CO_find_descptr(addr, *namelen, name);
 }
-
 
 
 /*****************************************\

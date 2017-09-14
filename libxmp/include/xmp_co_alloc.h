@@ -1,10 +1,7 @@
-/**************************************************\
-    internal header for Coarray Memory Allocation
-\**************************************************/
+// only for xmp_co_alloc.c
 
-#ifndef XMPF_INTERNAL_CO_ALLOC_H
-#define XMPF_INTERNAL_CO_ALLOC_H
-
+#ifndef _XMP_CO_ALLOC_H
+#define _XMP_CO_ALLOC_H
 
 /*****************************************\
   macro definitions
@@ -51,23 +48,6 @@
 #define IsEmptyMemoryChunk(chk)  ((chk)->headCoarray->next->next == NULL)
 
 #define IsEmptyResourceSet(rs)   ((rs)->headChunk->next->next == NULL)
-
-
-/*****************************************\
-  typedef
-\*****************************************/
-
-// MEMORY MANAGEMENT STRUCTURE-I (for automatic deallocation)
-typedef struct _resourceSet_t  ResourceSet_t;
-typedef struct _memoryChunk_t  MemoryChunk_t;
-//typedef struct _coarrayInfo_t  CoarrayInfo_t;   moved into xmpf_internal_coarray.h
-
-// MEMORY MANAGEMENT STRUCTURE-II (for dynamic ALLOCATE/DEALLOCATE stmts.)
-typedef struct _memoryChunkStack_t  MemoryChunkStack_t;
-typedef struct _memoryChunkOrder_t  MemoryChunkOrder_t;
-
-// MEMORY MANAGEMENT STRUCTURE-III (for binary search in memory chunks)
-typedef struct _sortedChunkTable_t  SortedChunkTable_t;
 
 
 /*****************************************\
@@ -146,92 +126,4 @@ struct _sortedChunkTable_t {
 };
 
 
-/*****************************************\
-  hidden inquire functions
-\*****************************************/
-
-extern size_t xmp_coarray_malloc_bytes(void);
-extern size_t xmp_coarray_allocated_bytes(void);
-extern size_t xmp_coarray_garbage_bytes(void);
-
-
-/*****************************************\
-  Allocation & Registration
-\*****************************************/
-extern void _XMP_CO_malloc_coarray(void **descPtr, char **addr,
-                                   int count, size_t element,
-                                   ResourceSet_t *rset);
-extern void _XMP_CO_regmem_coarray(void **descPtr, void *var,
-                                   int count, size_t element,
-                                   ResourceSet_t *rset);
-extern void _XMP_CO_alloc_static_coarray(void **descPtr, char **addr,
-                                         int count, size_t element,
-                                         int namelen, char *name);
-extern void _XMP_CO_regmem_static_coarray(void **descPtr, void *var,
-                                          int count, size_t element,
-                                          int namelen, char *name);
-
-/*****************************************\
-  Deallocation & Deregistration
-\*****************************************/
-extern void _XMP_CO_free_coarray(CoarrayInfo_t *cinfo);
-extern void _XMP_CO_deregmem_coarray(CoarrayInfo_t *cinfo);
-
-/*****************************************\
-  Initialization/Finalization
-  Handling memory pool
-\*****************************************/
-extern void _XMP_CO_malloc_pool(void);
-extern void _XMP_CO_alloc_static(void **descPtr, char **crayPtr,
-                                 int count, size_t element,
-                                 int namelen, char *name);
-
-
-extern void xmp_coarray_count_size(int count, size_t element);
-
-extern MPI_Comm _XMP_CO_communicatorFromCoarrayInfo(CoarrayInfo_t *cinfo);
-
-extern void _XMP_CO_prolog(void **tag, int namelen, char *name);
-extern void _XMP_CO_epilog(void **tag);
-
-/*****************************************\
-  Find descriptor from the local address
-\*****************************************/
-extern void* xmp_coarray_find_descptr(char *addr, int namelen, char *name);
-
-/*****************************************\
-  set attributes of CoarrayInfo
-\*****************************************/
-extern void _XMP_CO_set_corank(CoarrayInfo_t *cp, int corank);
-extern void _XMP_CO_set_codim_withBOUNDS(CoarrayInfo_t *cp, int dim,
-                                         int lb, int ub);
-extern void _XMP_CO_set_varname(CoarrayInfo_t *cp, int namelen,
-                                char *name);
-extern CoarrayInfo_t* _XMP_CO_set_nodes(CoarrayInfo_t *cinfo,
-                                        _XMP_nodes_t *nodes);
-
-/*****************************************\
-   STRUCTURE-II
-   management of the history of malloc/free
-\*****************************************/
-extern MemoryChunkOrder_t *_XMP_CO_newMemoryChunkOrder(MemoryChunk_t *chunk);
-extern void _XMP_CO_garbageCollectMallocHistory(void);
-extern void _XMP_CO_unlinkMemoryChunkOrder(MemoryChunkOrder_t *chunkP2);
-extern void _XMP_CO_freeMemoryChunkOrder(MemoryChunkOrder_t *chunkP);
-
-
-/*****************************************\
-  lower library functions and variables
-\*****************************************/
-extern void *MALLOC(size_t size);
-extern void *CALLOC(size_t nmemb, size_t size);
-extern void _FREE(void *ptr);
-extern void FREE_ResourceSet_t(ResourceSet_t *rset);
-extern void FREE_MemoryChunkOrder_t(MemoryChunkOrder_t *chunkp);
-extern void FREE_MemoryChunk_t(MemoryChunk_t *chunk);
-extern void FREE_CoarrayInfo_t(CoarrayInfo_t *cinfo);
-extern void FREE_string(char *name);
-extern void FREE_int_n(int *intp, int n);
-
-
-#endif /*XMPF_INTERNAL_CO_ALLOC_H*/
+#endif
