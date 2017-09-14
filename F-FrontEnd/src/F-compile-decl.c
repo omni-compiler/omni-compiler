@@ -1739,6 +1739,22 @@ find_external_cont_ident_head(SYMBOL s)
     return NULL;
 }
 
+static int
+in_interface()
+{
+    int i;
+    CTL cp;
+    FOR_CTLS_BACKWARD(cp) {
+        if (CTL_TYPE(cp) == CTL_INTERFACE)
+            return TRUE;
+    }
+    for (i = 0; i < unit_ctl_level; i++) {
+        if (UNIT_CTL_CURRENT_STATE(unit_ctls[i]) == ININTR)
+            return TRUE;
+    }
+    return FALSE;
+}
+
 
 /*
  * Find an identifier from the outiside of the current scope.
@@ -1776,6 +1792,9 @@ find_ident(SYMBOL s)
     ip = find_ident_local(s);
     if (ip != NULL) {
         return ip;
+    }
+    if (in_interface()) {
+        return NULL;
     }
     return find_ident_outer_scope(s);
 }
@@ -3850,6 +3869,9 @@ find_struct_decl(SYMBOL s)
     tp = find_struct_decl_head(s, LOCAL_STRUCT_DECLS);
     if (tp != NULL) {
         return tp;
+    }
+    if (in_interface()) {
+        return NULL;
     }
     tp = find_struct_decl_block_parent(s);
     if (tp != NULL) {
