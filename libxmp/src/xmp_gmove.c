@@ -5024,11 +5024,11 @@ _XMP_gmove_larray_garray(_XMP_gmv_desc_t *gmv_desc_leftp,
     _XMP_fatal("wrong assign statement for gmove");
   }
 
-  if(mode == _XMP_N_GMOVE_NORMAL){
-    if(dst_scalar_flag && src_scalar_flag){
+  if (mode == _XMP_N_GMOVE_NORMAL){
+    if (dst_scalar_flag && src_scalar_flag){
       char *dst_addr = (char *)gmv_desc_leftp->local_data;
-      for (int i=0;i<dst_dim;i++)
-	dst_addr += ((dst_l[i] - 1)* dst_d[i]) * type_size;
+      for (int i = 0; i < dst_dim; i++)
+	dst_addr += ((dst_l[i] - gmv_desc_leftp->a_lb[i]) * dst_d[i]) * type_size;
       _XMP_gmove_BCAST_GSCALAR(dst_addr, src_array, src_l);
       return;
     }

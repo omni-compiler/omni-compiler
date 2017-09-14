@@ -180,7 +180,7 @@ xmpc_gmv_do(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp,
       // in _XMP_gmove_1to1)
       _XMP_array_t *a = NULL;
       _XMPC_larray_alloc(&a, gmv_desc_leftp,
-			   gmv_desc_rightp->a_desc->type, gmv_desc_rightp->a_desc->align_template);
+			 gmv_desc_rightp->a_desc->type, gmv_desc_rightp->a_desc->align_template);
       _XMP_gmove_larray_garray(gmv_desc_leftp, gmv_desc_rightp, mode);
       _XMP_finalize_array_desc(a);
 
