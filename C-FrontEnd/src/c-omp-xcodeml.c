@@ -126,10 +126,11 @@ void out_OMP_arrayRef(FILE *fp,int indent, CExprOfBinaryNode *arrayRef)
 void out_OMP_subscript(FILE *fp,int indent, CExpr *subscript)
 {
     int indent1 = indent + 1;
+    outxPrint(fp, indent, "<list>\n");
     if (EXPR_CODE(subscript) != EC_UNDEF) {
-      outxContext(fp, indent, subscript); //single subscript
+      outxContext(fp, indent1, subscript); //single subscript
     } else {
-      outxPrint(fp, indent, "<list>\n");
+      outxPrint(fp, indent1, "<list>\n");
 
       CExpr *lower = exprListHeadData(subscript);
       CExpr *tmpLower = NULL;
@@ -137,7 +138,7 @@ void out_OMP_subscript(FILE *fp,int indent, CExpr *subscript)
         lower = tmpLower = (CExpr*)allocExprOfNumberConst2(0, BT_INT);
       }
 
-      outxContext(fp, indent1, lower);
+      outxContext(fp, indent1+1, lower);
       if (tmpLower) {
         freeExpr(tmpLower);
       }
@@ -145,11 +146,12 @@ void out_OMP_subscript(FILE *fp,int indent, CExpr *subscript)
       if (EXPR_L_SIZE(subscript) > 1) {
         CExpr *length = exprListNextNData(subscript, 1);
         if (! EXPR_ISNULL(length)){
-          outxContext(fp, indent1, length);
+          outxContext(fp, indent1+1, length);
         }
       }
-      outxPrint(fp, indent, "</list>\n");
+      outxPrint(fp, indent1, "</list>\n");
     }
+    outxPrint(fp, indent, "</list>\n");
 }
 
 char *ompDirectiveName(int c)
