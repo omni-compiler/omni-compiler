@@ -99,8 +99,7 @@ void xmpf_coarray_deregmem_(void **descPtr)
 
 
 /*****************************************\
-  Initialization/Finalization
-  Handling memory pool
+  Initialization for memory pool
 \*****************************************/
 
 void xmpf_coarray_malloc_pool_()
@@ -108,22 +107,25 @@ void xmpf_coarray_malloc_pool_()
   _XMP_CO_malloc_pool();
 }
 
-
 void xmpf_coarray_count_size_(int *count, int *element)
 {
   _XMP_CO_count_size(*count, (size_t)(*element));
 }
 
 
+/*****************************************\
+  Prologue/epilogue code for each procedure
+\*****************************************/
+
 void xmpf_coarray_prolog_(void **tag, int *namelen, char *name)
 {
-  _XMP_CO_prolog(tag, *namelen, name);
+  _XMP_CO_prolog((ResourceSet_t**)tag, *namelen, name);
 }
 
 
 void xmpf_coarray_epilog_(void **tag)
 {
-  _XMP_CO_epilog(tag);
+  _XMP_CO_epilog((ResourceSet_t**)tag);
 }
 
 
@@ -141,7 +143,7 @@ void xmpf_coarray_epilog_(void **tag)
 void xmpf_coarray_find_descptr_(void **descPtr, char *addr,
                                 int *namelen, char *name)
 {
-  *descPtr = _XMP_CO_find_descptr(addr, *namelen, name);
+  *descPtr = (void*)_XMP_CO_find_descptr(addr, *namelen, name);
 }
 
 
@@ -162,7 +164,7 @@ void xmpf_coarray_set_corank_(void **descPtr, int *corank)
 void xmpf_coarray_set_codim_(void **descPtr, int *dim, int *lb, int *ub)
 {
   CoarrayInfo_t *cp = (CoarrayInfo_t*)(*descPtr);
-  _XMP_CO_set_codim_withBOUNDS(cp, *dim, *lb, *ub);
+  _XMP_CO_set_codim_withBounds(cp, *dim, *lb, *ub);
 }
 
 

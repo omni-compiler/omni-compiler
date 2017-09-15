@@ -217,7 +217,8 @@ int _XMPF_get_initial_image_withDescPtr(int image, void *descPtr)
   if (descPtr == NULL)
     return _transImage_current2initial(image);
 
-  MPI_Comm nodesComm = _XMP_CO_get_communicatorFromDescPtr(descPtr);
+  MPI_Comm nodesComm =
+    _XMP_CO_communicatorFromCoarrayInfo((CoarrayInfo_t*)descPtr);
   if (nodesComm == MPI_COMM_NULL)
     return _transImage_current2initial(image);
 

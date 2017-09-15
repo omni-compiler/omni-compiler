@@ -77,7 +77,7 @@ struct _memoryChunk_t {
   BOOL             isGarbage;    // true if already encountered DEALLOCATE stmt
   char            *orgAddr;      // local address of the allocated memory
   size_t           nbytes;       // allocated size of memory [bytes]
-  void            *desc;         // address of the lower layer's descriptor 
+  void            *desc;         // descriptor in the lower-layer library
   CoarrayInfo_t   *headCoarray;
   CoarrayInfo_t   *tailCoarray;
 };

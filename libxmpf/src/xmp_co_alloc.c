@@ -3,6 +3,18 @@
 #include "xmpf_internal_coarray.h"
 #include "_xmp_co_alloc.h"
 
+
+static void *MALLOC(size_t size);
+static void *CALLOC(size_t nmemb, size_t size);
+static void _FREE(void *ptr);
+static void FREE_ResourceSet_t(ResourceSet_t *rset);
+static void FREE_MemoryChunkOrder_t(MemoryChunkOrder_t *chunkp);
+static void FREE_MemoryChunk_t(MemoryChunk_t *chunk);
+static void FREE_CoarrayInfo_t(CoarrayInfo_t *cinfo);
+static void FREE_string(char *name);
+static void FREE_int_n(int *intp, int n);
+
+
 /*****************************************\
   static variables
 \*****************************************/
@@ -53,6 +65,7 @@ static MemoryChunk_t *_constructMemoryChunk(void *baseAddr, unsigned nbytes);
 
 // historical order
 static MemoryChunkOrder_t *_newMemoryChunkOrder(MemoryChunk_t *chunk);
+static void _garbageCollectMallocHistory(void);
 static void _unlinkMemoryChunkOrder(MemoryChunkOrder_t *chunkP);
 static void _freeMemoryChunkOrder(MemoryChunkOrder_t *chunkP);
 
@@ -355,7 +368,7 @@ void _XMP_CO_free_coarray(CoarrayInfo_t *cinfo)
     // unlink this memory chunk as a garbage
     _unlinkMemoryChunk(chunk);
     // now chance to cellect and free garbages
-    _XMP_CO_garbageCollectMallocHistory();
+    _garbageCollectMallocHistory();
   }
 }
 
@@ -532,28 +545,25 @@ MPI_Comm _XMP_CO_communicatorFromCoarrayInfo(CoarrayInfo_t *cinfo)
 }
 
 
-void _XMP_CO_prolog(void **tag, int namelen, char *name)
+void _XMP_CO_prolog(ResourceSet_t **rsetp, int namelen, char *name)
 {
-  ResourceSet_t *rset = _newResourceSet(name, namelen);
+  *rsetp = _newResourceSet(name, namelen);
 
-  _XMPF_coarrayDebugPrint("XMP_CO_PROLOG (name=\'%s\', rset=%p)\n", rset->name, rset);
-
-  *tag = (void*)rset;
+  _XMPF_coarrayDebugPrint("_XMP_CO_PROLOG (procedure name=\'%s\', *rsetp=%p)\n",
+                          (*rsetp)->name, *rsetp);
 }
 
 
-void _XMP_CO_epilog(void **tag)
+void _XMP_CO_epilog(ResourceSet_t **rsetp)
 {
-  if (*tag == NULL)
+  if (*rsetp == NULL)
     return;
 
-  ResourceSet_t *rset = (ResourceSet_t*)(*tag);
+  _XMPF_coarrayDebugPrint("_XMP_CO_EPILOG_ (procedure name=\'%s\', *rsetp=%p)\n",
+                          (*rsetp)->name, *rsetp);
 
-  _XMPF_coarrayDebugPrint("_XMP_CO_EPILOG_ (name=\'%s\', rset=%p)\n", rset->name, rset);
-
-  _freeResourceSet(rset);     // with or without automatic SYNCALL
-
-  *tag = NULL;
+  _freeResourceSet(*rsetp);     // with or without automatic SYNCALL
+  *rsetp = NULL;
 }
 
 
@@ -568,7 +578,7 @@ void _XMP_CO_epilog(void **tag)
  *      to the memory chunk, and
  *   3. return coarrayInfo as descPtr
  */
-void* _XMP_CO_find_descptr(char *addr, int namelen, char *name)
+CoarrayInfo_t *_XMP_CO_find_descptr(char *addr, int namelen, char *name)
 {
   MemoryChunk_t *myChunk;
 
@@ -587,7 +597,7 @@ void* _XMP_CO_find_descptr(char *addr, int namelen, char *name)
                             _dispMemoryChunk(myChunk));
     // return coarrayInfo as descPtr
     _addCoarrayInfo(myChunk, cinfo);
-    return (void*)cinfo;
+    return cinfo;
   }
 
   _XMPF_coarrayDebugPrint("*** found no MemoryChunk of mine\n");
@@ -612,11 +622,11 @@ void _XMP_CO_set_corank(CoarrayInfo_t *cp, int corank)
 }
 
 
-void _XMP_CO_set_codim_withBOUNDS(CoarrayInfo_t *cp, int dim, int lb, int ub)
+void _XMP_CO_set_codim_withBounds(CoarrayInfo_t *cp, int dim, int lb, int ub)
 {
   int i, count, n_images, size;
 
-  if (dim < cp->corank - 1) {        // not last dimension
+  if (0 <= dim && dim < cp->corank - 1) {        // not last dimension
     cp->lcobound[dim] = lb;
     cp->ucobound[dim] = ub;
     size = ub - lb + 1;
@@ -625,6 +635,7 @@ void _XMP_CO_set_codim_withBOUNDS(CoarrayInfo_t *cp, int dim, int lb, int ub)
       _XMPF_coarrayFatal("upper cobound less than lower cobound");
   }
   else if (dim == cp->corank - 1) {   // last dimension
+    // ub is ignored. 
     cp->lcobound[dim] = lb;
     n_images = _XMPF_num_images_current();
     for (i = 0, count = 1; i < cp->corank - 1; i++)
@@ -634,10 +645,39 @@ void _XMP_CO_set_codim_withBOUNDS(CoarrayInfo_t *cp, int dim, int lb, int ub)
     cp->ucobound[dim] = lb + size - 1;
   }
   else {                               // illegal
-    _XMPF_coarrayFatal("spedified dim (%d) >= pre-specified corank (%d)\n",
-                       dim, cp->corank);
+    _XMPF_coarrayFatal("spedified dim (%d) is too large or less than zero.\n",
+                       dim);
   }
 }
+
+void _XMP_CO_set_codim_withSize(CoarrayInfo_t *cp, int dim, int lb, int size)
+{
+  int i, count, n_images, ub;
+
+  if (0 <= dim && dim < cp->corank - 1) {        // not last dimension
+    if (size < 0)
+      _XMPF_coarrayFatal("Size should not be less than zero.");
+    cp->lcobound[dim] = lb;
+    cp->cosize[dim] = size;
+    ub = lb + size - 1;
+    cp->ucobound[dim] = ub;
+  }
+  else if (dim == cp->corank - 1) {   // last dimension
+    // size is ignored. 
+    cp->lcobound[dim] = lb;
+    n_images = _XMPF_num_images_current();
+    for (i = 0, count = 1; i < cp->corank - 1; i++)
+      count *= cp->cosize[i];
+    size = DIV_CEILING(n_images, count);
+    cp->cosize[dim] = size;
+    cp->ucobound[dim] = lb + size - 1;
+  }
+  else {   // last dimension or more
+    _XMPF_coarrayFatal("Spedified dim (%d) is too large or less than zero.\n",
+                       dim);
+  }
+}
+
 
 void _XMP_CO_set_varname(CoarrayInfo_t *cp, int namelen, char *name)
 {
@@ -665,61 +705,67 @@ CoarrayInfo_t* _XMP_CO_set_nodes(CoarrayInfo_t *cinfo,
    inquire functions (open interface)
 \***********************************************/
 
-char *_XMP_CO_get_coarrayName(void *descPtr)
+// inquire functions about CoarrayInfo
+
+char *_XMP_CO_get_nameOfCoarray(CoarrayInfo_t *cinfo)
 {
-  CoarrayInfo_t *cinfo = (CoarrayInfo_t*)descPtr;
   return cinfo->name;
 }
 
-char *_XMP_CO_get_coarrayBaseAddr(void *descPtr)
+char *_XMP_CO_get_baseAddrOfCoarray(CoarrayInfo_t *cinfo)
 {
-  CoarrayInfo_t *cinfo = (CoarrayInfo_t*)descPtr;
   return cinfo->baseAddr;
 }
 
-size_t _XMP_CO_get_coarraySize(void *descPtr)
+size_t _XMP_CO_get_sizeOfCoarray(CoarrayInfo_t *cinfo)
 {
-  CoarrayInfo_t *cinfo = (CoarrayInfo_t*)descPtr;
   return cinfo->size;
 }
 
-size_t _XMP_CO_get_coarrayOffset(void *descPtr, char *addr)
+size_t _XMP_CO_get_offsetInCoarray(CoarrayInfo_t *cinfo, char *addr)
 {
-  CoarrayInfo_t *cinfo = (CoarrayInfo_t*)descPtr;
   size_t offset = addr - cinfo->baseAddr;
   return offset;
 }
 
 
-void *_XMP_CO_get_coarrayChunkDesc(void *descPtr)
+// inquire functions about MemoryChunk
+
+void *_XMP_CO_get_descForMemoryChunk(CoarrayInfo_t *cinfo)
 {
-  CoarrayInfo_t *cinfo = (CoarrayInfo_t*)descPtr;
   return cinfo->parent->desc;
 }
 
-char *_XMP_CO_get_coarrayChunkOrgAddr(void *descPtr)
+char *_XMP_CO_get_orgAddrOfMemoryChunk(CoarrayInfo_t *cinfo)
 {
-  CoarrayInfo_t *cinfo = (CoarrayInfo_t*)descPtr;
   return cinfo->parent->orgAddr;
 }
 
-size_t _XMP_CO_get_coarrayChunkSize(void *descPtr)
+size_t _XMP_CO_get_sizeOfMemoryChunk(CoarrayInfo_t *cinfo)
 {
-  CoarrayInfo_t *cinfo = (CoarrayInfo_t*)descPtr;
   return cinfo->parent->nbytes;
 }
 
-size_t _XMP_CO_get_coarrayChunkOffset(void *descPtr, char *addr)
+size_t _XMP_CO_get_offsetInMemoryChunk(CoarrayInfo_t *cinfo, char *addr)
 {
-  CoarrayInfo_t *cinfo = (CoarrayInfo_t*)descPtr;
   char* orgAddr = cinfo->parent->orgAddr;
   size_t offset = addr - orgAddr;
   return offset;
 }
 
+BOOL _XMP_CO_isAddrInMemoryChunk(char *localAddr, CoarrayInfo_t *cinfo)
+{
+  char *orgAddr = _XMP_CO_get_orgAddrOfMemoryChunk(cinfo);
+  size_t size = _XMP_CO_get_sizeOfMemoryChunk(cinfo);
+  size_t offset = localAddr - orgAddr;
+  BOOL result = (offset < size);
+  return result;
+}
 
-void *_XMP_CO_get_ctrlDataCoarrayDesc(char **baseAddr, size_t *offset,
-                                    char **name)
+
+// inquire functions about built-in coarray variables
+
+void *_XMP_CO_get_infoOfCtrlData(char **baseAddr, size_t *offset, char **name)
 {
   MemoryChunk_t *chunk = _cinfo_ctrlData->parent;
   char *orgAddr = chunk->orgAddr;                    // origin address of the memory pool
@@ -730,8 +776,7 @@ void *_XMP_CO_get_ctrlDataCoarrayDesc(char **baseAddr, size_t *offset,
   return chunk->desc;                                // descriptor of the memory pool
 }
 
-void *_XMP_CO_get_localBufCoarrayDesc(char **baseAddr, size_t *offset,
-                                    char **name)
+void *_XMP_CO_get_infoOfLocalBuf(char **baseAddr, size_t *offset, char **name)
 {
   MemoryChunk_t *chunk = _cinfo_localBuf->parent;
   char *orgAddr = chunk->orgAddr;                    // origin address of the memory pool
@@ -742,16 +787,10 @@ void *_XMP_CO_get_localBufCoarrayDesc(char **baseAddr, size_t *offset,
   return chunk->desc;                                // descriptor of the memory pool
 }
 
-BOOL _XMP_CO_isAddrInCoarrayChunk(char *localAddr, void *descPtr)
-{
-  char *orgAddr = _XMP_CO_get_coarrayChunkOrgAddr(descPtr);
-  size_t size = _XMP_CO_get_coarrayChunkSize(descPtr);
-  size_t offset = localAddr - orgAddr;
-  BOOL result = (offset < size);
-  return result;
-}
 
-void *_XMP_CO_get_coarrayDescFromAddr(char *localAddr, char **orgAddr,
+// search for the memory chunk from a local address
+
+void *_XMP_CO_get_descFromLocalAddr(char *localAddr, char **orgAddr,
                                     size_t *offset, char **name)
 {
   MemoryChunk_t* chunk = _findMemoryChunkInSortedChunkTable(localAddr);
@@ -766,13 +805,6 @@ void *_XMP_CO_get_coarrayDescFromAddr(char *localAddr, char **orgAddr,
   *offset = localAddr - *orgAddr;
   *name = chunk->headCoarray->next->name;
   return chunk->desc;
-}
-
-/*  return MPI_COMM_NULL if communicatior is not specified for descPtr
- */
-MPI_Comm _XMP_CO_get_communicatorFromDescPtr(void *descPtr)
-{
-  return _XMP_CO_communicatorFromCoarrayInfo((CoarrayInfo_t *)descPtr);
 }
 
 
@@ -814,7 +846,7 @@ void _freeResourceSet(ResourceSet_t *rset)
     }
 
     // now chance of garbabe collection
-    _XMP_CO_garbageCollectMallocHistory();
+    _garbageCollectMallocHistory();
   }
 
   FREE_string(rset->name);
@@ -1081,7 +1113,7 @@ void _addMemoryChunkToMallocHistory(MemoryChunk_t *chunk)
 /*  free deallocated coarry data objects as much as possible,
  *  keeping the reverse order of allocations.
  */
-void _XMP_CO_garbageCollectMallocHistory()
+void _garbageCollectMallocHistory()
 {
   MemoryChunkOrder_t *chunkP;
 

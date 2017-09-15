@@ -76,9 +76,9 @@ int    _remote_coindex;
 
 void _XMPF_coarrayInit_getsub()
 {
-  _localBuf_desc = _XMP_CO_get_localBufCoarrayDesc(&_localBuf_baseAddr,
-                                                 &_localBuf_offset,
-                                                 &_localBuf_name);
+  _localBuf_desc = _XMP_CO_get_infoOfLocalBuf(&_localBuf_baseAddr,
+                                              &_localBuf_offset,
+                                              &_localBuf_name);
   _localBuf_size = XMPF_get_localBufSize();
 }
 
@@ -114,7 +114,7 @@ extern void xmpf_coarray_getsub_array_(void **descPtr, char **baseAddr, int *ele
   BOOL avail_DMA;
 
   descDMA = XMPF_isEagerCommMode() ? NULL :
-      _XMP_CO_get_coarrayDescFromAddr(local, &orgAddrDMA, &offsetDMA, &nameDMA);
+      _XMP_CO_get_descFromLocalAddr(local, &orgAddrDMA, &offsetDMA, &nameDMA);
   avail_DMA = descDMA ? TRUE : FALSE;
 
   /*--------------------------------------*\
@@ -152,7 +152,7 @@ extern void xmpf_coarray_getsub_array_(void **descPtr, char **baseAddr, int *ele
 void xmpf_coarray_getsub_err_len_(void **descPtr,
                                   int *len_mold, int *len_src)
 {
-  char *name = _XMP_CO_get_coarrayName(*descPtr);
+  char *name = _XMP_CO_get_nameOfCoarray(*descPtr);
 
   _XMPF_coarrayDebugPrint("ERROR DETECTED: xmpf_coarray_getsub_err_len_\n"
                           "  coarray name=\'%s\', len(mold)=%d, len(src)=%d\n",
@@ -166,7 +166,7 @@ void xmpf_coarray_getsub_err_len_(void **descPtr,
 void xmpf_coarray_getsub_err_size_(void **descPtr, int *dim,
                                    int *size_mold, int *size_src)
 {
-  char *name = _XMP_CO_get_coarrayName(*descPtr);
+  char *name = _XMP_CO_get_nameOfCoarray(*descPtr);
 
   _XMPF_coarrayDebugPrint("ERROR DETECTED: xmpf_coarray_getsub_err_size_\n"
                           "  coarray name=\'%s\', i=%d, size(mold,i)=%d, size(src,i)=%d\n",
