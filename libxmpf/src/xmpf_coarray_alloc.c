@@ -1,7 +1,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include "xmpf_internal_coarray.h"
-#include "xmp_co_alloc.h"
+#include "_xmp_co_alloc.h"
 
 
 static char* _to_Nth(int n);
@@ -35,17 +35,26 @@ int xmpf_coarray_garbage_bytes_()
 void xmpf_coarray_malloc_(void **descPtr, char **crayPtr,
                           int *count, int *element, void **tag)
 {
-  _XMP_CO_malloc_coarray(descPtr, crayPtr, *count, (size_t)(*element),
+  CoarrayInfo_t* cinfo =
+    _XMP_CO_malloc_coarray(crayPtr, *count, (size_t)(*element),
                          (*tag) ? (ResourceSet_t*)(*tag) : NULL);
+  *descPtr = (void*)cinfo;
+
+  // SYNCALL_AUTO
+  //xmpf_sync_all_auto_();
 }
 
 
 void xmpf_coarray_regmem_(void **descPtr, void *var,
                           int *count, int *element, void **tag)
 {
-  
-_XMP_CO_regmem_coarray(descPtr, var, *count, (size_t)(*element),
-                         (*tag) ? (ResourceSet_t*)(*tag) : NULL);
+  CoarrayInfo_t* cinfo =
+    _XMP_CO_regmem_coarray(var, *count, (size_t)(*element),
+                           (*tag) ? (ResourceSet_t*)(*tag) : NULL);
+  *descPtr = (void*)cinfo;
+
+  // SYNCALL_AUTO
+  //xmpf_sync_all_auto_();
 }
 
 
@@ -53,16 +62,20 @@ void xmpf_coarray_alloc_static_(void **descPtr, char **crayPtr,
                                 int *count, int *element,
                                 int *namelen, char *name)
 {
-  _XMP_CO_alloc_static_coarray(descPtr, crayPtr, *count, (size_t)(*element),
-                               *namelen, name);
+  CoarrayInfo_t* cinfo =
+    _XMP_CO_malloc_staticCoarray(crayPtr, *count, (size_t)(*element),
+                                 *namelen, name);
+  *descPtr = (void*)cinfo;
 }
 
 void xmpf_coarray_regmem_static_(void **descPtr, void **baseAddr,
                                  int *count, int *element,
                                  int *namelen, char *name)
 {
-  _XMP_CO_regmem_static_coarray(descPtr, *baseAddr, *count, (size_t)(*element),
-                               *namelen, name);
+  CoarrayInfo_t* cinfo =
+    _XMP_CO_regmem_staticCoarray(*baseAddr, *count, (size_t)(*element),
+                                 *namelen, name);
+  *descPtr = (void*)cinfo;
 }
 
 

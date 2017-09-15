@@ -105,11 +105,6 @@ struct _coarrayInfo_t {
 /** MEMORY MANAGEMENT STRUCTURE-II (for dynamic ALLOCATE/DEALLOCATE stmts. in Fortran)
  *  structure to manage the history of malloc/free
  */
-struct _memoryChunkStack_t {
-  MemoryChunkOrder_t  *head;
-  MemoryChunkOrder_t  *tail;
-};
-
 struct _memoryChunkOrder_t {
   MemoryChunkOrder_t  *prev;
   MemoryChunkOrder_t  *next;

@@ -2,23 +2,24 @@
 #define _XMP_CO_INTERNAL_H
 
 /*****************************************\
-  typedef
+  xmp_co_alloc.c
+    typedef
 \*****************************************/
-// MEMORY MANAGEMENT STRUCTURE-I (for automatic deallocation)
-typedef struct _resourceSet_t  ResourceSet_t;
-typedef struct _memoryChunk_t  MemoryChunk_t;
-typedef struct _coarrayInfo_t  CoarrayInfo_t;
+// MEMORY MANAGEMENT STRUCTURE-I (linkage with procedures)
+typedef struct _resourceSet_t  ResourceSet_t;   // corresponding to a procedure
+typedef struct _memoryChunk_t  MemoryChunk_t;   // contains one or more coarrays
+typedef struct _coarrayInfo_t  CoarrayInfo_t;   // corresponding to a coarray
 
-// MEMORY MANAGEMENT STRUCTURE-II (for dynamic ALLOCATE/DEALLOCATE stmts.)
-typedef struct _memoryChunkStack_t  MemoryChunkStack_t;
-typedef struct _memoryChunkOrder_t  MemoryChunkOrder_t;
+// MEMORY MANAGEMENT STRUCTURE-II (management of the order of alloc/free)
+typedef struct _memoryChunkOrder_t  MemoryChunkOrder_t;  // contains a pointer to Chunk
 
-// MEMORY MANAGEMENT STRUCTURE-III (for binary search in memory chunks)
-typedef struct _sortedChunkTable_t  SortedChunkTable_t;
+// MEMORY MANAGEMENT STRUCTURE-III (for binary search of memory chunk)
+typedef struct _sortedChunkTable_t  SortedChunkTable_t;  // contains a pointer to Chunk
 
 
 /*****************************************\
-  user functions in xmp_co_alloc.c
+  xmp_co_alloc.c
+    user functions
 \*****************************************/
 // inquire functions
 extern size_t xmp_coarray_malloc_bytes(void);
@@ -27,7 +28,8 @@ extern size_t xmp_coarray_garbage_bytes(void);
 
 
 /*****************************************\
-  utilities in xmp_co_alloc.c
+  xmp_co_alloc.c
+    utilities
 \*****************************************/
 // inquire functions
 extern char *_XMP_CO_get_coarrayName(void *descPtr);
@@ -55,18 +57,18 @@ extern MPI_Comm _XMP_CO_get_communicatorFromDescPtr(void *descPtr);
   object interface in xmp_co_alloc.c
 \*****************************************/
 // allocation & registration
-extern void _XMP_CO_malloc_coarray(void **descPtr, char **addr,
-                                   int count, size_t element,
-                                   ResourceSet_t *rset);
-extern void _XMP_CO_regmem_coarray(void **descPtr, void *var,
-                                   int count, size_t element,
-                                   ResourceSet_t *rset);
-extern void _XMP_CO_alloc_static_coarray(void **descPtr, char **addr,
-                                         int count, size_t element,
-                                         int namelen, char *name);
-extern void _XMP_CO_regmem_static_coarray(void **descPtr, void *var,
-                                          int count, size_t element,
-                                          int namelen, char *name);
+extern CoarrayInfo_t *
+_XMP_CO_malloc_coarray(char **addr, int count, size_t element,
+                       ResourceSet_t *rset);
+extern CoarrayInfo_t *
+_XMP_CO_regmem_coarray(void *var, int count, size_t element,
+                       ResourceSet_t *rset);
+extern CoarrayInfo_t *
+_XMP_CO_malloc_staticCoarray(char **addr, int count, size_t element,
+                             int namelen, char *name);
+extern CoarrayInfo_t *
+_XMP_CO_regmem_staticCoarray(void *var, int count, size_t element,
+                             int namelen, char *name);
 
 // deallocation & deregistration
 extern void _XMP_CO_free_coarray(CoarrayInfo_t *cinfo);
@@ -74,14 +76,11 @@ extern void _XMP_CO_deregmem_coarray(CoarrayInfo_t *cinfo);
 
 // initialization & finalization
 extern void _XMP_CO_malloc_pool(void);
-extern void _XMP_CO_alloc_static(void **descPtr, char **crayPtr,
-                                 int count, size_t element,
-                                 int namelen, char *name);
+extern void _XMP_CO_count_size(int count, size_t element);
 extern void _XMP_CO_prolog(void **tag, int namelen, char *name);
 extern void _XMP_CO_epilog(void **tag);
 
 // tools
-extern void _XMP_CO_coarray_count_size(int count, size_t element);
 extern MPI_Comm _XMP_CO_communicatorFromCoarrayInfo(CoarrayInfo_t *cinfo);
 extern void* _XMP_CO_find_descptr(char *addr, int namelen, char *name);
 

@@ -1,7 +1,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include "xmpf_internal_coarray.h"
-#include "xmp_co_alloc.h"
+#include "_xmp_co_alloc.h"
 
 /*****************************************\
   static variables
@@ -77,7 +77,10 @@ static int _searchSortedChunkTable(unsigned long addrKey, BOOL *found);
 // utility
 static char* _xmp_strndup(char *name, const int namelen);
 
-static MemoryChunkStack_t _mallocStack;
+struct {
+  MemoryChunkOrder_t  *head;
+  MemoryChunkOrder_t  *tail;
+} _mallocStack;
 
 // CoarrayInfo for control data area
 static CoarrayInfo_t *_cinfo_ctrlData;
@@ -141,12 +144,13 @@ size_t xmp_coarray_garbage_bytes()
   Allocation
 \***********************************************/
 
-void _XMP_CO_malloc_coarray(void **descPtr, char **addr,
-                            int count, size_t element, ResourceSet_t *rset)
+CoarrayInfo_t *
+_XMP_CO_malloc_coarray(char **addr, int count, size_t element,
+                       ResourceSet_t *rset)
 {
   size_t nbytes = count * element;
 
-  _XMPF_coarrayDebugPrint("XMP_COARRAY_MALLOC\n");
+  _XMPF_coarrayDebugPrint("_XMP_CO_MALLOC_COARRAY\n");
 
   // malloc
   MemoryChunk_t *chunk = _mallocMemoryChunk(count, element);
@@ -165,22 +169,18 @@ void _XMP_CO_malloc_coarray(void **descPtr, char **addr,
 
   _addCoarrayInfo(chunk, cinfo);
 
-  // output #1
-  *descPtr = (void*)cinfo;
-  // output #2
   *addr = cinfo->baseAddr;   // == chunk->orgAddr
-
-  // SYNCALL_AUTO
-  xmpf_sync_all_auto_();
+  return cinfo;
 }
 
 
-void _XMP_CO_regmem_coarray(void **descPtr, void *var,
-                            int count, size_t element, ResourceSet_t *rset)
+CoarrayInfo_t *
+_XMP_CO_regmem_coarray(void *var, int count, size_t element,
+                       ResourceSet_t *rset)
 {
   size_t nbytes = count * element;
 
-  _XMPF_coarrayDebugPrint("XMP_COARRAY_REGMEM\n");
+  _XMPF_coarrayDebugPrint("_XMP_CO_REGMEM_COARRAY\n");
 
   // regmem
   MemoryChunk_t *chunk = _regmemMemoryChunk_core(var, nbytes);
@@ -191,12 +191,7 @@ void _XMP_CO_regmem_coarray(void **descPtr, void *var,
   CoarrayInfo_t *cinfo = _newCoarrayInfo(chunk->orgAddr, nbytes);
 
   _addCoarrayInfo(chunk, cinfo);
-
-  // output #1
-  *descPtr = (void*)cinfo;
-
-  // SYNCALL_AUTO
-  xmpf_sync_all_auto_();
+  return cinfo;
 }
 
 
@@ -204,16 +199,16 @@ void _XMP_CO_regmem_coarray(void **descPtr, void *var,
 /**
  * have a share of memory in the pool (if not larger than threshold)
  * or allocate individually (if larger than threshold)
- *    out: descPtr: pointer to descriptor CoarrayInfo_t
+ *    out: return : pointer to descriptor CoarrayInfo_t
  *         addr   : address of the coarray object to be allocated
  *    in:  count  : count of elements
  *         element: element size
  *         namelen: character length of name (for debugging)
  *         name   : name of the coarray (for debugging)
  */
-void _XMP_CO_alloc_static_coarray(void **descPtr, char **addr,
-                                  int count, size_t element,
-                                  int namelen, char *name)
+CoarrayInfo_t *
+_XMP_CO_malloc_staticCoarray(char **addr, int count, size_t element,
+                             int namelen, char *name)
 {
   size_t nbytes = count * element;
   CoarrayInfo_t *cinfo;
@@ -232,24 +227,24 @@ void _XMP_CO_alloc_static_coarray(void **descPtr, char **addr,
   }
   cinfo->name = _xmp_strndup(name, namelen);
 
-  *descPtr = (void*)cinfo;
   *addr = cinfo->baseAddr;
+  return cinfo;
 }
 
 
 /**
  * Similar to _alloc_static_coarray() except that the coarray is 
  * allocated not by the runtime but by the Fortran system.
- *    out: descPtr : pointer to descriptor CoarrayInfo_t
+ *    out: return  : pointer to descriptor CoarrayInfo_t
  *    in:  var     : pointer to the coarray
  *         count   : count of elements
  *         element : element size
  *         name    : name of the coarray (for debugging)
  *         namelen : character length of name (for debugging)
  */
-void _XMP_CO_regmem_static_coarray(void **descPtr, void *var,
-                                   int count, size_t element,
-                                   int namelen, char *name)
+CoarrayInfo_t *
+_XMP_CO_regmem_staticCoarray(void *var, int count, size_t element,
+                             int namelen, char *name)
 {
   CoarrayInfo_t *cinfo;
 
@@ -275,7 +270,7 @@ void _XMP_CO_regmem_static_coarray(void **descPtr, void *var,
   //cinfo = _regmemStaticCoarray(var, nbytesRU);
   cinfo->name = _xmp_strndup(name, namelen);
 
-  *descPtr = (void*)cinfo;
+  return cinfo;
 }
 
 
@@ -451,7 +446,7 @@ void _XMP_CO_malloc_pool()
   size_t ctrlDataSize = sizeof(int) * 8;
   size_t localBufSize = XMPF_get_localBufSize();
 
-  _XMPF_coarrayDebugPrint("XMPF_COARRAY_MALLOC_POOL_ contains:\n"
+  _XMPF_coarrayDebugPrint("_XMP_CO_MALLOC_POOL_ contains:\n"
                           "  system-defined local buffer :%10u bytes\n"
                           "  system-defined control data :%10u bytes\n"
                           "  user-defined coarays        :%10u bytes\n",
@@ -502,13 +497,13 @@ static void _setSimpleCoshapeToCoarrayInfo(CoarrayInfo_t *cinfo)
 
 
 
-void xmp_coarray_count_size(int count, size_t element)
+void _XMP_CO_count_size(int count, size_t element)
 {
   size_t thisSize = count * element;
   size_t mallocSize = ROUND_UP_MALLOC(thisSize);
 
   if (mallocSize > XMPF_get_poolThreshold()) {
-    _XMPF_coarrayDebugPrint("XMP_COARRAY_COUNT_SIZE_: no count because of the large size\n"
+    _XMPF_coarrayDebugPrint("XMP_CO_COUNT_SIZE_: no count because of the large size\n"
                             "  pooling threshold :%10u bytes\n"
                             "  data size         :%10u bytes\n",
                             XMPF_get_poolThreshold(), mallocSize);
@@ -516,7 +511,7 @@ void xmp_coarray_count_size(int count, size_t element)
   }
 
   pool_totalSize += mallocSize;
-  _XMPF_coarrayDebugPrint("XMP_COARRAY_COUNT_SIZE_: count up\n"
+  _XMPF_coarrayDebugPrint("XMP_CO_COUNT_SIZE_: count up\n"
                           "  %u bytes, totally %u bytes\n",
                           mallocSize, pool_totalSize);
 }
@@ -554,7 +549,7 @@ void _XMP_CO_epilog(void **tag)
 
   ResourceSet_t *rset = (ResourceSet_t*)(*tag);
 
-  _XMPF_coarrayDebugPrint("XMPF_COARRAY_EPILOG_ (name=\'%s\', rset=%p)\n", rset->name, rset);
+  _XMPF_coarrayDebugPrint("_XMP_CO_EPILOG_ (name=\'%s\', rset=%p)\n", rset->name, rset);
 
   _freeResourceSet(rset);     // with or without automatic SYNCALL
 
@@ -573,11 +568,11 @@ void _XMP_CO_epilog(void **tag)
  *      to the memory chunk, and
  *   3. return coarrayInfo as descPtr
  */
-void* xmp_coarray_find_descptr(char *addr, int namelen, char *name)
+void* _XMP_CO_find_descptr(char *addr, int namelen, char *name)
 {
   MemoryChunk_t *myChunk;
 
-  _XMPF_coarrayDebugPrint("XMPF_COARRAY_FIND_DESCPTR_ "
+  _XMPF_coarrayDebugPrint("_XMF_CO_FIND_DESCPTR_ "
                           "(varname=\'%.*s\')\n",
                           namelen, name);
 
