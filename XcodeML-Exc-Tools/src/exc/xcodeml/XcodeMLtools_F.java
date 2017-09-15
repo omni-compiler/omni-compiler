@@ -276,7 +276,8 @@ public class XcodeMLtools_F extends XcodeMLtools {
       | (getAttrBool(n, "is_private") ? Xtype.TQ_FPRIVATE : 0)
       | (getAttrBool(n, "is_public") ? Xtype.TQ_FPUBLIC : 0)
       | (getAttrBool(n, "is_protected") ? Xtype.TQ_FPROTECTED : 0)
-      | (getAttrBool(n, "is_sequence") ? Xtype.TQ_FSEQUENCE : 0);
+      | (getAttrBool(n, "is_sequence") ? Xtype.TQ_FSEQUENCE : 0)
+      | (getAttrBool(n, "is_abstract") ? Xtype.TQ_FABSTRACT : 0);
 
     XobjList tparam_list = (XobjList) toXobject(getElement(n, "typeParams"));
     XobjList id_list = (XobjList) toXobject(getElement(n, "symbols"));
@@ -865,7 +866,8 @@ public class XcodeMLtools_F extends XcodeMLtools {
         XobjString pass_arg = Xcons.String(getAttr(n, "pass_arg_name"));
         long tq = (getAttrBool(n, "is_private") ? Xtype.TQ_FPRIVATE : 0)
                | (getAttrBool(n, "is_public" ) ? Xtype.TQ_FPUBLIC  : 0)
-	       | (getAttrBool(n, "is_protected") ? Xtype.TQ_FPROTECTED : 0);
+	       | (getAttrBool(n, "is_protected") ? Xtype.TQ_FPROTECTED : 0)
+	       | (getAttrBool(n, "is_deferred") ? Xtype.TQ_FDEFERRED : 0);
         Node bdg = getElement(n, "binding");
         return setCommonAttributes(n, Xcons.List(code, type, pass, pass_arg,
                                                  toXobject(getElement(n, "name")),

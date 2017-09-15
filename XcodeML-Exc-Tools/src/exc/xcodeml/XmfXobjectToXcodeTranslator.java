@@ -1133,6 +1133,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
 		    "is_protected", toBoolStr(type.isFprotected()),
                     "is_sequence", toBoolStr(type.isFsequence()),
                     "is_internal_private", toBoolStr(type.isFinternalPrivate()),
+		    "is_abstract", toBoolStr(type.isFabstract()),
                     "extends", ((CompositeType)type).parentId(),
                     "bind", type.getBind());
                 addChildNode(typeElem, trans(((StructType)type).getFTypeParams()));
@@ -1516,6 +1517,8 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             addAttributes(e, "is_public", "true");
           else if ((tq & Xtype.TQ_FPROTECTED) != 0)
             addAttributes(e, "is_protected", "true");
+          if ((tq & Xtype.TQ_FDEFERRED) != 0)
+            addAttributes(e, "is_deferred", "true");
           addChildNode(e, addChildNode(createElement("binding"), transName(xobj.getArg(4))));
           addAttributes(e, "is_non_overridable", intFlagToBoolStr(xobj.getArgOrNull(5)));
         } else if (xobj.Opcode() == Xcode.F_FINAL_PROCEDURE) {
