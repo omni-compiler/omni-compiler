@@ -5031,6 +5031,9 @@ emit_decl(int l, ID id)
     if (ID_IS_OFMODULE(id) == TRUE && ID_CLASS(id) != CL_PARAM) {
         return;
     }
+    if (ID_IS_IMPORTED(id)) {
+        return;
+    }
 
     if (CRT_FUNCEP != NULL && EXT_PROC_IS_PROCEDUREDECL(CRT_FUNCEP)) {
         /*
@@ -5156,6 +5159,10 @@ outx_id_declarations(int l, ID id_list, int hasResultVar, const char * functionN
                 continue;
             }
 
+            if (ID_IS_IMPORTED(id) == TRUE) {
+                continue;
+            }
+
             tp = ID_TYPE(id);
             if (IS_STRUCT_TYPE(tp) && TYPE_REF(tp) == NULL) {
                 int j;
@@ -5181,7 +5188,7 @@ outx_id_declarations(int l, ID id_list, int hasResultVar, const char * functionN
          */
         for (i = 0; i < nIDs; ++i) {
             id = ids[i];
-
+            
             if (hasResultVar == TRUE && functionName != NULL &&
                 strcasecmp(functionName, SYM_NAME(ID_SYM(id))) == 0) {
                 continue;

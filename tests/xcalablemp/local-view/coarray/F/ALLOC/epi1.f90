@@ -1,10 +1,8 @@
 program epi1
-!!   include "xmp_coarray.h"
   real, allocatable :: a(:)[:] 
 
   interface
      subroutine allo(a)
-!!        include "xmp_coarray.h"
        real, allocatable :: a(:)[:] 
        real, allocatable :: al(:)[:] 
      end subroutine allo
@@ -20,7 +18,6 @@ end program epi1
 
 
 subroutine allo(a)
-!!   include "xmp_coarray.h"
   real, allocatable :: a(:)[:] 
   real, allocatable :: al(:)[:] 
     

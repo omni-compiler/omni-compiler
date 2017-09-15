@@ -1,0 +1,38 @@
+#PBS -S /bin/bash
+#PBS -A XMPTCA
+#PBS -q tcaq 
+
+#PBS -l select=3:mpiprocs=1
+#PBS -l walltime=00:30:00
+
+. /opt/Modules/default/init/bash
+
+module purge
+# copy from environ.h
+module load intel/17.0.2 mvapich2/2.2_intel_cuda-8.0.44
+
+#OPT="MV2_ENABLE_AFFINITY=0 MV2_SHOW_CPU_BINDING=1 MV2_USE_CUDA=1 MV2_USE_GPUDIRECT=1 MV2_NUM_PORTS=2"
+OPT="MV2_ENABLE_AFFINITY=0 MV2_SHOW_CPU_BINDING=1"
+
+cd $PBS_O_WORKDIR
+export XMP_ONESIDED_HEAP_SIZE=512M
+
+echo Environment -------
+module list 2>&1
+echo "pwd = "; pwd
+echo "XMP_ONESIDED_HEAP_SIZE=$XMP_ONESIDED_HEAP_SIZE"
+echo "GASNET_HOME=$GASNET_HOME"
+echo "OMP_NUM_THREADS=$OMP_NUM_THREADS"
+echo -------------------
+
+EXE="*.x"
+
+date
+
+for f in ${EXE}; do
+    echo --------------------------------- $f
+    mpirun_rsh -np 3 -hostfile $PBS_NODEFILE $OPT ./$f
+done
+
+date
+

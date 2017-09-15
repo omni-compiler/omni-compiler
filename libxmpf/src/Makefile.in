@@ -18,13 +18,13 @@ INCDIR       = @OMNI_HOME@/include
 WORKDIR      = ./include_work
 LIBXMPF      = libxmpf.a
 F_MAIN_O     = xmpf_main.o
-HEADERS   = $(XMPF_INC_DIR)/xmpf_internal.h $(XMPF_INC_DIR)/xmpf_internal_coarray.h \
+HEADERS   = $(XMPF_INC_DIR)/xmpf_internal.h $(XMPF_INC_DIR)/xmpf_internal_coarray.h                       $(XMPF_INC_DIR)/xmpf_internal_co_alloc.h \
 	    $(XMP_INC_DIR)/xmp.h $(XMP_INC_DIR)/xmp_internal.h $(XMP_INC_DIR)/xmp_func_decl.h \
 	    ../../include/config.h
 OBJECTS   = xmpf_array.o xmpf_async.o xmpf_gcomm.o xmpf_gmove.o xmpf_index.o xmpf_lib.o \
 	    xmpf_loop.o xmpf_misc.o xmpf_nodes.o xmpf_pack.o xmpf_reflect.o xmpf_sort.o \
 	    xmpf_task.o xmpf_template.o \
-            xmpf_coarray.o xmpf_coarray_alloc.o \
+            xmpf_coarray.o xmpf_coarray_alloc.o          xmp_co_alloc.o \
 	    xmpf_coarray_wrap.o xmpf_coarray_alloc_wrap.o \
             xmpf_coarray_put.o xmpf_coarray_get.o xmpf_coarray_getsub.o xmpf_coarray_atomic.o \
 	    xmpf_coarray_put_wrap.o xmpf_coarray_get_wrap.o xmpf_coarray_getsub_wrap.o xmpf_coarray_atomic_wrap.o \

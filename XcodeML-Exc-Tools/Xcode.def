@@ -11,6 +11,7 @@ T   IDENT
 T   STRING_CONSTANT            XbcStringConstant
 T   INT_CONSTANT               XbcIntConstant              XbfFintConstant
 T   FLOAT_CONSTANT             XbcFloatConstant            XbfFrealConstant
+T   LONG_CONSTANT
 T   LONGLONG_CONSTANT	       XbcLonglongConstant         XbfFintConstant
 T   MOE_CONSTANT               XbcMoeConstant
 
@@ -186,6 +187,7 @@ S   F_WRITE_STATEMENT          -                            XbfFwriteStatement
 S   F_PAUSE_STATEMENT          -                            XbfFpauseStatement
 S   F_STOP_STATEMENT           -                            XbfFstopStatement
 S   F_DATA_STATEMENT           -                            XbfFdataStatement
+S   F_WAIT_STATEMENT	       -
 
 # -----------------
 # Fortran: Variable Reference

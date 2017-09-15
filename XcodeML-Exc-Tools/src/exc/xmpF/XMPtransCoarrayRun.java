@@ -148,27 +148,26 @@ public class XMPtransCoarrayRun
     = new ArrayList<XMPtransCoarrayRun>();
 
   // coarrays in the Ident List are divied into two:
-  private ArrayList<XMPcoarray> localCoarrays;         // procedire-local coarrays
-  private ArrayList<XMPcoarray> useAssociatedCoarrays; // use-associated coarrays
-                                                       // (COPIED-IN to this procedure)
+  private ArrayList<XMPcoarray> localCoarrays;    // procedure-local coarrays
+  private ArrayList<XMPcoarray> moduleCoarrays;   // coarrays copied into this procedure
   // localCoarrays are divided into four:
   private ArrayList<XMPcoarray> staticLocalCoarrays;
   private ArrayList<XMPcoarray> allocatableLocalCoarrays;
   private ArrayList<XMPcoarray> staticDummyCoarrays;
   private ArrayList<XMPcoarray> allocatableDummyCoarrays;
 
-  // joint list of static coarrays in useAssociatedCoarrays and
+  // joint list of static coarrays in moduleCoarrays and
   //               host-associated coarrays from the host module
-  private ArrayList<XMPcoarray> staticAssociatedCoarrays;    // (COPIED-IN)
-  // allocatable coarrays in useAssociatedCoarrays
-  private ArrayList<XMPcoarray> allocatableAssociatedCoarrays; // (COPIED-IN)
+  private ArrayList<XMPcoarray> staticModuleCoarrays;    // (COPIED-IN)
+  // allocatable coarrays in moduleCoarrays
+  private ArrayList<XMPcoarray> allocatableModuleCoarrays; // (COPIED-IN)
 
 
   // the host module and the host procedure
   private String hostModuleName, hostProcedureName;
   private XMPtransCoarrayRun hostModuleRun, hostProcedureRun;
 
-  // localCoarrays + static/allocatableAssociatedCoarrays (COPIED-IN)
+  // localCoarrays + static/allocatableModuleCoarrays (COPIED-IN)
   // + visibleCoarrays of the host (not COPIED-IN)
   private ArrayList<XMPcoarray> visibleCoarrays;    // available after run1()
 
@@ -484,10 +483,10 @@ public class XMPtransCoarrayRun
    */
   private void _setLocalCoarrays() {
     localCoarrays = new ArrayList<XMPcoarray>();
-    useAssociatedCoarrays = new ArrayList<XMPcoarray>();
+    moduleCoarrays = new ArrayList<XMPcoarray>();
     Xobject idList = def.getFuncIdList();
 
-    /* divide coarrays into localCoarrays and useAssociatedCoarrays
+    /* divide coarrays into localCoarrays and moduleCoarrays
      */
     for (Xobject obj: (XobjList)idList) {
       Ident ident = (Ident)obj;
@@ -496,7 +495,7 @@ public class XMPtransCoarrayRun
         XMPcoarray coarray = new XMPcoarray(ident, def, getFblock(), env);
         coarray.setUseMallocWithHint(useMalloc);
         if (coarray.isUseAssociated())
-          useAssociatedCoarrays.add(coarray);
+          moduleCoarrays.add(coarray);
         else
           localCoarrays.add(coarray);
       }
@@ -504,9 +503,9 @@ public class XMPtransCoarrayRun
 
     /* localize coarrays of the using modules into this procedure
      */
-    for (int i = 0; i < useAssociatedCoarrays.size(); i++) {
-      XMPcoarray coarray = useAssociatedCoarrays.get(i);
-      useAssociatedCoarrays.set(i, localizedCopyOfCoarray(coarray));
+    for (int i = 0; i < moduleCoarrays.size(); i++) {
+      XMPcoarray coarray = moduleCoarrays.get(i);
+      moduleCoarrays.set(i, localizedCopyOfCoarray(coarray));
     }
 
     /* divide localCoarrays into four sets:
@@ -533,22 +532,20 @@ public class XMPtransCoarrayRun
       }
     }
 
-    /* divide useAssociatedCoarrays into two sets:
+    /* divide moduleCoarrays into two sets:
      *  - explicit-shape use-associated coarrays
      *  - deffered-shape (i.e., allocatable) use-associated coarrays
      */
-    staticAssociatedCoarrays = new ArrayList<XMPcoarray>();
-    allocatableAssociatedCoarrays = new ArrayList<XMPcoarray>();
-    for (XMPcoarray coarray: useAssociatedCoarrays) {
+    staticModuleCoarrays = new ArrayList<XMPcoarray>();
+    allocatableModuleCoarrays = new ArrayList<XMPcoarray>();
+    for (XMPcoarray coarray: moduleCoarrays) {
       if (coarray.isExplicitShape())
-        //staticAssociatedCoarrays.add(localizeCopyCoarray(coarray));
-        staticAssociatedCoarrays.add(coarray);
+        staticModuleCoarrays.add(coarray);
       else
-        //allocatableAssociatedCoarrays.add(localizeCopyCoarray(coarray));
-        allocatableAssociatedCoarrays.add(coarray);
+        allocatableModuleCoarrays.add(coarray);
     }
 
-    /* staticAssociatedCoarrays is expanded with such host-associated static coarrays
+    /* staticModuleCoarrays is expanded with such host-associated static coarrays
      * under the following condition:
      *  - The current procedure is a module procedure.
      *  - The coarrays are defined in the host module or in the modules use-associated
@@ -559,11 +556,11 @@ public class XMPtransCoarrayRun
 
       for (XMPcoarray coarray: hostModuleRun.staticLocalCoarrays)
         if (funcDef.getBlock().getBody().findLocalIdent(coarray.getName()) == null)
-          staticAssociatedCoarrays.add(localizedCopyOfCoarray(coarray));
+          staticModuleCoarrays.add(localizedCopyOfCoarray(coarray));
 
-      for (XMPcoarray coarray: hostModuleRun.staticAssociatedCoarrays)
+      for (XMPcoarray coarray: hostModuleRun.staticModuleCoarrays)
         if (funcDef.getBlock().getBody().findLocalIdent(coarray.getName()) == null)
-          staticAssociatedCoarrays.add(localizedCopyOfCoarray(coarray));
+          staticModuleCoarrays.add(localizedCopyOfCoarray(coarray));
     }
   }
 
@@ -596,13 +593,13 @@ public class XMPtransCoarrayRun
     /*  set the following coarrays as visibleCoarrays:
      *   1. coarrays declared in the current procedure (localCoarrays),
      *   2. the use- and host- associated coarrays that are copied into this
-     *      procedure (static/allocatableAssociatedCoarrays), and
+     *      procedure (static/allocatableModuleCoarrays), and
      *   3. visibleCoarrays of the host-associated (parent) procedure/module
      */
     visibleCoarrays = new ArrayList<XMPcoarray>();
     _mergeCoarraysByName(visibleCoarrays, localCoarrays);
-    _mergeCoarraysByName(visibleCoarrays, staticAssociatedCoarrays);
-    _mergeCoarraysByName(visibleCoarrays, allocatableAssociatedCoarrays);
+    _mergeCoarraysByName(visibleCoarrays, staticModuleCoarrays);
+    _mergeCoarraysByName(visibleCoarrays, allocatableModuleCoarrays);
 
     if (hostProcedureRun != null)
       _mergeCoarraysByName(visibleCoarrays, hostProcedureRun.visibleCoarrays);
@@ -702,8 +699,8 @@ public class XMPtransCoarrayRun
     transDeclPart_allocatableLocal();
     transDeclPart_staticDummy();
     transDeclPart_allocatableDummy();
-    transDeclPart_staticAssociated();
-    transDeclPart_allocatableAssociated();
+    transDeclPart_staticModule();
+    transDeclPart_allocatableModule();
 
     // To avoid trouble of the shallow/deep copies, visibleCoarrays
     // should be made after execution of transDeclPart_*.
@@ -730,9 +727,13 @@ public class XMPtransCoarrayRun
   private void run1_module() {
     // convert specification and declaration part
     transModule_staticLocal1();
-    transModule_staticAssociated1();
     transModule_allocatableLocal();
-    transModule_allocatableAssociated();
+    //////////////////////////////////
+    // Try for a while.
+    // I think allocatable use-associated coarray is not 
+    // needed to be expanded in the using module.
+    //////////////////////////////////
+    transModule_allocatableModule();
 
     // To avoid trouble of the shallow/deep copies, visibleCoarrays
     // should be made after execution of transDeclPart_*.
@@ -787,10 +788,10 @@ public class XMPtransCoarrayRun
     --------------------------------------------
       subroutine EX1
         real :: V1(1:10,1:20)                                        ! f. f1.
-        common /xmpf_crayptr_M1/ crayptr_V1                          ! c.
+        common /xmpf_crayptr_EX1/ crayptr_V1                         ! c.
         pointer (crayptr_V1, V1)                                     ! c.
         integer(8) :: descptr_V1                                     ! a.
-        common /xmpf_descptr_M1/ descptr_V1                          ! a1.
+        common /xmpf_descptr_EX1/ descptr_V1                         ! a1.
         ...
       end subroutine
 
@@ -802,9 +803,9 @@ public class XMPtransCoarrayRun
     --------------------------------------------
       subroutine EX1
         real :: V1(1:10,1:20)                                        ! f. f1.
-        common /xmpf_COARRAY_M1/ V1                                  ! f4.
+        common /xmpf_COARRAY_EX1/ V1                                 ! f4.
         integer(8) :: descptr_V1                                     ! a.
-        common /xmpf_descptr_M1/ descptr_V1                          ! a1.
+        common /xmpf_descptr_EX1/ descptr_V1                         ! a1.
         ...
       end subroutine
 
@@ -964,27 +965,27 @@ public class XMPtransCoarrayRun
     !! Do not generate initializer here for descptr_V1.
     --------------------------------------------
   */
-  private void transDeclPart_staticAssociated() {
+  private void transDeclPart_staticModule() {
     // a. declare descriptor pointers
-    genDeclOfDescPointer(staticAssociatedCoarrays);
+    genDeclOfDescPointer(staticModuleCoarrays);
     // a1. make common association of descriptors
-    genCommonStmt(staticAssociatedCoarrays);
+    genCommonStmt(staticModuleCoarrays);
 
     // c4. generate common block for data (case Ver.4)
-    genCommonBlockForStaticCoarrays(staticAssociatedCoarrays);
+    genCommonBlockForStaticCoarrays(staticModuleCoarrays);
 
     // c. generate Cray-POINTER and COMMON statements (case Ver.3)
-    genDeclOfCrayPointer(staticAssociatedCoarrays);
-    genCommonStmtForCrayPointer(staticAssociatedCoarrays);
+    genDeclOfCrayPointer(staticModuleCoarrays);
+    genCommonStmtForCrayPointer(staticModuleCoarrays);
 
     // b. generate allocation into the init procedure
-    genAllocOfStaticCoarrays(staticAssociatedCoarrays);
+    genAllocOfStaticCoarrays(staticModuleCoarrays);
 
     // f. remove codimensions from declarations of coarrays
-    removeCodimensions(staticAssociatedCoarrays);
+    removeCodimensions(staticModuleCoarrays);
 
     // f1. remove SAVE attributes from declarations of coarrays
-    removeSaveAttr(staticAssociatedCoarrays);
+    removeSaveAttr(staticModuleCoarrays);
   }
 
 
@@ -1045,9 +1046,9 @@ public class XMPtransCoarrayRun
       end subroutine
     --------------------------------------------
   */
-  private void transDeclPart_allocatableAssociated() {
+  private void transDeclPart_allocatableModule() {
     // a3. declare descriptor pointers with zero-init
-    genDeclOfDescPointer(allocatableAssociatedCoarrays, true);
+    genDeclOfDescPointer(allocatableModuleCoarrays, true);
   }
 
 
@@ -1087,17 +1088,21 @@ public class XMPtransCoarrayRun
     replaceAllocatableWithPointer(allocatableLocalCoarrays);
   }
 
-  private void transModule_allocatableAssociated() {
+    //////////////////////////////////
+    // Try for a while.
+    // I think allocatable use-associated coarray is not 
+    // needed to be expanded in the using module.
+    //////////////////////////////////
+  private void transModule_allocatableModule() {
     // a. declare descriptor pointers
-    genDeclOfDescPointer(allocatableAssociatedCoarrays);
+    genDeclOfDescPointer(allocatableModuleCoarrays);
 
     // f. remove codimensions from declarations of coarrays
-    removeCodimensions(allocatableAssociatedCoarrays);
+    removeCodimensions(allocatableModuleCoarrays);
 
     // h. replace allocatable attributes with pointer attributes
-    replaceAllocatableWithPointer(allocatableAssociatedCoarrays);
+    replaceAllocatableWithPointer(allocatableModuleCoarrays);
   }
-
 
 
   /**
@@ -1245,25 +1250,6 @@ public class XMPtransCoarrayRun
   }
 
 
-  private void transModule_staticAssociated1() {
-    /**************************  DO NOTHING HERE
-    // a. declare descriptor pointers
-    genDeclOfDescPointer(staticAssociatedCoarrays);
-
-    // b. generate allocation into init procedure (static coarrays only)
-    genAllocOfStaticCoarrays(staticAssociatedCoarrays);
-    ***************************************/
-  }
-
-  private void transModule_staticAssociated2() {
-    /**************************  DO NOTHING HERE
-    // o. remove declarations of variables
-    removeDeclOfCoarrays(staticAssociatedCoarrays);
-    ***************************************/
-  }
-
-
-
   /**
     EXECUTION PART
     --------------------------------------------
@@ -1381,7 +1367,7 @@ public class XMPtransCoarrayRun
     addVisibleCoarraysToSyncEtc(visibleCoarrays);
 
     // o. remove declarations for use-associated allocatable coarrays
-    for (XMPcoarray coarray: useAssociatedCoarrays) {
+    for (XMPcoarray coarray: moduleCoarrays) {
       if (!coarray.isExplicitShape()) 
         removeDeclOfCoarray(coarray);
     }
@@ -3758,9 +3744,9 @@ public class XMPtransCoarrayRun
       "\n    ArrayList<XMPcoarray> allocatableLocalCoarrays = " +  _coarrayNames(allocatableLocalCoarrays) +
       "\n    ArrayList<XMPcoarray> staticDummyCoarrays = " +  _coarrayNames(staticDummyCoarrays) +
       "\n    ArrayList<XMPcoarray> allocatableDummyCoarrays = " +  _coarrayNames(allocatableDummyCoarrays) +
-      "\n  ArrayList<XMPcoarray> useAssociatedCoarrays = " +  _coarrayNames(useAssociatedCoarrays) +
-      "\n    ArrayList<XMPcoarray> staticAssociatedCoarrays = " +  _coarrayNames(staticAssociatedCoarrays) +
-      "\n    ArrayList<XMPcoarray> allocatableAssociatedCoarrays = " +  _coarrayNames(allocatableAssociatedCoarrays) +
+      "\n    ArrayList<XMPcoarray> moduleCoarrays = " +  _coarrayNames(moduleCoarrays) +
+      "\n    ArrayList<XMPcoarray> staticModuleCoarrays = " +  _coarrayNames(staticModuleCoarrays) +
+      "\n    ArrayList<XMPcoarray> allocatableModuleCoarrays = " +  _coarrayNames(allocatableModuleCoarrays) +
       "\n  String hostModuleName = " +  hostModuleName +
       "\n  String hostProcedureName = " +  hostProcedureName +
       "\n  XMPtransCoarrayRun hostModuleRun = " +  hostModuleRun +
