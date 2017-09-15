@@ -78,6 +78,8 @@ public class Xtype
     public static final long TQ_FPROCEDURE           = 1 << 33;  // procedure
     public static final long TQ_FCONTIGUOUS          = 1 << 34;  // contiguous
     public static final long TQ_FASYNCHRONOUS        = 1 << 35;  // asynchronous
+    public static final long TQ_FABSTRACT            = 1 << 36;  // abstract
+    public static final long TQ_FDEFERRED            = 1 << 37;  // deferred
 
     private String type_id;
     private int type_kind;
@@ -795,7 +797,31 @@ public class Xtype
     {
         setTypeQualFlag(TQ_FASYNCHRONOUS, enabled);
     }
-    
+
+    /** Fortran : return if is abstract */
+    public final boolean isFabstract()
+    {
+      return getTypeQualFlag(TQ_FABSTRACT);
+    }
+
+    /** Fortran : set attribute 'is_abstract' */
+    public final void setIsFabstract(boolean enabled)
+    {
+        setTypeQualFlag(TQ_FABSTRACT, enabled);
+    }
+
+    /** Fortran : return if is dererred */
+    public final boolean isFdeferred()
+    {
+      return getTypeQualFlag(TQ_FDEFERRED);
+    }
+
+    /** Fortran : set attribute 'is_deferred' */
+    public final void setIsFdeferred(boolean enabled)
+    {
+        setTypeQualFlag(TQ_FDEFERRED, enabled);
+    }
+
     /** Fortran : return if is qualified by 'bind' in pointer decl */
     public final String getBind()
     {
