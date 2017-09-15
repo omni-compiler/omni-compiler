@@ -52,13 +52,13 @@ static void _atomic_define_self_core(void *descPtr, int *atomAddr, int *srcAddr)
 
   /* get the descriptor of src (if any)
    */
-  srcDesc = _XMPF_get_coarrayDescFromAddr((char*)srcAddr, &srcOrgAddr,
+  srcDesc = _XMP_CO_get_coarrayDescFromAddr((char*)srcAddr, &srcOrgAddr,
                                           &srcOffset, &srcName);
 
   /* get the descriptor of atom
    */
-  atomDesc = _XMPF_get_coarrayChunkDesc(descPtr);
-  atomOffset = _XMPF_get_coarrayChunkOffset(descPtr, (char*)atomAddr);
+  atomDesc = _XMP_CO_get_coarrayChunkDesc(descPtr);
+  atomOffset = _XMP_CO_get_coarrayChunkOffset(descPtr, (char*)atomAddr);
 
   /* action
    */
@@ -90,13 +90,13 @@ static void _atomic_define_remote_core(void *descPtr, int coindex, int *moldAddr
 
   /* get the descriptor of src (if any)
    */
-  srcDesc = _XMPF_get_coarrayDescFromAddr((char*)srcAddr, &srcOrgAddr,
+  srcDesc = _XMP_CO_get_coarrayDescFromAddr((char*)srcAddr, &srcOrgAddr,
                                           &srcOffset, &srcName);
 
   /* get the descriptor of atom (remote coarray)
    */
-  atomDesc = _XMPF_get_coarrayChunkDesc(descPtr);
-  atomOffset = _XMPF_get_coarrayChunkOffset(descPtr, (char*)moldAddr);
+  atomDesc = _XMP_CO_get_coarrayChunkDesc(descPtr);
+  atomOffset = _XMP_CO_get_coarrayChunkOffset(descPtr, (char*)moldAddr);
   int image = _XMPF_get_initial_image_withDescPtr(coindex, descPtr);
 
   /* action
@@ -134,13 +134,13 @@ static void _atomic_ref_self_core(void *descPtr, int *atomAddr, int *dstAddr)
 
   /* get the descriptor of dst (if any)
    */
-  dstDesc = _XMPF_get_coarrayDescFromAddr((char*)dstAddr, &dstOrgAddr,
+  dstDesc = _XMP_CO_get_coarrayDescFromAddr((char*)dstAddr, &dstOrgAddr,
                                           &dstOffset, &dstName);
 
   /* get the descriptor of atom
    */
-  atomDesc = _XMPF_get_coarrayChunkDesc(descPtr);
-  atomOffset = _XMPF_get_coarrayChunkOffset(descPtr, (char*)atomAddr);
+  atomDesc = _XMP_CO_get_coarrayChunkDesc(descPtr);
+  atomOffset = _XMP_CO_get_coarrayChunkOffset(descPtr, (char*)atomAddr);
 
   /* action
    */
@@ -172,13 +172,13 @@ static void _atomic_ref_remote_core(void *descPtr, int coindex, int *moldAddr,
 
   /* get the descriptor of dst (if any)
    */
-  dstDesc = _XMPF_get_coarrayDescFromAddr((char*)dstAddr, &dstOrgAddr,
+  dstDesc = _XMP_CO_get_coarrayDescFromAddr((char*)dstAddr, &dstOrgAddr,
                                           &dstOffset, &dstName);
 
   /* get the descriptor of atom (remote coarray)
    */
-  atomDesc = _XMPF_get_coarrayChunkDesc(descPtr);
-  atomOffset = _XMPF_get_coarrayChunkOffset(descPtr, (char*)moldAddr);
+  atomDesc = _XMP_CO_get_coarrayChunkDesc(descPtr);
+  atomOffset = _XMP_CO_get_coarrayChunkOffset(descPtr, (char*)moldAddr);
   int image = _XMPF_get_initial_image_withDescPtr(coindex, descPtr);
 
   /* action

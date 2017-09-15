@@ -84,6 +84,8 @@ typedef struct _coarrayInfo_t CoarrayInfo_t;
 
 extern void xmpf_coarray_malloc_(void **descPtr, char **crayPtr,
                                  int *count, int *element, void **tag);
+extern void xmpf_coarray_regmem_(void **descPtr, void *var,
+                                 int *count, int *element, void **tag);
 extern void xmpf_coarray_free_(void **descPtr);
 extern void xmpf_coarray_deregmem_(void **descPtr);
 
@@ -112,25 +114,26 @@ extern int xmpf_coarray_malloc_bytes_(void);
 extern int xmpf_coarray_allocated_bytes_(void);
 extern int xmpf_coarray_garbage_bytes_(void);
 
-extern char *_XMPF_get_coarrayName(void *descPtr);
-extern char *_XMPF_get_coarrayBaseAddr(void *descPtr);
-extern size_t _XMPF_get_coarraySize(void *descPtr);
-extern size_t _XMPF_get_coarrayOffset(void *descPtr, char *addr);
+// xmp_co_alloc.c
+extern char *_XMP_CO_get_coarrayName(void *descPtr);
+extern char *_XMP_CO_get_coarrayBaseAddr(void *descPtr);
+extern size_t _XMP_CO_get_coarraySize(void *descPtr);
+extern size_t _XMP_CO_get_coarrayOffset(void *descPtr, char *addr);
 
-extern void *_XMPF_get_coarrayChunkDesc(void *descPtr);
-extern char *_XMPF_get_coarrayChunkOrgAddr(void *descPtr);
-extern size_t _XMPF_get_coarrayChunkSize(void *descPtr);
-extern size_t _XMPF_get_coarrayChunkOffset(void *descPtr, char *addr);
+extern void *_XMP_CO_get_coarrayChunkDesc(void *descPtr);
+extern char *_XMP_CO_get_coarrayChunkOrgAddr(void *descPtr);
+extern size_t _XMP_CO_get_coarrayChunkSize(void *descPtr);
+extern size_t _XMP_CO_get_coarrayChunkOffset(void *descPtr, char *addr);
 
-extern void *_XMPF_get_cntlDataCoarrayDesc(char **baseAddr, size_t *offset,
+extern void *_XMP_CO_get_cntlDataCoarrayDesc(char **baseAddr, size_t *offset,
                                            char **name);
-extern void *_XMPF_get_localBufCoarrayDesc(char **baseAddr, size_t *offset,
+extern void *_XMP_CO_get_localBufCoarrayDesc(char **baseAddr, size_t *offset,
                                            char **name);
-extern BOOL _XMPF_isAddrInRangeOfCoarray(char *localAddr, void *descPtr);
-extern BOOL _XMPF_isAddrInCoarrayChunk(char *localAddr, void *descPtr);
-extern void *_XMPF_get_coarrayDescFromAddr(char *localAddr, char **orgAddr,
+//extern BOOL _XMP_CO_isAddrInRangeOfCoarray(char *localAddr, void *descPtr);    // obsolated ?
+extern BOOL _XMP_CO_isAddrInCoarrayChunk(char *localAddr, void *descPtr);
+extern void *_XMP_CO_get_coarrayDescFromAddr(char *localAddr, char **orgAddr,
                                            size_t *offset, char **nameAddr);
-extern MPI_Comm _XMPF_get_communicatorFromDescPtr(void *descPtr);
+extern MPI_Comm _XMP_CO_get_communicatorFromDescPtr(void *descPtr);
 
 // for COARRAY directive
 extern void _XMPF_coarray_set_nodes(CoarrayInfo_t *cinfo, _XMP_nodes_t *nodes);
