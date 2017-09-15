@@ -84,6 +84,15 @@ void outx_XMP_Clause(FILE *fp, int indent, CExprOfList* clauseList)
       outxPrint(fp, indent1+1, "<intConstant type=\"int\">%d</intConstant>\n", clauseList->e_aux);
       break;
 
+    case XMP_DATA_DEPEND_IN:
+      outxPrint(fp, indent1+1, "<string>DATA_DEPEND_IN</string>\n");
+      break;
+    case XMP_DATA_DEPEND_OUT:
+      outxPrint(fp, indent1+1, "<string>DATA_DEPEND_OUT</string>\n");
+      break;
+    case XMP_DATA_DEPEND_INOUT:
+      outxPrint(fp, indent1+1, "<string>DATA_DEPEND_INOUT</string>\n");
+      break;
     }
 
     EXPR_FOREACH(ite, clauseList){
@@ -126,6 +135,9 @@ char *xmpDirectiveName(int c)
   case XMP_REFLECT_INIT: return "REFLECT_INIT";
   case XMP_REFLECT_DO:   return "REFLECT_DO";
   case XMP_WAIT_ASYNC:   return "WAIT_ASYNC";
+  case XMP_TASKLET:      return "TASKLET";
+  case XMP_TASKLETS:     return "TASKLETS";
+  case XMP_TASKLETWAIT:  return "TASKLETWAIT";
   default:               return "OMP???";
   }
 }

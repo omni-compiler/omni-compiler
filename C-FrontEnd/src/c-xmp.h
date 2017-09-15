@@ -28,6 +28,9 @@ enum XMP_pragma {
     XMP_REFLECT_INIT    = 124,
     XMP_REFLECT_DO      = 125,
     XMP_STATIC_DESC     = 126,
+    XMP_TASKLET     = 127,
+    XMP_TASKLETS    = 128,
+    XMP_TASKLETWAIT = 129,
 
     XMP_MASTER_IO	= 130,
     XMP_MASTER_IO_BEGIN	= 131,
@@ -78,6 +81,10 @@ enum XMP_pragma_clause {
     XMP_DATA_REDUCE_MINUS    = 316,
     XMP_DATA_REDUCE_MAXLOC   = 317,
     XMP_DATA_REDUCE_MINLOC   = 318,
+
+    XMP_DATA_DEPEND_IN       = 319,
+    XMP_DATA_DEPEND_OUT      = 320,
+    XMP_DATA_DEPEND_INOUT    = 321,
 
     XMP_GLOBAL_IO_DIRECT     = 800,
     XMP_GLOBAL_IO_ATOMIC     = 801,

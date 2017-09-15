@@ -65,6 +65,10 @@ static CExpr* parse_TEMPLATE_FIX_clause();
 static CExpr* parse_REFLECT_INIT_clause();
 static CExpr* parse_REFLECT_DO_clause();
 static CExpr* parse_task_ON_ref();
+static CExpr* parse_TASKLET_clause();
+static CExpr* parse_TASKLETS_clause();
+static CExpr* parse_TASKLETWAIT_clause();
+static CExpr* parse_TASKLET_subscript_list();
 
 static CExpr* parse_COL2_name_list();
 static CExpr* parse_XMP_subscript_list_round();
@@ -262,6 +266,23 @@ int parse_XMP_pragma()
     pg_XMP_pragma = XMP_REFLECT_DO;
     pg_get_token();
     pg_XMP_list = parse_REFLECT_DO_clause();
+  }
+  else if (PG_IS_IDENT("tasklet")) {
+    pg_XMP_pragma = XMP_TASKLET;
+    ret = PRAGMA_PREFIX;
+    pg_get_token();
+    pg_XMP_list = parse_TASKLET_clause();
+  }
+  else if (PG_IS_IDENT("tasklets")) {
+    pg_XMP_pragma = XMP_TASKLETS;
+    ret = PRAGMA_PREFIX;
+    pg_get_token();
+    pg_XMP_list = parse_TASKLETS_clause();
+  }
+  else if (PG_IS_IDENT("taskletwait")) {
+    pg_XMP_pragma = XMP_TASKLETWAIT;
+    pg_get_token();
+    pg_XMP_list = parse_TASKLETWAIT_clause();
   }
   else {
     addError(NULL,"unknown XcalableMP directive, '%s'",pg_tok_buf);
@@ -2401,3 +2422,131 @@ static void parse_ASYNC_ACC_or_HOST_PROFILE(CExpr** async, CExpr** acc_or_host, 
   if(*acc_or_host == NULL) *acc_or_host = (CExpr *)allocExprOfNull();
   if(*profile == NULL)     *profile     = (CExpr *)allocExprOfNull();
 }
+
+static CExpr* parse_TASKLET_clause()
+{
+  int r;
+  CExpr *list, *v;
+  CExpr *onRef, *dependList;
+  onRef = EMPTY_LIST;
+  dependList = EMPTY_LIST;
+
+  while (pg_tok == PG_IDENT) {
+
+    if (PG_IS_IDENT("on")) {
+      pg_get_token();
+      onRef = parse_task_ON_ref();
+      if (pg_tok == PG_IDENT) goto err;
+    } else {
+      CExpr *args = EMPTY_LIST;
+      if (PG_IS_IDENT("in"))         r = XMP_DATA_DEPEND_IN;
+      else if (PG_IS_IDENT("out"))   r = XMP_DATA_DEPEND_OUT;
+      else if (PG_IS_IDENT("inout")) r = XMP_DATA_DEPEND_INOUT;
+      else goto err;
+
+      pg_get_token();
+      if (pg_tok != '(') {
+        goto err;
+      }
+      pg_get_token();
+
+    next:
+      if (pg_tok != PG_IDENT) {
+        goto err;
+      }
+      v = pg_tok_val;
+      pg_get_token();
+
+      if (pg_tok != '[') {
+        args = exprListAdd(args, v);
+      } else {
+        list = parse_TASKLET_subscript_list();
+        args = exprListAdd(args, XMP_LIST2(v, list));
+      }
+
+      if (pg_tok == ',') {
+        pg_get_token();
+        goto next;
+      } else if(pg_tok == ')') {
+        pg_get_token();
+      }
+      dependList = exprListAdd(dependList, XMP_PG_LIST(r, args));
+    }
+  }
+  return XMP_LIST2(dependList, onRef);
+
+ err:
+  XMP_has_err = 1;
+  return NULL;
+}
+
+static CExpr *parse_TASKLETS_clause()
+{
+  return NULL;
+}
+
+static CExpr* parse_TASKLETWAIT_clause()
+{
+  CExpr* onRef = EMPTY_LIST;
+  
+  if (PG_IS_IDENT("on")) {
+    pg_get_token();
+    onRef = parse_task_ON_ref();
+  } 
+
+  return XMP_LIST1(onRef);
+}
+
+static CExpr* parse_TASKLET_subscript_list()
+{
+  CExpr *list, *v1, *v2;
+
+  list = EMPTY_LIST;
+  if (pg_tok != '[') {
+    addError(NULL,"parse_OMP_C_subscript_list: first token= '['");
+  }
+  pg_get_token();
+
+  while (1) {
+    v1 = v2 = NULL;
+    switch (pg_tok) {
+    case ']': goto err;
+    case ',': goto err;
+      break;
+    case ':':
+      v1 = (CExpr*)allocExprOfNumberConst2(0, BT_INT);
+      break;
+    default:
+      v1 = pg_parse_expr();
+    }
+
+    if(pg_tok == ':') goto subarray;
+    list = exprListAdd(list, v1);
+    goto next;
+
+  subarray:
+    pg_get_token();
+    if(pg_tok != ']'){
+      v2 = pg_parse_expr();
+    }
+    list = exprListAdd(list, XMP_LIST2(v1, v2));
+
+  next:
+    if (pg_tok == ']') {
+      pg_get_token();
+    } else goto err;
+
+    if (pg_tok != '[') {
+      break;
+    } else {
+      pg_get_token();
+    }
+  }
+
+  return list;
+
+ err:
+  addError(NULL, "Syntax error in scripts of XMP directive");
+  return NULL;
+}
+

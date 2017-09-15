@@ -39,6 +39,9 @@ public enum XMPpragma {
   GPU_REFLECT,
   GPU_BARRIER,
   GPU_LOOP,
+  TASKLET,
+  TASKLETS,
+  TASKLETWAIT,
 
   // clause
   GPU_PRIVATE,

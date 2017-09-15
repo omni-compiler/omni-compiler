@@ -127,6 +127,12 @@ public class XMPtranslateLocalPragma {
         { break; }
       case GPU_LOOP:
         { translateGpuLoop(pb);			break; }
+      case TASKLET:
+      { translateTasklet(pb);			break; }
+      case TASKLETS:
+      { translateTasklets(pb);			break; }
+      case TASKLETWAIT:
+      { translateTaskletwait(pb);		break; }
       default:
         throw new XMPexception("'" + pragmaName.toLowerCase() + "' directive is not supported yet");
     }
@@ -4179,4 +4185,58 @@ public class XMPtranslateLocalPragma {
         funcCallList.add(Bcons.Statement(macroId.Call(funcArgs)));
         return Bcons.COMPOUND(funcCallList);
     }
+
+  private void translateTasklet(PragmaBlock pb) throws XMPexception {
+    XobjList taskletDecl = (XobjList)pb.getClauses();
+    BlockList taskletBody = pb.getBody();
+    XobjList dependList = (XobjList)taskletDecl.getArg(0);
+    XobjList onRef = (XobjList)taskletDecl.getArg(1);
+
+    /* in, out, or inout clauses */
+    BlockList taskBlockList = Bcons.blockList(Bcons.PRAGMA(Xcode.OMP_PRAGMA, "TASK", dependList, taskletBody));
+    taskBlockList.setIdentList(Xcons.IDList());
+
+    /* on clause */
+    if (!onRef.isEmpty()) {
+      XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, pb);
+      String execFuncSuffix = execOnRefArgs.getFirst();
+      execFuncSuffix = execFuncSuffix + "_nocomm";
+      XobjList execFuncArgs = execOnRefArgs.getThird();
+
+      Ident execFuncId = _globalDecl.declExternFunc("_XMP_exec_task_" + execFuncSuffix, Xtype.intType);
+      pb.replace(Bcons.IF(BasicBlock.Cond(execFuncId.Call(execFuncArgs)),
+              taskBlockList, null));
+    } else {
+      pb.replace(Bcons.COMPOUND(taskBlockList));
+    }
+  }
+  private void translateTasklets(PragmaBlock pb) throws XMPexception {
+    BlockList taskletsBody = pb.getBody();
+
+    Block taskletsBlock = Bcons.PRAGMA(Xcode.OMP_PRAGMA, "PARALLEL", null,
+            Bcons.blockList(Bcons.PRAGMA(Xcode.OMP_PRAGMA, "SINGLE", null, taskletsBody)));
+
+    pb.replace(taskletsBlock);
+  }
+  private void translateTaskletwait(PragmaBlock pb) throws XMPexception {
+    XobjList taskletwaitDecl = (XobjList)pb.getClauses();
+    XobjList onRef = (XobjList)taskletwaitDecl.getArg(0);
+
+    BlockList taskwaitBlockList = Bcons.blockList(Bcons.PRAGMA(Xcode.OMP_PRAGMA, "TASKWAIT", null, null));
+    taskwaitBlockList.setIdentList(Xcons.IDList());
+
+    if (!onRef.isEmpty()) {
+      XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, pb);
+      String execFuncSuffix = execOnRefArgs.getFirst();
+      execFuncSuffix = execFuncSuffix + "_nocomm";
+      XobjList execFuncArgs = execOnRefArgs.getThird();
+
+      Ident execFuncId = _globalDecl.declExternFunc("_XMP_exec_task_" + execFuncSuffix, Xtype.intType);
+      pb.replace(Bcons.IF(BasicBlock.Cond(execFuncId.Call(execFuncArgs)),
+              taskwaitBlockList, null));
+    } else {
+      pb.replace(Bcons.COMPOUND(taskwaitBlockList));
+    }
+  }
 }
+
