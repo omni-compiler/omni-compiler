@@ -24,14 +24,27 @@ int xmp_get_ruuning()
   return _XMP_runtime_working;
 }
 
+static void _XMP_init_mpi(int argc, char **argv)
+{
+  int flag = 0;
+  MPI_Initialized(&flag);
+  if (flag) return;
+
+  if(getenv("XMP_ENABLE_THREAD_MULTIPLE") != NULL) {
+    int provided;
+    MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
+    if (provided != MPI_THREAD_MULTIPLE) {
+      _XMP_fatal("Now implementation does not support MPI_THREAD_MULTIPLE");
+    }
+  } else {
+    MPI_Init(&argc, &argv);
+  }
+}
+
 void _XMP_init(int argc, char** argv, MPI_Comm comm)
 {
   if (!_XMP_runtime_working) {
-    int flag = 0;
-    MPI_Initialized(&flag);
-
-    if(!flag)
-      MPI_Init(&argc, &argv);
+    _XMP_init_mpi(argc, argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &_XMP_world_rank);
     MPI_Comm_size(MPI_COMM_WORLD, &_XMP_world_size);
 
