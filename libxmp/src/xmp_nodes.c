@@ -16,13 +16,14 @@ static _XMP_nodes_t *_XMP_create_new_nodes(int is_member, int dim, int comm_size
 {
   _XMP_nodes_t *n = _XMP_alloc(sizeof(_XMP_nodes_t) + sizeof(_XMP_nodes_info_t) * (dim - 1));
 
-  n->desc_kind = _XMP_DESC_NODES;
-  
-  n->on_ref_id = _XMP_get_on_ref_id();
-  n->is_member = is_member;
-  n->dim       = dim;
-  n->comm_size = comm_size;
-  n->comm      = comm;
+  n->desc_kind   = _XMP_DESC_NODES;
+  n->on_ref_id   = _XMP_get_on_ref_id();
+  n->is_member   = is_member;
+  n->dim         = dim;
+  n->comm_size   = comm_size;
+  n->comm        = comm;
+  n->subcomm     = NULL;
+  n->use_subcomm = false;
 
   if(is_member){
     int size, rank;
@@ -336,7 +337,7 @@ static _XMP_comm_t* create_subcomm(_XMP_nodes_t* n)
   }
   MPI_Comm_dup(*ref_comm, &subcomm[0]);               // i == 0
   MPI_Comm_dup(MPI_COMM_SELF, &subcomm[num_comms-1]); // i == num_comms-1
-
+  
   return (_XMP_comm_t*)subcomm;
 }
 
@@ -816,6 +817,17 @@ void _XMP_finalize_nodes(_XMP_nodes_t *nodes)
 {
   if(!nodes->use_subcomm)
     _XMP_finalize_comm(nodes->comm);
+
+  if(nodes->subcomm != NULL){
+    int dim       = nodes->dim;
+    int num_comms = 1<<dim;
+    for(int i=0;i<num_comms;i++){
+      MPI_Comm *comm = (MPI_Comm *)nodes->subcomm;
+      MPI_Comm_free(&comm[i]);
+    }
+    free(nodes->subcomm);
+  }
+  
   _XMP_free(nodes->inherit_info);
   _XMP_free(nodes);
 }
