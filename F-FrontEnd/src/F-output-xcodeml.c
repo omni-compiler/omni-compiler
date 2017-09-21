@@ -5402,6 +5402,7 @@ outx_functionDecl(int l, EXT_ID ep)
     CRT_FUNCEP_PUSH(ep);
     outx_tagOfDecl1(l, "FfunctionDecl", GET_EXT_LINE(ep));
     outx_symbolNameWithFunctionType_EXT(l1, ep);
+    outx_definition_symbols(l1, ep);
     outx_declarations(l1, ep);
     outx_close(l, "FfunctionDecl");
     CRT_FUNCEP_POP;
