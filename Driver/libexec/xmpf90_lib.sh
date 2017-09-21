@@ -220,6 +220,8 @@ function xmpf90_set_parameters()
 		ENABLE_TLOG_ALL=true;;
 	    --tlog)
 		ENABLE_TLOG=true;;
+	    -Mnolarge_arrays)
+		omni_error_exit "-Mnolarge_arrays option cannot be used.";;
 	    *)
 		other_args+=("$1");;
 	esac

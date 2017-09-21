@@ -196,6 +196,8 @@ function ompf90_set_parameters()
 		fi
 		ENABLE_ACC=true
 		;;
+	    -Mnolarge_arrays)
+		omni_error_exit "-Mnolarge_arrays option cannot be used.";;
             *)
                 other_args+=("$1");;
 	esac
