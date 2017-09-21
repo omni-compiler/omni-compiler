@@ -991,14 +991,14 @@ else
 
 		    # MPI C
 		    MPI_CPPFLAGS="-E -c99"
-		    MPI_CFLAGS="-fast -c99 -Mlarge_arrays $OPENMP_OPT_C" 
+		    MPI_CFLAGS="-fast -c99 $OPENMP_OPT_C" 
 		    MPI_CLIBS=""
-		    # About the reason of adding "-Mlarge_arrays", please see the following URL
-		    # https://github.com/omni-compiler/omni-compiler/issues/179#issuecomment-326466300
 
 		    # Omni C
 		    OMNI_C2X_FLAGS="--no-builtin-va-arg"
-		    OMNI_NTV_CFLAGS="-D_XMP_PGI"
+		    OMNI_NTV_CFLAGS="-D_XMP_PGI -Mlarge_arrays"
+		    # About the reason of adding "-Mlarge_arrays", please see the following URL
+		    # https://github.com/omni-compiler/omni-compiler/issues/179#issuecomment-326466300
 		    OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT_C"
 
 		    # Omni Common
@@ -1079,16 +1079,16 @@ else
 
 		    # MPI F
 		    MPI_FPPFLAGS="-E -Mpreprocess"
-		    MPI_FCFLAGS="-fast -Mlarge_arrays $OPENMP_OPT_F"
+		    MPI_FCFLAGS="-fast $OPENMP_OPT_F"
 		    MPI_MODINC="-module"
 		    MPI_FCLIBS=""
 		    KIND_MPI_FORTRAN=other
-		    # About the reason of adding "-Mlarge_arrays", please see the following URL
-		    # https://github.com/omni-compiler/omni-compiler/issues/179#issuecomment-326466300
 
 		    # Omni F
 		    OMNI_F2X_FLAGS=""
-		    OMNI_NTV_FCFLAGS=""
+		    OMNI_NTV_FCFLAGS="-Mlarge_arrays"
+		    # About the reason of adding "-Mlarge_arrays", please see the following URL
+		    # https://github.com/omni-compiler/omni-compiler/issues/179#issuecomment-326466300
 		    OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT_F"
 
 		    # Omni Common
