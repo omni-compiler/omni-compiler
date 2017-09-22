@@ -104,7 +104,7 @@ int    _target_coindex;
 
 void _XMPF_coarrayInit_put()
 {
-  _localBuf_desc = _XMP_CO_get_infoOfLocalBuf(&_localBuf_baseAddr,
+  _localBuf_desc = _XMPCO_get_infoOfLocalBuf(&_localBuf_baseAddr,
                                               &_localBuf_offset,
                                               &_localBuf_name);
   _localBuf_size = XMPF_get_localBufSize();
@@ -139,7 +139,7 @@ extern void xmpf_coarray_put_scalar_(void **descPtr, char **baseAddr, int *eleme
   BOOL sync = *synchronous;
 
   descDMA = XMPF_isEagerCommMode() ? NULL :
-      _XMP_CO_get_descFromLocalAddr(rhs, &orgAddrDMA, &offsetDMA, &nameDMA);
+      _XMPCO_get_desc_fromLocalAddr(rhs, &orgAddrDMA, &offsetDMA, &nameDMA);
   avail_DMA = descDMA ? TRUE : FALSE;
 
   /*--------------------------------------*\
@@ -248,7 +248,7 @@ extern void xmpf_coarray_put_array_(void **descPtr, char **baseAddr, int *elemen
   BOOL avail_DMA;
 
   descDMA = XMPF_isEagerCommMode() ? NULL :
-      _XMP_CO_get_descFromLocalAddr(rhs, &orgAddrDMA, &offsetDMA, &nameDMA);
+      _XMPCO_get_desc_fromLocalAddr(rhs, &orgAddrDMA, &offsetDMA, &nameDMA);
   avail_DMA = descDMA ? TRUE : FALSE;
 
   /*--------------------------------------*\
@@ -337,7 +337,7 @@ extern void xmpf_coarray_put_spread_(void **descPtr, char **baseAddr, int *eleme
 void xmpf_coarray_put_err_len_(void **descPtr,
                                int *len_mold, int *len_src)
 {
-  char *name = _XMP_CO_get_nameOfCoarray(*descPtr);
+  char *name = _XMPCO_get_nameOfCoarray(*descPtr);
 
   _XMPF_coarrayDebugPrint("ERROR DETECTED: xmpf_coarray_put_err_len_\n"
                           "  coarray name=\'%s\', len(mold)=%d, len(src)=%d\n",
@@ -351,7 +351,7 @@ void xmpf_coarray_put_err_len_(void **descPtr,
 void xmpf_coarray_put_err_size_(void **descPtr, int *dim,
                                 int *size_mold, int *size_src)
 {
-  char *name = _XMP_CO_get_nameOfCoarray(*descPtr);
+  char *name = _XMPCO_get_nameOfCoarray(*descPtr);
 
   _XMPF_coarrayDebugPrint("ERROR DETECTED: xmpf_coarray_put_err_size_\n"
                           "  coarray name=\'%s\', i=%d, size(mold,i)=%d, size(src,i)=%d\n",
@@ -681,8 +681,8 @@ void _putVector_DMA(void *descPtr, char *baseAddr, int bytes, int coindex,
                     void *descDMA, size_t offsetDMA, char *nameDMA,
                     BOOL synchronous)
 {
-  char* desc = _XMP_CO_get_descForMemoryChunk(descPtr);
-  size_t offset = _XMP_CO_get_offsetInMemoryChunk(descPtr, baseAddr);
+  char* desc = _XMPCO_get_descForMemoryChunk(descPtr);
+  size_t offset = _XMPCO_get_offsetInMemoryChunk(descPtr, baseAddr);
 
   _XMPF_coarrayDebugPrint("===PUT_VECTOR DMA-RDMA to[%d], %d bytes, %s\n"
                           "  local : \'%s\', offset=%zd\n"
@@ -691,7 +691,7 @@ void _putVector_DMA(void *descPtr, char *baseAddr, int bytes, int coindex,
                           (synchronous == 1) ? "SYNC!" :
                           (synchronous == 0) ? "async" : "Dirty!",
                           nameDMA, offsetDMA,
-                          _XMP_CO_get_nameOfCoarray(descPtr), offset);
+                          _XMPCO_get_nameOfCoarray(descPtr), offset);
 
   // ACTION (case synchronous: atomic_define)
   if (synchronous) {
@@ -735,8 +735,8 @@ void _putVector_buffer(void *descPtr, char *baseAddr, int bytesRU,
 void _putVector_buffer_SAFE(void *descPtr, char *baseAddr, int bytesRU,
                             int coindex, char *rhs, int bytes)
 {
-  char *desc = _XMP_CO_get_descForMemoryChunk(descPtr);
-  size_t offset = _XMP_CO_get_offsetInMemoryChunk(descPtr, baseAddr);
+  char *desc = _XMPCO_get_descForMemoryChunk(descPtr);
+  size_t offset = _XMPCO_get_offsetInMemoryChunk(descPtr, baseAddr);
 
   // MALLOC & MEMCPY
   char *buf = (char*)_XMP_alloc(sizeof(char) * bytesRU);
@@ -754,7 +754,7 @@ void _putVector_buffer_SAFE(void *descPtr, char *baseAddr, int bytesRU,
                           "  destination (RDMA): \'%s\', offset=%zd\n",
                           coindex, bytes,
                           buf,
-                          _XMP_CO_get_nameOfCoarray(descPtr), offset);
+                          _XMPCO_get_nameOfCoarray(descPtr), offset);
 
   // ACTION
   _XMP_coarray_rdma_coarray_set_1(offset, bytes, 1);    // LHS (remote)

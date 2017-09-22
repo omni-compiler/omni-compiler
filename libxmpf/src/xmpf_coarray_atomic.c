@@ -53,14 +53,14 @@ void _atomic_define_self_core(CoarrayInfo_t *cinfo, int *atomAddr, int *srcAddr)
 
   /* get the descriptor of src (if any)
    */
-  srcDesc = _XMP_CO_get_descFromLocalAddr((char*)srcAddr, &srcOrgAddr_char,
+  srcDesc = _XMPCO_get_desc_fromLocalAddr((char*)srcAddr, &srcOrgAddr_char,
                                           &srcOffset_char, &srcName);
   srcOffset = srcDesc ? (srcAddr - (int*)srcOrgAddr_char) : 0;
 
   /* get the descriptor of atom
    */
-  atomDesc = _XMP_CO_get_descForMemoryChunk(cinfo);
-  atomOrgAddr_char = _XMP_CO_get_orgAddrOfMemoryChunk(cinfo);
+  atomDesc = _XMPCO_get_descForMemoryChunk(cinfo);
+  atomOrgAddr_char = _XMPCO_get_orgAddrOfMemoryChunk(cinfo);
   atomOffset = atomAddr - (int*)atomOrgAddr_char;
 
   /* action
@@ -94,14 +94,14 @@ void _atomic_define_remote_core(CoarrayInfo_t *cinfo, int coindex,
 
   /* get the descriptor of src (if any)
    */
-  srcDesc = _XMP_CO_get_descFromLocalAddr((char*)srcAddr, &srcOrgAddr_char,
+  srcDesc = _XMPCO_get_desc_fromLocalAddr((char*)srcAddr, &srcOrgAddr_char,
                                           &srcOffset_char, &srcName);
   srcOffset = srcDesc ? (srcAddr - (int*)srcOrgAddr_char) : 0;
 
   /* get the descriptor of atom (remote coarray)
    */
-  atomDesc = _XMP_CO_get_descForMemoryChunk(cinfo);
-  moldOrgAddr_char = _XMP_CO_get_orgAddrOfMemoryChunk(cinfo);
+  atomDesc = _XMPCO_get_descForMemoryChunk(cinfo);
+  moldOrgAddr_char = _XMPCO_get_orgAddrOfMemoryChunk(cinfo);
   moldOffset = moldAddr - (int*)moldOrgAddr_char;
 
   int image = _XMPF_get_initial_image_withDescPtr(coindex, cinfo);
@@ -142,14 +142,14 @@ void _atomic_ref_self_core(CoarrayInfo_t *cinfo, int *atomAddr, int *dstAddr)
 
   /* get the descriptor of dst (if any)
    */
-  dstDesc = _XMP_CO_get_descFromLocalAddr((char*)dstAddr, &dstOrgAddr_char,
+  dstDesc = _XMPCO_get_desc_fromLocalAddr((char*)dstAddr, &dstOrgAddr_char,
                                           &dstOffset_char, &dstName);
   dstOffset = dstDesc ? (dstAddr - (int*)dstOrgAddr_char) : 0;
 
   /* get the descriptor of atom
    */
-  atomDesc = _XMP_CO_get_descForMemoryChunk(cinfo);
-  atomOrgAddr_char = _XMP_CO_get_orgAddrOfMemoryChunk(cinfo);
+  atomDesc = _XMPCO_get_descForMemoryChunk(cinfo);
+  atomOrgAddr_char = _XMPCO_get_orgAddrOfMemoryChunk(cinfo);
   atomOffset = atomAddr - (int*)atomOrgAddr_char;
 
   /* action
@@ -183,14 +183,14 @@ void _atomic_ref_remote_core(CoarrayInfo_t *cinfo, int coindex,
 
   /* get the descriptor of dst (if any)
    */
-  dstDesc = _XMP_CO_get_descFromLocalAddr((char*)dstAddr, &dstOrgAddr_char,
+  dstDesc = _XMPCO_get_desc_fromLocalAddr((char*)dstAddr, &dstOrgAddr_char,
                                           &dstOffset_char, &dstName);
   dstOffset = dstDesc ? (dstAddr - (int*)dstOrgAddr_char) : 0;
 
   /* get the descriptor of atom (remote coarray)
    */
-  atomDesc = _XMP_CO_get_descForMemoryChunk(cinfo);
-  moldOrgAddr_char = _XMP_CO_get_orgAddrOfMemoryChunk(cinfo);
+  atomDesc = _XMPCO_get_descForMemoryChunk(cinfo);
+  moldOrgAddr_char = _XMPCO_get_orgAddrOfMemoryChunk(cinfo);
   moldOffset = moldAddr - (int*)moldOrgAddr_char;
 
   int image = _XMPF_get_initial_image_withDescPtr(coindex, cinfo);

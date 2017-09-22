@@ -1,40 +1,28 @@
 #include "xmpf_internal_coarray.h"
+#include "xmpco_internal.h"
 
 /*************************************************\
-  INITIAL images
+  INITIAL images **** DELETE US ****
 \*************************************************/
-static int _initial_this_image;
-static int _initial_num_images;
 
 void _XMPF_set_this_image_initial()
 {
-  int rank;
-
-  if (MPI_Comm_rank(MPI_COMM_WORLD, &rank) != 0)
-    _XMPF_coarrayFatal("INTERNAL ERROR: "
-                       "MPI_Comm_rank(MPI_COMM_WORLD, ) failed");
-
-  _initial_this_image = rank + 1;
+  _XMPCO_set_initialThisImage();
 }
 
 void _XMPF_set_num_images_initial()
 {
-  int size;
-
-  if (MPI_Comm_size(MPI_COMM_WORLD, &size) != 0)
-    _XMPF_coarrayFatal("INTERNAL ERROR: "
-                       "MPI_Comm_size(MPI_COMM_WORLD, ) failed");
-  _initial_num_images = size;
+  _XMPCO_set_initialNumImages();
 }
 
 int _XMPF_this_image_initial()
 {
-  return _initial_this_image;
+  return _XMPCO_get_initialThisImage();
 }
 
 int _XMPF_num_images_initial()
 {
-  return _initial_num_images;
+  return _XMPCO_get_initialNumImages();
 }
 
 
@@ -54,17 +42,6 @@ void xmpf_get_comm_current_(MPI_Fint *fcomm)
 void xmpf_consume_comm_current_(MPI_Fint *fcomm)
 {
   *fcomm = MPI_Comm_c2f(_XMPF_consume_comm_current());
-}
-
-BOOL _XMPF_is_subset_exec()
-{
-  if (xmp_num_nodes() < _initial_num_images)
-    // now executing in a task region
-    return TRUE;
-  if (_XMPF_coarray_get_image_nodes() != NULL)
-    // image directive is now valid
-    return TRUE;
-  return FALSE;
 }
 
 /* look at also _image_nodes
@@ -92,30 +69,6 @@ MPI_Comm _XMPF_consume_comm_current()
     return *commp;
   return MPI_COMM_WORLD;
 }
-
-int _XMPF_num_images_current()
-{
-  return xmp_num_nodes();
-}
-
-/* 'this image' in a task region is defined as (MPI rank + 1),
- * which is not always equal to node_num of XMP in Language Spec V1.x.
- */
-int _XMPF_this_image_current()
-{
-  if (_XMPF_is_subset_exec()) {
-    int rank;
-    if (MPI_Comm_rank(_XMPF_get_comm_current(), &rank) != 0)
-      _XMPF_coarrayFatal("INTERNAL: MPI_Comm_rank failed");
-
-    // got rank for the current communicator successfully
-    return rank + 1;
-  }
-
-  // get this_image for the initial communicator
-  return _XMPF_this_image_initial();
-}
-
 
 /*************************************************\
   ON-NODES images
@@ -184,13 +137,13 @@ int _XMPF_transImage_withComm(MPI_Comm comm1, int image1, MPI_Comm comm2)
 
 static int _transImage_current2initial(int image)
 {
-  int num = _XMPF_num_images_current();
+  int num = _XMPCO_get_currentNumImages();
 
   if (image <= 0 || num < image)
     _XMPF_coarrayFatal("ERROR: image index (%d) not specified within the range (1 to %d)\n",
                        image, num);
 
-  if (!_XMPF_is_subset_exec())
+  if (!_XMPCO_is_subset_exec())
     return image;
 
   int initImage = _XMPF_transImage_withComm(_XMPF_get_comm_current(), image,
@@ -218,7 +171,7 @@ int _XMPF_get_initial_image_withDescPtr(int image, void *descPtr)
     return _transImage_current2initial(image);
 
   MPI_Comm nodesComm =
-    _XMP_CO_communicatorFromCoarrayInfo((CoarrayInfo_t*)descPtr);
+    _XMPCO_get_comm_fromCoarrayInfo((CoarrayInfo_t*)descPtr);
   if (nodesComm == MPI_COMM_NULL)
     return _transImage_current2initial(image);
 
@@ -255,7 +208,7 @@ static void _get_initial_image_vector(int size, int images1[], int images2[])
  */
 static void _get_initial_allimages(int size, int images2[])
 {
-  int myImage = _XMPF_this_image_current();
+  int myImage = _XMPCO_get_currentThisImage();
   MPI_Comm comm = _XMPF_get_comm_current();
   int i,j;
 
@@ -296,62 +249,16 @@ int xmpf_this_image_current_(void)
 
 /*****************************************\
   sync all
-  All arguments, which are described to prohibit overoptimization 
-  of compiler, are ignored in this library.
 \*****************************************/
 
-static unsigned int _count_syncall = 0;
-static int _sync_all_core();
-static int _sync_all_withComm(MPI_Comm comm);
-
-void xmpf_sync_all_(void)
+void xmpf_sync_all_()
 {
-  int stat;
-
-  if (_XMPF_is_subset_exec()) {
-    _XMPF_coarrayDebugPrint("SYNCALL, SUBSET(%d nodes) starts\n",
-                            _XMPF_num_images_current());
-    stat = _sync_all_withComm(_XMPF_consume_comm_current());
-    _XMPF_coarrayDebugPrint("SYNCALL, SUBSET(%d nodes) done (stat=%d)\n",
-                            _XMPF_num_images_current(), stat);
-    return;
-  }
-
-  stat = _sync_all_core();
-  _XMPF_coarrayDebugPrint("SYNCALL done (count:%d, state=%d)\n",
-                          _count_syncall, stat);
+  XMPCO_sync_all();
 }
 
-/* entry for automatic syncall at the end of procedures
- */
-void xmpf_sync_all_auto_(void)
+void xmpf_sync_all_auto_()
 {
-  int stat;
-
-  if (_XMPF_is_subset_exec()) {
-    _XMPF_coarrayDebugPrint("SYNCALL AUTO, SUBSET(%d nodes) starts\n",
-                            _XMPF_num_images_current());
-    stat = _sync_all_withComm(_XMPF_consume_comm_current());
-    _XMPF_coarrayDebugPrint("SYNCALL AUTO, SUBSET(%d nodes) done (stat=%d)\n",
-                            _XMPF_num_images_current(), stat);
-    return;
-  } 
-
-  stat = _sync_all_core();
-  _XMPF_coarrayDebugPrint("SYNCALL_AUTO done (count:%d, stat=%d)\n",
-                          _count_syncall, stat);
-}
-
-
-static int _sync_all_core()
-{
-  _count_syncall += 1;
-
-  int state = 0;
-  xmp_sync_all(&state);
-  if (state != 0)
-    _XMPF_coarrayFatal("SYNC ALL failed with state=%d", state);
-  return state;
+  XMPCO_sync_all_auto();
 }
 
 
@@ -360,24 +267,8 @@ static int _sync_all_core()
 void xmpf_sync_all_withcomm_(MPI_Fint *fcomm)
 {
   MPI_Comm comm = MPI_Comm_f2c(*fcomm);
-  (void)_sync_all_withComm(comm);
+  XMPCO_sync_all_withComm(comm);
 }
-
-static int _sync_all_withComm(MPI_Comm comm)
-{
-  int state = 0;
-  
-  xmp_sync_memory(&state);
-  if (state != 0)
-    _XMPF_coarrayFatal("SYNC MEMORY inside SYNC ALL failed with state=%d",
-                       state);
-  state = MPI_Barrier(comm);
-  if (state != 0)
-    _XMPF_coarrayFatal("MPI_Barrier inside SYNC ALL failed with state=%d",
-                       state);
-  return state;
-}
-
 
 
 /* Error handling is not supported yet.
@@ -393,8 +284,7 @@ void xmpf_sync_all_stat_core_(int *stat, char *msg, int *msglen)
     fprintf(stderr, "  -- ignored.\n");
   }
 
-  int state;
-  xmp_sync_all(&state);
+  XMPCO_sync_all();
 }
 
 
@@ -475,7 +365,7 @@ void xmpf_sync_allimages_nostat_(void)
 {
   int state;
 
-  if (_XMPF_is_subset_exec()) {
+  if (_XMPCO_is_subset_exec()) {
     int size = _XMPF_num_images_current() - 1;    // #of images except myself
     int *images0 = (int*)malloc((sizeof(int)*size));
     _get_initial_allimages(size, images0);
@@ -507,7 +397,7 @@ void xmpf_sync_image_stat_(int *image, int *stat, char *msg, int *msglen)
             "STAT= specifier of SYNC IMAGES is not supported yet and ignored.\n");
   }
 
-  _XMPF_checkIfInTask("syncimage with stat");
+  _XMPCO_checkIfInTask("syncimage with stat");
   xmpf_sync_image_nostat_(image);
 }
 
@@ -522,7 +412,7 @@ void xmpf_sync_images_stat_(int *images, int *size, int *stat,
             "STAT= specifier of SYNC IMAGES is not supported yet and ignored.\n");
   }
 
-  _XMPF_checkIfInTask("syncimage with stat");
+  _XMPCO_checkIfInTask("syncimage with stat");
   xmpf_sync_images_nostat_(images, size);
 }
 
@@ -536,7 +426,7 @@ void xmpf_sync_allimages_stat_(int *stat, char *msg, int *msglen)
             "STAT= specifier of SYNC IMAGES is not supported yet and ignored.\n");
   }
 
-  _XMPF_checkIfInTask("syncimage with stat");
+  _XMPCO_checkIfInTask("syncimage with stat");
   xmpf_sync_allimages_nostat_();
 }
 

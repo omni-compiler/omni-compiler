@@ -5,12 +5,7 @@
 #ifndef XMPF_INTERNAL_COARRAY_H
 #define XMPF_INTERNAL_COARRAY_H
 
-#define BOOL   int
-#define TRUE   1
-#define FALSE  0
-
-#include "xmpf_internal.h"
-#include "xmp_co_internal.h"
+#include "xmpco_internal.h"
 
 
 // GET/PUT Interface types
@@ -19,30 +14,6 @@
 #define GET_INTERFACE_TYPE 8
 //#define PUT_INTERFACE_TYPE 7           // varid last implementation
 #define PUT_INTERFACE_TYPE 8
-
-// MALLOC_UNIT must be divisible by COMM_UNIT
-#if defined(_XMP_FJRDMA)
-#  define COMM_UNIT      ((size_t)4)
-#  define MALLOC_UNIT    ((size_t)8)
-#  define ONESIDED_COMM_LAYER "FJRDMA"
-#elif defined(_XMP_GASNET)
-#  define COMM_UNIT      ((size_t)1)
-#  define MALLOC_UNIT    ((size_t)4)
-#  define ONESIDED_COMM_LAYER "GASNET"
-#elif defined(_XMP_MPI3_ONESIDED)
-#  define COMM_UNIT      ((size_t)1)
-#  define MALLOC_UNIT    ((size_t)4)
-#  define ONESIDED_COMM_LAYER "MPI3"
-#else
-#  define COMM_UNIT      ((size_t)1)
-#  define MALLOC_UNIT    ((size_t)4)
-#  define ONESIDED_COMM_LAYER "unknown"
-#endif
-
-#define _ROUND_UP(n,p)        (((((size_t)(n))-1)/(p)+1)*(p))
-#define _ROUND_UP_PLUS(n,p)   (((n)>0) ? _ROUND_UP(n,p) : (p))
-#define ROUND_UP_COMM(n)      _ROUND_UP((n),COMM_UNIT)
-#define ROUND_UP_MALLOC(n)    _ROUND_UP_PLUS((n),MALLOC_UNIT)
 
 /*-- parameters --*/
 #define DESCR_ID_MAX   250
@@ -71,8 +42,6 @@ extern void xmpf_coarray_msg_(int *sw);
 extern char *_XMPF_errmsg;   // to answer ERRMSG argument in Fortran
 extern void xmpf_copy_errmsg_(char *errmsg, int *msglen);
 
-extern int _XMPF_nowInTask(void);   // for restriction check
-extern void _XMPF_checkIfInTask(char *msgopt);   // restriction check
 #define _XMPF_coarrayDebugPrint	if (_XMPF_get_coarrayMsg()) __XMPF_coarrayDebugPrint
 extern void __XMPF_coarrayDebugPrint(char *format, ...);
 extern void xmpf_coarray_fatal_with_len_(char *msg, int *msglen);
@@ -137,7 +106,6 @@ extern void _XMPF_set_num_images_initial(void);
 extern int _XMPF_this_image_initial(void);
 extern int _XMPF_num_images_initial(void);
 
-extern BOOL _XMPF_is_subset_exec(void);
 extern MPI_Comm _XMPF_get_comm_current(void);
 extern MPI_Comm _XMPF_consume_comm_current(void);
 extern int _XMPF_this_image_current(void);

@@ -41,7 +41,7 @@ char *_localBuf_name;           // name of the local buffer
 
 void _XMPF_coarrayInit_get()
 {
-  _localBuf_desc = _XMP_CO_get_infoOfLocalBuf(&_localBuf_baseAddr,
+  _localBuf_desc = _XMPCO_get_infoOfLocalBuf(&_localBuf_baseAddr,
                                               &_localBuf_offset,
                                               &_localBuf_name);
 }
@@ -61,14 +61,14 @@ extern void xmpf_coarray_get_scalar_(void **descPtr, char **baseAddr, int *eleme
    * the memory chunk corresponding to    *
    * descptr.                             *
   \*--------------------------------------*/
-  BOOL pass = _XMP_CO_isAddrInMemoryChunk(*baseAddr, *descPtr);
+  BOOL pass = _XMPCO_isAddrInMemoryChunk(*baseAddr, *descPtr);
   if (!pass) {
     _XMPF_coarrayFatal("INTERNAL: illegal baseAddr of mold coarray (in xmpf_coarray_get_scalar_)\n"
                        "  possibly because of unexpected copy-in interface\n"
                        "  coarray_name=\"%s\", chunk_size=%ud; offset_in_chunk=%ud",
-                       _XMP_CO_get_nameOfCoarray(*descPtr),
-                       (unsigned)_XMP_CO_get_sizeOfMemoryChunk(*descPtr),
-                       (unsigned)_XMP_CO_get_offsetInMemoryChunk(*descPtr, *baseAddr));
+                       _XMPCO_get_nameOfCoarray(*descPtr),
+                       (unsigned)_XMPCO_get_sizeOfMemoryChunk(*descPtr),
+                       (unsigned)_XMPCO_get_offsetInMemoryChunk(*descPtr, *baseAddr));
   }
 
   /*--------------------------------------*\
@@ -83,7 +83,7 @@ extern void xmpf_coarray_get_scalar_(void **descPtr, char **baseAddr, int *eleme
   BOOL avail_DMA;
 
   descDMA = XMPF_isEagerCommMode() ? NULL :
-      _XMP_CO_get_descFromLocalAddr(result, &orgAddrDMA, &offsetDMA, &nameDMA);
+      _XMPCO_get_desc_fromLocalAddr(result, &orgAddrDMA, &offsetDMA, &nameDMA);
   avail_DMA = descDMA ? TRUE : FALSE;
 
   /*--------------------------------------*\
@@ -165,14 +165,14 @@ extern void xmpf_coarray_get_array_(void **descPtr, char **baseAddr, int *elemen
    * the memory chunk corresponding to    *
    * descptr.                             *
   \*--------------------------------------*/
-  BOOL pass = _XMP_CO_isAddrInMemoryChunk(*baseAddr, *descPtr);
+  BOOL pass = _XMPCO_isAddrInMemoryChunk(*baseAddr, *descPtr);
   if (!pass) {
     _XMPF_coarrayFatal("INTERNAL : illegal baseAddr of mold coarray (in xmpf_coarray_get_array_)\n"
                        "  possibly because of unexpected copy-in interface\n"
                        "  coarray_name=\"%s\", chunk_size=%ud; offset_in_chunk=%ud",
-                       _XMP_CO_get_nameOfCoarray(*descPtr),
-                       (unsigned)_XMP_CO_get_sizeOfMemoryChunk(*descPtr),
-                       (unsigned)_XMP_CO_get_offsetInMemoryChunk(*descPtr, *baseAddr));
+                       _XMPCO_get_nameOfCoarray(*descPtr),
+                       (unsigned)_XMPCO_get_sizeOfMemoryChunk(*descPtr),
+                       (unsigned)_XMPCO_get_offsetInMemoryChunk(*descPtr, *baseAddr));
   }
 
   /*--------------------------------------*\
@@ -187,7 +187,7 @@ extern void xmpf_coarray_get_array_(void **descPtr, char **baseAddr, int *elemen
   BOOL avail_DMA;
 
   descDMA = XMPF_isEagerCommMode() ? NULL :
-      _XMP_CO_get_descFromLocalAddr(result, &orgAddrDMA, &offsetDMA, &nameDMA);
+      _XMPCO_get_desc_fromLocalAddr(result, &orgAddrDMA, &offsetDMA, &nameDMA);
   avail_DMA = descDMA ? TRUE : FALSE;
 
   /*--------------------------------------*\
@@ -345,14 +345,14 @@ char *_getVectorIter(void *descPtr, char *baseAddr, int bytes, int coindex,
 void _XMPF_getVector_DMA(void *descPtr, char *baseAddr, int bytes, int coindex,
                     void *descDMA, size_t offsetDMA, char *nameDMA)
 {
-  char* desc = _XMP_CO_get_descForMemoryChunk(descPtr);
-  size_t offset = _XMP_CO_get_offsetInMemoryChunk(descPtr, baseAddr);
+  char* desc = _XMPCO_get_descForMemoryChunk(descPtr);
+  size_t offset = _XMPCO_get_offsetInMemoryChunk(descPtr, baseAddr);
 
   _XMPF_coarrayDebugPrint("from [%d] GET_VECTOR, RDMA-DMA, %d bytes\n"
                           "  src (RDMA): \'%s\', offset=%zd\n"
                           "  dst (DMA) : \'%s\', offset=%zd\n",
                           coindex, bytes,
-                          _XMP_CO_get_nameOfCoarray(descPtr), offset,
+                          _XMPCO_get_nameOfCoarray(descPtr), offset,
                           nameDMA, offsetDMA);
 
   // ACTION
@@ -410,15 +410,15 @@ void _XMPF_getVector_buffer(void *descPtr, char *baseAddr, int bytesRU, int coin
 void _getVector(void *descPtr, char *baseAddr, int bytes, int coindex,
                 char *dst)
 {
-  char* desc = _XMP_CO_get_descForMemoryChunk(descPtr);
-  size_t offset = _XMP_CO_get_offsetInMemoryChunk(descPtr, baseAddr);
+  char* desc = _XMPCO_get_descForMemoryChunk(descPtr);
+  size_t offset = _XMPCO_get_offsetInMemoryChunk(descPtr, baseAddr);
 
   if ((size_t)bytes <= XMPF_get_localBufSize()) {
     _XMPF_coarrayDebugPrint("to [%d] GET_VECTOR, RDMA-DMA-memcpy, %d bytes\n"
                             "  source      (RDMA): \'%s\', offset=%zd\n"
                             "  destination (DMA) : static buffer in the pool, offset=%zd\n",
                             coindex, bytes,
-                            _XMP_CO_get_nameOfCoarray(descPtr), offset,
+                            _XMPCO_get_nameOfCoarray(descPtr), offset,
                             _localBuf_offset);
 
     // ACTION
@@ -433,7 +433,7 @@ void _getVector(void *descPtr, char *baseAddr, int bytes, int coindex,
                             "  source      (RDMA): \'%s\', offset=%zd\n"
                             "  destination       : dynamically-allocated buffer, addr=%p\n",
                             coindex, bytes,
-                            _XMP_CO_get_nameOfCoarray(descPtr), offset,
+                            _XMPCO_get_nameOfCoarray(descPtr), offset,
                             dst);
 
     // ACTION

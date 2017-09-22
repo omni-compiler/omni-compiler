@@ -1,7 +1,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include "xmpf_internal_coarray.h"
-#include "_xmp_co_alloc.h"
+#include "_xmpco_alloc.h"
 
 
 static char* _to_Nth(int n);
@@ -36,7 +36,7 @@ void xmpf_coarray_malloc_(void **descPtr, char **crayPtr,
                           int *count, int *element, void **tag)
 {
   CoarrayInfo_t* cinfo =
-    _XMP_CO_malloc_coarray(crayPtr, *count, (size_t)(*element),
+    XMPCO_malloc_coarray(crayPtr, *count, (size_t)(*element),
                          (*tag) ? (ResourceSet_t*)(*tag) : NULL);
   *descPtr = (void*)cinfo;
 
@@ -49,8 +49,8 @@ void xmpf_coarray_regmem_(void **descPtr, void *var,
                           int *count, int *element, void **tag)
 {
   CoarrayInfo_t* cinfo =
-    _XMP_CO_regmem_coarray(var, *count, (size_t)(*element),
-                           (*tag) ? (ResourceSet_t*)(*tag) : NULL);
+    XMPCO_regmem_coarray(var, *count, (size_t)(*element),
+                         (*tag) ? (ResourceSet_t*)(*tag) : NULL);
   *descPtr = (void*)cinfo;
 
   // SYNCALL_AUTO
@@ -63,8 +63,8 @@ void xmpf_coarray_alloc_static_(void **descPtr, char **crayPtr,
                                 int *namelen, char *name)
 {
   CoarrayInfo_t* cinfo =
-    _XMP_CO_malloc_staticCoarray(crayPtr, *count, (size_t)(*element),
-                                 *namelen, name);
+    XMPCO_malloc_staticCoarray(crayPtr, *count, (size_t)(*element),
+                               *namelen, name);
   *descPtr = (void*)cinfo;
 }
 
@@ -73,8 +73,8 @@ void xmpf_coarray_regmem_static_(void **descPtr, void **baseAddr,
                                  int *namelen, char *name)
 {
   CoarrayInfo_t* cinfo =
-    _XMP_CO_regmem_staticCoarray(*baseAddr, *count, (size_t)(*element),
-                                 *namelen, name);
+    XMPCO_regmem_staticCoarray(*baseAddr, *count, (size_t)(*element),
+                               *namelen, name);
   *descPtr = (void*)cinfo;
 }
 
@@ -88,13 +88,13 @@ void xmpf_coarray_regmem_static_(void **descPtr, void **baseAddr,
 void xmpf_coarray_free_(void **descPtr)
 {
   CoarrayInfo_t *cinfo = (CoarrayInfo_t*)(*descPtr);
-  _XMP_CO_free_coarray(cinfo);
+  XMPCO_free_coarray(cinfo);
 }
 
 void xmpf_coarray_deregmem_(void **descPtr)
 {
   CoarrayInfo_t *cinfo = (CoarrayInfo_t*)(*descPtr);
-  _XMP_CO_deregmem_coarray(cinfo);
+  XMPCO_deregmem_coarray(cinfo);
 }
 
 
@@ -104,12 +104,17 @@ void xmpf_coarray_deregmem_(void **descPtr)
 
 void xmpf_coarray_malloc_pool_()
 {
-  _XMP_CO_malloc_pool();
+  XMPCO_malloc_pool();
+
+  // init library internal
+  _XMPF_coarrayInit_get();
+  _XMPF_coarrayInit_getsub();
+  _XMPF_coarrayInit_put();
 }
 
 void xmpf_coarray_count_size_(int *count, int *element)
 {
-  _XMP_CO_count_size(*count, (size_t)(*element));
+  XMPCO_count_size(*count, (size_t)(*element));
 }
 
 
@@ -119,13 +124,13 @@ void xmpf_coarray_count_size_(int *count, int *element)
 
 void xmpf_coarray_prolog_(void **tag, int *namelen, char *name)
 {
-  _XMP_CO_prolog((ResourceSet_t**)tag, *namelen, name);
+  XMPCO_prolog((ResourceSet_t**)tag, *namelen, name);
 }
 
 
 void xmpf_coarray_epilog_(void **tag)
 {
-  _XMP_CO_epilog((ResourceSet_t**)tag);
+  XMPCO_epilog((ResourceSet_t**)tag);
 }
 
 
@@ -143,7 +148,7 @@ void xmpf_coarray_epilog_(void **tag)
 void xmpf_coarray_find_descptr_(void **descPtr, char *addr,
                                 int *namelen, char *name)
 {
-  *descPtr = (void*)_XMP_CO_find_descptr(addr, *namelen, name);
+  *descPtr = (void*)XMPCO_find_descptr(addr, *namelen, name);
 }
 
 
@@ -157,14 +162,14 @@ void xmpf_coarray_find_descptr_(void **descPtr, char *addr,
 void xmpf_coarray_set_corank_(void **descPtr, int *corank)
 {
   CoarrayInfo_t *cp = (CoarrayInfo_t*)(*descPtr);
-  _XMP_CO_set_corank(cp, *corank);
+  _XMPCO_set_corank(cp, *corank);
 }
 
 
 void xmpf_coarray_set_codim_(void **descPtr, int *dim, int *lb, int *ub)
 {
   CoarrayInfo_t *cp = (CoarrayInfo_t*)(*descPtr);
-  _XMP_CO_set_codim_withBounds(cp, *dim, *lb, *ub);
+  _XMPCO_set_codim_withBounds(cp, *dim, *lb, *ub);
 }
 
 
@@ -174,7 +179,7 @@ void xmpf_coarray_set_codim_(void **descPtr, int *dim, int *lb, int *ub)
 void xmpf_coarray_set_varname_(void **descPtr, int *namelen, char *name)
 {
   CoarrayInfo_t *cp = (CoarrayInfo_t*)(*descPtr);
-  _XMP_CO_set_varname(cp, *namelen, name);
+  _XMPCO_set_varname(cp, *namelen, name);
 }
 
 
@@ -190,7 +195,7 @@ void xmpf_coarray_set_nodes_(void **descPtr, void **nodesDesc)
 {
   CoarrayInfo_t *cinfo = (CoarrayInfo_t*)(*descPtr);
   _XMP_nodes_t *nodes = (_XMP_nodes_t*)(*nodesDesc);
-  cinfo = _XMP_CO_set_nodes(cinfo, nodes);
+  cinfo = _XMPCO_set_nodes(cinfo, nodes);
   *descPtr = (void*)cinfo;
 }
 
