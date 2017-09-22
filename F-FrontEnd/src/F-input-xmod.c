@@ -3201,6 +3201,7 @@ input_FfunctionDecl(xmlTextReaderPtr reader, HashTable * ht, EXT_ID parent,
                     ID id_list)
 {
     ID id;
+    ID tail = NULL;
     EXT_ID ep;
     SYMBOL s;
     TYPE_DESC tp = NULL;
@@ -3226,6 +3227,21 @@ input_FfunctionDecl(xmlTextReaderPtr reader, HashTable * ht, EXT_ID parent,
     else
         extid_put_last(EXT_PROC_INTR_DEF_EXT_IDS(parent), ep);
 
+    if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "symbols"))
+        return FALSE;
+
+    while (TRUE) {
+        if (xmlMatchNodeType(reader, XML_READER_TYPE_END_ELEMENT))
+            /* must be </symbols> */
+            break;
+
+        if (!input_symbol(reader, ht, tp, &tail))
+            return FALSE;
+    }
+
+    if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "symbols"))
+        return FALSE;
+    
     if (!input_declarations(reader, ht, ep, id_list))
         return FALSE;
 
