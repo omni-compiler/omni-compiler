@@ -3371,6 +3371,7 @@ public class XfDecompileDomVisitor {
             // ======
             // Inside
             // ======
+            invokeEnter(XmDomUtil.getElement(n, "symbols"));
             Node declarations = XmDomUtil.getElement(n, "declarations");
             invokeEnter(declarations);
 

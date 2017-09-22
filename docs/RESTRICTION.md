@@ -29,3 +29,6 @@ you need to use xmp_sync_all() or barrier directive to divide communication.
 ## The in and out clauses of the gmove directives
 * The target of the gmove in/out directives must be declared as a module variable or
   a variable with the SAVE attribute in XMP/F, or as an external variable in XMP/C
+
+## Support only 64-bit compiler
+The Omni compiler assumes that it is compiled with a 64-bit compiler.
