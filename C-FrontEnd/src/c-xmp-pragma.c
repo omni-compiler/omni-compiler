@@ -2461,7 +2461,8 @@ static CExpr* parse_TASKLET_clause()
         args = exprListAdd(args, v);
       } else {
         list = parse_TASKLET_subscript_list();
-        args = exprListAdd(args, XMP_LIST2(v, list));
+        CExpr *arrayRef = exprBinary(EC_ARRAY_REF, v, list);
+        args = exprListAdd(args, (CExpr *)arrayRef);
       }
 
       if (pg_tok == ',') {

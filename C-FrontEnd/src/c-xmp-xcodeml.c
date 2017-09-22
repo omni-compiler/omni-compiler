@@ -9,6 +9,8 @@
 
 void outx_XMP_Clause(FILE *fp, int indent, CExprOfList* clause);
 char *xmpDirectiveName(int c);
+void out_XMP_arrayRef(FILE *fp,int indent, CExprOfBinaryNode *arrayRef);
+void out_XMP_subscript(FILE *fp,int indent, CExpr *subscript);
 
 void
 out_XMP_PRAGMA(FILE *fp, int indent, int pragma_code, CExpr* expr)
@@ -102,6 +104,8 @@ void outx_XMP_Clause(FILE *fp, int indent, CExprOfList* clauseList)
 	    outxPrint(fp,indent1+1,"<list/>\n");
 	else if(EXPR_CODE(node) == EC_UNDEF)
 	    outx_XMP_Clause(fp,indent1,(CExprOfList *)node);
+    else if(EXPR_CODE(node) == EC_ARRAY_REF)
+        out_XMP_arrayRef(fp, indent1, (CExprOfBinaryNode *)node);
 	else
 	    outxContext(fp,indent1+1,node);
     }
@@ -141,3 +145,49 @@ char *xmpDirectiveName(int c)
   default:               return "OMP???";
   }
 }
+
+void out_XMP_arrayRef(FILE *fp,int indent, CExprOfBinaryNode *arrayRef)
+{
+    int indent1 = indent+1;
+    CCOL_DListNode *ite;
+    CExpr *arrayExpr = arrayRef->e_nodes[0];
+    CExpr *subscripts = arrayRef->e_nodes[1];
+
+    outxPrint(fp, indent, "<list>\n");
+    outxPrint(fp, indent1,"<Var>%s</Var>\n", ((CExprOfSymbol *)arrayExpr)->e_symName);
+    EXPR_FOREACH(ite, subscripts){
+      CExpr *node = EXPR_L_DATA(ite);
+      out_XMP_subscript(fp, indent1, node);
+    }
+    outxPrint(fp,indent,"</list>\n");
+}
+
+void out_XMP_subscript(FILE *fp,int indent, CExpr *subscript)
+{
+   int indent1 = indent + 1;
+   if (EXPR_CODE(subscript) != EC_UNDEF) {
+     outxContext(fp, indent, subscript); //single subscript
+   } else {
+     outxPrint(fp, indent, "<list>\n");
+ 
+     CExpr *lower = exprListHeadData(subscript);
+     CExpr *tmpLower = NULL;
+     if (EXPR_ISNULL(lower)) {
+       lower = tmpLower = (CExpr*)allocExprOfNumberConst2(0, BT_INT);
+     }
+ 
+     outxContext(fp, indent1, lower);
+     if (tmpLower) {
+       freeExpr(tmpLower);
+     }
+ 
+     if (EXPR_L_SIZE(subscript) > 1) {
+       CExpr *length = exprListNextNData(subscript, 1);
+       if (! EXPR_ISNULL(length)){
+         outxContext(fp, indent1, length);
+       }
+     }
+     outxPrint(fp, indent, "</list>\n");
+   }
+}
+

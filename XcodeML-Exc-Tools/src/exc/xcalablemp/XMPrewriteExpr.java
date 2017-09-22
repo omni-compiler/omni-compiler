@@ -2381,32 +2381,26 @@ public class XMPrewriteExpr {
                 //item is arrayRef
                 try {
                   Xobject arrayAddr = item.getArg(0);
-                  Xobject arrayRef = item.getArg(1);
-
                   String arrayName = arrayAddr.getSym();
                   XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, block);
 
                   if (alignedArray != null) {
                     XobjList arrayRefList = Xcons.List();
-                    for (int j = 0; j < arrayRef.Nargs(); j++) {
-                      Xobject arrayInd = arrayRef.getArg(j);
-                      if (arrayInd.Opcode() == Xcode.LIST) {
-                        arrayInd = arrayInd.getArg(0);
+                    for (int j = 1; j < item.Nargs(); j++) {
+                      Xobject arrayRef = item.getArg(j);
+                      if (arrayRef.Opcode() == Xcode.LIST) {
+                        arrayRef = arrayRef.getArg(0);
                       }
-                      arrayRefList.add(arrayInd);
+                      arrayRefList.add(arrayRef);
                     }
                     item.setArg(1, arrayRefList);
                     itemList.setArg(i, rewriteArrayRef(item, pragmaBlock, false));
                   } else {
-                    item.removeLastArgs();
-                    for (int j = 0; j < arrayRef.Nargs(); j++) {
-                      item.add(arrayRef.getArg(j));
-                    }
                     itemList.setArg(i, rewriteArrayRef(item, pragmaBlock, true));
                   }
                 } catch (XMPexception e) {
                   XMP.error(x.getLineNo(), e.getMessage());
-                }
+                }                
               }
             }
           }
