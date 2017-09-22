@@ -782,30 +782,7 @@ compile_statement1(int st_no, expr x)
         CTL_IF_STATEMENT(ctl_top) = st;
         if(EXPR_ARG2(x)){
             if(EXPR_CODE(EXPR_ARG2(x)) == F_WHERE_STATEMENT) {
-                check_INEXEC();
-                push_ctl(CTL_WHERE);
-
-                /* evaluate condition and make WHERE_STATEMENT clause */
-                v = compile_logical_expression_with_array(EXPR_ARG1(x));
-
-                st = list5(F_WHERE_STATEMENT,v,NULL,NULL,NULL,NULL);
-                output_statement(st);
-
-                CTL_BLOCK(ctl_top) = CURRENT_STATEMENTS;
-                CURRENT_STATEMENTS = NULL;
-
-                /* set current WHERE_STATEMENT */
-                CTL_WHERE_STATEMENT(ctl_top) = st;
-                if(EXPR_ARG2(EXPR_ARG2(x)) != NULL) {
-                     compile_statement1(st_no, EXPR_ARG2(EXPR_ARG2(x)));
-                     /* TODO x must be array assignment expression,
-                     * and shape of array is equal to v
-                     */
-
-                    CTL_WHERE_THEN(ctl_top) = CURRENT_STATEMENTS;
-                    pop_ctl();  /* pop and output */
-                }
-
+                compile_statement1(st_no, EXPR_ARG2(x));
             } else {
                 compile_exec_statement(EXPR_ARG2(x));
             }
