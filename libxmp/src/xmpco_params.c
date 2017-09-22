@@ -66,6 +66,12 @@ void _XMPCO_set_isMsgMode(BOOL sw)
   }
 }
 
+void _XMPCO_set_isMsgMode_quietly(BOOL sw)
+{
+  _isMsgMode_last = _isMsgMode;
+  _isMsgMode = sw;
+}
+
 void _XMPCO_reset_isMsgMode()
 {
   _isMsgMode = _isMsgMode_last;

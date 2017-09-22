@@ -79,7 +79,7 @@ void _XMPF_coarrayInit_getsub()
   _localBuf_desc = _XMPCO_get_infoOfLocalBuf(&_localBuf_baseAddr,
                                               &_localBuf_offset,
                                               &_localBuf_name);
-  _localBuf_size = XMPF_get_localBufSize();
+  _localBuf_size = _XMPCO_get_localBufSize();
 }
 
 
@@ -95,7 +95,7 @@ extern void xmpf_coarray_getsub_array_(void **descPtr, char **baseAddr, int *ele
   int coindex0 = _XMPF_get_initial_image_withDescPtr(*coindex, *descPtr);
 
   if (*element % COMM_UNIT != 0) {
-    _XMP_fatal("violation of boundary writing to a coindexed variable\n"
+    _XMPCO_fatal("violation of boundary writing to a coindexed variable\n"
                "  xmpf_coarray_getsub_array_, " __FILE__);
     return;
   }
@@ -113,7 +113,7 @@ extern void xmpf_coarray_getsub_array_(void **descPtr, char **baseAddr, int *ele
   char *nameDMA;
   BOOL avail_DMA;
 
-  descDMA = XMPF_isEagerCommMode() ? NULL :
+  descDMA = _XMPCO_get_isEagerCommMode() ? NULL :
       _XMPCO_get_desc_fromLocalAddr(local, &orgAddrDMA, &offsetDMA, &nameDMA);
   avail_DMA = descDMA ? TRUE : FALSE;
 
@@ -127,20 +127,20 @@ extern void xmpf_coarray_getsub_array_(void **descPtr, char **baseAddr, int *ele
   \*--------------------------------------*/
   switch (scheme) {
   case SCHEME_DirectGetsub:
-    _XMPF_coarrayDebugPrint("SCHEME_DirectGetsub/array selected\n");
+    _XMPCO_debugPrint("SCHEME_DirectGetsub/array selected\n");
     _getsubCoarray_DMA(*descPtr, *baseAddr, coindex0, local,
                     *element, *rank, skip, skip_local, count,
                     descDMA, offsetDMA, nameDMA);
     break;
 
   case SCHEME_BufferGetsub:
-    _XMPF_coarrayDebugPrint("SCHEME_BufferGetsub/array selected\n");
+    _XMPCO_debugPrint("SCHEME_BufferGetsub/array selected\n");
     _getsubCoarray_buffer(*descPtr, *baseAddr, coindex0, local,
                        *element, *rank, skip, skip_local, count);
     break;
 
   default:
-    _XMP_fatal("unexpected scheme number in " __FILE__);
+    _XMPCO_fatal("unexpected scheme number in " __FILE__);
   }
 }
 
@@ -154,11 +154,11 @@ void xmpf_coarray_getsub_err_len_(void **descPtr,
 {
   char *name = _XMPCO_get_nameOfCoarray(*descPtr);
 
-  _XMPF_coarrayDebugPrint("ERROR DETECTED: xmpf_coarray_getsub_err_len_\n"
+  _XMPCO_debugPrint("ERROR DETECTED: xmpf_coarray_getsub_err_len_\n"
                           "  coarray name=\'%s\', len(mold)=%d, len(src)=%d\n",
                           name, *len_mold, *len_src);
 
-  _XMPF_coarrayFatal("mismatch length-parameters found in "
+  _XMPCO_fatal("mismatch length-parameters found in "
                      "optimized get-communication on coarray \'%s\'", name);
 }
 
@@ -168,11 +168,11 @@ void xmpf_coarray_getsub_err_size_(void **descPtr, int *dim,
 {
   char *name = _XMPCO_get_nameOfCoarray(*descPtr);
 
-  _XMPF_coarrayDebugPrint("ERROR DETECTED: xmpf_coarray_getsub_err_size_\n"
+  _XMPCO_debugPrint("ERROR DETECTED: xmpf_coarray_getsub_err_size_\n"
                           "  coarray name=\'%s\', i=%d, size(mold,i)=%d, size(src,i)=%d\n",
                           name, *dim, *size_mold, *size_src);
 
-  _XMPF_coarrayFatal("Mismatch sizes of %d-th dimension found in "
+  _XMPCO_fatal("Mismatch sizes of %d-th dimension found in "
                      "optimized get-communication on coarray \'%s\'", *dim, name);
 }
 
@@ -220,7 +220,7 @@ void _getsubCoarray_DMA(void *descPtr, char *baseAddr, int coindex, char *local,
 
   // Coarray or LOCAL is non-contiguous
 
-  if (_XMPF_get_coarrayMsg()) {
+  if (_XMPCO_get_isMsgMode()) {
     char work[200];
     char* p;
     sprintf(work, "DMA-RDMA GETSUB %d", bytes);
@@ -229,7 +229,7 @@ void _getsubCoarray_DMA(void *descPtr, char *baseAddr, int coindex, char *local,
       sprintf(p, " (%d-byte stride) * %d", skip[i], count[i]);
       p += strlen(p);
     }
-    _XMPF_coarrayDebugPrint("=%s bytes ===\n", work);
+    _XMPCO_debugPrint("=%s bytes ===\n", work);
   }
 
   _getsubVectorIter_DMA(descPtr, baseAddr, bytes, coindex,
@@ -242,7 +242,7 @@ void _getsubCoarray_buffer(void *descPtr, char *baseAddr, int coindex, char *loc
                         int bytes, int rank, int skip[], int skip_local[],
                         int count[])
 {
-  _XMPF_coarrayDebugPrint("=ENTER _getsubCoarray_buffer(rank=%d)\n", rank);
+  _XMPCO_debugPrint("=ENTER _getsubCoarray_buffer(rank=%d)\n", rank);
 
   if (rank == 0) {  // fully contiguous after perfect collapsing
     _XMPF_getVector_buffer(descPtr, baseAddr, bytes, coindex,
@@ -268,8 +268,8 @@ void _getsubCoarray_buffer(void *descPtr, char *baseAddr, int coindex, char *loc
     // Buffer-RDMA scheme selected because:
     //  - the collapsed coarray has no more contiguity between the array elements, or
     //  - the array element is large enough compared with the local buffer.
-    if (_XMPF_get_coarrayMsg()) {
-      _XMPF_coarrayDebugPrint("=SELECTED Buffer-RDMA\n");
+    if (_XMPCO_get_isMsgMode()) {
+      _XMPCO_debugPrint("=SELECTED Buffer-RDMA\n");
       _debugPrint_getsubCoarray(bytes, rank, skip, skip_local, count);
     }
 
@@ -282,8 +282,8 @@ void _getsubCoarray_buffer(void *descPtr, char *baseAddr, int coindex, char *loc
     //  - the collapsed coarray still has contiguity between the array elements, and
     //  - The local buffer has room for two or more array elements.
 
-    if (_XMPF_get_coarrayMsg()) {
-      _XMPF_coarrayDebugPrint("=SELECTED Packing Buffer-RDMA\n");
+    if (_XMPCO_get_isMsgMode()) {
+      _XMPCO_debugPrint("=SELECTED Packing Buffer-RDMA\n");
       _debugPrint_getsubCoarray(bytes, rank, skip, skip_local, count);
     }
 
@@ -311,7 +311,7 @@ static void _getsubCoarray_bufferPack(void *descPtr, char *baseAddr, int coindex
     size *= count[k];
   }
 
-  _XMPF_coarrayDebugPrint("=CALLING _getsubVectorIter_bufferPack, rank=%d, contiguity=%d\n",
+  _XMPCO_debugPrint("=CALLING _getsubVectorIter_bufferPack, rank=%d, contiguity=%d\n",
                           rank, contiguity);
 
   _getsubVectorIter_bufferPack(descPtr, baseAddr, bytes, coindex,
@@ -332,7 +332,7 @@ static void _debugPrint_getsubCoarray(int bytes, int rank,
     sprintf(p, " (stride %d) * %d", skip_local[i], count[i]);
     p += strlen(p);
   }
-  _XMPF_coarrayDebugPrint("*** %s\n", work);
+  _XMPCO_debugPrint("*** %s\n", work);
 
   sprintf(work, "dst: %d bytes", bytes);
   p = work + strlen(work);
@@ -340,7 +340,7 @@ static void _debugPrint_getsubCoarray(int bytes, int rank,
     sprintf(p, " (stride %d) * %d", skip[i], count[i]);
     p += strlen(p);
   }
-  _XMPF_coarrayDebugPrint("*** %s\n", work);
+  _XMPCO_debugPrint("*** %s\n", work);
 }
 
 
@@ -414,7 +414,7 @@ void _getsubVectorIter_bufferPack(void *descPtr, char *baseAddr, int bytes, int 
 {
   assert(rank >= 1);
 
-  //  _XMPF_coarrayDebugPrint("==GETSUB VECTOR-ITER Packing-buffer, recursive call (rank=%d)\n"
+  //  _XMPCO_debugPrint("==GETSUB VECTOR-ITER Packing-buffer, recursive call (rank=%d)\n"
   //                          "  contiguity=%d, baseAddr=%p, local=%p\n",
   //                          rank, contiguity, baseAddr, local);
 
@@ -504,7 +504,7 @@ void _push_localBuf(char *src0, int bytes0)
       // for huge data
       while (bytes > _localBuf_size) {
         copySize = _localBuf_size;      
-        _XMPF_coarrayDebugPrint("===MEMCPY %d of %d bytes to localBuf (cont\'d)\n"
+        _XMPCO_debugPrint("===MEMCPY %d of %d bytes to localBuf (cont\'d)\n"
                                 "  from: addr=%p\n"
                                 "  to  : localBuf\n",
                                 copySize, bytes,
@@ -524,7 +524,7 @@ void _push_localBuf(char *src0, int bytes0)
     return;
   copySize = bytes;
 
-  _XMPF_coarrayDebugPrint("===MEMCPY %d bytes to localBuf (final)\n"
+  _XMPCO_debugPrint("===MEMCPY %d bytes to localBuf (final)\n"
                           "  from: addr=%p\n"
                           "  to  : localBuf + offset(%d bytes)\n",
                           copySize,

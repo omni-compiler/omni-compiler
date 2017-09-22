@@ -25,8 +25,8 @@ void _XMPF_coarray_init(void)
    *  set who-am-i
    *  clean static data
    */
-  _XMPF_set_this_image_initial();
-  _XMPF_set_num_images_initial();
+  _XMPCO_set_initialThisImage();
+  _XMPCO_set_initialNumImages();
   _XMPF_coarray_clean_image_nodes();
 
   /*
@@ -52,7 +52,7 @@ void _XMPF_coarray_init(void)
     work = strdup(env1);
     tok = strtok(work, delim);
     for (i = 1; tok != NULL; i++, tok = strtok(NULL, delim)) {
-      if (_XMPF_this_image_current() == i) {
+      if (_XMPCO_get_currentThisImage() == i) {
         _XMPF_coarrayDebugPrint("Accepted XMPF_COARRAY_MSG=%s as %s\n", env1, tok);
         _XMPCO_set_isMsgMode(atoi(tok));
       }
@@ -204,8 +204,8 @@ void __XMPF_coarrayDebugPrint(char *format, ...)
   vsprintf(work, format, list);
   va_end(list);
 
-  current = _XMPF_this_image_current();
-  initial = _XMPF_this_image_initial();
+  current = _XMPCO_get_currentThisImage();
+  initial = _XMPCO_get_initialThisImage();
   if (current == initial)
     fprintf(stderr, "XMPF [%d] %s", initial, work);
   else

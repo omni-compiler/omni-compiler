@@ -269,7 +269,7 @@ void xmpf_this_image_coarray(CoarrayInfo_t *cinfo, int corank, int image[])
   if (nodes != NULL) {
     image_coarray = _XMPF_this_image_onNodes(nodes);
   } else {
-    image_coarray = _XMPF_this_image_current();
+    image_coarray = _XMPCO_get_currentThisImage();
   }
 
   if (image_coarray == 0) {    // This image is out of the nodes.
@@ -304,7 +304,7 @@ int xmpf_this_image_coarray_dim(CoarrayInfo_t *cinfo, int corank, int dim)
   if (nodes != NULL) {
     image_coarray = _XMPF_this_image_onNodes(nodes);
   } else {
-    image_coarray = _XMPF_this_image_current();
+    image_coarray = _XMPCO_get_currentThisImage();
   }
 
   if (image_coarray == 0)    // This image is out of the nodes.
@@ -431,7 +431,7 @@ int xmpf_image_index_(void **descPtr, int coindexes[])
   }
 
   image = count + 1;
-  if (image > _XMPF_num_images_current())
+  if (image > _XMPCO_get_currentNumImages())
     image = 0;
 
   return image;

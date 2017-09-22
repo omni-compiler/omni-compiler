@@ -5,6 +5,7 @@
 
 #include <assert.h>
 #include "xmpf_internal_coarray.h"
+#include "xmpco_internal.h"
 
 // TEMPORARY
 // declared in ../../libxmp/include/xmp_func_decl.h
@@ -107,7 +108,7 @@ void _XMPF_coarrayInit_put()
   _localBuf_desc = _XMPCO_get_infoOfLocalBuf(&_localBuf_baseAddr,
                                               &_localBuf_offset,
                                               &_localBuf_name);
-  _localBuf_size = XMPF_get_localBufSize();
+  _localBuf_size = _XMPCO_get_localBufSize();
 }
 
 
@@ -138,8 +139,8 @@ extern void xmpf_coarray_put_scalar_(void **descPtr, char **baseAddr, int *eleme
   BOOL avail_DMA;
   BOOL sync = *synchronous;
 
-  descDMA = XMPF_isEagerCommMode() ? NULL :
-      _XMPCO_get_desc_fromLocalAddr(rhs, &orgAddrDMA, &offsetDMA, &nameDMA);
+  descDMA = _XMPCO_get_isEagerCommMode() ? NULL :
+    _XMPCO_get_desc_fromLocalAddr(rhs, &orgAddrDMA, &offsetDMA, &nameDMA);
   avail_DMA = descDMA ? TRUE : FALSE;
 
   /*--------------------------------------*\
@@ -208,8 +209,8 @@ extern void xmpf_coarray_put_array_(void **descPtr, char **baseAddr, int *elemen
   int coindex0 = _XMPF_get_initial_image_withDescPtr(*coindex, *descPtr);
 
   if (*element % COMM_UNIT != 0) {
-    _XMP_fatal("violation of boundary writing to a coindexed variable\n"
-               "  xmpf_coarray_put_array_, " __FILE__);
+    _XMPCO_fatal("violation of boundary writing to a coindexed variable\n"
+                 "  xmpf_coarray_put_array_, " __FILE__);
     return;
   }
 
@@ -247,7 +248,7 @@ extern void xmpf_coarray_put_array_(void **descPtr, char **baseAddr, int *elemen
   char *nameDMA;
   BOOL avail_DMA;
 
-  descDMA = XMPF_isEagerCommMode() ? NULL :
+  descDMA = _XMPCO_get_isEagerCommMode() ? NULL :
       _XMPCO_get_desc_fromLocalAddr(rhs, &orgAddrDMA, &offsetDMA, &nameDMA);
   avail_DMA = descDMA ? TRUE : FALSE;
 
@@ -261,20 +262,20 @@ extern void xmpf_coarray_put_array_(void **descPtr, char **baseAddr, int *elemen
   \*--------------------------------------*/
   switch (scheme) {
   case SCHEME_DirectPut:
-    _XMPF_coarrayDebugPrint("SCHEME_DirectPut/array selected\n");
+    _XMPCO_debugPrint("SCHEME_DirectPut/array selected\n");
     _putCoarray_DMA(*descPtr, *baseAddr, coindex0, rhs,
                     *element, *rank, skip, skip_rhs, count,
                     descDMA, offsetDMA, nameDMA, sync);
     break;
 
   case SCHEME_BufferPut:
-    _XMPF_coarrayDebugPrint("SCHEME_BufferPut/array selected\n");
+    _XMPCO_debugPrint("SCHEME_BufferPut/array selected\n");
     _putCoarray_buffer(*descPtr, *baseAddr, coindex0, rhs,
                        *element, *rank, skip, skip_rhs, count, sync);
     break;
 
   default:
-    _XMP_fatal("unexpected scheme number in " __FILE__);
+    _XMPCO_fatal("unexpected scheme number in " __FILE__);
   }
 }
 
@@ -293,7 +294,7 @@ extern void xmpf_coarray_put_spread_(void **descPtr, char **baseAddr, int *eleme
   int coindex0 = _XMPF_get_initial_image_withDescPtr(*coindex, *descPtr);
 
   if (*element % COMM_UNIT != 0) {
-    _XMP_fatal("violation of boundary writing a scalar to a coindexed variable\n"
+    _XMPCO_fatal("violation of boundary writing a scalar to a coindexed variable\n"
                "   xmpf_coarray_put_spread_, " __FILE__);
     return;
   }
@@ -320,7 +321,7 @@ extern void xmpf_coarray_put_spread_(void **descPtr, char **baseAddr, int *eleme
    * select scheme                        *
   \*--------------------------------------*/
   // only BufferPut
-  _XMPF_coarrayDebugPrint("SCHEME_BufferPut/spread selected\n");
+  _XMPCO_debugPrint("SCHEME_BufferPut/spread selected\n");
 
   /*--------------------------------------*\
    * action                               *
@@ -339,11 +340,11 @@ void xmpf_coarray_put_err_len_(void **descPtr,
 {
   char *name = _XMPCO_get_nameOfCoarray(*descPtr);
 
-  _XMPF_coarrayDebugPrint("ERROR DETECTED: xmpf_coarray_put_err_len_\n"
+  _XMPCO_debugPrint("ERROR DETECTED: xmpf_coarray_put_err_len_\n"
                           "  coarray name=\'%s\', len(mold)=%d, len(src)=%d\n",
                           name, *len_mold, *len_src);
 
-  _XMPF_coarrayFatal("mismatch length-parameters found in "
+  _XMPCO_fatal("mismatch length-parameters found in "
                      "put-communication on coarray \'%s\'", name);
 }
 
@@ -353,11 +354,11 @@ void xmpf_coarray_put_err_size_(void **descPtr, int *dim,
 {
   char *name = _XMPCO_get_nameOfCoarray(*descPtr);
 
-  _XMPF_coarrayDebugPrint("ERROR DETECTED: xmpf_coarray_put_err_size_\n"
+  _XMPCO_debugPrint("ERROR DETECTED: xmpf_coarray_put_err_size_\n"
                           "  coarray name=\'%s\', i=%d, size(mold,i)=%d, size(src,i)=%d\n",
                           name, *dim, *size_mold, *size_src);
 
-  _XMPF_coarrayFatal("Mismatch sizes of %d-th dimension found in "
+  _XMPCO_fatal("Mismatch sizes of %d-th dimension found in "
                      "put-communication on coarray \'%s\'", *dim, name);
 }
 
@@ -419,7 +420,7 @@ void _putCoarray_DMA(void *descPtr, char *baseAddr, int coindex, char *rhs,
 
   // Coarray or RHS is non-contiguous
 
-  if (_XMPF_get_coarrayMsg()) {
+  if (_XMPCO_get_isMsgMode()) {
     char work[200];
     char* p;
     sprintf(work, "DMA-RDMA PUT %d", bytes);
@@ -428,7 +429,7 @@ void _putCoarray_DMA(void *descPtr, char *baseAddr, int coindex, char *rhs,
       sprintf(p, " (%d-byte stride) * %d", skip[i], count[i]);
       p += strlen(p);
     }
-    _XMPF_coarrayDebugPrint("=%s bytes ===\n", work);
+    _XMPCO_debugPrint("=%s bytes ===\n", work);
   }
 
   _putVectorIter_DMA(descPtr, baseAddr, bytes, coindex,
@@ -441,7 +442,7 @@ void _putCoarray_buffer(void *descPtr, char *baseAddr, int coindex, char *rhs,
                         int bytes, int rank, int skip[], int skip_rhs[],
                         int count[], BOOL synchronous)
 {
-  _XMPF_coarrayDebugPrint("=ENTER _putCoarray_buffer(rank=%d), %s\n",
+  _XMPCO_debugPrint("=ENTER _putCoarray_buffer(rank=%d), %s\n",
                           rank,
                           (synchronous==1) ? "SYNC" : 
                           (synchronous==0) ? "async" : "dirty");
@@ -470,8 +471,8 @@ void _putCoarray_buffer(void *descPtr, char *baseAddr, int coindex, char *rhs,
     // Buffer-RDMA scheme selected because:
     //  - the collapsed coarray has no more contiguity between the array elements, or
     //  - the array element is large enough compared with the local buffer.
-    if (_XMPF_get_coarrayMsg()) {
-      _XMPF_coarrayDebugPrint("=SELECTED Buffer-RDMA\n");
+    if (_XMPCO_get_isMsgMode()) {
+      _XMPCO_debugPrint("=SELECTED Buffer-RDMA\n");
       _debugPrint_putCoarray(bytes, rank, skip, skip_rhs, count);
     }
 
@@ -484,8 +485,8 @@ void _putCoarray_buffer(void *descPtr, char *baseAddr, int coindex, char *rhs,
     //  - the collapsed coarray still has contiguity between the array elements, and
     //  - The local buffer has room for two or more array elements.
 
-    if (_XMPF_get_coarrayMsg()) {
-      _XMPF_coarrayDebugPrint("=SELECTED Packing Buffer-RDMA\n");
+    if (_XMPCO_get_isMsgMode()) {
+      _XMPCO_debugPrint("=SELECTED Packing Buffer-RDMA\n");
       _debugPrint_putCoarray(bytes, rank, skip, skip_rhs, count);
     }
 
@@ -513,7 +514,7 @@ static void _putCoarray_bufferPack(void *descPtr, char *baseAddr, int coindex, c
     size *= count[k];
   }
 
-  _XMPF_coarrayDebugPrint("=CALLING _putVectorIter_bufferPack, rank=%d, contiguity=%d\n",
+  _XMPCO_debugPrint("=CALLING _putVectorIter_bufferPack, rank=%d, contiguity=%d\n",
                           rank, contiguity);
 
   _putVectorIter_bufferPack(descPtr, baseAddr, bytes, coindex,
@@ -534,7 +535,7 @@ static void _debugPrint_putCoarray(int bytes, int rank,
     sprintf(p, " (stride %d) * %d", skip_rhs[i], count[i]);
     p += strlen(p);
   }
-  _XMPF_coarrayDebugPrint("*** %s\n", work);
+  _XMPCO_debugPrint("*** %s\n", work);
 
   sprintf(work, "dst: %d bytes", bytes);
   p = work + strlen(work);
@@ -542,7 +543,7 @@ static void _debugPrint_putCoarray(int bytes, int rank,
     sprintf(p, " (stride %d) * %d", skip[i], count[i]);
     p += strlen(p);
   }
-  _XMPF_coarrayDebugPrint("*** %s\n", work);
+  _XMPCO_debugPrint("*** %s\n", work);
 }
 
 
@@ -617,7 +618,7 @@ void _putVectorIter_bufferPack(void *descPtr, char *baseAddr, int bytes, int coi
 {
   assert(rank >= 1);
 
-  //  _XMPF_coarrayDebugPrint("==PUT VECTOR-ITER Packing-buffer, recursive call (rank=%d)\n"
+  //  _XMPCO_debugPrint("==PUT VECTOR-ITER Packing-buffer, recursive call (rank=%d)\n"
   //                          "  contiguity=%d, baseAddr=%p, rhs=%p\n",
   //                          rank, contiguity, baseAddr, rhs);
 
@@ -684,7 +685,7 @@ void _putVector_DMA(void *descPtr, char *baseAddr, int bytes, int coindex,
   char* desc = _XMPCO_get_descForMemoryChunk(descPtr);
   size_t offset = _XMPCO_get_offsetInMemoryChunk(descPtr, baseAddr);
 
-  _XMPF_coarrayDebugPrint("===PUT_VECTOR DMA-RDMA to[%d], %d bytes, %s\n"
+  _XMPCO_debugPrint("===PUT_VECTOR DMA-RDMA to[%d], %d bytes, %s\n"
                           "  local : \'%s\', offset=%zd\n"
                           "  remote: \'%s\', offset=%zd\n",
                           coindex, bytes,
@@ -696,7 +697,7 @@ void _putVector_DMA(void *descPtr, char *baseAddr, int bytes, int coindex,
   // ACTION (case synchronous: atomic_define)
   if (synchronous) {
     if (offset % 4 != 0) {
-      _XMPF_coarrayFatal("RESTRICSION: boundary error: "
+      _XMPCO_fatal("RESTRICSION: boundary error: "
                          "the 1-st argument of atomic_define");
     }
     _XMP_atomic_define_1(desc, offset / 4, coindex-1, 0,
@@ -715,9 +716,9 @@ void _putVector_DMA(void *descPtr, char *baseAddr, int bytes, int coindex,
 void _putVector_buffer(void *descPtr, char *baseAddr, int bytesRU,
                        int coindex, char *rhs, int bytes, BOOL synchronous)
 {
-  if (XMPF_isSafeBufferMode()) {
+  if (_XMPCO_get_isSafeBufferMode()) {
     if (synchronous) {
-      _XMPF_coarrayFatal("SafeBufferMode does not support synchronous put");
+      _XMPCO_fatal("SafeBufferMode does not support synchronous put");
     }
     _putVector_buffer_SAFE(descPtr, baseAddr, bytesRU,
                            coindex, rhs, bytes);
@@ -741,7 +742,7 @@ void _putVector_buffer_SAFE(void *descPtr, char *baseAddr, int bytesRU,
   // MALLOC & MEMCPY
   char *buf = (char*)_XMP_alloc(sizeof(char) * bytesRU);
 
-  _XMPF_coarrayDebugPrint("===MEMCPY, SAFE MODE, %d bytes\n"
+  _XMPCO_debugPrint("===MEMCPY, SAFE MODE, %d bytes\n"
                           "  from: addr=%p\n"
                           "  to  : addr=%p\n",
                           bytes,
@@ -749,7 +750,7 @@ void _putVector_buffer_SAFE(void *descPtr, char *baseAddr, int bytesRU,
                           buf);
   (void)memcpy(buf, rhs, bytes);
 
-  _XMPF_coarrayDebugPrint("===PUT_VECTOR RDMA to [%d], SAFE MODE, %d bytes\n"
+  _XMPCO_debugPrint("===PUT_VECTOR RDMA to [%d], SAFE MODE, %d bytes\n"
                           "  source            : dynamically-allocated buffer, addr=%p\n"
                           "  destination (RDMA): \'%s\', offset=%zd\n",
                           coindex, bytes,
@@ -763,7 +764,7 @@ void _putVector_buffer_SAFE(void *descPtr, char *baseAddr, int bytesRU,
   _XMP_coarray_put(desc, buf, NULL);
 
   // NOT FREE for safe
-  _XMPF_coarrayDebugPrint("===DO NOT FREE every local buffer in SAFE MODE\n"
+  _XMPCO_debugPrint("===DO NOT FREE every local buffer in SAFE MODE\n"
                           "  addr=%p\n",
                           buf);
   //_XMP_free(buf);
@@ -795,7 +796,7 @@ void _spreadCoarray(void *descPtr, char *baseAddr, int coindex, char *rhs,
   // not contiguous any more
   char* src = rhs;
 
-  if (_XMPF_get_coarrayMsg()) {
+  if (_XMPCO_get_isMsgMode()) {
     char work[200];
     char* p;
     sprintf(work, "SPREAD %d", bytes);
@@ -804,7 +805,7 @@ void _spreadCoarray(void *descPtr, char *baseAddr, int coindex, char *rhs,
       sprintf(p, " (%d-byte stride) * %d", skip[i], count[i]);
       p += strlen(p);
     }
-    _XMPF_coarrayDebugPrint("=%s bytes\n", work);
+    _XMPCO_debugPrint("=%s bytes\n", work);
   }
 
   src = _spreadVectorIter(descPtr, baseAddr, bytes, coindex, src,
@@ -854,7 +855,7 @@ void _spreadVector_buffer(void *descPtr, char *baseAddr, int bytes, int coindex,
   for (rest = bytes;
        rest > bufSize;
        rest -= bufSize) {
-    _XMPF_coarrayDebugPrint("===SPREAD %d-byte scalar to %d bytes, continued\n"
+    _XMPCO_debugPrint("===SPREAD %d-byte scalar to %d bytes, continued\n"
                             "  from: addr=%p\n"
                             "  to  : \'%s\'\n",
                             element, bufSize,
@@ -873,7 +874,7 @@ void _spreadVector_buffer(void *descPtr, char *baseAddr, int bytes, int coindex,
     dst += bufSize;
   }
 
-  _XMPF_coarrayDebugPrint("===SPREAD %d-byte scalar to %d bytes\n"
+  _XMPCO_debugPrint("===SPREAD %d-byte scalar to %d bytes\n"
                           "  from: addr=%p\n"
                           "  to  : \'%s\'\n",
                           element, rest,
@@ -916,7 +917,7 @@ void _push_localBuf(char *src0, int bytes0, BOOL synchronous)
       // for huge data
       while (bytes > _localBuf_size) {
         copySize = _localBuf_size;      
-        _XMPF_coarrayDebugPrint("===MEMCPY %d of %d bytes to localBuf (cont\'d)\n"
+        _XMPCO_debugPrint("===MEMCPY %d of %d bytes to localBuf (cont\'d)\n"
                                 "  from: addr=%p\n"
                                 "  to  : localBuf\n",
                                 copySize, bytes,
@@ -936,7 +937,7 @@ void _push_localBuf(char *src0, int bytes0, BOOL synchronous)
     return;
   copySize = bytes;
 
-  _XMPF_coarrayDebugPrint("===MEMCPY %d bytes to localBuf (final)\n"
+  _XMPCO_debugPrint("===MEMCPY %d bytes to localBuf (final)\n"
                           "  from: addr=%p\n"
                           "  to  : localBuf + offset(%d bytes)\n",
                           copySize,
@@ -959,9 +960,9 @@ void _flush_localBuf(BOOL synchronous)
     _localBuf_used = 0;
   }
 
-  if (XMPF_isSyncPutMode()) {
+  if (_XMPCO_get_isSyncPutMode()) {
       xmp_sync_memory(&state);
-      _XMPF_coarrayDebugPrint("SYNC MEMORY caused by SYNCPUT MODE (stat=%d)\n",
+      _XMPCO_debugPrint("SYNC MEMORY caused by SYNCPUT MODE (stat=%d)\n",
                               state);
   }
 }

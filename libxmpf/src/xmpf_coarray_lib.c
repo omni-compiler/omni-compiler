@@ -1,30 +1,6 @@
 #include "xmpf_internal_coarray.h"
 #include "xmpco_internal.h"
 
-/*************************************************\
-  INITIAL images **** DELETE US ****
-\*************************************************/
-
-void _XMPF_set_this_image_initial()
-{
-  _XMPCO_set_initialThisImage();
-}
-
-void _XMPF_set_num_images_initial()
-{
-  _XMPCO_set_initialNumImages();
-}
-
-int _XMPF_this_image_initial()
-{
-  return _XMPCO_get_initialThisImage();
-}
-
-int _XMPF_num_images_initial()
-{
-  return _XMPCO_get_initialNumImages();
-}
-
 
 /*************************************************\
   CURRENT images
@@ -43,6 +19,7 @@ void xmpf_consume_comm_current_(MPI_Fint *fcomm)
 {
   *fcomm = MPI_Comm_c2f(_XMPF_consume_comm_current());
 }
+
 
 /* look at also _image_nodes
  */
@@ -235,7 +212,7 @@ static void _get_initial_allimages(int size, int images2[])
  */
 int xmpf_num_images_current_(void)
 {
-  return _XMPF_num_images_current();
+  return _XMPCO_get_currentNumImages();
 }
 
 
@@ -243,7 +220,7 @@ int xmpf_num_images_current_(void)
  */
 int xmpf_this_image_current_(void)
 {
-  return _XMPF_this_image_current();
+  return _XMPCO_get_currentThisImage();
 }
 
 
@@ -366,7 +343,7 @@ void xmpf_sync_allimages_nostat_(void)
   int state;
 
   if (_XMPCO_is_subset_exec()) {
-    int size = _XMPF_num_images_current() - 1;    // #of images except myself
+    int size = _XMPCO_get_currentNumImages() - 1;    // #of images except myself
     int *images0 = (int*)malloc((sizeof(int)*size));
     _get_initial_allimages(size, images0);
     for(int i=0;i<size;i++)

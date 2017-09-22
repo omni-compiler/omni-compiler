@@ -7,6 +7,7 @@
 
 #include "xmpco_internal.h"
 
+#define _XMPF_coarrayDebugPrint	if (_XMPCO_get_isMsgMode()) __XMPF_coarrayDebugPrint
 
 // GET/PUT Interface types
 // (see also XcodeML-Exc-Tools/src/exc/xmpF/XMPcoindexObj.java)
@@ -25,16 +26,16 @@ extern int _XMP_boundaryByte;     // communication boundary (bytes)
 #define COARRAY_PUT_CODE  701
 
 /* xmpf_coarray.c */
-//extern void _XMPF_coarray_init(void); 
-//extern void _XMPF_coarray_finalize(void); 
-extern int _XMPF_get_coarrayMsg(void);
-extern void _XMPF_set_coarrayMsg(int sw);
-extern void _XMPF_reset_coarrayMsg(void);
-extern unsigned XMPF_get_poolThreshold(void);
-extern size_t XMPF_get_localBufSize(void);
-extern BOOL XMPF_isSafeBufferMode(void);
-extern BOOL XMPF_isSyncPutMode(void);
-extern BOOL XMPF_isEagerCommMode(void);
+extern void _XMPF_coarray_init(void); 
+extern void _XMPF_coarray_finalize(void); 
+//extern int _XMPF_get_coarrayMsg(void);
+//extern void _XMPF_set_coarrayMsg(int sw);
+//extern void _XMPF_reset_coarrayMsg(void);
+//extern unsigned XMPF_get_poolThreshold(void);
+//extern size_t XMPF_get_localBufSize(void);
+//extern BOOL XMPF_isSafeBufferMode(void);
+//extern BOOL XMPF_isSyncPutMode(void);
+//extern BOOL XMPF_isEagerCommMode(void);
 
 /* hidden API */
 extern void xmpf_coarray_msg_(int *sw);
@@ -42,7 +43,6 @@ extern void xmpf_coarray_msg_(int *sw);
 extern char *_XMPF_errmsg;   // to answer ERRMSG argument in Fortran
 extern void xmpf_copy_errmsg_(char *errmsg, int *msglen);
 
-#define _XMPF_coarrayDebugPrint	if (_XMPF_get_coarrayMsg()) __XMPF_coarrayDebugPrint
 extern void __XMPF_coarrayDebugPrint(char *format, ...);
 extern void xmpf_coarray_fatal_with_len_(char *msg, int *msglen);
 extern void _XMPF_coarrayFatal(char *format, ...);
@@ -101,15 +101,9 @@ extern void xmpf_get_comm_current_(MPI_Fint *fcomm);
 extern void xmpf_consume_comm_current_(MPI_Fint *fcomm);
 
 extern int XMPF_initial_this_image, XMPF_initial_num_images;
-extern void _XMPF_set_this_image_initial(void);
-extern void _XMPF_set_num_images_initial(void);
-extern int _XMPF_this_image_initial(void);
-extern int _XMPF_num_images_initial(void);
 
 extern MPI_Comm _XMPF_get_comm_current(void);
 extern MPI_Comm _XMPF_consume_comm_current(void);
-extern int _XMPF_this_image_current(void);
-extern int _XMPF_num_images_current(void);
 extern int _XMPF_transImage_current2initial(int image);
 extern int _XMPF_get_initial_image_withDescPtr(int image, void *descPtr);
 

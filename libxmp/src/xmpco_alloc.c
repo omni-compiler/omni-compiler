@@ -547,7 +547,7 @@ void XMPCO_prolog(ResourceSet_t **rsetp, int namelen, char *name)
 }
 
 
-void _XMPCO_epilog(ResourceSet_t **rsetp)
+void XMPCO_epilog(ResourceSet_t **rsetp)
 {
   if (*rsetp == NULL)
     return;
