@@ -1,6 +1,6 @@
 module mod1
   implicit none
-  use mo_constant
+  use mo_issue282
 contains
   subroutine sub1()
     implicit none
