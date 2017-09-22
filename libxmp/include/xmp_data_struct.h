@@ -7,6 +7,9 @@
 #if defined(OMNI_TARGET_CPU_KCOMPUTER) && defined(K_RDMA_REFLECT)
 #include <mpi-ext.h>
 #endif
+#if defined(_XMP_XACC)
+#include "xacc_internal.h"
+#endif
 
 #define _XMP_comm_t void
 
@@ -132,11 +135,29 @@ typedef struct _XMP_reflect_sched_type {
   int lo_rank, hi_rank;
 
 #if defined(_XMP_XACC)
+  __attribute__((deprecated))
   void *dev_addr;
+
   void *lo_send_host_buf, *lo_recv_host_buf;
   void *hi_send_host_buf, *hi_recv_host_buf;
-  void *lo_async_id;
-  void *hi_async_id;
+  _XACC_queue_t lo_async_id;
+  _XACC_queue_t hi_async_id;
+
+  _XACC_memory_t dev_mem;
+
+  //offset of array_dev_mem
+  size_t lo_send_offset;
+  size_t lo_recv_offset;
+  size_t hi_send_offset;
+  size_t hi_recv_offset;
+  _XACC_memory_t lo_send_buf_mem;
+  _XACC_memory_t lo_recv_buf_mem;
+  _XACC_memory_t hi_send_buf_mem;
+  _XACC_memory_t hi_recv_buf_mem;
+  size_t lo_send_buf_offset;
+  size_t lo_recv_buf_offset;
+  size_t hi_send_buf_offset;
+  size_t hi_recv_buf_offset;
 #endif
   
 #if defined(_XMP_TCA)

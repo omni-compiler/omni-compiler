@@ -48,6 +48,8 @@ IS_KCOMPUTER     = @KCOMPUTER@
 IS_FX10          = @FX10@
 IS_FX100         = @FX100@
 IS_XACC          = @XACC@
+IS_CUDA          = @CUDA@
+IS_OPENCL        = @OPENCL@
 
 ifeq ($(IS_KCOMPUTER), $(TRUE))
         CFLAGS += -D_KCOMPUTER
@@ -62,6 +64,12 @@ endif
 ifeq ($(IS_XACC), $(TRUE))
     OBJECTS += xaccf_gcomm.o xaccf_reflect.o
     CFLAGS  += -D_XMP_XACC
+ifeq ($(IS_CUDA), $(TRUE))
+    CFLAGS  += -D_XMP_XACC_CUDA -I@CUDA_PREFIX@/include
+endif
+ifeq ($(IS_OPENCL), $(TRUE))
+    CFLAGS  += -D_XMP_XACC_OPENCL -I@OPENCL_PREFIX@/include
+endif
 endif
 
 ifeq ($(IS_CRAY), $(TRUE))
