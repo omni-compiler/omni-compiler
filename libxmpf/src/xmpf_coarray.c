@@ -106,17 +106,13 @@ void _XMPF_coarray_init(void)
                           "   static buffer (localBuf) size :  %u bytes\n"
                           "   safe buffer mode (PUT only)   :  %s\n"
                           "   sync put mode (PUT only)      :  %s\n"
-                          "   eager communication mode      :  %s\n"
-                          "   GET-communication interface   :  type %d\n"
-                          "   PUT-communication interface   :  type %d\n",
+                          "   eager communication mode      :  %s\n",
                           _XMPCO_get_isMsgMode() ? "on" : "off",
                           _XMPCO_get_poolThreshold(),
                           _XMPCO_get_localBufSize(),
                           _XMPCO_get_isSafeBufferMode() ? "on" : "off",
                           _XMPCO_get_isSyncPutMode() ? "on" : "off",
-                          _XMPCO_get_isEagerCommMode() ? "on" : "off",
-                          GET_INTERFACE_TYPE,
-                          PUT_INTERFACE_TYPE
+                          _XMPCO_get_isEagerCommMode() ? "on" : "off"
                           );
 }
 

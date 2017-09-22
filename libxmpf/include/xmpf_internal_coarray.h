@@ -9,12 +9,6 @@
 
 #define _XMPF_coarrayDebugPrint	if (_XMPCO_get_isMsgMode()) __XMPF_coarrayDebugPrint
 
-// GET/PUT Interface types
-// (see also XcodeML-Exc-Tools/src/exc/xmpF/XMPcoindexObj.java)
-//#define GET_INTERFACE_TYPE 6           // varid last implementation
-#define GET_INTERFACE_TYPE 8
-//#define PUT_INTERFACE_TYPE 7           // varid last implementation
-#define PUT_INTERFACE_TYPE 8
 
 /*-- parameters --*/
 #define DESCR_ID_MAX   250
@@ -134,7 +128,6 @@ extern void xmpf_critical_(void);
 extern void xmpf_end_critical_(void);
 
 /* xmpf_coarray_put.c */
-#if PUT_INTERFACE_TYPE==8
 extern void xmpf_coarray_put_scalar_(void **descPtr, char **baseAddr, int *element,
                                      int *coindex, char *rhs, BOOL *synchronouns);
 extern void xmpf_coarray_put_array_(void **descPtr, char **baseAddr, int *element,
@@ -145,34 +138,17 @@ extern void xmpf_coarray_put_spread_(void **descPtr, char **baseAddr, int *eleme
                                      int *coindex, char *rhs, int *rank,
                                      int skip[], int count[],
                                      BOOL *synchronous);
-#else
-extern void xmpf_coarray_put_scalar_(void **descPtr, char **baseAddr, int *element,
-                                     int *coindex, char *rhs, int *condition,
-                                     BOOL *synchronous);
-extern void xmpf_coarray_put_array_(void **descPtr, char **baseAddr, int *element,
-                                    int *coindex, char *rhs, int *condition,
-                                    BOOL *synchronous, int *rank, ...);
-extern void xmpf_coarray_put_spread_(void **descPtr, char **baseAddr, int *element,
-                                     int *coindex, char *rhs, int *condition,
-                                     BOOL *synchronous, int *rank, ...);
-#endif
 extern void _XMPF_coarrayInit_put(void);
 
 /* xmpf_coarray_get.c */
 extern void xmpf_coarray_get_scalar_(void **descPtr, char **baseAddr, int *element,
                                      int *coindex, char *result);
-#if GET_INTERFACE_TYPE==8
 extern void xmpf_coarray_get_array_(void **descPtr, char **baseAddr, int *element,
                                     int *coindex, char *result, int *rank,
                                     int skip[], int count[]);
-#else
-extern void xmpf_coarray_get_array_(void **descPtr, char **baseAddr, int *element,
-                                    int *coindex, char *result, int *rank, ...);
-#endif
 extern void _XMPF_coarrayInit_get(void);
 
 /* xmpf_coarray_getsub.c */
-/* INTERFACE_TYPE==8 only */
 extern void xmpf_coarray_getsub_array_(void **descPtr, char **baseAddr, int *element,
                                        int *coindex, char **localAddr, int *rank,
                                        int skip[], int skip_local[], int count[]);
