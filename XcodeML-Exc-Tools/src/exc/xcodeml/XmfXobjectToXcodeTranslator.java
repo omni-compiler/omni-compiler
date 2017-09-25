@@ -303,8 +303,9 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
 
         case F_RENAME:
             e = createElement(name,
-                              "use_name", xobj.getArg(0).getName(),
-                              "local_name", (xobj.getArgOrNull(1) != null ? xobj.getArg(1).getName() : null));
+			      "is_operator", intFlagToBoolStr(xobj.getArg(0)),
+                              "use_name", xobj.getArg(1).getName(),
+                              "local_name", (xobj.getArgOrNull(2) != null ? xobj.getArg(2).getName() : null));
             break;
 
         case F_RENAMABLE:

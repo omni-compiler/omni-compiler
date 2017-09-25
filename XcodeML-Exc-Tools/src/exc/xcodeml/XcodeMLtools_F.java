@@ -587,6 +587,11 @@ public class XcodeMLtools_F extends XcodeMLtools {
 	return getChildList(n, xx);
       }
 
+    case F_RENAME:
+      boolean isOperator = getAttrBool(n, "is_operator");
+      return Xcons.List(code, type, Xcons.IntConstant(isOperator ? 1 : 0),
+			getSymbol(n, "use_name"), getSymbol(n, "local_name"));
+      
     case F_RENAMABLE:
       return Xcons.List(code, type, getSymbol(n, "use_name"), getSymbol(n, "local_name"));
 
