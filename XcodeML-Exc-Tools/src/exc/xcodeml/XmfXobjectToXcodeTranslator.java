@@ -244,11 +244,12 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             break;
 
         case F_INTERFACE_DECL:
-            // (CODE is_operator is_assignment name (LIST ... ))
+            // (CODE name is_operator is_assignment (LIST ... ) is_abstract)
             e = createElement(name,
                               "name", getArg0Name(xobj),
                               "is_operator", intFlagToBoolStr(xobj.getArg(1)),
-                              "is_assignment", intFlagToBoolStr(xobj.getArg(2)));
+                              "is_assignment", intFlagToBoolStr(xobj.getArg(2)),
+			      "is_abstract", intFlagToBoolStr(xobj.getArg(4)));
             for (Xobject a : (XobjList)xobj.getArg(3)) {
                 addChildNode(e, trans(a));
             }

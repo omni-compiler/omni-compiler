@@ -419,7 +419,8 @@ public class XcodeMLtools_F extends XcodeMLtools {
                                                getSymbol(n, "name"),
                                                getAttrIntFlag(n, "is_operator"),
                                                getAttrIntFlag(n, "is_assignment"),
-                                               getChildList(n)));
+                                               getChildList(n),
+					       getAttrIntFlag(n, "is_abstract")));
 
     case F_BLOCK_DATA_DEFINITION:
       x = getSymbol(n, "name");
