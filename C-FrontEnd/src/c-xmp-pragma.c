@@ -69,6 +69,7 @@ static CExpr* parse_TASKLET_clause();
 static CExpr* parse_TASKLETS_clause();
 static CExpr* parse_TASKLETWAIT_clause();
 static CExpr* parse_TASKLET_subscript_list();
+static CExpr* parse_TAG_clause();
 
 static CExpr* parse_COL2_name_list();
 static CExpr* parse_XMP_subscript_list_round();
@@ -87,7 +88,7 @@ static CExpr* parse_Reduction_opt();
 static CExpr* parse_XMP_opt();
 static CExpr* parse_ACC_or_HOST_clause();
 static CExpr* parse_PROFILE_clause();
-static void parse_ASYNC_ACC_or_HOST_PROFILE(CExpr**, CExpr**, CExpr**);
+static void parse_ASYNC_ACC_or_HOST_PROFILE_TAG(CExpr**, CExpr**, CExpr**, CExpr**);
 static CExpr *parse_XMP_loop_subscript_list_round();
 static CExpr *parse_XMP_loop_subscript_list_square();
 static CExpr *parse_XMP_shadow_width_list();
@@ -549,8 +550,8 @@ CExpr* parse_TASK_clause()
   
   opt = parse_XMP_opt();
 
-  CExpr *async, *profile, *acc_or_host; // async and acc_or_host is not used
-  parse_ASYNC_ACC_or_HOST_PROFILE(&async, &acc_or_host, &profile);
+  CExpr *async, *profile, *acc_or_host, *tag; // async and acc_or_host is not used
+  parse_ASYNC_ACC_or_HOST_PROFILE_TAG(&async, &acc_or_host, &profile, &tag);
   
   return XMP_LIST4(onRef, (CExpr*)allocExprOfNumberConst2(nocomm_flag, BT_INT), opt, profile);
   
@@ -581,8 +582,8 @@ CExpr* parse_LOOP_clause()
   reductionOpt = reduction_opt ? XMP_LIST1(reduction_opt) : EMPTY_LIST;
   opt = parse_XMP_opt();
 
-  CExpr *async, *profile, *acc_or_host; // async and acc_or_host is not used
-  parse_ASYNC_ACC_or_HOST_PROFILE(&async, &acc_or_host, &profile);
+  CExpr *async, *profile, *acc_or_host, *tag; // async and acc_or_host is not used
+  parse_ASYNC_ACC_or_HOST_PROFILE_TAG(&async, &acc_or_host, &profile, &tag);
 
   return XMP_LIST5(subscriptList,onRef,reductionOpt,opt,profile);
 
@@ -1842,9 +1843,9 @@ static CExpr* parse_REFLECT_clause()
 {
   CExpr *arrayNameList = parse_name_list();
   CExpr *widthList = parse_WIDTH_list();
-  CExpr *async, *acc_or_host, *profile;
+  CExpr *async, *acc_or_host, *profile, *tag;
   
-  parse_ASYNC_ACC_or_HOST_PROFILE(&async, &acc_or_host, &profile);
+  parse_ASYNC_ACC_or_HOST_PROFILE_TAG(&async, &acc_or_host, &profile, &tag);
   return XMP_LIST5(arrayNameList, widthList, async, acc_or_host, profile);
 }
 
@@ -1852,14 +1853,14 @@ static CExpr* parse_REDUCTION_clause()
 {
   CExpr* reductionRef = parse_Reduction_ref();
   CExpr* onRef        = (CExpr *)allocExprOfNull();
-  CExpr *async, *profile, *acc_or_host;
+  CExpr *async, *profile, *acc_or_host, *tag;
   
   if (PG_IS_IDENT("on")) {
     pg_get_token();
     onRef = parse_task_ON_ref();
   }
   
-  parse_ASYNC_ACC_or_HOST_PROFILE(&async, &acc_or_host, &profile);
+  parse_ASYNC_ACC_or_HOST_PROFILE_TAG(&async, &acc_or_host, &profile, &tag);
   
   return XMP_LIST5(reductionRef, onRef, async, acc_or_host, profile);
 }
@@ -1872,8 +1873,8 @@ static CExpr* parse_BARRIER_clause()
     onRef = parse_task_ON_ref();
   }
 
-  CExpr *async, *profile, *acc_or_host; // async and acc_or_host is not used
-  parse_ASYNC_ACC_or_HOST_PROFILE(&async, &acc_or_host, &profile);
+  CExpr *async, *profile, *acc_or_host, *tag; // async and acc_or_host is not used
+  parse_ASYNC_ACC_or_HOST_PROFILE_TAG(&async, &acc_or_host, &profile, &tag);
   
   return XMP_LIST2(onRef, profile);
 }
@@ -1881,7 +1882,7 @@ static CExpr* parse_BARRIER_clause()
 static CExpr* parse_BCAST_clause()
 {
   CExpr* varList = parse_name_list();
-  CExpr *async, *acc_or_host, *profile;
+  CExpr *async, *acc_or_host, *profile, *tag;
   
   CExpr* fromRef = (CExpr *)allocExprOfNull();
   if (PG_IS_IDENT("from")) {
@@ -1901,7 +1902,7 @@ static CExpr* parse_BCAST_clause()
     onRef = (CExpr *)allocExprOfNull();
   }
   
-  parse_ASYNC_ACC_or_HOST_PROFILE(&async, &acc_or_host, &profile);
+  parse_ASYNC_ACC_or_HOST_PROFILE_TAG(&async, &acc_or_host, &profile, &tag);
   
   return XMP_LIST6(varList, fromRef, onRef, async, acc_or_host, profile);
 }
@@ -1909,7 +1910,7 @@ static CExpr* parse_BCAST_clause()
 static CExpr* parse_GMOVE_clause()
 {
   CExpr* gmoveClause = (CExpr *)allocExprOfNull();
-  CExpr *async, *acc_or_host, *profile;
+  CExpr *async, *acc_or_host, *profile, *tag;
   
   if (PG_IS_IDENT("in")) {
     gmoveClause = (CExpr*)allocExprOfNumberConst2(XMP_GMOVE_IN, BT_INT);
@@ -1921,9 +1922,9 @@ static CExpr* parse_GMOVE_clause()
   }
   else gmoveClause = (CExpr*)allocExprOfNumberConst2(XMP_GMOVE_NORMAL, BT_INT);
   
-  parse_ASYNC_ACC_or_HOST_PROFILE(&async, &acc_or_host, &profile);  
+  parse_ASYNC_ACC_or_HOST_PROFILE_TAG(&async, &acc_or_host, &profile, &tag);  
 
-  return XMP_LIST4(gmoveClause, async, acc_or_host, profile);
+  return XMP_LIST5(gmoveClause, async, acc_or_host, profile, tag);
 }
 
 static CExpr* parse_COARRAY_clause()
@@ -2400,9 +2401,9 @@ static CExpr* parse_PROFILE_clause()
   }
 }
 
-static void parse_ASYNC_ACC_or_HOST_PROFILE(CExpr** async, CExpr** acc_or_host, CExpr** profile)
+static void parse_ASYNC_ACC_or_HOST_PROFILE_TAG(CExpr** async, CExpr** acc_or_host, CExpr** profile, CExpr** tag)
 {
-  *async = *acc_or_host = *profile = NULL;
+  *async = *acc_or_host = *profile = *tag = NULL;
 
   while(pg_tok != 0){ // Check until the end of clause
     if(*async       == NULL){
@@ -2414,6 +2415,9 @@ static void parse_ASYNC_ACC_or_HOST_PROFILE(CExpr** async, CExpr** acc_or_host, 
     if(*profile     == NULL){
       if((*profile     = parse_PROFILE_clause())     != NULL) continue;
     }
+    if(*tag         == NULL){
+      if((*tag         = parse_TAG_clause())         != NULL) continue;
+    }
 
     break;
   }
@@ -2421,6 +2425,7 @@ static void parse_ASYNC_ACC_or_HOST_PROFILE(CExpr** async, CExpr** acc_or_host, 
   if(*async == NULL)       *async       = (CExpr *)allocExprOfNull();
   if(*acc_or_host == NULL) *acc_or_host = (CExpr *)allocExprOfNull();
   if(*profile == NULL)     *profile     = (CExpr *)allocExprOfNull();
+  if(*tag == NULL)         *tag         = (CExpr *)allocExprOfNull();
 }
 
 static CExpr* parse_TASKLET_clause()
@@ -2549,5 +2554,27 @@ static CExpr* parse_TASKLET_subscript_list()
  err:
   addError(NULL, "Syntax error in scripts of XMP directive");
   return NULL;
+}
+
+static CExpr* parse_TAG_clause()
+{
+  if (PG_IS_IDENT("tag")){
+    pg_get_token();
+    if (pg_tok != '(') goto err;
+    pg_get_token();
+    CExpr* async = pg_parse_expr();
+    if (pg_tok != ')') goto err;
+    pg_get_token();
+    
+    return async;
+  }
+  else{
+    return NULL;
+  }
+
+ err:
+    XMP_Error0("syntax error in the GMOVE directive");
+    XMP_has_err = 1;
+    return NULL;
 }
 
