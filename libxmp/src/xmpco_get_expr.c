@@ -5,6 +5,7 @@
 
 #include <assert.h>
 #include "xmpco_internal.h"
+#include "_xmpco_putget.h"
 
 // communication schemes
 #define SCHEME_DirectGet       20   // RDMA expected
@@ -35,7 +36,7 @@ char *_localBuf_baseAddr;       // local base address of the local buffer
 char *_localBuf_name;           // name of the local buffer
 
 
-void _XMPF_coarrayInit_get()
+void _XMPCO_coarrayInit_get()
 {
   _localBuf_desc = _XMPCO_get_infoOfLocalBuf(&_localBuf_baseAddr,
                                               &_localBuf_offset,

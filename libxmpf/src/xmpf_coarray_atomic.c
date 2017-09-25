@@ -104,7 +104,7 @@ void _atomic_define_remote_core(CoarrayInfo_t *cinfo, int coindex,
   moldOrgAddr_char = _XMPCO_get_orgAddrOfMemoryChunk(cinfo);
   moldOffset = moldAddr - (int*)moldOrgAddr_char;
 
-  int image = _XMPF_get_initial_image_withDescPtr(coindex, cinfo);
+  int image = _XMPCO_get_initial_image_withDescPtr(coindex, cinfo);
 
   /* action
    */

@@ -5,10 +5,7 @@
 
 #include <assert.h>
 #include "xmpco_internal.h"
-
-// TEMPORARY
-// declared in ../../libxmp/include/xmp_func_decl.h
-extern void _XMP_atomic_define_1(void *, size_t, int, int, void*, size_t, size_t);
+#include "_xmpco_putget.h"
 
 
 // communication schemes
@@ -102,7 +99,7 @@ char * _target_baseAddr;
 int    _target_coindex;
 
 
-void _XMPF_coarrayInit_put()
+void _XMPCO_coarrayInit_put()
 {
   _localBuf_desc = _XMPCO_get_infoOfLocalBuf(&_localBuf_baseAddr,
                                               &_localBuf_offset,

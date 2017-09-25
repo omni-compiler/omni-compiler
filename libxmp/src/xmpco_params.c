@@ -1,13 +1,12 @@
 #include <string.h>
 #include <stdarg.h>
 #include "xmpco_internal.h"
-#include "xmpco_params.h"
 
 /*****************************************\
   parameter variables
 \*****************************************/
 
-/*  Default values are defined in _xmpco_params.h
+/*  Default values are defined in xmpco_params.h
  */
 static unsigned _poolThreshold    = _XMPCO_default_poolThreshold;
 static size_t   _localBufSize     = _XMPCO_default_localBufSize;

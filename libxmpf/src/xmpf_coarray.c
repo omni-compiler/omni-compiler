@@ -27,7 +27,7 @@ void _XMPF_coarray_init(void)
    */
   _XMPCO_set_initialThisImage();
   _XMPCO_set_initialNumImages();
-  _XMPF_coarray_clean_image_nodes();
+  _XMPCO_clean_imageDirNodes();
 
   /*
    * read environment variables

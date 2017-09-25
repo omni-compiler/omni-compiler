@@ -1,10 +1,6 @@
 #ifndef _XMPCO_PARAMS_H
 #define _XMPCO_PARAMS_H
 
-#define BOOL   int
-#define TRUE   1
-#define FALSE  0
-
 
 /** Threshold of memory size to share in the pool
  */
@@ -42,30 +38,6 @@
 # define MALLOC_UNIT    ((size_t)4)
 # define ONESIDED_COMM_LAYER "unknown"
 #endif
-
-
-/*****************************************\
-  set functions
-\*****************************************/
-extern void _XMPCO_set_poolThreshold(unsigned size);
-extern void _XMPCO_set_localBufSize(unsigned size);
-extern void _XMPCO_set_isMsgMode(BOOL sw);
-extern void _XMPCO_set_isMsgMode_quietly(BOOL sw);
-extern void _XMPCO_set_isSafeBufferMode(BOOL sw);
-extern void _XMPCO_set_isSyncPutMode(BOOL sw);
-extern void _XMPCO_set_isEagerCommMode(BOOL sw);
-
-extern void _XMPCO_reset_isMsgMode(void);
-
-/*****************************************\
-  get functions
-\*****************************************/
-extern unsigned _XMPCO_get_poolThreshold(void);
-extern size_t   _XMPCO_get_localBufSize(void);
-extern BOOL     _XMPCO_get_isMsgMode(void);
-extern BOOL     _XMPCO_get_isSafeBufferMode(void);
-extern BOOL     _XMPCO_get_isSyncPutMode(void);
-extern BOOL     _XMPCO_get_isEagerCommMode(void);
 
 
 #endif /*_XMPCO_PARAMS_H*/

@@ -33,9 +33,9 @@ void _XMPCO_debugPrint(char *format, ...)
   current = _XMPCO_get_currentThisImage();
   initial = _XMPCO_get_initialThisImage();
   if (current == initial)
-    fprintf(stderr, "XMPCO [%d] %s", initial, work);
+    fprintf(stderr, "XMPCO[%d] %s", initial, work);
   else
-    fprintf(stderr, "XMPCO [%d(current=%d)] %s", initial, current, work);
+    fprintf(stderr, "XMPCO[%d(current=%d)] %s", initial, current, work);
 }
 
 

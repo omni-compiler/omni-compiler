@@ -13,7 +13,7 @@ void XMPCO_sync_all()
   int stat = 0;
 
   if (_XMPCO_is_subset_exec()) {
-    XMPCO_sync_all_withComm(_XMPF_consume_comm_current());
+    XMPCO_sync_all_withComm(_XMPCO_consume_comm_current());
     _XMPCO_debugPrint("SYNCALL, SUBSET(image %d/%d) done\n",
                       _XMPCO_get_currentThisImage(),
                       _XMPCO_get_currentNumImages());
@@ -37,9 +37,8 @@ void XMPCO_sync_all_auto()
   int stat = 0;
 
   if (_XMPCO_is_subset_exec()) {
-    XMPCO_sync_all_withComm(_XMPF_consume_comm_current());
-    _XMPCO_debugPrint("SYNCALL AUTO, SUBSET(image %d/%d) done\n",
-                      _XMPCO_get_currentThisImage(),
+    XMPCO_sync_all_withComm(_XMPCO_consume_comm_current());
+    _XMPCO_debugPrint("SYNCALL AUTO on SUBSET(%d images) done\n",
                       _XMPCO_get_currentNumImages());
     return;
   } 

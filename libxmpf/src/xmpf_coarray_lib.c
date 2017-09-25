@@ -5,74 +5,20 @@
 /*************************************************\
   CURRENT images
 \*************************************************/
-/*  see struct _XMP_nodes_type in libxmp/include/xmp_data_struct.h
- */
 
 /* entry
  */
 void xmpf_get_comm_current_(MPI_Fint *fcomm)
 {
-  *fcomm = MPI_Comm_c2f(_XMPF_get_comm_current());
+  *fcomm = MPI_Comm_c2f(_XMPCO_get_comm_current());
 }
 
 void xmpf_consume_comm_current_(MPI_Fint *fcomm)
 {
-  *fcomm = MPI_Comm_c2f(_XMPF_consume_comm_current());
+  *fcomm = MPI_Comm_c2f(_XMPCO_consume_comm_current());
 }
 
 
-/* look at also _image_nodes
- */
-MPI_Comm _XMPF_get_comm_current()
-{
-  _XMP_nodes_t *imageNodes = _XMPF_coarray_get_image_nodes();
-  if (imageNodes != NULL)
-    return *(MPI_Comm*)(imageNodes->comm);
-
-  MPI_Comm *commp = (MPI_Comm*)(_XMP_get_execution_nodes()->comm);
-  if (commp != NULL)
-    return *commp;
-  return MPI_COMM_WORLD;
-}
-
-MPI_Comm _XMPF_consume_comm_current()
-{
-  _XMP_nodes_t *imageNodes = _XMPF_coarray_consume_image_nodes();
-  if (imageNodes != NULL)
-    return *(MPI_Comm*)(imageNodes->comm);
-
-  MPI_Comm *commp = (MPI_Comm*)(_XMP_get_execution_nodes()->comm);
-  if (commp != NULL)
-    return *commp;
-  return MPI_COMM_WORLD;
-}
-
-
-/*************************************************\
-  ON-NODES images
-\*************************************************/
-
-MPI_Comm _XMPF_get_comm_of_nodes(_XMP_nodes_t *nodes)
-{
-  if (!nodes->is_member)
-    return MPI_COMM_NULL;
-  return *(MPI_Comm*)(nodes->comm);
-}
-
-int _XMPF_num_images_onNodes(_XMP_nodes_t *nodes)
-{
-  return nodes->comm_size;
-}
-
-/* 'this image' in a task region is defined as (MPI rank + 1),
- * which is not always equal to node_num of XMP in Language Spec V1.x.
- */
-int _XMPF_this_image_onNodes(_XMP_nodes_t *nodes)
-{
-  if (!nodes->is_member)
-    return 0;   // This image is out of the node.
-  return nodes->comm_rank + 1;
-}
 
 
 /*************************************************\
@@ -114,7 +60,7 @@ int _XMPF_get_initial_image_withDescPtr(int image, void *descPtr)
  */
 static void _get_initial_image_vector(int size, int images1[], int images2[])
 {
-  MPI_Comm comm = _XMPF_get_comm_current();
+  MPI_Comm comm = _XMPCO_get_comm_current();
 
   for (int i=0; i < size; i++)
     images2[i] = _XMPCO_transImage_withComm(comm, images1[i], MPI_COMM_WORLD);
@@ -127,7 +73,7 @@ static void _get_initial_image_vector(int size, int images1[], int images2[])
 static void _get_initial_allimages(int size, int images2[])
 {
   int myImage = _XMPCO_get_currentThisImage();
-  MPI_Comm comm = _XMPF_get_comm_current();
+  MPI_Comm comm = _XMPCO_get_comm_current();
   int i,j;
 
   for (i=0, j=0; i < size + 1; i++) {
@@ -258,7 +204,7 @@ void xmpf_sync_image_nostat_(int *image)
   xmp_sync_image(image0-1, &state);
   _XMPF_coarrayDebugPrint("SYNC IMAGES(image=%d) ends. (stat=%d)\n",
                           image0, state);
-  _XMPF_coarray_clean_image_nodes();
+  _XMPCO_clean_imageDirNodes();
 }
 
 void xmpf_sync_images_nostat_(int *images, int *size)
@@ -276,7 +222,7 @@ void xmpf_sync_images_nostat_(int *images, int *size)
   _XMPF_coarrayDebugPrint("SYNC IMAGES 1-to-N ends. (stat=%d)\n", state);
 
   free(images0);
-  _XMPF_coarray_clean_image_nodes();
+  _XMPCO_clean_imageDirNodes();
 }
 
 void xmpf_sync_allimages_nostat_(void)
@@ -295,7 +241,7 @@ void xmpf_sync_allimages_nostat_(void)
     _XMPF_coarrayDebugPrint("SYNC IMAGES 1-to-SUBSET ends. (stat=%d)\n", state);
 
     free(images0);
-    _XMPF_coarray_clean_image_nodes();
+    _XMPCO_clean_imageDirNodes();
     return;
   } 
 
