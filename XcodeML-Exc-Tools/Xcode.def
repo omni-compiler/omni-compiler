@@ -157,6 +157,7 @@ L   F_RENAME                   -                            XbfRename
 L   F_RENAMABLE                -                            XbfRenamable
 L   F_USE_ONLY_DECL            -                            XbfFuseOnlyDecl
 L   F_STATEMENT_LIST           -                            XbfBody
+L   F_ENUM_DECL
 
 # -----------------
 # Fortran: Statement

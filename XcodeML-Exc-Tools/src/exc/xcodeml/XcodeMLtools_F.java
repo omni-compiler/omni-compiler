@@ -38,6 +38,7 @@ import exc.object.XobjString;
 import exc.object.Xobject;
 import exc.object.XobjectFile;
 import exc.object.Xtype;
+import exc.object.EnumType;
 
 
 /**
@@ -58,6 +59,8 @@ public class XcodeMLtools_F extends XcodeMLtools {
       declFfunctionType(n);
     } else if (name == "FstructType") {
       declFstructType(n);
+    } else if (name == "FenumType") {
+      declFenumType(n);
     } else
       fatal("Unknown node in typeTable: " + n);
   }
@@ -293,6 +296,34 @@ public class XcodeMLtools_F extends XcodeMLtools {
     xobjFile.addType(type);
   }
 
+  /*
+   * (symbols)
+   *
+   * enum, bind(C)
+   *  enumerator :: open_door=4, close_door=17
+   *  enumerator :: lock_door
+   * end enum
+   *
+   * <FenumType type="TYPE_NAME">
+   *   <name>open_door</name>
+   *   <value>
+   *     <FintConstant type="Fint">4</FintConstant>
+   *   </value>
+   *   <name>close_door</name>
+   *   <value>
+   *     <FintConstant type="Fint">17</FintConstant>
+   *   </value>
+   *   <name>lock_door</name>
+   * </FenumType>
+   */
+  private void declFenumType(Node n) {
+    String tid = getAttr(n, "type");
+    long tq = 0;
+    XobjList moe_list = (XobjList)toXobject(getElement(n, "symbols"));
+    EnumType type = new EnumType(tid, moe_list, tq, null);
+    xobjFile.addType(type);
+  }
+  
   /*
    * global Ident section
    */

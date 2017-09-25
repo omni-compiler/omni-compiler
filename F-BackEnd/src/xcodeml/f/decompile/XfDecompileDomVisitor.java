@@ -7138,29 +7138,64 @@ public class XfDecompileDomVisitor {
                 fail(n);
             }
 
-            NodeList list = type.getChildNodes();
-            for (int i = 0; i < list.getLength(); i++) {
-                Node elm = list.item(i);
-                if (elm.getNodeType() != Node.ELEMENT_NODE) {
-                    continue;
-                }
-                String name = elm.getNodeName();
-                if (name.equals("name")) {
-                    writer.setupNewLine();
-                    writer.writeToken("ENUMERATOR");
-                    writer.writeToken("::");
-                    writer.writeToken(XmDomUtil.getContentText(elm));
-                } else if (name.equals("value")) {
-                    writer.writeToken("=");
-                    invokeEnter(elm);
-                } else {
-                    _context.setLastErrorMessage(
-                            XfUtilForDom.formatError(type,
-                                    XfError.XCODEML_SEMANTICS,
-                                    type.getNodeName()));
-                    fail(type);
-                }
+	    Node symbols = XmDomUtil.getElement(type, "symbols");
+            NodeList symbol_list = symbols.getChildNodes();
+
+            for (int i = 0; i < symbol_list.getLength(); i++) {
+
+	      Node symbol = symbol_list.item(i);
+	      if (symbol.getNodeType() != Node.ELEMENT_NODE) {
+		continue;
+	      }
+
+	      String name = symbol.getNodeName();
+	      if (name.equals("id")){
+
+		NodeList clist = symbol.getChildNodes();
+
+		Node c0 = clist.item(0);
+		String name0 = c0.getNodeName();
+		if (name0.equals("name")) {
+		  writer.setupNewLine();
+		  writer.writeToken("ENUMERATOR");
+		  writer.writeToken("::");
+		  writer.writeToken(XmDomUtil.getContentText(c0));
+		}
+
+		if (clist.getLength() > 1){
+		  Node c1 = clist.item(1);
+		  String name1 = c1.getNodeName();
+		  if (name1.equals("value")) {
+		    writer.writeToken("=");
+		    invokeEnter(c1);
+		  }
+		}
+	      }
             }
+
+            // NodeList list = type.getChildNodes();
+            // for (int i = 0; i < list.getLength(); i++) {
+            //     Node elm = list.item(i);
+            //     if (elm.getNodeType() != Node.ELEMENT_NODE) {
+            //         continue;
+            //     }
+            //     String name = elm.getNodeName();
+            //     if (name.equals("name")) {
+            //         writer.setupNewLine();
+            //         writer.writeToken("ENUMERATOR");
+            //         writer.writeToken("::");
+            //         writer.writeToken(XmDomUtil.getContentText(elm));
+            //     } else if (name.equals("value")) {
+            //         writer.writeToken("=");
+            //         invokeEnter(elm);
+            //     } else {
+            //         _context.setLastErrorMessage(
+            //                 XfUtilForDom.formatError(type,
+            //                         XfError.XCODEML_SEMANTICS,
+            //                         type.getNodeName()));
+            //         fail(type);
+            //     }
+            // }
 
             writer.setupNewLine();
             writer.decrementIndentLevel();

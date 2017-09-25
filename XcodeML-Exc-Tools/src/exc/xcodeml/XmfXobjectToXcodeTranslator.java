@@ -270,6 +270,10 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             e = addChildNode(createElement(name), transName(xobj.getArg(0)));
             break;
 
+	case F_ENUM_DECL:
+            e = createElement(name);
+            break;
+
         case F_USE_DECL:
             e = createElement(name,
                               "name", xobj.getArg(0).getName(),
@@ -1164,6 +1168,11 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
                              transParams((XobjList)type.getFuncParam()));
                 break;
 
+	    case Xtype.ENUM:
+                typeElem = createElement("FenumType");
+                addChildNode(typeElem, transSymbols(type.getMemberList()));
+                break;
+		
             default:
                 fatal("cannot convert type_kind:" + Xtype.getKindName(type.getKind()));
             }

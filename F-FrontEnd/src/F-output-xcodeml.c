@@ -4672,11 +4672,17 @@ outx_enumType(int l, TYPE_DESC tp)
 {
     ID id;
     int l1 = l + 1;
+    int l2 = l1 + 1;
+    int l3 = l2 + 1;
     outx_typeAttrs(l, tp ,"FenumType", TOPT_NEXTLINE);
+    outx_tag(l1, "symbols");
     FOREACH_MEMBER(id, tp) {
-        outx_symbolName(l1, ID_SYM(id));
-        outx_value(l1, VAR_INIT_VALUE(id));
+      outx_tag(l2, "id");
+      outx_symbolName(l3, ID_SYM(id));
+      outx_value(l3, VAR_INIT_VALUE(id));
+      outx_close(l2,"id");
     }
+    outx_close(l1,"symbols");
     outx_close(l,"FenumType");
 }
 
