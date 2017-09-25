@@ -31,9 +31,7 @@ OUT_DIM=coindex2d.x nodes2d.x
 
 #coarray_dir_inner.f90  #image_dir.x
 
-### ZANTEI 9.25
-###OUT= $(OUT_DIR) $(OUT_TASK) $(OUT_IMG) $(OUT_ALO) $(OUT_DIM)
-OUT= $(OUT_DIR) $(OUT_TASK)  $(OUT_ALO) $(OUT_DIM)
+OUT= $(OUT_DIR) $(OUT_TASK) $(OUT_IMG) $(OUT_ALO) $(OUT_DIM)
 
 
 include ../Makefile.common
