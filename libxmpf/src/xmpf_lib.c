@@ -17,8 +17,8 @@ void xmp_init_mpi_(void) {
 void xmp_finalize_mpi_(void) {
 }
 
-void xmp_init_(MPI_Comm *comm) {
-  _XMP_init(1, NULL, *comm);
+void xmp_init_(MPI_Fint *comm) {
+  _XMP_init(1, NULL, MPI_Comm_f2c(*comm));
 }
 
 void xmp_finalize_(void) {
