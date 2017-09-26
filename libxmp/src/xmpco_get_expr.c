@@ -49,8 +49,8 @@ void _XMPCO_coarrayInit_get()
     entry
 \***************************************************/
 
-void XMPCO_GET_scalarExpr(void *descPtr, char *baseAddr, int element,
-                          int coindex, char *result)
+void XMPCO_GET_scalarExpr(CoarrayInfo_t *descPtr, char *baseAddr, 
+                          int element, int coindex, char *result)
 {
   int coindex0 = _XMPCO_get_initial_image_withDescPtr(coindex, descPtr);
 
@@ -123,9 +123,9 @@ void XMPCO_GET_scalarExpr(void *descPtr, char *baseAddr, int element,
 }
 
 
-void XMPCO_GET_arrayExpr(void *descPtr, char *baseAddr, int element,
-                         int coindex, char *result, int rank,
-                         int skip[], int count[])
+void XMPCO_GET_arrayExpr(CoarrayInfo_t *descPtr, char *baseAddr,
+                         int element, int coindex, char *result,
+                         int rank, int skip[], int count[])
 {
   int coindex0 = _XMPCO_get_initial_image_withDescPtr(coindex, descPtr);
 

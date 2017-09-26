@@ -112,7 +112,7 @@ void _XMPCO_coarrayInit_put()
     entry
 \***************************************************/
 
-void XMPCO_PUT_scalarStmt(void *descPtr, char *baseAddr, int element,
+void XMPCO_PUT_scalarStmt(CoarrayInfo_t *descPtr, char *baseAddr, int element,
                           int coindex, char *rhs, BOOL synchronous)
 {
   int coindex0 = _XMPCO_get_initial_image_withDescPtr(coindex, descPtr);
@@ -183,7 +183,7 @@ void XMPCO_PUT_scalarStmt(void *descPtr, char *baseAddr, int element,
 }
 
 
-void XMPCO_PUT_arrayStmt(void *descPtr, char *baseAddr, int element,
+void XMPCO_PUT_arrayStmt(CoarrayInfo_t *descPtr, char *baseAddr, int element,
                          int coindex, char *rhsAddr, int rank,
                          int skip[], int skip_rhs[], int count[],
                          BOOL synchronous)
@@ -239,7 +239,7 @@ void XMPCO_PUT_arrayStmt(void *descPtr, char *baseAddr, int element,
 }
 
 
-void XMPCO_PUT_spread(void *descPtr, char *baseAddr, int element,
+void XMPCO_PUT_spread(CoarrayInfo_t *descPtr, char *baseAddr, int element,
                       int coindex, char *rhs, int rank,
                       int skip[], int count[], BOOL synchronous)
 {

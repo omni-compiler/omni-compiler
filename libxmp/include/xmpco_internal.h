@@ -83,22 +83,22 @@ extern void XMPCO_sync_all_auto(void);
 extern void XMPCO_sync_all_withComm(MPI_Comm comm);
 
 // PUT and GET
-extern void XMPCO_GET_arrayStmt(void *descPtr, char *baseAddr, int element,
-                                int coindex, char *localAddr, int rank,
-                                int skip[], int skip_local[], int count[]);
-extern void XMPCO_GET_scalarExpr(void *descPtr, char *baseAddr, int element,
-                                 int coindex, char *result);
-extern void XMPCO_GET_arrayExpr(void *descPtr, char *baseAddr, int element,
-                                int coindex, char *result, int rank,
-                                int skip[], int count[]);
+extern void XMPCO_GET_arrayStmt(CoarrayInfo_t *descPtr, char *baseAddr,
+                          int element, int coindex, char *localAddr,
+                          int rank, int skip[], int skip_local[], int count[]);
+extern void XMPCO_GET_scalarExpr(CoarrayInfo_t *descPtr, char *baseAddr,
+                                 int element, int coindex, char *result);
+extern void XMPCO_GET_arrayExpr(CoarrayInfo_t *descPtr, char *baseAddr,
+                                int element, int coindex, char *result,
+                                int rank, int skip[], int count[]);
 
-extern void XMPCO_PUT_scalarStmt(void *descPtr, char *baseAddr, int element,
+extern void XMPCO_PUT_scalarStmt(CoarrayInfo_t *descPtr, char *baseAddr, int element,
                                  int coindex, char *rhs, BOOL synchronous);
-extern void XMPCO_PUT_arrayStmt(void *descPtr, char *baseAddr, int element,
+extern void XMPCO_PUT_arrayStmt(CoarrayInfo_t *descPtr, char *baseAddr, int element,
                                 int coindex, char *rhsAddr, int rank,
                                 int skip[], int skip_rhs[], int count[],
                                 BOOL synchronous);
-extern void XMPCO_PUT_spread(void *descPtr, char *baseAddr, int element,
+extern void XMPCO_PUT_spread(CoarrayInfo_t *descPtr, char *baseAddr, int element,
                              int coindex, char *rhs, int rank,
                              int skip[], int count[], BOOL synchronous);
 
@@ -194,9 +194,11 @@ extern int _XMPCO_get_currentNumImages(void);
 
 extern MPI_Comm _XMPCO_get_currentComm(void);
 extern BOOL _XMPCO_is_subset_exec(void);
-extern int _XMPCO_transImage_withComm(MPI_Comm comm1, int image1, MPI_Comm comm2);
+extern int _XMPCO_transImage_withComm(MPI_Comm comm1, int image1,
+                                      MPI_Comm comm2);
 extern int _XMPCO_transImage_current2initial(int image);
-extern int _XMPCO_get_initial_image_withDescPtr(int image, void *descPtr);
+extern int _XMPCO_get_initial_image_withDescPtr(int image,
+                                                CoarrayInfo_t *descPtr);
 
 // image-directive nodes (xmpco_lib.c)
 extern void _XMPCO_clean_imageDirNodes(void);

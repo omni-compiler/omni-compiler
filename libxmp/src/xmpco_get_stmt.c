@@ -89,9 +89,9 @@ void _XMPCO_coarrayInit_getsub()
     entry
 \***************************************************/
 
-void XMPCO_GET_arrayStmt(void *descPtr, char *baseAddr, int element,
-                                    int coindex, char *localAddr, int rank,
-                                    int skip[], int skip_local[], int count[])
+void XMPCO_GET_arrayStmt(CoarrayInfo_t *descPtr, char *baseAddr, int element,
+                         int coindex, char *localAddr, int rank,
+                         int skip[], int skip_local[], int count[])
 {
   int coindex0 = _XMPCO_get_initial_image_withDescPtr(coindex, descPtr);
 

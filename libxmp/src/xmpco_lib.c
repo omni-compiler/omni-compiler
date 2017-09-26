@@ -142,18 +142,33 @@ int _XMPCO_get_initialNumImages()
 
 int _XMPCO_get_currentNumImages()
 {
-  return _XMP_get_execution_nodes()->comm_size;
+  _XMP_nodes_t *nodes;
+
+  if ((nodes = _XMPCO_get_imageDirNodes()) == NULL)
+    nodes = _XMP_get_execution_nodes();
+
+  return nodes->comm_size;
 }
 
 int _XMPCO_get_currentThisImage()
 {
-  return _XMP_get_execution_nodes()->comm_rank + 1;
+  _XMP_nodes_t *nodes;
+
+  if ((nodes = _XMPCO_get_imageDirNodes()) == NULL)
+    nodes = _XMP_get_execution_nodes();
+
+  return nodes->comm_rank + 1;
 }
 
 MPI_Comm _XMPCO_get_currentComm()
 {
   MPI_Comm *commp;
-  commp = (MPI_Comm*)_XMP_get_execution_nodes()->comm;
+  _XMP_nodes_t *nodes;
+
+  if ((nodes = _XMPCO_get_imageDirNodes()) == NULL)
+    nodes = _XMP_get_execution_nodes();
+
+  commp = (MPI_Comm*)nodes->comm;
   return *commp;
 }
 
@@ -181,6 +196,9 @@ int _XMPCO_transImage_withComm(MPI_Comm comm1, int image1, MPI_Comm comm2)
   rank1 = image1 - 1;
   stat1 = MPI_Comm_group(comm1, &group1);
   stat2 = MPI_Comm_group(comm2, &group2);
+  ///////////////////////////////////////
+  _XMPCO_debugPrint("gege comm1=%d, comm2=%d, image1=%d\n", comm1, comm2, image1);
+  ///////////////////////////////////////
 
   stat3 = MPI_Group_translate_ranks(group1, 1, &rank1, group2, &rank2);
   //                           (in:Group1, n, rank1[n], Group2, out:rank2[n])
@@ -225,13 +243,13 @@ int _XMPCO_transImage_current2initial(int image)
 /*  get the initial image index corresponding to the image index
  *  of the nodes that the coarray is mapped to.
  */
-int _XMPCO_get_initial_image_withDescPtr(int image, void *descPtr)
+int _XMPCO_get_initial_image_withDescPtr(int image, CoarrayInfo_t *descPtr)
 {
   if (descPtr == NULL)
     return _XMPCO_transImage_current2initial(image);
 
   MPI_Comm nodesComm =
-    _XMPCO_get_comm_fromCoarrayInfo((CoarrayInfo_t*)descPtr);
+    _XMPCO_get_comm_fromCoarrayInfo(descPtr);
   if (nodesComm == MPI_COMM_NULL)
     return _XMPCO_transImage_current2initial(image);
 
@@ -261,6 +279,8 @@ void _XMPCO_set_imageDirNodes(_XMP_nodes_t *nodes)
   if (_imageDirNodes != NULL)
     _XMP_fatal("INTERNAL: _imageDirNodes was not consumed but is defined.");
   _imageDirNodes = nodes;
+
+  _XMPCO_debugPrint("SET _imageDirNodes (%d nodes) done.\n", nodes->comm_size);
 }
 
 _XMP_nodes_t *_XMPCO_get_imageDirNodes()

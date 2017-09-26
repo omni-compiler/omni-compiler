@@ -19,19 +19,6 @@ void xmpf_consume_comm_current_(MPI_Fint *fcomm)
 }
 
 
-
-
-/*************************************************\
-  Translation of images
-\*************************************************/
-/*  get image2 of MPI communicatior comm2 corresponding to image1 of comm1.
- */
-int _XMPF_transImage_withComm(MPI_Comm comm1, int image1, MPI_Comm comm2)
-{
-  return _XMPCO_transImage_withComm(comm1, image1, comm2);
-}
-
-
 /*************************************************\
   translation between initial and current images
 \*************************************************/
@@ -41,23 +28,12 @@ int _XMPF_transImage_current2initial(int image)
   return _XMPCO_transImage_current2initial(image);
 }
 
-/*  get the initial image index corresponding to the image index
- *  of the nodes that the coarray is mapped to.
- */
-int _XMPF_get_initial_image_withDescPtr(int image, void *descPtr)
-{
-  return _XMPCO_get_initial_image_withDescPtr(image, descPtr);
-}
-
 
 
 /*************************************************\
   internal
 \*************************************************/
 
-/*  TEMPORARY VERSION
- *  It would be better using MPI_Group_translate_ranks with vector arguments.
- */
 static void _get_initial_image_vector(int size, int images1[], int images2[])
 {
   MPI_Comm comm = _XMPCO_get_comm_current();
@@ -67,9 +43,6 @@ static void _get_initial_image_vector(int size, int images1[], int images2[])
 }
 
 
-/*  TEMPORARY VERSION
- *  It would be better using MPI_Group_translate_ranks with vector arguments.
- */
 static void _get_initial_allimages(int size, int images2[])
 {
   int myImage = _XMPCO_get_currentThisImage();
@@ -198,57 +171,84 @@ void xmpf_touch_(void)
 void xmpf_sync_image_nostat_(int *image)
 {
   int state = 0;
-  int image0 = _XMPCO_transImage_current2initial(*image);
+  int image0;
 
-  _XMPF_coarrayDebugPrint("SYNC IMAGES(image=%d) starts...\n", image0);
+  _XMPF_coarrayDebugPrint("SYNC IMAGES(%d) starts...\n", *image);
+
+  if (_XMPCO_is_subset_exec()) {
+    image0 = _XMPCO_transImage_current2initial(*image);
+    _XMPF_coarrayDebugPrint("*** translated image number %d (current) to %d (initial)\n",
+                            *image, image0);
+    _XMPCO_clean_imageDirNodes();
+  } else {
+    image0 = *image;
+  }
+
   xmp_sync_image(image0-1, &state);
-  _XMPF_coarrayDebugPrint("SYNC IMAGES(image=%d) ends. (stat=%d)\n",
-                          image0, state);
-  _XMPCO_clean_imageDirNodes();
+
+  _XMPF_coarrayDebugPrint("SYNC IMAGES(%d) ends. (stat=%d)\n", image0, state);
 }
+
 
 void xmpf_sync_images_nostat_(int *images, int *size)
 {
   int state;
-
-  int *images0 = (int*)malloc((sizeof(int)*(*size)));
-  for(int i=0;i<*size;i++)
-    images[i]--;
+  int images0[*size], imagesC[*size];
+  //  int *images0 = (int*)malloc((sizeof(int)*(*size)));
   
-  _get_initial_image_vector(*size, images, images0);
+  _XMPF_coarrayDebugPrint("SYNC IMAGES(%d,..) to %d images starts...\n",
+                          images[0], *size);
 
-  _XMPF_coarrayDebugPrint("SYNC IMAGES 1-to-N starts...\n");
-  xmp_sync_images(*size, images0, &state);
-  _XMPF_coarrayDebugPrint("SYNC IMAGES 1-to-N ends. (stat=%d)\n", state);
+  if (_XMPCO_is_subset_exec()) {
+    _get_initial_image_vector(*size, images, images0);
+    _XMPF_coarrayDebugPrint("*** translated image numbers %d,.. (current) to %d,.. (initial)\n",
+                            images[0], images0[0]);
+    for(int i = 0; i < *size; i++)
+      imagesC[i] = images0[i]-1;
+    _XMPCO_clean_imageDirNodes();
+  } else {
+    for(int i = 0; i < *size; i++)
+      imagesC[i] = images[i]-1;
+  }
 
-  free(images0);
-  _XMPCO_clean_imageDirNodes();
+  xmp_sync_images(*size, imagesC, &state);
+
+  //  free(images0);
+
+  _XMPF_coarrayDebugPrint("SYNC IMAGES(%d,..) ends. (stat=%d)\n",
+                          imagesC[0]+1, state);
 }
+
 
 void xmpf_sync_allimages_nostat_(void)
 {
   int state;
 
+  _XMPF_coarrayDebugPrint("SYNC IMAGES(*) starts...\n");
+
   if (_XMPCO_is_subset_exec()) {
     int size = _XMPCO_get_currentNumImages() - 1;    // #of images except myself
     int *images0 = (int*)malloc((sizeof(int)*size));
+
     _get_initial_allimages(size, images0);
-    for(int i=0;i<size;i++)
+    _XMPF_coarrayDebugPrint("*** translated image numbers to %d,.. (initial)\n",
+                            images0[0]);
+    for(int i = 0; i < size; i++)
       images0[i]--;
 
-    _XMPF_coarrayDebugPrint("SYNC IMAGES 1-to-SUBSET starts...\n");
     xmp_sync_images(size, images0, &state);
-    _XMPF_coarrayDebugPrint("SYNC IMAGES 1-to-SUBSET ends. (stat=%d)\n", state);
+    _XMPF_coarrayDebugPrint("SYNC IMAGES(*), using xmp_sync_images(), ends. (stat=%d)\n",
+                            state);
 
     free(images0);
     _XMPCO_clean_imageDirNodes();
-    return;
-  } 
+  }
 
-  _XMPF_coarrayDebugPrint("SYNC IMAGES 1-to-ALL starts...\n");
-  xmp_sync_images_all(&state);
-  _XMPF_coarrayDebugPrint("SYNC IMAGES 1-to-ALL ends. (stat=%d)\n",
-                          state);
+  else {
+    xmp_sync_images_all(&state);
+    _XMPF_coarrayDebugPrint("SYNC IMAGES(*), using xmp_sync_images_all(), ends. (stat=%d)\n",
+                            state);
+  }
 }
 
 

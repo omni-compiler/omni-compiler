@@ -12,10 +12,15 @@ void XMPCO_sync_all()
 {
   int stat = 0;
 
+  ////////////////////////////////////
+  _XMPCO_debugPrint("GACHACHA\n");
+  ////////////////////////////////////
   if (_XMPCO_is_subset_exec()) {
+  ////////////////////////////////////
+  _XMPCO_debugPrint("GACHA consume\n");
+  ////////////////////////////////////
     XMPCO_sync_all_withComm(_XMPCO_consume_comm_current());
-    _XMPCO_debugPrint("SYNCALL, SUBSET(image %d/%d) done\n",
-                      _XMPCO_get_currentThisImage(),
+    _XMPCO_debugPrint("SYNCALL on subset(%d images) done\n",
                       _XMPCO_get_currentNumImages());
     return;
   }
@@ -38,7 +43,7 @@ void XMPCO_sync_all_auto()
 
   if (_XMPCO_is_subset_exec()) {
     XMPCO_sync_all_withComm(_XMPCO_consume_comm_current());
-    _XMPCO_debugPrint("SYNCALL AUTO on SUBSET(%d images) done\n",
+    _XMPCO_debugPrint("SYNCALL AUTO on subset(%d images) done\n",
                       _XMPCO_get_currentNumImages());
     return;
   } 
