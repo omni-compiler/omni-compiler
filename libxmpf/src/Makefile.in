@@ -17,6 +17,7 @@ LIBDIR       = @OMNI_HOME@/lib
 INCDIR       = @OMNI_HOME@/include
 WORKDIR      = ./include_work
 LIBXMPF      = libxmpf.a
+LIBXMPF_TRAVERSE = libxmpf_traverse.a
 F_MAIN_O     = xmpf_main.o
 HEADERS   = $(XMPF_INC_DIR)/xmpf_internal.h \
 	    $(XMPF_INC_DIR)/xmpf_internal_coarray.h \
@@ -104,9 +105,14 @@ endif
 %.F90: %.F90.sh
 	bash $< $(TARGET) > $@
 
-all: $(LIBXMPF)
+all: $(LIBXMPF) $(LIBXMPF_TRAVERSE)
 
 $(LIBXMPF): $(F_MAIN_O) $(OBJECTS)
+	rm -f $@
+	$(AR) $(ARFLAGS) $@ $^
+	$(RANLIB) $@
+
+$(LIBXMPF_TRAVERSE): xmpf_traverse.o
 	rm -f $@
 	$(AR) $(ARFLAGS) $@ $^
 	$(RANLIB) $@
@@ -133,7 +139,7 @@ $(XMPF_COARRAY_DECL) xmpf_coarray_decl.o: xmpf_coarray_decl.F90
 
 install: $(F_MAIN_O) $(LIBXMPF) $(XMPF_COARRAY_DECL)
 	$(MKDIR_P) $(DESTDIR)$(LIBDIR) $(DESTDIR)$(INCDIR)
-	$(INSTALL) $(F_MAIN_O) $(LIBXMPF) $(DESTDIR)$(LIBDIR)
+	$(INSTALL) $(F_MAIN_O) $(LIBXMPF) $(LIBXMPF_TRAVERSE) $(DESTDIR)$(LIBDIR)
 	$(INSTALL) $(XMPF_COARRAY_DECL) $(DESTDIR)$(INCDIR)
 
 clean:
