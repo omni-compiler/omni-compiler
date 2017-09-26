@@ -22,8 +22,11 @@ sub_mpi.o: ./sub/sub_mpi.f90
 %.x: %.f90
 	$(XFC) -o $@ $<
 
-mpi_xmp.x: mpi_xmp.f90 ixmp_sub.o
-	$(XFC) -o $@ mpi_xmp.f90 ixmp_sub.o
+mpi_xmp.o : mpi_xmp.f90
+	$(MPI_FC) -c mpi_xmp.f90
+
+mpi_xmp.x: mpi_xmp.o ixmp_sub.o
+	$(XFC) -o $@ mpi_xmp.o ixmp_sub.o
 
 xmp_mpi.x: xmp_mpi.f90 sub_mpi.o
 	$(XFC) -o $@ xmp_mpi.f90 sub_mpi.o
