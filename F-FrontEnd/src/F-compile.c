@@ -7216,6 +7216,59 @@ compile_PROTECTED_statement(expr id_list)
     }
 }
 
+/*
+ * Check if the array is specified with bounds-remapping-list
+ */
+static int
+is_array_with_bounds_remapping_list(expv v)
+{
+    list lp;
+
+    if (EXPR_CODE(v) != ARRAY_REF) {
+        return FALSE;
+    }
+
+    /*
+     * If all elements of the bounds-spec-list are bounds-spec,
+     * it is a bounds-remapping-list
+     */
+    FOR_ITEMS_IN_LIST(lp, EXPR_ARG2(v)) {
+        expv bounds_spec = LIST_ITEM(lp);
+        /*
+         * If bounds-spec has a lower bound and an upper bound,
+         * it is bounds remapping
+         */
+        if (EXPR_CODE(bounds_spec) == F_INDEX_RANGE &&
+            EXPR_ARG1(bounds_spec) != NULL &&
+            EXPR_ARG2(bounds_spec) != NULL &&
+            EXPR_ARG3(bounds_spec) == NULL) {
+            continue;
+        } else {
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
+
+static int
+type_is_contiguous(TYPE_DESC tp)
+{
+    if (tp == NULL)
+        return FALSE;
+
+    // an object with the CONTIGUOUS attribute,
+    if (TYPE_IS_CONTIGUOUS(tp)) // believe it
+        return TRUE;
+
+    if (IS_ARRAY_TYPE(tp))
+        return TRUE;
+
+    return FALSE;
+}
+
+
 static void
 compile_POINTER_SET_statement(expr x) {
     list lp;
@@ -7402,10 +7455,19 @@ compile_POINTER_SET_statement(expr x) {
         }
     }
 
-    if (TYPE_N_DIM(IS_REFFERENCE(vPtrTyp)?TYPE_REF(vPtrTyp):vPtrTyp) !=
-        TYPE_N_DIM(IS_REFFERENCE(vPteTyp)?TYPE_REF(vPteTyp):vPteTyp)) {
-        error_at_node(x, "Rank mismatch.");
-        return;
+    if (is_array_with_bounds_remapping_list(vPointer)) {
+        /* This statement is pointer remapping! */
+        if (TYPE_N_DIM(IS_REFFERENCE(vPteTyp)?TYPE_REF(vPteTyp):vPteTyp) != 1 &&
+            !type_is_contiguous(vPteTyp)) {
+            error_at_node(x, "POINTEE is not contiguous or one-rank array.");
+            return;
+        }
+    } else {
+        if (TYPE_N_DIM(IS_REFFERENCE(vPtrTyp)?TYPE_REF(vPtrTyp):vPtrTyp) !=
+            TYPE_N_DIM(IS_REFFERENCE(vPteTyp)?TYPE_REF(vPteTyp):vPteTyp)) {
+            error_at_node(x, "Rank mismatch.");
+            return;
+        }
     }
 
     if (IS_PROCEDURE_TYPE(vPtrTyp)) {
