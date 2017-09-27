@@ -5,10 +5,7 @@
 
 #include <assert.h>
 #include "xmpco_internal.h"
-
-// TEMPORARY
-// declared in ../../libxmp/include/xmp_func_decl.h
-extern void _XMP_atomic_define_1(void *, size_t, int, int, void*, size_t, size_t);
+#include "_xmpco_putget.h"
 
 
 // communication schemes
@@ -102,7 +99,7 @@ char * _target_baseAddr;
 int    _target_coindex;
 
 
-void _XMPF_coarrayInit_put()
+void _XMPCO_coarrayInit_put()
 {
   _localBuf_desc = _XMPCO_get_infoOfLocalBuf(&_localBuf_baseAddr,
                                               &_localBuf_offset,
@@ -115,7 +112,7 @@ void _XMPF_coarrayInit_put()
     entry
 \***************************************************/
 
-void XMPCO_PUT_scalarStmt(void *descPtr, char *baseAddr, int element,
+void XMPCO_PUT_scalarStmt(CoarrayInfo_t *descPtr, char *baseAddr, int element,
                           int coindex, char *rhs, BOOL synchronous)
 {
   int coindex0 = _XMPCO_get_initial_image_withDescPtr(coindex, descPtr);
@@ -186,7 +183,7 @@ void XMPCO_PUT_scalarStmt(void *descPtr, char *baseAddr, int element,
 }
 
 
-void XMPCO_PUT_arrayStmt(void *descPtr, char *baseAddr, int element,
+void XMPCO_PUT_arrayStmt(CoarrayInfo_t *descPtr, char *baseAddr, int element,
                          int coindex, char *rhsAddr, int rank,
                          int skip[], int skip_rhs[], int count[],
                          BOOL synchronous)
@@ -242,7 +239,7 @@ void XMPCO_PUT_arrayStmt(void *descPtr, char *baseAddr, int element,
 }
 
 
-void XMPCO_PUT_spread(void *descPtr, char *baseAddr, int element,
+void XMPCO_PUT_spread(CoarrayInfo_t *descPtr, char *baseAddr, int element,
                       int coindex, char *rhs, int rank,
                       int skip[], int count[], BOOL synchronous)
 {

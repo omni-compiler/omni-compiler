@@ -5,6 +5,7 @@
 
 #include <assert.h>
 #include "xmpco_internal.h"
+#include "_xmpco_putget.h"
 
 // communication schemes
 #define SCHEME_DirectGetsub       10   // RDMA expected
@@ -74,7 +75,7 @@ char * _remote_baseAddr;
 int    _remote_coindex;
 
 
-void _XMPF_coarrayInit_getsub()
+void _XMPCO_coarrayInit_getsub()
 {
   _localBuf_desc = _XMPCO_get_infoOfLocalBuf(&_localBuf_baseAddr,
                                               &_localBuf_offset,
@@ -88,9 +89,9 @@ void _XMPF_coarrayInit_getsub()
     entry
 \***************************************************/
 
-void XMPCO_GET_arrayStmt(void *descPtr, char *baseAddr, int element,
-                                    int coindex, char *localAddr, int rank,
-                                    int skip[], int skip_local[], int count[])
+void XMPCO_GET_arrayStmt(CoarrayInfo_t *descPtr, char *baseAddr, int element,
+                         int coindex, char *localAddr, int rank,
+                         int skip[], int skip_local[], int count[])
 {
   int coindex0 = _XMPCO_get_initial_image_withDescPtr(coindex, descPtr);
 

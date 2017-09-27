@@ -6,9 +6,14 @@
 #include <string.h>
 #include <stdarg.h>
 
-#include "xmpco_params.h"
 #include "xmp_internal.h"
 #include "xmp_data_struct.h"
+#include "xmpco_params.h"
+
+
+#define BOOL   int
+#define TRUE   1
+#define FALSE  0
 
 #define _ROUND_UP(n,p)        (((((size_t)(n))-1)/(p)+1)*(p))
 #define _ROUND_UP_PLUS(n,p)   (((n)>0) ? _ROUND_UP(n,p) : (p))
@@ -78,29 +83,54 @@ extern void XMPCO_sync_all_auto(void);
 extern void XMPCO_sync_all_withComm(MPI_Comm comm);
 
 // PUT and GET
-extern void XMPCO_GET_arrayStmt(void *descPtr, char *baseAddr, int element,
-                                int coindex, char *localAddr, int rank,
-                                int skip[], int skip_local[], int count[]);
-extern void XMPCO_GET_scalarExpr(void *descPtr, char *baseAddr, int element,
-                                 int coindex, char *result);
-extern void XMPCO_GET_arrayExpr(void *descPtr, char *baseAddr, int element,
-                                int coindex, char *result, int rank,
-                                int skip[], int count[]);
+extern void XMPCO_GET_arrayStmt(CoarrayInfo_t *descPtr, char *baseAddr,
+                          int element, int coindex, char *localAddr,
+                          int rank, int skip[], int skip_local[], int count[]);
+extern void XMPCO_GET_scalarExpr(CoarrayInfo_t *descPtr, char *baseAddr,
+                                 int element, int coindex, char *result);
+extern void XMPCO_GET_arrayExpr(CoarrayInfo_t *descPtr, char *baseAddr,
+                                int element, int coindex, char *result,
+                                int rank, int skip[], int count[]);
 
-extern void _XMPCO_getVector_DMA(void *descPtr, char *baseAddr, int bytes, int coindex,
-                                 void *descDMA, size_t offsetDMA, char *nameDMA);
-extern void _XMPCO_getVector_buffer(void *descPtr, char *baseAddr, int bytesRU, int coindex,
-                                    char *result, int bytes);
-
-extern void XMPCO_PUT_scalarStmt(void *descPtr, char *baseAddr, int element,
+extern void XMPCO_PUT_scalarStmt(CoarrayInfo_t *descPtr, char *baseAddr, int element,
                                  int coindex, char *rhs, BOOL synchronous);
-extern void XMPCO_PUT_arrayStmt(void *descPtr, char *baseAddr, int element,
+extern void XMPCO_PUT_arrayStmt(CoarrayInfo_t *descPtr, char *baseAddr, int element,
                                 int coindex, char *rhsAddr, int rank,
                                 int skip[], int skip_rhs[], int count[],
                                 BOOL synchronous);
-extern void XMPCO_PUT_spread(void *descPtr, char *baseAddr, int element,
+extern void XMPCO_PUT_spread(CoarrayInfo_t *descPtr, char *baseAddr, int element,
                              int coindex, char *rhs, int rank,
                              int skip[], int count[], BOOL synchronous);
+
+
+// inquire functions (xmpco_lib.c)
+extern int XMPCO_this_image_coarray_dim(CoarrayInfo_t *cinfo,
+                                        int corank, int dim);
+extern void XMPCO_this_image_coarray(CoarrayInfo_t *cinfo,
+                                     int corank, int image[]);
+
+
+/*****************************************\
+  set/get options and environment vars
+\*****************************************/
+// set functions (xmpco_params.c)
+extern void _XMPCO_set_poolThreshold(unsigned size);
+extern void _XMPCO_set_localBufSize(unsigned size);
+extern void _XMPCO_set_isMsgMode(BOOL sw);
+extern void _XMPCO_set_isMsgMode_quietly(BOOL sw);
+extern void _XMPCO_set_isSafeBufferMode(BOOL sw);
+extern void _XMPCO_set_isSyncPutMode(BOOL sw);
+extern void _XMPCO_set_isEagerCommMode(BOOL sw);
+
+extern void _XMPCO_reset_isMsgMode(void);
+
+// get functions (xmpco_params.c)
+extern unsigned _XMPCO_get_poolThreshold(void);
+extern size_t   _XMPCO_get_localBufSize(void);
+extern BOOL     _XMPCO_get_isMsgMode(void);
+extern BOOL     _XMPCO_get_isSafeBufferMode(void);
+extern BOOL     _XMPCO_get_isSyncPutMode(void);
+extern BOOL     _XMPCO_get_isEagerCommMode(void);
 
 
 /*****************************************\
@@ -143,6 +173,11 @@ extern MPI_Comm _XMPCO_get_comm_fromCoarrayInfo(CoarrayInfo_t *cinfo);
 extern void _XMPCO_fatal(char *format, ...);
 extern void _XMPCO_debugPrint(char *format, ...);
 
+// initialization for PUT/GET (xmpco_put.c, xmpco_get_*.c)
+extern void _XMPCO_coarrayInit_get(void);
+extern void _XMPCO_coarrayInit_getsub(void);
+extern void _XMPCO_coarrayInit_put(void);
+
 
 // TEMPORARY restriction check
 extern int _XMPCO_nowInTask(void);   // for restriction check
@@ -159,9 +194,26 @@ extern int _XMPCO_get_currentNumImages(void);
 
 extern MPI_Comm _XMPCO_get_currentComm(void);
 extern BOOL _XMPCO_is_subset_exec(void);
-extern int _XMPCO_transImage_withComm(MPI_Comm comm1, int image1, MPI_Comm comm2);
+extern int _XMPCO_transImage_withComm(MPI_Comm comm1, int image1,
+                                      MPI_Comm comm2);
 extern int _XMPCO_transImage_current2initial(int image);
-extern int _XMPCO_get_initial_image_withDescPtr(int image, void *descPtr);
+extern int _XMPCO_get_initial_image_withDescPtr(int image,
+                                                CoarrayInfo_t *descPtr);
+
+// image-directive nodes (xmpco_lib.c)
+extern void _XMPCO_clean_imageDirNodes(void);
+extern void _XMPCO_set_imageDirNodes(_XMP_nodes_t *nodes);
+extern _XMP_nodes_t *_XMPCO_get_imageDirNodes(void);
+extern _XMP_nodes_t *_XMPCO_consume_imageDirNodes(void);
+
+// values obtained from nodes (xmpco_lib.c)
+extern MPI_Comm _XMPCO_get_comm_of_nodes(_XMP_nodes_t *nodes);
+extern int _XMPCO_num_images_onNodes(_XMP_nodes_t *nodes);
+extern int _XMPCO_this_image_onNodes(_XMP_nodes_t *nodes);
+
+// current communicator (xmpco_lib.c)
+extern MPI_Comm _XMPCO_get_comm_current(void);
+extern MPI_Comm _XMPCO_consume_comm_current(void);
 
 
 /*****************************************\
@@ -190,13 +242,5 @@ extern void _XMP_coarray_rdma_image_set_1(const int);
 extern void _XMP_coarray_put(void*, void*, void *);
 extern void _XMP_coarray_get(void*, void*, void *);
 
-
-/*****************************************\
-  TEMPORARY
-\*****************************************/
-
-extern _XMP_nodes_t *_XMPF_coarray_get_image_nodes(void);
-extern _XMP_nodes_t *_XMPF_coarray_consume_image_nodes(void);
-extern MPI_Comm _XMPF_consume_comm_current(void);
 
 #endif

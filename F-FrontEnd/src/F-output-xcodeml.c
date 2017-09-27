@@ -3418,7 +3418,6 @@ outx_UNLOCK_statement(int l, expv v)
     outx_expvClose(l, v);
 }
 
-
 /*
  * output blockStatement
  */
@@ -3433,6 +3432,8 @@ outx_BLOCK_statement(int l, expv v)
     int l1 = l + 1;
     int l2 = l + 2;
 
+    block = EXPR_BLOCK(v);
+
     if (EXPR_HAS_ARG2(v) && EXPR_ARG2(v) != NULL) {
         sprintf(buf, " construct_name=\"%s\"",
                 SYM_NAME(EXPR_SYM(EXPR_ARG2(v))));
@@ -3440,7 +3441,6 @@ outx_BLOCK_statement(int l, expv v)
     } else {
         outx_tagOfStatement(l, v);
     }
-    block = EXPR_BLOCK(v);
 
     outx_tag(l1, "symbols");
     FOREACH_ID(id, BLOCK_LOCAL_SYMBOLS(block)) {
@@ -3501,14 +3501,15 @@ outx_FORALL_statement(int l, expv v)
     expv body = EXPR_ARG2(v);
     const char *tid = NULL;
 
+
     outx_vtagLineno(l, XTAG(v), EXPR_LINE(v), NULL);
 
     if (EXPR_HAS_ARG4(v) && EXPR_ARG4(v) != NULL) {
         outx_print(" construct_name=\"%s\"",
                    SYM_NAME(EXPR_SYM(EXPR_ARG4(v))));
     }
-    if (EXPV_TYPE(EXPR_ARG1(v))) {
-        tid = getTypeID(EXPV_TYPE(EXPR_ARG1(v)));
+    if (EXPV_TYPE(init)) {
+        tid = getTypeID(EXPV_TYPE(init));
         outx_print(" type=\"%s\"", tid);
     }
     outx_print(">\n");
@@ -3539,7 +3540,6 @@ outx_FORALL_statement(int l, expv v)
         outx_close(l1, "symbols");
     }
 #endif
-
 
     FOR_ITEMS_IN_LIST(lp, init) {
         expv name = EXPR_ARG1(LIST_ITEM(lp));
@@ -4775,8 +4775,6 @@ id_is_visibleVar(ID id)
             return TRUE;
         if(VAR_IS_IMPLIED_DO_DUMMY(id))
             return FALSE;
-        if(ID_STORAGE(id) == STG_INDEX) /* Don't declare as a variable */
-            return FALSE;
         break;
     case CL_PARAM:
         return TRUE;
@@ -4810,8 +4808,6 @@ id_is_visibleVar(ID id)
         case STG_UNKNOWN:
         case STG_NONE:
             return FALSE;
-        case STG_INDEX:
-            return FALSE;
         default:
             break;
         }
@@ -4829,12 +4825,10 @@ id_is_visibleVar_for_symbols(ID id)
     if (id == NULL)
         return FALSE;
 
-    if (ID_STORAGE(id) == STG_INDEX)
-        return TRUE;
-
     return (id_is_visibleVar(id) && IS_MODULE(ID_TYPE(id)) == FALSE) ||
             ((ID_STORAGE(id) == STG_ARG ||
               ID_STORAGE(id) == STG_SAVE ||
+              ID_STORAGE(id) == STG_INDEX ||
               (ID_STORAGE(id) == STG_EXT && !EXT_IS_DEFINED_IO(PROC_EXT_ID(id))) ||
               ID_STORAGE(id) == STG_AUTO) && ID_CLASS(id) == CL_PROC);
 }

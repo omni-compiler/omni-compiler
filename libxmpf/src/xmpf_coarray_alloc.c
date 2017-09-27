@@ -107,9 +107,9 @@ void xmpf_coarray_malloc_pool_()
   XMPCO_malloc_pool();
 
   // init library internal
-  _XMPF_coarrayInit_get();
-  _XMPF_coarrayInit_getsub();
-  _XMPF_coarrayInit_put();
+  _XMPCO_coarrayInit_get();
+  _XMPCO_coarrayInit_getsub();
+  _XMPCO_coarrayInit_put();
 }
 
 void xmpf_coarray_count_size_(int *count, int *element)
@@ -205,38 +205,10 @@ void xmpf_coarray_set_nodes_(void **descPtr, void **nodesDesc)
    set the nodes specified with IMAGE directive
 \***********************************************/
 
-static _XMP_nodes_t *_image_nodes;
-
 void xmpf_coarray_set_image_nodes_(void **nodesDesc)
 {
   _XMP_nodes_t *nodes = (_XMP_nodes_t*)(*nodesDesc);
-  _XMPF_coarray_set_image_nodes(nodes);
-}
-
-
-void _XMPF_coarray_clean_image_nodes()
-{
-  _image_nodes = NULL;
-}
-
-void _XMPF_coarray_set_image_nodes(_XMP_nodes_t *nodes)
-{
-  if (_image_nodes != NULL)
-    _XMP_fatal("INTERNAL: _image_nodes was not consumed but is defined.");
-  _image_nodes = nodes;
-}
-
-_XMP_nodes_t *_XMPF_coarray_get_image_nodes()
-{
-  return _image_nodes;
-}
-
-// get and clean
-_XMP_nodes_t *_XMPF_coarray_consume_image_nodes()
-{
-  _XMP_nodes_t *ret = _image_nodes;
-  _image_nodes = NULL;
-  return ret;
+  _XMPCO_set_imageDirNodes(nodes);
 }
 
 
@@ -246,80 +218,16 @@ _XMP_nodes_t *_XMPF_coarray_consume_image_nodes()
    inquire function this_image(coarray, dim)
 \***********************************************/
 
-static int xmpf_this_image_coarray_dim(CoarrayInfo_t *cinfo, int corank, int dim);
-static void xmpf_this_image_coarray(CoarrayInfo_t *cinfo, int corank, int image[]);
-
 int xmpf_this_image_coarray_dim_(void **descPtr, int *corank, int *dim)
 {
-  return xmpf_this_image_coarray_dim((CoarrayInfo_t*)(*descPtr), *corank, *dim);
+  return XMPCO_this_image_coarray_dim((CoarrayInfo_t*)(*descPtr), *corank, *dim);
 }
 
 void xmpf_this_image_coarray_(void **descPtr, int *corank, int image[])
 {
-  xmpf_this_image_coarray((CoarrayInfo_t*)(*descPtr), *corank, image);
+  XMPCO_this_image_coarray((CoarrayInfo_t*)(*descPtr), *corank, image);
 }
 
-
-void xmpf_this_image_coarray(CoarrayInfo_t *cinfo, int corank, int image[])
-{
-  int size, index, image_coarray, magic;
-  _XMP_nodes_t *nodes;
-
-  nodes = cinfo->nodes;
-  if (nodes != NULL) {
-    image_coarray = _XMPF_this_image_onNodes(nodes);
-  } else {
-    image_coarray = _XMPCO_get_currentThisImage();
-  }
-
-  if (image_coarray == 0) {    // This image is out of the nodes.
-    for (int i = 0; i < corank; i++)
-      image[i] = 0;
-    return;
-  }
-
-  magic = image_coarray - 1;
-  for (int i = 0; i < corank; i++) {
-    size = cinfo->cosize[i];
-    index = magic % size;
-    image[i] = index + cinfo->lcobound[i];
-    magic /= size;
-  }
-}
-
-
-int xmpf_this_image_coarray_dim(CoarrayInfo_t *cinfo, int corank, int dim)
-{
-  int size, index, image_coarray, magic;
-  //int image_init;
-  int k;
-  _XMP_nodes_t *nodes;
-  //MPI_Comm comm_coarray;
-
-  if (dim <= 0 || corank < dim)
-    _XMPF_coarrayFatal("Too large or non-positive argument 'dim' of this_image:"
-                      "%d\n", dim);
-
-  nodes = cinfo->nodes;
-  if (nodes != NULL) {
-    image_coarray = _XMPF_this_image_onNodes(nodes);
-  } else {
-    image_coarray = _XMPCO_get_currentThisImage();
-  }
-
-  if (image_coarray == 0)    // This image is out of the nodes.
-    return 0;
-
-  magic = image_coarray - 1;
-  k = dim - 1;
-  for (int i = 0; i < k; i++) {
-    size = cinfo->cosize[i];
-    magic /= size;
-  }
-  size = cinfo->cosize[k];
-  index = magic % size;
-  return index + cinfo->lcobound[k];
-}
 
 /***********************************************\
   ENTRY

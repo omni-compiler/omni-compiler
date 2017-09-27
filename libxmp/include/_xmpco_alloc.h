@@ -4,6 +4,7 @@
 #define _XMPCO_ALLOC_H
 
 #include "xmpco_internal.h"
+#include "_xmpco_alloc.h"
 
 /*****************************************\
   macro definitions
