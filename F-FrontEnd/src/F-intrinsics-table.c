@@ -748,13 +748,18 @@ intrinsic_entry intrinsic_table[] = {
     // SELECTED_CHAR_KIND(NAME)
     { INTR_SELECTED_CHAR_KIND, INTR_NAME_GENERIC,   "selected_char_kind",  0,      {INTR_TYPE_CHAR}, INTR_TYPE_INT, 1,  -6, LANGSPEC_F2008, INTR_CLASS_T },
 
+
+    /*
+     * Fortran 2003 intrinsics
+     */
+
+    { INTR_MOVE_ALLOC,   INTR_NAME_SPECIFIC,        "move_alloc",          0,      {INTR_TYPE_ANY, INTR_TYPE_ANY}, INTR_TYPE_NONE, 2,  -6, LANGSPEC_F2008, INTR_CLASS_PS },
+    { INTR_EXTENDS_TYPE_OF,   INTR_NAME_SPECIFIC,   "extends_type_of",     0,      {INTR_TYPE_ANY, INTR_TYPE_ANY}, INTR_TYPE_LOGICAL, 2,  -6, LANGSPEC_F2008, INTR_CLASS_I },
+    { INTR_SAME_TYPE_AS,   INTR_NAME_SPECIFIC,      "same_type_as",        0,      {INTR_TYPE_ANY, INTR_TYPE_ANY}, INTR_TYPE_LOGICAL, 2,  -6, LANGSPEC_F2008, INTR_CLASS_I },
+
     /*
      * Fortran 2008 intrinsics
      */
-    { INTR_EXTENDS_TYPE_OF,   INTR_NAME_SPECIFIC,   "extends_type_of",     0,      {INTR_TYPE_ANY, INTR_TYPE_ANY}, INTR_TYPE_LOGICAL, 2,  -6, LANGSPEC_F2008, INTR_CLASS_I },
-    { INTR_SAME_TYPE_AS,   INTR_NAME_SPECIFIC,      "same_type_as",        0,      {INTR_TYPE_ANY, INTR_TYPE_ANY}, INTR_TYPE_LOGICAL, 2,  -6, LANGSPEC_F2008, INTR_CLASS_I },
-    { INTR_MOVE_ALLOC,   INTR_NAME_SPECIFIC,        "move_alloc",          0,      {INTR_TYPE_ANY, INTR_TYPE_ANY}, INTR_TYPE_NONE, 2,  -6, LANGSPEC_F2008, INTR_CLASS_PS },
-
 
     { INTR_COMMOND_ARUGMENT_COUNT,       INTR_NAME_SPECIFIC,     "command_argument_count",        0,      {},                    INTR_TYPE_INT,                  0, -6, LANGSPEC_F2008, INTR_CLASS_T },
 
