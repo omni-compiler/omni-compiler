@@ -2517,6 +2517,19 @@ public class XfDecompileDomVisitor {
         }
     }
 
+    // FcomplexPartRef
+    class FcomplexPartRefVisitor extends XcodeNodeVisitor {
+        /**
+         * Decompile "FcomplexPartRef" element in XcodeML/F.
+         */
+        @Override public void enter(Node n) {
+            invokeEnter(XmDomUtil.getElement(n, "varRef"));
+            XmfWriter writer = _context.getWriter();
+            writer.writeToken("%");
+            writer.writeToken(XmDomUtil.getAttr(n, "part"));
+        }
+    }
+
     // FconcatExpr
     class FconcatExprVisitor extends XcodeNodeVisitor {
         /**
@@ -7157,6 +7170,7 @@ public class XfDecompileDomVisitor {
         new Pair("FcloseStatement", new FcloseStatementVisitor()),
         new Pair("FcommonDecl", new FcommonDeclVisitor()),
         new Pair("FcomplexConstant", new FcomplexConstantVisitor()),
+        new Pair("FcomplexPartRef", new FcomplexPartRefVisitor()),
         new Pair("FconcatExpr", new FconcatExprVisitor()),
         new Pair("FcontainsStatement", new FcontainsStatementVisitor()),
         new Pair("FcycleStatement", new FcycleStatementVisitor()),
