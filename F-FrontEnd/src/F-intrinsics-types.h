@@ -287,6 +287,11 @@ typedef enum {
     INTR_SAME_TYPE_AS,
     INTR_MOVE_ALLOC,
 
+    INTR_COMMOND_ARUGMENT_COUNT,
+    INTR_GET_COMMOND,
+    INTR_GET_COMMOND_ARUGMENT,
+    INTR_GET_ENVIRONMENT_VARIABLE,
+
     INTR_COARRAY_MALLOC_BYTES,       // hidden interface
     INTR_COARRAY_ALLOCATED_BYTES,    // hidden interface
     INTR_COARRAY_GARBAGE_BYTES,      // hidden interface
