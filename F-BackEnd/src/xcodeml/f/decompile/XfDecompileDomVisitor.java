@@ -7027,18 +7027,6 @@ public class XfDecompileDomVisitor {
 
             writer.writeToken("(");
 
-            String typeName = XmDomUtil.getAttr(n, "type");
-            if (!XfUtilForDom.isNullOrEmpty(typeName)) {
-                XfType type = XfType.getTypeIdFromXcodemlTypeName(typeName);
-                if (type.isPrimitive()) {
-                    writer.writeToken(type.fortranName());
-                } else {
-                    XfTypeManagerForDom.TypeList typeList = getTypeList(typeName);
-                    _writeTopType(typeList, false);
-                }
-                writer.writeToken("::");
-            }
-
             Boolean first = true;
             NodeList list = n.getChildNodes();
             for (int i = 0; i < list.getLength(); i++) {
