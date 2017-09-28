@@ -2279,6 +2279,23 @@ outx_characterRef(int l, expv v)
 
 
 /**
+ * output FcomplexPartRef
+ */
+static void
+outx_complexPartRef(int l, expv v)
+{
+    expv v_left = EXPV_LEFT(v);
+    expv v_right = EXPV_RIGHT(v);
+
+    outx_typeAttrOnly_EXPR(l, v, "FcomplexPartRef");
+    outx_print(" part=\"%s\"", SYM_NAME(EXPV_NAME(v_right)));
+    outx_print(">\n");
+    outx_varRef_EXPR(l + 1, v_left);
+    outx_close(l, "FcomplexPartRef");
+}
+
+
+/**
  * output FmemberRef
  */
 static void
@@ -2287,8 +2304,12 @@ outx_memberRef(int l, expv v)
     expv v_left = EXPV_LEFT(v);
     expv v_right = EXPV_RIGHT(v);
 
+    if (IS_COMPLEX(EXPV_TYPE(v_left)))
+        return outx_complexPartRef(l, v);
+
     outx_typeAttrOnly_EXPR(l, v, XTAG(v));
-    outx_print(" member=\"%s\">\n", SYM_NAME(EXPV_NAME(v_right)));
+    outx_print(" member=\"%s\"", SYM_NAME(EXPV_NAME(v_right)));
+    outx_print(">\n");
     outx_varRef_EXPR(l + 1, v_left);
     outx_expvClose(l, v);
 }

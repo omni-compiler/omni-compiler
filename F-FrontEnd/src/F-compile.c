@@ -6236,6 +6236,30 @@ compile_set_expr(expr x) {
 }
 
 
+static expv
+compile_complex_member_ref(expv cmplx, expr mem)
+{
+    TYPE_DESC tp;
+    expv v;
+
+    if (strcmp("re", SYM_NAME(EXPR_SYM(mem))) != 0  &&
+        strcmp("im", SYM_NAME(EXPR_SYM(mem))) != 0) {
+        error("COMPLEX has no member '%s'", SYM_NAME(EXPR_SYM(mem)));
+        return NULL;
+    }
+
+    if (TYPE_HAVE_KIND(EXPV_TYPE(cmplx))) {
+        tp = wrap_type(type_REAL);
+        TYPE_KIND(tp) = TYPE_KIND(EXPV_TYPE(cmplx));
+    } else {
+        tp = type_REAL;
+    }
+
+    v = expv_cons(F95_MEMBER_REF, tp, cmplx, mem);
+    EXPV_LINE(v) = EXPR_LINE(mem);
+    return v;
+}
+
 expv
 compile_member_ref(expr x)
 {
@@ -6266,7 +6290,7 @@ compile_member_ref(expr x)
 
     stVTyp = EXPV_TYPE(struct_v);
 
-    if(IS_ARRAY_TYPE(stVTyp)) {
+    if (IS_ARRAY_TYPE(stVTyp)) {
         shape = list0(LIST);
         generate_shape_expr(EXPV_TYPE(struct_v), shape);
         stVTyp = bottom_type(stVTyp);
@@ -6274,6 +6298,10 @@ compile_member_ref(expr x)
 
     mX = EXPR_ARG2(x);
     assert(EXPR_CODE(mX) == IDENT);
+
+    if (IS_COMPLEX(stVTyp)) {
+        return compile_complex_member_ref(struct_v, mX);
+    }
 
     member_id = find_struct_member(stVTyp, EXPR_SYM(mX));
 
