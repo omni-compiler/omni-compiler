@@ -54,6 +54,7 @@ public class XcodeMLNameTable_F extends XcodeMLNameTable {
 			new XcodeMLName(Xcode.F_ARRAY_REF, "FarrayRef"),
 			new XcodeMLName(Xcode.F_CHARACTER_REF, "FcharacterRef"),
 			new XcodeMLName(Xcode.MEMBER_REF, "FmemberRef"),
+			new XcodeMLName(Xcode.F_COMPLEX_PART_REF, "FcomplexPartRef"),
 			new XcodeMLName(Xcode.CO_ARRAY_REF, "FcoArrayRef"),      // #060
 			new XcodeMLName(Xcode.FUNC_ADDR, "Ffunction"),
 			new XcodeMLName(Xcode.F_VAR_REF, "varRef"),

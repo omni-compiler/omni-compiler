@@ -503,6 +503,9 @@ public class XcodeMLtools_F extends XcodeMLtools {
     case MEMBER_REF:
       return Xcons.List(code, type, toXobject(getElement(n, "varRef")), getSymbol(n, "member"));
 
+    case F_COMPLEX_PART_REF:
+      return Xcons.List(code, type, toXobject(getElement(n, "varRef")), getSymbol(n, "part"));
+
     case F_USER_BINARY_EXPR: {
       XobjList xx = Xcons.List(code, type);
       x = getChildList(n, xx);
