@@ -1314,7 +1314,14 @@ declare_external_proc_id(SYMBOL s, TYPE_DESC tp, int def_flag)
     assert(ep != NULL);
 
     if (def_flag == TRUE || EXT_PROC_TYPE(ep) == NULL) {
-        EXT_PROC_TYPE(ep) = tp;
+        if(tp != NULL 
+            && (TYPE_BASIC_TYPE(tp) == TYPE_FUNCTION 
+            || TYPE_BASIC_TYPE(tp) == TYPE_SUBR 
+            || TYPE_BASIC_TYPE(tp) ==  TYPE_MODULE))
+        {
+            // Do not set non-function type to PROC
+            EXT_PROC_TYPE(ep) = tp;
+        }
     } else if(EXT_IS_DEFINED(ep)) {
         /* avoid overwriting EXT_ID already defined. */
         ep = new_external_id_for_external_decl(s, tp);
