@@ -135,14 +135,21 @@ typedef struct _XMP_reflect_sched_type {
   int lo_rank, hi_rank;
 
 #if defined(_XMP_XACC)
-  __attribute__((deprecated))
+#if defined(_XMP_TCA)
   void *dev_addr;
-
+  void *lo_send_host_buf, *lo_recv_host_buf;
+  void *hi_send_host_buf, *hi_recv_host_buf;
+  void *lo_async_id;
+  void *hi_async_id;
+  off_t lo_src_offset, lo_dst_offset;
+  off_t hi_src_offset, hi_dst_offset;
+  void *lo_send_handle, *lo_recv_handle;
+  void *hi_send_handle, *hi_recv_handle;
+#else
   void *lo_send_host_buf, *lo_recv_host_buf;
   void *hi_send_host_buf, *hi_recv_host_buf;
   _XACC_queue_t lo_async_id;
   _XACC_queue_t hi_async_id;
-
   _XACC_memory_t dev_mem;
 
   //offset of array_dev_mem
@@ -159,12 +166,6 @@ typedef struct _XMP_reflect_sched_type {
   size_t hi_send_buf_offset;
   size_t hi_recv_buf_offset;
 #endif
-  
-#if defined(_XMP_TCA)
-  off_t lo_src_offset, lo_dst_offset;
-  off_t hi_src_offset, hi_dst_offset;
-  void *lo_send_handle, *lo_recv_handle;
-  void *hi_send_handle, *hi_recv_handle;
 #endif
 } _XMP_reflect_sched_t;
 

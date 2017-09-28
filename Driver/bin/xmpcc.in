@@ -237,8 +237,8 @@ fi
 
 obj_files+=("$TRAVERSE_FILE_O")
 if [ @XACC@ = 0 ]; then
-    [ @CUDA@ = 0 ] && OMNI_LINKER_OPT+="$OMNI_CUDA_LIB"
-    [ @OPENCL@ = 0 ] && OMNI_LINKER_OPT+="$OMNI_OPENCL_LIB"
+    [ @CUDA@ = 0 ] && OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_CUDA_LIB"
+    [ @OPENCL@ = 0 ] && OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_OPENCL_LIB"
 fi
 if [ $ENABLE_OPENACC = true ]; then
     if [ $OPENACC_PLATFORM = "CUDA" ]; then

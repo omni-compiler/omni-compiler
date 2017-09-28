@@ -1,6 +1,8 @@
 #include "xmp_internal.h"
 #include "xacc_internal.h"
 
+void _XACC_util_init(void){}
+
 void _XACC_queue_create(_XACC_queue_t *queue)
 {
     CUDA_SAFE_CALL(cudaStreamCreate(queue));
