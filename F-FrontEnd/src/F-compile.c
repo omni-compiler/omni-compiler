@@ -3408,10 +3408,11 @@ is_defined_io_formatted(const TYPE_DESC ftp, const TYPE_DESC stp, int is_read)
     iostat = v_list?ID_NEXT(v_list):NULL;
     iomsg  = iostat?ID_NEXT(iostat):NULL;
 
-    if (dtv == NULL || strcmp("dtv", SYM_NAME(ID_SYM(dtv))) != 0) {
-        debug("expect 'dtv' as a 1st argument, but got %s", unit?SYM_NAME(ID_SYM(dtv)):"null");
+    if (iomsg == NULL) {
+        debug("expect 6 arguments");
         return FALSE;
     }
+
     tp = ID_TYPE(dtv);
     if (!IS_STRUCT_TYPE(tp) || (stp != NULL && TYPE_REF(tp) != stp) ||
         (TYPE_ATTR_FLAGS(tp) != dtv_attr_flags &&
@@ -3420,20 +3421,12 @@ is_defined_io_formatted(const TYPE_DESC ftp, const TYPE_DESC stp, int is_read)
         return FALSE;
     }
 
-    if (unit == NULL || strcmp("unit", SYM_NAME(ID_SYM(unit))) != 0) {
-        debug("expect 'unit' as a 2nd arg, but got %s", unit?SYM_NAME(ID_SYM(unit)):"null");
-        return FALSE;
-    }
     tp = ID_TYPE(unit);
     if (!IS_INT(tp) || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_IN) {
         debug("unexpected type of 'unit'");
         return FALSE;
     }
 
-    if (iotype == NULL || strcmp("iotype", SYM_NAME(ID_SYM(iotype))) != 0) {
-        debug("expect 'iotype' as a 3rd arg, but got %s", unit?SYM_NAME(ID_SYM(iostat)):"null");
-        return FALSE;
-    }
     tp = ID_TYPE(iotype);
     if (!IS_CHAR(tp) ||
         !IS_CHAR_LEN_UNFIXED(tp) ||
@@ -3442,10 +3435,6 @@ is_defined_io_formatted(const TYPE_DESC ftp, const TYPE_DESC stp, int is_read)
         return FALSE;
     }
 
-    if (v_list == NULL || strcmp("v_list", SYM_NAME(ID_SYM(v_list))) != 0) {
-        debug("expect 'v_list' as a 4th arg, but got %s", unit?SYM_NAME(ID_SYM(v_list)):"null");
-        return FALSE;
-    }
     tp = ID_TYPE(v_list);
     if (!IS_ARRAY_TYPE(tp) ||
         !TYPE_IS_ARRAY_ASSUMED_SHAPE(tp) ||
@@ -3455,22 +3444,12 @@ is_defined_io_formatted(const TYPE_DESC ftp, const TYPE_DESC stp, int is_read)
         return FALSE;
     }
 
-    if (iostat == NULL || strcmp("iostat", SYM_NAME(ID_SYM(iostat))) != 0) {
-        debug("expect 'iostat' as a 5th arg, but got %s",
-              unit?SYM_NAME(ID_SYM(iostat)):"null");
-        return FALSE;
-    }
     tp = ID_TYPE(iostat);
     if (!IS_INT(tp) || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_OUT) {
         debug("unexpected type of 'iostat'");
         return FALSE;
     }
 
-    if (iomsg == NULL || strcmp("iomsg", SYM_NAME(ID_SYM(iomsg))) != 0) {
-        debug("expect 'iomsg' as a 6th arg, but got %s",
-              unit?SYM_NAME(ID_SYM(iostat)):"null");
-        return FALSE;
-    }
     tp = ID_TYPE(iomsg);
     if (!IS_CHAR(tp) ||
         !IS_CHAR_LEN_UNFIXED(tp) ||
@@ -3538,11 +3517,11 @@ is_defined_io_unformatted(const TYPE_DESC ftp, const TYPE_DESC stp, int is_read)
     iostat = unit?ID_NEXT(unit):NULL;
     iomsg  = iostat?ID_NEXT(iostat):NULL;
 
-    if (dtv == NULL || strcmp("dtv", SYM_NAME(ID_SYM(dtv))) != 0) {
-        debug("expect 'dtv' as a 1st arg, but got %s",
-              unit?SYM_NAME(ID_SYM(dtv)):"null");
+    if (iomsg == NULL) {
+        debug("expect 4 arguments");
         return FALSE;
     }
+
     tp = ID_TYPE(dtv);
     if (!IS_STRUCT_TYPE(tp) ||
         (stp != NULL && TYPE_REF(tp) != stp) ||
@@ -3552,33 +3531,18 @@ is_defined_io_unformatted(const TYPE_DESC ftp, const TYPE_DESC stp, int is_read)
         return FALSE;
     }
 
-    if (unit == NULL || strcmp("unit", SYM_NAME(ID_SYM(unit))) != 0) {
-        debug("expect 'unit' as a 2nd arg, but got %s",
-              unit?SYM_NAME(ID_SYM(unit)):"null");
-        return FALSE;
-    }
     tp = ID_TYPE(unit);
     if (!IS_INT(tp) || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_IN) {
         debug("unexpected type of 'unit'");
         return FALSE;
     }
 
-    if (iostat == NULL || strcmp("iostat", SYM_NAME(ID_SYM(iostat))) != 0) {
-        debug("expect 'iostat' as a 3rd arg, but got %s",
-              unit?SYM_NAME(ID_SYM(iostat)):"null");
-        return FALSE;
-    }
     tp = ID_TYPE(iostat);
     if (!IS_INT(tp) || TYPE_ATTR_FLAGS(tp) != TYPE_ATTR_INTENT_OUT) {
         debug("unexpected type of 'iostat'");
         return FALSE;
     }
 
-    if (iomsg == NULL || strcmp("iomsg", SYM_NAME(ID_SYM(iomsg))) != 0) {
-        debug("expect 'iomsg' as a 4th arg, but got %s",
-              unit?SYM_NAME(ID_SYM(iomsg)):"null");
-        return FALSE;
-    }
     tp = ID_TYPE(iomsg);
     if (!IS_CHAR(tp) ||
         !IS_CHAR_LEN_UNFIXED(tp) ||
