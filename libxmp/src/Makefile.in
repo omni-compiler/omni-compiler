@@ -36,6 +36,8 @@ IS_SSL2BLAMP     = @SSL2BLAMP@
 IS_INTELMKL      = @INTELMKL@
 IS_TCA           = @TCA@
 IS_XACC          = @XACC@
+IS_CUDA          = @CUDA@
+IS_OPENCL        = @OPENCL@
 
 ifeq ($(IS_KCOMPUTER), $(TRUE))
 	CFLAGS += -D_KCOMPUTER
@@ -83,21 +85,41 @@ ifeq ($(IS_INTELMKL), $(TRUE))
 endif
 
 ifeq ($(IS_TCA), $(TRUE))
-	OBJECTS += xmp_onesided.o xmp_onesided_tca.o xmp_coarray.o xmp_coarray_utils.o xmp_coarray_local.o \
-		   xmp_post_wait.o xmp_post_wait_tca.o xmp_coarray_tca.o xmp_reflect_tca.o \
-	           xmp_reflect_hybrid.o xmp_tca_runtime.o xmp_reduce_tca.o xmp_reduce_hybrid.o
-	CFLAGS  += -D_XMP_TCA
+    OBJECTS += xmp_onesided.o xmp_onesided_tca.o xmp_coarray.o xmp_coarray_utils.o xmp_coarray_local.o \
+	       xmp_post_wait.o xmp_post_wait_tca.o xmp_coarray_tca.o
+    CFLAGS  += -D_XMP_TCA
 endif
 
 ifeq ($(IS_XACC), $(TRUE))
-	OBJECTS  += xmp_reflect_acc.o xmp_reduce_acc.o xmp_bcast_acc.o xmp_reflect_gpu.o xmp_reduce_gpu.o \
-	            xmp_gpu_pack.o xmp_gmove_acc.o xmp_coarray_acc.o
-	CFLAGS   += -D_XMP_XACC -I@CUDA_PREFIX@/include
-	GPUCC     = @GPU_CMD@
-	GPUCFLAGS = @GPU_CFLAGS@
-.SUFFIXES : .o .cu
+    OBJECTS  += xacc_runtime.o xmp_reflect_acc.o xmp_reduce_acc.o xmp_bcast_acc.o xmp_gmove_acc.o xmp_coarray_acc.o
+    CFLAGS   += -D_XMP_XACC
+    HEADERS  += ../include/xacc_internal.h
+
+ifeq ($(IS_CUDA), $(TRUE))
+    OBJECTS  += xacc_util_cuda.o xmp_gpu_pack.o
+    CFLAGS   += -D_XMP_XACC_CUDA -I@CUDA_PREFIX@/include
+    GPUCC     = @GPU_CMD@
+    GPUCFLAGS = @GPU_CFLAGS@
+.SUFFIXES: .cu
 .cu.o:
 	$(GPUCC) $(GPUCFLAGS) -I../include -c $@ $<
+
+endif
+ifeq ($(IS_OPENCL), $(TRUE))
+    OBJECTS  += xacc_util_cl.o
+    CFLAGS   += -D_XMP_XACC_OPENCL -I@OPENCL_PREFIX@/include
+    HEADERS  += xacc_util_cl_kernel.hex
+.SUFFIXES: .cl .hex
+.cl.hex:
+	xxd -i < $< >$@
+
+endif
+
+ifeq ($(IS_TCA), $(TRUE))
+    OBJECTS  += xmp_reflect_tca.o xmp_reflect_hybrid.o xmp_tca_runtime.o xmp_reduce_tca.o xmp_reduce_hybrid.o
+else
+    OBJECTS  += xmp_reduce_gpu.o xmp_reflect_gpu.o
+endif
 endif
 
 all: $(LIBXMP)
@@ -116,4 +138,4 @@ install: $(LIBXMP)
 	$(INSTALL) $^ $(DESTDIR)$(LIBDIR)
 
 clean:
-	rm -f *~ *.core core core.* *.o $(LIBXMP)
+	rm -f *~ *.core core core.* *.o *.hex $(LIBXMP)

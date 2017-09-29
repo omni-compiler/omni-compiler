@@ -1,12 +1,12 @@
 #PBS -S /bin/bash
 #PBS -N xacc_test
-#PBS -A XMPTCA
-#PBS -q tcaq
-#PBS -l select=2:ncpus=4:mpiprocs=1
-##PBS -l select=1:ncpus=1:host=tcag-0001+1:ncpus=1:host=tcag-0002
+#PBS -A TCAGEN
+#PBS -q tcaq-q1
+#PBS -l select=8:ncpus=4:mpiprocs=1
+###PBS -l select=1:ncpus=1:host=tcag-0001+1:ncpus=1:host=tcag-0002+1:ncpus=1:host=tcag-0003+1:ncpus=1:host=tcag-0004+1:ncpus=1:host=tcag-0005+1:ncpus=1:host=tcag-0006+1:ncpus=1:host=tcag-0007+1:ncpus=1:host=tcag-0008
 #PBS -l walltime=00:10:00
-#PBS -o o_parallel
-#PBS -e e_parallel
+##PBS -o o_xacc_test
+##PBS -e e_xacc_test
 #---------------
 # select=NODES:ncpus=CORES:mpiprocs=PROCS:ompthreads=THREADS:mem=MEMORY
 # NODES   : num of nodes

@@ -4,6 +4,7 @@
 *.mod
 *.xmod
 *.so
+*.hex
 a.out
 Xcode.java
 
