@@ -7139,39 +7139,41 @@ public class XfDecompileDomVisitor {
                 fail(n);
             }
 
-	    Node symbols = XmDomUtil.getElement(type, "symbols");
+            Node symbols = XmDomUtil.getElement(type, "symbols");
             NodeList symbol_list = symbols.getChildNodes();
 
             for (int i = 0; i < symbol_list.getLength(); i++) {
 
-	      Node symbol = symbol_list.item(i);
-	      if (symbol.getNodeType() != Node.ELEMENT_NODE) {
-		continue;
-	      }
+                Node symbol = symbol_list.item(i);
+                if (symbol.getNodeType() != Node.ELEMENT_NODE) {
+                    continue;
+                }
 
-	      String name = symbol.getNodeName();
-	      if (name.equals("id")){
+                String nodeName = symbol.getNodeName();
+                if (nodeName == null || !nodeName.equals("id")) {
+                    continue;
+                }
 
-		NodeList clist = symbol.getChildNodes();
+                Node name = XmDomUtil.getElement(symbol, "name");
 
-		Node c0 = clist.item(0);
-		String name0 = c0.getNodeName();
-		if (name0.equals("name")) {
-		  writer.setupNewLine();
-		  writer.writeToken("ENUMERATOR");
-		  writer.writeToken("::");
-		  writer.writeToken(XmDomUtil.getContentText(c0));
-		}
+                if (name == null) {
+                    _context.setLastErrorMessage(
+                            XfUtilForDom.formatError(symbol,
+                                    XfError.XCODEML_SEMANTICS,
+                                    "id"));
+                    fail(symbol);
+                }
 
-		if (clist.getLength() > 1){
-		  Node c1 = clist.item(1);
-		  String name1 = c1.getNodeName();
-		  if (name1.equals("value")) {
-		    writer.writeToken("=");
-		    invokeEnter(c1);
-		  }
-		}
-	      }
+                writer.setupNewLine();
+                writer.writeToken("ENUMERATOR");
+                writer.writeToken("::");
+                writer.writeToken(XmDomUtil.getContentText(name));
+
+                Node value = XmDomUtil.getElement(symbol, "value");
+                if (value != null) {
+                    writer.writeToken("=");
+                    invokeEnter(value);
+                }
             }
 
             // NodeList list = type.getChildNodes();
