@@ -32,6 +32,7 @@ module issue285
     mytype( 'XXX_' , 99, 899 ) /) 
 
   integer, parameter :: ngpgfz = gpc(n_gpc)%cdtyp
+  integer, parameter :: c8 = 8
 
 
 end module issue285
