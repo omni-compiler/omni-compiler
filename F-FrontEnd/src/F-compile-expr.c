@@ -1103,18 +1103,24 @@ compile_ident_expression(expr x)
 
     if(ID_CLASS(id) == CL_PARAM) {
         if(VAR_INIT_VALUE(id) != NULL) {
-            if(!(ID_IS_OFMODULE(id) == TRUE && 
-                (EXPV_CODE(VAR_INIT_VALUE(id)) != STRING_CONSTANT
-                || EXPV_CODE(VAR_INIT_VALUE(id)) != INT_CONSTANT
-                || EXPV_CODE(VAR_INIT_VALUE(id)) != FLOAT_CONSTANT
-                || EXPV_CODE(VAR_INIT_VALUE(id)) != COMPLEX_CONSTANT
-                || EXPV_CODE(VAR_INIT_VALUE(id)) != F_TRUE_CONSTANT
-                || EXPV_CODE(VAR_INIT_VALUE(id)) != F_FALSE_CONSTANT
-                || EXPV_CODE(VAR_INIT_VALUE(id)) != F_DOUBLE_CONSTANT
-                || EXPV_CODE(VAR_INIT_VALUE(id)) != F_QUAD_CONSTANT)) 
-                && EXPV_CODE(VAR_INIT_VALUE(id)) != F95_STRUCT_CONSTRUCTOR)
+            // Not a external module parameter. Can be replaced by value.
+            if(ID_IS_OFMODULE(id) == FALSE
+                && EXPV_CODE(VAR_INIT_VALUE(id)) != F95_STRUCT_CONSTRUCTOR) 
             {
                 return VAR_INIT_VALUE(id);
+            } else if(EXPV_CODE(VAR_INIT_VALUE(id)) != F95_STRUCT_CONSTRUCTOR) {
+                // Only constant from external module can be replaced safely.
+                if(EXPV_CODE(VAR_INIT_VALUE(id)) == STRING_CONSTANT
+                || EXPV_CODE(VAR_INIT_VALUE(id)) == INT_CONSTANT
+                || EXPV_CODE(VAR_INIT_VALUE(id)) == FLOAT_CONSTANT
+                || EXPV_CODE(VAR_INIT_VALUE(id)) == COMPLEX_CONSTANT
+                || EXPV_CODE(VAR_INIT_VALUE(id)) == F_TRUE_CONSTANT
+                || EXPV_CODE(VAR_INIT_VALUE(id)) == F_FALSE_CONSTANT
+                || EXPV_CODE(VAR_INIT_VALUE(id)) == F_DOUBLE_CONSTANT
+                || EXPV_CODE(VAR_INIT_VALUE(id)) == F_QUAD_CONSTANT)
+                {
+                    return VAR_INIT_VALUE(id);
+                }
             }
         }
     }
