@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include "xmp_internal.h"
+#ifdef _XMP_XACC
+#include "xacc_internal.h"
+#endif
 #include "mpi.h"
 
 #ifdef _XMP_FJRDMA
@@ -40,6 +43,10 @@ void _XMP_init(int argc, char** argv, MPI_Comm comm)
     if(result != MPI_IDENT)
       _XMP_fatal("Now implementation does not support subcommunicator");
     
+#ifdef _XMP_XACC
+    _XACC_init();
+#endif
+
 #ifdef _XMP_TCA
     _XMP_init_tca();
 #endif

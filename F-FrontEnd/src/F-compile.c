@@ -782,30 +782,7 @@ compile_statement1(int st_no, expr x)
         CTL_IF_STATEMENT(ctl_top) = st;
         if(EXPR_ARG2(x)){
             if(EXPR_CODE(EXPR_ARG2(x)) == F_WHERE_STATEMENT) {
-                check_INEXEC();
-                push_ctl(CTL_WHERE);
-
-                /* evaluate condition and make WHERE_STATEMENT clause */
-                v = compile_logical_expression_with_array(EXPR_ARG1(x));
-
-                st = list5(F_WHERE_STATEMENT,v,NULL,NULL,NULL,NULL);
-                output_statement(st);
-
-                CTL_BLOCK(ctl_top) = CURRENT_STATEMENTS;
-                CURRENT_STATEMENTS = NULL;
-
-                /* set current WHERE_STATEMENT */
-                CTL_WHERE_STATEMENT(ctl_top) = st;
-                if(EXPR_ARG2(EXPR_ARG2(x)) != NULL) {
-                     compile_statement1(st_no, EXPR_ARG2(EXPR_ARG2(x)));
-                     /* TODO x must be array assignment expression,
-                     * and shape of array is equal to v
-                     */
-
-                    CTL_WHERE_THEN(ctl_top) = CURRENT_STATEMENTS;
-                    pop_ctl();  /* pop and output */
-                }
-
+                compile_statement1(st_no, EXPR_ARG2(x));
             } else {
                 compile_exec_statement(EXPR_ARG2(x));
             }
@@ -6236,6 +6213,30 @@ compile_set_expr(expr x) {
 }
 
 
+static expv
+compile_complex_member_ref(expv cmplx, expr mem)
+{
+    TYPE_DESC tp;
+    expv v;
+
+    if (strcmp("re", SYM_NAME(EXPR_SYM(mem))) != 0  &&
+        strcmp("im", SYM_NAME(EXPR_SYM(mem))) != 0) {
+        error("COMPLEX has no member '%s'", SYM_NAME(EXPR_SYM(mem)));
+        return NULL;
+    }
+
+    if (TYPE_HAVE_KIND(EXPV_TYPE(cmplx))) {
+        tp = wrap_type(type_REAL);
+        TYPE_KIND(tp) = TYPE_KIND(EXPV_TYPE(cmplx));
+    } else {
+        tp = type_REAL;
+    }
+
+    v = expv_cons(F95_MEMBER_REF, tp, cmplx, mem);
+    EXPV_LINE(v) = EXPR_LINE(mem);
+    return v;
+}
+
 expv
 compile_member_ref(expr x)
 {
@@ -6266,7 +6267,7 @@ compile_member_ref(expr x)
 
     stVTyp = EXPV_TYPE(struct_v);
 
-    if(IS_ARRAY_TYPE(stVTyp)) {
+    if (IS_ARRAY_TYPE(stVTyp)) {
         shape = list0(LIST);
         generate_shape_expr(EXPV_TYPE(struct_v), shape);
         stVTyp = bottom_type(stVTyp);
@@ -6274,6 +6275,10 @@ compile_member_ref(expr x)
 
     mX = EXPR_ARG2(x);
     assert(EXPR_CODE(mX) == IDENT);
+
+    if (IS_COMPLEX(stVTyp)) {
+        return compile_complex_member_ref(struct_v, mX);
+    }
 
     member_id = find_struct_member(stVTyp, EXPR_SYM(mX));
 
@@ -7216,6 +7221,59 @@ compile_PROTECTED_statement(expr id_list)
     }
 }
 
+/*
+ * Check if the array is specified with bounds-remapping-list
+ */
+static int
+is_array_with_bounds_remapping_list(expv v)
+{
+    list lp;
+
+    if (EXPR_CODE(v) != ARRAY_REF) {
+        return FALSE;
+    }
+
+    /*
+     * If all elements of the bounds-spec-list are bounds-spec,
+     * it is a bounds-remapping-list
+     */
+    FOR_ITEMS_IN_LIST(lp, EXPR_ARG2(v)) {
+        expv bounds_spec = LIST_ITEM(lp);
+        /*
+         * If bounds-spec has a lower bound and an upper bound,
+         * it is bounds remapping
+         */
+        if (EXPR_CODE(bounds_spec) == F_INDEX_RANGE &&
+            EXPR_ARG1(bounds_spec) != NULL &&
+            EXPR_ARG2(bounds_spec) != NULL &&
+            EXPR_ARG3(bounds_spec) == NULL) {
+            continue;
+        } else {
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
+
+static int
+type_is_contiguous(TYPE_DESC tp)
+{
+    if (tp == NULL)
+        return FALSE;
+
+    // an object with the CONTIGUOUS attribute,
+    if (TYPE_IS_CONTIGUOUS(tp)) // believe it
+        return TRUE;
+
+    if (IS_ARRAY_TYPE(tp))
+        return TRUE;
+
+    return FALSE;
+}
+
+
 static void
 compile_POINTER_SET_statement(expr x) {
     list lp;
@@ -7402,10 +7460,19 @@ compile_POINTER_SET_statement(expr x) {
         }
     }
 
-    if (TYPE_N_DIM(IS_REFFERENCE(vPtrTyp)?TYPE_REF(vPtrTyp):vPtrTyp) !=
-        TYPE_N_DIM(IS_REFFERENCE(vPteTyp)?TYPE_REF(vPteTyp):vPteTyp)) {
-        error_at_node(x, "Rank mismatch.");
-        return;
+    if (is_array_with_bounds_remapping_list(vPointer)) {
+        /* This statement is pointer remapping! */
+        if (TYPE_N_DIM(IS_REFFERENCE(vPteTyp)?TYPE_REF(vPteTyp):vPteTyp) != 1 &&
+            !type_is_contiguous(vPteTyp)) {
+            error_at_node(x, "POINTEE is not contiguous or one-rank array.");
+            return;
+        }
+    } else {
+        if (TYPE_N_DIM(IS_REFFERENCE(vPtrTyp)?TYPE_REF(vPtrTyp):vPtrTyp) !=
+            TYPE_N_DIM(IS_REFFERENCE(vPteTyp)?TYPE_REF(vPteTyp):vPteTyp)) {
+            error_at_node(x, "Rank mismatch.");
+            return;
+        }
     }
 
     if (IS_PROCEDURE_TYPE(vPtrTyp)) {
@@ -8673,15 +8740,16 @@ compile_forall_header(expr x)
     mask           = EXPR_ARG2(x);
     type           = EXPR_ARG3(x);
 
+    init = list0(LIST);
+
     if (type) {
         tp = compile_type(type, /*allow_predecl=*/ FALSE);
+        EXPV_TYPE(init) = tp;
     } else {
-        tp = new_type_desc();
-        TYPE_BASIC_TYPE(tp) = TYPE_INT;
+        tp = wrap_type(type_INT);
     }
     CURRENT_STATE = INEXEC;
 
-    init = list0(LIST);
     FOR_ITEMS_IN_LIST(lp, triplets) {
         ID id;
         SYMBOL sym;

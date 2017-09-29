@@ -9,8 +9,6 @@
   n2 = me+20
   n3 = me+30
 
-  sync all
-
   if (3<=me.and.me<=7) then
      !$xmp image(q)
      sync all

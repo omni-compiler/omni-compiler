@@ -17,12 +17,12 @@ void xmp_init_mpi_(void) {
 void xmp_finalize_mpi_(void) {
 }
 
-void xmp_init_() {
-  _XMP_init(1, NULL, MPI_COMM_WORLD);
+void xmp_init_(MPI_Fint *comm) {
+  _XMP_init(1, NULL, MPI_Comm_f2c(*comm));
 }
 
 void xmp_finalize_(void) {
-  _XMP_finalize(true);
+  _XMP_finalize(false);
 }
 
 int xmpf_desc_kind_(xmp_desc_t **d, int *kind) {

@@ -38,6 +38,7 @@ import exc.object.XobjString;
 import exc.object.Xobject;
 import exc.object.XobjectFile;
 import exc.object.Xtype;
+import exc.object.EnumType;
 
 
 /**
@@ -58,6 +59,8 @@ public class XcodeMLtools_F extends XcodeMLtools {
       declFfunctionType(n);
     } else if (name == "FstructType") {
       declFstructType(n);
+    } else if (name == "FenumType") {
+      declFenumType(n);
     } else
       fatal("Unknown node in typeTable: " + n);
   }
@@ -294,6 +297,34 @@ public class XcodeMLtools_F extends XcodeMLtools {
   }
 
   /*
+   * (symbols)
+   *
+   * enum, bind(C)
+   *  enumerator :: open_door=4, close_door=17
+   *  enumerator :: lock_door
+   * end enum
+   *
+   * <FenumType type="TYPE_NAME">
+   *   <name>open_door</name>
+   *   <value>
+   *     <FintConstant type="Fint">4</FintConstant>
+   *   </value>
+   *   <name>close_door</name>
+   *   <value>
+   *     <FintConstant type="Fint">17</FintConstant>
+   *   </value>
+   *   <name>lock_door</name>
+   * </FenumType>
+   */
+  private void declFenumType(Node n) {
+    String tid = getAttr(n, "type");
+    long tq = 0;
+    XobjList moe_list = (XobjList)toXobject(getElement(n, "symbols"));
+    EnumType type = new EnumType(tid, moe_list, tq, null);
+    xobjFile.addType(type);
+  }
+  
+  /*
    * global Ident section
    */
   void enterGlobalIdent(Node n) {
@@ -388,7 +419,8 @@ public class XcodeMLtools_F extends XcodeMLtools {
                                                getSymbol(n, "name"),
                                                getAttrIntFlag(n, "is_operator"),
                                                getAttrIntFlag(n, "is_assignment"),
-                                               getChildList(n)));
+                                               getChildList(n),
+					       getAttrIntFlag(n, "is_abstract")));
 
     case F_BLOCK_DATA_DEFINITION:
       x = getSymbol(n, "name");
@@ -470,6 +502,9 @@ public class XcodeMLtools_F extends XcodeMLtools {
 
     case MEMBER_REF:
       return Xcons.List(code, type, toXobject(getElement(n, "varRef")), getSymbol(n, "member"));
+
+    case F_COMPLEX_PART_REF:
+      return Xcons.List(code, type, toXobject(getElement(n, "varRef")), getSymbol(n, "part"));
 
     case F_USER_BINARY_EXPR: {
       XobjList xx = Xcons.List(code, type);
@@ -556,6 +591,11 @@ public class XcodeMLtools_F extends XcodeMLtools {
 	return getChildList(n, xx);
       }
 
+    case F_RENAME:
+      boolean isOperator = getAttrBool(n, "is_operator");
+      return Xcons.List(code, type, Xcons.IntConstant(isOperator ? 1 : 0),
+			getSymbol(n, "use_name"), getSymbol(n, "local_name"));
+      
     case F_RENAMABLE:
       return Xcons.List(code, type, getSymbol(n, "use_name"), getSymbol(n, "local_name"));
 

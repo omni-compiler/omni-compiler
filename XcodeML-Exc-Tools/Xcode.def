@@ -157,6 +157,7 @@ L   F_RENAME                   -                            XbfRename
 L   F_RENAMABLE                -                            XbfRenamable
 L   F_USE_ONLY_DECL            -                            XbfFuseOnlyDecl
 L   F_STATEMENT_LIST           -                            XbfBody
+L   F_ENUM_DECL
 
 # -----------------
 # Fortran: Statement
@@ -233,6 +234,7 @@ L   F_ARRAY_INDEX              -                            XbfArrayIndex
 L   F_CONDITION                -                            XbfCondition
 L   F_NAMED_VALUE              -                            XbfNamedValue
 L   F_NAMED_VALUE_LIST         -                            XbfNamedValueList
+L   F_COMPLEX_PART_REF	       -
 
 # -----------------
 # External Pragma

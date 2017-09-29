@@ -2279,6 +2279,23 @@ outx_characterRef(int l, expv v)
 
 
 /**
+ * output FcomplexPartRef
+ */
+static void
+outx_complexPartRef(int l, expv v)
+{
+    expv v_left = EXPV_LEFT(v);
+    expv v_right = EXPV_RIGHT(v);
+
+    outx_typeAttrOnly_EXPR(l, v, "FcomplexPartRef");
+    outx_print(" part=\"%s\"", SYM_NAME(EXPV_NAME(v_right)));
+    outx_print(">\n");
+    outx_varRef_EXPR(l + 1, v_left);
+    outx_close(l, "FcomplexPartRef");
+}
+
+
+/**
  * output FmemberRef
  */
 static void
@@ -2287,8 +2304,12 @@ outx_memberRef(int l, expv v)
     expv v_left = EXPV_LEFT(v);
     expv v_right = EXPV_RIGHT(v);
 
+    if (IS_COMPLEX(EXPV_TYPE(v_left)))
+        return outx_complexPartRef(l, v);
+
     outx_typeAttrOnly_EXPR(l, v, XTAG(v));
-    outx_print(" member=\"%s\">\n", SYM_NAME(EXPV_NAME(v_right)));
+    outx_print(" member=\"%s\"", SYM_NAME(EXPV_NAME(v_right)));
+    outx_print(">\n");
     outx_varRef_EXPR(l + 1, v_left);
     outx_expvClose(l, v);
 }
@@ -3418,7 +3439,6 @@ outx_UNLOCK_statement(int l, expv v)
     outx_expvClose(l, v);
 }
 
-
 /*
  * output blockStatement
  */
@@ -3433,6 +3453,8 @@ outx_BLOCK_statement(int l, expv v)
     int l1 = l + 1;
     int l2 = l + 2;
 
+    block = EXPR_BLOCK(v);
+
     if (EXPR_HAS_ARG2(v) && EXPR_ARG2(v) != NULL) {
         sprintf(buf, " construct_name=\"%s\"",
                 SYM_NAME(EXPR_SYM(EXPR_ARG2(v))));
@@ -3440,7 +3462,6 @@ outx_BLOCK_statement(int l, expv v)
     } else {
         outx_tagOfStatement(l, v);
     }
-    block = EXPR_BLOCK(v);
 
     outx_tag(l1, "symbols");
     FOREACH_ID(id, BLOCK_LOCAL_SYMBOLS(block)) {
@@ -3501,14 +3522,15 @@ outx_FORALL_statement(int l, expv v)
     expv body = EXPR_ARG2(v);
     const char *tid = NULL;
 
+
     outx_vtagLineno(l, XTAG(v), EXPR_LINE(v), NULL);
 
     if (EXPR_HAS_ARG4(v) && EXPR_ARG4(v) != NULL) {
         outx_print(" construct_name=\"%s\"",
                    SYM_NAME(EXPR_SYM(EXPR_ARG4(v))));
     }
-    if (EXPV_TYPE(EXPR_ARG1(v))) {
-        tid = getTypeID(EXPV_TYPE(EXPR_ARG1(v)));
+    if (EXPV_TYPE(init)) {
+        tid = getTypeID(EXPV_TYPE(init));
         outx_print(" type=\"%s\"", tid);
     }
     outx_print(">\n");
@@ -3539,7 +3561,6 @@ outx_FORALL_statement(int l, expv v)
         outx_close(l1, "symbols");
     }
 #endif
-
 
     FOR_ITEMS_IN_LIST(lp, init) {
         expv name = EXPR_ARG1(LIST_ITEM(lp));
@@ -4672,11 +4693,17 @@ outx_enumType(int l, TYPE_DESC tp)
 {
     ID id;
     int l1 = l + 1;
+    int l2 = l1 + 1;
+    int l3 = l2 + 1;
     outx_typeAttrs(l, tp ,"FenumType", TOPT_NEXTLINE);
+    outx_tag(l1, "symbols");
     FOREACH_MEMBER(id, tp) {
-        outx_symbolName(l1, ID_SYM(id));
-        outx_value(l1, VAR_INIT_VALUE(id));
+      outx_tag(l2, "id");
+      outx_symbolName(l3, ID_SYM(id));
+      outx_value(l3, VAR_INIT_VALUE(id));
+      outx_close(l2,"id");
     }
+    outx_close(l1,"symbols");
     outx_close(l,"FenumType");
 }
 
@@ -4769,8 +4796,6 @@ id_is_visibleVar(ID id)
             return TRUE;
         if(VAR_IS_IMPLIED_DO_DUMMY(id))
             return FALSE;
-        if(ID_STORAGE(id) == STG_INDEX) /* Don't declare as a variable */
-            return FALSE;
         break;
     case CL_PARAM:
         return TRUE;
@@ -4804,8 +4829,6 @@ id_is_visibleVar(ID id)
         case STG_UNKNOWN:
         case STG_NONE:
             return FALSE;
-        case STG_INDEX:
-            return FALSE;
         default:
             break;
         }
@@ -4823,12 +4846,10 @@ id_is_visibleVar_for_symbols(ID id)
     if (id == NULL)
         return FALSE;
 
-    if (ID_STORAGE(id) == STG_INDEX)
-        return TRUE;
-
     return (id_is_visibleVar(id) && IS_MODULE(ID_TYPE(id)) == FALSE) ||
             ((ID_STORAGE(id) == STG_ARG ||
               ID_STORAGE(id) == STG_SAVE ||
+              ID_STORAGE(id) == STG_INDEX ||
               (ID_STORAGE(id) == STG_EXT && !EXT_IS_DEFINED_IO(PROC_EXT_ID(id))) ||
               ID_STORAGE(id) == STG_AUTO) && ID_CLASS(id) == CL_PROC);
 }
@@ -5402,6 +5423,7 @@ outx_functionDecl(int l, EXT_ID ep)
     CRT_FUNCEP_PUSH(ep);
     outx_tagOfDecl1(l, "FfunctionDecl", GET_EXT_LINE(ep));
     outx_symbolNameWithFunctionType_EXT(l1, ep);
+    outx_definition_symbols(l1, ep);
     outx_declarations(l1, ep);
     outx_close(l, "FfunctionDecl");
     CRT_FUNCEP_POP;

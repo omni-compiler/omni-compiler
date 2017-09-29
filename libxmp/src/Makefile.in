@@ -13,11 +13,14 @@ INSTALL   = @INSTALL@
 TLOG_DIR  = ../../libtlog/src_mpi
 LIBXMP    = libxmp.a
 HEADERS   = ../include/xmp_internal.h ../include/xmp_constant.h ../include/xmp_data_struct.h \
-            ../include/xmp_math_function.h
+            ../include/xmp_math_function.h \
+            ../include/xmpco_internal.h ../include/xmpco_params.h
 OBJECTS   = xmp_lib.o xmp_util.o xmp_world.o xmp_nodes_stack.o xmp_nodes.o xmp_template.o \
 	    xmp_barrier.o xmp_reduce.o xmp_bcast.o xmp_align.o xmp_shadow.o xmp_array_section.o \
 	    xmp_loop.o xmp_gmove.o xmp_math_function.o xmp_runtime.o xmp_tlog_runtime.o xmp_io.o \
-	    xmp_reflect.o xmp_pack_vector.o xmp_intrinsic.o xmp_section_desc.o xmp_sort.o xmp_async.o xmpc_gmove.o
+	    xmp_reflect.o xmp_pack_vector.o xmp_intrinsic.o xmp_section_desc.o xmp_sort.o xmp_async.o xmpc_gmove.o \
+	    xmpco_params.o xmpco_msg.o xmpco_alloc.o xmpco_sync.o xmpco_lib.o \
+	    xmpco_get_stmt.o xmpco_get_expr.o xmpco_put.o
 
 FALSE            = 1
 TRUE             = 0
@@ -33,6 +36,8 @@ IS_SSL2BLAMP     = @SSL2BLAMP@
 IS_INTELMKL      = @INTELMKL@
 IS_TCA           = @TCA@
 IS_XACC          = @XACC@
+IS_CUDA          = @CUDA@
+IS_OPENCL        = @OPENCL@
 
 ifeq ($(IS_KCOMPUTER), $(TRUE))
 	CFLAGS += -D_KCOMPUTER
@@ -80,21 +85,41 @@ ifeq ($(IS_INTELMKL), $(TRUE))
 endif
 
 ifeq ($(IS_TCA), $(TRUE))
-	OBJECTS += xmp_onesided.o xmp_onesided_tca.o xmp_coarray.o xmp_coarray_utils.o xmp_coarray_local.o \
-		   xmp_post_wait.o xmp_post_wait_tca.o xmp_coarray_tca.o xmp_reflect_tca.o \
-	           xmp_reflect_hybrid.o xmp_tca_runtime.o xmp_reduce_tca.o xmp_reduce_hybrid.o
-	CFLAGS  += -D_XMP_TCA
+    OBJECTS += xmp_onesided.o xmp_onesided_tca.o xmp_coarray.o xmp_coarray_utils.o xmp_coarray_local.o \
+	       xmp_post_wait.o xmp_post_wait_tca.o xmp_coarray_tca.o
+    CFLAGS  += -D_XMP_TCA
 endif
 
 ifeq ($(IS_XACC), $(TRUE))
-	OBJECTS  += xmp_reflect_acc.o xmp_reduce_acc.o xmp_bcast_acc.o xmp_reflect_gpu.o xmp_reduce_gpu.o \
-	            xmp_gpu_pack.o xmp_gmove_acc.o xmp_coarray_acc.o
-	CFLAGS   += -D_XMP_XACC -I@CUDA_PREFIX@/include
-	GPUCC     = @GPU_CMD@
-	GPUCFLAGS = @GPU_CFLAGS@
-.SUFFIXES : .o .cu
+    OBJECTS  += xacc_runtime.o xmp_reflect_acc.o xmp_reduce_acc.o xmp_bcast_acc.o xmp_gmove_acc.o xmp_coarray_acc.o
+    CFLAGS   += -D_XMP_XACC
+    HEADERS  += ../include/xacc_internal.h
+
+ifeq ($(IS_CUDA), $(TRUE))
+    OBJECTS  += xacc_util_cuda.o xmp_gpu_pack.o
+    CFLAGS   += -D_XMP_XACC_CUDA -I@CUDA_PREFIX@/include
+    GPUCC     = @GPU_CMD@
+    GPUCFLAGS = @GPU_CFLAGS@
+.SUFFIXES: .cu
 .cu.o:
 	$(GPUCC) $(GPUCFLAGS) -I../include -c $@ $<
+
+endif
+ifeq ($(IS_OPENCL), $(TRUE))
+    OBJECTS  += xacc_util_cl.o
+    CFLAGS   += -D_XMP_XACC_OPENCL -I@OPENCL_PREFIX@/include
+    HEADERS  += xacc_util_cl_kernel.hex
+.SUFFIXES: .cl .hex
+.cl.hex:
+	xxd -i < $< >$@
+
+endif
+
+ifeq ($(IS_TCA), $(TRUE))
+    OBJECTS  += xmp_reflect_tca.o xmp_reflect_hybrid.o xmp_tca_runtime.o xmp_reduce_tca.o xmp_reduce_hybrid.o
+else
+    OBJECTS  += xmp_reduce_gpu.o xmp_reflect_gpu.o
+endif
 endif
 
 all: $(LIBXMP)
@@ -113,4 +138,4 @@ install: $(LIBXMP)
 	$(INSTALL) $^ $(DESTDIR)$(LIBDIR)
 
 clean:
-	rm -f *~ *.core core core.* *.o $(LIBXMP)
+	rm -f *~ *.core core core.* *.o *.hex $(LIBXMP)

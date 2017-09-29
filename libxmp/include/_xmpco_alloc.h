@@ -1,7 +1,10 @@
-// only for xmp_co_alloc.c
+// only for xmpco_alloc.c
 
-#ifndef _XMP_CO_ALLOC_H
-#define _XMP_CO_ALLOC_H
+#ifndef _XMPCO_ALLOC_H
+#define _XMPCO_ALLOC_H
+
+#include "xmpco_internal.h"
+#include "_xmpco_alloc.h"
 
 /*****************************************\
   macro definitions

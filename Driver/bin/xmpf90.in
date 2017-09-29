@@ -31,6 +31,7 @@ ENABLE_SCALASCA_ALL=false
 ENABLE_SCALASCA=false
 ENABLE_TLOG_ALL=false
 ENABLE_TLOG=false
+ENABLE_MAIN_XMP=false
 
 ### Set options ###
 # e.g.) xmpf90 -I/usr/lib a.f b.F c.f90 d.F90 e.o --tmp --Wlfoo lib.a -omp -DTEST -Jdir -lm -o a.out
@@ -220,7 +221,15 @@ for file in "${f_files[@]}"; do
     obj_files+=("${FILE_O}")
 done
 
-obj_files+=("$XMPF_MAIN_O")
+for obj in "${obj_files[@]}"; do
+    ${NM} ${NM_OPT} ${obj} | awk 'NF >= 2 && $(NF-1) ~ "^[DdTt]$" { print $NF }' | grep xmpf_main_ > /dev/null
+    if [ $? -eq 0 ]; then
+	ENABLE_MAIN_XMP=true
+	break
+    fi
+done
+
+[ $ENABLE_MAIN_XMP = true ] && obj_files+=("$XMPF_MAIN_O")
 OMNI_TRAVERSE_OPT="--F --prefix xmpf --nm ${NM}"
 [ "${NM_OPT}" != "" ] && OMNI_TRAVERSE_OPT="${OMNI_TRAVERSE_OPT} --nm_opt ${NM_OPT}"
 [ ${TARGET} = "powerpc-hitachi-aix" ] && OMNI_TRAVERSE_OPT="${OMNI_TRAVERSE_OPT} --sr"
@@ -229,7 +238,10 @@ omni_exec $OMNI_TRAVERSE $OMNI_TRAVERSE_OPT -o $TRAVERSE_FILE "${obj_files[@]}" 
 
 # link
 [ $ENABLE_TLOG_ALL = true -o $ENABLE_TLOG = true ] && OMNI_LINKER_OPT="-ltlog_mpi $OMNI_LINKER_OPT"
-[ $ENABLE_OPENACC = true -o @XACC@ = 0 ] && OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_LINKER_CUDA_OPT"
+if [ $ENABLE_OPENACC = true -o @XACC@ = 0 ]; then
+    [ @CUDA@ = 0 ] && OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_LINKER_CUDA_OPT"
+    [ @OPENCL@ = 0 ] && OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_LINKER_OPENCL_OPT"
+fi
 [ $ENABLE_OPENACC = true ] && OMNI_LINKER_OPT="-lacc $OMNI_LINKER_OPT"
 TRAVERSE_FILE_O=${TEMP_DIR}/omni_traverse_${PID}.o
 omni_exec $OMNI_MPIFC_CMD $OMNI_MPIFC_OPT -c $TRAVERSE_FILE -o $TRAVERSE_FILE_O 

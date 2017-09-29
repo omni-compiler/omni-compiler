@@ -244,11 +244,12 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             break;
 
         case F_INTERFACE_DECL:
-            // (CODE is_operator is_assignment name (LIST ... ))
+            // (CODE name is_operator is_assignment (LIST ... ) is_abstract)
             e = createElement(name,
                               "name", getArg0Name(xobj),
                               "is_operator", intFlagToBoolStr(xobj.getArg(1)),
-                              "is_assignment", intFlagToBoolStr(xobj.getArg(2)));
+                              "is_assignment", intFlagToBoolStr(xobj.getArg(2)),
+			      "is_abstract", intFlagToBoolStr(xobj.getArg(4)));
             for (Xobject a : (XobjList)xobj.getArg(3)) {
                 addChildNode(e, trans(a));
             }
@@ -268,6 +269,10 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
 
         case F_STRUCT_DECL:
             e = addChildNode(createElement(name), transName(xobj.getArg(0)));
+            break;
+
+	case F_ENUM_DECL:
+            e = createElement(name);
             break;
 
         case F_USE_DECL:
@@ -299,8 +304,9 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
 
         case F_RENAME:
             e = createElement(name,
-                              "use_name", xobj.getArg(0).getName(),
-                              "local_name", (xobj.getArgOrNull(1) != null ? xobj.getArg(1).getName() : null));
+			      "is_operator", intFlagToBoolStr(xobj.getArg(0)),
+                              "use_name", xobj.getArg(1).getName(),
+                              "local_name", (xobj.getArgOrNull(2) != null ? xobj.getArg(2).getName() : null));
             break;
 
         case F_RENAMABLE:
@@ -793,6 +799,12 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
                              trans(xobj.getArg(0)));
             break;
 
+        case F_COMPLEX_PART_REF:
+            e = addChildNode(createElement(name,
+                                           "part", xobj.getArg(1).getName()),
+                             trans(xobj.getArg(0)));
+            break;
+
         case F_ARRAY_CONSTRUCTOR:
             e = createElement(name, "element_type", getArg0Name(xobj));
             for (Xobject a : (XobjList)xobj.getArg(1)) {
@@ -1164,6 +1176,11 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
                              transParams((XobjList)type.getFuncParam()));
                 break;
 
+	    case Xtype.ENUM:
+                typeElem = createElement("FenumType");
+                addChildNode(typeElem, transSymbols(type.getMemberList()));
+                break;
+		
             default:
                 fatal("cannot convert type_kind:" + Xtype.getKindName(type.getKind()));
             }

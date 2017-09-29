@@ -1,7 +1,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include "xmpf_internal_coarray.h"
-#include "_xmp_co_alloc.h"
+#include "_xmpco_alloc.h"
 
 
 static char* _to_Nth(int n);
@@ -36,7 +36,7 @@ void xmpf_coarray_malloc_(void **descPtr, char **crayPtr,
                           int *count, int *element, void **tag)
 {
   CoarrayInfo_t* cinfo =
-    _XMP_CO_malloc_coarray(crayPtr, *count, (size_t)(*element),
+    XMPCO_malloc_coarray(crayPtr, *count, (size_t)(*element),
                          (*tag) ? (ResourceSet_t*)(*tag) : NULL);
   *descPtr = (void*)cinfo;
 
@@ -49,8 +49,8 @@ void xmpf_coarray_regmem_(void **descPtr, void *var,
                           int *count, int *element, void **tag)
 {
   CoarrayInfo_t* cinfo =
-    _XMP_CO_regmem_coarray(var, *count, (size_t)(*element),
-                           (*tag) ? (ResourceSet_t*)(*tag) : NULL);
+    XMPCO_regmem_coarray(var, *count, (size_t)(*element),
+                         (*tag) ? (ResourceSet_t*)(*tag) : NULL);
   *descPtr = (void*)cinfo;
 
   // SYNCALL_AUTO
@@ -63,8 +63,8 @@ void xmpf_coarray_alloc_static_(void **descPtr, char **crayPtr,
                                 int *namelen, char *name)
 {
   CoarrayInfo_t* cinfo =
-    _XMP_CO_malloc_staticCoarray(crayPtr, *count, (size_t)(*element),
-                                 *namelen, name);
+    XMPCO_malloc_staticCoarray(crayPtr, *count, (size_t)(*element),
+                               *namelen, name);
   *descPtr = (void*)cinfo;
 }
 
@@ -73,8 +73,8 @@ void xmpf_coarray_regmem_static_(void **descPtr, void **baseAddr,
                                  int *namelen, char *name)
 {
   CoarrayInfo_t* cinfo =
-    _XMP_CO_regmem_staticCoarray(*baseAddr, *count, (size_t)(*element),
-                                 *namelen, name);
+    XMPCO_regmem_staticCoarray(*baseAddr, *count, (size_t)(*element),
+                               *namelen, name);
   *descPtr = (void*)cinfo;
 }
 
@@ -88,13 +88,13 @@ void xmpf_coarray_regmem_static_(void **descPtr, void **baseAddr,
 void xmpf_coarray_free_(void **descPtr)
 {
   CoarrayInfo_t *cinfo = (CoarrayInfo_t*)(*descPtr);
-  _XMP_CO_free_coarray(cinfo);
+  XMPCO_free_coarray(cinfo);
 }
 
 void xmpf_coarray_deregmem_(void **descPtr)
 {
   CoarrayInfo_t *cinfo = (CoarrayInfo_t*)(*descPtr);
-  _XMP_CO_deregmem_coarray(cinfo);
+  XMPCO_deregmem_coarray(cinfo);
 }
 
 
@@ -104,12 +104,17 @@ void xmpf_coarray_deregmem_(void **descPtr)
 
 void xmpf_coarray_malloc_pool_()
 {
-  _XMP_CO_malloc_pool();
+  XMPCO_malloc_pool();
+
+  // init library internal
+  _XMPCO_coarrayInit_get();
+  _XMPCO_coarrayInit_getsub();
+  _XMPCO_coarrayInit_put();
 }
 
 void xmpf_coarray_count_size_(int *count, int *element)
 {
-  _XMP_CO_count_size(*count, (size_t)(*element));
+  XMPCO_count_size(*count, (size_t)(*element));
 }
 
 
@@ -119,13 +124,13 @@ void xmpf_coarray_count_size_(int *count, int *element)
 
 void xmpf_coarray_prolog_(void **tag, int *namelen, char *name)
 {
-  _XMP_CO_prolog((ResourceSet_t**)tag, *namelen, name);
+  XMPCO_prolog((ResourceSet_t**)tag, *namelen, name);
 }
 
 
 void xmpf_coarray_epilog_(void **tag)
 {
-  _XMP_CO_epilog((ResourceSet_t**)tag);
+  XMPCO_epilog((ResourceSet_t**)tag);
 }
 
 
@@ -143,7 +148,7 @@ void xmpf_coarray_epilog_(void **tag)
 void xmpf_coarray_find_descptr_(void **descPtr, char *addr,
                                 int *namelen, char *name)
 {
-  *descPtr = (void*)_XMP_CO_find_descptr(addr, *namelen, name);
+  *descPtr = (void*)XMPCO_find_descptr(addr, *namelen, name);
 }
 
 
@@ -157,14 +162,14 @@ void xmpf_coarray_find_descptr_(void **descPtr, char *addr,
 void xmpf_coarray_set_corank_(void **descPtr, int *corank)
 {
   CoarrayInfo_t *cp = (CoarrayInfo_t*)(*descPtr);
-  _XMP_CO_set_corank(cp, *corank);
+  _XMPCO_set_corank(cp, *corank);
 }
 
 
 void xmpf_coarray_set_codim_(void **descPtr, int *dim, int *lb, int *ub)
 {
   CoarrayInfo_t *cp = (CoarrayInfo_t*)(*descPtr);
-  _XMP_CO_set_codim_withBounds(cp, *dim, *lb, *ub);
+  _XMPCO_set_codim_withBounds(cp, *dim, *lb, *ub);
 }
 
 
@@ -174,7 +179,7 @@ void xmpf_coarray_set_codim_(void **descPtr, int *dim, int *lb, int *ub)
 void xmpf_coarray_set_varname_(void **descPtr, int *namelen, char *name)
 {
   CoarrayInfo_t *cp = (CoarrayInfo_t*)(*descPtr);
-  _XMP_CO_set_varname(cp, *namelen, name);
+  _XMPCO_set_varname(cp, *namelen, name);
 }
 
 
@@ -190,7 +195,7 @@ void xmpf_coarray_set_nodes_(void **descPtr, void **nodesDesc)
 {
   CoarrayInfo_t *cinfo = (CoarrayInfo_t*)(*descPtr);
   _XMP_nodes_t *nodes = (_XMP_nodes_t*)(*nodesDesc);
-  cinfo = _XMP_CO_set_nodes(cinfo, nodes);
+  cinfo = _XMPCO_set_nodes(cinfo, nodes);
   *descPtr = (void*)cinfo;
 }
 
@@ -200,38 +205,10 @@ void xmpf_coarray_set_nodes_(void **descPtr, void **nodesDesc)
    set the nodes specified with IMAGE directive
 \***********************************************/
 
-static _XMP_nodes_t *_image_nodes;
-
 void xmpf_coarray_set_image_nodes_(void **nodesDesc)
 {
   _XMP_nodes_t *nodes = (_XMP_nodes_t*)(*nodesDesc);
-  _XMPF_coarray_set_image_nodes(nodes);
-}
-
-
-void _XMPF_coarray_clean_image_nodes()
-{
-  _image_nodes = NULL;
-}
-
-void _XMPF_coarray_set_image_nodes(_XMP_nodes_t *nodes)
-{
-  if (_image_nodes != NULL)
-    _XMP_fatal("INTERNAL: _image_nodes was not consumed but is defined.");
-  _image_nodes = nodes;
-}
-
-_XMP_nodes_t *_XMPF_coarray_get_image_nodes()
-{
-  return _image_nodes;
-}
-
-// get and clean
-_XMP_nodes_t *_XMPF_coarray_consume_image_nodes()
-{
-  _XMP_nodes_t *ret = _image_nodes;
-  _image_nodes = NULL;
-  return ret;
+  _XMPCO_set_imageDirNodes(nodes);
 }
 
 
@@ -241,80 +218,16 @@ _XMP_nodes_t *_XMPF_coarray_consume_image_nodes()
    inquire function this_image(coarray, dim)
 \***********************************************/
 
-static int xmpf_this_image_coarray_dim(CoarrayInfo_t *cinfo, int corank, int dim);
-static void xmpf_this_image_coarray(CoarrayInfo_t *cinfo, int corank, int image[]);
-
 int xmpf_this_image_coarray_dim_(void **descPtr, int *corank, int *dim)
 {
-  return xmpf_this_image_coarray_dim((CoarrayInfo_t*)(*descPtr), *corank, *dim);
+  return XMPCO_this_image_coarray_dim((CoarrayInfo_t*)(*descPtr), *corank, *dim);
 }
 
 void xmpf_this_image_coarray_(void **descPtr, int *corank, int image[])
 {
-  xmpf_this_image_coarray((CoarrayInfo_t*)(*descPtr), *corank, image);
+  XMPCO_this_image_coarray((CoarrayInfo_t*)(*descPtr), *corank, image);
 }
 
-
-void xmpf_this_image_coarray(CoarrayInfo_t *cinfo, int corank, int image[])
-{
-  int size, index, image_coarray, magic;
-  _XMP_nodes_t *nodes;
-
-  nodes = cinfo->nodes;
-  if (nodes != NULL) {
-    image_coarray = _XMPF_this_image_onNodes(nodes);
-  } else {
-    image_coarray = _XMPF_this_image_current();
-  }
-
-  if (image_coarray == 0) {    // This image is out of the nodes.
-    for (int i = 0; i < corank; i++)
-      image[i] = 0;
-    return;
-  }
-
-  magic = image_coarray - 1;
-  for (int i = 0; i < corank; i++) {
-    size = cinfo->cosize[i];
-    index = magic % size;
-    image[i] = index + cinfo->lcobound[i];
-    magic /= size;
-  }
-}
-
-
-int xmpf_this_image_coarray_dim(CoarrayInfo_t *cinfo, int corank, int dim)
-{
-  int size, index, image_coarray, magic;
-  //int image_init;
-  int k;
-  _XMP_nodes_t *nodes;
-  //MPI_Comm comm_coarray;
-
-  if (dim <= 0 || corank < dim)
-    _XMPF_coarrayFatal("Too large or non-positive argument 'dim' of this_image:"
-                      "%d\n", dim);
-
-  nodes = cinfo->nodes;
-  if (nodes != NULL) {
-    image_coarray = _XMPF_this_image_onNodes(nodes);
-  } else {
-    image_coarray = _XMPF_this_image_current();
-  }
-
-  if (image_coarray == 0)    // This image is out of the nodes.
-    return 0;
-
-  magic = image_coarray - 1;
-  k = dim - 1;
-  for (int i = 0; i < k; i++) {
-    size = cinfo->cosize[i];
-    magic /= size;
-  }
-  size = cinfo->cosize[k];
-  index = magic % size;
-  return index + cinfo->lcobound[k];
-}
 
 /***********************************************\
   ENTRY
@@ -426,7 +339,7 @@ int xmpf_image_index_(void **descPtr, int coindexes[])
   }
 
   image = count + 1;
-  if (image > _XMPF_num_images_current())
+  if (image > _XMPCO_get_currentNumImages())
     image = 0;
 
   return image;
