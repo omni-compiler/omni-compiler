@@ -1,0 +1,13 @@
+MODULE mod1
+IMPLICIT NONE
+CONTAINS
+  SUBROUTINE sub1(dst, src)
+    IMPLICIT NONE
+    REAL, ALLOCATABLE, INTENT(OUT) ::  dst(:)
+    REAL, ALLOCATABLE, INTENT(IN)  ::  src(:)
+  
+    ALLOCATE( dst(10) )
+  
+  END SUBROUTINE sub1
+
+END MODULE mod1
