@@ -282,7 +282,11 @@ typedef enum {
     INTR_ATOMIC_DEFINE,
     INTR_ATOMIC_REF,
 
-    /* F08 intrinsic subroutins */
+    /* F03 intrinsic subroutins */
+    INTR_IS_IOSTAT_END,
+    INTR_IS_IOSTAT_EOR,
+
+    /* F08 intrinsic subroutines */
     INTR_EXTENDS_TYPE_OF,
     INTR_SAME_TYPE_AS,
     INTR_MOVE_ALLOC,
