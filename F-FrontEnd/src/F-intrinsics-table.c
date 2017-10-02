@@ -80,6 +80,7 @@ intrinsic_entry intrinsic_table[] = {
 
     // MAX (A1, A2 [, A3,...])
     { INTR_MAX,         INTR_NAME_GENERIC,      "max",          0,      {INTR_TYPE_NUMERICS},                   INTR_TYPE_NUMERICS,  -1, 0, LANGSPEC_F77, INTR_CLASS_E },
+    { INTR_MAX,         INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_CHAR},                       INTR_TYPE_CHAR,      -1, 0, LANGSPEC_F2003, INTR_CLASS_E },
 
     { INTR_MAX,         INTR_NAME_SPECIFIC_NA,  "max0",         0,      {INTR_TYPE_INT},                        INTR_TYPE_INT,  -1, 0, LANGSPEC_F77, INTR_CLASS_E },
     { INTR_MAX,         INTR_NAME_SPECIFIC_NA,  "amax1",        0,      {INTR_TYPE_REAL},                       INTR_TYPE_REAL, -1, 0, LANGSPEC_F77, INTR_CLASS_E },
@@ -89,6 +90,7 @@ intrinsic_entry intrinsic_table[] = {
 
     // MIN (A1, A2 [, A3,...])
     { INTR_MIN,         INTR_NAME_GENERIC,      "min",          0,      {INTR_TYPE_NUMERICS},                   INTR_TYPE_NUMERICS,  -1, 0, LANGSPEC_F77, INTR_CLASS_E },
+    { INTR_MIN,         INTR_NAME_GENERIC,      "",             0,      {INTR_TYPE_CHAR},                       INTR_TYPE_CHAR,      -1, 0, LANGSPEC_F2003, INTR_CLASS_E },
 
     { INTR_MIN,         INTR_NAME_SPECIFIC_NA,  "min0",         0,      {INTR_TYPE_INT},                        INTR_TYPE_INT,  -1, 0, LANGSPEC_F77, INTR_CLASS_E },
     { INTR_MIN,         INTR_NAME_SPECIFIC_NA,  "amin1",        0,      {INTR_TYPE_REAL},                       INTR_TYPE_REAL, -1, 0, LANGSPEC_F77, INTR_CLASS_E },
@@ -514,9 +516,11 @@ intrinsic_entry intrinsic_table[] = {
     // MINVAL (ARRAY [, MASK])
     { INTR_MINVAL,      INTR_NAME_GENERIC,      "minval",       0,      { INTR_TYPE_NUMERICS_ARRAY },                           INTR_TYPE_NUMERICS,             1, -2, LANGSPEC_F90, INTR_CLASS_T },
     { INTR_MINVAL,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_NUMERICS_ARRAY,  INTR_TYPE_LOGICAL_ARRAY }, INTR_TYPE_NUMERICS,             2, -2, LANGSPEC_F90, INTR_CLASS_T },
+    { INTR_MINVAL,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_CHAR_ARRAY,      INTR_TYPE_LOGICAL_ARRAY }, INTR_TYPE_NUMERICS,             2, -2, LANGSPEC_F2003, INTR_CLASS_T },
     // MINVAL (ARRAY, DIM [, MASK])
     { INTR_MINVAL,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_NUMERICS_ARRAY, INTR_TYPE_INT },                            INTR_TYPE_NUMERICS_DYNAMIC_ARRAY,       2, -1, LANGSPEC_F90, INTR_CLASS_T },
     { INTR_MINVAL,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_NUMERICS_ARRAY, INTR_TYPE_INT, INTR_TYPE_LOGICAL_ARRAY },   INTR_TYPE_NUMERICS_DYNAMIC_ARRAY,       3, -1, LANGSPEC_F90, INTR_CLASS_T },
+    { INTR_MINVAL,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_CHAR_ARRAY,     INTR_TYPE_INT, INTR_TYPE_LOGICAL_ARRAY },   INTR_TYPE_NUMERICS_DYNAMIC_ARRAY,       3, -1, LANGSPEC_F2003, INTR_CLASS_T },
 
     // PRODUCT (ARRAY [, MASK])
     { INTR_PRODUCT,     INTR_NAME_GENERIC,      "product",      0,      { INTR_TYPE_ALL_NUMERICS_ARRAY },                               INTR_TYPE_ALL_NUMERICS,         1, -2, LANGSPEC_F90, INTR_CLASS_T },
@@ -603,33 +607,75 @@ intrinsic_entry intrinsic_table[] = {
 
     /* 19. Array location functions */
 
-    // MINLOC (ARRAY [, MASK, KIND])
-    { INTR_MINLOC,      INTR_NAME_GENERIC,      "minloc",       1,      { INTR_TYPE_INT_ARRAY },                                INTR_TYPE_INT_ARRAY,    1, -3, LANGSPEC_F90, INTR_CLASS_T },
-    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_ALL_REAL_ARRAY },                           INTR_TYPE_INT_ARRAY,    1, -3, LANGSPEC_F90, INTR_CLASS_T },
-    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_INT_ARRAY, INTR_TYPE_LOGICAL_ARRAY },       INTR_TYPE_INT_ARRAY,    2, -3, LANGSPEC_F90, INTR_CLASS_T },
-    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_ALL_REAL_ARRAY, INTR_TYPE_LOGICAL_ARRAY },  INTR_TYPE_INT_ARRAY,    2, -3, LANGSPEC_F90, INTR_CLASS_T },
+    // MINLOC (ARRAY [, MASK, KIND, BACK])
+    { INTR_MINLOC,      INTR_NAME_GENERIC,      "minloc",       0,      { INTR_TYPE_INT_ARRAY },                                                                  INTR_TYPE_INT_ARRAY,    1, -3, LANGSPEC_F90, INTR_CLASS_T },
+    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_INT_ARRAY, INTR_TYPE_LOGICAL_ARRAY },                                         INTR_TYPE_INT_ARRAY,    2, -3, LANGSPEC_F90, INTR_CLASS_T },
+    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_INT_ARRAY, INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_INT },                          INTR_TYPE_INT_ARRAY,    3, -3, LANGSPEC_F90, INTR_CLASS_T },
+    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_INT_ARRAY, INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_INT, INTR_TYPE_LOGICAL },       INTR_TYPE_INT_ARRAY,    4, -3, LANGSPEC_F90, INTR_CLASS_T },
 
-    // MINLOC (ARRAY [, DIM, MASK, KIND]) (Fortran 95)
-    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_INT_ARRAY, INTR_TYPE_INT },       INTR_TYPE_INT_ARRAY,    2, -3, LANGSPEC_F95, INTR_CLASS_T },
-    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_ALL_REAL_ARRAY, INTR_TYPE_INT },  INTR_TYPE_INT_ARRAY,    2, -3, LANGSPEC_F95, INTR_CLASS_T },
-    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_INT_ARRAY, INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_INT },       INTR_TYPE_INT_ARRAY,    3, -3, LANGSPEC_F95, INTR_CLASS_T },
-    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_INT_ARRAY, INTR_TYPE_INT, INTR_TYPE_LOGICAL_ARRAY },       INTR_TYPE_INT_ARRAY,    3, -3, LANGSPEC_F95, INTR_CLASS_T },
-    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_ALL_REAL_ARRAY, INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_INT },  INTR_TYPE_INT_ARRAY,    3, -3, LANGSPEC_F95, INTR_CLASS_T },
-    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_ALL_REAL_ARRAY, INTR_TYPE_INT, INTR_TYPE_LOGICAL_ARRAY },  INTR_TYPE_INT_ARRAY,    3, -3, LANGSPEC_F95, INTR_CLASS_T },
+    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_ALL_REAL_ARRAY },                                                             INTR_TYPE_INT_ARRAY,    1, -3, LANGSPEC_F90, INTR_CLASS_T },
+    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_ALL_REAL_ARRAY, INTR_TYPE_LOGICAL_ARRAY },                                    INTR_TYPE_INT_ARRAY,    2, -3, LANGSPEC_F90, INTR_CLASS_T },
+    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_ALL_REAL_ARRAY, INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_INT },                     INTR_TYPE_INT_ARRAY,    3, -3, LANGSPEC_F90, INTR_CLASS_T },
+    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_ALL_REAL_ARRAY, INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_INT, INTR_TYPE_LOGICAL },  INTR_TYPE_INT_ARRAY,    4, -3, LANGSPEC_F90, INTR_CLASS_T },
 
-    // MAXLOC (ARRAY [, MASK, KIND])
-    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "maxloc",       1,      { INTR_TYPE_INT_ARRAY },                                INTR_TYPE_INT_ARRAY,    1, -3, LANGSPEC_F90, INTR_CLASS_T },
-    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_ALL_REAL_ARRAY },                           INTR_TYPE_INT_ARRAY,    1, -3, LANGSPEC_F90, INTR_CLASS_T },
-    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_INT_ARRAY, INTR_TYPE_LOGICAL_ARRAY },       INTR_TYPE_INT_ARRAY,    2, -3, LANGSPEC_F90, INTR_CLASS_T },
-    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_ALL_REAL_ARRAY, INTR_TYPE_LOGICAL_ARRAY },  INTR_TYPE_INT_ARRAY,    2, -3, LANGSPEC_F90, INTR_CLASS_T },
+    //// F2003 accepts CHARACTER ARRAY
+    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_CHAR_ARRAY },                                                                 INTR_TYPE_INT_ARRAY,    1, -3, LANGSPEC_F2003, INTR_CLASS_T },
+    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_CHAR_ARRAY, INTR_TYPE_LOGICAL_ARRAY },                                        INTR_TYPE_INT_ARRAY,    2, -3, LANGSPEC_F2003, INTR_CLASS_T },
+    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_CHAR_ARRAY, INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_INT },                         INTR_TYPE_INT_ARRAY,    3, -3, LANGSPEC_F2003, INTR_CLASS_T },
+    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_CHAR_ARRAY, INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_INT, INTR_TYPE_LOGICAL },      INTR_TYPE_INT_ARRAY,    4, -3, LANGSPEC_F2003, INTR_CLASS_T },
 
-    // MAXLOC (ARRAY [, DIM, MASK, KIND]) (Fortran 95)
-    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_INT_ARRAY, INTR_TYPE_INT },       INTR_TYPE_INT_ARRAY,    2, -3, LANGSPEC_F95, INTR_CLASS_T },
-    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_ALL_REAL_ARRAY, INTR_TYPE_INT },  INTR_TYPE_INT_ARRAY,    2, -3, LANGSPEC_F95, INTR_CLASS_T },
-    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_INT_ARRAY, INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_INT },       INTR_TYPE_INT_ARRAY,    3, -3, LANGSPEC_F95, INTR_CLASS_T },
-    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_INT_ARRAY, INTR_TYPE_INT, INTR_TYPE_LOGICAL_ARRAY },       INTR_TYPE_INT_ARRAY,    3, -3, LANGSPEC_F95, INTR_CLASS_T },
-    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_ALL_REAL_ARRAY, INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_INT },  INTR_TYPE_INT_ARRAY,    3, -3, LANGSPEC_F95, INTR_CLASS_T },
-    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             1,      { INTR_TYPE_ALL_REAL_ARRAY, INTR_TYPE_INT, INTR_TYPE_LOGICAL_ARRAY },  INTR_TYPE_INT_ARRAY,    3, -3, LANGSPEC_F95, INTR_CLASS_T },
+    // MINLOC (ARRAY, DIM [, MASK, KIND, BACK]) (Fortran 95)
+    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_INT_ARRAY, INTR_TYPE_INT },                                                   INTR_TYPE_INT_DYNAMIC_ARRAY,    2, -1, LANGSPEC_F95, INTR_CLASS_T },
+    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_INT_ARRAY, INTR_TYPE_INT, INTR_TYPE_LOGICAL_ARRAY },                          INTR_TYPE_INT_DYNAMIC_ARRAY,    3, -1, LANGSPEC_F95, INTR_CLASS_T },
+    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_INT_ARRAY, INTR_TYPE_INT, INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_INT },           INTR_TYPE_INT_DYNAMIC_ARRAY,    4, -1, LANGSPEC_F95, INTR_CLASS_T },
+    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_INT_ARRAY, INTR_TYPE_INT, INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_INT, INTR_TYPE_LOGICAL },   INTR_TYPE_INT_DYNAMIC_ARRAY,    5, -1, LANGSPEC_F95, INTR_CLASS_T },
+
+    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_ALL_REAL_ARRAY, INTR_TYPE_INT },                                              INTR_TYPE_INT_DYNAMIC_ARRAY,    2, -1, LANGSPEC_F95, INTR_CLASS_T },
+    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_ALL_REAL_ARRAY, INTR_TYPE_INT, INTR_TYPE_LOGICAL_ARRAY },                     INTR_TYPE_INT_DYNAMIC_ARRAY,    3, -1, LANGSPEC_F95, INTR_CLASS_T },
+    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_ALL_REAL_ARRAY, INTR_TYPE_INT, INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_INT },      INTR_TYPE_INT_DYNAMIC_ARRAY,    4, -1, LANGSPEC_F95, INTR_CLASS_T },
+    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_ALL_REAL_ARRAY, INTR_TYPE_INT, INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_INT, INTR_TYPE_LOGICAL }, INTR_TYPE_INT_DYNAMIC_ARRAY,    5, -1, LANGSPEC_F95, INTR_CLASS_T },
+
+    //// F2003 accepts CHARACTER ARRAY
+    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_CHAR_ARRAY, INTR_TYPE_INT },                                                  INTR_TYPE_INT_DYNAMIC_ARRAY,    2, -1, LANGSPEC_F95, INTR_CLASS_T },
+    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_CHAR_ARRAY, INTR_TYPE_INT, INTR_TYPE_LOGICAL_ARRAY },                         INTR_TYPE_INT_DYNAMIC_ARRAY,    3, -1, LANGSPEC_F95, INTR_CLASS_T },
+    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_CHAR_ARRAY, INTR_TYPE_INT, INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_INT },          INTR_TYPE_INT_DYNAMIC_ARRAY,    4, -1, LANGSPEC_F95, INTR_CLASS_T },
+    { INTR_MINLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_CHAR_ARRAY, INTR_TYPE_INT, INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_INT, INTR_TYPE_LOGICAL }, INTR_TYPE_INT_DYNAMIC_ARRAY,    5, -1, LANGSPEC_F95, INTR_CLASS_T },
+
+    // MAXLOC (ARRAY [, MASK, KIND, BACK])
+    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "maxloc",       0,      { INTR_TYPE_INT_ARRAY },                                                                  INTR_TYPE_INT_ARRAY,    1, -3, LANGSPEC_F90, INTR_CLASS_T },
+    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_INT_ARRAY, INTR_TYPE_LOGICAL_ARRAY },                                         INTR_TYPE_INT_ARRAY,    2, -3, LANGSPEC_F90, INTR_CLASS_T },
+    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_INT_ARRAY, INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_INT },                          INTR_TYPE_INT_ARRAY,    3, -3, LANGSPEC_F90, INTR_CLASS_T },
+    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_INT_ARRAY, INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_INT, INTR_TYPE_LOGICAL },       INTR_TYPE_INT_ARRAY,    4, -3, LANGSPEC_F90, INTR_CLASS_T },
+
+    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_ALL_REAL_ARRAY },                                                             INTR_TYPE_INT_ARRAY,    1, -3, LANGSPEC_F90, INTR_CLASS_T },
+    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_ALL_REAL_ARRAY, INTR_TYPE_LOGICAL_ARRAY },                                    INTR_TYPE_INT_ARRAY,    2, -3, LANGSPEC_F90, INTR_CLASS_T },
+    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_ALL_REAL_ARRAY, INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_INT },                     INTR_TYPE_INT_ARRAY,    3, -3, LANGSPEC_F90, INTR_CLASS_T },
+    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_ALL_REAL_ARRAY, INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_INT, INTR_TYPE_LOGICAL },  INTR_TYPE_INT_ARRAY,    4, -3, LANGSPEC_F90, INTR_CLASS_T },
+
+    //// F2003 accepts CHARACTER ARRAY
+    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_CHAR_ARRAY },                                                                 INTR_TYPE_INT_ARRAY,    1, -3, LANGSPEC_F2003, INTR_CLASS_T },
+    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_CHAR_ARRAY, INTR_TYPE_LOGICAL_ARRAY },                                        INTR_TYPE_INT_ARRAY,    2, -3, LANGSPEC_F2003, INTR_CLASS_T },
+    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_CHAR_ARRAY, INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_INT },                         INTR_TYPE_INT_ARRAY,    3, -3, LANGSPEC_F2003, INTR_CLASS_T },
+    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_CHAR_ARRAY, INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_INT, INTR_TYPE_LOGICAL },      INTR_TYPE_INT_ARRAY,    4, -3, LANGSPEC_F2003, INTR_CLASS_T },
+
+    // MAXLOC (ARRAY, DIM, [MASK, KIND, BACK]) (Fortran 95)
+    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_INT_ARRAY, INTR_TYPE_INT },                                                   INTR_TYPE_INT_DYNAMIC_ARRAY,    2, -1, LANGSPEC_F95, INTR_CLASS_T },
+    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_INT_ARRAY, INTR_TYPE_INT, INTR_TYPE_LOGICAL_ARRAY },                          INTR_TYPE_INT_DYNAMIC_ARRAY,    3, -1, LANGSPEC_F95, INTR_CLASS_T },
+    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_INT_ARRAY, INTR_TYPE_INT, INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_INT },           INTR_TYPE_INT_DYNAMIC_ARRAY,    4, -1, LANGSPEC_F95, INTR_CLASS_T },
+    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_INT_ARRAY, INTR_TYPE_INT, INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_INT, INTR_TYPE_LOGICAL },       INTR_TYPE_INT_DYNAMIC_ARRAY,    5, -1, LANGSPEC_F95, INTR_CLASS_T },
+
+    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_ALL_REAL_ARRAY, INTR_TYPE_INT },                                              INTR_TYPE_INT_DYNAMIC_ARRAY,    2, -1, LANGSPEC_F95, INTR_CLASS_T },
+    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_ALL_REAL_ARRAY, INTR_TYPE_INT, INTR_TYPE_LOGICAL_ARRAY },                     INTR_TYPE_INT_DYNAMIC_ARRAY,    3, -1, LANGSPEC_F95, INTR_CLASS_T },
+    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_ALL_REAL_ARRAY, INTR_TYPE_INT, INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_INT },      INTR_TYPE_INT_DYNAMIC_ARRAY,    4, -1, LANGSPEC_F95, INTR_CLASS_T },
+    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_ALL_REAL_ARRAY, INTR_TYPE_INT, INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_INT, INTR_TYPE_LOGICAL },  INTR_TYPE_INT_DYNAMIC_ARRAY,    5, -1, LANGSPEC_F95, INTR_CLASS_T },
+
+
+    //// F2003 accepts CHARACTER ARRAY
+    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_CHAR_ARRAY, INTR_TYPE_INT },                                                  INTR_TYPE_INT_DYNAMIC_ARRAY,    2, -1, LANGSPEC_F95, INTR_CLASS_T },
+    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_CHAR_ARRAY, INTR_TYPE_INT, INTR_TYPE_LOGICAL_ARRAY },                         INTR_TYPE_INT_DYNAMIC_ARRAY,    3, -1, LANGSPEC_F95, INTR_CLASS_T },
+    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_CHAR_ARRAY, INTR_TYPE_INT, INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_INT },          INTR_TYPE_INT_DYNAMIC_ARRAY,    4, -1, LANGSPEC_F95, INTR_CLASS_T },
+    { INTR_MAXLOC,      INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_CHAR_ARRAY, INTR_TYPE_INT, INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_INT, INTR_TYPE_LOGICAL },       INTR_TYPE_INT_DYNAMIC_ARRAY,    5, -1, LANGSPEC_F95, INTR_CLASS_T },
+
 
 
     /* 20. Pointer association status functions */
@@ -670,6 +716,8 @@ intrinsic_entry intrinsic_table[] = {
     { INTR_SYSTEM_CLOCK,        INTR_NAME_GENERIC,      "",                     0,      { INTR_TYPE_INT },                              INTR_TYPE_NONE, 1, -6, LANGSPEC_F90, INTR_CLASS_S },
     { INTR_SYSTEM_CLOCK,        INTR_NAME_GENERIC,      "",                     0,      { INTR_TYPE_INT, INTR_TYPE_INT },               INTR_TYPE_NONE, 2, -6, LANGSPEC_F90, INTR_CLASS_S },
     { INTR_SYSTEM_CLOCK,        INTR_NAME_GENERIC,      "",                     0,      { INTR_TYPE_INT, INTR_TYPE_INT, INTR_TYPE_INT },        INTR_TYPE_NONE, 3, -6, LANGSPEC_F90, INTR_CLASS_S },
+    { INTR_SYSTEM_CLOCK,        INTR_NAME_GENERIC,      "",                     0,      { INTR_TYPE_INT, INTR_TYPE_REAL },              INTR_TYPE_NONE, 2, -6, LANGSPEC_F2003, INTR_CLASS_S },
+    { INTR_SYSTEM_CLOCK,        INTR_NAME_GENERIC,      "",                     0,      { INTR_TYPE_INT, INTR_TYPE_REAL, INTR_TYPE_INT },       INTR_TYPE_NONE, 3, -6, LANGSPEC_F2003, INTR_CLASS_S },
 
     /*
      * Fortran90 intrinsics

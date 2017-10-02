@@ -1170,7 +1170,89 @@ get_intrinsic_return_type(intrinsic_entry *ep, expv args, expv kindV) {
                     }
                     break;
 
+                    case INTR_MAXLOC:
+                    case INTR_MINLOC:
+                    {
+                        /*
+                         * `MAXLOC/MINLOC(ARRAY, DIM)` returns an 1-rank array.
+                         * Its shape is [d_1, ..., d_dim-1, d_dim+1, ..., d_n]
+                         */
 
+                        expr dim;
+                        int array_has_dim = FALSE;
+                        int i;
+                        TYPE_DESC tp = NULL;
+                        TYPE_DESC first = NULL;
+                        TYPE_DESC prev = NULL;
+
+                        ret = type_basic(TYPE_INT);
+
+                        TYPE_KIND(ret) = expr_list_get_n(args, 3);
+
+                        a = expr_list_get_n(args, 0);
+                        tp = EXPV_TYPE(a);
+                        if (TYPE_N_DIM(tp) < 1) {
+                            goto return_assumed_shape;
+                        }
+
+                        dim = expr_list_get_n(args, 1);
+                        dim = expv_reduce(dim, FALSE);
+
+                        if (dim == NULL || EXPV_CODE(dim) != INT_CONSTANT) {
+                            goto return_assumed_shape;
+                        }
+
+                        for (i = TYPE_N_DIM(tp); IS_ARRAY_TYPE(tp); i--, tp = TYPE_REF(tp)) {
+                            TYPE_DESC tp0;
+
+                            if (i == EXPR_INT(dim)) {
+                                array_has_dim = TRUE;
+                                continue;
+                            }
+
+                            tp0 = new_type_desc();
+                            TYPE_BASIC_TYPE(tp0)        = TYPE_ARRAY;
+                            TYPE_ARRAY_ASSUME_KIND(tp0) = TYPE_ARRAY_ASSUME_KIND(tp);
+                            TYPE_DIM_SIZE(tp0)          = TYPE_DIM_SIZE(tp);
+                            TYPE_DIM_LOWER(tp0)         = TYPE_DIM_LOWER(tp);
+                            TYPE_DIM_UPPER(tp0)         = TYPE_DIM_UPPER(tp);
+                            TYPE_DIM_STEP(tp0)          = TYPE_DIM_STEP(tp);
+
+                            if (prev != NULL) {
+                                TYPE_REF(prev) = tp0;
+                            } else {
+                                first = tp0;
+                            }
+                            prev = tp0;
+                        }
+
+                        if (!array_has_dim) {
+                            error("not valid dimension index");
+                            return NULL;
+                        }
+
+                        if (prev != NULL) {
+                            TYPE_REF(prev) = ret;
+                            fix_array_dimensions(first);
+                            return first;
+                        }
+                        /* fall through */
+
+                  return_assumed_shape:
+                        /*
+                         * dummy N-1 dimensional assumed array or scala.
+                         */
+
+                        if (TYPE_N_DIM(tp) > 1) {
+                            generate_assumed_shape_expr(shape, TYPE_N_DIM(tp));
+                            ret = compile_dimensions(ret, shape);
+                            fix_array_dimensions(ret);
+                        }
+
+
+                        return ret;
+                    }
+                    break;
 
 
                     default:
@@ -1229,6 +1311,12 @@ get_intrinsic_return_type(intrinsic_entry *ep, expv args, expv kindV) {
                 nDims = TYPE_N_DIM(tp);
                 dims = list1(LIST, make_int_enode(nDims));
                 ret = compile_dimensions(bTypeDsc, dims);
+
+                if (INTR_OP(ep) == INTR_MAXLOC ||
+                    INTR_OP(ep) == INTR_MINLOC) {
+                    TYPE_KIND(ret) = expr_list_get_n(args, 2);
+                }
+
                 fix_array_dimensions(ret);
 
                 break;
