@@ -1773,8 +1773,6 @@ executable_statement:
 	 CTL_WHERE/CTL_ELSE_WHERE and treat coming statement
 	 appropriately.
 	 ***/
-        | WHERE '(' expr ')' assign_statement_or_null
-        { $$ = list2(F_WHERE_STATEMENT,$3,$5); }
         | ELSEWHERE
         { $$ = list0(F_ELSEWHERE_STATEMENT); }
         | ELSEWHERE '(' expr ')' assign_statement_or_null
