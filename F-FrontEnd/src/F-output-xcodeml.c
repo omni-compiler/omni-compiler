@@ -2555,7 +2555,9 @@ getKindParameter(TYPE_DESC tp)
 
     if(IS_DOUBLED_TYPE(tp)) {
         sprintf(buf, "%d", KIND_PARAM_DOUBLE);
-    } else if(v && (EXPV_CODE(v) == INT_CONSTANT || EXPV_CODE(v) == IDENT)) {
+    } else if(v && (EXPV_CODE(v) == INT_CONSTANT || EXPV_CODE(v) == IDENT 
+        || EXPV_CODE(v) == F_VAR || EXPV_CODE(v) == FLOAT_CONSTANT)) 
+    {
         strcpy(buf, getRawString(v));
     } else {
         return NULL;
