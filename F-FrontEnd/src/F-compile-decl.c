@@ -517,6 +517,8 @@ declare_procedure(enum name_class class,
         link_parent_defined_by(id);
         (void)declare_current_procedure_ext_id();
 
+	EXT_LINE(CURRENT_EXT_ID) = EXPR_LINE(name);
+
         break;
     }
 
@@ -3749,7 +3751,7 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
 	
         if (id != NULL) {
              declare_id_type(id, tp);
-             if (!ID_LINE(id)) ID_LINE(id) = EXPR_LINE(decl_list);
+             if (!ID_LINE(id) || PROC_CLASS(id) == P_THISPROC) ID_LINE(id) = EXPR_LINE(decl_list);
              if (TYPE_IS_PARAMETER(tp)) {
                  ID_CLASS(id) = CL_PARAM;
              }

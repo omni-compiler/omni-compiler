@@ -691,6 +691,7 @@ compile_statement1(int st_no, expr x)
         break;
 
     case F_FORMAT_DECL: {
+        if (CURRENT_STATE != INEXEC) check_INDCL();
         if (this_label == NULL) {
             error("format without statement label.");
             break;
