@@ -2,22 +2,24 @@ module mod1
 implicit none
 
 interface
-  subroutine signal_handler( sig )
-    integer, intent(in) :: sig
+  subroutine signal_handler()
   end subroutine
 end interface
 
+  procedure(signal_handler), public :: sigh1
+  procedure(signal_handler), private :: sigh2
+
 contains
 
-  subroutine set_handler( sig, signalh )
-    integer :: sig
+  subroutine sub1(signalh)
     procedure(signal_handler), optional :: signalh
-  
-    if(present(signalh)) then
-      print*,'present'
-    else
-      print*,'not present'
-    endif
-  end subroutine
+    procedure(signal_handler), pointer :: ptr
+  end subroutine sub1
+
+  subroutine sub2(signalh)
+    procedure(signal_handler), pointer, intent(in) :: signalh
+    procedure(signal_handler), pointer, save :: ptr2 => NULL()
+  end subroutine sub2
+
 end module mod1
 
