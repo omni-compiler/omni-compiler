@@ -1,12 +1,12 @@
 module mod1
-implicit none
 use issue319
+implicit none
 contains
   
 
-  subroutine sub1()
-    if(main%id() + 1 == 10) then 
+  subroutine sub2()
+    if(main%id() == 10) then 
     end if
-  end subroutine sub1
+  end subroutine sub2
 
 end module mod1
