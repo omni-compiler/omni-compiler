@@ -661,8 +661,8 @@ statement:      /* entry */
           { $$ = list1(F08_ENDPROCEDURE_STATEMENT, $2); }
         | GENERIC COL2 type_bound_generic_spec REF_OP ident_list
           { $$ = list3(F03_TYPE_BOUND_GENERIC_STATEMENT,$3, $5, NULL); }
-        | GENERIC ',' private_or_public_spec COL2 type_bound_generic_spec REF_OP ident_list
-          { $$ = list3(F03_TYPE_BOUND_GENERIC_STATEMENT,$5, $7, $3); }
+        | GENERIC ',' KW private_or_public_spec COL2 type_bound_generic_spec REF_OP ident_list
+         { $$ = list3(F03_TYPE_BOUND_GENERIC_STATEMENT, $6, $8, $4); }
         | FINAL COL2_or_null ident_list
           { $$ = list1(F03_TYPE_BOUND_FINAL_STATEMENT, $3); }
         | BLOCKDATA program_name
