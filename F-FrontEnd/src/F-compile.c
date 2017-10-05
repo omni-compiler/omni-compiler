@@ -4064,9 +4064,11 @@ end_procedure()
                 } else if (ID_TYPE(id) != NULL){
                     if (current_module_state == M_PUBLIC) {
                         TYPE_SET_PUBLIC(ID_TYPE(id));
+                        TYPE_ACCESS_IS_INFERRED(ID_TYPE(id)) = TRUE;
                     }
                     if (current_module_state == M_PRIVATE) {
                         TYPE_SET_PRIVATE(ID_TYPE(id));
+                        TYPE_ACCESS_IS_INFERRED(ID_TYPE(id)) = TRUE;
                     }
                 }
                 ID_DEFINED_BY(id_in_parent) = id;
@@ -7029,25 +7031,31 @@ compile_ARITHIF_statement(expr x)
 static int markAsPublic(ID id)
 {
     TYPE_DESC tp = ID_TYPE(id);
-    if (TYPE_IS_PRIVATE(id) || (tp != NULL && TYPE_IS_PRIVATE(tp))) {
+    if (TYPE_IS_PRIVATE(id) || (tp != NULL && TYPE_IS_PRIVATE(tp) && !TYPE_ACCESS_IS_INFERRED(tp))) {
         error("'%s' is already specified as private.", ID_NAME(id));
         return FALSE;
     }
     TYPE_SET_PUBLIC(id);
     TYPE_UNSET_PRIVATE(id);
-
+    if(tp != NULL) {
+        TYPE_ACCESS_IS_INFERRED(tp) = FALSE;
+    }
+    
     return TRUE;
 }
 
 static int markAsPrivate(ID id)
 {
     TYPE_DESC tp = ID_TYPE(id);
-    if (TYPE_IS_PUBLIC(id) || (tp != NULL && TYPE_IS_PUBLIC(tp))) {
+    if (TYPE_IS_PUBLIC(id) || (tp != NULL && TYPE_IS_PUBLIC(tp) && !TYPE_ACCESS_IS_INFERRED(tp))) {
         error("'%s' is already specified as public.", ID_NAME(id));
         return FALSE;
     }
     TYPE_UNSET_PUBLIC(id);
     TYPE_SET_PRIVATE(id);
+    if(tp != NULL) {
+        TYPE_ACCESS_IS_INFERRED(tp) = FALSE;
+    }
 
     return TRUE;
 }
