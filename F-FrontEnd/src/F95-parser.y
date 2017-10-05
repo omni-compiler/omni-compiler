@@ -1399,6 +1399,10 @@ char_selector: /* empty */
 
 len_key_spec: KW_LEN '=' expr
          { $$ = list1(F95_LEN_SELECTOR_SPEC, $3); }
+         | KW_LEN '=' ':'
+         { $$ = list1(F95_LEN_SELECTOR_SPEC,  list0(F08_LEN_SPEC_COLON)); }
+         | KW_LEN '=' '*'
+         { $$ = list1(F95_LEN_SELECTOR_SPEC, NULL); } 
         ;
 
 len_spec: '*'
