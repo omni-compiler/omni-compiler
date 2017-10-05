@@ -286,11 +286,11 @@ typedef enum {
     INTR_IS_IOSTAT_END,
     INTR_IS_IOSTAT_EOR,
 
-    /* F08 intrinsic subroutines */
     INTR_EXTENDS_TYPE_OF,
     INTR_SAME_TYPE_AS,
     INTR_MOVE_ALLOC,
 
+    /* F08 intrinsic subroutines */
     INTR_COMMOND_ARUGMENT_COUNT,
     INTR_GET_COMMOND,
     INTR_GET_COMMOND_ARUGMENT,
