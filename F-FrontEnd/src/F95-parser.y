@@ -1139,6 +1139,7 @@ use_only_list:
 
 use_only:
           use_rename
+        | GENERIC_SPEC // e.g: USE ..., ONLY: assignement(=) 
         | IDENTIFIER
         ;
 
