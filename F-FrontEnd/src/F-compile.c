@@ -6254,9 +6254,7 @@ compile_member_ref(expr x)
 
     // TODO:
     //	 should work for all cases (array/substr/plain scalar).
-    if (!IS_FUNCTION_TYPE(ID_TYPE(member_id)) && (
-            TYPE_HAS_SUBOBJECT_PROPAGATE_ATTRS(stVTyp) ||
-            TYPE_IS_COINDEXED(stVTyp))) {
+    if (!IS_FUNCTION_TYPE(ID_TYPE(member_id))) {
         /*
          * If type of struct_v has pointer/pointee flags on, members
          * should have those flags on too.
