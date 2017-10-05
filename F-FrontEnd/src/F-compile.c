@@ -146,6 +146,8 @@ static ID     unify_id_list(ID parents, ID childs, int overshadow);
 static void   unify_submodule_symbol_table(void);
 static EXT_ID unify_ext_id_list(EXT_ID parents, EXT_ID childs, int overshadow);
 
+static expr get_generic_spec_symbol(int expr_code);
+
 void init_for_OMP_pragma();
 void check_for_OMP_pragma(expr x);
 
@@ -5539,6 +5541,57 @@ compile_USE_decl(expr x, expr x_args, int is_intrinsic)
 }
 
 /*
+ * Get correct symbol for a specific generic spec
+ */
+static expr 
+get_generic_spec_symbol(int expr_code){
+    expr gen_spec;
+    if(expr_code == F95_ASSIGNOP) {
+        gen_spec = make_enode(IDENT, (void *)find_symbol("="));
+    } else if(expr_code == F95_DOTOP) {
+        gen_spec = make_enode(IDENT, (void *)find_symbol("."));
+    } else if(expr_code == F95_POWEOP) {
+        gen_spec = make_enode(IDENT, (void *)find_symbol("**"));
+    } else if(expr_code == F95_MULOP) {
+        gen_spec = make_enode(IDENT, (void *)find_symbol("*"));
+    } else if(expr_code == F95_DIVOP) {
+        gen_spec = make_enode(IDENT, (void *)find_symbol("/"));
+    } else if(expr_code == F95_PLUSOP) {
+        gen_spec = make_enode(IDENT, (void *)find_symbol("+"));
+    } else if(expr_code == F95_MINUSOP) {
+        gen_spec = make_enode(IDENT, (void *)find_symbol("-"));
+    } else if(expr_code == F95_EQOP) {
+        gen_spec = make_enode(IDENT, (void *)find_symbol(".eq."));
+    } else if(expr_code == F95_NEOP) {
+        gen_spec = make_enode(IDENT, (void *)find_symbol(".neq."));
+    } else if(expr_code == F95_LTOP) {
+        gen_spec = make_enode(IDENT, (void *)find_symbol(".lt."));
+    } else if(expr_code == F95_LEOP) {
+        gen_spec = make_enode(IDENT, (void *)find_symbol(".le."));
+    } else if(expr_code == F95_GEOP) {
+        gen_spec = make_enode(IDENT, (void *)find_symbol(".ge."));
+    } else if(expr_code == F95_GTOP) {
+        gen_spec = make_enode(IDENT, (void *)find_symbol(".gt."));
+    } else if(expr_code == F95_NOTOP) {
+        gen_spec = make_enode(IDENT, (void *)find_symbol(".not."));
+    } else if(expr_code == F95_ANDOP) {
+        gen_spec = make_enode(IDENT, (void *)find_symbol(".and."));
+    } else if(expr_code == F95_OROP) {
+        gen_spec = make_enode(IDENT, (void *)find_symbol(".or."));
+    } else if(expr_code == F95_EQVOP) {
+        gen_spec = make_enode(IDENT, (void *)find_symbol(".eqv."));
+    } else if(expr_code == F95_NEQVOP) {
+        gen_spec = make_enode(IDENT, (void *)find_symbol(".neqv."));
+    } else if(expr_code == F95_CONCATOP) {
+        gen_spec = make_enode(IDENT, (void *)find_symbol("/"));
+    } else {
+        gen_spec = NULL;
+    }
+    return gen_spec;
+}
+
+
+/*
  * compiles use only statement.
  */
 static void
@@ -5560,7 +5613,17 @@ compile_USE_ONLY_decl (expr x, expr x_args, int is_intrinsic)
 
         a = LIST_ITEM(lp);
 
-        if (EXPV_CODE(a) == LIST) {
+        if(EXPV_CODE(a) == F95_GENERIC_SPEC) {
+            expr gen_spec;
+            assert(EXPR_HAS_ARG1(a));
+            gen_spec = get_generic_spec_symbol(EXPR_CODE(EXPR_ARG1(a)));
+            if(gen_spec != NULL) {
+                args = list_put_last(args, list2(F95_GENERIC_SPEC, NULL, gen_spec));
+                use_arg->local = EXPV_NAME(gen_spec);
+                use_arg->use = NULL;
+                use_arg->is_operator = TRUE;
+            }
+        } else if (EXPV_CODE(a) == LIST) {
             useExpr = EXPR_ARG1(a);
             localExpr = EXPR_ARG2(a);
 
