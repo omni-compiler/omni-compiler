@@ -542,6 +542,8 @@ intrinsic_entry intrinsic_table[] = {
 
     // ALLOCATED (ARRAY)
     { INTR_ALLOCATED,   INTR_NAME_GENERIC,      "allocated",    0,      { INTR_TYPE_ANY_ARRAY_ALLOCATABLE },                    INTR_TYPE_LOGICAL,      1, -6, LANGSPEC_F90, INTR_CLASS_I },
+    // ALLOCATED (SCALA) for F2003
+    { INTR_ALLOCATED,   INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_ANY },                                      INTR_TYPE_LOGICAL,      1, -6, LANGSPEC_F2003, INTR_CLASS_I },
 
     // LBOUND (ARRAY [, DIM])
     { INTR_LBOUND,      INTR_NAME_GENERIC,      "lbound",       0,      { INTR_TYPE_ANY_ARRAY },                                INTR_TYPE_INT_ARRAY,    1, -3, LANGSPEC_F90, INTR_CLASS_I },
