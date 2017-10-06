@@ -5826,10 +5826,11 @@ compile_type_bound_generic_procedure(expr x)
 
     switch (EXPR_CODE(generics_spec)) {
         case IDENT:
-            if ((find_struct_member(struct_tp, EXPR_SYM(generics_spec))) != NULL) {
+            id = find_struct_member(struct_tp, EXPR_SYM(generics_spec));
+            if (id != NULL) {
                 // Multiple GENERIC statement for the same id. Have to add to 
                 // the binding list. 
-                id = find_struct_member(struct_tp, EXPR_SYM(generics_spec));
+                
                 last_ip = TBP_BINDING(id);
                 while(ID_NEXT(last_ip) != NULL) {
                     last_ip = ID_NEXT(last_ip);
