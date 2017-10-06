@@ -506,6 +506,7 @@ compare_intrinsic_arg_type(expv arg,
                             break;
                         argtp = ID_TYPE(id);
                     } break;
+                    case(ARRAY_REF):
                     case(F95_MEMBER_REF): {
                         if(iType != INTR_TYPE_ANY_OPTIONAL)
                             argtp = EXPV_TYPE(arg);
