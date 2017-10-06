@@ -8560,11 +8560,12 @@ compile_IMPORT_statement(expr x)
     ID ident;
 
     if (in_interface() == FALSE){
-        error("IMPORT statement allowed only in interface body");
+        error("The IMPORT statement is allowed only in an interface body.");
     }
 
     if (in_module_procedure()){
-        error("IMPORT statement allowed only in interface body and not in module procedure");
+        error("The IMPORT statement is not allowed in an interface body of "
+              "a module procedure.");
     }
 
     ident_list = EXPR_ARG1(x);
