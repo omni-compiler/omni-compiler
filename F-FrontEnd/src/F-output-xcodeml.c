@@ -4632,6 +4632,8 @@ outx_structType(int l, TYPE_DESC tp)
                     }
                     outx_puts("\" ");
                 }
+                outx_true(TYPE_IS_PUBLIC(id), "is_public");
+                outx_true(TYPE_IS_PRIVATE(id), "is_private");
                 outx_printi(0,">\n");
                 if (!is_defined_io) {
                     outx_tagText(l3, "name", SYM_NAME(ID_SYM(id)));
