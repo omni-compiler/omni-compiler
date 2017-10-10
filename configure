@@ -859,6 +859,7 @@ with_gmp
 with_gmp_include
 with_gmp_lib
 enable_debug
+enable_python
 enable_openacc
 enable_atool
 enable_xacc
@@ -1505,6 +1506,7 @@ Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-debug          enable generate executable with debug symbol (false default)
+  --enable-python         enable generate shared library for loading python ctypes (false default)
   --enable-openacc        enable OpenACC (false default)
   --enable-atool          enable atool (false default)
   --enable-xacc           enable XcalableACC (false default)
@@ -8457,6 +8459,14 @@ else
 fi
 
 
+# Check whether --enable-python was given.
+if test "${enable_python+set}" = set; then :
+  enableval=$enable_python; doPython=yes
+else
+  doPython=no
+fi
+
+
 # Check whether --enable-openacc was given.
 if test "${enable_openacc+set}" = set; then :
   enableval=$enable_openacc; doOpenAcc=yes
@@ -10317,6 +10327,9 @@ fi
 	    # MPI C
 	    MPI_CPPFLAGS="-E -std=gnu99"
 	    MPI_CFLAGS="-O2 -std=gnu99 -Wall -Wpointer-arith $OPENMP_OPT_C"
+	    if test "x$doPython" = "xyes"; then
+	       MPI_CFLAGS+=" -fPIC -shared"
+	    fi
 	    MPI_CLIBS=""
 
 	    # Omni C
@@ -14523,5 +14536,9 @@ fi
 
 if test x${domod2xmod} = xyes; then
   echo "    Translate .mod to .xmod      : $domod2xmod"
+fi
+
+if test x${doPython} = xyes; then
+  echo "    Shared library for python    : $doPython"
 fi
 echo "=================================================="

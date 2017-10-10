@@ -214,7 +214,7 @@ OMNI_TRAVERSE_OPT="--C --nm ${NM}"
 OMNI_TRAVERSE_OPT="${OMNI_TRAVERSE_OPT} --prefix xmpc"
 omni_exec $OMNI_TRAVERSE $OMNI_TRAVERSE_OPT -o $TRAVERSE_FILE_C "${obj_files[@]}" "${archive_files[@]}" ${OMNI_HOME}/lib/libxmp.a
 
-omni_exec $OMNI_MPICC_CMD -c $TRAVERSE_FILE_C -o $TRAVERSE_FILE_O
+omni_exec $OMNI_MPICC_CMD $OMNI_MPICC_OPT "${native_add_opt[@]}" "${other_args[@]}" -c $TRAVERSE_FILE_C -o $TRAVERSE_FILE_O
 
 # omni_traverse for ACC
 if [ $ENABLE_OPENACC = true ]; then

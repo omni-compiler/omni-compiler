@@ -60,7 +60,7 @@ ifeq ($(IS_MPI3_ONESIDED), $(TRUE))
 	OBJECTS += xmp_onesided.o xmp_onesided_mpi.o xmp_coarray.o xmp_coarray_utils.o xmp_coarray_local.o \
 		   xmp_post_wait.o xmp_post_wait_mpi.o xmp_coarray_mpi.o xmp_intrinsic_mpi.o
 	CFLAGS += -D_XMP_MPI3_ONESIDED
-endif	
+endif
 endif
 ifeq ($(IS_FJRDMA), $(TRUE))
 	OBJECTS += xmp_onesided.o xmp_onesided_fjrdma.o xmp_coarray.o xmp_coarray_utils.o xmp_coarray_local.o \
