@@ -1662,21 +1662,6 @@ compile_exec_statement(expr x)
     }
 }
 
-/**
- * Checks if the current context is inside interface block
- * (between `INTERFACE` and `END INTERFACE`)
- */
-static int
-check_inside_INTERFACE_body() {
-    int i;
-    for (i = 0; i <= unit_ctl_level; i++) {
-        if (UNIT_CTL_CURRENT_STATE(unit_ctls[i]) == ININTR) {
-            return TRUE;
-        }
-    }
-    return FALSE;
-}
-
 /*
  * context control. keep track of context
  */
@@ -1704,7 +1689,7 @@ begin_procedure()
      * and the implicit type conversion rule can be propagated
      * only from the host-associated scopes
      */
-    if (unit_ctl_level > 0 && check_inside_INTERFACE_body() == FALSE) {
+    if (unit_ctl_level > 0 && in_interface() == FALSE) {
         set_parent_implicit_decls();
     }
 
@@ -1814,6 +1799,46 @@ check_NOT_INBLOCK()
     if (inblock()) {
         error("unexpected statement in the block construct");
     }
+}
+
+
+/**
+ * Checks if the current context is inside interface block
+ * (between `INTERFACE` and `END INTERFACE`)
+ */
+int
+in_interface()
+{
+    int i;
+    CTL cp;
+    FOR_CTLS_BACKWARD(cp) {
+        if (CTL_TYPE(cp) == CTL_INTERFACE)
+            return TRUE;
+    }
+    for (i = 0; i < unit_ctl_level; i++) {
+        if (UNIT_CTL_CURRENT_STATE(unit_ctls[i]) == ININTR)
+            return TRUE;
+    }
+    return FALSE;
+}
+
+/**
+ * Checks if the current context is inside MODULE PROCEDURE/FUNCTION/SUBROUTINE
+ */
+int
+in_module_procedure()
+{
+    int i;
+    ID id;
+    for (i = unit_ctl_level; i >= 0; i--) {
+        id = UNIT_CTL_CURRENT_PROCEDURE(unit_ctls[i]);
+        if (id != NULL &&
+            ID_TYPE(id) != NULL &&
+            TYPE_IS_MODULE(ID_TYPE(id))) {
+            return TRUE;
+        }
+    }
+    return FALSE;
 }
 
 
@@ -7909,7 +7934,7 @@ push_unit_ctl(enum prog_state state)
 
     assert(unit_ctls[unit_ctl_level] == NULL);
     unit_ctls[unit_ctl_level] = new_unit_ctl();
-    if (check_inside_INTERFACE_body() == FALSE) {
+    if (in_interface() == FALSE) {
         set_parent_implicit_decls();
     }
 
@@ -8496,8 +8521,14 @@ compile_IMPORT_statement(expr x)
     expv ident_list, arg;
     list lp;
     ID ident;
-    if (check_inside_INTERFACE_body() == FALSE){
-        error("IMPORT statement allowed only in interface body");
+
+    if (in_interface() == FALSE){
+        error("The IMPORT statement is allowed only in an interface body.");
+    }
+
+    if (in_module_procedure()){
+        error("The IMPORT statement is not allowed in an interface body of "
+              "a module procedure.");
     }
 
     ident_list = EXPR_ARG1(x);
