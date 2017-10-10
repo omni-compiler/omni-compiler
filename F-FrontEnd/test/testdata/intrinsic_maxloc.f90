@@ -49,8 +49,8 @@
         s1 = MAXLOC(arrayC, 1, mask, 8)
 
         ! MAXLOC(ARRAY,DIM,MASK,KIND,BACK)
-        i = MAXLOC(arrayI, 0, mask, 8, .TRUE.)
-        r = MAXLOC(arrayR, 0, mask, 8, .TRUE.)
-        s = MAXLOC(arrayC, 0, mask, 8, .TRUE.)
+        i = MAXLOC(arrayI, 1, mask, 8, .TRUE.)
+        r = MAXLOC(arrayR, 1, mask, 8, .TRUE.)
+        s = MAXLOC(arrayC, 1, mask, 8, .TRUE.)
 
       end program test_maxloc
