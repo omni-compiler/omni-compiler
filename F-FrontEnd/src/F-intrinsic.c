@@ -1236,7 +1236,6 @@ get_intrinsic_return_type(intrinsic_entry *ep, expv args, expv kindV) {
                             fix_array_dimensions(first);
                             return first;
                         }
-                        /* fall through */
 
                   return_assumed_shape:
                         /*
