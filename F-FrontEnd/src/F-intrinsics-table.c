@@ -762,17 +762,17 @@ intrinsic_entry intrinsic_table[] = {
      * Fortran 2008 intrinsics
      */
 
-    { INTR_COMMOND_ARUGMENT_COUNT,       INTR_NAME_SPECIFIC,     "command_argument_count",        0,      {},                    INTR_TYPE_INT,                  0, -6, LANGSPEC_F2008, INTR_CLASS_T },
+    { INTR_COMMAND_ARUGMENT_COUNT,       INTR_NAME_SPECIFIC,     "command_argument_count",        0,      {},                    INTR_TYPE_INT,                  0, -6, LANGSPEC_F2008, INTR_CLASS_T },
 
-    { INTR_GET_COMMOND,                  INTR_NAME_GENERIC,      "get_command",        0,      {},                    INTR_TYPE_NONE,                  0, -6, LANGSPEC_F2008, INTR_CLASS_S },
-    { INTR_GET_COMMOND,                  INTR_NAME_GENERIC,      "",                   0,      { INTR_TYPE_CHAR },                    INTR_TYPE_NONE,                  1, -6, LANGSPEC_F2008, INTR_CLASS_S },
-    { INTR_GET_COMMOND,                  INTR_NAME_GENERIC,      "",                   0,      { INTR_TYPE_CHAR, INTR_TYPE_INT },                    INTR_TYPE_NONE,                  2, -6, LANGSPEC_F2008, INTR_CLASS_S },
-    { INTR_GET_COMMOND,                  INTR_NAME_GENERIC,      "",                   0,      { INTR_TYPE_CHAR, INTR_TYPE_INT, INTR_TYPE_INT},                    INTR_TYPE_NONE,                  3, -6, LANGSPEC_F2008, INTR_CLASS_S },
+    { INTR_GET_COMMAND,                  INTR_NAME_GENERIC,      "get_command",        0,      {},                    INTR_TYPE_NONE,                  0, -6, LANGSPEC_F2008, INTR_CLASS_S },
+    { INTR_GET_COMMAND,                  INTR_NAME_GENERIC,      "",                   0,      { INTR_TYPE_CHAR },                    INTR_TYPE_NONE,                  1, -6, LANGSPEC_F2008, INTR_CLASS_S },
+    { INTR_GET_COMMAND,                  INTR_NAME_GENERIC,      "",                   0,      { INTR_TYPE_CHAR, INTR_TYPE_INT },                    INTR_TYPE_NONE,                  2, -6, LANGSPEC_F2008, INTR_CLASS_S },
+    { INTR_GET_COMMAND,                  INTR_NAME_GENERIC,      "",                   0,      { INTR_TYPE_CHAR, INTR_TYPE_INT, INTR_TYPE_INT},                    INTR_TYPE_NONE,                  3, -6, LANGSPEC_F2008, INTR_CLASS_S },
 
-    { INTR_GET_COMMOND_ARUGMENT,         INTR_NAME_GENERIC,      "get_command_argument",        0,      { INTR_TYPE_INT },                    INTR_TYPE_NONE,                  1, -6, LANGSPEC_F2008, INTR_CLASS_S },
-    { INTR_GET_COMMOND_ARUGMENT,         INTR_NAME_GENERIC,      "",                            0,      { INTR_TYPE_INT,INTR_TYPE_CHAR },                    INTR_TYPE_NONE,                  2, -6, LANGSPEC_F2008, INTR_CLASS_S },
-    { INTR_GET_COMMOND_ARUGMENT,         INTR_NAME_GENERIC,      "",                            0,      { INTR_TYPE_INT,INTR_TYPE_CHAR,INTR_TYPE_INT},                    INTR_TYPE_NONE,                  3, -6, LANGSPEC_F2008, INTR_CLASS_S },
-    { INTR_GET_COMMOND_ARUGMENT,         INTR_NAME_GENERIC,      "",                            0,      { INTR_TYPE_INT,INTR_TYPE_CHAR,INTR_TYPE_INT,INTR_TYPE_INT},                    INTR_TYPE_NONE,                  4, -6, LANGSPEC_F2008, INTR_CLASS_S },
+    { INTR_GET_COMMAND_ARUGMENT,         INTR_NAME_GENERIC,      "get_command_argument",        0,      { INTR_TYPE_INT },                    INTR_TYPE_NONE,                  1, -6, LANGSPEC_F2008, INTR_CLASS_S },
+    { INTR_GET_COMMAND_ARUGMENT,         INTR_NAME_GENERIC,      "",                            0,      { INTR_TYPE_INT,INTR_TYPE_CHAR },                    INTR_TYPE_NONE,                  2, -6, LANGSPEC_F2008, INTR_CLASS_S },
+    { INTR_GET_COMMAND_ARUGMENT,         INTR_NAME_GENERIC,      "",                            0,      { INTR_TYPE_INT,INTR_TYPE_CHAR,INTR_TYPE_INT},                    INTR_TYPE_NONE,                  3, -6, LANGSPEC_F2008, INTR_CLASS_S },
+    { INTR_GET_COMMAND_ARUGMENT,         INTR_NAME_GENERIC,      "",                            0,      { INTR_TYPE_INT,INTR_TYPE_CHAR,INTR_TYPE_INT,INTR_TYPE_INT},                    INTR_TYPE_NONE,                  4, -6, LANGSPEC_F2008, INTR_CLASS_S },
 
     { INTR_GET_ENVIRONMENT_VARIABLE,     INTR_NAME_GENERIC,      "get_environment_variable",        0,      { INTR_TYPE_CHAR },                    INTR_TYPE_INT,                  1, -6, LANGSPEC_F2008, INTR_CLASS_T },
     { INTR_GET_ENVIRONMENT_VARIABLE,     INTR_NAME_GENERIC,      "",        0,      { INTR_TYPE_CHAR,INTR_TYPE_CHAR },                    INTR_TYPE_INT,                  2, -6, LANGSPEC_F2008, INTR_CLASS_T },
