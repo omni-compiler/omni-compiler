@@ -5885,39 +5885,35 @@ compile_type_bound_generic_procedure(expr x)
     }
 
     if (access_attr) {
-        FOR_ITEMS_IN_LIST(lp, access_attr) {
-            expr v = LIST_ITEM(lp);
-            switch (EXPR_CODE(v)) {
-
-                /*
-                 * Accesss specs
-                 */
-                case F95_PUBLIC_SPEC:
-                    if (access_attr_flags & TYPE_ATTR_PUBLIC) {
-                        error_at_node(x, "PUBLIC is already specified.");
-                        return;
-                    }
-                    if (access_attr_flags & (TYPE_ATTR_PRIVATE)) {
-                        error_at_node(x, "access specs are conflicted.");
-                        return;
-                    }
-                    access_attr_flags |= TYPE_ATTR_PUBLIC;
-                    break;
-                case F95_PRIVATE_SPEC:
-                    if (access_attr_flags & TYPE_ATTR_PRIVATE) {
-                        error_at_node(x, "PRIVATE is already specified.");
-                        return;
-                    }
-                    if (access_attr_flags & (TYPE_ATTR_PUBLIC)) {
-                        error_at_node(x, "access specs are conflicted.");
-                        return;
-                    }
-                    access_attr_flags |= TYPE_ATTR_PRIVATE;
-                    break;
-                default:
-                    error_at_node(x, "unexpected expression");
-                    break;
-            }
+        switch (EXPR_CODE(access_attr)) {
+            /*
+             * Accesss specs
+             */
+            case F95_PUBLIC_SPEC:
+                if (access_attr_flags & TYPE_ATTR_PUBLIC) {
+                    error_at_node(x, "PUBLIC is already specified.");
+                    return;
+                }
+                if (access_attr_flags & (TYPE_ATTR_PRIVATE)) {
+                    error_at_node(x, "access specs are conflicted.");
+                    return;
+                }
+                access_attr_flags |= TYPE_ATTR_PUBLIC;
+                break;
+            case F95_PRIVATE_SPEC:
+                if (access_attr_flags & TYPE_ATTR_PRIVATE) {
+                    error_at_node(x, "PRIVATE is already specified.");
+                    return;
+                }
+                if (access_attr_flags & (TYPE_ATTR_PUBLIC)) {
+                    error_at_node(x, "access specs are conflicted.");
+                    return;
+                }
+                access_attr_flags |= TYPE_ATTR_PRIVATE;
+                break;
+            default:
+                error_at_node(x, "unexpected expression");
+            break;
         }
     } else if (is_internal_private) {
         access_attr_flags |= TYPE_ATTR_PRIVATE;
