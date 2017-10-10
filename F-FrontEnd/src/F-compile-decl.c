@@ -1748,22 +1748,6 @@ find_external_cont_ident_head(SYMBOL s)
     return NULL;
 }
 
-static int
-in_interface()
-{
-    int i;
-    CTL cp;
-    FOR_CTLS_BACKWARD(cp) {
-        if (CTL_TYPE(cp) == CTL_INTERFACE)
-            return TRUE;
-    }
-    for (i = 0; i < unit_ctl_level; i++) {
-        if (UNIT_CTL_CURRENT_STATE(unit_ctls[i]) == ININTR)
-            return TRUE;
-    }
-    return FALSE;
-}
-
 
 /*
  * Find an identifier from the outiside of the current scope.
@@ -1802,7 +1786,7 @@ find_ident(SYMBOL s)
     if (ip != NULL) {
         return ip;
     }
-    if (in_interface()) {
+    if (in_interface() && !in_module_procedure()) {
         return NULL;
     }
     return find_ident_outer_scope(s);
@@ -3879,7 +3863,7 @@ find_struct_decl(SYMBOL s)
     if (tp != NULL) {
         return tp;
     }
-    if (in_interface()) {
+    if (in_interface() && !in_module_procedure()) {
         return NULL;
     }
     tp = find_struct_decl_block_parent(s);
@@ -5901,39 +5885,35 @@ compile_type_bound_generic_procedure(expr x)
     }
 
     if (access_attr) {
-        FOR_ITEMS_IN_LIST(lp, access_attr) {
-            expr v = LIST_ITEM(lp);
-            switch (EXPR_CODE(v)) {
-
-                /*
-                 * Accesss specs
-                 */
-                case F95_PUBLIC_SPEC:
-                    if (access_attr_flags & TYPE_ATTR_PUBLIC) {
-                        error_at_node(x, "PUBLIC is already specified.");
-                        return;
-                    }
-                    if (access_attr_flags & (TYPE_ATTR_PRIVATE)) {
-                        error_at_node(x, "access specs are conflicted.");
-                        return;
-                    }
-                    access_attr_flags |= TYPE_ATTR_PUBLIC;
-                    break;
-                case F95_PRIVATE_SPEC:
-                    if (access_attr_flags & TYPE_ATTR_PRIVATE) {
-                        error_at_node(x, "PRIVATE is already specified.");
-                        return;
-                    }
-                    if (access_attr_flags & (TYPE_ATTR_PUBLIC)) {
-                        error_at_node(x, "access specs are conflicted.");
-                        return;
-                    }
-                    access_attr_flags |= TYPE_ATTR_PRIVATE;
-                    break;
-                default:
-                    error_at_node(x, "unexpected expression");
-                    break;
-            }
+        switch (EXPR_CODE(access_attr)) {
+            /*
+             * Accesss specs
+             */
+            case F95_PUBLIC_SPEC:
+                if (access_attr_flags & TYPE_ATTR_PUBLIC) {
+                    error_at_node(x, "PUBLIC is already specified.");
+                    return;
+                }
+                if (access_attr_flags & (TYPE_ATTR_PRIVATE)) {
+                    error_at_node(x, "access specs are conflicted.");
+                    return;
+                }
+                access_attr_flags |= TYPE_ATTR_PUBLIC;
+                break;
+            case F95_PRIVATE_SPEC:
+                if (access_attr_flags & TYPE_ATTR_PRIVATE) {
+                    error_at_node(x, "PRIVATE is already specified.");
+                    return;
+                }
+                if (access_attr_flags & (TYPE_ATTR_PUBLIC)) {
+                    error_at_node(x, "access specs are conflicted.");
+                    return;
+                }
+                access_attr_flags |= TYPE_ATTR_PRIVATE;
+                break;
+            default:
+                error_at_node(x, "unexpected expression");
+            break;
         }
     } else if (is_internal_private) {
         access_attr_flags |= TYPE_ATTR_PRIVATE;
