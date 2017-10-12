@@ -282,6 +282,20 @@ typedef enum {
     INTR_ATOMIC_DEFINE,
     INTR_ATOMIC_REF,
 
+    /* F03 intrinsic subroutins */
+    INTR_IS_IOSTAT_END,
+    INTR_IS_IOSTAT_EOR,
+
+    INTR_EXTENDS_TYPE_OF,
+    INTR_SAME_TYPE_AS,
+    INTR_MOVE_ALLOC,
+
+    /* F08 intrinsic subroutines */
+    INTR_COMMAND_ARUGMENT_COUNT,
+    INTR_GET_COMMAND,
+    INTR_GET_COMMAND_ARUGMENT,
+    INTR_GET_ENVIRONMENT_VARIABLE,
+
     INTR_COARRAY_MALLOC_BYTES,       // hidden interface
     INTR_COARRAY_ALLOCATED_BYTES,    // hidden interface
     INTR_COARRAY_GARBAGE_BYTES,      // hidden interface

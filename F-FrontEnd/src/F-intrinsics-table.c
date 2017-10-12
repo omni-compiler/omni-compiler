@@ -713,6 +713,7 @@ intrinsic_entry intrinsic_table[] = {
     { INTR_CPU_TIME,    INTR_NAME_GENERIC,      "cpu_time",     0,      { INTR_TYPE_REAL },                                    INTR_TYPE_NONE, 1, -6, LANGSPEC_F95, INTR_CLASS_S },
     { INTR_CPU_TIME,    INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_DREAL },                                   INTR_TYPE_NONE, 1, -6, LANGSPEC_F95, INTR_CLASS_S },
 
+
     /*
      * CAF1.0 (subset of Fortran2008) intrinic functions
      * This list should match with XcodeML-Exc-Tools/src/exc/xmpF/XMPtransCoarrayRun.java
@@ -747,6 +748,38 @@ intrinsic_entry intrinsic_table[] = {
 
     // SELECTED_CHAR_KIND(NAME)
     { INTR_SELECTED_CHAR_KIND, INTR_NAME_GENERIC,   "selected_char_kind",  0,      {INTR_TYPE_CHAR}, INTR_TYPE_INT, 1,  -6, LANGSPEC_F2008, INTR_CLASS_T },
+
+
+    /*
+     * Fortran 2003 intrinsics
+     */
+    { INTR_MOVE_ALLOC,   INTR_NAME_SPECIFIC,        "move_alloc",          0,      {INTR_TYPE_ANY, INTR_TYPE_ANY}, INTR_TYPE_NONE,    2,  -6, LANGSPEC_F2003, INTR_CLASS_PS },
+    { INTR_EXTENDS_TYPE_OF,   INTR_NAME_SPECIFIC,   "extends_type_of",     0,      {INTR_TYPE_ANY, INTR_TYPE_ANY}, INTR_TYPE_LOGICAL, 2,  -6, LANGSPEC_F2003, INTR_CLASS_I },
+    { INTR_SAME_TYPE_AS,   INTR_NAME_SPECIFIC,      "same_type_as",        0,      {INTR_TYPE_ANY, INTR_TYPE_ANY}, INTR_TYPE_LOGICAL, 2,  -6, LANGSPEC_F2003, INTR_CLASS_I },
+    { INTR_IS_IOSTAT_END,   INTR_NAME_SPECIFIC,      "is_iostat_end",      0,      {INTR_TYPE_INT},                INTR_TYPE_LOGICAL, 1,  -6, LANGSPEC_F2003, INTR_CLASS_E },
+    { INTR_IS_IOSTAT_EOR,   INTR_NAME_SPECIFIC,      "is_iostat_ior",      0,      {INTR_TYPE_INT},                INTR_TYPE_LOGICAL, 1,  -6, LANGSPEC_F2003, INTR_CLASS_E },
+
+    /*
+     * Fortran 2008 intrinsics
+     */
+
+    { INTR_COMMAND_ARUGMENT_COUNT,       INTR_NAME_SPECIFIC,     "command_argument_count",        0,      {},                    INTR_TYPE_INT,                  0, -6, LANGSPEC_F2008, INTR_CLASS_T },
+
+    { INTR_GET_COMMAND,                  INTR_NAME_GENERIC,      "get_command",        0,      {},                    INTR_TYPE_NONE,                  0, -6, LANGSPEC_F2008, INTR_CLASS_S },
+    { INTR_GET_COMMAND,                  INTR_NAME_GENERIC,      "",                   0,      { INTR_TYPE_CHAR },                    INTR_TYPE_NONE,                  1, -6, LANGSPEC_F2008, INTR_CLASS_S },
+    { INTR_GET_COMMAND,                  INTR_NAME_GENERIC,      "",                   0,      { INTR_TYPE_CHAR, INTR_TYPE_INT },                    INTR_TYPE_NONE,                  2, -6, LANGSPEC_F2008, INTR_CLASS_S },
+    { INTR_GET_COMMAND,                  INTR_NAME_GENERIC,      "",                   0,      { INTR_TYPE_CHAR, INTR_TYPE_INT, INTR_TYPE_INT},                    INTR_TYPE_NONE,                  3, -6, LANGSPEC_F2008, INTR_CLASS_S },
+
+    { INTR_GET_COMMAND_ARUGMENT,         INTR_NAME_GENERIC,      "get_command_argument",        0,      { INTR_TYPE_INT },                    INTR_TYPE_NONE,                  1, -6, LANGSPEC_F2008, INTR_CLASS_S },
+    { INTR_GET_COMMAND_ARUGMENT,         INTR_NAME_GENERIC,      "",                            0,      { INTR_TYPE_INT,INTR_TYPE_CHAR },                    INTR_TYPE_NONE,                  2, -6, LANGSPEC_F2008, INTR_CLASS_S },
+    { INTR_GET_COMMAND_ARUGMENT,         INTR_NAME_GENERIC,      "",                            0,      { INTR_TYPE_INT,INTR_TYPE_CHAR,INTR_TYPE_INT},                    INTR_TYPE_NONE,                  3, -6, LANGSPEC_F2008, INTR_CLASS_S },
+    { INTR_GET_COMMAND_ARUGMENT,         INTR_NAME_GENERIC,      "",                            0,      { INTR_TYPE_INT,INTR_TYPE_CHAR,INTR_TYPE_INT,INTR_TYPE_INT},                    INTR_TYPE_NONE,                  4, -6, LANGSPEC_F2008, INTR_CLASS_S },
+
+    { INTR_GET_ENVIRONMENT_VARIABLE,     INTR_NAME_GENERIC,      "get_environment_variable",        0,      { INTR_TYPE_CHAR },                    INTR_TYPE_INT,                  1, -6, LANGSPEC_F2008, INTR_CLASS_T },
+    { INTR_GET_ENVIRONMENT_VARIABLE,     INTR_NAME_GENERIC,      "",        0,      { INTR_TYPE_CHAR,INTR_TYPE_CHAR },                    INTR_TYPE_INT,                  2, -6, LANGSPEC_F2008, INTR_CLASS_T },
+    { INTR_GET_ENVIRONMENT_VARIABLE,     INTR_NAME_GENERIC,      "",        0,      { INTR_TYPE_CHAR,INTR_TYPE_CHAR,INTR_TYPE_INT },                    INTR_TYPE_INT,                  3, -6, LANGSPEC_F2008, INTR_CLASS_T },
+    { INTR_GET_ENVIRONMENT_VARIABLE,     INTR_NAME_GENERIC,      "",        0,      { INTR_TYPE_CHAR,INTR_TYPE_CHAR,INTR_TYPE_INT,INTR_TYPE_INT },                    INTR_TYPE_INT,                  4, -6, LANGSPEC_F2008, INTR_CLASS_T },
+    { INTR_GET_ENVIRONMENT_VARIABLE,     INTR_NAME_GENERIC,      "",        0,      { INTR_TYPE_CHAR,INTR_TYPE_CHAR,INTR_TYPE_INT,INTR_TYPE_INT,INTR_TYPE_LOGICAL },                    INTR_TYPE_INT,                  5, -6, LANGSPEC_F2008, INTR_CLASS_T },
 
     /* hidden interfaces for debugging */
     { INTR_COARRAY_MALLOC_BYTES,      INTR_NAME_GENERIC,   "xmpf_coarray_malloc_bytes",        0,   {INTR_TYPE_NONE},   INTR_TYPE_INT,  0, -8, LANGSPEC_NONSTD, INTR_CLASS_N },
