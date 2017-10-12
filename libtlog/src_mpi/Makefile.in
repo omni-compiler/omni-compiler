@@ -1,22 +1,33 @@
 .PHONY: all clean install
 
-CC           = @MPI_CC@
-CFLAGS       = @MPI_CFLAGS@
-RANLIB       = @RANLIB@
-AR           = @AR@
-ARFLAGS      = @ARFLAGS@
-MKDIR_P      = @MKDIR_P@
-INSTALL      = @INSTALL@
-LIBDIR       = @OMNI_HOME@/lib
-BINDIR       = @OMNI_HOME@/bin
-INCDIR       = @OMNI_HOME@/include
-LIBTLOG      = libtlog_mpi.a
-TLOGVIEW     = ./bin/tlogview
-TLOGVIEW_JAR = ./bin/tlogview.jar
-OBJECTS      = tlog.o tlog_event.o tlog_misc.o tlog-time.o
-HEADERS      = tlog_mpi.h tlog_event.h
+CC            = @MPI_CC@
+CFLAGS        = @MPI_CFLAGS@
+RANLIB        = @RANLIB@
+AR            = @AR@
+ARFLAGS       = @ARFLAGS@
+MKDIR_P       = @MKDIR_P@
+INSTALL       = @INSTALL@
+LIBDIR        = @OMNI_HOME@/lib
+BINDIR        = @OMNI_HOME@/bin
+INCDIR        = @OMNI_HOME@/include
+LIBTLOG       = libtlog_mpi.a
+TLOGVIEW      = ./bin/tlogview
+TLOGVIEW_JAR  = ./bin/tlogview.jar
+OBJECTS       = tlog.o tlog_event.o tlog_misc.o tlog-time.o
+HEADERS       = tlog_mpi.h tlog_event.h
+LIBS          = $(LIBTLOG)
+SOFLAGS       = -shared
+PICFLAGS      = -fPIC
+TMP_DIR       = .libs
+FALSE         = 1
+TRUE          = 0
+ENABLE_SHARED = @SHARED@
 
-all: $(LIBTLOG)
+ifeq ($(ENABLE_SHARED), $(TRUE))
+	LIBS := $(LIBS) $(LIBTLOG:.a=.so)
+endif
+
+all: $(LIBS)
 $(OBJECTS): $(HEADERS)
 $(LIBTLOG): $(OBJECTS)
 	rm -f $@
@@ -26,12 +37,20 @@ $(LIBTLOG): $(OBJECTS)
 .c.o:
 	$(CC) $(CFLAGS) $< -c
 
+$(LIBTLOG:.a=.so): $(addprefix $(TMP_DIR)/, $(OBJECTS))
+	rm -f $@
+	$(CC) $(SOFLAGS) $(PICFLAGS) $^ -o $@
+
+$(TMP_DIR)/%.o : %.c
+	@$(MKDIR_P) $(TMP_DIR)
+	$(CC) $(CFLAGS) -c $< $(PICFLAGS) -o $@
+
 clean:
-	rm -f $(LIBTLOG) *.o
+	rm -rf $(LIBTLOG) *.o $(TMP_DIR) $(LIBS)
 
 install: $(LIBTLOG) $(TLOGVIEW_JAR) $(TLOGVIEW) $(HEADERS)
 	$(MKDIR_P) $(DESTDIR)$(LIBDIR) $(DESTDIR)$(BINDIR) $(DESTDIR)$(INCDIR)
-	$(INSTALL) $(LIBTLOG) $(TLOGVIEW_JAR) $(DESTDIR)$(LIBDIR)
+	$(INSTALL) $(LIBS) $(TLOGVIEW_JAR) $(DESTDIR)$(LIBDIR)
 	$(INSTALL) $(TLOGVIEW) $(DESTDIR)$(BINDIR)
 	$(INSTALL) $(HEADERS) $(DESTDIR)$(INCDIR)
 

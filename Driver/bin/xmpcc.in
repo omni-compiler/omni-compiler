@@ -226,7 +226,7 @@ fi
 
 # link
 [ $ENABLE_SCALASCA = true ] && OMNI_LINKER_CMD="scalasca -instrument -user $OMNI_LINKER_CMD"
-[ $ENABLE_TLOG     = true ] && OMNI_LINKER_OPT="$OMNI_LINKER_OPT -ltlog_mpi"
+OMNI_LINKER_OPT="$OMNI_LINKER_OPT -ltlog_mpi"
 
 if [ "$target" != "sxace-nec-superux" -a "${output_file}" != "" ]; then
     other_args+=("-o" "${output_file[@]}")

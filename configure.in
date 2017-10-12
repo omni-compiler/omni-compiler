@@ -404,12 +404,8 @@ AC_DEFINE_UNQUOTED(OBJEXT, "${OBJEXT}")
 
 #--------------------------------------------------------------------
 AC_ARG_ENABLE(debug,
-  [  --enable-debug          enable generate executable with debug symbol (false default)],
+  [  --enable-debug          enable to generate executable with debug symbol (false default)],
   [doDebug=yes], [doDebug=no])
-
-AC_ARG_ENABLE(python,
-  [  --enable-python         enable generate shared library for loading python ctypes (false default)],
-  [doPython=yes], [doPython=no])
 
 AC_ARG_ENABLE(openacc,
   [  --enable-openacc        enable OpenACC (false default)],
@@ -428,7 +424,7 @@ AC_ARG_ENABLE(mod2xmod,
   [domod2xmod=yes], [domod2xmod=no])
 
 AC_ARG_ENABLE(shared,
-  [  --enable-shared         enable to generate shared library (only OpenACC now) (false default)],
+  [  --enable-shared         enable to generate shared library (false default)],
   [doshared=yes], [doshared=no])
 
 AC_ARG_ENABLE(fjrdma,
@@ -947,9 +943,6 @@ else
 	    # MPI C
 	    MPI_CPPFLAGS="-E -std=gnu99"
 	    MPI_CFLAGS="-O2 -std=gnu99 -Wall -Wpointer-arith $OPENMP_OPT_C"
-	    if test "x$doPython" = "xyes"; then
-	       MPI_CFLAGS+=" -fPIC -shared"
-	    fi
 	    MPI_CLIBS=""
 
 	    # Omni C
@@ -2405,7 +2398,7 @@ if test x${domod2xmod} = xyes; then
   echo "    Translate .mod to .xmod      : $domod2xmod"
 fi
 
-if test x${doPython} = xyes; then
-  echo "    Shared library for python    : $doPython"
+if test x${doshared} = xyes; then
+  echo "    Shared library               : $doshared"
 fi
 echo "=================================================="
