@@ -8586,7 +8586,7 @@ move_implicit_variables_to_parent()
     ID moved = NULL;
     ID replaced_last = NULL;
     ID moved_last;
-    ID last;
+    ID last = NULL;
     ID parent = PARENT_LOCAL_SYMBOLS;
 
     SAFE_FOREACH_ID(ip, iq, LOCAL_SYMBOLS) {
