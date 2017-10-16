@@ -478,7 +478,9 @@ getXmlEscapedStr(const char *s)
     char *px = x;
     char c;
     x[0] = '\0';
+    int should_cdata = FALSE;
 
+#if 0
     while((c = *p++)) {
         switch(c) {
         case '<':  xstrcat(&px, "&lt;"); break;
@@ -502,8 +504,40 @@ getXmlEscapedStr(const char *s)
             break;
         }
     }
-
     *px = 0;
+#else
+    while((c = *p++)) {
+        switch(c) {
+        case '<':
+        case '>':
+        case '&':
+        case '"':
+        case '\'':
+        /* \002 used as quote in F95-lexer.c */
+        case '\002':
+            should_cdata = TRUE;
+            *px++ = c;
+            break;
+        case '\r': xstrcat(&px, "\\r"); break;
+        case '\n': xstrcat(&px, "\\n"); break;
+        case '\t': xstrcat(&px, "\\t"); break;
+        default:
+            if(c <= 31 || c >= 127) {
+                should_cdata = TRUE;
+            }
+            *px++ = c;
+            break;
+        }
+    }
+    *px = 0;
+
+    if (should_cdata) {
+        char buf[CHAR_BUF_SIZE + 20];
+        sprintf(buf, "<![CDATA[%s]]>", x);
+        strcpy(x, buf);
+    }
+
+#endif
 
     return x;
 }
