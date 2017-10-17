@@ -72,14 +72,14 @@ ulimit -t 10
 
 echo > errors.txt
 
-for f in `find -L ${testdata} -type f -a -name '*.f' -o -name '*.f90' | sort | xargs` ; do
+for f in `find -L ${testdata} -type f -a -name '*.f' -o -name '*.f90' -o -name '*.f08' | sort | xargs` ; do
     b=`basename $f`
     errOut=${b}.out
     xmlOut=${b}.xml
     decompiledSrc=${b}.dec.f90
     binOut=${b}.o
     executableOut=${b}.bin
-    expectedOut=`echo ${f} | sed -e 's_/enabled/_/result/_g' -e 's_/tp/_/result/_g' -e 's/.f90$/.res/g' -e 's/.f$/.res/g'`
+    expectedOut=`echo ${f} | sed -e 's_/enabled/_/result/_g' -e 's_/tp/_/result/_g' -e 's/.f90$/.res/g' -e 's/.f$/.res/g' -e 's/.f08$/.res/g'`
     executeResult=${b}.res
     skipNative=${f}.skip.native
     fOpts=''

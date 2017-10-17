@@ -38,48 +38,48 @@ public class Xtype
     //
     // Qualifiers for C
     //
-    public static final long TQ_CONST            = 1 << 0;   // const
-    public static final long TQ_VOLATILE         = 1 << 1;   // volatile
-    public static final long TQ_RESTRICT         = 1 << 2;   // restrict
-    public static final long TQ_INLINE           = 1 << 3;   // inline
-    public static final long TQ_ARRAY_STATIC     = 1 << 4;   // static at array specifier
-    public static final long TQ_FUNC_STATIC      = 1 << 5;   // static at function definition
+    public static final long TQ_CONST            = 1L << 0;   // const
+    public static final long TQ_VOLATILE         = 1L << 1;   // volatile
+    public static final long TQ_RESTRICT         = 1L << 2;   // restrict
+    public static final long TQ_INLINE           = 1L << 3;   // inline
+    public static final long TQ_ARRAY_STATIC     = 1L << 4;   // static at array specifier
+    public static final long TQ_FUNC_STATIC      = 1L << 5;   // static at function definition
 
     //
     // Qualifiers for Fortran
     //
-    public static final long TQ_FPUBLIC              = 1 << 6;   // public
-    public static final long TQ_FPRIVATE             = 1 << 7;   // private
-    public static final long TQ_FPROTECTED           = 1 << 8;   // protected
-    public static final long TQ_FPOINTER             = 1 << 9;   // pointer
-    public static final long TQ_FOPTIONAL            = 1 << 10;  // optional
-    public static final long TQ_FTARGET              = 1 << 11;  // target
-    public static final long TQ_FSAVE                = 1 << 12;  // save
-    public static final long TQ_FPARAMETER           = 1 << 13;  // parameter
-    public static final long TQ_FALLOCATABLE         = 1 << 14;  // allocatable
-    public static final long TQ_FINTENT_IN           = 1 << 15;  // intent(in)
-    public static final long TQ_FINTENT_OUT          = 1 << 16;  // intent(out)
-    public static final long TQ_FINTENT_INOUT        = 1 << 17;  // intent(inout)
-    public static final long TQ_FPROGRAM             = 1 << 18;  // program
-    public static final long TQ_FINTRINSIC           = 1 << 19;  // intrinsic
-    public static final long TQ_FELEMENTAL           = 1 << 20;  // elemental
-    public static final long TQ_FIMPURE              = 1 << 21;  // impure
-    public static final long TQ_FPURE                = 1 << 22;  // pure
-    public static final long TQ_FRECURSIVE           = 1 << 23;  // recursive
-    public static final long TQ_FINTERNAL            = 1 << 24;  // internal
-    public static final long TQ_FEXTERNAL            = 1 << 25;  // external
-    public static final long TQ_FSEQUENCE            = 1 << 26;  // sequence
-    public static final long TQ_FINTERNAL_PRIVATE    = 1 << 27;  // private in structure decl
-    public static final long TQ_FCRAY_POINTER        = 1 << 28;  // cray pointer (ID=060c)
-    public static final long TQ_FVOLATILE            = 1 << 29;  // volatile
-    public static final long TQ_FCLASS               = 1 << 30;  // class
-    public static final long TQ_FVALUE               = 1 << 31;  // value
-    public static final long TQ_FMODULE              = 1 << 32;  // module
-    public static final long TQ_FPROCEDURE           = 1 << 33;  // procedure
-    public static final long TQ_FCONTIGUOUS          = 1 << 34;  // contiguous
-    public static final long TQ_FASYNCHRONOUS        = 1 << 35;  // asynchronous
-    public static final long TQ_FABSTRACT            = 1 << 36;  // abstract
-    public static final long TQ_FDEFERRED            = 1 << 37;  // deferred
+    public static final long TQ_FPUBLIC              = 1L << 6;   // public
+    public static final long TQ_FPRIVATE             = 1L << 7;   // private
+    public static final long TQ_FPROTECTED           = 1L << 8;   // protected
+    public static final long TQ_FPOINTER             = 1L << 9;   // pointer
+    public static final long TQ_FOPTIONAL            = 1L << 10;  // optional
+    public static final long TQ_FTARGET              = 1L << 11;  // target
+    public static final long TQ_FSAVE                = 1L << 12;  // save
+    public static final long TQ_FPARAMETER           = 1L << 13;  // parameter
+    public static final long TQ_FALLOCATABLE         = 1L << 14;  // allocatable
+    public static final long TQ_FINTENT_IN           = 1L << 15;  // intent(in)
+    public static final long TQ_FINTENT_OUT          = 1L << 16;  // intent(out)
+    public static final long TQ_FINTENT_INOUT        = 1L << 17;  // intent(inout)
+    public static final long TQ_FPROGRAM             = 1L << 18;  // program
+    public static final long TQ_FINTRINSIC           = 1L << 19;  // intrinsic
+    public static final long TQ_FELEMENTAL           = 1L << 20;  // elemental
+    public static final long TQ_FIMPURE              = 1L << 21;  // impure
+    public static final long TQ_FPURE                = 1L << 22;  // pure
+    public static final long TQ_FRECURSIVE           = 1L << 23;  // recursive
+    public static final long TQ_FINTERNAL            = 1L << 24;  // internal
+    public static final long TQ_FEXTERNAL            = 1L << 25;  // external
+    public static final long TQ_FSEQUENCE            = 1L << 26;  // sequence
+    public static final long TQ_FINTERNAL_PRIVATE    = 1L << 27;  // private in structure decl
+    public static final long TQ_FCRAY_POINTER        = 1L << 28;  // cray pointer (ID=060c)
+    public static final long TQ_FVOLATILE            = 1L << 29;  // volatile
+    public static final long TQ_FCLASS               = 1L << 30;  // class
+    public static final long TQ_FVALUE               = 1L << 31;  // value
+    public static final long TQ_FMODULE              = 1L << 32;  // module
+    public static final long TQ_FPROCEDURE           = 1L << 33;  // procedure
+    public static final long TQ_FCONTIGUOUS          = 1L << 34;  // contiguous
+    public static final long TQ_FASYNCHRONOUS        = 1L << 35;  // asynchronous
+    public static final long TQ_FABSTRACT            = 1L << 36;  // abstract
+    public static final long TQ_FDEFERRED            = 1L << 37;  // deferred
 
     private String type_id;
     private int type_kind;
