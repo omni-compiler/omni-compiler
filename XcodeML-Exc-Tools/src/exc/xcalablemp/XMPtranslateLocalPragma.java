@@ -2543,12 +2543,18 @@ public class XMPtranslateLocalPragma {
               count = Xcons.LongLongConstant(0, XMPutil.getArrayElmtCount(arrayVarType));
               returnVector.add(Xcons.List(varId.Ref(), count, Xcons.SizeOf(arrayVarType.getArrayElementType())));
             }
-            else{
-              // Number of elements is defined in arguments
+            else{  // Number of elements is defined in arguments
               // void hoge(int n, int a[n]){
               // #pragma xmp bcast (a)
-              returnVector.add(Xcons.List(varId.Ref(), arrayVarType.getArraySizeExpr(),
-                                          Xcons.SizeOf(arrayVarType.getArrayElementType())));
+              Xobject size = Xcons.SizeOf(arrayVarType.getArrayElementType());
+              Xobject len  = arrayVarType.getArraySizeExpr();
+              ArrayType tmpType = arrayVarType;
+              for(int j=1;j<arrayVarType.getNumDimensions();j++){
+                tmpType = (ArrayType)arrayVarType.getRef();
+                len = Xcons.binaryOp(Xcode.MUL_EXPR, len, tmpType.getArraySizeExpr());
+              }
+              
+              returnVector.add(Xcons.List(varId.Ref(), len, size));
             }
           } break;
         default:
