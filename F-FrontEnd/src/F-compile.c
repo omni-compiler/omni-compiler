@@ -137,6 +137,9 @@ static void compile_ENUM_statement(expr x);
 static void compile_ENDENUM_statement(expr x);
 static void compile_ENUMERATOR_statement(expr x);
 
+static void compile_ASSOCIATE_statement(expr x);
+static void compile_ENDASSOCIATE_statement(expr x);
+
 static int check_valid_construction_name(expr x, expr y);
 static void move_vars_to_parent_from_type_guard(void);
 static void check_select_types(expr x, TYPE_DESC tp);
@@ -1393,9 +1396,13 @@ compile_statement1(int st_no, expr x)
     } break;
 
     case F03_ASSOCIATE_STATEMENT:
+        check_INEXEC();
+        compile_ASSOCIATE_statement(x);
         break;
 
     case F03_ENDASSOCIATE_STATEMENT:
+        compile_ENDASSOCIATE_statement(x);
+        check_INEXEC();
         break;
 
     case F08_CONTIGUOUS_STATEMENT:
@@ -9337,3 +9344,123 @@ compile_CONTIGUOUS_statement(expr x)
     }
 }
 
+
+static void
+compile_ASSOCIATE_statement(expr x)
+{
+    list lp;
+    expr association_list;
+    expv st;
+
+    assert(x != NULL);
+
+    assert(LOCAL_SYMBOLS == NULL);
+
+    st = list2(F03_ASSOCIATE_STATEMENT, NULL, NULL);
+
+
+    association_list = EXPR_ARG1(x);
+
+    /*
+     * A selector doesn't refer previous association names.
+     *
+     * ex)
+     *      1 INTEGER :: X = 1
+     *      2 REAL :: Y = 2.5
+     *      3 ASSOCIATE ( Y => X, Z => Y )
+     *      4   !                This `Y` refers `Y` in the line 2, not `Y` in the line 3
+     *      4   PRINT *, Z !=> 2.5
+     *      5 END ASSOCIATE
+     *
+     * So use two loops: Evaluate selectors in the 1st loop, then declare
+     * association names in the 2nd loop.
+     */
+    FOR_ITEMS_IN_LIST(lp, association_list) {
+        expr selector;
+        expv v;
+
+        selector = EXPR_ARG2(LIST_ITEM(lp));
+        v = compile_expression(selector);
+        list_put_last(LIST_ITEM(lp), v);
+    }
+
+    push_ctl(CTL_ASSOCIATE);
+    push_env(CTL_LOCAL_ENV(ctl_top));
+    CTL_BLOCK(ctl_top) = st;
+
+    FOR_ITEMS_IN_LIST(lp, association_list) {
+        ID id;
+
+        expr associate_name;
+        expv v;
+
+        associate_name = EXPR_ARG1(LIST_ITEM(lp));
+        v = EXPR_ARG3(LIST_ITEM(lp));
+        if (v == NULL) {
+            /* The error is already thrown in the compile_expression() */
+            continue;
+        }
+
+        id = declare_ident(EXPR_SYM(associate_name), CL_VAR);
+
+        declare_id_type(id, EXPV_TYPE(v));
+        declare_variable(id);
+
+        VAR_INIT_VALUE(id) = v;
+    }
+
+
+    /* save construct name */
+    if (EXPR_HAS_ARG2(x)) {
+        CTL_ASSOCIATE_CONST_NAME(ctl_top) = EXPR_ARG2(x);
+    }
+    CURRENT_STATEMENTS = NULL;
+    current_proc_state = P_DEFAULT;
+}
+
+static void
+compile_ENDASSOCIATE_statement(expr x)
+{
+    BLOCK_ENV current_block;
+
+    /* check construct name */
+    if (CTL_ASSOCIATE_CONST_NAME(ctl_top) != NULL) {
+        if (x == NULL || !EXPR_HAS_ARG1(x) || EXPR_ARG1(x) == NULL) {
+            error("expects construnct name");
+            return;
+        } else if (EXPR_SYM(CTL_ASSOCIATE_CONST_NAME(ctl_top)) !=
+                   EXPR_SYM(EXPR_ARG1(x))) {
+            error("unmatched construct name");
+            return;
+        }
+    } else if (x != NULL && EXPR_HAS_ARG1(x) && EXPR_ARG1(x) != NULL) {
+        error("unexpected construnct name");
+        return;
+    }
+
+    if (debug_flag) {
+        fprintf(debug_fp,"\n*** IN ASSOCIATE:\n");
+        print_IDs(LOCAL_SYMBOLS, debug_fp, TRUE);
+        expv_output(CURRENT_STATEMENTS, debug_fp);
+    }
+
+    CTL_ASSOCIATE_BODY(ctl_top) = CURRENT_STATEMENTS;
+
+    move_implicit_variables_to_parent();
+
+    current_block = XMALLOC(BLOCK_ENV, sizeof(*current_block));
+    BLOCK_LOCAL_SYMBOLS(current_block) = LOCAL_SYMBOLS;
+    BLOCK_LOCAL_LABELS(current_block) = LOCAL_LABELS;
+    BLOCK_LOCAL_INTERFACES(current_block) = LOCAL_INTERFACES;
+    BLOCK_LOCAL_EXTERNAL_SYMBOLS(current_block) = LOCAL_EXTERNAL_SYMBOLS;
+    BLOCK_CHILDREN(current_block) = LOCAL_BLOCKS;
+    EXPR_BLOCK(CTL_BLOCK(ctl_top)) = current_block;
+
+    if (endlineno_flag) {
+        EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+    }
+
+    pop_ctl();
+    pop_env();
+    CURRENT_STATE = INEXEC;
+}
