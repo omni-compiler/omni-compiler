@@ -1392,6 +1392,12 @@ compile_statement1(int st_no, expr x)
         compile_DOCONCURRENT_statement(EXPR_ARG1(x), EXPR_ARG2(x), EXPR_ARG3(x));
     } break;
 
+    case F03_ASSOCIATE_STATEMENT:
+        break;
+
+    case F03_ENDASSOCIATE_STATEMENT:
+        break;
+
     case F08_CONTIGUOUS_STATEMENT:
         compile_CONTIGUOUS_statement(x);
         check_INDCL();
