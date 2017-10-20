@@ -781,6 +781,10 @@ intrinsic_entry intrinsic_table[] = {
     { INTR_GET_ENVIRONMENT_VARIABLE,     INTR_NAME_GENERIC,      "",        0,      { INTR_TYPE_CHAR,INTR_TYPE_CHAR,INTR_TYPE_INT,INTR_TYPE_INT },                    INTR_TYPE_INT,                  4, -6, LANGSPEC_F2008, INTR_CLASS_T },
     { INTR_GET_ENVIRONMENT_VARIABLE,     INTR_NAME_GENERIC,      "",        0,      { INTR_TYPE_CHAR,INTR_TYPE_CHAR,INTR_TYPE_INT,INTR_TYPE_INT,INTR_TYPE_LOGICAL },                    INTR_TYPE_INT,                  5, -6, LANGSPEC_F2008, INTR_CLASS_T },
 
+    { INTR_GAMMA,                        INTR_NAME_GENERIC,     "gamma",      0,      { INTR_TYPE_REAL }, INTR_TYPE_REAL, 1, -6, LANGSPEC_F2008, INTR_CLASS_T},
+    { INTR_LOGGAMMA,                     INTR_NAME_GENERIC,     "log_gamma",  0,      { INTR_TYPE_REAL }, INTR_TYPE_REAL, 1, -6, LANGSPEC_F2008, INTR_CLASS_T},
+    
+
     /* hidden interfaces for debugging */
     { INTR_COARRAY_MALLOC_BYTES,      INTR_NAME_GENERIC,   "xmpf_coarray_malloc_bytes",        0,   {INTR_TYPE_NONE},   INTR_TYPE_INT,  0, -8, LANGSPEC_NONSTD, INTR_CLASS_N },
     { INTR_COARRAY_ALLOCATED_BYTES,   INTR_NAME_GENERIC,   "xmpf_coarray_allocated_bytes",     0,   {INTR_TYPE_NONE},   INTR_TYPE_INT,  0, -8, LANGSPEC_NONSTD, INTR_CLASS_N },
