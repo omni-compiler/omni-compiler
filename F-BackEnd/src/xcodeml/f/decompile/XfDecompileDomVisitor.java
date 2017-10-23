@@ -7209,6 +7209,57 @@ public class XfDecompileDomVisitor {
     }
 
 
+    /**
+     * Decompile 'associateStatement' element in XcodeML/F.
+     */
+    class AssociateStatementVisitor extends XcodeNodeVisitor {
+
+        @Override
+        public void enter(Node n) {
+            _writeLineDirective(n);
+
+            XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
+            XmfWriter writer = _context.getWriter();
+
+            String constructName = XmDomUtil.getAttr(n, "construct_name");
+            if (XfUtilForDom.isNullOrEmpty(constructName) == false) {
+                writer.writeToken(constructName);
+                writer.writeToken(":");
+            }
+
+            writer.writeToken("ASSOCIATE");
+            writer.writeToken("(");
+
+            writer.incrementIndentLevel();
+
+            Node symbols = XmDomUtil.getElement(n, "symbols");
+            for (Node id : XmDomUtil.collectElements(symbols, "id")) {
+                typeManager.addSymbol(id);
+                Node name = XmDomUtil.getElement(id, "name");
+                writer.writeToken(XmDomUtil.getContentText(name));
+                writer.writeToken("=>");
+                Node value = XmDomUtil.getElement(id, "value");
+                invokeEnter(value);
+            }
+
+            writer.writeToken(")");
+
+            writer.setupNewLine();
+
+            invokeEnter(XmDomUtil.getElement(n, "body"));
+
+            writer.decrementIndentLevel();
+
+            writer.writeToken("END");
+            writer.writeToken("ASSOCIATE");
+            if (XfUtilForDom.isNullOrEmpty(constructName) == false) {
+                writer.writeToken(constructName);
+            }
+            writer.setupNewLine();
+        }
+    }
+
+
     /* Check if the name is declared in the runtime library declaration file xmpf_coarray_decl.
      * To avoid double-declaration of the name at the compile time in the native compiler, the
      * declaration of the name should be suppressed if the result of this method is true.
@@ -7622,5 +7673,6 @@ public class XfDecompileDomVisitor {
         new Pair("forallStatement", new ForallStatementVisitor()),
         new Pair("FwaitStatement", new FwaitStatementVisitor()),
         new Pair("FenumDecl", new FenumDeclVisitor()),
+        new Pair("associateStatement", new AssociateStatementVisitor()),
     };
 }
