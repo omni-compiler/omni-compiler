@@ -5810,11 +5810,19 @@ compile_type_bound_generic_procedure(expr x)
 
     switch (EXPR_CODE(generics_spec)) {
         case IDENT:
-            if ((find_struct_member(struct_tp, EXPR_SYM(generics_spec))) != NULL) {
-                error("already declared");
-                return;
+            id = find_struct_member(struct_tp, EXPR_SYM(generics_spec));
+            if (id != NULL) {
+                // Multiple GENERIC statement for the same id. Have to add to 
+                // the binding list. 
+                
+                last_ip = TBP_BINDING(id);
+                while(ID_NEXT(last_ip) != NULL) {
+                    last_ip = ID_NEXT(last_ip);
+                }
+            } else {
+                // First GENERIC statement for and id. Binding list is empty.
+                id = declare_ident(EXPR_SYM(generics_spec), CL_TYPE_BOUND_PROC);
             }
-            id = declare_ident(EXPR_SYM(generics_spec), CL_TYPE_BOUND_PROC);
             break;
         case F95_GENERIC_SPEC:{
             expr arg;
