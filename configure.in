@@ -2334,6 +2334,7 @@ AC_CONFIG_FILES(libtlog/src_mpi/Makefile)
 AC_CONFIG_FILES(libtlog/src_mpi/bin/tlogview)
 AC_CONFIG_FILES(libacc/src/Makefile)
 AC_CONFIG_FILES(libacc/include/Makefile)
+AC_CONFIG_FILES(interfaces/Makefile)
 
 # --------------------------------------------------------------------
 AC_CONFIG_FILES(Makefile)

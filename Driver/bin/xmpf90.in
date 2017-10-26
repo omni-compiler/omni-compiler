@@ -30,7 +30,6 @@ ENABLE_XACC=false
 ENABLE_SCALASCA_ALL=false
 ENABLE_SCALASCA=false
 ENABLE_TLOG_ALL=false
-ENABLE_TLOG=false
 ENABLE_MAIN_XMP=false
 
 ### Set options ###
@@ -129,7 +128,6 @@ done
 
 ### Translator ###
 [ $ENABLE_TLOG_ALL = true ]     && OMNI_FX2X_OPT="$OMNI_FX2X_OPT -tlog-all"
-[ $ENABLE_TLOG = true ]         && OMNI_FX2X_OPT="$OMNI_FX2X_OPT -tlog"
 [ $ENABLE_SCALASCA_ALL = true ] && OMNI_FX2X_OPT="$OMNI_FX2X_OPT -scalasca-all"
 [ $ENABLE_SCALASCA = true ]     && OMNI_FX2X_OPT="$OMNI_FX2X_OPT -scalasca"
 [ $ENABLE_OPENACC = true ]      && OMNI_FX2X_OPT="$OMNI_FX2X_OPT -facc"
@@ -237,7 +235,8 @@ TRAVERSE_FILE=${TEMP_DIR}/omni_traverse_${PID}.f90
 omni_exec $OMNI_TRAVERSE $OMNI_TRAVERSE_OPT -o $TRAVERSE_FILE "${obj_files[@]}" "${archive_files[@]}"
 
 # link
-[ $ENABLE_TLOG_ALL = true -o $ENABLE_TLOG = true ] && OMNI_LINKER_OPT="-ltlog_mpi $OMNI_LINKER_OPT"
+OMNI_LINKER_OPT="$OMNI_LINKER_OPT -ltlog_mpi"
+
 if [ $ENABLE_OPENACC = true -o @XACC@ = 0 ]; then
     [ @CUDA@ = 0 ] && OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_LINKER_CUDA_OPT"
     [ @OPENCL@ = 0 ] && OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_LINKER_OPENCL_OPT"

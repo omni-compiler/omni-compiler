@@ -13121,6 +13121,8 @@ ac_config_files="$ac_config_files libacc/src/Makefile"
 
 ac_config_files="$ac_config_files libacc/include/Makefile"
 
+ac_config_files="$ac_config_files interfaces/Makefile"
+
 
 # --------------------------------------------------------------------
 ac_config_files="$ac_config_files Makefile"
@@ -13873,6 +13875,7 @@ do
     "libtlog/src_mpi/bin/tlogview") CONFIG_FILES="$CONFIG_FILES libtlog/src_mpi/bin/tlogview" ;;
     "libacc/src/Makefile") CONFIG_FILES="$CONFIG_FILES libacc/src/Makefile" ;;
     "libacc/include/Makefile") CONFIG_FILES="$CONFIG_FILES libacc/include/Makefile" ;;
+    "interfaces/Makefile") CONFIG_FILES="$CONFIG_FILES interfaces/Makefile" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
