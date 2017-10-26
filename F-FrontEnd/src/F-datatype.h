@@ -101,6 +101,8 @@ typedef struct type_descriptor
     int is_modified;           /* modified with VOLATILE or ASYNCHRONOUS */
     expv bind_name;            /* ISO BIND C name attribute */
 
+    int is_access_inferred;    /* boolean flag that tell if the access-spec is
+                                  inferred or clearly stated */
     struct type_attr {
 #define TYPE_ATTR_PARAMETER         0x00000001
 #define TYPE_ATTR_ALLOCATABLE       0x00000002
@@ -202,6 +204,7 @@ extern TYPE_DESC basic_type_desc[];
 #define TYPE_LINK(tp)           ((tp)->link)
 #define TYPE_SLINK(tp)          ((tp)->struct_link)
 #define TYPE_IS_DECLARED(tp)    ((tp)->is_declared)
+#define TYPE_ACCESS_IS_INFERRED(tp) ((tp)->is_access_inferred)
 #define TYPE_IS_COINDEXED(tp)   (tp != NULL && (tp)->codims)
 #define TYPE_BASIC_TYPE(tp)     ((tp)->basic_type)
 #define TYPE_REF(tp)            ((tp)->ref)

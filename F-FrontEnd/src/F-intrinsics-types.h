@@ -295,6 +295,8 @@ typedef enum {
     INTR_GET_COMMAND,
     INTR_GET_COMMAND_ARUGMENT,
     INTR_GET_ENVIRONMENT_VARIABLE,
+    INTR_GAMMA,
+    INTR_LOGGAMMA,
 
     INTR_COARRAY_MALLOC_BYTES,       // hidden interface
     INTR_COARRAY_ALLOCATED_BYTES,    // hidden interface
