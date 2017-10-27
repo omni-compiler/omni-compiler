@@ -47,8 +47,15 @@ public class XmDomUtil {
         if (n.getFirstChild() == null) {
             return "";
         }
+        StringBuilder builder = new StringBuilder("");
 
-        return n.getFirstChild().getNodeValue();
+        NodeList list = n.getChildNodes();
+        for (int i = 0; i < list.getLength(); i++) {
+            Node elm = list.item(i);
+            builder.append(elm.getNodeValue());
+        }
+
+        return builder.toString();
     }
 
     public static String getAttr(Node n, String name) {
