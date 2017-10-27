@@ -117,6 +117,9 @@ struct saved_file_state {
     /* when include by USE, must specify -force-free-format.  */
     int save_fixed_format_flag;
     int save_no_countup; /* reach ';', we do not count up the line number.  */
+#ifdef ENABLE_UCHARDET
+    iconv_t cd;
+#endif
 } file_state[N_NESTED_FILE];
 
 int n_nested_file = 0;
@@ -2095,6 +2098,11 @@ include_file(char *name, int inside_use)
     p->save_fixed_format_flag = fixed_format_flag;
     /* save the context for no count up of line number.  */
     p->save_no_countup = no_countup;
+#ifdef ENABLE_UCHARDET
+    p->cd = current_cd;
+    current_cd = 0;
+#endif
+
     is_using_module = inside_use;
 
     if(p->save_buffer == NULL){
@@ -2140,6 +2148,11 @@ static void restore_file()
     no_countup = p->save_no_countup;
     bcopy(p->save_buffer,line_buffer,LINE_BUF_SIZE);
     bcopy(p->save_stn_cols,stn_cols,7);
+#ifdef ENABLE_UCHARDET
+    if (current_cd)
+        iconv_close(current_cd);
+    current_cd = p->cd;
+#endif
 
     if (is_using_module == TRUE) {
         pop_filter();
