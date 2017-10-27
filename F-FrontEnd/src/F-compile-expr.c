@@ -3294,6 +3294,13 @@ compile_type_bound_procedure_call(expv memberRef, expr args) {
             }
 #endif
             if (TYPE_REF(ftp)) {
+                if(FUNCTION_TYPE_RETURN_TYPE(TYPE_REF(ftp)) == NULL){ 
+                    // might have some ref indirection before getting to the 
+                    // actual function type
+                    while(TYPE_REF(TYPE_REF(ftp))) {
+                        ftp = TYPE_REF(ftp);
+                    }
+                } 
                 ret_type = FUNCTION_TYPE_RETURN_TYPE(TYPE_REF(ftp));
             } else {
                 /*
