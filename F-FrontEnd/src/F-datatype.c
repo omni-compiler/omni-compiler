@@ -565,6 +565,28 @@ is_array_shape_assumed(TYPE_DESC tp)
     return FALSE;
 }
 
+/*
+ * The array with '*' in for each upper bounds of ranks is implicit shaped array.
+ *
+ * ex)
+ *    INTEGER, PARAMETER :: array(*, 1:*) = (/(/1,2/), (/3,4/), (/5,6/)/)
+ */
+int
+is_array_implicit_shape(TYPE_DESC tp)
+{
+    assert(IS_ARRAY_TYPE(tp));
+
+    if (!TYPE_IS_PARAMETER(tp) && !IS_ARRAY_TYPE(tp))
+        return FALSE;
+
+    while(IS_ARRAY_TYPE(tp) && TYPE_REF(tp)) {
+        if (!TYPE_IS_ARRAY_ASSUMED_SIZE(tp))
+            return FALSE;
+        tp = TYPE_REF(tp);
+    }
+    return TRUE;
+}
+
 int
 is_array_size_const(TYPE_DESC tp)
 {
