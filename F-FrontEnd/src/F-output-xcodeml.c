@@ -532,6 +532,25 @@ getXmlEscapedStr(const char *s)
     *px = 0;
 
     if (should_cdata) {
+        const char *p = s;
+        char *px = x;
+        for (; *p; p++) {
+            if (*(p) == ']' &&
+                (*(p+1) && *(p+1) == ']') &&
+                (*(p+2) && *(p+2) == '>')) {
+                *px++ = *p;
+                p++;
+                *px++ = *p;
+                xstrcat(&px, "]]><![CDATA[");
+                p++;
+                *px++ = *p;
+            } else {
+                *px++ = *p;
+            }
+        }
+    }
+
+    if (should_cdata) {
         char buf[CHAR_BUF_SIZE + 20];
         sprintf(buf, "<![CDATA[%s]]>", x);
         strcpy(x, buf);
