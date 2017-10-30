@@ -2279,7 +2279,7 @@ public class XMPrewriteExpr {
 	Xobject clauses = pragmaBlock.getClauses();
 	if (clauses != null) rewriteOmpClauses(clauses, (PragmaBlock)block, fb, localXMPsymbolTable);
 
-	if (pragmaBlock.getPragma().equals("PARALLEL_FOR")){
+	if (pragmaBlock.getPragma().equals("PARALLEL_FOR") || pragmaBlock.getPragma().equals("FOR")){
 	  BlockList body = pragmaBlock.getBody();
 	  if (body.getDecls() != null){
 	    BlockList newBody = Bcons.emptyBody(body.getIdentList().copy(), body.getDecls().copy());
