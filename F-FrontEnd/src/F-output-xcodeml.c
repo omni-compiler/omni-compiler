@@ -2295,6 +2295,39 @@ outx_complexPartRef(int l, expv v)
 }
 
 
+static int
+expv_is_type_parameter_inquiry(expv v)
+{
+    expv designator = EXPR_ARG1(v);
+    expv mem = EXPR_ARG2(v);
+
+    if (IS_NUMERIC(EXPV_TYPE(designator)) &&
+        strcmp("kind", SYM_NAME(EXPV_NAME(mem))) == 0) {
+        return TRUE;
+    }
+    if (IS_CHAR(EXPV_TYPE(designator)) &&
+        (strcmp("kind", SYM_NAME(EXPV_NAME(mem))) == 0 ||
+         strcmp("len", SYM_NAME(EXPV_NAME(mem))) == 0)) {
+        return TRUE;
+    }
+    return FALSE;
+}
+
+/**
+ * output FmemberRef as type parameter inquiry
+ */
+static void
+outx_type_param_inquiry(int l, expv v)
+{
+    expv designator = EXPR_ARG1(v);
+    expv mem = EXPR_ARG2(v);
+
+    EXPR_CODE(v) = FUNCTION_CALL;
+    EXPR_ARG1(v) = mem;
+    EXPR_ARG2(v) = list1(LIST, designator);
+    outx_functionCall(l, v);
+}
+
 /**
  * output FmemberRef
  */
@@ -2303,6 +2336,9 @@ outx_memberRef(int l, expv v)
 {
     expv v_left = EXPV_LEFT(v);
     expv v_right = EXPV_RIGHT(v);
+
+    if (expv_is_type_parameter_inquiry(v))
+        return outx_type_param_inquiry(l, v);
 
     if (IS_COMPLEX(EXPV_TYPE(v_left)))
         return outx_complexPartRef(l, v);
