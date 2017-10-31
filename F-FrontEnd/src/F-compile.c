@@ -1322,6 +1322,11 @@ compile_statement1(int st_no, expr x)
         compile_ASYNCHRONOUS_statement(EXPR_ARG1(x));
         break;
 
+    case F03_BIND_STATEMENT:
+        check_INDCL();
+        compile_BIND_statement(EXPR_ARG1(x), EXPR_ARG2(x));
+        break;
+
     case F03_TYPE_BOUND_PROCEDURE_STATEMENT:
         if (CURRENT_STATE != IN_TYPE_BOUND_PROCS) {
             error("TYPE-BOUDNED PROCEDURE out of the derived-type declaration");

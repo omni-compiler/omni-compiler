@@ -5974,3 +5974,42 @@ compile_FINAL_statement(expr x)
     ID_TYPE(id) = type_bound_procedure_type();
     ID_LINE(id) = EXPR_LINE(x);
 }
+
+
+/*
+ * declare asynchronous variable
+ *   OR
+ * add asynchronous attribute (in block scope)
+ */
+void
+compile_BIND_statement(expr bind_opt, expr id_list)
+{
+    list lp;
+    ID id;
+    expr bind_name = EXPR_ARG1(bind_opt);
+
+    FOR_ITEMS_IN_LIST(lp, id_list) {
+        expr elm = LIST_ITEM(lp);
+        if (EXPR_CODE(elm) == IDENT) {
+            if((id = declare_ident(EXPR_SYM(elm), CL_VAR)) == NULL) {
+                fatal("cannot declare ident %s", SYM_NAME(EXPR_SYM(elm)));
+            }
+        } else {
+            if((id = declare_common_ident(EXPR_SYM(elm))) == NULL) {
+                fatal("cannot common block %s", SYM_NAME(EXPR_SYM(elm)));
+            }
+        }            
+        TYPE_SET_BIND(id);
+        if (ID_TYPE(id) != NULL) {
+            TYPE_SET_BIND(ID_TYPE(id));
+        }
+        if(bind_name){
+            ID_BIND(id) = bind_name;
+            if(ID_TYPE(id) != NULL) {
+                TYPE_BIND_NAME(ID_TYPE(id)) = bind_name;
+            }
+        }
+    }
+}
+
+

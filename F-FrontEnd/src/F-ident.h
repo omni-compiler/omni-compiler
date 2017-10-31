@@ -167,6 +167,7 @@ typedef struct ident_descriptor
                                            NULL */
     int from_parent_module;             /* ID is imported from parent module  */
     int imported;                       /* ID imported with the IMPORT statement */
+    expv bind_name;            /* ISO BIND C name attribute */
 
     union {
         struct {
@@ -290,6 +291,7 @@ typedef struct ident_descriptor
 #define ID_LINE(id)     ((id)->line)
 #define ID_ORDER(id)    ((id)->order)
 #define ID_DEFINED_BY(id)       ((id)->defined_by)
+#define ID_BIND(id)     ((id)->bind_name)
 
 #define ID_IS_IMPORTED(id)       ((id)->imported)
 #define ID_SET_IMPORTED(id)      ((id)->imported = TRUE)

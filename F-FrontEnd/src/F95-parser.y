@@ -522,7 +522,7 @@ static void type_spec_done();
 %type <val> type_param_value_list type_param_value
 %type <val> common_block external_decl intrinsic_decl equivalence_decl
 %type <val> cray_pointer_list cray_pointer_pair cray_pointer_var
-%type <val> equiv_list data data_list data_val_list data_val value simple_value save_list save_item const_list const_item common_var data_var data_var_list image_dims image_dim_list image_dim image_dims_alloc image_dim_list_alloc image_dim_alloc dims dim_list dim ubound label_list implicit_decl imp_list letter_group letter_groups namelist_decl namelist_list ident_list access_ident_list access_ident
+%type <val> equiv_list data data_list data_val_list data_val value simple_value save_list save_item const_list const_item common_var data_var data_var_list image_dims image_dim_list image_dim image_dims_alloc image_dim_list_alloc image_dim_alloc dims dim_list dim ubound label_list implicit_decl imp_list letter_group letter_groups namelist_decl namelist_list ident_list access_ident_list access_ident binding_entity_list binding_entity
 %type <val> do_spec arg arg_list parenthesis_arg_list image_selector cosubscript_list
 %type <val> parenthesis_arg_list_or_null
 %type <val> set_expr
@@ -1084,8 +1084,9 @@ declaration_statement95:
         { $$ = list1(F03_VOLATILE_STATEMENT, $3); }
         | ASYNCHRONOUS COL2_or_null access_ident_list
         { $$ = list1(F03_ASYNCHRONOUS_STATEMENT, $3); }
+        | bind_c COL2_or_null binding_entity_list
+        { $$ = list2(F03_BIND_STATEMENT, $1, $3); }
         ;
-
 
 array_allocation_list:
           array_allocation
@@ -1563,6 +1564,20 @@ access_ident_list: access_ident
 
 access_ident: GENERIC_SPEC
         | IDENTIFIER
+        ;
+
+binding_entity_list:
+          binding_entity
+        { $$ = list1(LIST, $1); }
+        | binding_entity_list ',' binding_entity
+        { $$ = list_put_last($1, $3); }
+        ;
+
+binding_entity:
+          IDENTIFIER
+        { $$ = $1; }
+        | '/' IDENTIFIER '/' /* not common_block because '//' is not accepted */
+        { $$ = list1(LIST,$2); }
         ;
 
 /*
