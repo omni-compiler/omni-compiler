@@ -6011,5 +6011,3 @@ compile_BIND_statement(expr bind_opt, expr id_list)
         }
     }
 }
-
-

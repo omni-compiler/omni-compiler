@@ -658,6 +658,7 @@ has_attribute_except_func_attrs(TYPE_DESC tp)
         TYPE_IS_PROCEDURE(tp) ||
         TYPE_IS_ASYNCHRONOUS(tp) ||
         TYPE_IS_CONTIGUOUS(tp) ||
+        TYPE_HAS_BIND(tp) ||
         tp->codims;
 }
 
