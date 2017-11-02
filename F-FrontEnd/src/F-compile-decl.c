@@ -5991,19 +5991,23 @@ compile_BIND_statement(expr bind_opt, expr id_list)
     FOR_ITEMS_IN_LIST(lp, id_list) {
         expr elm = LIST_ITEM(lp);
         if (EXPR_CODE(elm) == IDENT) {
-            if((id = declare_ident(EXPR_SYM(elm), CL_VAR)) == NULL) {
+            if ((id = declare_ident(EXPR_SYM(elm), CL_VAR)) == NULL) {
                 fatal("cannot declare ident %s", SYM_NAME(EXPR_SYM(elm)));
             }
         } else {
-            if((id = declare_common_ident(EXPR_SYM(elm))) == NULL) {
-                fatal("cannot common block %s", SYM_NAME(EXPR_SYM(elm)));
+            /* for 'BIND(C) :: /COMMON/' */
+            elm = EXPR_ARG1(elm);
+            if ((id = find_ident_head(EXPR_SYM(elm), LOCAL_COMMON_SYMBOLS)) == NULL) {
+                if ((id = declare_common_ident(EXPR_SYM(elm))) == NULL) {
+                    fatal("cannot declare common block %s", SYM_NAME(EXPR_SYM(elm)));
+                }
             }
         }            
         TYPE_SET_BIND(id);
         if (ID_TYPE(id) != NULL) {
             TYPE_SET_BIND(ID_TYPE(id));
         }
-        if(bind_name){
+        if (bind_name){
             ID_BIND(id) = bind_name;
             if(ID_TYPE(id) != NULL) {
                 TYPE_BIND_NAME(ID_TYPE(id)) = bind_name;
