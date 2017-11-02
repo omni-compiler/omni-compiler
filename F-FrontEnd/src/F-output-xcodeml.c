@@ -5296,8 +5296,10 @@ outx_declarations1(int l, EXT_ID parent_ep, int outputPragmaInBody)
     /*
      * FcommonDecl
      */
-    FOREACH_ID(id, EXT_PROC_COMMON_ID_LIST(parent_ep)) {
-        outx_commonDecl(l1, id);
+    if (!is_emitting_xmod()) {
+        FOREACH_ID(id, EXT_PROC_COMMON_ID_LIST(parent_ep)) {
+            outx_commonDecl(l1, id);
+        }
     }
 
     /*
