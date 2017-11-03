@@ -26,7 +26,7 @@ $(OM_EXC_TOOLS): $(SOURCE) $(XCODE_JAVA)
 	cd src; $(JAR) $(JAR_OPT) cf ../$@ ./exc/*/*.class ./xcodeml/*/*.class
 
 clean:
-	rm -f $(OM_EXC_TOOLS) src/exc/*/*.class
+	rm -f $(OM_EXC_TOOLS) src/exc/*/*.class src/xcodeml/util/*.class
 
 install: $(OM_EXC_TOOLS)
 	$(MKDIR_P) $(DESTDIR)$(JAVADIR)
