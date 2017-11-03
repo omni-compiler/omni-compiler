@@ -4,7 +4,7 @@ LIBDIR    = @OMNI_HOME@/lib
 MKDIR_P   = @MKDIR_P@
 INSTALL   = @INSTALL@
 
-all: install
+all:
 
 install: xmp.py
 	$(MKDIR_P) $(DESTDIR)$(LIBDIR)
