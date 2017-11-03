@@ -1,10 +1,3 @@
-/* 
- * $TSUKUBA_Release: Omni XMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
-
 package exc.xmpF;
 
 import exc.object.*;

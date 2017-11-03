@@ -1,15 +1,8 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package xcodeml.util;
 
 import java.io.Reader;
 import java.io.Writer;
 import org.w3c.dom.Document;
-
 import xcodeml.util.XmException;
 import xcodeml.util.XmXcodeProgram;
 

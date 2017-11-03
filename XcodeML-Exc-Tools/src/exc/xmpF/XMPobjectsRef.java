@@ -1,14 +1,7 @@
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
-
 package exc.xmpF;
 
 import exc.block.*;
 import exc.object.*;
-
 import java.util.Vector;
 
 /* 
