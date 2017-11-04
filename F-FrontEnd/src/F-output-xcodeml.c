@@ -5239,7 +5239,8 @@ outx_id_declarations(int l, ID id_list, int hasResultVar, const char * functionN
             if (TYPE_IS_MODIFIED(ID_TYPE(id)) == TRUE) {
                 continue;
             }
-            outx_pragma_if_any(l,p,ID_LINE(id));
+            if(ID_IS_DECLARED(id)) // ignore implicit variables
+              outx_pragma_if_any(l,p,ID_LINE(id));
             emit_decl(l, id);
             ID_IS_EMITTED(id) = TRUE;
         }
