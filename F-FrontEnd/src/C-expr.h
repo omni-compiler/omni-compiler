@@ -65,6 +65,8 @@ typedef struct expression_node
     int need_type_fixup;                /* used for expv */
     int is_rvalue;                      /* used for expv, to determine
                                            rvalue (not lhs) or not. */
+                                        /* also used to determine if a pragma
+                                           is alerady output or not. */
     const char *keyword_opt;		/* A name of keyword option
                                          * for function/subroutine
                                          * call argument and IO

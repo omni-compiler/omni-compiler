@@ -37,14 +37,14 @@ static void     outx_functionDefinition(int l, EXT_ID ep);
 static void     outx_interfaceDecl(int l, EXT_ID ep);
 static void     outx_definition_symbols(int l, EXT_ID ep);
 static void     outx_declarations(int l, EXT_ID parent_ep);
-static void     outx_id_declarations(int l, ID id_list, int expectResultVar, const char *functionName);
+static void     outx_id_declarations(int l, ID id_list, int expectResultVar, const char *functionName, expv v);
 static void     collect_types(EXT_ID extid);
 static void     collect_types_inner(EXT_ID extid);
 static void     collect_type_desc(expv v);
 static int      id_is_visibleVar(ID id);
 static int      id_is_visibleVar_for_symbols(ID id);
 static void     mark_type_desc_in_id_list(ID ids);
-
+static void     outx_pragma_if_any(int l, expv v, lineno_info* li);
 
 char s_timestamp[CEXPR_OPTVAL_CHARLEN] = { 0 };
 char s_xmlIndent[CEXPR_OPTVAL_CHARLEN] = "  ";
@@ -2641,10 +2641,12 @@ outx_constants(int l, expv v)
 static void
 outx_pragmaStatement(int l, expv v)
 {
+    if(v->is_rvalue == 1) return;
     list lp = EXPV_LIST(v);
     outx_tagOfStatement2(l, v);
     outx_puts(getXmlEscapedStr(EXPV_STR(LIST_ITEM(lp))));
     outx_expvClose(0, v);
+    v->is_rvalue = 1;
 }
 
 /* outx_expv with <list> ...</list> */
@@ -3497,7 +3499,7 @@ outx_BLOCK_statement(int l, expv v)
         }
     }
 
-    outx_id_declarations(l2, BLOCK_LOCAL_SYMBOLS(block), FALSE, NULL);
+    outx_id_declarations(l2, BLOCK_LOCAL_SYMBOLS(block), FALSE, NULL, EXPR_ARG1(v));
 
     /*
      * FinterfaceDecl
@@ -4217,6 +4219,20 @@ mark_type_desc_in_id_list(ID ids)
     ID id;
     FOREACH_ID(id, ids) {
         mark_type_desc_id(id);
+    }
+}
+
+static void
+outx_pragma_if_any(int l, expv p, lineno_info* li)
+{
+    if(li == NULL) return;
+    list lp;
+    expv v;
+    FOR_ITEMS_IN_LIST(lp,p) {
+        v = LIST_ITEM(lp);
+        if(EXPR_CODE(v) == F_PRAGMA_STATEMENT &&
+           EXPR_LINE_NO(v) < li->ln_no)
+            outx_pragmaStatement(l,v);
     }
 }
 
@@ -5141,7 +5157,7 @@ emit_decl(int l, ID id)
 }
 
 static void
-outx_id_declarations(int l, ID id_list, int hasResultVar, const char * functionName)
+outx_id_declarations(int l, ID id_list, int hasResultVar, const char * functionName, expv p)
 {
     TYPE_DESC tp;
     ID id, *ids;
@@ -5197,6 +5213,7 @@ outx_id_declarations(int l, ID id_list, int hasResultVar, const char * functionN
                             continue;
                         }
                         if (is_id_used_in_struct_member(ids[j], tp) == TRUE) {
+                            outx_pragma_if_any(l,p,ID_LINE(ids[i]));
                             emit_decl(l, ids[j]);
                             ID_IS_EMITTED(ids[j]) = TRUE;
                         }
@@ -5222,7 +5239,7 @@ outx_id_declarations(int l, ID id_list, int hasResultVar, const char * functionN
             if (TYPE_IS_MODIFIED(ID_TYPE(id)) == TRUE) {
                 continue;
             }
-
+            outx_pragma_if_any(l,p,ID_LINE(id));
             emit_decl(l, id);
             ID_IS_EMITTED(id) = TRUE;
         }
@@ -5273,7 +5290,7 @@ outx_declarations1(int l, EXT_ID parent_ep, int outputPragmaInBody)
         }
     }
 
-    outx_id_declarations(l1, EXT_PROC_ID_LIST(parent_ep), hasResultVar, myName);
+    outx_id_declarations(l1, EXT_PROC_ID_LIST(parent_ep), hasResultVar, myName, EXT_PROC_BODY(parent_ep));
 
     /*
      * FdataDecl / FequivalenceDecl
@@ -5850,8 +5867,10 @@ outx_globalDeclarations(int l)
                 if(EXT_PROC_TYPE(ep) != NULL &&
                     TYPE_BASIC_TYPE(EXT_PROC_TYPE(ep)) == TYPE_MODULE)
                     outx_moduleDefinition(l1, ep);
-                else
+                else {
+                    outx_pragma_if_any(l1, EXT_PROC_BODY(ep), EXT_LINE(ep));
                     outx_functionDefinition(l1, ep);
+                }
             }
             break;
         default:
