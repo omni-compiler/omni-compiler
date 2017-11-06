@@ -28,7 +28,8 @@ import xcodeml.util.XmOption;
 /**
  * Decompiler of XcodeML/F DOM nodes.
  */
-public class XfDecompileDomVisitor {
+public class
+XfDecompileDomVisitor {
     static final int PRIO_LOW = 0; /* lowest */
 
     static final int PRIO_DEFINED_BINARY = 1; /* defined binary operation */
@@ -7233,7 +7234,12 @@ public class XfDecompileDomVisitor {
             writer.incrementIndentLevel();
 
             Node symbols = XmDomUtil.getElement(n, "symbols");
+            Boolean first = true;
             for (Node id : XmDomUtil.collectElements(symbols, "id")) {
+                if (!first) {
+                    writer.writeToken(",");
+                }
+                first = false;
                 typeManager.addSymbol(id);
                 Node name = XmDomUtil.getElement(id, "name");
                 writer.writeToken(XmDomUtil.getContentText(name));
