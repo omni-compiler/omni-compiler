@@ -1371,8 +1371,8 @@ compile_statement1(int st_no, expr x)
         break;
 
     case F_ENDFORALL_STATEMENT:
-        compile_ENDFORALL_statement(x);
         check_INEXEC();
+        compile_ENDFORALL_statement(x);
         break;
 
     case F03_ENUM_STATEMENT:
@@ -1401,8 +1401,8 @@ compile_statement1(int st_no, expr x)
         break;
 
     case F03_ENDASSOCIATE_STATEMENT:
-        compile_ENDASSOCIATE_statement(x);
         check_INEXEC();
+        compile_ENDASSOCIATE_statement(x);
         break;
 
     case F08_CONTIGUOUS_STATEMENT:
@@ -1792,7 +1792,7 @@ inblock()
     CTL cp;
     FOR_CTLS_BACKWARD(cp) {
         switch (CTL_TYPE(cp)) {
-            case CTL_BLOCK:
+            case CTL_BLK:
                 return TRUE;
                 break;
             case CTL_INTERFACE:
@@ -2265,7 +2265,7 @@ end_declaration()
         print_types(LOCAL_STRUCT_DECLS, debug_fp);
     }
 
-    if (CURRENT_PROCEDURE != NULL && CTL_TYPE(ctl_top) != CTL_BLOCK) {
+    if (CURRENT_PROCEDURE != NULL && CTL_TYPE(ctl_top) != CTL_BLK) {
 
         myId = CURRENT_PROCEDURE;
 
@@ -3889,7 +3889,7 @@ end_procedure()
     EXT_ID ep;
 
     /* Check if a block construct is closed */
-    if (CTL_TYPE(ctl_top) == CTL_BLOCK &&
+    if (CTL_TYPE(ctl_top) == CTL_BLK &&
         EXPR_BLOCK(CTL_BLOCK_STATEMENT(ctl_top)) == NULL) {
         error("expecting END BLOCK statement");
     }
@@ -3898,9 +3898,13 @@ end_procedure()
     if (CTL_TYPE(ctl_top) == CTL_FORALL) {
         error("expecting END FORALL statement");
     }
+    if (CTL_TYPE(ctl_top) == CTL_ASSOCIATE) {
+        error("expecting END ASSOCIATE statement");
+    }
+
 
     if (unit_ctl_level > 0 && CURRENT_PROC_NAME == NULL &&\
-        CTL_TYPE(ctl_top) != CTL_BLOCK) {
+        CTL_TYPE(ctl_top) != CTL_BLK) {
         /* if CURRENT_PROC_NAME == NULL, then this is the end of CONTAINS */
         end_contains();
     }
@@ -4135,7 +4139,7 @@ end_procedure()
 
 
 
-    if (CTL_TYPE(ctl_top) == CTL_BLOCK) {
+    if (CTL_TYPE(ctl_top) == CTL_BLK) {
         return;
     }
 
@@ -4480,7 +4484,7 @@ compile_DO_concurrent_end()
     /*
      * Close the block construct which is genereted in compile_FORALL_statement().
      */
-    if (CTL_TYPE(ctl_top) == CTL_BLOCK) {
+    if (CTL_TYPE(ctl_top) == CTL_BLK) {
         compile_ENDBLOCK_statement(list0(F2008_ENDBLOCK_STATEMENT));
     }
 }
@@ -4800,7 +4804,7 @@ unify_submodule_symbol_table()
     ENV submodule;
     ENV parent;
 
-    if (CURRENT_PROC_NAME == NULL && CTL_TYPE(ctl_top) != CTL_BLOCK) {
+    if (CURRENT_PROC_NAME == NULL && CTL_TYPE(ctl_top) != CTL_BLK) {
         end_contains();
     }
 
@@ -8563,7 +8567,7 @@ compile_BLOCK_statement(expr x)
 {
     expv st;
 
-    push_ctl(CTL_BLOCK);
+    push_ctl(CTL_BLK);
     push_env(CTL_BLOCK_LOCAL_ENV(ctl_top));
 
     st = list2(F2008_BLOCK_STATEMENT, NULL, NULL);
@@ -8626,7 +8630,7 @@ compile_ENDBLOCK_statement(expr x)
     BLOCK_ENV current_block;
     BLOCK_ENV bp, tail;
 
-    if (CTL_TYPE(ctl_top) != CTL_BLOCK) {
+    if (CTL_TYPE(ctl_top) != CTL_BLK) {
         error("'endblock', out of place");
         return;
     }
@@ -9064,7 +9068,7 @@ compile_ENDFORALL_statement(expr x)
     /*
      * Close the block construct which is genereted in compile_FORALL_statement().
      */
-    if (CTL_TYPE(ctl_top) == CTL_BLOCK) {
+    if (CTL_TYPE(ctl_top) == CTL_BLK) {
         compile_ENDBLOCK_statement(list0(F2008_ENDBLOCK_STATEMENT));
     }
 }
@@ -9358,7 +9362,6 @@ compile_ASSOCIATE_statement(expr x)
 
     st = list2(F03_ASSOCIATE_STATEMENT, NULL, NULL);
 
-
     association_list = EXPR_ARG1(x);
 
     /*
@@ -9405,10 +9408,10 @@ compile_ASSOCIATE_statement(expr x)
 
         declare_id_type(id, EXPV_TYPE(v));
         declare_variable(id);
+        TYPE_UNSET_IMPLICIT(ID_TYPE(id));
 
         VAR_INIT_VALUE(id) = v;
     }
-
 
     /* save construct name */
     if (EXPR_HAS_ARG2(x)) {
@@ -9421,6 +9424,7 @@ compile_ASSOCIATE_statement(expr x)
 static void
 compile_ENDASSOCIATE_statement(expr x)
 {
+    ID ip;
     BLOCK_ENV current_block;
 
     /* check construct name */

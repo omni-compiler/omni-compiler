@@ -1223,12 +1223,14 @@ declare_label(int st_no,LABEL_TYPE type,int def_flag)
     }
 
     FOR_CTLS_BACKWARD(cp) {
-        if (CTL_TYPE(cp) == CTL_BLOCK) {
+        if (CTL_TYPE(cp) == CTL_BLK ||
+            CTL_TYPE(cp) == CTL_FORALL ||
+            CTL_TYPE(cp) == CTL_ASSOCIATE) {
             in_block = TRUE;
             if (CTL_BLOCK_LOCAL_LABELS(cp) == LOCAL_LABELS) {
                 continue;
             }
-            FOREACH_ID(ip, CTL_BLOCK_LOCAL_LABELS(cp)) {
+            FOREACH_ID(ip, CTL_LOCAL_LABELS(cp)) {
                 if(LAB_ST_NO(ip) == st_no) {
                     goto found;
                 }
@@ -1623,8 +1625,9 @@ find_ident_block_parent(SYMBOL s)
     int in_block = FALSE;
 
     FOR_CTLS_BACKWARD(cp) {
-        if (CTL_TYPE(cp) == CTL_BLOCK || \
+        if (CTL_TYPE(cp) == CTL_BLK || \
             CTL_TYPE(cp) == CTL_FORALL || \
+            CTL_TYPE(cp) == CTL_ASSOCIATE || \
             CTL_TYPE(cp) == CTL_DO || \
             CTL_TYPE(cp) == CTL_TYPE_GUARD) {
             in_block = TRUE;
@@ -3799,7 +3802,9 @@ find_struct_decl_block_parent(SYMBOL s)
     int in_block = FALSE;
 
     FOR_CTLS_BACKWARD(cp) {
-        if (CTL_TYPE(cp) == CTL_BLOCK) {
+        if (CTL_TYPE(cp) == CTL_BLK ||
+            CTL_TYPE(cp) == CTL_FORALL ||
+            CTL_TYPE(cp) == CTL_ASSOCIATE) {
             in_block = TRUE;
             if (CTL_BLOCK_LOCAL_STRUCT_DECLS(cp) == LOCAL_STRUCT_DECLS) {
                 continue;

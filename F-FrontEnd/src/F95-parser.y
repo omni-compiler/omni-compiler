@@ -671,7 +671,7 @@ statement:      /* entry */
         | BLOCKDATA program_name
           { $$ = list1(F_BLOCK_STATEMENT,$2); }
         | ENDBLOCKDATA name_or_null
-          { if ($2 == NULL && CTL_TYPE(ctl_top) == CTL_BLOCK) {
+          { if ($2 == NULL && CTL_TYPE(ctl_top) == CTL_BLK) {
               $$ = list1(F2008_ENDBLOCK_STATEMENT,
                          GEN_NODE(IDENT, find_symbol("data")));
             } else {
