@@ -1842,6 +1842,23 @@ in_module_procedure()
 }
 
 
+/**
+ * Checks if the current context is inside MODULE PROCEDURE/FUNCTION/SUBROUTINE
+ */
+int
+has_import_all()
+{
+    int i;
+    ID id;
+    for (i = unit_ctl_level; i >= 0; i--) {
+        id = UNIT_CTL_CURRENT_PROCEDURE(unit_ctls[i]);
+        if (id != NULL && PROC_HAS_IMPORT_ALL(id)) {
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
 void
 checkTypeRef(ID id) {
     TYPE_DESC tp = ID_TYPE(id);
@@ -8539,8 +8556,10 @@ compile_IMPORT_statement(expr x)
               "a module procedure.");
     }
 
-    ident_list = EXPR_ARG1(x);
-    if (EXPR_LIST(ident_list)) {
+    if ((ident_list = EXPR_ARG1(x)) == NULL) {
+        PROC_HAS_IMPORT_ALL(CURRENT_PROCEDURE) = TRUE;
+
+    } else if (EXPR_LIST(ident_list)) {
         FOR_ITEMS_IN_LIST(lp, ident_list) {
             arg = LIST_ITEM(lp);
             if ((ident = find_ident_parent(EXPR_SYM(arg))) == NULL){
@@ -8550,7 +8569,7 @@ compile_IMPORT_statement(expr x)
             import_ident(ident);
         }
     }
-    output_statement(list1(F03_IMPORT_STATEMENT, EXPR_ARG1(x)));
+    output_statement(list1(F03_IMPORT_STATEMENT, ident_list));
 }
 
 static void

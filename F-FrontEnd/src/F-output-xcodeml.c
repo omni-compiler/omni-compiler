@@ -1969,12 +1969,12 @@ outx_importStatement(int l, expv v) {
     list lp;
     outx_tagOfStatement(l, v);
     ident_list = EXPR_ARG1(v);
-    if(EXPR_LIST(ident_list)) {
+    if (ident_list != NULL && EXPR_LIST(ident_list)) {
         FOR_ITEMS_IN_LIST(lp, ident_list) {
             arg = LIST_ITEM(lp);
             if(EXPR_CODE(arg) == IDENT){
                 outx_printi(l1, "<name>%s</name>\n", getRawString(arg));
-            }            
+            }
         }
     }
     outx_expvClose(l, v);
@@ -5264,7 +5264,7 @@ outx_declarations1(int l, EXT_ID parent_ep, int outputPragmaInBody)
             break;
         case F03_USE_ONLY_INTRINSIC_STATEMENT:
             outx_useOnlyDecl(l1, v, TRUE);
-            break;            
+            break;
         case F03_IMPORT_STATEMENT:
             outx_importStatement(l1, v);
             break;
