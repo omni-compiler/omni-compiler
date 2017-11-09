@@ -1138,7 +1138,7 @@ void _XMPF_pack_array_BASIC(void *buffer, void *src, int array_type,
  //   _XMP_fatal("unknown data type for reflect");
  // case _XMP_N_TYPE_LONG_DOUBLE_COMPLEX:
     default:
-      _XMP_fatal("unknown data type for reflect");
+      _XMP_fatal("unknown data type for packing arrays");
   }
 }
 
@@ -1340,7 +1340,7 @@ void _XMPF_unpack_array_BASIC(void *dst, void *buffer, int array_type,
  // case _XMP_N_TYPE_LONG_DOUBLE_COMPLEX:
  //   _XMP_fatal("unknown data type for reflect");
     default:
-      _XMP_fatal("unknown data type for reflect");
+      _XMP_fatal("unknown data type for unpacking arrays");
   }
 }
 
@@ -1360,8 +1360,17 @@ void _XMPF_unpack_array_GENERAL(void *dst, void *buffer, size_t array_type_size,
 
 void _XMPF_pack_array(void *buffer, void *src, int array_type, size_t array_type_size,
                      int array_dim, int *l, int *u, int *s, unsigned long long *d) {
-  if (array_type == _XMP_N_TYPE_NONBASIC) {
+  if (array_type >= _XMP_N_TYPE_FLOAT_COMPLEX && array_type <= _XMP_N_TYPE_NONBASIC) {
+    /*_XMP_N_TYPE_FLOAT_COMPLEX || _XMP_N_TYPE_DOUBLE_COMPLEX ||
+      _XMP_N_TYPE_LONG_DOUBLE_COMPLEX ||
+      _XMP_N_TYPE_NONBASIC */
     _XMPF_pack_array_GENERAL(buffer, src, array_type_size, array_dim, l, u, s, d);
+#ifdef __STD_IEC_559_COMPLEX__
+  } else if (array_type >= _XMP_N_TYPE_FLOAT_IMAGINARY && array_type <= _XMP_N_TYPE_LONG_DOUBLE_IMAGINARY) {
+    /* _XMP_N_TYPE_FLOAT_IMAGINARY || _XMP_N_TYPE_DOUBLE_IMAGINARY ||
+       _XMP_N_TYPE_LONG_DOUBLE_IMAGINARY */
+    _XMPF_pack_array_GENERAL(buffer, src, array_type_size, array_dim, l, u, s, d);
+#endif
   } else {
     _XMPF_pack_array_BASIC(buffer, src, array_type, array_dim, l, u, s, d);
   }
@@ -1369,8 +1378,17 @@ void _XMPF_pack_array(void *buffer, void *src, int array_type, size_t array_type
 
 void _XMPF_unpack_array(void *dst, void *buffer, int array_type, size_t array_type_size,
                        int array_dim, int *l, int *u, int *s, unsigned long long *d) {
-  if (array_type == _XMP_N_TYPE_NONBASIC) {
+  if (array_type >= _XMP_N_TYPE_FLOAT_COMPLEX && array_type <= _XMP_N_TYPE_NONBASIC) {
+    /*_XMP_N_TYPE_FLOAT_COMPLEX || _XMP_N_TYPE_DOUBLE_COMPLEX ||
+      _XMP_N_TYPE_LONG_DOUBLE_COMPLEX ||
+      _XMP_N_TYPE_NONBASIC */
     _XMPF_unpack_array_GENERAL(dst, buffer, array_type_size, array_dim, l, u, s, d);
+#ifdef __STD_IEC_559_COMPLEX__
+  } else if (array_type >= _XMP_N_TYPE_FLOAT_IMAGINARY && array_type <= _XMP_N_TYPE_LONG_DOUBLE_IMAGINARY) {
+    /* _XMP_N_TYPE_FLOAT_IMAGINARY || _XMP_N_TYPE_DOUBLE_IMAGINARY ||
+       _XMP_N_TYPE_LONG_DOUBLE_IMAGINARY */
+    _XMPF_unpack_array_GENERAL(dst, buffer, array_type_size, array_dim, l, u, s, d);
+#endif
   } else {
     _XMPF_unpack_array_BASIC(dst, buffer, array_type, array_dim, l, u, s, d);
   }
