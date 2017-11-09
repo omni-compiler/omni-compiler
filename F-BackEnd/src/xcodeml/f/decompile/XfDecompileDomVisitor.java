@@ -5603,14 +5603,37 @@ public class XfDecompileDomVisitor {
                 if (renamableCount > 0) {
                     writer.writeToken(", ");
                 }
+                boolean isOperator = XmDomUtil.getAttrBool(renamableNode, "is_operator");
                 String localName = XmDomUtil.getAttr(renamableNode, "local_name");
                 String useName = XmDomUtil.getAttr(renamableNode, "use_name");
                 if (XfUtilForDom.isNullOrEmpty(localName) == false) {
-                    writer.writeToken(localName);
+                    if (isOperator) {
+                        if(localName.equals("=")){
+                            writer.writeToken("ASSIGNMENT");
+                        } else {
+                            writer.writeToken("OPERATOR");
+                        }
+                        writer.writeToken("(");
+                        writer.writeToken(localName);
+                        writer.writeToken(")");
+                    } else {
+                        writer.writeToken(localName);
+                    }
                     writer.writeToken(" => ");
                 }
                 if (XfUtilForDom.isNullOrEmpty(useName) == false) {
-                    writer.writeToken(useName);
+                    if (isOperator) {
+                        if(useName.equals("=")){
+                            writer.writeToken("ASSIGNMENT");
+                        } else {
+                            writer.writeToken("OPERATOR");
+                        }
+                        writer.writeToken("(");
+                        writer.writeToken(useName);
+                        writer.writeToken(")");
+                    } else {
+                        writer.writeToken(useName);
+                    }
                 }
                 ++renamableCount;
             }

@@ -3289,11 +3289,15 @@ outx_useDecl(int l, expv v, int is_intrinsic)
  * output rename
  */
 static void
-outx_useRenamable(int l, expv local, expv use)
+outx_useRenamable(int l, int expr_code, expv local, expv use)
 {
     assert(use != NULL);
 
     outx_printi(l, "<renamable");
+    
+    if (expr_code == F95_GENERIC_SPEC) {
+        outx_true(TRUE, "is_operator");
+    }
 
     if (local != NULL)
         outx_printi(0," local_name=\"%s\"", getRawString(local));
@@ -3318,7 +3322,7 @@ outx_useOnlyDecl(int l, expv v, int is_intrinsic)
 
     FOR_ITEMS_IN_LIST(lp, EXPR_ARG2(v)) {
         expv x = LIST_ITEM(lp);
-        outx_useRenamable(l+1, EXPR_ARG1(x), EXPR_ARG2(x));
+        outx_useRenamable(l+1, EXPR_CODE(x), EXPR_ARG1(x), EXPR_ARG2(x));
     }
 
     include_module_file(print_fp,EXPV_NAME(EXPR_ARG1(v)));
