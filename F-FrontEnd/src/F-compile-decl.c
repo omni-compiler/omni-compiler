@@ -6002,16 +6002,10 @@ compile_BIND_statement(expr bind_opt, expr id_list)
                     fatal("cannot declare common block %s", SYM_NAME(EXPR_SYM(elm)));
                 }
             }
-        }            
-        TYPE_SET_BIND(id);
-        if (ID_TYPE(id) != NULL) {
-            TYPE_SET_BIND(ID_TYPE(id));
         }
+        TYPE_SET_BIND(id);
         if (bind_name){
             ID_BIND(id) = bind_name;
-            if(ID_TYPE(id) != NULL) {
-                TYPE_BIND_NAME(ID_TYPE(id)) = bind_name;
-            }
         }
     }
 }

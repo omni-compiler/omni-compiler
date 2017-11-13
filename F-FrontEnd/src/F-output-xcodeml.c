@@ -4901,17 +4901,23 @@ outx_commonDecl(int l, ID cid)
 {
     list lp;
     expv var;
-    char buf[256];
     const int l1 = l + 1, l2 = l1 + 1;
 
     outx_tagOfDecl1(l, xtag(F_COMMON_DECL), ID_LINE(cid));
 
-    if(COM_IS_BLANK_NAME(cid) == FALSE)
-        sprintf(buf, " name=\"%s\"", ID_NAME(cid));
-    else
-        buf[0] = '\0';
+    outx_printi(l1, "<varList");
+    if(COM_IS_BLANK_NAME(cid) == FALSE) {
+        outx_print(" name=\"%s\"", ID_NAME(cid));
+    }
 
-    outx_tag(l1, "varList%s", buf);
+    if(TYPE_HAS_BIND(cid)) {
+        outx_print(" bind=\"%s\"", "C"); // Only C for the moment
+        if(ID_BIND(cid)){
+            outx_print(" bind_name=\"%s\"", EXPR_STR(ID_BIND(cid)));
+        }
+    }
+
+    outx_print(">\n");
 
     FOR_ITEMS_IN_LIST(lp, COM_VARS(cid)) {
         var = LIST_ITEM(lp);

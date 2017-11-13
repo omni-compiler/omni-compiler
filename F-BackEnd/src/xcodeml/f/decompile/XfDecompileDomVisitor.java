@@ -2486,11 +2486,38 @@ public class XfDecompileDomVisitor {
             _writeLineDirective(n);
 
             XmfWriter writer = _context.getWriter();
-            writer.writeToken("COMMON ");
+            writer.writeToken("COMMON");
 
-            _invokeChildEnterAndWriteDelim(n, ", ");
+            _invokeChildEnterAndWriteDelim(n, ",");
 
             writer.setupNewLine();
+
+            ArrayList<Node> childNodes = XmDomUtil.collectChildNodes(n);
+
+            Node valueList = childNodes.get(0);
+
+            String bind = XmDomUtil.getAttr(valueList, "bind");
+            if(XfUtilForDom.isNullOrEmpty(bind) == false) {
+                writer.writeToken("BIND( " + bind.toUpperCase());
+                String bindName = XmDomUtil.getAttr(valueList, "bind_name");
+                if(XfUtilForDom.isNullOrEmpty(bindName) == false){
+                    writer.writeToken(", NAME = \"" + bindName + "\"");
+                }
+                writer.writeToken(")");
+                writer.writeToken("::");
+
+
+                String name = XmDomUtil.getAttr(valueList, "name");
+
+                if (XfUtilForDom.isNullOrEmpty(name) == false) {
+                    writer.writeToken("/");
+                    writer.writeToken(name);
+                    writer.writeToken("/ ");
+                }
+
+                writer.setupNewLine();
+            }
+
         }
     }
 
@@ -3303,8 +3330,7 @@ public class XfDecompileDomVisitor {
                 // ISO C BINDING feature
                 String bind = XmDomUtil.getAttr(functionTypeNode, "bind");
                 if(XfUtilForDom.isNullOrEmpty(bind) == false) {
-                    writer.writeToken(" ");
-                    writer.writeToken("BIND( " + bind.toUpperCase());
+                    writer.writeToken("BIND(" + bind.toUpperCase());
                     String bindName = XmDomUtil.getAttr(functionTypeNode, "bind_name");
                     if(XfUtilForDom.isNullOrEmpty(bindName) == false){
                         writer.writeToken(", NAME = \"" + bindName + "\"");
