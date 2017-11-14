@@ -2492,24 +2492,21 @@ public class XfDecompileDomVisitor {
 
             writer.setupNewLine();
 
-            ArrayList<Node> childNodes = XmDomUtil.collectChildNodes(n);
-
-            Node valueList = childNodes.get(0);
-
-            String bind = XmDomUtil.getAttr(valueList, "bind");
-            if(XfUtilForDom.isNullOrEmpty(bind) == false) {
+            String bind = XmDomUtil.getAttr(n, "bind");
+            if(!XfUtilForDom.isNullOrEmpty(bind)) {
                 writer.writeToken("BIND( " + bind.toUpperCase());
-                String bindName = XmDomUtil.getAttr(valueList, "bind_name");
-                if(XfUtilForDom.isNullOrEmpty(bindName) == false){
+                String bindName = XmDomUtil.getAttr(n, "bind_name");
+                if(!XfUtilForDom.isNullOrEmpty(bindName)){
                     writer.writeToken(", NAME = \"" + bindName + "\"");
                 }
                 writer.writeToken(")");
                 writer.writeToken("::");
 
+                ArrayList<Node> childNodes = XmDomUtil.collectChildNodes(n);
+                Node valueList = childNodes.get(0);
 
                 String name = XmDomUtil.getAttr(valueList, "name");
-
-                if (XfUtilForDom.isNullOrEmpty(name) == false) {
+                if (!XfUtilForDom.isNullOrEmpty(name)) {
                     writer.writeToken("/");
                     writer.writeToken(name);
                     writer.writeToken("/ ");
