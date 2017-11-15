@@ -8347,6 +8347,7 @@ esac
 
 
 
+ENABLE_UCHARDET=no
 # Check whether --enable-uchardet was given.
 if test "${enable_uchardet+set}" = set; then :
   enableval=$enable_uchardet; ENABLE_UCHARDET=yes

@@ -280,6 +280,7 @@ AC_SUBST(CPU)
 AC_SUBST(MM5TGT)
 AC_SUBST(PPTGT)
 
+ENABLE_UCHARDET=no
 AC_ARG_ENABLE(uchardet,
               [  --enable-uchardet       enable uchardet Library (false default)],
               [ENABLE_UCHARDET=yes], [ENABLE_UCHARDET=no])
