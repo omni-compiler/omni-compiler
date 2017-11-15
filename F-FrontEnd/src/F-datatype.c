@@ -579,11 +579,17 @@ is_array_implicit_shape(TYPE_DESC tp)
     if (!TYPE_IS_PARAMETER(tp) && !IS_ARRAY_TYPE(tp))
         return FALSE;
 
-    while(IS_ARRAY_TYPE(tp) && TYPE_REF(tp)) {
+    while (IS_ARRAY_TYPE(tp) && TYPE_REF(tp)) {
         if (!TYPE_IS_ARRAY_ASSUMED_SIZE(tp))
             return FALSE;
         tp = TYPE_REF(tp);
     }
+    if (tp == NULL || IS_ARRAY_TYPE(tp)) {
+        /* tp is corrupted! */
+        fatal("invalid array type.");
+        return FALSE;
+    }
+
     return TRUE;
 }
 
