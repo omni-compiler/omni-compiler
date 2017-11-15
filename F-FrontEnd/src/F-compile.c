@@ -6243,7 +6243,7 @@ type_parameter_inquiry(expv v, expr mem)
         }
     } else if (IS_CHAR(btp)) {
         if (strcmp("kind", SYM_NAME(EXPR_SYM(mem))) == 0 ||
-            strcmp("len", SYM_NAME(EXPR_SYM(mem)))) {
+            strcmp("len", SYM_NAME(EXPR_SYM(mem))) == 0) {
             return expv_cons(F95_MEMBER_REF, type_basic(TYPE_INT), v, mem);
         }
     }
