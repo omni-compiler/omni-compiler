@@ -1324,6 +1324,11 @@ compile_statement1(int st_no, expr x)
         compile_ASYNCHRONOUS_statement(EXPR_ARG1(x));
         break;
 
+    case F03_BIND_STATEMENT:
+        check_INDCL();
+        compile_BIND_statement(EXPR_ARG1(x), EXPR_ARG2(x));
+        break;
+
     case F03_TYPE_BOUND_PROCEDURE_STATEMENT:
         if (CURRENT_STATE != IN_TYPE_BOUND_PROCS) {
             error("TYPE-BOUDNED PROCEDURE out of the derived-type declaration");
@@ -2495,6 +2500,9 @@ end_declaration()
 
         /* merge type attribute flags except SAVE attr*/
         TYPE_ATTR_FLAGS(tp) |= (TYPE_ATTR_FLAGS(ip) & ~TYPE_ATTR_SAVE);
+        if (TYPE_HAS_BIND(ip)) {
+            TYPE_BIND_NAME(tp) = ID_BIND(ip);
+        }
         if (IS_FUNCTION_TYPE(tp) && TYPE_REF(tp) == NULL) {
             /*
              * The type attributes for the function (PURE, ELEMENETAL, etc) are
@@ -2951,14 +2959,8 @@ setLocalInfoToCurrentExtId(int asModule)
     EXT_PROC_STRUCT_DECLS(CURRENT_EXT_ID) = LOCAL_STRUCT_DECLS;
     EXT_PROC_BLOCKS(CURRENT_EXT_ID) = LOCAL_BLOCKS;
     EXT_PROC_INTERFACES(CURRENT_EXT_ID) = LOCAL_INTERFACES;
-
-    if(asModule) {
-        EXT_PROC_COMMON_ID_LIST(CURRENT_EXT_ID) = NULL;
-        EXT_PROC_LABEL_LIST(CURRENT_EXT_ID) = NULL;
-    } else {
-        EXT_PROC_COMMON_ID_LIST(CURRENT_EXT_ID) = LOCAL_COMMON_SYMBOLS;
-        EXT_PROC_LABEL_LIST(CURRENT_EXT_ID) = LOCAL_LABELS;
-    }
+    EXT_PROC_COMMON_ID_LIST(CURRENT_EXT_ID) = LOCAL_COMMON_SYMBOLS;
+    EXT_PROC_LABEL_LIST(CURRENT_EXT_ID) = LOCAL_LABELS;
 }
 
 
@@ -6006,6 +6008,9 @@ end_interface()
         ID_CLASS(iid) = CL_PROC;
         ID_TYPE(iid) = hasSub ? generic_subroutine_type() : generic_function_type();
         TYPE_ATTR_FLAGS(ID_TYPE(iid)) = TYPE_ATTR_FLAGS(iid);
+        if (TYPE_HAS_BIND(iid)) {
+            TYPE_BIND_NAME(ID_TYPE(iid)) = ID_BIND(iid);
+        }
         ID_STORAGE(iid) = STG_EXT;
         PROC_CLASS(iid) = P_EXTERNAL;
         PROC_EXT_ID(iid) = intr;
