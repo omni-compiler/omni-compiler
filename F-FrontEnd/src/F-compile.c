@@ -1324,6 +1324,11 @@ compile_statement1(int st_no, expr x)
         compile_ASYNCHRONOUS_statement(EXPR_ARG1(x));
         break;
 
+    case F03_BIND_STATEMENT:
+        check_INDCL();
+        compile_BIND_statement(EXPR_ARG1(x), EXPR_ARG2(x));
+        break;
+
     case F03_TYPE_BOUND_PROCEDURE_STATEMENT:
         if (CURRENT_STATE != IN_TYPE_BOUND_PROCS) {
             error("TYPE-BOUDNED PROCEDURE out of the derived-type declaration");
@@ -2495,6 +2500,9 @@ end_declaration()
 
         /* merge type attribute flags except SAVE attr*/
         TYPE_ATTR_FLAGS(tp) |= (TYPE_ATTR_FLAGS(ip) & ~TYPE_ATTR_SAVE);
+        if (TYPE_HAS_BIND(ip)) {
+            TYPE_BIND_NAME(tp) = ID_BIND(ip);
+        }
         if (IS_FUNCTION_TYPE(tp) && TYPE_REF(tp) == NULL) {
             /*
              * The type attributes for the function (PURE, ELEMENETAL, etc) are
@@ -2951,14 +2959,8 @@ setLocalInfoToCurrentExtId(int asModule)
     EXT_PROC_STRUCT_DECLS(CURRENT_EXT_ID) = LOCAL_STRUCT_DECLS;
     EXT_PROC_BLOCKS(CURRENT_EXT_ID) = LOCAL_BLOCKS;
     EXT_PROC_INTERFACES(CURRENT_EXT_ID) = LOCAL_INTERFACES;
-
-    if(asModule) {
-        EXT_PROC_COMMON_ID_LIST(CURRENT_EXT_ID) = NULL;
-        EXT_PROC_LABEL_LIST(CURRENT_EXT_ID) = NULL;
-    } else {
-        EXT_PROC_COMMON_ID_LIST(CURRENT_EXT_ID) = LOCAL_COMMON_SYMBOLS;
-        EXT_PROC_LABEL_LIST(CURRENT_EXT_ID) = LOCAL_LABELS;
-    }
+    EXT_PROC_COMMON_ID_LIST(CURRENT_EXT_ID) = LOCAL_COMMON_SYMBOLS;
+    EXT_PROC_LABEL_LIST(CURRENT_EXT_ID) = LOCAL_LABELS;
 }
 
 
@@ -6006,6 +6008,9 @@ end_interface()
         ID_CLASS(iid) = CL_PROC;
         ID_TYPE(iid) = hasSub ? generic_subroutine_type() : generic_function_type();
         TYPE_ATTR_FLAGS(ID_TYPE(iid)) = TYPE_ATTR_FLAGS(iid);
+        if (TYPE_HAS_BIND(iid)) {
+            TYPE_BIND_NAME(ID_TYPE(iid)) = ID_BIND(iid);
+        }
         ID_STORAGE(iid) = STG_EXT;
         PROC_CLASS(iid) = P_EXTERNAL;
         PROC_EXT_ID(iid) = intr;
@@ -6292,6 +6297,27 @@ compile_complex_member_ref(expv cmplx, expr mem)
     return v;
 }
 
+static expv
+type_parameter_inquiry(expv v, expr mem)
+{
+    TYPE_DESC tp = EXPV_TYPE(v);
+    TYPE_DESC btp = bottom_type(tp);
+
+    assert(EXPR_CODE(mX) == IDENT);
+    if (IS_NUMERIC(btp)) {
+        if (strcmp("kind", SYM_NAME(EXPR_SYM(mem))) == 0) {
+            return expv_cons(F95_MEMBER_REF, type_basic(TYPE_INT), v, mem);
+
+        }
+    } else if (IS_CHAR(btp)) {
+        if (strcmp("kind", SYM_NAME(EXPR_SYM(mem))) == 0 ||
+            strcmp("len", SYM_NAME(EXPR_SYM(mem))) == 0) {
+            return expv_cons(F95_MEMBER_REF, type_basic(TYPE_INT), v, mem);
+        }
+    }
+    return NULL;
+}
+
 expv
 compile_member_ref(expr x)
 {
@@ -6321,6 +6347,12 @@ compile_member_ref(expr x)
     }
 
     stVTyp = EXPV_TYPE(struct_v);
+    mX = EXPR_ARG2(x);
+    assert(EXPR_CODE(mX) == IDENT);
+
+    if ((new_v = type_parameter_inquiry(struct_v, mX)) != NULL) {
+        return new_v;
+    }
 
     if (IS_ARRAY_TYPE(stVTyp)) {
         shape = list0(LIST);
@@ -6328,11 +6360,11 @@ compile_member_ref(expr x)
         stVTyp = bottom_type(stVTyp);
     }
 
-    mX = EXPR_ARG2(x);
-    assert(EXPR_CODE(mX) == IDENT);
-
     if (IS_COMPLEX(stVTyp)) {
-        return compile_complex_member_ref(struct_v, mX);
+        new_v = compile_complex_member_ref(struct_v, mX);
+        tp = EXPV_TYPE(new_v);
+        EXPV_TYPE(new_v) = compile_dimensions(tp, shape);
+        return new_v;
     }
 
     member_id = find_struct_member(stVTyp, EXPR_SYM(mX));
@@ -6344,7 +6376,12 @@ compile_member_ref(expr x)
 
     // TODO:
     //	 should work for all cases (array/substr/plain scalar).
-    if (!IS_FUNCTION_TYPE(ID_TYPE(member_id))) {
+    if (TYPE_IS_KIND(ID_TYPE(member_id)) ||
+        TYPE_IS_LEN(ID_TYPE(member_id))) {
+        /* type parameter inquiry is always scala */
+        tp = ID_TYPE(member_id);
+
+    } else if (!IS_FUNCTION_TYPE(ID_TYPE(member_id))) {
         /*
          * If type of struct_v has pointer/pointee flags on, members
          * should have those flags on too.
@@ -6369,6 +6406,7 @@ compile_member_ref(expr x)
 
         tp = retTyp;
         tp = compile_dimensions(tp, shape);
+
     } else {
         tp = ID_TYPE(member_id);
 

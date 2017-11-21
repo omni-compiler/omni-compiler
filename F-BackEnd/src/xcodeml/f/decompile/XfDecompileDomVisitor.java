@@ -2486,11 +2486,35 @@ public class XfDecompileDomVisitor {
             _writeLineDirective(n);
 
             XmfWriter writer = _context.getWriter();
-            writer.writeToken("COMMON ");
+            writer.writeToken("COMMON");
 
-            _invokeChildEnterAndWriteDelim(n, ", ");
+            _invokeChildEnterAndWriteDelim(n, ",");
 
             writer.setupNewLine();
+
+            String bind = XmDomUtil.getAttr(n, "bind");
+            if(!XfUtilForDom.isNullOrEmpty(bind)) {
+                writer.writeToken("BIND( " + bind.toUpperCase());
+                String bindName = XmDomUtil.getAttr(n, "bind_name");
+                if(!XfUtilForDom.isNullOrEmpty(bindName)){
+                    writer.writeToken(", NAME = \"" + bindName + "\"");
+                }
+                writer.writeToken(")");
+                writer.writeToken("::");
+
+                ArrayList<Node> childNodes = XmDomUtil.collectChildNodes(n);
+                Node valueList = childNodes.get(0);
+
+                String name = XmDomUtil.getAttr(valueList, "name");
+                if (!XfUtilForDom.isNullOrEmpty(name)) {
+                    writer.writeToken("/");
+                    writer.writeToken(name);
+                    writer.writeToken("/ ");
+                }
+
+                writer.setupNewLine();
+            }
+
         }
     }
 
@@ -3303,8 +3327,7 @@ public class XfDecompileDomVisitor {
                 // ISO C BINDING feature
                 String bind = XmDomUtil.getAttr(functionTypeNode, "bind");
                 if(XfUtilForDom.isNullOrEmpty(bind) == false) {
-                    writer.writeToken(" ");
-                    writer.writeToken("BIND( " + bind.toUpperCase());
+                    writer.writeToken("BIND(" + bind.toUpperCase());
                     String bindName = XmDomUtil.getAttr(functionTypeNode, "bind_name");
                     if(XfUtilForDom.isNullOrEmpty(bindName) == false){
                         writer.writeToken(", NAME = \"" + bindName + "\"");

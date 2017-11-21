@@ -658,6 +658,7 @@ has_attribute_except_func_attrs(TYPE_DESC tp)
         TYPE_IS_PROCEDURE(tp) ||
         TYPE_IS_ASYNCHRONOUS(tp) ||
         TYPE_IS_CONTIGUOUS(tp) ||
+        TYPE_HAS_BIND(tp) ||
         tp->codims;
 }
 
@@ -2295,6 +2296,39 @@ outx_complexPartRef(int l, expv v)
 }
 
 
+static int
+expv_is_type_parameter_inquiry(expv v)
+{
+    expv designator = EXPR_ARG1(v);
+    expv mem = EXPR_ARG2(v);
+
+    if (IS_NUMERIC(EXPV_TYPE(designator)) &&
+        strcmp("kind", SYM_NAME(EXPV_NAME(mem))) == 0) {
+        return TRUE;
+    }
+    if (IS_CHAR(EXPV_TYPE(designator)) &&
+        (strcmp("kind", SYM_NAME(EXPV_NAME(mem))) == 0 ||
+         strcmp("len", SYM_NAME(EXPV_NAME(mem))) == 0)) {
+        return TRUE;
+    }
+    return FALSE;
+}
+
+/**
+ * output FmemberRef as type parameter inquiry
+ */
+static void
+outx_type_param_inquiry(int l, expv v)
+{
+    expv designator = EXPR_ARG1(v);
+    expv mem = EXPR_ARG2(v);
+
+    EXPR_CODE(v) = FUNCTION_CALL;
+    EXPR_ARG1(v) = mem;
+    EXPR_ARG2(v) = list1(LIST, designator);
+    outx_functionCall(l, v);
+}
+
 /**
  * output FmemberRef
  */
@@ -2303,6 +2337,9 @@ outx_memberRef(int l, expv v)
 {
     expv v_left = EXPV_LEFT(v);
     expv v_right = EXPV_RIGHT(v);
+
+    if (expv_is_type_parameter_inquiry(v))
+        return outx_type_param_inquiry(l, v);
 
     if (IS_COMPLEX(EXPV_TYPE(v_left)))
         return outx_complexPartRef(l, v);
@@ -4904,17 +4941,24 @@ outx_commonDecl(int l, ID cid)
 {
     list lp;
     expv var;
-    char buf[256];
     const int l1 = l + 1, l2 = l1 + 1;
 
-    outx_tagOfDecl1(l, xtag(F_COMMON_DECL), ID_LINE(cid));
+    outx_tagOfDeclNoClose(l, xtag(F_COMMON_DECL), ID_LINE(cid));
 
-    if(COM_IS_BLANK_NAME(cid) == FALSE)
-        sprintf(buf, " name=\"%s\"", ID_NAME(cid));
-    else
-        buf[0] = '\0';
+    if(TYPE_HAS_BIND(cid)) {
+        outx_print(" bind=\"%s\"", "C"); // Only C for the moment
+        if(ID_BIND(cid)){
+            outx_print(" bind_name=\"%s\"", EXPR_STR(ID_BIND(cid)));
+        }
+    }
 
-    outx_tag(l1, "varList%s", buf);
+    outx_print(">\n");
+
+    outx_printi(l1, "<varList");
+    if(COM_IS_BLANK_NAME(cid) == FALSE) {
+        outx_print(" name=\"%s\"", ID_NAME(cid));
+    }
+    outx_print(">\n");
 
     FOR_ITEMS_IN_LIST(lp, COM_VARS(cid)) {
         var = LIST_ITEM(lp);
@@ -5299,8 +5343,10 @@ outx_declarations1(int l, EXT_ID parent_ep, int outputPragmaInBody)
     /*
      * FcommonDecl
      */
-    FOREACH_ID(id, EXT_PROC_COMMON_ID_LIST(parent_ep)) {
-        outx_commonDecl(l1, id);
+    if (!is_emitting_xmod()) {
+        FOREACH_ID(id, EXT_PROC_COMMON_ID_LIST(parent_ep)) {
+            outx_commonDecl(l1, id);
+        }
     }
 
     /*
