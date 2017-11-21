@@ -2325,7 +2325,11 @@ if test x${use_tca} = xyes; then
 fi
 
 AC_SUBST(ONESIDED_LIB)
-
+OMNI_X2X_FONESIDED_OPT=""
+if test x$isOnesided = xyes; then
+  OMNI_X2X_FONESIDED_OPT="-enable-Fonesided"
+fi
+AC_SUBST(OMNI_X2X_FONESIDED_OPT)
 #--------------------------------------------------------------------
 # AC_CONFIG_FILES(XcodeML-Common/Makefile)
 AC_CONFIG_FILES(C-FrontEnd/src/Makefile)

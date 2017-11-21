@@ -2,6 +2,7 @@ package exc.xmpF;
 
 import exc.object.*;
 import exc.block.*;
+import xcodeml.util.XmOption;
 
 /**
  * XcalableMP AST translator:
@@ -263,7 +264,29 @@ public class XMPtranslate implements XobjectDefVisitor
       if(ft != null && ft.isFprogram()) {
 	ft.setIsFprogram(false);
 	replace_main(d);
+
+        // create new main
+        Ident mainId = Ident.FidentNotExternal("main", Xtype.FsubroutineType);
+        BlockList newFuncBody = Bcons.emptyBody();
+        
+        newFuncBody.add(Ident.FidentNotExternal("xmpf_init_all_", Xtype.FsubroutineType).callSubroutine(null));
+        newFuncBody.add(Ident.FidentNotExternal("xmpf_traverse_module", Xtype.FsubroutineType).callSubroutine(null));
+
+        if(XmOption.isFonesided()){
+          newFuncBody.add(Ident.FidentNotExternal("xmpf_traverse_countcoarray", Xtype.FsubroutineType).callSubroutine(null));
+          newFuncBody.add(Ident.FidentNotExternal("xmpf_coarray_malloc_pool", Xtype.FsubroutineType).callSubroutine(null));
+          newFuncBody.add(Ident.FidentNotExternal("xmpf_traverse_initcoarray", Xtype.FsubroutineType).callSubroutine(null));
+          newFuncBody.add(Ident.FidentNotExternal("xmpf_sync_all_auto", Xtype.FsubroutineType).callSubroutine(null));
+        }
+        
+        newFuncBody.add(Ident.FidentNotExternal("xmpf_main", Xtype.FsubroutineType).callSubroutine(null));
+        newFuncBody.add(Ident.FidentNotExternal("xmpf_finalize_all_", Xtype.FsubroutineType).callSubroutine(null));
+        
+        XobjectDef newMain = XobjectDef.Func(mainId, null, null, newFuncBody.toXobject());
+        newMain.getFuncType().setIsFprogram(true);
+        d.addAfterThis(newMain);
       }
+      
       else if (d.getParent() == null){ // neither internal nor module procedures
       	newChild = wrap_external(d);
       }

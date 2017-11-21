@@ -625,6 +625,7 @@ ac_includes_default="\
 ac_header_list=
 ac_func_list=
 ac_subst_vars='LTLIBOBJS
+OMNI_X2X_FONESIDED_OPT
 ONESIDED_LIB
 MKRULESDIR
 TARGET_ARCH
@@ -13257,6 +13258,10 @@ if test x${use_tca} = xyes; then
 fi
 
 
+OMNI_X2X_FONESIDED_OPT=""
+if test x$isOnesided = xyes; then
+  OMNI_X2X_FONESIDED_OPT="-enable-Fonesided"
+fi
 
 #--------------------------------------------------------------------
 # AC_CONFIG_FILES(XcodeML-Common/Makefile)
