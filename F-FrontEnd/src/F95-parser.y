@@ -518,7 +518,7 @@ static void type_spec_done();
 %type <val> array_constructor array_constructor_list
 %type <val> program_name dummy_arg_list dummy_args dummy_arg file_name
 %type <val> declaration_statement executable_statement action_statement action_statement_let action_statement_key assign_statement_or_null assign_statement
-%type <val> declaration_list entity_decl type_spec type_spec0 expr_type_spec length_spec common_decl
+%type <val> declaration_list entity_decl type_spec type_spec0 type_spec1 expr_type_spec length_spec common_decl
 %type <val> type_param_value_list type_param_value
 %type <val> common_block external_decl intrinsic_decl equivalence_decl
 %type <val> cray_pointer_list cray_pointer_pair cray_pointer_var
@@ -1279,17 +1279,25 @@ entity_decl:
 type_spec: type_spec0 { $$ = $1; type_spec_done(); }
 
 type_spec0:
-          KW_TYPE '(' IDENTIFIER ')'
-        { $$ = $3; }
-        | KW_TYPE '(' IDENTIFIER '(' type_param_value_list ')' ')'
-        { $$ = list2(F03_PARAMETERIZED_TYPE,$3,$5); }
+          KW_TYPE '(' KW IDENTIFIER ')'
+        { $$ = $4; }
+        | KW_TYPE '(' KW IDENTIFIER '(' type_param_value_list ')' ')'
+        { $$ = list2(F03_PARAMETERIZED_TYPE,$4,$6); }
+        | KW_TYPE '(' KW type_spec1 ')'
+        { $$ = $4; }
         | CLASS '(' IDENTIFIER ')'
         { $$ = list1(F03_CLASS, $3); }
         | CLASS '(' IDENTIFIER '(' type_param_value_list ')' ')'
         { $$ = list1(F03_CLASS, list2(F03_PARAMETERIZED_TYPE,$3,$5)); }
         | CLASS '(' '*' ')'
-        { $$ = list1(F03_CLASS, NULL);; }
-        | type_keyword kind_selector
+        { $$ = list1(F03_CLASS, NULL); }
+        | type_spec1
+        { $$ = $1; }
+        ;
+
+
+type_spec1:
+          type_keyword kind_selector
         { $$ = list2(LIST,$1,$2);}
         | type_keyword length_spec  /* compatibility */
         { $$ = list2(LIST, $1, $2);}
@@ -1304,7 +1312,6 @@ type_spec0:
                             GEN_NODE(INT_CONSTANT, 8)); }
         //                    gen_default_real_kind()); }
         ;
-
 
 /*
  * NOTE:
