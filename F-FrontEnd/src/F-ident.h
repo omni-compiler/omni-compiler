@@ -33,6 +33,7 @@ enum name_class {
     CL_TYPE_PARAM, /* type parameter name */
     CL_TYPE_BOUND_PROC, /* type bound procedure */
     CL_MULTI,     /* Both the derived type name and the generic procedure */
+    CL_DECL_PRAGMA, /* Placeholder for declarative pragmas */
     CL_ENUM,      /* enum (dummy name) */
 };
 
@@ -272,6 +273,10 @@ typedef struct ident_descriptor
             /* for enumerator */
             struct ident_descriptor * define;
         } enumerator_info;
+        struct {
+	  /* for CL_DECL_PRAGMA */
+	  expv v;
+	} decl_pragma_info;
     } info;
 } *ID;
 

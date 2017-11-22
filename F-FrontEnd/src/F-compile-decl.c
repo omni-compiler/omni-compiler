@@ -4845,6 +4845,41 @@ compile_pragma_statement(expr x)
 }
 
 
+void
+compile_pragma_decl(expr x)
+{
+  expv v = NULL;
+
+  switch (EXPR_CODE(EXPR_ARG1(x)))
+    {
+    case STRING_CONSTANT:
+	if (EXPR_STR(EXPR_ARG1(x)) == NULL) {
+	    error("assertion fail on compile_pragma_statement, arg = NULL");
+	    break;
+	}
+	else {
+	  v = expv_str_term(STRING_CONSTANT,
+			    NULL,
+			    strdup(EXPR_STR(EXPR_ARG1(x))));
+        break;
+      }
+    default:
+      {
+        error("invalid format.");
+        break;
+      }
+    }
+
+    SYMBOL sym = gen_temp_symbol("omni_dummy");
+    ID id = declare_ident(sym, CL_DECL_PRAGMA);
+    id->info.decl_pragma_info.v = list1(F_PRAGMA_STATEMENT, v);
+    //ID_TYPE(id) = BASIC_TYPE_DESC(TYPE_INT);
+    //ID_STORAGE(id) = STG_AUTO;
+    ID_LINE(id) = new_line_info(get_file_id(source_file_name),0);
+    //declare_variable(id);
+}
+
+
 /*
  * declare variables those have a specified type attribute
  *   OR

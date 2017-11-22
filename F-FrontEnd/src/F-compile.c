@@ -1230,8 +1230,13 @@ compile_statement1(int st_no, expr x)
         break;
 
     case F_PRAGMA_STATEMENT:
-        compile_pragma_statement(x);
-        break;
+      if (CURRENT_STATE == OUTSIDE)
+	;
+      else if (CURRENT_STATE == INDCL || CURRENT_STATE == INSIDE)
+	compile_pragma_decl(x);
+      else 
+	compile_pragma_statement(x);
+      break;
 
     case F95_TYPEDECL_STATEMENT:
         check_INDCL();

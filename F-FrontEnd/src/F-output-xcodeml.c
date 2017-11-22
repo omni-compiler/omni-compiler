@@ -5146,6 +5146,10 @@ emit_decl(int l, ID id)
         outx_enumDecl(l, id);
         break;
 
+    case CL_DECL_PRAGMA:
+      outx_pragmaStatement(l, id->info.decl_pragma_info.v);
+      break;
+	
     case CL_PROC:
         if (ID_TYPE(id) &&
             IS_PROCEDURE_TYPE(ID_TYPE(id)) &&
