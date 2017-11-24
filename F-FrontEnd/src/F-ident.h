@@ -104,6 +104,7 @@ enum storage_class {
     STG_NONE,    /* for intrinsic, stfunction */
     STG_TYPE_PARAM, /* type parameter */
     STG_INDEX, /* indexes of forall */
+    STG_PRAGMA, /* placeholder for pragma */
 
 };
 
@@ -510,6 +511,10 @@ typedef struct external_symbol
                 SYMBOL parent;
             } extends;
         } proc_info;
+        struct {
+	  /* for STG_PRAGMA */
+	  expv v;
+	} pragma_info;
     } info;
 } *EXT_ID;
 
@@ -530,6 +535,7 @@ typedef struct external_symbol
                                 EXT_PROC_INTERFACE_INFO(ep)->class == INTF_GENERIC_READ_UNFORMATTED || \
                                 EXT_PROC_INTERFACE_INFO(ep)->class == INTF_GENERIC_WRITE_FORMATTED || \
                                 EXT_PROC_INTERFACE_INFO(ep)->class == INTF_GENERIC_WRITE_UNFORMATTED))
+#define EXT_IS_PRAGMA(ep) (EXT_TAG(ep) == STG_PRAGMA)
 
 #define EXT_PROC_TYPE(ep)       ((ep)->info.proc_info.type)
 #define EXT_PROC_BODY(ep)       ((ep)->info.proc_info.body)

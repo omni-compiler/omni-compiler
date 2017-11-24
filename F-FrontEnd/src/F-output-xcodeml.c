@@ -1215,7 +1215,8 @@ get_sclass(ID id)
             return "ftype_name";
         case STG_UNKNOWN:
         case STG_NONE:
-            fatal("%s: illegal storage class: symbol=%s", __func__, ID_NAME(id));
+	case STG_PRAGMA:
+	  fatal("%s: illegal storage class: symbol=%s", __func__, ID_NAME(id));
             abort();
         }
         break;
@@ -5186,6 +5187,7 @@ emit_decl(int l, ID id)
 
             case STG_UNKNOWN:
             case STG_NONE:
+	    case STG_PRAGMA:
                 break;
         }
         break;
@@ -5873,7 +5875,7 @@ outx_globalSymbols(int l)
 
     outx_tag(l, "globalSymbols");
     FOREACH_EXT_ID(ep, EXTERNAL_SYMBOLS) {
-        if (EXT_IS_DUMMY(ep) || EXT_IS_BLANK_NAME(ep)) {
+        if (EXT_IS_DUMMY(ep) || EXT_IS_BLANK_NAME(ep) || EXT_IS_PRAGMA(ep)) {
             continue;
         }
         outx_ext_id(l1, ep);
@@ -5908,6 +5910,9 @@ outx_globalDeclarations(int l)
                     outx_functionDefinition(l1, ep);
             }
             break;
+	case STG_PRAGMA:
+	    outx_pragmaStatement(l + 1, ep->info.pragma_info.v);
+	    break;
         default:
             break;
         }

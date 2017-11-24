@@ -356,6 +356,10 @@ list_find_type_expr(const expr lst)
 }
 
 
+void compile_pragma_decl(expr x);
+void compile_pragma_outside(expr x);
+
+
 void
 compile_statement(st_no,x)
      int st_no;
@@ -1231,7 +1235,7 @@ compile_statement1(int st_no, expr x)
 
     case F_PRAGMA_STATEMENT:
       if (CURRENT_STATE == OUTSIDE)
-	;
+	compile_pragma_outside(x);
       else if (CURRENT_STATE == INDCL || CURRENT_STATE == INSIDE)
 	compile_pragma_decl(x);
       else 
