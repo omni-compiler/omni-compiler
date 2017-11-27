@@ -149,6 +149,8 @@ static ID     unify_id_list(ID parents, ID childs, int overshadow);
 static void   unify_submodule_symbol_table(void);
 static EXT_ID unify_ext_id_list(EXT_ID parents, EXT_ID childs, int overshadow);
 
+static expr get_generic_spec_symbol(int expr_code);
+
 void init_for_OMP_pragma();
 void check_for_OMP_pragma(expr x);
 
@@ -1323,6 +1325,11 @@ compile_statement1(int st_no, expr x)
     case F03_ASYNCHRONOUS_STATEMENT:
         check_INDCL();
         compile_ASYNCHRONOUS_statement(EXPR_ARG1(x));
+        break;
+
+    case F03_BIND_STATEMENT:
+        check_INDCL();
+        compile_BIND_statement(EXPR_ARG1(x), EXPR_ARG2(x));
         break;
 
     case F03_TYPE_BOUND_PROCEDURE_STATEMENT:
@@ -2506,6 +2513,9 @@ end_declaration()
 
         /* merge type attribute flags except SAVE attr*/
         TYPE_ATTR_FLAGS(tp) |= (TYPE_ATTR_FLAGS(ip) & ~TYPE_ATTR_SAVE);
+        if (TYPE_HAS_BIND(ip)) {
+            TYPE_BIND_NAME(tp) = ID_BIND(ip);
+        }
         if (IS_FUNCTION_TYPE(tp) && TYPE_REF(tp) == NULL) {
             /*
              * The type attributes for the function (PURE, ELEMENETAL, etc) are
@@ -2962,14 +2972,8 @@ setLocalInfoToCurrentExtId(int asModule)
     EXT_PROC_STRUCT_DECLS(CURRENT_EXT_ID) = LOCAL_STRUCT_DECLS;
     EXT_PROC_BLOCKS(CURRENT_EXT_ID) = LOCAL_BLOCKS;
     EXT_PROC_INTERFACES(CURRENT_EXT_ID) = LOCAL_INTERFACES;
-
-    if(asModule) {
-        EXT_PROC_COMMON_ID_LIST(CURRENT_EXT_ID) = NULL;
-        EXT_PROC_LABEL_LIST(CURRENT_EXT_ID) = NULL;
-    } else {
-        EXT_PROC_COMMON_ID_LIST(CURRENT_EXT_ID) = LOCAL_COMMON_SYMBOLS;
-        EXT_PROC_LABEL_LIST(CURRENT_EXT_ID) = LOCAL_LABELS;
-    }
+    EXT_PROC_COMMON_ID_LIST(CURRENT_EXT_ID) = LOCAL_COMMON_SYMBOLS;
+    EXT_PROC_LABEL_LIST(CURRENT_EXT_ID) = LOCAL_LABELS;
 }
 
 
@@ -4106,9 +4110,11 @@ end_procedure()
                 } else if (ID_TYPE(id) != NULL){
                     if (current_module_state == M_PUBLIC) {
                         TYPE_SET_PUBLIC(ID_TYPE(id));
+                        TYPE_ACCESS_IS_INFERRED(ID_TYPE(id)) = TRUE;
                     }
                     if (current_module_state == M_PRIVATE) {
                         TYPE_SET_PRIVATE(ID_TYPE(id));
+                        TYPE_ACCESS_IS_INFERRED(ID_TYPE(id)) = TRUE;
                     }
                 }
                 ID_DEFINED_BY(id_in_parent) = id;
@@ -5582,6 +5588,57 @@ compile_USE_decl(expr x, expr x_args, int is_intrinsic)
 }
 
 /*
+ * Get correct symbol for a specific generic spec
+ */
+static expr 
+get_generic_spec_symbol(int expr_code){
+    expr gen_spec;
+    if(expr_code == F95_ASSIGNOP) {
+        gen_spec = make_enode(IDENT, (void *)find_symbol("="));
+    } else if(expr_code == F95_DOTOP) {
+        gen_spec = make_enode(IDENT, (void *)find_symbol("."));
+    } else if(expr_code == F95_POWEOP) {
+        gen_spec = make_enode(IDENT, (void *)find_symbol("**"));
+    } else if(expr_code == F95_MULOP) {
+        gen_spec = make_enode(IDENT, (void *)find_symbol("*"));
+    } else if(expr_code == F95_DIVOP) {
+        gen_spec = make_enode(IDENT, (void *)find_symbol("/"));
+    } else if(expr_code == F95_PLUSOP) {
+        gen_spec = make_enode(IDENT, (void *)find_symbol("+"));
+    } else if(expr_code == F95_MINUSOP) {
+        gen_spec = make_enode(IDENT, (void *)find_symbol("-"));
+    } else if(expr_code == F95_EQOP) {
+        gen_spec = make_enode(IDENT, (void *)find_symbol(".eq."));
+    } else if(expr_code == F95_NEOP) {
+        gen_spec = make_enode(IDENT, (void *)find_symbol(".neq."));
+    } else if(expr_code == F95_LTOP) {
+        gen_spec = make_enode(IDENT, (void *)find_symbol(".lt."));
+    } else if(expr_code == F95_LEOP) {
+        gen_spec = make_enode(IDENT, (void *)find_symbol(".le."));
+    } else if(expr_code == F95_GEOP) {
+        gen_spec = make_enode(IDENT, (void *)find_symbol(".ge."));
+    } else if(expr_code == F95_GTOP) {
+        gen_spec = make_enode(IDENT, (void *)find_symbol(".gt."));
+    } else if(expr_code == F95_NOTOP) {
+        gen_spec = make_enode(IDENT, (void *)find_symbol(".not."));
+    } else if(expr_code == F95_ANDOP) {
+        gen_spec = make_enode(IDENT, (void *)find_symbol(".and."));
+    } else if(expr_code == F95_OROP) {
+        gen_spec = make_enode(IDENT, (void *)find_symbol(".or."));
+    } else if(expr_code == F95_EQVOP) {
+        gen_spec = make_enode(IDENT, (void *)find_symbol(".eqv."));
+    } else if(expr_code == F95_NEQVOP) {
+        gen_spec = make_enode(IDENT, (void *)find_symbol(".neqv."));
+    } else if(expr_code == F95_CONCATOP) {
+        gen_spec = make_enode(IDENT, (void *)find_symbol("/"));
+    } else {
+        gen_spec = NULL;
+    }
+    return gen_spec;
+}
+
+
+/*
  * compiles use only statement.
  */
 static void
@@ -5603,7 +5660,17 @@ compile_USE_ONLY_decl (expr x, expr x_args, int is_intrinsic)
 
         a = LIST_ITEM(lp);
 
-        if (EXPV_CODE(a) == LIST) {
+        if(EXPV_CODE(a) == F95_GENERIC_SPEC) {
+            expr gen_spec;
+            assert(EXPR_HAS_ARG1(a));
+            gen_spec = get_generic_spec_symbol(EXPR_CODE(EXPR_ARG1(a)));
+            if(gen_spec != NULL) {
+                args = list_put_last(args, list2(F95_GENERIC_SPEC, NULL, gen_spec));
+                use_arg->local = EXPV_NAME(gen_spec);
+                use_arg->use = NULL;
+                use_arg->is_operator = TRUE;
+            }
+        } else if (EXPV_CODE(a) == LIST) {
             useExpr = EXPR_ARG1(a);
             localExpr = EXPR_ARG2(a);
 
@@ -5958,6 +6025,9 @@ end_interface()
         ID_CLASS(iid) = CL_PROC;
         ID_TYPE(iid) = hasSub ? generic_subroutine_type() : generic_function_type();
         TYPE_ATTR_FLAGS(ID_TYPE(iid)) = TYPE_ATTR_FLAGS(iid);
+        if (TYPE_HAS_BIND(iid)) {
+            TYPE_BIND_NAME(ID_TYPE(iid)) = ID_BIND(iid);
+        }
         ID_STORAGE(iid) = STG_EXT;
         PROC_CLASS(iid) = P_EXTERNAL;
         PROC_EXT_ID(iid) = intr;
@@ -6244,6 +6314,27 @@ compile_complex_member_ref(expv cmplx, expr mem)
     return v;
 }
 
+static expv
+type_parameter_inquiry(expv v, expr mem)
+{
+    TYPE_DESC tp = EXPV_TYPE(v);
+    TYPE_DESC btp = bottom_type(tp);
+
+    assert(EXPR_CODE(mX) == IDENT);
+    if (IS_NUMERIC(btp)) {
+        if (strcmp("kind", SYM_NAME(EXPR_SYM(mem))) == 0) {
+            return expv_cons(F95_MEMBER_REF, type_basic(TYPE_INT), v, mem);
+
+        }
+    } else if (IS_CHAR(btp)) {
+        if (strcmp("kind", SYM_NAME(EXPR_SYM(mem))) == 0 ||
+            strcmp("len", SYM_NAME(EXPR_SYM(mem))) == 0) {
+            return expv_cons(F95_MEMBER_REF, type_basic(TYPE_INT), v, mem);
+        }
+    }
+    return NULL;
+}
+
 expv
 compile_member_ref(expr x)
 {
@@ -6273,6 +6364,12 @@ compile_member_ref(expr x)
     }
 
     stVTyp = EXPV_TYPE(struct_v);
+    mX = EXPR_ARG2(x);
+    assert(EXPR_CODE(mX) == IDENT);
+
+    if ((new_v = type_parameter_inquiry(struct_v, mX)) != NULL) {
+        return new_v;
+    }
 
     if (IS_ARRAY_TYPE(stVTyp)) {
         shape = list0(LIST);
@@ -6280,11 +6377,11 @@ compile_member_ref(expr x)
         stVTyp = bottom_type(stVTyp);
     }
 
-    mX = EXPR_ARG2(x);
-    assert(EXPR_CODE(mX) == IDENT);
-
     if (IS_COMPLEX(stVTyp)) {
-        return compile_complex_member_ref(struct_v, mX);
+        new_v = compile_complex_member_ref(struct_v, mX);
+        tp = EXPV_TYPE(new_v);
+        EXPV_TYPE(new_v) = compile_dimensions(tp, shape);
+        return new_v;
     }
 
     member_id = find_struct_member(stVTyp, EXPR_SYM(mX));
@@ -6296,7 +6393,12 @@ compile_member_ref(expr x)
 
     // TODO:
     //	 should work for all cases (array/substr/plain scalar).
-    if (!IS_FUNCTION_TYPE(ID_TYPE(member_id))) {
+    if (TYPE_IS_KIND(ID_TYPE(member_id)) ||
+        TYPE_IS_LEN(ID_TYPE(member_id))) {
+        /* type parameter inquiry is always scala */
+        tp = ID_TYPE(member_id);
+
+    } else if (!IS_FUNCTION_TYPE(ID_TYPE(member_id))) {
         /*
          * If type of struct_v has pointer/pointee flags on, members
          * should have those flags on too.
@@ -6321,6 +6423,7 @@ compile_member_ref(expr x)
 
         tp = retTyp;
         tp = compile_dimensions(tp, shape);
+
     } else {
         tp = ID_TYPE(member_id);
 
@@ -7071,25 +7174,31 @@ compile_ARITHIF_statement(expr x)
 static int markAsPublic(ID id)
 {
     TYPE_DESC tp = ID_TYPE(id);
-    if (TYPE_IS_PRIVATE(id) || (tp != NULL && TYPE_IS_PRIVATE(tp))) {
+    if (TYPE_IS_PRIVATE(id) || (tp != NULL && TYPE_IS_PRIVATE(tp) && !TYPE_ACCESS_IS_INFERRED(tp))) {
         error("'%s' is already specified as private.", ID_NAME(id));
         return FALSE;
     }
     TYPE_SET_PUBLIC(id);
     TYPE_UNSET_PRIVATE(id);
-
+    if(tp != NULL) {
+        TYPE_ACCESS_IS_INFERRED(tp) = FALSE;
+    }
+    
     return TRUE;
 }
 
 static int markAsPrivate(ID id)
 {
     TYPE_DESC tp = ID_TYPE(id);
-    if (TYPE_IS_PUBLIC(id) || (tp != NULL && TYPE_IS_PUBLIC(tp))) {
+    if (TYPE_IS_PUBLIC(id) || (tp != NULL && TYPE_IS_PUBLIC(tp) && !TYPE_ACCESS_IS_INFERRED(tp))) {
         error("'%s' is already specified as public.", ID_NAME(id));
         return FALSE;
     }
     TYPE_UNSET_PUBLIC(id);
     TYPE_SET_PRIVATE(id);
+    if(tp != NULL) {
+        TYPE_ACCESS_IS_INFERRED(tp) = FALSE;
+    }
 
     return TRUE;
 }

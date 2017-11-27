@@ -520,11 +520,11 @@ static void type_spec_done();
 %type <val> array_constructor array_constructor_list
 %type <val> program_name dummy_arg_list dummy_args dummy_arg file_name
 %type <val> declaration_statement executable_statement action_statement action_statement_let action_statement_key assign_statement_or_null assign_statement
-%type <val> declaration_list entity_decl type_spec type_spec0 expr_type_spec length_spec common_decl
+%type <val> declaration_list entity_decl type_spec type_spec0 type_spec1 expr_type_spec length_spec common_decl
 %type <val> type_param_value_list type_param_value
 %type <val> common_block external_decl intrinsic_decl equivalence_decl
 %type <val> cray_pointer_list cray_pointer_pair cray_pointer_var
-%type <val> equiv_list data data_list data_val_list data_val value simple_value save_list save_item const_list const_item common_var data_var data_var_list image_dims image_dim_list image_dim image_dims_alloc image_dim_list_alloc image_dim_alloc dims dim_list dim ubound label_list implicit_decl imp_list letter_group letter_groups namelist_decl namelist_list ident_list access_ident_list access_ident
+%type <val> equiv_list data data_list data_val_list data_val value simple_value save_list save_item const_list const_item common_var data_var data_var_list image_dims image_dim_list image_dim image_dims_alloc image_dim_list_alloc image_dim_alloc dims dim_list dim ubound label_list implicit_decl imp_list letter_group letter_groups namelist_decl namelist_list ident_list access_ident_list access_ident binding_entity_list binding_entity
 %type <val> do_spec arg arg_list parenthesis_arg_list image_selector cosubscript_list
 %type <val> parenthesis_arg_list_or_null
 %type <val> set_expr
@@ -1087,8 +1087,9 @@ declaration_statement95:
         { $$ = list1(F03_VOLATILE_STATEMENT, $3); }
         | ASYNCHRONOUS COL2_or_null access_ident_list
         { $$ = list1(F03_ASYNCHRONOUS_STATEMENT, $3); }
+        | bind_c COL2_or_null binding_entity_list
+        { $$ = list2(F03_BIND_STATEMENT, $1, $3); }
         ;
-
 
 array_allocation_list:
           array_allocation
@@ -1142,6 +1143,7 @@ use_only_list:
 
 use_only:
           use_rename
+        | GENERIC_SPEC // e.g: USE ..., ONLY: assignement(=) 
         | IDENTIFIER
         ;
 
@@ -1280,17 +1282,25 @@ entity_decl:
 type_spec: type_spec0 { $$ = $1; type_spec_done(); }
 
 type_spec0:
-          KW_TYPE '(' IDENTIFIER ')'
-        { $$ = $3; }
-        | KW_TYPE '(' IDENTIFIER '(' type_param_value_list ')' ')'
-        { $$ = list2(F03_PARAMETERIZED_TYPE,$3,$5); }
+          KW_TYPE '(' KW IDENTIFIER ')'
+        { $$ = $4; }
+        | KW_TYPE '(' KW IDENTIFIER '(' type_param_value_list ')' ')'
+        { $$ = list2(F03_PARAMETERIZED_TYPE,$4,$6); }
+        | KW_TYPE '(' KW type_spec1 ')'
+        { $$ = $4; }
         | CLASS '(' IDENTIFIER ')'
         { $$ = list1(F03_CLASS, $3); }
         | CLASS '(' IDENTIFIER '(' type_param_value_list ')' ')'
         { $$ = list1(F03_CLASS, list2(F03_PARAMETERIZED_TYPE,$3,$5)); }
         | CLASS '(' '*' ')'
-        { $$ = list1(F03_CLASS, NULL);; }
-        | type_keyword kind_selector
+        { $$ = list1(F03_CLASS, NULL); }
+        | type_spec1
+        { $$ = $1; }
+        ;
+
+
+type_spec1:
+          type_keyword kind_selector
         { $$ = list2(LIST,$1,$2);}
         | type_keyword length_spec  /* compatibility */
         { $$ = list2(LIST, $1, $2);}
@@ -1305,7 +1315,6 @@ type_spec0:
                             GEN_NODE(INT_CONSTANT, 8)); }
         //                    gen_default_real_kind()); }
         ;
-
 
 /*
  * NOTE:
@@ -1566,6 +1575,20 @@ access_ident_list: access_ident
 
 access_ident: GENERIC_SPEC
         | IDENTIFIER
+        ;
+
+binding_entity_list:
+          binding_entity
+        { $$ = list1(LIST, $1); }
+        | binding_entity_list ',' binding_entity
+        { $$ = list_put_last($1, $3); }
+        ;
+
+binding_entity:
+          IDENTIFIER
+        { $$ = $1; }
+        | '/' IDENTIFIER '/' /* not common_block because '//' is not accepted */
+        { $$ = list1(LIST,$2); }
         ;
 
 /*

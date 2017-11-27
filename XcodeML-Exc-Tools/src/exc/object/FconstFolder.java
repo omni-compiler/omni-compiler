@@ -1,11 +1,5 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
-
 package exc.object;
+
 import exc.block.Block;
 import java.util.*;
 import java.math.BigInteger;

@@ -82,8 +82,9 @@ public class omompx
       "  -tlog-all           : output results in tlog format for all directives.",
       "  -tlog-selective     : output results in tlog format for selected directives.",
       "",
-      "  -enable-threads  enable 'threads' clause",
-      "  -enable-gpu      enable xmp-dev directive/clauses"
+      "  -enable-threads     : enable 'threads' clause",
+      "  -enable-gpu         : enable xmp-dev directive/clauses",
+      "  -enable-Fonesided   : enable one-sided functions (Only Fortran)"
     };
         
     for(String line : lines) {
@@ -114,6 +115,7 @@ public class omompx
     boolean doScalasca         = false;
     boolean doTlog             = false;
     boolean silent             = false;
+    boolean Fonesided          = false;
     int maxColumns             = 0;
     String coarray_suboption   = "";        // HIDDEN
     boolean coarray_noUseStmt  = false;     // TEMPORARY
@@ -156,6 +158,8 @@ public class omompx
         xcalableMPthreads = true;
       } else if(arg.equals("-enable-gpu")) {
         xcalableMPGPU = true;
+      } else if(arg.equals("-enable-Fonesided")) {
+        Fonesided = true;
       } else if(arg.equals("-fxmpf")) {
         xmpf = true;
       } else if(arg.equals("-fasync")) {
@@ -268,6 +272,7 @@ public class omompx
     XmOption.setIsXcalableMPthreads(xcalableMPthreads);
     XmOption.setIsXcalableMPGPU(xcalableMPGPU);
     XmOption.setTlogMPIisEnable(doTlog);
+    XmOption.setFonesided(Fonesided);
     XmOption.setCoarrayNoUseStatement(coarray_noUseStmt);   // TEMPORARY
     XmOption.setIsXcalableACC(xcalableACC);
     

@@ -18,7 +18,6 @@ INCDIR       = @OMNI_HOME@/include
 WORKDIR      = ./include_work
 LIBXMPF      = libxmpf.a
 LIBXMPF_TRAVERSE = libxmpf_traverse.a
-F_MAIN_O     = xmpf_main.o
 HEADERS   = $(XMPF_INC_DIR)/xmpf_internal.h \
 	    $(XMPF_INC_DIR)/xmpf_internal_coarray.h \
 	    $(XMP_INC_DIR)/xmpco_internal.h \
@@ -27,13 +26,11 @@ HEADERS   = $(XMPF_INC_DIR)/xmpf_internal.h \
 	    ../../include/config.h
 OBJECTS   = xmpf_array.o xmpf_async.o xmpf_gcomm.o xmpf_gmove.o xmpf_index.o xmpf_lib.o \
 	    xmpf_loop.o xmpf_misc.o xmpf_nodes.o xmpf_pack.o xmpf_reflect.o xmpf_sort.o \
-	    xmpf_task.o xmpf_template.o \
-            xmpf_coarray.o xmpf_coarray_alloc.o \
+	    xmpf_task.o xmpf_template.o xmpf_coarray.o xmpf_coarray_alloc.o \
 	    xmpf_coarray_wrap.o xmpf_coarray_alloc_wrap.o \
             xmpf_coarray_put.o xmpf_coarray_get.o xmpf_coarray_getsub.o xmpf_coarray_atomic.o \
 	    xmpf_coarray_put_wrap.o xmpf_coarray_get_wrap.o xmpf_coarray_getsub_wrap.o xmpf_coarray_atomic_wrap.o \
-	    xmpf_coarray_lib.o xmpf_coarray_reduction.o \
-            xmpf_coarray_decl.o $(F_MAIN_O)
+	    xmpf_coarray_lib.o xmpf_coarray_reduction.o xmpf_coarray_decl.o
 
 FALSE            = 1
 TRUE             = 0
@@ -115,7 +112,7 @@ endif
 
 all: $(LIBXMPF) $(LIBXMPF_TRAVERSE)
 
-$(LIBXMPF): $(F_MAIN_O) $(OBJECTS)
+$(LIBXMPF): $(OBJECTS)
 	rm -f $@
 	$(AR) $(ARFLAGS) $@ $^
 	$(RANLIB) $@
@@ -145,9 +142,9 @@ $(XMPF_COARRAY_DECL) xmpf_coarray_decl.o: xmpf_coarray_decl.F90
 	$(INSTALL) ../include/$(COARRAY_SYNC_H) $(WORKDIR)/xmp_coarray_sync.h
 	$(FC) $(FCFLAGS) -c -I $(WORKDIR) $<
 
-install: $(F_MAIN_O) $(LIBXMPF) $(XMPF_COARRAY_DECL)
+install: $(LIBXMPF) $(XMPF_COARRAY_DECL)
 	$(MKDIR_P) $(DESTDIR)$(LIBDIR) $(DESTDIR)$(INCDIR)
-	$(INSTALL) $(F_MAIN_O) $(LIBXMPF) $(LIBXMPF_TRAVERSE) $(DESTDIR)$(LIBDIR)
+	$(INSTALL) $(LIBXMPF) $(LIBXMPF_TRAVERSE) $(DESTDIR)$(LIBDIR)
 	$(INSTALL) $(XMPF_COARRAY_DECL) $(DESTDIR)$(INCDIR)
 
 clean:

@@ -1,5 +1,9 @@
 Omni Compiler Software RELEASE NOTES
 
+# ver. 1.2.2    2017/12/04
+* Add Python module
+* Support KNL
+
 # ver. 1.2.1    2017/09/04
 * Fix xmp_init() and xmp_finalize() to call an XMP program from an MPI program.
 * Fixed lots of bugs.

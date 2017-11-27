@@ -639,7 +639,49 @@ if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$t
     ARFLAGS="cru"
     AC_CHECK_PROG([NM], [nmpx], [nmpx], [nm])
 
-elif test "$target" = "MIC-linux-gnu"; then
+elif test "$target" = "KNL-linux-gnu"; then
+    # OpenMP
+    OPENMP_OPT_C="-qopenmp"
+    OPENMP_OPT_F=$OPENMP_OPT_C
+
+    # XcalableMP
+    XMPC_DEF="-D_XCALABLEMP"
+    XMPF_DEF="-D_XCALABLEMP"
+
+    # MPI C
+    AC_CHECK_PROG([MPI_CC], [mpiicc], [mpiicc])
+    MPI_CPPFLAGS="-E -std=gnu99"
+    MPI_CFLAGS="-O2 -fp-model fast=2 -ipo -xHost -no-prec-div -axMIC-AVX512 $OPENMP_OPT_C"
+    MPI_CLIBS=""
+
+    # MPI F
+    AC_CHECK_PROG([MPI_FC], [mpiifort], [mpiifort])
+    MPI_FPPFLAGS="-E -cpp"
+    MPI_FCFLAGS="-O2 -fp-model fast=2 -ipo -xHost -no-prec-div -axMIC-AVX512 $OPENMP_OPT_F"
+    MPI_MODINC="-module"
+    MPI_FCLIBS=""
+    KIND_MPI_FORTRAN=other
+
+    # Omni C
+    OMNI_C2X_FLAGS=""
+    OMNI_NTV_CFLAGS="-std=gnu99"
+    OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT_C"
+
+    # Omni F
+    OMNI_F2X_FLAGS=""
+    OMNI_NTV_FCFLAGS=""
+    OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT_F"
+
+    # Omni Common
+    OMNI_X2X_FLAGS=""
+
+    # ranlib & ar & nm
+    AC_CHECK_PROG([RANLIB], [ranlib], [ranlib])
+    AC_CHECK_PROG([AR], [ar], [ar])
+    ARFLAGS="cru"
+    AC_CHECK_PROG([NM], [nm], [nm])
+
+elif test "$target" = "KNC-linux-gnu"; then
     # OpenMP
     OPENMP_OPT_C="-mp"
     OPENMP_OPT_F=$OPENMP_OPT_C
@@ -2283,7 +2325,11 @@ if test x${use_tca} = xyes; then
 fi
 
 AC_SUBST(ONESIDED_LIB)
-
+OMNI_X2X_FONESIDED_OPT=""
+if test x$isOnesided = xyes; then
+  OMNI_X2X_FONESIDED_OPT="-enable-Fonesided"
+fi
+AC_SUBST(OMNI_X2X_FONESIDED_OPT)
 #--------------------------------------------------------------------
 # AC_CONFIG_FILES(XcodeML-Common/Makefile)
 AC_CONFIG_FILES(C-FrontEnd/src/Makefile)
@@ -2334,6 +2380,7 @@ AC_CONFIG_FILES(libtlog/src_mpi/Makefile)
 AC_CONFIG_FILES(libtlog/src_mpi/bin/tlogview)
 AC_CONFIG_FILES(libacc/src/Makefile)
 AC_CONFIG_FILES(libacc/include/Makefile)
+AC_CONFIG_FILES(interfaces/Makefile)
 
 # --------------------------------------------------------------------
 AC_CONFIG_FILES(Makefile)

@@ -1601,7 +1601,6 @@ classify_statement()
     case KW_OUT:
     case KW_TO:
     case KW_TYPE:
-    case KW_USE:
     case NAMELIST:
     case NULLIFY:
     case OPTIONAL:
@@ -1658,6 +1657,8 @@ classify_statement()
         }
         break;
 
+    case KW_ONLY:
+    case KW_USE:        
     case GENERIC:
         may_generic_spec = TRUE;
         break;

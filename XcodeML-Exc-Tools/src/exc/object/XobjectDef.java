@@ -1,14 +1,7 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package exc.object;
 
 import java.util.LinkedList;
 import java.util.List;
-
 import exc.util.XobjectVisitable;
 import exc.util.XobjectVisitor;
 import xcodeml.util.ILineNo;

@@ -393,6 +393,7 @@ public class XMPalignedArray {
       case XMPalignedArray.BLOCK:
       case XMPalignedArray.CYCLIC:
       case XMPalignedArray.BLOCK_CYCLIC:
+	if (arrayType.isVariableArray()) return false;
         Xobject x = arrayType.getArraySizeExpr();
         if(x.getLongHigh() != 0) return false; // fix me
         int index = alignedArray.getAlignSubscriptIndexAt(i);

@@ -11,7 +11,7 @@ static expv compile_data_args _ANSI_ARGS_((expr args));
 static expv compile_implied_do_expression _ANSI_ARGS_((expr x));
 static expv compile_dup_decl _ANSI_ARGS_((expv x));
 static expv compile_array_constructor _ANSI_ARGS_((expr x));
-static int compile_array_ref_dimension _ANSI_ARGS_((expr x, expv dims, expv subs));
+static int  compile_array_ref_dimension _ANSI_ARGS_((expr x, expv dims, expv subs));
 static expv compile_member_array_ref  _ANSI_ARGS_((expr x, expv v));
 
 struct replace_item replace_stack[MAX_REPLACE_ITEMS];
@@ -1135,6 +1135,9 @@ compile_ident_expression(expr x)
         }
 
         TYPE_ATTR_FLAGS(tp) |= TYPE_ATTR_FLAGS(id);
+        if (TYPE_HAS_BIND(id)) {
+            TYPE_BIND_NAME(tp) = ID_BIND(id);
+        }
 
         if (ID_ADDR(id)) {
             /*
@@ -3294,6 +3297,13 @@ compile_type_bound_procedure_call(expv memberRef, expr args) {
             }
 #endif
             if (TYPE_REF(ftp)) {
+                if(FUNCTION_TYPE_RETURN_TYPE(TYPE_REF(ftp)) == NULL){ 
+                    // might have some ref indirection before getting to the 
+                    // actual function type
+                    while(TYPE_REF(TYPE_REF(ftp))) {
+                        ftp = TYPE_REF(ftp);
+                    }
+                } 
                 ret_type = FUNCTION_TYPE_RETURN_TYPE(TYPE_REF(ftp));
             } else {
                 /*

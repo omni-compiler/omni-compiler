@@ -757,6 +757,7 @@ extern void     compile_VOLATILE_statement _ANSI_ARGS_((expr id_list));
 extern void     compile_VALUE_statement _ANSI_ARGS_((expr id_list));
 extern void     compile_ASYNCHRONOUS_statement _ANSI_ARGS_((expr id_list));
 extern void     compile_CONTIGUOUS_statement _ANSI_ARGS_((expr id_list));
+extern void     compile_BIND_statement _ANSI_ARGS_((expr bind_opt, expr id_list));
 
 extern void     compile_procedure_declaration _ANSI_ARGS_((expr x));
 extern void     compile_type_bound_procedure _ANSI_ARGS_((expr x));
@@ -1029,6 +1030,7 @@ extern void                    shrink_type(TYPE_DESC tp);
 extern TYPE_DESC               reduce_type(TYPE_DESC tp);
 
 extern int is_array_shape_assumed(TYPE_DESC tp);
+extern int is_array_implicit_shape(TYPE_DESC tp);
 //extern int is_descendant_coindexed(TYPE_DESC tp);
 extern int has_coarray_component(TYPE_DESC tp);
 
