@@ -7536,9 +7536,6 @@ compile_POINTER_SET_statement(expr x) {
                 }
             }
 
-            ID_CLASS(id) = CL_PROC;
-            PROC_CLASS(id) = P_UNDEFINEDPROC;
-
             if (ID_LINE(id) == NULL) {
                 ID_LINE(id) = EXPR_LINE(x);
             }
