@@ -3677,14 +3677,11 @@ static void
 outx_ASSOCIATE_statement(int l, expv v)
 {
     ID id;
-    list lp;
     int l1 = l + 1;
     int l2 = l + 2;
     int l3 = l + 3;
     BLOCK_ENV block = EXPR_BLOCK(v);
     expv body = EXPR_ARG1(v);
-
-    const char *tid = NULL;
 
     outx_vtagLineno(l, XTAG(v), EXPR_LINE(v), NULL);
     if (EXPR_HAS_ARG2(v) && EXPR_ARG2(v) != NULL) {

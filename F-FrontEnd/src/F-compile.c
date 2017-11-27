@@ -9533,7 +9533,6 @@ compile_ASSOCIATE_statement(expr x)
 static void
 compile_ENDASSOCIATE_statement(expr x)
 {
-    ID ip;
     BLOCK_ENV current_block;
 
     /* check construct name */
