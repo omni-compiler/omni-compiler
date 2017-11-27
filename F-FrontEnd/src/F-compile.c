@@ -3907,7 +3907,6 @@ end_procedure()
     ID id;
     EXT_ID ext;
     BLOCK_ENV bp;
-    EXT_ID ep;
 
     /* Check if a block construct is closed */
     if (CTL_TYPE(ctl_top) == CTL_BLK &&
@@ -4148,19 +4147,6 @@ end_procedure()
             }
         }
     }
-
-
-    FOREACH_EXT_ID(ep, LOCAL_EXTERNAL_SYMBOLS) {
-        /*
-         * Update procedure variables
-         */
-        update_procedure_variables_forall(EXT_PROC_ID_LIST(ep),
-                                          EXT_PROC_STRUCT_DECLS(ep),
-                                          EXT_PROC_BLOCKS(ep),
-                                          LOCAL_SYMBOLS, /* is_final = */ TRUE);
-    }
-
-
 
     if (CTL_TYPE(ctl_top) == CTL_BLK) {
         return;
