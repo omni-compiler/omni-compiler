@@ -1662,8 +1662,10 @@ input_FbasicType(xmlTextReaderPtr reader, HashTable * ht)
 
     } else {
         TYPE_REF(tp) = NULL;
-        if (TYPE_IS_PROCEDURE(tp)) {
+        if (IS_FUNCTION_TYPE(tp)) {
             TYPE_BASIC_TYPE(tp) = TYPE_FUNCTION;
+        } else if (IS_SUBR(tp)) {
+            TYPE_BASIC_TYPE(tp) = TYPE_SUBR;
         } else if (TYPE_IS_CLASS(tp)) {
             TYPE_BASIC_TYPE(tp) = TYPE_STRUCT;
         }
@@ -3419,6 +3421,16 @@ update_struct_type(HashTable * ht)
         tep = GetHashValue(e);
         tp = tep->tp;
         if (TYPE_BASIC_TYPE(tp) == TYPE_STRUCT) {
+            FOREACH_MEMBER(mem, tp) {
+                if (IS_PROCEDURE_TYPE(ID_TYPE(mem))) {
+                    if (TYPE_REF(ID_TYPE(mem)) &&
+                        TYPE_BASIC_TYPE(ID_TYPE(mem)) !=
+                        TYPE_BASIC_TYPE(TYPE_REF(ID_TYPE(mem)))) {
+                        TYPE_BASIC_TYPE(ID_TYPE(mem)) = TYPE_BASIC_TYPE(TYPE_REF(ID_TYPE(mem)));
+                    }
+                }
+            }
+
             FOREACH_TYPE_BOUND_GENERIC(mem, tp) {
                 /*
                  * generic type bound procedure
