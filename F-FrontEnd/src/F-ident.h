@@ -72,7 +72,7 @@ enum proc_class {
     /* defined_proc is a class for the procedure
        which is defined in the file. */
     P_UNDEFINEDPROC,
-    /* unddefined proc is a class for the procedure
+    /* undefined proc is a class for the procedure
        which is not defined, but used as function. */
 };
 
