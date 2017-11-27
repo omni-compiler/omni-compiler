@@ -813,7 +813,8 @@ public class XMPtranslateLocalPragma {
       }
 
       BlockList reductionBody = createReductionClauseBody(pb, reductionRefList, schedBaseBlock);
-      schedBaseBlock.add(createReductionClauseBlock(pb, reductionBody, schedVarList));
+      // schedBaseBlock.add(createReductionClauseBlock(pb, reductionBody, schedVarList)); #418
+      schedBaseBlock.getParentBlock().add(createReductionClauseBlock(pb, reductionBody, schedVarList));
     }
 
     // translate multicore clause
@@ -1169,13 +1170,12 @@ public class XMPtranslateLocalPragma {
   }
 
   private Block createReductionClauseBlock(PragmaBlock pb, BlockList reductionBody, XobjList schedVarList) throws XMPexception {
-    XobjList loopDecl = (XobjList)pb.getClauses();
-    XobjList onRef = (XobjList)loopDecl.getArg(1);
-    String onRefObjName = onRef.getArg(0).getString();
+    XobjList loopDecl      = (XobjList)pb.getClauses();
+    XobjList onRef         = (XobjList)loopDecl.getArg(1);
+    String onRefObjName    = onRef.getArg(0).getString();
     XobjList subscriptList = (XobjList)onRef.getArg(1);
 
     XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
-    //XMPobject onRefObj = _globalDecl.getXMPobject(onRefObjName, localXMPsymbolTable);
     XMPobject onRefObj = _globalDecl.getXMPobject(onRefObjName, pb);
     if (onRefObj == null) {
       throw new XMPexception("cannot find '" + onRefObjName + "' nodes/template");
@@ -1201,7 +1201,8 @@ public class XMPtranslateLocalPragma {
       String subscript = i.getArg().getString();
       if (XMPutil.hasElmt(schedVarList, subscript)) {
         initFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(0)));
-      } else {
+      }
+      else {
         initComm = true;
         initFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
       }
@@ -1216,7 +1217,8 @@ public class XMPtranslateLocalPragma {
       Ident initFuncId = _globalDecl.declExternFunc("_XMP_init_reduce_comm_" + initFuncSuffix, Xtype.intType);
 
       return Bcons.IF(BasicBlock.Cond(initFuncId.Call(initFuncArgs)), reductionBody, null);
-    } else {
+    }
+    else {
       return Bcons.COMPOUND(reductionBody);
     }
   }
@@ -1438,7 +1440,8 @@ public class XMPtranslateLocalPragma {
     }
 
     if (reductionInitIfBlock.getThenBody() != null) {
-      schedBaseBlock.insert(reductionInitIfBlock);
+      // schedBaseBlock.insert(reductionInitIfBlock); # 418
+      schedBaseBlock.getParentBlock().insert(reductionInitIfBlock);
     }
 
     return reductionBody;
