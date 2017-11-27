@@ -6762,7 +6762,11 @@ compile_CALL_member_procedure_statement(expr x)
         TYPE_BASIC_TYPE(tp) = TYPE_SUBR;
     }
 
-    tp = ID_TYPE(mem);
+    if (!IS_SUBR(tp) && !TYPE_BOUND_GENERIC_TYPE_GENERICS(tp)) {
+        error("'%s' is not a subroutine", SYM_NAME(EXPR_SYM(x2)));
+        return;
+    }
+
     if (TYPE_BOUND_GENERIC_TYPE_GENERICS(tp)) {
         /* for type-bound GENERIC */
         ID bind;
