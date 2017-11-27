@@ -842,6 +842,11 @@ implicit_declaration(ID id)
         return;
     }
 
+    if (tp != NULL && TYPE_IS_PROCEDURE(tp) && TYPE_REF(tp)) {
+        /* id is a procedure pointer, its type isn't determeind implicitly */
+        return;
+    }
+
     if (IS_FUNCTION_TYPE(tp)) {
         tp = FUNCTION_TYPE_RETURN_TYPE(tp);
     }
@@ -1224,12 +1229,14 @@ declare_label(int st_no,LABEL_TYPE type,int def_flag)
     }
 
     FOR_CTLS_BACKWARD(cp) {
-        if (CTL_TYPE(cp) == CTL_BLOCK) {
+        if (CTL_TYPE(cp) == CTL_BLK ||
+            CTL_TYPE(cp) == CTL_FORALL ||
+            CTL_TYPE(cp) == CTL_ASSOCIATE) {
             in_block = TRUE;
             if (CTL_BLOCK_LOCAL_LABELS(cp) == LOCAL_LABELS) {
                 continue;
             }
-            FOREACH_ID(ip, CTL_BLOCK_LOCAL_LABELS(cp)) {
+            FOREACH_ID(ip, CTL_LOCAL_LABELS(cp)) {
                 if(LAB_ST_NO(ip) == st_no) {
                     goto found;
                 }
@@ -1624,8 +1631,9 @@ find_ident_block_parent(SYMBOL s)
     int in_block = FALSE;
 
     FOR_CTLS_BACKWARD(cp) {
-        if (CTL_TYPE(cp) == CTL_BLOCK || \
+        if (CTL_TYPE(cp) == CTL_BLK || \
             CTL_TYPE(cp) == CTL_FORALL || \
+            CTL_TYPE(cp) == CTL_ASSOCIATE || \
             CTL_TYPE(cp) == CTL_DO || \
             CTL_TYPE(cp) == CTL_TYPE_GUARD) {
             in_block = TRUE;
@@ -2536,10 +2544,6 @@ compile_basic_type(expr x)
             } else {
                 vcharLen = vcharLen1;
                 charLen = EXPV_INT_VALUE(vcharLen1);
-                if(EXPV_CODE(vcharLen1) == INT_CONSTANT && charLen < 0) {
-                    error("length specification must be positive");
-                    return NULL;
-                }
             }
         }
     } else if(charLen == 0) {
@@ -3800,7 +3804,9 @@ find_struct_decl_block_parent(SYMBOL s)
     int in_block = FALSE;
 
     FOR_CTLS_BACKWARD(cp) {
-        if (CTL_TYPE(cp) == CTL_BLOCK) {
+        if (CTL_TYPE(cp) == CTL_BLK ||
+            CTL_TYPE(cp) == CTL_FORALL ||
+            CTL_TYPE(cp) == CTL_ASSOCIATE) {
             in_block = TRUE;
             if (CTL_BLOCK_LOCAL_STRUCT_DECLS(cp) == LOCAL_STRUCT_DECLS) {
                 continue;
@@ -3864,7 +3870,7 @@ find_struct_decl(SYMBOL s)
     if (tp != NULL) {
         return tp;
     }
-    if (in_interface() && !in_module_procedure()) {
+    if (in_interface() && !in_module_procedure() && !has_import_all()) {
         return NULL;
     }
     tp = find_struct_decl_block_parent(s);
@@ -5622,42 +5628,20 @@ compile_procedure_declaration(expr x)
 
         }
 
-        if (tp != NULL) {
+        if (tp) {
             ID_TYPE(id) = procedure_type(tp);
 
         } else {
             /*
+             * `If proc-interface does not appear, the procedure declaration
+             *  statement does not specify whether the declared
+             *  procedures or procedure pointers are subroutines or functions.`
+             *
              * If proc interface is null,
-             * the function return type is declared implicitly
-             *
-             * ex)
-             *   PROCEDURE(), POINTER :: i
-             *
-             *   it will returns an INTEGER type
+             * the function return type cannot be determined.
              *
              */
-
-            if (VAR_INIT_VALUE(id)) {
-                if (IS_SUBR(EXPV_TYPE(VAR_INIT_VALUE(id)))) {
-                    ID_TYPE(id) = subroutine_type();
-                    TYPE_SET_IMPLICIT(ID_TYPE(id));
-                } else {
-                    ID_TYPE(id) = function_type(NULL);
-                    implicit_declaration(id);
-                    TYPE_SET_IMPLICIT(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)));
-                    TYPE_SET_IMPLICIT(ID_TYPE(id));
-                }
-                ID_TYPE(id) = procedure_type(ID_TYPE(id));
-            } else {
-                ID_TYPE(id) = function_type(NULL);
-                implicit_declaration(id);
-                TYPE_SET_IMPLICIT(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)));
-                TYPE_SET_IMPLICIT(ID_TYPE(id));
-                ID_TYPE(id) = procedure_type(ID_TYPE(id));
-
-                /* When the first assignment appears, fix it */
-                TYPE_SET_NOT_FIXED(ID_TYPE(id));
-            }
+            ID_TYPE(id) = procedure_type(function_type(wrap_type(type_GNUMERIC_ALL)));
         }
 
         /*

@@ -240,6 +240,8 @@ xtag(enum expr_code code)
      */
     case F03_IMPORT_STATEMENT:      return "FimportDecl";
     case F03_WAIT_STATEMENT:        return "FwaitStatement";
+    case F03_ASSOCIATE_STATEMENT:   return "associateStatement";
+
 
     /*
      * invalid or no corresponding tag
@@ -1970,12 +1972,12 @@ outx_importStatement(int l, expv v) {
     list lp;
     outx_tagOfStatement(l, v);
     ident_list = EXPR_ARG1(v);
-    if(EXPR_LIST(ident_list)) {
+    if (ident_list != NULL && EXPR_LIST(ident_list)) {
         FOR_ITEMS_IN_LIST(lp, ident_list) {
             arg = LIST_ITEM(lp);
             if(EXPR_CODE(arg) == IDENT){
                 outx_printi(l1, "<name>%s</name>\n", getRawString(arg));
-            }            
+            }
         }
     }
     outx_expvClose(l, v);
@@ -3668,6 +3670,44 @@ outx_DOCONCURRENT_statement(int l, expv v)
     outx_expvClose(l, v);
 }
 
+/*
+ * output forallStatement
+ */
+static void
+outx_ASSOCIATE_statement(int l, expv v)
+{
+    ID id;
+    int l1 = l + 1;
+    int l2 = l + 2;
+    int l3 = l + 3;
+    BLOCK_ENV block = EXPR_BLOCK(v);
+    expv body = EXPR_ARG1(v);
+
+    outx_vtagLineno(l, XTAG(v), EXPR_LINE(v), NULL);
+    if (EXPR_HAS_ARG2(v) && EXPR_ARG2(v) != NULL) {
+        outx_print(" construct_name=\"%s\"",
+                   SYM_NAME(EXPR_SYM(EXPR_ARG2(v))));
+    }
+    outx_print(">\n");
+
+    outx_tag(l1, "symbols");
+    FOREACH_ID(id, BLOCK_LOCAL_SYMBOLS(block)) {
+        if (id_is_visibleVar_for_symbols(id)) {
+            assert (ID_CLASS(id) = CL_VAR);
+            outx_typeAttrOnly_ID(l2, id, "id");
+            outx_print(" sclass=\"%s\">\n", get_sclass(id));
+            outx_symbolName(l3, ID_SYM(id));
+            outx_value(l3, VAR_INIT_VALUE(id));
+            outx_close(l2, "id");
+        }
+    }
+    outx_close(l1, "symbols");
+
+    outx_body(l1, body);
+    outx_expvClose(l, v);
+}
+
+
 static void
 outx_lenspec(int l, expv v)
 {
@@ -4052,6 +4092,9 @@ outx_expv(int l, expv v)
       outx_DOCONCURRENT_statement(l, v);
       break;
 
+    case F03_ASSOCIATE_STATEMENT:
+      outx_ASSOCIATE_statement(l, v);
+      break;
 
     default:
         fatal("unknown exprcode : %d", code);
@@ -5312,7 +5355,7 @@ outx_declarations1(int l, EXT_ID parent_ep, int outputPragmaInBody)
             break;
         case F03_USE_ONLY_INTRINSIC_STATEMENT:
             outx_useOnlyDecl(l1, v, TRUE);
-            break;            
+            break;
         case F03_IMPORT_STATEMENT:
             outx_importStatement(l1, v);
             break;

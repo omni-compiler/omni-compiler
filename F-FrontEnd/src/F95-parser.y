@@ -184,6 +184,8 @@ state 2058
 %token ENUM
 %token ENDENUM
 %token ENUMERATOR
+%token ASSOCIATE
+%token ENDASSOCIATE
 
 /* Coarray keywords #060 */
 %token SYNCALL
@@ -545,6 +547,7 @@ static void type_spec_done();
 %type <val> scene_list scene_range
 %type <val> bind_opt bind_c
 %type <val> enumerator_list enumerator
+%type <val> association association_list
 
 
 %start program
@@ -668,7 +671,7 @@ statement:      /* entry */
         | BLOCKDATA program_name
           { $$ = list1(F_BLOCK_STATEMENT,$2); }
         | ENDBLOCKDATA name_or_null
-          { if ($2 == NULL && CTL_TYPE(ctl_top) == CTL_BLOCK) {
+          { if ($2 == NULL && CTL_TYPE(ctl_top) == CTL_BLK) {
               $$ = list1(F2008_ENDBLOCK_STATEMENT,
                          GEN_NODE(IDENT, find_symbol("data")));
             } else {
@@ -1078,6 +1081,8 @@ declaration_statement95:
         { $$ = list2(F95_INTENT_STATEMENT, $4, $7); }
         | ALLOCATABLE COL2_or_null array_allocation_list
         { $$ = list1(F95_ALLOCATABLE_STATEMENT,$3); }
+        | IMPORT
+        { $$ = list1(F03_IMPORT_STATEMENT, NULL); }
         | IMPORT COL2_or_null ident_list
         { $$ = list1(F03_IMPORT_STATEMENT, $3); }
         | VOLATILE COL2_or_null access_ident_list
@@ -1832,6 +1837,10 @@ executable_statement:
         { $$ = list3(F_FORALL_STATEMENT, $3, $5, st_name); }
         | ENDFORALL name_or_null
         { $$ = list1(F_ENDFORALL_STATEMENT, $2); }
+        | ASSOCIATE '(' association_list ')'
+        { $$ = list2(F03_ASSOCIATE_STATEMENT,$3,st_name); }
+        | ENDASSOCIATE name_or_null
+        { $$ = list1(F03_ENDASSOCIATE_STATEMENT,$2); }
         ;
 
 assign_statement_or_null:
@@ -1875,6 +1884,18 @@ forall_header:
         { $$ = list3(LIST, $4, NULL,   $2); }
         | TYPE_KW type_spec COL2 forall_triplet_list ',' expr
         { $$ = list3(LIST, $4,   $6,   $2); }
+        ;
+
+association:
+        IDENTIFIER REF_OP expr
+        { $$ = list2(LIST, $1, $3); }
+        ;
+
+association_list:
+          association
+        { $$ = list1(LIST,$1); }
+        | association_list ',' association
+        { $$ = list_put_last($1,$3); }
         ;
 
 

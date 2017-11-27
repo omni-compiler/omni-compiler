@@ -28,7 +28,8 @@ import xcodeml.util.XmOption;
 /**
  * Decompiler of XcodeML/F DOM nodes.
  */
-public class XfDecompileDomVisitor {
+public class
+XfDecompileDomVisitor {
     static final int PRIO_LOW = 0; /* lowest */
 
     static final int PRIO_DEFINED_BINARY = 1; /* defined binary operation */
@@ -7005,10 +7006,13 @@ public class XfDecompileDomVisitor {
             _writeLineDirective(n);
 
             XmfWriter writer = _context.getWriter();
-            writer.writeToken("IMPORT :: ");
+            writer.writeToken("IMPORT");
 
             int nameCount = 0;
             ArrayList<Node> nameNodes = XmDomUtil.collectElements(n, "name");
+            if (nameNodes.size() > 0) {
+                writer.writeToken("::");
+            }
             for (Node name : nameNodes) {
                 if (nameCount > 0) {
                     writer.writeToken(", ");
@@ -7250,6 +7254,62 @@ public class XfDecompileDomVisitor {
             writer.decrementIndentLevel();
             writer.writeToken("END");
             writer.writeToken("ENUM");
+            writer.setupNewLine();
+        }
+    }
+
+
+    /**
+     * Decompile 'associateStatement' element in XcodeML/F.
+     */
+    class AssociateStatementVisitor extends XcodeNodeVisitor {
+
+        @Override
+        public void enter(Node n) {
+            _writeLineDirective(n);
+
+            XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
+            XmfWriter writer = _context.getWriter();
+
+            String constructName = XmDomUtil.getAttr(n, "construct_name");
+            if (XfUtilForDom.isNullOrEmpty(constructName) == false) {
+                writer.writeToken(constructName);
+                writer.writeToken(":");
+            }
+
+            writer.writeToken("ASSOCIATE");
+            writer.writeToken("(");
+
+            writer.incrementIndentLevel();
+
+            Node symbols = XmDomUtil.getElement(n, "symbols");
+            Boolean first = true;
+            for (Node id : XmDomUtil.collectElements(symbols, "id")) {
+                if (!first) {
+                    writer.writeToken(",");
+                }
+                first = false;
+                typeManager.addSymbol(id);
+                Node name = XmDomUtil.getElement(id, "name");
+                writer.writeToken(XmDomUtil.getContentText(name));
+                writer.writeToken("=>");
+                Node value = XmDomUtil.getElement(id, "value");
+                invokeEnter(value);
+            }
+
+            writer.writeToken(")");
+
+            writer.setupNewLine();
+
+            invokeEnter(XmDomUtil.getElement(n, "body"));
+
+            writer.decrementIndentLevel();
+
+            writer.writeToken("END");
+            writer.writeToken("ASSOCIATE");
+            if (XfUtilForDom.isNullOrEmpty(constructName) == false) {
+                writer.writeToken(constructName);
+            }
             writer.setupNewLine();
         }
     }
@@ -7668,5 +7728,6 @@ public class XfDecompileDomVisitor {
         new Pair("forallStatement", new ForallStatementVisitor()),
         new Pair("FwaitStatement", new FwaitStatementVisitor()),
         new Pair("FenumDecl", new FenumDeclVisitor()),
+        new Pair("associateStatement", new AssociateStatementVisitor()),
     };
 }

@@ -72,7 +72,7 @@ enum proc_class {
     /* defined_proc is a class for the procedure
        which is defined in the file. */
     P_UNDEFINEDPROC,
-    /* unddefined proc is a class for the procedure
+    /* undefined proc is a class for the procedure
        which is not defined, but used as function. */
 };
 
@@ -197,6 +197,7 @@ typedef struct ident_descriptor
             int has_bind;             /* if TRUE, proc uses BIND feature */
             expr bind;                /* temporary storage for bind
                                        * information */
+            int has_import_all;       /* has IMPORT statement with no arguments */
         } proc_info;
         struct {
 
@@ -356,6 +357,7 @@ struct use_assoc_info {
     ((id)->info.proc_info.is_func_subr_ambiguous)
 #define PROC_HAS_BIND(id) ((id)->info.proc_info.has_bind)
 #define PROC_BIND(id)   ((id)->info.proc_info.bind)
+#define PROC_HAS_IMPORT_ALL(id) ((id)->info.proc_info.has_import_all)
 
 #define ID_IS_DUMMY_ARG(id) \
     ((ID_STORAGE((id)) == STG_ARG) || \

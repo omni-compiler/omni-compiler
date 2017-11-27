@@ -137,6 +137,9 @@ static void compile_ENUM_statement(expr x);
 static void compile_ENDENUM_statement(expr x);
 static void compile_ENUMERATOR_statement(expr x);
 
+static void compile_ASSOCIATE_statement(expr x);
+static void compile_ENDASSOCIATE_statement(expr x);
+
 static int check_valid_construction_name(expr x, expr y);
 static void move_vars_to_parent_from_type_guard(void);
 static void check_select_types(expr x, TYPE_DESC tp);
@@ -1375,8 +1378,8 @@ compile_statement1(int st_no, expr x)
         break;
 
     case F_ENDFORALL_STATEMENT:
-        compile_ENDFORALL_statement(x);
         check_INEXEC();
+        compile_ENDFORALL_statement(x);
         break;
 
     case F03_ENUM_STATEMENT:
@@ -1398,6 +1401,16 @@ compile_statement1(int st_no, expr x)
         check_INEXEC();
         compile_DOCONCURRENT_statement(EXPR_ARG1(x), EXPR_ARG2(x), EXPR_ARG3(x));
     } break;
+
+    case F03_ASSOCIATE_STATEMENT:
+        check_INEXEC();
+        compile_ASSOCIATE_statement(x);
+        break;
+
+    case F03_ENDASSOCIATE_STATEMENT:
+        check_INEXEC();
+        compile_ENDASSOCIATE_statement(x);
+        break;
 
     case F08_CONTIGUOUS_STATEMENT:
         compile_CONTIGUOUS_statement(x);
@@ -1786,7 +1799,7 @@ inblock()
     CTL cp;
     FOR_CTLS_BACKWARD(cp) {
         switch (CTL_TYPE(cp)) {
-            case CTL_BLOCK:
+            case CTL_BLK:
                 return TRUE;
                 break;
             case CTL_INTERFACE:
@@ -1848,6 +1861,23 @@ in_module_procedure()
     return FALSE;
 }
 
+
+/**
+ * Checks if the current context is inside MODULE PROCEDURE/FUNCTION/SUBROUTINE
+ */
+int
+has_import_all()
+{
+    int i;
+    ID id;
+    for (i = unit_ctl_level; i >= 0; i--) {
+        id = UNIT_CTL_CURRENT_PROCEDURE(unit_ctls[i]);
+        if (id != NULL && PROC_HAS_IMPORT_ALL(id)) {
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
 
 void
 checkTypeRef(ID id) {
@@ -2259,7 +2289,7 @@ end_declaration()
         print_types(LOCAL_STRUCT_DECLS, debug_fp);
     }
 
-    if (CURRENT_PROCEDURE != NULL && CTL_TYPE(ctl_top) != CTL_BLOCK) {
+    if (CURRENT_PROCEDURE != NULL && CTL_TYPE(ctl_top) != CTL_BLK) {
 
         myId = CURRENT_PROCEDURE;
 
@@ -3880,7 +3910,7 @@ end_procedure()
     EXT_ID ep;
 
     /* Check if a block construct is closed */
-    if (CTL_TYPE(ctl_top) == CTL_BLOCK &&
+    if (CTL_TYPE(ctl_top) == CTL_BLK &&
         EXPR_BLOCK(CTL_BLOCK_STATEMENT(ctl_top)) == NULL) {
         error("expecting END BLOCK statement");
     }
@@ -3889,9 +3919,13 @@ end_procedure()
     if (CTL_TYPE(ctl_top) == CTL_FORALL) {
         error("expecting END FORALL statement");
     }
+    if (CTL_TYPE(ctl_top) == CTL_ASSOCIATE) {
+        error("expecting END ASSOCIATE statement");
+    }
+
 
     if (unit_ctl_level > 0 && CURRENT_PROC_NAME == NULL &&\
-        CTL_TYPE(ctl_top) != CTL_BLOCK) {
+        CTL_TYPE(ctl_top) != CTL_BLK) {
         /* if CURRENT_PROC_NAME == NULL, then this is the end of CONTAINS */
         end_contains();
     }
@@ -4128,7 +4162,7 @@ end_procedure()
 
 
 
-    if (CTL_TYPE(ctl_top) == CTL_BLOCK) {
+    if (CTL_TYPE(ctl_top) == CTL_BLK) {
         return;
     }
 
@@ -4473,7 +4507,7 @@ compile_DO_concurrent_end()
     /*
      * Close the block construct which is genereted in compile_FORALL_statement().
      */
-    if (CTL_TYPE(ctl_top) == CTL_BLOCK) {
+    if (CTL_TYPE(ctl_top) == CTL_BLK) {
         compile_ENDBLOCK_statement(list0(F2008_ENDBLOCK_STATEMENT));
     }
 }
@@ -4793,7 +4827,7 @@ unify_submodule_symbol_table()
     ENV submodule;
     ENV parent;
 
-    if (CURRENT_PROC_NAME == NULL && CTL_TYPE(ctl_top) != CTL_BLOCK) {
+    if (CURRENT_PROC_NAME == NULL && CTL_TYPE(ctl_top) != CTL_BLK) {
         end_contains();
     }
 
@@ -6718,9 +6752,9 @@ compile_ASSIGN_LABEL_statement(expr x)
 
 
 static void
-compile_CALL_type_bound_procedure_statement(expr x)
+compile_CALL_member_procedure_statement(expr x)
 {
-    ID tpd;
+    ID mem;
     expv structRef;
     expr x1, x2, args;
     TYPE_DESC stp;
@@ -6737,20 +6771,22 @@ compile_CALL_type_bound_procedure_statement(expr x)
     structRef = compile_lhs_expression(x1);
 
     if (!IS_STRUCT_TYPE(EXPV_TYPE(structRef))) {
-        error("invalid type bound procedure call to non derived-type");
+        error("invalid calling member procedure of non derived-type");
         return;
     }
 
     stp = EXPV_TYPE(structRef);
 
-    tpd = find_struct_member(stp, EXPR_SYM(x2));
+    mem = find_struct_member(stp, EXPR_SYM(x2));
 
-    if (tpd == NULL || ID_CLASS(tpd) != CL_TYPE_BOUND_PROC) {
-        error("'%s' is not type bound procedure", SYM_NAME(EXPR_SYM(x2)));
+    if (mem == NULL || 
+        (ID_CLASS(mem) != CL_TYPE_BOUND_PROC &&
+         (ID_TYPE(mem) != NULL && !IS_PROCEDURE_TYPE(ID_TYPE(mem))))) {
+        error("'%s' is not a procedure", SYM_NAME(EXPR_SYM(x2)));
         return;
     }
 
-    if ((tp = ID_TYPE(tpd)) == NULL) {
+    if ((tp = ID_TYPE(mem)) == NULL) {
         /*
          * If type bound procedure is bound to module procedure, its type does
          * not yet exists.  So create it in this timing.
@@ -6760,13 +6796,17 @@ compile_CALL_type_bound_procedure_statement(expr x)
         TYPE_BASIC_TYPE(tp) = TYPE_SUBR;
     }
 
-    tp = ID_TYPE(tpd);
+    if (!IS_SUBR(tp) && !TYPE_BOUND_GENERIC_TYPE_GENERICS(tp)) {
+        error("'%s' is not a subroutine", SYM_NAME(EXPR_SYM(x2)));
+        return;
+    }
+
     if (TYPE_BOUND_GENERIC_TYPE_GENERICS(tp)) {
         /* for type-bound GENERIC */
         ID bind;
         ID bindto;
         tp = NULL;
-        FOREACH_ID(bind, TBP_BINDING(tpd)) {
+        FOREACH_ID(bind, TBP_BINDING(mem)) {
             bindto = find_struct_member_allow_private(stp, ID_SYM(bind), TRUE);
             if (bindto && function_type_is_appliable(ID_TYPE(bindto), a, TRUE)) 
             {
@@ -6945,7 +6985,7 @@ compile_CALL_statement(expr x)
     if (EXPR_CODE(x1) == IDENT) {
         compile_CALL_subroutine_statement(x);
     } else if (EXPR_CODE(x1) == F95_MEMBER_REF) {
-        compile_CALL_type_bound_procedure_statement(x);
+        compile_CALL_member_procedure_statement(x);
     } else {
         fatal("compile_exec_statement: bad id in call");
     }
@@ -8640,8 +8680,10 @@ compile_IMPORT_statement(expr x)
               "a module procedure.");
     }
 
-    ident_list = EXPR_ARG1(x);
-    if (EXPR_LIST(ident_list)) {
+    if ((ident_list = EXPR_ARG1(x)) == NULL) {
+        PROC_HAS_IMPORT_ALL(CURRENT_PROCEDURE) = TRUE;
+
+    } else if (EXPR_LIST(ident_list)) {
         FOR_ITEMS_IN_LIST(lp, ident_list) {
             arg = LIST_ITEM(lp);
             if ((ident = find_ident_parent(EXPR_SYM(arg))) == NULL){
@@ -8651,7 +8693,7 @@ compile_IMPORT_statement(expr x)
             import_ident(ident);
         }
     }
-    output_statement(list1(F03_IMPORT_STATEMENT, EXPR_ARG1(x)));
+    output_statement(list1(F03_IMPORT_STATEMENT, ident_list));
 }
 
 static void
@@ -8659,7 +8701,7 @@ compile_BLOCK_statement(expr x)
 {
     expv st;
 
-    push_ctl(CTL_BLOCK);
+    push_ctl(CTL_BLK);
     push_env(CTL_BLOCK_LOCAL_ENV(ctl_top));
 
     st = list2(F2008_BLOCK_STATEMENT, NULL, NULL);
@@ -8722,7 +8764,7 @@ compile_ENDBLOCK_statement(expr x)
     BLOCK_ENV current_block;
     BLOCK_ENV bp, tail;
 
-    if (CTL_TYPE(ctl_top) != CTL_BLOCK) {
+    if (CTL_TYPE(ctl_top) != CTL_BLK) {
         error("'endblock', out of place");
         return;
     }
@@ -9160,7 +9202,7 @@ compile_ENDFORALL_statement(expr x)
     /*
      * Close the block construct which is genereted in compile_FORALL_statement().
      */
-    if (CTL_TYPE(ctl_top) == CTL_BLOCK) {
+    if (CTL_TYPE(ctl_top) == CTL_BLK) {
         compile_ENDBLOCK_statement(list0(F2008_ENDBLOCK_STATEMENT));
     }
 }
@@ -9440,3 +9482,122 @@ compile_CONTIGUOUS_statement(expr x)
     }
 }
 
+
+static void
+compile_ASSOCIATE_statement(expr x)
+{
+    list lp;
+    expr association_list;
+    expv st;
+
+    assert(x != NULL);
+
+    assert(LOCAL_SYMBOLS == NULL);
+
+    st = list2(F03_ASSOCIATE_STATEMENT, NULL, NULL);
+
+    association_list = EXPR_ARG1(x);
+
+    /*
+     * A selector doesn't refer previous association names.
+     *
+     * ex)
+     *      1 INTEGER :: X = 1
+     *      2 REAL :: Y = 2.5
+     *      3 ASSOCIATE ( Y => X, Z => Y )
+     *      4   !                This `Y` refers `Y` in the line 2, not `Y` in the line 3
+     *      4   PRINT *, Z !=> 2.5
+     *      5 END ASSOCIATE
+     *
+     * So use two loops: Evaluate selectors in the 1st loop, then declare
+     * association names in the 2nd loop.
+     */
+    FOR_ITEMS_IN_LIST(lp, association_list) {
+        expr selector;
+        expv v;
+
+        selector = EXPR_ARG2(LIST_ITEM(lp));
+        v = compile_expression(selector);
+        list_put_last(LIST_ITEM(lp), v);
+    }
+
+    push_ctl(CTL_ASSOCIATE);
+    push_env(CTL_LOCAL_ENV(ctl_top));
+    CTL_BLOCK(ctl_top) = st;
+
+    FOR_ITEMS_IN_LIST(lp, association_list) {
+        ID id;
+
+        expr associate_name;
+        expv v;
+
+        associate_name = EXPR_ARG1(LIST_ITEM(lp));
+        v = EXPR_ARG3(LIST_ITEM(lp));
+        if (v == NULL) {
+            /* The error is already thrown in the compile_expression() */
+            continue;
+        }
+
+        id = declare_ident(EXPR_SYM(associate_name), CL_VAR);
+
+        declare_id_type(id, EXPV_TYPE(v));
+        declare_variable(id);
+        TYPE_UNSET_IMPLICIT(ID_TYPE(id));
+
+        VAR_INIT_VALUE(id) = v;
+    }
+
+    /* save construct name */
+    if (EXPR_HAS_ARG2(x)) {
+        CTL_ASSOCIATE_CONST_NAME(ctl_top) = EXPR_ARG2(x);
+    }
+    CURRENT_STATEMENTS = NULL;
+    current_proc_state = P_DEFAULT;
+}
+
+static void
+compile_ENDASSOCIATE_statement(expr x)
+{
+    BLOCK_ENV current_block;
+
+    /* check construct name */
+    if (CTL_ASSOCIATE_CONST_NAME(ctl_top) != NULL) {
+        if (x == NULL || !EXPR_HAS_ARG1(x) || EXPR_ARG1(x) == NULL) {
+            error("expects construnct name");
+            return;
+        } else if (EXPR_SYM(CTL_ASSOCIATE_CONST_NAME(ctl_top)) !=
+                   EXPR_SYM(EXPR_ARG1(x))) {
+            error("unmatched construct name");
+            return;
+        }
+    } else if (x != NULL && EXPR_HAS_ARG1(x) && EXPR_ARG1(x) != NULL) {
+        error("unexpected construnct name");
+        return;
+    }
+
+    if (debug_flag) {
+        fprintf(debug_fp,"\n*** IN ASSOCIATE:\n");
+        print_IDs(LOCAL_SYMBOLS, debug_fp, TRUE);
+        expv_output(CURRENT_STATEMENTS, debug_fp);
+    }
+
+    CTL_ASSOCIATE_BODY(ctl_top) = CURRENT_STATEMENTS;
+
+    move_implicit_variables_to_parent();
+
+    current_block = XMALLOC(BLOCK_ENV, sizeof(*current_block));
+    BLOCK_LOCAL_SYMBOLS(current_block) = LOCAL_SYMBOLS;
+    BLOCK_LOCAL_LABELS(current_block) = LOCAL_LABELS;
+    BLOCK_LOCAL_INTERFACES(current_block) = LOCAL_INTERFACES;
+    BLOCK_LOCAL_EXTERNAL_SYMBOLS(current_block) = LOCAL_EXTERNAL_SYMBOLS;
+    BLOCK_CHILDREN(current_block) = LOCAL_BLOCKS;
+    EXPR_BLOCK(CTL_BLOCK(ctl_top)) = current_block;
+
+    if (endlineno_flag) {
+        EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+    }
+
+    pop_ctl();
+    pop_env();
+    CURRENT_STATE = INEXEC;
+}
