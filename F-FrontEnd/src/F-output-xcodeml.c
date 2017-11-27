@@ -4113,7 +4113,7 @@ mark_type_desc_skip_tbp(TYPE_DESC tp, int skip_tbp)
     if (tp == NULL || TYPE_IS_REFERENCED(tp) == TRUE || IS_MODULE(tp))
         return;
 
-    if (skip_tbp &&  IS_PROCEDURE_TYPE(tp) && TYPE_REF(tp) != NULL) {
+    if (skip_tbp && IS_PROCEDURE_TYPE(tp) && TYPE_REF(tp) != NULL) {
         /* procedure variable or type-bound procedure with a PASS argument
          * may cause a circulation reference,
          * so store them to a list and check them later.
