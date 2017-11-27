@@ -7006,10 +7006,13 @@ XfDecompileDomVisitor {
             _writeLineDirective(n);
 
             XmfWriter writer = _context.getWriter();
-            writer.writeToken("IMPORT :: ");
+            writer.writeToken("IMPORT");
 
             int nameCount = 0;
             ArrayList<Node> nameNodes = XmDomUtil.collectElements(n, "name");
+            if (nameNodes.size() > 0) {
+                writer.writeToken("::");
+            }
             for (Node name : nameNodes) {
                 if (nameCount > 0) {
                     writer.writeToken(", ");

@@ -620,6 +620,7 @@ extern int      check_in_interface _ANSI_ARGS_((void));
 extern int      check_in_module_procedure _ANSI_ARGS_((void));
 extern int      in_interface _ANSI_ARGS_((void));
 extern int      in_module_procedure _ANSI_ARGS_((void));
+extern int      has_import_all _ANSI_ARGS_((void));
 extern void     include_file(char *name, int inside_use);
 extern void     push_unit_ctl _ANSI_ARGS_((enum prog_state));
 extern void     pop_unit_ctl _ANSI_ARGS_((void));

@@ -3869,7 +3869,7 @@ find_struct_decl(SYMBOL s)
     if (tp != NULL) {
         return tp;
     }
-    if (in_interface() && !in_module_procedure()) {
+    if (in_interface() && !in_module_procedure() && !has_import_all()) {
         return NULL;
     }
     tp = find_struct_decl_block_parent(s);
