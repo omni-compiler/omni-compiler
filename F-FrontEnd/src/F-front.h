@@ -171,10 +171,11 @@ enum control_type {
     CTL_XMP,
     CTL_ACC,
     CTL_CRITICAL,
-    CTL_BLOCK,
+    CTL_BLK,
     CTL_INTERFACE,
     CTL_FORALL,
     CTL_ENUM,
+    CTL_ASSOCIATE,
 };
 
 #define CONTROL_TYPE_NAMES {\
@@ -191,10 +192,11 @@ enum control_type {
     "CTL_XMP",\
     "CTL_ACC",\
     "CTL_CRITICAL",\
-    "CTL_BLOCK",\
+    "CTL_BLK",\
     "CTL_INTERFACE",\
     "CTL_FORALL",\
     "CTL_ENUM",\
+    "CTL_ASSOCIATE",\
 }
 
 typedef struct environment {
@@ -245,6 +247,14 @@ typedef struct control
 #define CTL_SAVE(l)             ((l)->save)
 #define CTL_BLOCK(l)            ((l)->v1)
 #define CTL_CLIENT(l)           ((l)->v2)
+#define CTL_LOCAL_ENV(l)        (&((l)->local_env))
+#define CTL_LOCAL_SYMBOLS(l)               ((CTL_LOCAL_ENV(l))->symbols)
+#define CTL_LOCAL_STRUCT_DECLS(l)          ((CTL_LOCAL_ENV(l))->struct_decls)
+#define CTL_LOCAL_COMMON_SYMBOLS(l)        ((CTL_LOCAL_ENV(l))->common_symbols)
+#define CTL_LOCAL_LABELS(l)                ((CTL_LOCAL_ENV(l))->labels)
+#define CTL_LOCAL_EXTERNAL_SYMBOLS(l)      ((CTL_LOCAL_ENV(l))->external_symbols)
+#define CTL_LOCAL_BLOCKS(l)                ((CTL_LOCAL_ENV(l))->blocks)
+
 
 #define CTL_IF_STATEMENT(l)     ((l)->v2)
 #define CTL_IF_THEN(l)          (EXPR_ARG2((l)->v2))
@@ -312,6 +322,9 @@ typedef struct control
 #define CTL_FORALL_LOCAL_EXTERNAL_SYMBOLS(l)      ((CTL_FORALL_LOCAL_ENV(l))->external_symbols)
 #define CTL_FORALL_LOCAL_BLOCKS(l)                ((CTL_FORALL_LOCAL_ENV(l))->blocks)
 
+
+#define CTL_ASSOCIATE_BODY(l)                     (EXPR_ARG1((l)->v1))
+#define CTL_ASSOCIATE_CONST_NAME(l)               (EXPR_ARG2((l)->v1))
 
 
 #define CTL_NEXT(u)               ((u)->next)

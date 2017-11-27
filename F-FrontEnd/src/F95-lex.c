@@ -3932,6 +3932,7 @@ struct keyword_token keywords[ ] =
     { "abstract",       ABSTRACT  },     /* F2003 spec */
     { "assignment",     ASSIGNMENT  },
     { "assign",         ASSIGN  },
+    { "associate",      ASSOCIATE  },    /* F2003 spec */
     { "allocatable",    ALLOCATABLE },
     { "allocate",       ALLOCATE },
     { "all",            KW_ALL },       /* #060 coarray */
@@ -3970,6 +3971,7 @@ struct keyword_token keywords[ ] =
     { "enum",           ENUM },          /* F2003 spec */
     { "enumerator",     ENUMERATOR },          /* F2003 spec */
     { "exit",           EXIT },
+    { "endassociate",   ENDASSOCIATE },  /* F2003 spec */
     { "endblock",       ENDBLOCK },
     { "endcritical",    ENDCRITICAL },     /* #060 coarray */
     { "enddo",          ENDDO },
@@ -4085,6 +4087,7 @@ struct keyword_token keywords[ ] =
 
 struct keyword_token end_keywords[ ] =
 {
+    { "associate",      ENDASSOCIATE },
     { "block",          BLOCK },
     { "blockdata",      BLOCKDATA },
     { "critical",       ENDCRITICAL },     /* #060 coarray */
