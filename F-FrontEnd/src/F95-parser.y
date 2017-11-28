@@ -1284,11 +1284,11 @@ entity_decl:
 type_spec: type_spec0 { $$ = $1; type_spec_done(); }
 
 type_spec0:
-          KW_TYPE '(' KW IDENTIFIER ')'
+          KW_TYPE '(' TYPE_KW IDENTIFIER ')'
         { $$ = $4; }
-        | KW_TYPE '(' KW IDENTIFIER '(' type_param_value_list ')' ')'
+        | KW_TYPE '(' TYPE_KW IDENTIFIER '(' type_param_value_list ')' ')'
         { $$ = list2(F03_PARAMETERIZED_TYPE,$4,$6); }
-        | KW_TYPE '(' KW type_spec1 ')'
+        | KW_TYPE '(' TYPE_KW type_spec1 ')'
         { $$ = $4; }
         | CLASS '(' IDENTIFIER ')'
         { $$ = list1(F03_CLASS, $3); }
