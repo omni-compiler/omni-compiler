@@ -4851,6 +4851,72 @@ compile_pragma_statement(expr x)
 }
 
 
+void
+compile_pragma_decl(expr x)
+{
+  expv v = NULL;
+
+  switch (EXPR_CODE(EXPR_ARG1(x)))
+    {
+    case STRING_CONSTANT:
+	if (EXPR_STR(EXPR_ARG1(x)) == NULL) {
+	    error("assertion fail on compile_pragma_statement, arg = NULL");
+	    break;
+	}
+	else {
+	  v = expv_str_term(STRING_CONSTANT,
+			    NULL,
+			    strdup(EXPR_STR(EXPR_ARG1(x))));
+        break;
+      }
+    default:
+      {
+        error("invalid format.");
+        break;
+      }
+    }
+
+  SYMBOL sym = gen_temp_symbol("omni_dummy");
+  ID id = declare_ident(sym, CL_DECL_PRAGMA);
+  id->info.decl_pragma_info.v = list1(F_PRAGMA_STATEMENT, v);
+  ID_LINE(id) = EXPR_LINE(x);
+
+}
+
+
+void
+compile_pragma_outside(expr x)
+{
+  expv v = NULL;
+
+  switch (EXPR_CODE(EXPR_ARG1(x)))
+    {
+    case STRING_CONSTANT:
+	if (EXPR_STR(EXPR_ARG1(x)) == NULL) {
+	    error("assertion fail on compile_pragma_statement, arg = NULL");
+	    break;
+	}
+	else {
+	  v = expv_str_term(STRING_CONSTANT,
+			    NULL,
+			    strdup(EXPR_STR(EXPR_ARG1(x))));
+        break;
+      }
+    default:
+      {
+        error("invalid format.");
+        break;
+      }
+    }
+
+  SYMBOL sym = gen_temp_symbol("omni_dummy");
+  EXT_ID ep = declare_external_id(sym, STG_PRAGMA , 0);
+  ep->info.pragma_info.v = list1(F_PRAGMA_STATEMENT, v);
+  EXT_LINE(ep) = EXPR_LINE(x);
+  
+}
+
+
 /*
  * declare variables those have a specified type attribute
  *   OR

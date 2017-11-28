@@ -33,6 +33,7 @@ enum name_class {
     CL_TYPE_PARAM, /* type parameter name */
     CL_TYPE_BOUND_PROC, /* type bound procedure */
     CL_MULTI,     /* Both the derived type name and the generic procedure */
+    CL_DECL_PRAGMA, /* Placeholder for declarative pragmas */
     CL_ENUM,      /* enum (dummy name) */
 };
 
@@ -103,6 +104,7 @@ enum storage_class {
     STG_NONE,    /* for intrinsic, stfunction */
     STG_TYPE_PARAM, /* type parameter */
     STG_INDEX, /* indexes of forall */
+    STG_PRAGMA, /* placeholder for pragma */
 
 };
 
@@ -273,6 +275,10 @@ typedef struct ident_descriptor
             /* for enumerator */
             struct ident_descriptor * define;
         } enumerator_info;
+        struct {
+	  /* for CL_DECL_PRAGMA */
+	  expv v;
+	} decl_pragma_info;
     } info;
 } *ID;
 
@@ -507,6 +513,10 @@ typedef struct external_symbol
                 SYMBOL parent;
             } extends;
         } proc_info;
+        struct {
+	  /* for STG_PRAGMA */
+	  expv v;
+	} pragma_info;
     } info;
 } *EXT_ID;
 
@@ -527,6 +537,7 @@ typedef struct external_symbol
                                 EXT_PROC_INTERFACE_INFO(ep)->class == INTF_GENERIC_READ_UNFORMATTED || \
                                 EXT_PROC_INTERFACE_INFO(ep)->class == INTF_GENERIC_WRITE_FORMATTED || \
                                 EXT_PROC_INTERFACE_INFO(ep)->class == INTF_GENERIC_WRITE_UNFORMATTED))
+#define EXT_IS_PRAGMA(ep) (EXT_TAG(ep) == STG_PRAGMA)
 
 #define EXT_PROC_TYPE(ep)       ((ep)->info.proc_info.type)
 #define EXT_PROC_BODY(ep)       ((ep)->info.proc_info.body)
