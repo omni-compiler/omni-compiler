@@ -25,6 +25,7 @@ public enum XMPpragma {
     TASKS,
     LOOP,
     REFLECT,
+    REDUCE_SHADOW,
     GMOVE,
     BARRIER,
     REDUCTION,

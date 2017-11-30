@@ -2759,6 +2759,7 @@ outx_XMP_dir_string(int l,expv v)
   case XMP_TASKS: s = "TASKS"; break;
   case XMP_LOOP: s = "LOOP"; break;
   case XMP_REFLECT: s = "REFLECT"; break;
+  case XMP_REDUCE_SHADOW: s = "REDUCE_SHADOW"; break;
   case XMP_GMOVE: s = "GMOVE"; break;
   case XMP_ARRAY: s = "ARRAY"; break;
   case XMP_BARRIER: s = "BARRIER"; break;

@@ -195,6 +195,7 @@ public class XMPtransPragma
       return translateLoop(pb,info);
 
     case REFLECT:
+    case REDUCE_SHADOW:
       return translateReflect(pb,info);
     case BARRIER:
       return translateBarrier(pb,info);
@@ -469,7 +470,10 @@ public class XMPtransPragma
     Ident f, g, h;
     boolean isAcc = info.isAcc();
 
-    f = env.declInternIdent(isAcc? XMP.reflect_acc_f : XMP.reflect_f,Xtype.FsubroutineType);
+    if (info.pragma == XMPpragma.REFLECT)
+      f = env.declInternIdent(isAcc? XMP.reflect_acc_f : XMP.reflect_f, Xtype.FsubroutineType);
+    else
+      f = env.declInternIdent(isAcc? XMP.reduce_shadow_acc_f : XMP.reduce_shadow_f, Xtype.FsubroutineType);
     
     if (info.getAsyncId() != null){
       Xobject arg = Xcons.List(info.getAsyncId());
@@ -480,7 +484,10 @@ public class XMPtransPragma
     Vector<XMParray> reflectArrays = info.getReflectArrays();
     for(XMParray a: reflectArrays){
       for (int i = 0; i < info.widthList.size(); i++){
-	  g = env.declInternIdent(isAcc? XMP.set_reflect_acc_f : XMP.set_reflect_f,Xtype.FsubroutineType);
+	  if (info.pragma == XMPpragma.REFLECT)
+	    g = env.declInternIdent(isAcc? XMP.set_reflect_acc_f : XMP.set_reflect_f, Xtype.FsubroutineType);
+	  else
+	    g = env.declInternIdent(isAcc? XMP.set_reduce_shadow_acc_f : XMP.set_reduce_shadow_f, Xtype.FsubroutineType);
 	  XMPdimInfo w = info.widthList.get(i);
 
 	  // Here the stride means the periodic flag.
@@ -495,7 +502,10 @@ public class XMPtransPragma
       }
 
       if (info.getAsyncId() != null){
-	  h = env.declInternIdent(isAcc? XMP.reflect_async_acc_f : XMP.reflect_async_f,Xtype.FsubroutineType);
+	  if (info.pragma == XMPpragma.REFLECT)
+	    h = env.declInternIdent(isAcc? XMP.reflect_async_acc_f : XMP.reflect_async_f, Xtype.FsubroutineType);
+	  else
+	    h = env.declInternIdent(isAcc? XMP.reduce_shadow_async_acc_f : XMP.reduce_shadow_async_f, Xtype.FsubroutineType);
 	  bb.add(h.callSubroutine(Xcons.List(a.getDescId().Ref(), info.getAsyncId())));
       }
       else {

@@ -159,6 +159,7 @@ typedef struct _XMP_async_reflect_type {
 
   MPI_Datatype *datatype;
   MPI_Request *reqs;
+  MPI_Request *reqs_reduce;
   int nreqs;
 
 } _XMP_async_reflect_t;

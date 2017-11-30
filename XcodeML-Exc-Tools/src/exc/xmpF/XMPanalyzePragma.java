@@ -200,6 +200,7 @@ public class XMPanalyzePragma
       break; 
 
     case REFLECT:
+    case REDUCE_SHADOW:
       analyzeReflect(pb.getClauses(),info,pb);
       break;
 

@@ -1892,7 +1892,7 @@ static CExpr* parse_ASYNC_clause()
   }
 
  err:
-    XMP_Error0("syntax error in the REFLECT directive");
+    XMP_Error0("syntax error in an ASYNC clause");
     XMP_has_err = 1;
     return NULL;
 }

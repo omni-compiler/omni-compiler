@@ -2,14 +2,17 @@
 
 void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim, int lwidth, int uwidth, int is_periodic,
 				  int is_reduce_shadow);
+
 void _XMP_reflect_pack_dim(_XMP_array_t *a, int i, int *lwidth, int *uwidth, int *is_periodic, int is_reduce_shadow);
 void _XMP_sum_vector(int type, char * restrict dst, char * restrict src,
 		     int count, int blocklength, long stride);
 
+int _XMP_get_owner_pos(_XMP_array_t *a, int dim, int index);
+
 static void _XMP_reduce_shadow_wait_and_sum(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_periodic);
 static void _XMP_reduce_shadow_sum(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_periodic);
 
-static int _xmpf_set_reduce_shadow_flag = 0;
+static int _xmp_set_reduce_shadow_flag = 0;
 static int _xmp_lwidth[_XMP_N_MAX_DIM] = {0};
 static int _xmp_uwidth[_XMP_N_MAX_DIM] = {0};
 static int _xmp_is_periodic[_XMP_N_MAX_DIM] = {0};
@@ -18,7 +21,7 @@ static int _xmp_is_periodic[_XMP_N_MAX_DIM] = {0};
 void _XMP_set_reduce_shadow__(_XMP_array_t *a, int dim, int lwidth, int uwidth,
 			      int is_periodic)
 {
-  _xmpf_set_reduce_shadow_flag = 1;
+  _xmp_set_reduce_shadow_flag = 1;
   _xmp_lwidth[dim] = lwidth;
   _xmp_uwidth[dim] = uwidth;
   _xmp_is_periodic[dim] = is_periodic;
@@ -31,11 +34,11 @@ void _XMP_reduce_shadow__(_XMP_array_t *a, int is_diagonal)
 
   _XMP_RETURN_IF_SINGLE;
   if (!a->is_allocated){
-    _xmpf_set_reduce_shadow_flag = 0;
+    _xmp_set_reduce_shadow_flag = 0;
     return;
   }
 
-  if (!_xmpf_set_reduce_shadow_flag){
+  if (!_xmp_set_reduce_shadow_flag){
     for (int i = 0; i < a->dim; i++){
       _XMP_array_info_t *ai = &(a->info[i]);
       _xmp_lwidth[i] = ai->shadow_size_lo;
@@ -88,7 +91,7 @@ void _XMP_reduce_shadow__(_XMP_array_t *a, int is_diagonal)
 
   _XMP_reduce_shadow_wait_and_sum(a, _xmp_lwidth, _xmp_uwidth, _xmp_is_periodic);
 
-  _xmpf_set_reduce_shadow_flag = 0;
+  _xmp_set_reduce_shadow_flag = 0;
   for (int i = 0; i < a->dim; i++){
     _xmp_lwidth[i] = 0;
     _xmp_uwidth[i] = 0;
@@ -98,53 +101,49 @@ void _XMP_reduce_shadow__(_XMP_array_t *a, int is_diagonal)
 }
 
 
-#if 0
-void _XMP_reduce_shadow_async__(_XMP_array_t *a, int is_diagonal, int async_id){
+/* void _XMP_reduce_shadow_async__(_XMP_array_t *a, int is_diagonal, int async_id){ */
 
-  _XMP_RETURN_IF_SINGLE;
-  if (!a->is_allocated){
-    _xmpf_set_reduce_shadow_flag = 0;
-    return;
-  }
+/*   _XMP_RETURN_IF_SINGLE; */
+/*   if (!a->is_allocated){ */
+/*     _xmp_set_reduce_shadow_flag = 0; */
+/*     return; */
+/*   } */
 
-  if (!_xmpf_set_reduce_shadow_flag){
-    for (int i = 0; i < a->dim; i++){
-      _XMP_array_info_t *ai = &(a->info[i]);
-      if (ai->shadow_type == _XMP_N_SHADOW_FULL){
-	_XMP_fatal("asynchronous reduce_shadow for full shadow not supported.");
-      }
-      _xmp_lwidth[i] = ai->shadow_size_lo;
-      _xmp_uwidth[i] = ai->shadow_size_hi;
-      _xmp_is_periodic[i] = 0;
-    }
-  }
+/*   if (!_xmp_set_reduce_shadow_flag){ */
+/*     for (int i = 0; i < a->dim; i++){ */
+/*       _XMP_array_info_t *ai = &(a->info[i]); */
+/*       if (ai->shadow_type == _XMP_N_SHADOW_FULL){ */
+/* 	_XMP_fatal("asynchronous reduce_shadow for full shadow not supported."); */
+/*       } */
+/*       _xmp_lwidth[i] = ai->shadow_size_lo; */
+/*       _xmp_uwidth[i] = ai->shadow_size_hi; */
+/*       _xmp_is_periodic[i] = 0; */
+/*     } */
+/*   } */
 
-  int reduce_shadow_ndims = 0;
-  for (int i = 0; i < a->dim; i++){
-    if (_xmp_lwidth[i] || _xmp_uwidth[i]){
-      reduce_shadow_ndims++;
-    }
-  }
+/*   int reduce_shadow_ndims = 0; */
+/*   for (int i = 0; i < a->dim; i++){ */
+/*     if (_xmp_lwidth[i] || _xmp_uwidth[i]){ */
+/*       reduce_shadow_ndims++; */
+/*     } */
+/*   } */
 
-  if (reduce_shadow_ndims == 0){
-    return;
-  }
-  else if (reduce_shadow_ndims == 1 || !is_ordinal){
-    _XMP_reduce_shadow_async_cardinal(a, async_id);
-  }
-  else {
-    _XMP_reduce_shadow_async_ordinal(a, async_id);
-  }
+/*   if (reduce_shadow_ndims == 0){ */
+/*     return; */
+/*   } */
 
-  _xmpf_set_reduce_shadow_flag = 0;
-  for (int i = 0; i < a->dim; i++){
-    _xmp_lwidth[i] = 0;
-    _xmp_uwidth[i] = 0;
-    _xmp_is_periodic[i] = 0;
-  }
+/*   // */
+/*   // ... */
+/*   // */
+  
+/*   _xmp_set_reduce_shadow_flag = 0; */
+/*   for (int i = 0; i < a->dim; i++){ */
+/*     _xmp_lwidth[i] = 0; */
+/*     _xmp_uwidth[i] = 0; */
+/*     _xmp_is_periodic[i] = 0; */
+/*   } */
 
-}
-#endif
+/* } */
 
 
 static void _XMP_reduce_shadow_wait_and_sum(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_periodic)
@@ -172,31 +171,22 @@ static void _XMP_reduce_shadow_wait_and_sum(_XMP_array_t *a, int *lwidth, int *u
 
 static void _XMP_reduce_shadow_sum(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_periodic)
 {
-
-  int lb = 0, ub = 0;
   int type_size = a->type_size;
 
-  if (a->order == MPI_ORDER_FORTRAN){ /* for XMP/F */
-    lb = 0;
-    ub = a->dim - 1;
-  }
-  else if (a->order == MPI_ORDER_C){ /* for XMP/C */
-    lb = 1;
-    ub = a->dim;
-  }
-  else {
-    _XMP_fatal("cannot determin the base language.");
-  }
-
-  for (int i = lb; i < ub; i++){
+  for (int i = 0; i < a->dim; i++){
 
     _XMP_array_info_t *ai = &(a->info[i]);
     _XMP_reflect_sched_t *shadow_sched = ai->reflect_sched;
 
     if (ai->shadow_type == _XMP_N_SHADOW_NORMAL){
 
+      // 0-origin
+      int my_pos = a->align_template->chunk[i].onto_nodes_info->rank;
+      int lb_pos = _XMP_get_owner_pos(a, i, ai->ser_lower);
+      int ub_pos = _XMP_get_owner_pos(a, i, ai->ser_upper);
+
       // for lower reduce_shadow
-      if (lwidth[i]){
+      if (lwidth[i] && (is_periodic[i] || my_pos != ub_pos)){
 	_XMP_sum_vector(a->type,
 			(char *)shadow_sched->lo_send_array,
 			(char *)shadow_sched->lo_send_buf,
@@ -205,7 +195,7 @@ static void _XMP_reduce_shadow_sum(_XMP_array_t *a, int *lwidth, int *uwidth, in
       }
 
       // for upper reduce_shadow
-      if (uwidth[i]){
+      if (uwidth[i] && (is_periodic[i] || my_pos != lb_pos)){
 	_XMP_sum_vector(a->type,
 			(char *)shadow_sched->hi_send_array,
 			(char *)shadow_sched->hi_send_buf,
