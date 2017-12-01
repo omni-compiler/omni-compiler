@@ -1239,9 +1239,9 @@ compile_statement1(int st_no, expr x)
     case F_PRAGMA_STATEMENT:
       if (CURRENT_STATE == OUTSIDE)
 	compile_pragma_outside(x);
-      else if (CURRENT_STATE == INDCL || CURRENT_STATE == INSIDE)
+      else if (CURRENT_STATE == INDCL)
 	compile_pragma_decl(x);
-      else 
+      else // INEXEC || INSIDE
 	compile_pragma_statement(x);
       break;
 
