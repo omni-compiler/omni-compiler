@@ -28,7 +28,8 @@ void _XMP_set_reduce_shadow__(_XMP_array_t *a, int dim, int lwidth, int uwidth,
 }
 
 
-void _XMP_reduce_shadow__(_XMP_array_t *a, int is_diagonal)
+//void _XMP_reduce_shadow__(_XMP_array_t *a, int is_diagonal)
+void _XMP_reduce_shadow__(_XMP_array_t *a)
 // is_diagnonal is not used now.
 {
 

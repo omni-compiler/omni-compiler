@@ -293,6 +293,10 @@ extern void _XMP_reflect__(char *a);
 extern void _XMP_wait_async__(int async_id);
 extern void _XMP_reflect_async__(void *a, int async_id);
 
+// xmp_reduce_shadow.c
+extern void _XMP_set_reduce_shadow__(void *a, int dim, int lwidth, int uwidth, int is_periodic);
+extern void _XMP_reduce_shadow__(void *a);
+
 // xmp_runtime.c
 //extern void _XMP_init(void);
 extern void _XMP_init(int, char**); 

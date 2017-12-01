@@ -89,6 +89,8 @@ public class XMPtranslateLocalPragma {
         { translateLoop(pb);			break; }
       case REFLECT:
         { translateReflect(pb);			break; }
+      case REDUCE_SHADOW:
+        { translateReduceShadow(pb);		break; }
       case BARRIER:
         { translateBarrier(pb);			break; }
       case REDUCTION:
@@ -554,6 +556,15 @@ public class XMPtranslateLocalPragma {
     XobjList accOrHost = (XobjList)pb.getClauses().getArg(3);
     boolean isACC = accOrHost.hasIdent("acc");
     Block reflectFuncCallBlock = XMPshadow.translateReflect(pb, _globalDecl, isACC);
+
+    Xobject profileClause = pb.getClauses().getArg(4);
+    addProfileFunctions(profileClause, reflectFuncCallBlock, "reflect", pb);
+  }
+
+  private void translateReduceShadow(PragmaBlock pb) throws XMPexception {
+    XobjList accOrHost = (XobjList)pb.getClauses().getArg(3);
+    boolean isACC = accOrHost.hasIdent("acc");
+    Block reflectFuncCallBlock = XMPshadow.translateReduceShadow(pb, _globalDecl, isACC);
 
     Xobject profileClause = pb.getClauses().getArg(4);
     addProfileFunctions(profileClause, reflectFuncCallBlock, "reflect", pb);

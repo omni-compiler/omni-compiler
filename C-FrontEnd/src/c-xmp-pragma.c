@@ -183,6 +183,11 @@ int parse_XMP_pragma()
     pg_get_token();
     pg_XMP_list = parse_REFLECT_clause();
   }
+  else if (PG_IS_IDENT("reduce_shadow")) {
+    pg_XMP_pragma = XMP_REDUCE_SHADOW;
+    pg_get_token();
+    pg_XMP_list = parse_REFLECT_clause();
+  }
   else if (PG_IS_IDENT("barrier")) {
     pg_XMP_pragma = XMP_BARRIER;
     pg_get_token();

@@ -112,6 +112,7 @@ char *xmpDirectiveName(int c)
   case XMP_TASKS:        return "TASKS";
   case XMP_LOOP:         return "LOOP";
   case XMP_REFLECT:      return "REFLECT";
+  case XMP_REDUCE_SHADOW:return "REDUCE_SHADOW";
   case XMP_GMOVE:        return "GMOVE";
   case XMP_BARRIER:      return "BARRIER";
   case XMP_REDUCTION:    return "REDUCTION";
