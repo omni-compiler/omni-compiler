@@ -414,7 +414,7 @@ public class XMParray {
 	  if (isDistributed(i))
 	    sizeExprs[i] = Xcons.FindexRangeOfAssumedShape(Xcons.IntConstant(0));
 	  else
-	    sizeExprs[i] = Xcons.FindexRangeOfAssumedShape(Xcons.IntConstant(1));
+	    sizeExprs[i] = Xcons.FindexRangeOfAssumedShape(type.getFarraySizeExpr()[i].getArg(0));
 	}
 	localType = Xtype.Farray(elementType, sizeExprs);
 	localType.setTypeQualFlags(type.getTypeQualFlags());
