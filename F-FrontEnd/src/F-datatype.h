@@ -177,6 +177,7 @@ typedef struct type_descriptor
         int is_internal;                /* for internal subprograms (function/subroutine in the contain block)*/
         int is_module_procedure;        /* used as a module procedure */ /* may not be required */
         int is_visible_intrinsic;       /* TRUE if non standard intrinsic */
+        int is_interface;               /* TRUE if the function is a interface */
 
         int has_binding_arg;
         int has_pass_arg;                   /* for the function type of procedure variable OR type-bound procedure */
@@ -615,6 +616,10 @@ extern TYPE_DESC basic_type_desc[];
 #define FUNCTION_TYPE_HAS_PASS_ARG(tp) ((tp)->proc_info.has_pass_arg)
 #define FUNCTION_TYPE_PASS_ARG(tp) ((tp)->proc_info.pass_arg)
 #define FUNCTION_TYPE_PASS_ARG_TYPE(tp) ((tp)->proc_info.pass_arg_type)
+
+#define FUNCTION_TYPE_IS_INTERFACE(tp) ((tp)->proc_info.is_interface == TRUE)
+#define FUNCTION_TYPE_SET_INTERFACE(tp) ((tp)->proc_info.is_interface = TRUE)
+#define FUNCTION_TYPE_UNSET_INTERFACE(tp) ((tp)->proc_info.is_interface = FALSE)
 
 
 #endif /* _F_DATATYPE_H_ */

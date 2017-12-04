@@ -656,6 +656,8 @@ declare_procedure(enum name_class class,
         int arg_len;
         list lp;
 
+        FUNCTION_TYPE_SET_INTERFACE(ID_TYPE(id));
+
         arg_len = 0;
         FOR_ITEMS_IN_LIST(lp, args) {
             arg_len++;
