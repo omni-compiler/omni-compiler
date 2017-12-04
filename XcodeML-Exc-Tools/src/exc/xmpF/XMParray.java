@@ -758,6 +758,8 @@ public class XMParray {
     Ident f;
     Xobject args;
 
+    Xobject orig_lower[] = new Xobject[dims.size()];
+
     // Following codes come from XMParray.buildConstructor
 
     f = env.declInternIdent(XMP.init_allocated_f, Xtype.FsubroutineType, block);
@@ -779,6 +781,8 @@ public class XMParray {
 	upper = bound.getArg(1);
       }
 
+      orig_lower[i] = lower;
+      
       XMPdimInfo info = dims.elementAt(i);
       if(info.isAlignAny()){
 	args = Xcons.List(descId.Ref(),Xcons.IntConstant(i),
@@ -860,7 +864,7 @@ public class XMParray {
 	}
 	else {
 	    // not distributed
-	    alloc_args.add(Xcons.FindexRange(info.getLower(),
+	    alloc_args.add(Xcons.FindexRange(orig_lower[i],
 					     info.getArraySizeVar().Ref()));
 	}
       }
