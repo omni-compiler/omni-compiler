@@ -429,9 +429,11 @@ typedef struct _XMP_async_comm {
   int   nreqs;
   int   nnodes;
   _Bool is_used;
+  int type;
   MPI_Request *reqs;
   _XMP_nodes_t **node;
   _XMP_async_gmove_t *gmove;
+  _XMP_array_t *a;
   struct _XMP_async_comm *next;
 } _XMP_async_comm_t;
 

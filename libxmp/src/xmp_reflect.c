@@ -1137,7 +1137,7 @@ static void _XMP_reflect_sched_dir(_XMP_array_t *adesc, int ishadow[],
   int src = my_rank;
   int dst = my_rank;
 
-  _XMP_async_reflect_t *async_reflect = adesc->async_reflect;;
+  _XMP_async_reflect_t *async_reflect = adesc->async_reflect;
 
   MPI_Datatype *send_dtype = &async_reflect->datatype[async_reflect->nreqs];
   MPI_Datatype *recv_dtype = send_dtype + 1;

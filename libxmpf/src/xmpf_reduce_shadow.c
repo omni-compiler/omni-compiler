@@ -9,10 +9,5 @@ void xmpf_set_reduce_shadow__(_XMP_array_t **a_desc, int *dim, int *lwidth, int 
 
 void xmpf_reduce_shadow__(_XMP_array_t **a_desc)
 {
-  _XMP_reduce_shadow__(*a_desc, 0);
+  _XMP_reduce_shadow__(*a_desc);
 }
-
-/* void xmpf_reduce_shadow_async__(_XMP_array_t **a_desc, int *async_id) */
-/* { */
-/*   _XMP_reduce_shadow_async__(*a_desc, 0, *async_id); */
-/* } */

@@ -9,9 +9,6 @@ void _XMP_sum_vector(int type, char * restrict dst, char * restrict src,
 
 int _XMP_get_owner_pos(_XMP_array_t *a, int dim, int index);
 
-static void _XMP_reduce_shadow_wait_and_sum(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_periodic);
-static void _XMP_reduce_shadow_sum(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_periodic);
-
 static int _xmp_set_reduce_shadow_flag = 0;
 static int _xmp_lwidth[_XMP_N_MAX_DIM] = {0};
 static int _xmp_uwidth[_XMP_N_MAX_DIM] = {0};
@@ -28,11 +25,18 @@ void _XMP_set_reduce_shadow__(_XMP_array_t *a, int dim, int lwidth, int uwidth,
 }
 
 
-//void _XMP_reduce_shadow__(_XMP_array_t *a, int is_diagonal)
 void _XMP_reduce_shadow__(_XMP_array_t *a)
-// is_diagnonal is not used now.
 {
 
+  _XMP_async_comm_t *async = NULL;
+  MPI_Request *reqs = NULL;
+  int nreqs = 0;
+
+  if (xmp_is_async()){
+    async = _XMP_get_current_async();
+    reqs = &async->reqs[async->nreqs];
+  }
+  
   _XMP_RETURN_IF_SINGLE;
   if (!a->is_allocated){
     _xmp_set_reduce_shadow_flag = 0;
@@ -80,6 +84,14 @@ void _XMP_reduce_shadow__(_XMP_array_t *a)
 
 	MPI_Startall(4, shadow_sched->req_reduce);
 
+	if (xmp_is_async()){
+	  if (async->nreqs + nreqs + 4 > _XMP_MAX_ASYNC_REQS){
+	    _XMP_fatal("too many arrays in an asynchronous reflect");
+	  }
+	  memcpy(&reqs[nreqs], shadow_sched->req_reduce, 4 * sizeof(MPI_Request));
+	  nreqs += 4;
+	}
+
       }
 
     }
@@ -90,8 +102,13 @@ void _XMP_reduce_shadow__(_XMP_array_t *a)
     
   }
 
-  _XMP_reduce_shadow_wait_and_sum(a, _xmp_lwidth, _xmp_uwidth, _xmp_is_periodic);
-
+  if (!xmp_is_async())
+    _XMP_reduce_shadow_wait_and_sum(a);
+  else {
+    async->a = a;
+    async->type = _XMP_COMM_REDUCE_SHADOW;
+  }
+  
   _xmp_set_reduce_shadow_flag = 0;
   for (int i = 0; i < a->dim; i++){
     _xmp_lwidth[i] = 0;
@@ -102,61 +119,19 @@ void _XMP_reduce_shadow__(_XMP_array_t *a)
 }
 
 
-/* void _XMP_reduce_shadow_async__(_XMP_array_t *a, int is_diagonal, int async_id){ */
-
-/*   _XMP_RETURN_IF_SINGLE; */
-/*   if (!a->is_allocated){ */
-/*     _xmp_set_reduce_shadow_flag = 0; */
-/*     return; */
-/*   } */
-
-/*   if (!_xmp_set_reduce_shadow_flag){ */
-/*     for (int i = 0; i < a->dim; i++){ */
-/*       _XMP_array_info_t *ai = &(a->info[i]); */
-/*       if (ai->shadow_type == _XMP_N_SHADOW_FULL){ */
-/* 	_XMP_fatal("asynchronous reduce_shadow for full shadow not supported."); */
-/*       } */
-/*       _xmp_lwidth[i] = ai->shadow_size_lo; */
-/*       _xmp_uwidth[i] = ai->shadow_size_hi; */
-/*       _xmp_is_periodic[i] = 0; */
-/*     } */
-/*   } */
-
-/*   int reduce_shadow_ndims = 0; */
-/*   for (int i = 0; i < a->dim; i++){ */
-/*     if (_xmp_lwidth[i] || _xmp_uwidth[i]){ */
-/*       reduce_shadow_ndims++; */
-/*     } */
-/*   } */
-
-/*   if (reduce_shadow_ndims == 0){ */
-/*     return; */
-/*   } */
-
-/*   // */
-/*   // ... */
-/*   // */
-  
-/*   _xmp_set_reduce_shadow_flag = 0; */
-/*   for (int i = 0; i < a->dim; i++){ */
-/*     _xmp_lwidth[i] = 0; */
-/*     _xmp_uwidth[i] = 0; */
-/*     _xmp_is_periodic[i] = 0; */
-/*   } */
-
-/* } */
-
-
-static void _XMP_reduce_shadow_wait_and_sum(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_periodic)
+void _XMP_reduce_shadow_wait_and_sum(_XMP_array_t *a)
 {
   for (int i = 0; i < a->dim; i++){
 
-    if (!lwidth[i] && !uwidth[i]) continue;
-
     _XMP_array_info_t *ai = &(a->info[i]);
+    _XMP_reflect_sched_t *shadow_sched = ai->reflect_sched;
+
+    int lwidth = shadow_sched->lo_width;
+    int uwidth = shadow_sched->hi_width;
+    
+    if (!lwidth && !uwidth) continue;
 
     if (ai->shadow_type == _XMP_N_SHADOW_NORMAL){
-      _XMP_reflect_sched_t *shadow_sched = ai->reflect_sched;
       MPI_Waitall(4, shadow_sched->req_reduce, MPI_STATUSES_IGNORE);
     }
     else if (ai->shadow_type == _XMP_N_SHADOW_FULL){
@@ -165,12 +140,12 @@ static void _XMP_reduce_shadow_wait_and_sum(_XMP_array_t *a, int *lwidth, int *u
 
   }
 
-  _XMP_reduce_shadow_sum(a, lwidth, uwidth, is_periodic);
+  _XMP_reduce_shadow_sum(a);
 
 }
 
 
-static void _XMP_reduce_shadow_sum(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_periodic)
+void _XMP_reduce_shadow_sum(_XMP_array_t *a)
 {
   int type_size = a->type_size;
 
@@ -178,6 +153,10 @@ static void _XMP_reduce_shadow_sum(_XMP_array_t *a, int *lwidth, int *uwidth, in
 
     _XMP_array_info_t *ai = &(a->info[i]);
     _XMP_reflect_sched_t *shadow_sched = ai->reflect_sched;
+
+    int lwidth = shadow_sched->lo_width;
+    int uwidth = shadow_sched->hi_width;
+    int is_periodic = shadow_sched->is_periodic;
 
     if (ai->shadow_type == _XMP_N_SHADOW_NORMAL){
 
@@ -187,20 +166,20 @@ static void _XMP_reduce_shadow_sum(_XMP_array_t *a, int *lwidth, int *uwidth, in
       int ub_pos = _XMP_get_owner_pos(a, i, ai->ser_upper);
 
       // for lower reduce_shadow
-      if (lwidth[i] && (is_periodic[i] || my_pos != ub_pos)){
+      if (lwidth && (is_periodic || my_pos != ub_pos)){
 	_XMP_sum_vector(a->type,
 			(char *)shadow_sched->lo_send_array,
 			(char *)shadow_sched->lo_send_buf,
-			shadow_sched->count, lwidth[i] * shadow_sched->blocklength / type_size,
+			shadow_sched->count, lwidth * shadow_sched->blocklength / type_size,
 			shadow_sched->stride / type_size);
       }
 
       // for upper reduce_shadow
-      if (uwidth[i] && (is_periodic[i] || my_pos != lb_pos)){
+      if (uwidth && (is_periodic || my_pos != lb_pos)){
 	_XMP_sum_vector(a->type,
 			(char *)shadow_sched->hi_send_array,
 			(char *)shadow_sched->hi_send_buf,
-			shadow_sched->count, uwidth[i] * shadow_sched->blocklength / type_size,
+			shadow_sched->count, uwidth * shadow_sched->blocklength / type_size,
 			shadow_sched->stride / type_size);
       }
 
