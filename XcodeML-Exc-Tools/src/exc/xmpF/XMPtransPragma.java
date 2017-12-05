@@ -505,7 +505,7 @@ public class XMPtransPragma
 	  if (info.pragma == XMPpragma.REFLECT)
 	    h = env.declInternIdent(isAcc? XMP.reflect_async_acc_f : XMP.reflect_async_f, Xtype.FsubroutineType);
 	  else
-	    h = env.declInternIdent(isAcc? XMP.reduce_shadow_async_acc_f : XMP.reduce_shadow_async_f, Xtype.FsubroutineType);
+	    h = f; // no change for REDUCE_SHADOW
 	  bb.add(h.callSubroutine(Xcons.List(a.getDescId().Ref(), info.getAsyncId())));
       }
       else {

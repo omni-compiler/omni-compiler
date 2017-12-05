@@ -314,8 +314,8 @@ public class XMPshadow {
         Ident funcId1 = globalDecl.declExternFunc("xmpc_init_async");
         XobjList funcArgs1 = Xcons.List(asyncId);
 
-	Ident funcId2 = globalDecl.declExternFunc("_XMP_reduce_shadow_async__");
-	XobjList funcArgs2 = Xcons.List(alignedArray.getDescId().Ref(), asyncId);
+	Ident funcId2 = globalDecl.declExternFunc("_XMP_reduce_shadow__"); // same as synchronous
+	XobjList funcArgs2 = Xcons.List(alignedArray.getDescId().Ref());
 
         Ident funcId3 = globalDecl.declExternFunc("xmpc_start_async");
         XobjList funcArgs3 = Xcons.List();

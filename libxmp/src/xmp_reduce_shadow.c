@@ -78,6 +78,7 @@ void _XMP_reduce_shadow__(_XMP_array_t *a)
 	  shadow_sched->lo_width = _xmp_lwidth[i];
 	  shadow_sched->hi_width = _xmp_uwidth[i];
 	  shadow_sched->is_periodic = _xmp_is_periodic[i];
+
 	}
 	
 	_XMP_reflect_pack_dim(a, i, _xmp_lwidth, _xmp_uwidth, _xmp_is_periodic, 1);
@@ -86,7 +87,7 @@ void _XMP_reduce_shadow__(_XMP_array_t *a)
 
 	if (xmp_is_async()){
 	  if (async->nreqs + nreqs + 4 > _XMP_MAX_ASYNC_REQS){
-	    _XMP_fatal("too many arrays in an asynchronous reflect");
+	    _XMP_fatal("too many arrays in an asynchronous reflect/reduce_shadow");
 	  }
 	  memcpy(&reqs[nreqs], shadow_sched->req_reduce, 4 * sizeof(MPI_Request));
 	  nreqs += 4;
@@ -102,10 +103,13 @@ void _XMP_reduce_shadow__(_XMP_array_t *a)
     
   }
 
-  if (!xmp_is_async())
-    _XMP_reduce_shadow_wait_and_sum(a);
+  if (!xmp_is_async()){
+    _XMP_reduce_shadow_wait(a);
+    _XMP_reduce_shadow_sum(a);
+  }
   else {
     async->a = a;
+    async->nreqs += nreqs;
     async->type = _XMP_COMM_REDUCE_SHADOW;
   }
   
@@ -119,12 +123,14 @@ void _XMP_reduce_shadow__(_XMP_array_t *a)
 }
 
 
-void _XMP_reduce_shadow_wait_and_sum(_XMP_array_t *a)
+void _XMP_reduce_shadow_wait(_XMP_array_t *a)
 {
   for (int i = 0; i < a->dim; i++){
 
     _XMP_array_info_t *ai = &(a->info[i]);
     _XMP_reflect_sched_t *shadow_sched = ai->reflect_sched;
+
+    if (!shadow_sched) continue;
 
     int lwidth = shadow_sched->lo_width;
     int uwidth = shadow_sched->hi_width;
@@ -140,8 +146,6 @@ void _XMP_reduce_shadow_wait_and_sum(_XMP_array_t *a)
 
   }
 
-  _XMP_reduce_shadow_sum(a);
-
 }
 
 
@@ -154,33 +158,35 @@ void _XMP_reduce_shadow_sum(_XMP_array_t *a)
     _XMP_array_info_t *ai = &(a->info[i]);
     _XMP_reflect_sched_t *shadow_sched = ai->reflect_sched;
 
+    if (!shadow_sched) continue;
+
     int lwidth = shadow_sched->lo_width;
     int uwidth = shadow_sched->hi_width;
     int is_periodic = shadow_sched->is_periodic;
 
     if (ai->shadow_type == _XMP_N_SHADOW_NORMAL){
 
-      // 0-origin
-      int my_pos = a->align_template->chunk[i].onto_nodes_info->rank;
+      int target_dim = ai->align_template_index;
+      int my_pos = a->align_template->chunk[target_dim].onto_nodes_info->rank;
       int lb_pos = _XMP_get_owner_pos(a, i, ai->ser_lower);
       int ub_pos = _XMP_get_owner_pos(a, i, ai->ser_upper);
 
       // for lower reduce_shadow
       if (lwidth && (is_periodic || my_pos != ub_pos)){
-	_XMP_sum_vector(a->type,
-			(char *)shadow_sched->lo_send_array,
-			(char *)shadow_sched->lo_send_buf,
-			shadow_sched->count, lwidth * shadow_sched->blocklength / type_size,
-			shadow_sched->stride / type_size);
+      	_XMP_sum_vector(a->type,
+      			(char *)shadow_sched->lo_send_array,
+      			(char *)shadow_sched->lo_send_buf,
+      			shadow_sched->count, lwidth * shadow_sched->blocklength / type_size,
+      			shadow_sched->stride / type_size);
       }
 
       // for upper reduce_shadow
       if (uwidth && (is_periodic || my_pos != lb_pos)){
-	_XMP_sum_vector(a->type,
-			(char *)shadow_sched->hi_send_array,
-			(char *)shadow_sched->hi_send_buf,
-			shadow_sched->count, uwidth * shadow_sched->blocklength / type_size,
-			shadow_sched->stride / type_size);
+      	_XMP_sum_vector(a->type,
+      			(char *)shadow_sched->hi_send_array,
+      			(char *)shadow_sched->hi_send_buf,
+      			shadow_sched->count, uwidth * shadow_sched->blocklength / type_size,
+      			shadow_sched->stride / type_size);
       }
 
     }

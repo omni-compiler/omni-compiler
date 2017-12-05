@@ -104,7 +104,8 @@ void _XMP_wait_async__(int async_id)
   _XMP_async_gmove_t *gmove = async->gmove;
 
   if (async->type == _XMP_COMM_REDUCE_SHADOW){
-    _XMP_reduce_shadow_wait_and_sum(async->a);
+    MPI_Waitall(nreqs, reqs, MPI_STATUSES_IGNORE);
+    _XMP_reduce_shadow_sum(async->a);
   }
   else if (!gmove || gmove->mode == _XMP_N_GMOVE_NORMAL){
     _XMP_TSTART(t0);
@@ -151,7 +152,7 @@ int xmp_test_async_(int *async_id)
   if(flag){
     _XMP_async_gmove_t *gmove = async->gmove;
     if (gmove) _XMP_finalize_async_gmove(gmove);
-    else if(async->type = _XMP_COMM_REDUCE_SHADOW)
+    else if(async->type == _XMP_COMM_REDUCE_SHADOW)
       _XMP_reduce_shadow_sum(async->a);
 
     xmpc_end_async(*async_id);
