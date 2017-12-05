@@ -34,31 +34,13 @@ program test
             i == 5 .OR. i == 8 .OR. &
             i == 9 .OR. i == 16 .OR. &
             i == 17 .OR. i == 32) then
-           b(i,j) = 2
+           b(i,j) = b(i,j) + 1
         end if
         if (j == 1 .OR. j == 4 .OR. &
             j == 5 .OR. j == 8 .OR. &
             j == 9 .OR. j == 16 .OR. &
             j == 17 .OR. j == 32) then
-           b(i,j) = 2
-        end if
-        if ((i == 1 .and. &
-             (j == 1 .OR. j == 4 .OR. j == 5 .OR. j == 8 .OR. j == 9 .OR. j == 16 .OR. j == 17 .OR. j == 32)) .OR. &
-            (i == 4 .and. &
-             (j == 1 .OR. j == 4 .OR. j == 5 .OR. j == 8 .OR. j == 9 .OR. j == 16 .OR. j == 17 .OR. j == 32)) .OR. &
-            (i == 5 .and. &
-             (j == 1 .OR. j == 4 .OR. j == 5 .OR. j == 8 .OR. j == 9 .OR. j == 16 .OR. j == 17 .OR. j == 32)) .OR. &
-            (i == 8 .and. &
-             (j == 1 .OR. j == 4 .OR. j == 5 .OR. j == 8 .OR. j == 9 .OR. j == 16 .OR. j == 17 .OR. j == 32)) .OR. &
-            (i == 9 .and. &
-             (j == 1 .OR. j == 4 .OR. j == 5 .OR. j == 8 .OR. j == 9 .OR. j == 16 .OR. j == 17 .OR. j == 32)) .OR. &
-            (i == 16 .and. &
-             (j == 1 .OR. j == 4 .OR. j == 5 .OR. j == 8 .OR. j == 9 .OR. j == 16 .OR. j == 17 .OR. j == 32)) .OR. &
-            (i == 17 .and. &
-             (j == 1 .OR. j == 4 .OR. j == 5 .OR. j == 8 .OR. j == 9 .OR. j == 16 .OR. j == 17 .OR. j == 32)) .OR. &
-            (i == 32 .and. &
-             (j == 1 .OR. j == 4 .OR. j == 5 .OR. j == 8 .OR. j == 9 .OR. j == 16 .OR. j == 17 .OR. j == 32))) then
-           b(i,j) = 3
+           b(i,j) = b(i,j) + 1
         end if
      end do
   end do
