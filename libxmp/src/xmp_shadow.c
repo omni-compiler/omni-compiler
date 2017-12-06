@@ -219,7 +219,7 @@ void _XMP_init_reflect_sched(_XMP_reflect_sched_t *sched){
   //sched->is_periodic = -1; /* not used yet */
   sched->reflect_is_initialized = 0;
   sched->reduce_is_initialized = 0;
-  sched->pcopy_sched_is_initialized = 0;
+  sched->prev_pcopy_sched_type = 0;
   sched->datatype_lo = MPI_DATATYPE_NULL;
   sched->datatype_hi = MPI_DATATYPE_NULL;
   for (int j = 0; j < 4; j++){

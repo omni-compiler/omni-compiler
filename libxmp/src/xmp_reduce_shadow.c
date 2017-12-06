@@ -1,9 +1,9 @@
 #include "xmp_internal.h"
 
 void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim, int lwidth, int uwidth, int is_periodic,
-				  int is_reduce_shadow);
+				  int shadow_comm_type);
 
-void _XMP_reflect_pack_dim(_XMP_array_t *a, int i, int *lwidth, int *uwidth, int *is_periodic, int is_reduce_shadow);
+void _XMP_reflect_pack_dim(_XMP_array_t *a, int i, int *lwidth, int *uwidth, int *is_periodic, int shadow_comm_type);
 void _XMP_sum_vector(int type, char * restrict dst, char * restrict src,
 		     int count, int blocklength, long stride);
 
@@ -72,7 +72,7 @@ void _XMP_reduce_shadow__(_XMP_array_t *a)
 	    _xmp_uwidth[i] != shadow_sched->hi_width ||
 	    _xmp_is_periodic[i] != shadow_sched->is_periodic){
 
-	  _XMP_reflect_pcopy_sched_dim(a, i, _xmp_lwidth[i], _xmp_uwidth[i], _xmp_is_periodic[i], 1);
+	  _XMP_reflect_pcopy_sched_dim(a, i, _xmp_lwidth[i], _xmp_uwidth[i], _xmp_is_periodic[i], _XMP_COMM_REDUCE_SHADOW);
 
 	  shadow_sched->reduce_is_initialized = 1;
 	  shadow_sched->lo_width = _xmp_lwidth[i];
@@ -81,7 +81,7 @@ void _XMP_reduce_shadow__(_XMP_array_t *a)
 
 	}
 	
-	_XMP_reflect_pack_dim(a, i, _xmp_lwidth, _xmp_uwidth, _xmp_is_periodic, 1);
+	_XMP_reflect_pack_dim(a, i, _xmp_lwidth, _xmp_uwidth, _xmp_is_periodic, _XMP_COMM_REDUCE_SHADOW);
 
 	MPI_Startall(4, shadow_sched->req_reduce);
 

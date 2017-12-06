@@ -114,7 +114,7 @@ typedef struct _XMP_reflect_sched_type {
 
   int reflect_is_initialized;
   int reduce_is_initialized;
-  int pcopy_sched_is_initialized;
+  int prev_pcopy_sched_type;
   
   int lo_width, hi_width;
   int is_periodic;

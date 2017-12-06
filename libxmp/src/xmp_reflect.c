@@ -6,7 +6,7 @@
 static void _XMP_reflect_normal_sched_dim(_XMP_array_t *adesc, int target_dim,
 					   int lwidth, int uwidth, int is_periodic);
 void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
-				  int lwidth, int uwidth, int is_periodic, int is_reduce_shadow);
+				  int lwidth, int uwidth, int is_periodic, int shadow_comm_type);
 #else
 static void _XMP_reflect_rdma_sched_dim(_XMP_array_t *adesc, int target_dim,
 					int lwidth, int uwidth, int is_periodic);
@@ -23,7 +23,7 @@ int _XMP_get_owner_pos(_XMP_array_t *a, int dim, int index);
 static void _XMP_reflect_unpack(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_periodic);
 
 void _XMP_reflect_pack_dim(_XMP_array_t *a, int i, int *lwidth, int *uwidth,
-			   int *is_periodic, int is_reduce_shadow);
+			   int *is_periodic, int shadow_comm_type);
 static void _XMP_reflect_unpack_dim(_XMP_array_t *a, int i, int *lwidth, int *uwidth, int *is_periodic);
 
 static void _XMP_reflect_sched_dir(_XMP_array_t *adesc, int ishadow[],
@@ -177,7 +177,7 @@ void _XMP_reflect__(_XMP_array_t *a)
 	    _xmp_is_periodic[i] != reflect->is_periodic){
 
 	  if (_xmp_reflect_pack_flag){
-	    _XMP_reflect_pcopy_sched_dim(a, i, _xmp_lwidth[i], _xmp_uwidth[i], _xmp_is_periodic[i], 0);
+	    _XMP_reflect_pcopy_sched_dim(a, i, _xmp_lwidth[i], _xmp_uwidth[i], _xmp_is_periodic[i], _XMP_COMM_REFLECT);
 	  }
 	  else {
 	    _XMP_reflect_normal_sched_dim(a, i, _xmp_lwidth[i], _xmp_uwidth[i], _xmp_is_periodic[i]);
@@ -191,7 +191,7 @@ void _XMP_reflect__(_XMP_array_t *a)
 
 	if (_xmp_reflect_pack_flag){
 	  _XMP_TSTART(t0);
-	  _XMP_reflect_pack_dim(a, i, _xmp_lwidth, _xmp_uwidth, _xmp_is_periodic, 0);
+	  _XMP_reflect_pack_dim(a, i, _xmp_lwidth, _xmp_uwidth, _xmp_is_periodic, _XMP_COMM_REFLECT);
 	  _XMP_TEND(xmptiming_.t_copy, t0);
 	}
 
@@ -463,7 +463,7 @@ static void _XMP_reflect_normal_sched_dim(_XMP_array_t *adesc, int target_dim,
 
 
 void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
-				  int lwidth, int uwidth, int is_periodic, int is_reduce_shadow){
+				  int lwidth, int uwidth, int is_periodic, int shadow_comm_type){
 
   if (lwidth == 0 && uwidth == 0) return;
 
@@ -497,13 +497,9 @@ void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
   int lo_rank = my_rank + (lo_pos - my_pos) * ni->multiplier;
   int hi_rank = my_rank + (hi_pos - my_pos) * ni->multiplier;
 
-  if (reflect->pcopy_sched_is_initialized &&
-      lwidth == reflect->lo_width &&
-      uwidth == reflect->hi_width &&
-      is_periodic == reflect->is_periodic){
-    goto init_comm;
-  }
-  
+  int count = 0, blocklength = 0;
+  long long stride = 0;
+
   int type_size = adesc->type_size;
   void *array_addr = adesc->array_addr_p;
 
@@ -518,12 +514,25 @@ void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
   int lo_buf_size = 0;
   int hi_buf_size = 0;
 
+  if (reflect->prev_pcopy_sched_type &&
+      lwidth == reflect->lo_width &&
+      uwidth == reflect->hi_width &&
+      is_periodic == reflect->is_periodic){
+    if ((adesc->order == MPI_ORDER_FORTRAN && target_dim != ndims - 1) ||
+	(adesc->order == MPI_ORDER_C && target_dim != 0)){
+      goto init_comm;
+    }
+    else if (reflect->prev_pcopy_sched_type != shadow_comm_type){
+      count = reflect->count;
+      blocklength = reflect->blocklength;
+      stride = reflect->stride;
+      goto alloc_buf;
+    }
+  }
+  
   //
   // setup data_type
   //
-
-  int count = 0, blocklength = 0;
-  long long stride = 0;
 
   if (adesc->order == MPI_ORDER_FORTRAN){ /* for XMP/F */
 
@@ -565,6 +574,8 @@ void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
   // calculate base address
   //
 
+ alloc_buf:
+  
   // for lower reflect
 
   if (lwidth){
@@ -631,9 +642,12 @@ void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
   // Allocate buffers
   //
 
-  if (is_reduce_shadow ||
-      (adesc->order == MPI_ORDER_FORTRAN && target_dim != ndims - 1) ||
-      (adesc->order == MPI_ORDER_C && target_dim != 0)){
+  if (reflect->prev_pcopy_sched_type == _XMP_COMM_REFLECT &&
+      ((adesc->order == MPI_ORDER_FORTRAN && target_dim == ndims - 1) ||
+       (adesc->order == MPI_ORDER_C && target_dim == 0))){
+    ;
+  }
+  else {
     _XMP_free(reflect->lo_send_buf);
     _XMP_free(reflect->lo_recv_buf);
     _XMP_free(reflect->hi_send_buf);
@@ -646,7 +660,7 @@ void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
 
     lo_buf_size = lwidth * blocklength * count;
 
-    if (!is_reduce_shadow &&
+    if (shadow_comm_type == _XMP_COMM_REFLECT &&
 	((adesc->order == MPI_ORDER_FORTRAN && target_dim == ndims - 1) ||
 	 (adesc->order == MPI_ORDER_C && target_dim == 0))){
       lo_send_buf = lo_send_array;
@@ -667,7 +681,7 @@ void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
 
     hi_buf_size = uwidth * blocklength * count;
 
-    if (!is_reduce_shadow &&
+    if (shadow_comm_type == _XMP_COMM_REFLECT &&
 	((adesc->order == MPI_ORDER_FORTRAN && target_dim == ndims - 1) ||
 	 (adesc->order == MPI_ORDER_C && target_dim == 0))){
       hi_send_buf = hi_send_array;
@@ -700,8 +714,6 @@ void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
   reflect->hi_send_buf = hi_send_buf;
   reflect->hi_recv_buf = hi_recv_buf;
 
-  reflect->pcopy_sched_is_initialized = 1;
-  
   //
   // initialize communication
   //
@@ -732,7 +744,7 @@ void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
     dst = MPI_PROC_NULL;
   }
 
-  if (is_reduce_shadow){
+  if (shadow_comm_type == _XMP_COMM_REDUCE_SHADOW){
     if (reflect->req_reduce[0] != MPI_REQUEST_NULL){
       MPI_Request_free(&reflect->req_reduce[0]);
     }
@@ -772,7 +784,7 @@ void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
     dst = MPI_PROC_NULL;
   }
 
-  if (is_reduce_shadow){
+  if (shadow_comm_type == _XMP_COMM_REDUCE_SHADOW){
     if (reflect->req_reduce[2] != MPI_REQUEST_NULL){
       MPI_Request_free(&reflect->req_reduce[2]);
     }
@@ -800,6 +812,8 @@ void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
     MPI_Send_init(reflect->hi_send_buf, hi_buf_size, MPI_BYTE, dst,
 		  _XMP_N_MPI_TAG_REFLECT_HI, *comm, &reflect->req[3]);
   }
+  
+  reflect->prev_pcopy_sched_type = shadow_comm_type;
   
 }
 
@@ -1740,13 +1754,13 @@ int _XMP_get_owner_pos(_XMP_array_t *a, int dim, int index){
 
 
 void _XMP_reflect_pack_dim(_XMP_array_t *a, int i, int *lwidth, int *uwidth, int *is_periodic,
-			   int is_reduce_shadow)
+			   int shadow_comm_type)
 {
 
   char *pack_dst_lo, *pack_src_lo;
   char *pack_dst_hi, *pack_src_hi;
   
-  if (!is_reduce_shadow){
+  if (shadow_comm_type == _XMP_COMM_REFLECT){
     if (a->order == MPI_ORDER_FORTRAN){ /* for XMP/F */
       if (i == a->dim - 1) return;
     }
@@ -1761,7 +1775,7 @@ void _XMP_reflect_pack_dim(_XMP_array_t *a, int i, int *lwidth, int *uwidth, int
   _XMP_array_info_t *ai = &(a->info[i]);
   _XMP_reflect_sched_t *reflect = ai->reflect_sched;
 
-  if (is_reduce_shadow){
+  if (shadow_comm_type == _XMP_COMM_REDUCE_SHADOW){
     pack_dst_lo = (char *)reflect->lo_recv_buf;
     pack_src_lo = (char *)reflect->lo_recv_array;
     pack_dst_hi = (char *)reflect->hi_recv_buf;
