@@ -38,8 +38,18 @@ public class XMPalignedArray {
 
   private boolean               _isStaticDesc = false;
   private Ident                 _flagId = null;
-  public boolean                canBeOptimized = false;
+  private boolean               _canOptimized = false;
 
+  public boolean canOptimized()
+  {
+    return _canOptimized;
+  }
+
+  public void setOptimized(boolean flag)
+  {
+    _canOptimized = flag;
+  }
+  
   public static int convertDistMannerToAlignManner(int distManner) throws XMPexception {
     switch (distManner) {
       case XMPtemplate.DUPLICATION:
@@ -765,8 +775,10 @@ public class XMPalignedArray {
     if (isLocalPragma && !isParameter)
       XMPlocalDecl.removeLocalIdent(pb, arrayName);
 
-    if(arrayDim > 1)
-      alignedArray.canBeOptimized = is_divisible_size(alignedArray);
+    if(arrayDim > 1 && is_divisible_size(alignedArray))
+      alignedArray.setOptimized(true);
+    else
+      alignedArray.setOptimized(false);
   }
 
   private static void declNotAlignFunc(XMPalignedArray alignedArray, int alignSourceIndex,

@@ -1798,7 +1798,7 @@ public class XMPrewriteExpr {
     XobjList args = Xcons.List();
     Boolean is_optimize_trasform = false;
 
-    if(alignedArray.canBeOptimized){
+    if(alignedArray.canOptimized()){
       XMPtemplate t     = alignedArray.getAlignTemplate();
       XMPnodes n        = t.getOntoNodes();
       XobjList tmp_args = Xcons.List();
@@ -1848,7 +1848,7 @@ public class XMPrewriteExpr {
     else if (arrayDim == arrayDimCount) {
       getAddrFuncId = XMP.getMacroId("_XMP_M_GET_ADDR_E_" + arrayDim, Xtype.Pointer(alignedArray.getType()));
       for (int i=0; i<arrayDim-1; i++)
-        if(alignedArray.canBeOptimized){
+        if(alignedArray.canOptimized()){
           getAddrFuncArgs.add(args.getArg(i));
         }
         else{
