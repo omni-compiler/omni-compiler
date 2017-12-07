@@ -3313,6 +3313,7 @@ _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_right
       gmove->a = lhs_array;
       gmove->comm_set = recv_comm_set;
       async->gmove = gmove;
+      async->type = _XMP_COMM_GMOVE;
 
       for (int rank = 0; rank < n_gmv_nodes; rank++){
 	for (int adim = 0; adim < n_rhs_dims; adim++){
@@ -3372,6 +3373,7 @@ _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_right
       gmove->mode = mode;
       gmove->sendbuf = _XMP_get_execution_nodes()->comm; // NOTE: the sendbuf field is used for an improper purpose.
       async->gmove = gmove;
+      async->type = _XMP_COMM_GMOVE;
     }
     else {
       _XMP_sync_images_EXEC(NULL);
@@ -3392,6 +3394,7 @@ _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_right
       gmove->mode = mode;
       gmove->sendbuf = _XMP_get_execution_nodes()->comm; // NOTE: the sendbuf field is used for an improper purpose.
       async->gmove = gmove;
+      async->type = _XMP_COMM_GMOVE;
     }
     else {
       _XMP_sync_images_EXEC(NULL);

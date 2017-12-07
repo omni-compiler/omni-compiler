@@ -4280,6 +4280,7 @@ struct keyword_token XMP_keywords[ ] =
     {"tasks",	XMPKW_TASKS },
     {"loop",	XMPKW_LOOP },
     {"reflect",	XMPKW_REFLECT },
+    {"reduce_shadow",	XMPKW_REDUCE_SHADOW },
     {"gmove",	XMPKW_GMOVE },
     {"barrier",	XMPKW_BARRIER},
     {"reduction",	XMPKW_REDUCTION },

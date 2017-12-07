@@ -95,6 +95,10 @@ public class XMP {
   public final static String set_reflect_f    = "xmpf_set_reflect_";
   public final static String reflect_f        = "xmpf_reflect_";
   public final static String reflect_async_f  = "xmpf_reflect_async_";
+  public final static String set_reduce_shadow_f    = "xmpf_set_reduce_shadow_";
+  public final static String reduce_shadow_f        = "xmpf_reduce_shadow_";
+  public final static String reduce_shadow_async_f  = "xmpf_reduce_shadow_async_";
+    
   public final static String init_async_f     = "xmpf_init_async_";
   public final static String start_async_f    = "xmpf_start_async_";
   public final static String wait_async_f     = "xmpf_wait_async_";
@@ -122,6 +126,10 @@ public class XMP {
   public final static String set_reflect_acc_f    = "xaccf_set_reflect_";
   public final static String reflect_acc_f        = "xaccf_reflect_";
   public final static String reflect_async_acc_f  = "xaccf_reflect_async_";
+  public final static String set_reduce_shadow_acc_f    = "xaccf_set_reduce_shadow_";
+  public final static String reduce_shadow_acc_f        = "xaccf_reduce_shadow_";
+  public final static String reduce_shadow_async_acc_f  = "xaccf_reduce_shadow_async_";
+
   public final static String reduction_acc_f      = "xaccf_reduction_";
   public final static String reduction_loc_acc_f  = "xaccf_reduction_loc_";
   public final static String bcast_acc_f          = "xaccf_bcast_";

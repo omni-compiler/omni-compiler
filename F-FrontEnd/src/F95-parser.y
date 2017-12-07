@@ -337,6 +337,7 @@ state 2058
 %token XMPKW_TASKS
 %token XMPKW_LOOP
 %token XMPKW_REFLECT
+%token XMPKW_REDUCE_SHADOW
 %token XMPKW_GMOVE
 %token XMPKW_BARRIER
 %token XMPKW_REDUCTION
@@ -2696,6 +2697,8 @@ xmp_directive:
 	    { $$ = XMP_LIST(XMP_LOOP,$3); }
 	  | XMPKW_REFLECT xmp_reflect_clause
 	    { $$ = XMP_LIST(XMP_REFLECT,$2); }
+	  | XMPKW_REDUCE_SHADOW xmp_reflect_clause
+	    { $$ = XMP_LIST(XMP_REDUCE_SHADOW,$2); }
 	  | XMPKW_GMOVE { need_keyword = TRUE; } xmp_gmove_clause
 	    { $$ = XMP_LIST(XMP_GMOVE,$3); }
 	  | XMPKW_BARRIER { need_keyword = TRUE; } xmp_barrier_clause
