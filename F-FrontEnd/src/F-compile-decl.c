@@ -264,7 +264,7 @@ declare_procedure(enum name_class class,
                   expr prefix_spec, expr result_opt, expr bind_opt)
 {
     SYMBOL s = NULL;
-    ID id, ip, last = NULL;
+    ID id = NULL, ip, last = NULL;
     EXT_ID ep;
     int recursive = FALSE;
     int pure = FALSE;
@@ -658,7 +658,9 @@ declare_procedure(enum name_class class,
         int arg_len;
         list lp;
 
-        FUNCTION_TYPE_SET_INTERFACE(ID_TYPE(id));
+        if (id != NULL && ID_TYPE(id) != NULL) {
+            FUNCTION_TYPE_SET_INTERFACE(ID_TYPE(id));
+        }
 
         arg_len = 0;
         FOR_ITEMS_IN_LIST(lp, args) {
