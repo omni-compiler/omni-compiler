@@ -6213,7 +6213,7 @@ compile_separate_MODULEPROCEDURE_statement(expr x)
         error("parent should be a procedure");
         return;
     } else if(!TYPE_IS_MODULE(ID_TYPE(ip))) {
-        error("parent should have a modure prefix");
+        error("parent should have a module prefix");
         return;
     } else if (FUNCTION_TYPE_IS_DEFINED(ID_TYPE(ip))) {
         error("%s is already defined", SYM_NAME(ID_SYM(ip)));

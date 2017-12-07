@@ -4872,7 +4872,7 @@ id_is_visibleVar(ID id)
             return TRUE;
         }
         if ((is_outputed_module && CRT_FUNCEP == NULL)
-            && (TYPE_IS_PUBLIC(tp) || TYPE_IS_PRIVATE(tp))) { // TODO PROTECTED
+            && (TYPE_IS_PUBLIC(tp) || TYPE_IS_PRIVATE(tp))) {
             return TRUE;
         }
         return FALSE;
