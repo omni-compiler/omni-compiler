@@ -2284,6 +2284,8 @@ end_declaration()
     expv v;
     TYPE_DESC tp;
     UNIT_CTL uc = CURRENT_UNIT_CTL;
+    int is_pure = FALSE;
+    int is_elemental = FALSE;
 
     if (CURRENT_STATE == INENUM)
         error("expects END ENUM");
@@ -2415,12 +2417,14 @@ end_declaration()
             PROC_IS_PURE(myId)) {
             TYPE_SET_PURE(ID_TYPE(myId));
             TYPE_SET_PURE(EXT_PROC_TYPE(myEId));
+            is_pure = TRUE;
         }
         /* for elemental */
         if (TYPE_IS_ELEMENTAL(myId) ||
             PROC_IS_ELEMENTAL(myId)) {
             TYPE_SET_ELEMENTAL(ID_TYPE(myId));
             TYPE_SET_ELEMENTAL(EXT_PROC_TYPE(myEId));
+            is_elemental = TRUE;
         }
         /* for impure */
         if (TYPE_IS_IMPURE(myId)) {
@@ -2794,6 +2798,10 @@ end_declaration()
                        !(ID_IS_DUMMY_ARG(ip))) {
                 warning_at_id(ip, "INTENT is applied only "
                               "to dummy argument");
+            } else if (TYPE_IS_VALUE(tp) &&
+                       !(ID_IS_DUMMY_ARG(ip))) {
+                warning_at_id(ip, "VALUE is applied only "
+                              "to dummy argument");
             } else if (ID_STORAGE(ip) != STG_TAGNAME && type_is_nopolymorphic_abstract(tp)) {
                 error_at_id(ip, "No derived type should not have the ABSTRACT attribute");
             } else if (TYPE_IS_CONTIGUOUS(tp) &&
@@ -2809,6 +2817,28 @@ end_declaration()
                     }
                     if (TYPE_IS_INTENT_IN(tp) || TYPE_IS_INTENT_OUT(tp) || TYPE_IS_INTENT_INOUT(tp)) {
                         error_at_id(ip, "PROCEDURE variable should not have the INTENT attribute");
+                    }
+                }
+            }
+            if (is_pure) {
+                if (ID_IS_DUMMY_ARG(ip) &&
+                    !TYPE_IS_POINTER(tp) && !TYPE_IS_INTENT_IN(tp) && !TYPE_IS_VALUE(tp)) {
+                    error_at_id(ip,
+                                "nonpointer argument of PURE procedure "
+                                "should have INTENT(IN) or VALUE attribute");
+                }
+            }
+            if (is_elemental) {
+                if (ID_IS_DUMMY_ARG(ip)) {
+                    if (TYPE_IS_POINTER(tp) || TYPE_IS_ALLOCATABLE(tp)) {
+                        error_at_id(ip,
+                                    "argument of ELEMENTAL procedure "
+                                    "should not have PONTER or ALLOCATABLE attribute");
+                    }
+                    if (TYPE_IS_COINDEXED(tp)) {
+                        error_at_id(ip,
+                                    "argument of ELEMENTAL procedure "
+                                    "should not be a coarray");
                     }
                 }
             }
