@@ -413,6 +413,8 @@ declare_procedure(enum name_class class,
 
         /* make local entry */
         id = declare_ident(s, CL_PROC);
+        ID_ORDER(id) = order_sequence++;
+
         if (result_opt != NULL) {
             PROC_RESULTVAR(id) = result_opt;
         }

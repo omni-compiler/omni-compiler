@@ -29,6 +29,7 @@ int Addr2Uint(void *x)
 #endif
 
 int is_emitting_for_submodule;
+int is_inside_interface = FALSE;
 
 extern int      flag_module_compile;
 
@@ -5152,7 +5153,10 @@ emit_decl(int l, ID id)
         return;
     }
 
-    if (CRT_FUNCEP != NULL && EXT_PROC_IS_PROCEDUREDECL(CRT_FUNCEP)) {
+    if (!is_inside_interface &&
+        CRT_FUNCEP != NULL &&
+        EXT_PROC_IS_PROCEDUREDECL(CRT_FUNCEP)) {
+
         /*
          * In the Separate Module Procedure,
          * a function, argments, and a result variable are not decleared
@@ -5459,18 +5463,20 @@ outx_moduleProcedureDecl(int l, EXT_ID ep, SYMBOL parentName)
 {
     const int l1 = l + 1;
 
-    if (EXT_PROC_IS_MODULE_SPECIFIED(ep)) {
-        outx_tagOfDecl1(l, "FmoduleProcedureDecl is_module_specified=\"true\"",
-            GET_EXT_LINE(ep));
-    } else {
-        outx_tagOfDecl1(l, "FmoduleProcedureDecl", GET_EXT_LINE(ep));
-    }
-
     if (is_emitting_xmod() == FALSE) {
         if (EXT_TAG(ep) == STG_EXT &&
             !EXT_IS_OFMODULE(ep)) {
+            if (EXT_PROC_IS_MODULE_SPECIFIED(ep)) {
+                outx_tagOfDecl1(l, "FmoduleProcedureDecl is_module_specified=\"true\"",
+                                GET_EXT_LINE(ep));
+            } else {
+                outx_tagOfDecl1(l, "FmoduleProcedureDecl", GET_EXT_LINE(ep));
+            }
             outx_symbolName(l1, EXT_SYM(ep));
+            outx_close(l, "FmoduleProcedureDecl");
+
         }
+
     } else {
         if (parentName != NULL) {
             gen_proc_t gp = find_generic_procedure(SYM_NAME(parentName));
@@ -5481,11 +5487,18 @@ outx_moduleProcedureDecl(int l, EXT_ID ep, SYMBOL parentName)
                     HashSearch sCtx;
                     mod_proc_t mp;
 
+                    if (EXT_PROC_IS_MODULE_SPECIFIED(ep)) {
+                        outx_tagOfDecl1(l, "FmoduleProcedureDecl is_module_specified=\"true\"",
+                                        GET_EXT_LINE(ep));
+                    } else {
+                        outx_tagOfDecl1(l, "FmoduleProcedureDecl", GET_EXT_LINE(ep));
+                    }
                     FOREACH_IN_HASH(hPtr, &sCtx, tPtr) {
                         mp = (mod_proc_t)GetHashValue(hPtr);
                         outx_symbolNameWithFunctionType_EXT(l1,
                                                             MOD_PROC_EXT_ID(mp));
                     }
+                    outx_close(l, "FmoduleProcedureDecl");
                 } else {
                     fatal("invalid generic procedure structure.");
                     /* not reached. */
@@ -5504,7 +5517,6 @@ outx_moduleProcedureDecl(int l, EXT_ID ep, SYMBOL parentName)
         }
     }
 
-    outx_close(l, "FmoduleProcedureDecl");
 }
 
 
@@ -5552,8 +5564,12 @@ outx_innerDefinitions(int l, EXT_ID extids, SYMBOL parentName, int asDefOrDecl)
             && TYPE_BASIC_TYPE(EXT_PROC_TYPE(ep)) == TYPE_MODULE)
             continue;
 
-        if(EXT_PROC_IS_MODULE_PROCEDURE(ep) == FALSE)
-            outx_functionDecl(l, ep);
+        if(asDefOrDecl) {
+            outx_functionDefinition(l, ep);
+        } else {
+            if(EXT_PROC_IS_MODULE_PROCEDURE(ep) == FALSE)
+                outx_functionDecl(l, ep);
+        }
     }
 }
 
@@ -5580,7 +5596,7 @@ outx_contains(int l, EXT_ID parent)
 
 
 /**
- * output FinterfaceDecl
+ * output a function as FinterfaceDecl
  */
 static void
 outx_function_as_interfaceDecl(int l, EXT_ID ep)
@@ -5588,13 +5604,21 @@ outx_function_as_interfaceDecl(int l, EXT_ID ep)
     if(EXT_IS_OFMODULE(ep) == TRUE)
         return;
 
+
     CRT_FUNCEP_PUSH(NULL);
     outx_printi(l, "<FinterfaceDecl");
+    is_inside_interface = TRUE;
+
+    if (TYPE_IS_ABSTRACT(EXT_PROC_TYPE(ep)))
+        outx_true(TRUE, "is_abstract");
+
     outx_lineno(EXT_LINE(ep));
     outx_printi(0,">\n");
-    outx_functionDefinition(l + 1, ep);
+    outx_functionDecl(l + 1, ep);
     outx_close(l, "FinterfaceDecl");
+    is_inside_interface = FALSE;
     CRT_FUNCEP_POP;
+
 }
 
 
@@ -5608,11 +5632,14 @@ is_generic_interface(EXT_ID ep) {
         case INTF_GENERIC_WRITE_UNFORMATTED:
         case INTF_GENERIC_READ_FORMATTED:
         case INTF_GENERIC_READ_UNFORMATTED:
-        case INTF_ABSTRACT:
             return TRUE;
         case INTF_DECL:
             if(EXT_IS_BLANK_NAME(ep) == FALSE)
                 return TRUE;
+            else
+                return FALSE;
+        case INTF_ABSTRACT:
+            return FALSE;
         default:
             return FALSE;
     }
@@ -5639,6 +5666,7 @@ outx_interfaceDecl(int l, EXT_ID ep)
 
     CRT_FUNCEP_PUSH(NULL);
     outx_printi(l, "<FinterfaceDecl");
+    is_inside_interface = TRUE;
 
     switch(EXT_PROC_INTERFACE_CLASS(ep)) {
         case INTF_DECL:
@@ -5677,6 +5705,7 @@ outx_interfaceDecl(int l, EXT_ID ep)
     outx_printi(0,">\n");
     outx_moduleProcedureDecls(l + 1, extids, EXT_SYM(ep));
     outx_close(l, "FinterfaceDecl");
+    is_inside_interface = FALSE;
     CRT_FUNCEP_POP;
 }
 
@@ -5723,6 +5752,7 @@ outx_moduleDefinition(int l, EXT_ID ep)
     const int l1 = l + 1;
 
     is_outputed_module = TRUE;
+
     CRT_FUNCEP = NULL;
 
     outx_tagOfDeclNoClose(l, "%s name=\"%s\"", GET_EXT_LINE(ep),
