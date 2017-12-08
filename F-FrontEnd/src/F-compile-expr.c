@@ -2258,6 +2258,28 @@ choose_module_procedure_by_args(EXT_ID mod_procedures, expv args)
     return NULL;
 }
 
+
+static expv
+max_rank_from_arguments(expv args)
+{
+    list lp;
+    expv maxRanked = NULL;
+
+    if (args == NULL || EXPR_CODE(args) != LIST) {
+        return NULL;
+    }
+    FOR_ITEMS_IN_LIST(lp, args) {
+        if (maxRanked == NULL ||
+            (TYPE_N_DIM(EXPV_TYPE(maxRanked)) <
+             TYPE_N_DIM(EXPV_TYPE(LIST_ITEM(lp))))) {
+            maxRanked = LIST_ITEM(lp);
+        }
+    }
+
+    return maxRanked;
+}
+
+
 expv
 compile_function_call(ID f_id, expr args) {
     return compile_function_call_check_intrinsic_arg_type(f_id, args, FALSE);
@@ -2266,7 +2288,7 @@ compile_function_call(ID f_id, expr args) {
 
 expv
 compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTypeMismatch) {
-    expv a, v = NULL;
+    expv a = NULL, v = NULL;
     EXT_ID ep = NULL;
     TYPE_DESC tp = NULL;
     ID tagname = NULL;
@@ -2425,6 +2447,13 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
         default:
             fatal("%s: unknown proc_class %d", __func__,
                   PROC_CLASS(f_id));
+    }
+
+    if (ID_TYPE(f_id) != NULL && TYPE_IS_ELEMENTAL(ID_TYPE(f_id))) {
+        expv maxRanked = max_rank_from_arguments(a);
+        if (maxRanked != NULL && IS_ARRAY_TYPE(EXPV_TYPE(maxRanked))) {
+            EXPV_TYPE(v) = copy_dimension(EXPV_TYPE(maxRanked), EXPV_TYPE(v));
+        }
     }
 
 line_info:
