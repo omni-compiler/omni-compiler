@@ -1071,6 +1071,11 @@ type_is_compatible(TYPE_DESC left, TYPE_DESC right,
         return FALSE;
     }
 
+    if (!compare_rank) {
+        left = bottom_type(left);
+        right = bottom_type(right);
+    }
+
     left_basic = getBaseParameterizedType(left);
     right_basic = getBaseParameterizedType(right);
 
@@ -1157,9 +1162,6 @@ rank_compatibility:
         fprintf(debug_fp, "# comparing rank of types\n");
     }
 
-    if (!compare_rank)
-        goto attribute_compatibility;
-
     if (TYPE_N_DIM(left) == 0 && TYPE_N_DIM(right) == 0) {
         goto attribute_compatibility;
 
@@ -1173,7 +1175,7 @@ rank_compatibility:
 
 attribute_compatibility:
 
-    if (for_assignment) {
+    if (for_assignment || for_argunemt) {
         goto compatible;
     }
 
@@ -1215,13 +1217,26 @@ type_is_strict_compatible(TYPE_DESC left, TYPE_DESC right, int compare_rank, int
 }
 
 
+static int
+type_is_match_for_argument(TYPE_DESC left, TYPE_DESC right, int compare_rank, int issue_error)
+{
+    return type_is_compatible(left, right,
+                              /*is_strict=*/TRUE,
+                              /*for_argument=*/TRUE,
+                              /*for_assignment=*/FALSE,
+                              /*is_pointer_assignment=*/FALSE,
+                              /*compare_rank=*/compare_rank,
+                              issue_error);
+}
+
+
 int
 type_is_compatible_for_allocation(TYPE_DESC left, TYPE_DESC right)
 {
     return type_is_compatible(left, right,
                               /*is_strict=*/TRUE,
                               /*for_argument=*/FALSE,
-                              /*for_assignment=*/FALSE,
+                              /*for_assignment=*/TRUE,
                               /*is_pointer_assignment=*/TRUE,
                               /*compare_rank=*/TRUE,
                               TRUE);
@@ -1650,7 +1665,7 @@ function_type_is_appliable(TYPE_DESC ftp, expv actual_args, int issue_error)
             return FALSE;
         }
 
-        if (!type_is_strict_compatible(EXPV_TYPE(actual_arg),
+        if (!type_is_match_for_argument(EXPV_TYPE(actual_arg),
                                        ID_TYPE(dummy_arg), compare_rank, issue_error))
         {
             return FALSE;
