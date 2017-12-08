@@ -435,6 +435,7 @@ declare_procedure(enum name_class class,
         PROC_ARGS(id) = args;
         FOR_ITEMS_IN_LIST(lp, args) {
             ip = new_ident_desc(EXPR_SYM(LIST_ITEM(lp)));
+            ID_STORAGE(ip) = STG_ARG;
             ID_LINK_ADD(ip, FUNCTION_TYPE_ARGS(ID_TYPE(id)), last);
         }
         FUNCTION_TYPE_HAS_EXPLICIT_ARGS(ID_TYPE(id)) = TRUE;
