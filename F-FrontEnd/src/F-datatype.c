@@ -1058,7 +1058,9 @@ type_is_compatible(TYPE_DESC left, TYPE_DESC right,
                    int is_strict,
                    int for_argunemt,
                    int for_assignment,
-                   int is_pointer_assignment, int issue_error)
+                   int is_pointer_assignment,
+                   int compare_rank,
+                   int issue_error)
 {
     TYPE_DESC left_basic, right_basic;
 
@@ -1155,6 +1157,9 @@ rank_compatibility:
         fprintf(debug_fp, "# comparing rank of types\n");
     }
 
+    if (!compare_rank)
+        goto attribute_compatibility;
+
     if (TYPE_N_DIM(left) == 0 && TYPE_N_DIM(right) == 0) {
         goto attribute_compatibility;
 
@@ -1198,10 +1203,15 @@ incompatible:
 
 
 int
-type_is_strict_compatible(TYPE_DESC left, TYPE_DESC right, int issue_error)
+type_is_strict_compatible(TYPE_DESC left, TYPE_DESC right, int compare_rank, int issue_error)
 {
-    return type_is_compatible(left, right, TRUE, FALSE, FALSE, FALSE, 
-        issue_error);
+    return type_is_compatible(left, right,
+                              /*is_strict=*/TRUE,
+                              /*for_argument=*/FALSE,
+                              /*for_assignment=*/FALSE,
+                              /*is_pointer_assignment=*/FALSE,
+                              /*compare_rank=*/compare_rank,
+                              issue_error);
 }
 
 
@@ -1212,7 +1222,9 @@ type_is_compatible_for_allocation(TYPE_DESC left, TYPE_DESC right)
                               /*is_strict=*/TRUE,
                               /*for_argument=*/FALSE,
                               /*for_assignment=*/FALSE,
-                              /*is_pointer_assignment=*/TRUE, TRUE);
+                              /*is_pointer_assignment=*/TRUE,
+                              /*compare_rank=*/TRUE,
+                              TRUE);
 }
 
 
@@ -1255,7 +1267,7 @@ function_type_is_compatible0(const TYPE_DESC ftp1, const TYPE_DESC ftp2,
      * compare return types
      */
     if (!type_is_strict_compatible(FUNCTION_TYPE_RETURN_TYPE(bftp1),
-                                   FUNCTION_TYPE_RETURN_TYPE(bftp2), TRUE)) 
+                                   FUNCTION_TYPE_RETURN_TYPE(bftp2), TRUE, TRUE)) 
     {
         if (debug_flag) {
             fprintf(debug_fp, "return types are not match\n");
@@ -1338,7 +1350,7 @@ function_type_is_compatible0(const TYPE_DESC ftp1, const TYPE_DESC ftp2,
             }
         }
 
-        if (!type_is_strict_compatible(ID_TYPE(arg1), ID_TYPE(arg2), TRUE)) {
+        if (!type_is_strict_compatible(ID_TYPE(arg1), ID_TYPE(arg2), TRUE, TRUE)) {
             if (debug_flag) {
                 fprintf(debug_fp, "argument types are not match ('%s' and '%s')\n",
                         SYM_NAME(ID_SYM(arg1)), SYM_NAME(ID_SYM(arg2)));
@@ -1542,7 +1554,7 @@ procedure_is_assignable(const TYPE_DESC left, const TYPE_DESC right)
 
         return type_is_strict_compatible(
             FUNCTION_TYPE_RETURN_TYPE(left_ftp),
-            FUNCTION_TYPE_RETURN_TYPE(right_ftp), TRUE);
+            FUNCTION_TYPE_RETURN_TYPE(right_ftp), TRUE, TRUE);
 
     } else {
 
@@ -1589,9 +1601,14 @@ function_type_is_appliable(TYPE_DESC ftp, expv actual_args, int issue_error)
     ID dummy_args;
     list actual_lp;
     TYPE_DESC tbp_tp = NULL;
+    int compare_rank = TRUE;
 
     if (ftp == NULL) {
         return FALSE;
+    }
+
+    if (TYPE_IS_ELEMENTAL(ftp)) {
+        compare_rank = FALSE;
     }
 
     if (TYPE_REF(ftp) != NULL && FUNCTION_TYPE_IS_TYPE_BOUND(ftp)) {
@@ -1633,8 +1650,8 @@ function_type_is_appliable(TYPE_DESC ftp, expv actual_args, int issue_error)
             return FALSE;
         }
 
-        if (!type_is_strict_compatible(EXPV_TYPE(actual_arg), 
-            ID_TYPE(dummy_arg), issue_error)) 
+        if (!type_is_strict_compatible(EXPV_TYPE(actual_arg),
+                                       ID_TYPE(dummy_arg), compare_rank, issue_error))
         {
             return FALSE;
         }
