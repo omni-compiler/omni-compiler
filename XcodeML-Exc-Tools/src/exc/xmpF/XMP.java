@@ -262,7 +262,7 @@ public class XMP {
   static int gensym_num = 0;
   
   public static String genSym(String prefix) {
-    String newString = new String(prefix + String.valueOf(gensym_num));
+    String newString = new String("XMP_" + prefix + String.valueOf(gensym_num));
     gensym_num++;
     return newString;
   }
