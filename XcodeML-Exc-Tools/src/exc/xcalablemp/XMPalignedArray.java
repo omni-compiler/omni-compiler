@@ -28,6 +28,7 @@ public class XMPalignedArray {
   private Ident			_arrayId;
   private Ident			_descId;
   private Ident			_addrId;
+  private Ident                 _multiAddrId = null;
   private boolean		_hasShadow;
   private boolean		_reallocChecked;
   private boolean		_realloc;
@@ -40,6 +41,16 @@ public class XMPalignedArray {
   private Ident                 _flagId = null;
   private boolean               _canOptimized = false;
 
+  public void setMultiArrayId(Ident id)
+  {
+    _multiAddrId = id;
+  }
+
+  public Ident getMultiArrayId()
+  {
+    return _multiAddrId;
+  }
+  
   public boolean canOptimized()
   {
     return _canOptimized;
@@ -507,9 +518,13 @@ public class XMPalignedArray {
     Ident arrayAddrId = arrayId;
     Ident arrayDescId = null;
     if (isLocalPragma) {
-      if (!isPointer) arrayAddrId = XMPlocalDecl.addObjectId2(XMP.ADDR_PREFIX_ + arrayName,
-							      Xtype.Pointer(arrayElmtType), parentBlock);
-      else arrayAddrId.setType(Xtype.Pointer(arrayElmtType));
+      if (!isPointer){
+        arrayAddrId = XMPlocalDecl.addObjectId2(XMP.ADDR_PREFIX_ + arrayName,
+                                                Xtype.Pointer(arrayElmtType), parentBlock);
+      }
+      else{
+        arrayAddrId.setType(Xtype.Pointer(arrayElmtType));
+      }
       arrayDescId = XMPlocalDecl.addObjectId2(XMP.DESC_PREFIX_ + arrayName, parentBlock);
     }
     else {

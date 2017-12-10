@@ -784,7 +784,7 @@ public class XMPtranslateLocalPragma {
   }
 
   private void translateLoop(PragmaBlock pb, boolean isFromTranslateLoop) throws XMPexception {
-    XobjList loopDecl = (XobjList)pb.getClauses();
+    XobjList loopDecl  = (XobjList)pb.getClauses();
     BlockList loopBody = pb.getBody();
 
     // get block to schedule
@@ -860,7 +860,7 @@ public class XMPtranslateLocalPragma {
     // rewrite array refs in loop
     topdownXobjectIterator iter = new topdownXobjectIterator(getLoopBody(schedBaseBlock).toXobject());
     for (iter.init(); !iter.end(); iter.next()) {
-      XMPrewriteExpr.rewriteArrayRefInLoop(iter.getXobject(), _globalDecl, schedBaseBlock);
+      XMPrewriteExpr.rewriteArrayRefInLoop(iter.getXobject(), _globalDecl, schedBaseBlock, loopBody);
     }
 
     // replace pragma
