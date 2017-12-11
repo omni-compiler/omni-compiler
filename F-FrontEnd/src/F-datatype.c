@@ -1200,7 +1200,7 @@ incompatible:
 int
 type_is_strict_compatible(TYPE_DESC left, TYPE_DESC right, int issue_error)
 {
-    return type_is_compatible(left, right, TRUE, FALSE, FALSE, FALSE, 
+    return type_is_compatible(left, right, TRUE, FALSE, FALSE, FALSE,
         issue_error);
 }
 
@@ -1474,6 +1474,7 @@ procedure_is_assignable(const TYPE_DESC left, const TYPE_DESC right)
 {
     TYPE_DESC left_ftp;
     TYPE_DESC right_ftp;
+    struct type_descriptor type;
 
     debug("### BEGIN procedure_is_assignable");
 
@@ -1491,6 +1492,12 @@ procedure_is_assignable(const TYPE_DESC left, const TYPE_DESC right)
 
     /* right may be a procedure pointer */
     right_ftp = get_bottom_ref_type(right);
+
+    if (TYPE_IS_EXTERNAL(right_ftp)) {
+        type = *right_ftp;
+        right_ftp = &type;
+        TYPE_UNSET_EXTERNAL(right_ftp);
+    }
 
     if (!TYPE_IS_POINTER(left)) {
         debug("#### Invalid argument, not POINTER");

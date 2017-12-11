@@ -7499,12 +7499,64 @@ compile_POINTER_SET_statement(expr x) {
             error_at_node(x, "'%s' is not a function/subroutine",
                           SYM_NAME(EXPR_SYM(EXPR_ARG2(x))));
         }
-        if (TYPE_IS_ABSTRACT(vPteTyp)) {
-            error_at_node(x, "'%s' is an abstract interface",
-                          SYM_NAME(EXPR_SYM(EXPR_ARG2(x))));
+
+        if (IS_PROCEDURE_TYPE(vPteTyp)) {
+            if (!procedure_is_assignable(vPtrTyp, vPteTyp)) {
+                error_at_node(x, "procedures are type mismatch.");
+                return;
+            }
         }
 
+    } else {
+        if (!TYPE_IS_TARGET(vPteTyp) &&
+            !TYPE_IS_POINTER(vPteTyp) &&
+            !IS_PROCEDURE_TYPE(vPteTyp)) {
+            if(EXPR_CODE(EXPR_ARG2(x)) == IDENT)
+                error_at_node(x, "'%s' is not a pointee.",
+                              SYM_NAME(EXPR_SYM(EXPR_ARG2(x))));
+            else
+                error_at_node(x, "right hand side expression is not a pointee.");
+            return;
+        }
+    }
 
+    if (TYPE_IS_ABSTRACT(vPteTyp)) {
+        error_at_node(x, "'%s' is an abstract interface",
+                      SYM_NAME(EXPR_SYM(EXPR_ARG2(x))));
+    }
+
+    if (is_array_with_bounds_remapping_list(vPointer)) {
+        /* This statement is pointer remapping! */
+        if (TYPE_N_DIM(IS_REFFERENCE(vPteTyp)?TYPE_REF(vPteTyp):vPteTyp) != 1 &&
+            !type_is_contiguous(vPteTyp)) {
+            error_at_node(x, "POINTEE is not contiguous or one-rank array.");
+            return;
+        }
+    } else {
+        if (TYPE_N_DIM(IS_REFFERENCE(vPtrTyp)?TYPE_REF(vPtrTyp):vPtrTyp) !=
+            TYPE_N_DIM(IS_REFFERENCE(vPteTyp)?TYPE_REF(vPteTyp):vPteTyp)) {
+            error_at_node(x, "Rank mismatch.");
+            return;
+        }
+    }
+
+    if (TYPE_IS_VOLATILE(vPtrTyp) != TYPE_IS_VOLATILE(vPteTyp)) {
+        error_at_node(x, "VOLATILE attribute mismatch.");
+        return;
+    }
+    if (TYPE_IS_ASYNCHRONOUS(vPtrTyp) != TYPE_IS_ASYNCHRONOUS(vPteTyp)) {
+        error_at_node(x, "ASYNCHRONOUS attribute mismatch.");
+        return;
+    }
+
+    if (IS_STRUCT_TYPE(vPtrTyp) &&
+        !struct_type_is_compatible_for_assignment(vPtrTyp, vPteTyp, TRUE)) {
+        error_at_node(x, "Derived-type mismatch.");
+    }
+
+accept:
+
+    if (IS_PROCEDURE_TYPE(vPtrTyp)) {
         if (EXPR_CODE(vPointee) == F_VAR) {
             ID id = find_ident(EXPR_SYM(vPointee));
             if (!IS_PROCEDURE_TYPE(vPteTyp)) {
@@ -7594,40 +7646,6 @@ compile_POINTER_SET_statement(expr x) {
             }
         }
 
-    } else {
-        if (!TYPE_IS_TARGET(vPteTyp) &&
-            !TYPE_IS_POINTER(vPteTyp) &&
-            !IS_PROCEDURE_TYPE(vPteTyp)) {
-            if(EXPR_CODE(EXPR_ARG2(x)) == IDENT)
-                error_at_node(x, "'%s' is not a pointee.",
-                              SYM_NAME(EXPR_SYM(EXPR_ARG2(x))));
-            else
-                error_at_node(x, "right hand side expression is not a pointee.");
-            return;
-        }
-    }
-
-    if (is_array_with_bounds_remapping_list(vPointer)) {
-        /* This statement is pointer remapping! */
-        if (TYPE_N_DIM(IS_REFFERENCE(vPteTyp)?TYPE_REF(vPteTyp):vPteTyp) != 1 &&
-            !type_is_contiguous(vPteTyp)) {
-            error_at_node(x, "POINTEE is not contiguous or one-rank array.");
-            return;
-        }
-    } else {
-        if (TYPE_N_DIM(IS_REFFERENCE(vPtrTyp)?TYPE_REF(vPtrTyp):vPtrTyp) !=
-            TYPE_N_DIM(IS_REFFERENCE(vPteTyp)?TYPE_REF(vPteTyp):vPteTyp)) {
-            error_at_node(x, "Rank mismatch.");
-            return;
-        }
-    }
-
-    if (IS_PROCEDURE_TYPE(vPtrTyp)) {
-        if (!procedure_is_assignable(vPtrTyp, vPteTyp)) {
-            error_at_node(x, "Type mismatch.");
-            return;
-        }
-
         if (TYPE_IS_NOT_FIXED(vPtrTyp)) {
             TYPE_DESC subr, ftp;
 
@@ -7639,29 +7657,8 @@ compile_POINTER_SET_statement(expr x) {
             }
             TYPE_UNSET_NOT_FIXED(vPtrTyp);
         }
-
-    } else {
-        if (get_basic_type(vPtrTyp) != get_basic_type(vPteTyp)) {
-            error_at_node(x, "Type mismatch.");
-            return;
-        }
     }
 
-    if (TYPE_IS_VOLATILE(vPtrTyp) != TYPE_IS_VOLATILE(vPteTyp)) {
-        error_at_node(x, "VOLATILE attribute mismatch.");
-        return;
-    }
-    if (TYPE_IS_ASYNCHRONOUS(vPtrTyp) != TYPE_IS_ASYNCHRONOUS(vPteTyp)) {
-        error_at_node(x, "ASYNCHRONOUS attribute mismatch.");
-        return;
-    }
-
-    if (IS_STRUCT_TYPE(vPtrTyp) &&
-        !struct_type_is_compatible_for_assignment(vPtrTyp, vPteTyp, TRUE)) {
-        error_at_node(x, "Derived-type mismatch.");
-    }
-
-accept:
 
     EXPV_LINE(vPointer) = EXPR_LINE(x);
     EXPV_LINE(vPointee) = EXPR_LINE(x);
