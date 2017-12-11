@@ -329,6 +329,7 @@ XfDecompileDomVisitor {
                 }
 
                 boolean isClass = XmDomUtil.getAttrBool(lowType, "is_class");
+                boolean isProcedure = XmDomUtil.getAttrBool(lowType, "is_procedure");
 
                 String topTypeName = topType.getNodeName();
                 if ("FbasicType".equals(topTypeName)) {
@@ -364,8 +365,38 @@ XfDecompileDomVisitor {
                     writer.writeToken(")");
                 } else {
                     /* topType is FfunctionType. */
-                    throw new XmTranslationException(node,
-                                                     "Top type must be a FfunctionType.");
+
+                    if (isProcedure) {
+                        writer.writeToken("PROCEDURE");
+                        writer.writeToken("(");
+                        if (XmDomUtil.getAttr(lowType, "ref") != null) {
+                            String functionName = typeManager.findNameFromType(XmDomUtil.getAttr(lowType, "ref"));
+                            if (functionName != null) {
+                                /*
+                                 * PROCEDURE(function_name) :: p
+                                 */
+                                writer.writeToken(functionName);
+                            } else {
+                                /*
+                                 * PROCEDURE(REAL) :: p1
+                                 * PROCEDURE(TYPE(t)) :: p2
+                                 */
+                                String returnTypeId = XmDomUtil.getAttr(topType, "return_type");
+                                XfType returnType = XfType.getTypeIdFromXcodemlTypeName(returnTypeId);
+
+                                if (returnType.isPrimitive()) {
+                                    writer.writeToken(returnType.fortranName());
+                                } else {
+                                    XfTypeManagerForDom.TypeList returnTypeList = getTypeList(returnTypeId);
+                                    _writeTopType(returnTypeList, true);
+                                }
+                            }
+                        }
+                        writer.writeToken(")");
+                    } else {
+                        throw new XmTranslationException(node,
+                                "Top type must not be a function/subroutine.");
+                    }
                 }
 
                 _writeDeclAttr(topType, lowType);
