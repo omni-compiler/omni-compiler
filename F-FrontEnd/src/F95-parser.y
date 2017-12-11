@@ -518,7 +518,7 @@ static void type_spec_done();
 
 %type <val> statement label
 %type <val> expr /*expr1*/ lhs member_ref lhs_alloc member_ref_alloc substring expr_or_null complex_const
-%type <val> array_constructor array_constructor_list
+%type <val> array_constructor array_constructor_list array_constructor_list_or_null
 %type <val> program_name dummy_arg_list dummy_args dummy_arg file_name
 %type <val> declaration_statement executable_statement action_statement action_statement_let action_statement_key assign_statement_or_null assign_statement
 %type <val> declaration_list entity_decl type_spec type_spec0 type_spec1 expr_type_spec length_spec common_decl
@@ -2225,9 +2225,9 @@ array_constructor:
         { $$ = list2(F95_ARRAY_CONSTRUCTOR, $3, NULL); }
         | '[' TYPE_KW_COL2 array_constructor_list ']'
         { $$ = list2(F95_ARRAY_CONSTRUCTOR, $3, NULL); }
-        | L_ARRAY_CONSTRUCTOR TYPE_KW_COL2 expr_type_spec COL2 array_constructor_list R_ARRAY_CONSTRUCTOR
+        | L_ARRAY_CONSTRUCTOR TYPE_KW_COL2 expr_type_spec COL2 array_constructor_list_or_null R_ARRAY_CONSTRUCTOR
         { $$ = list2(F95_ARRAY_CONSTRUCTOR, $5, $3); }
-        | '[' TYPE_KW_COL2 expr_type_spec COL2 array_constructor_list ']'
+        | '[' TYPE_KW_COL2 expr_type_spec COL2 array_constructor_list_or_null ']'
         { $$ = list2(F95_ARRAY_CONSTRUCTOR, $5, $3); }
         ;
 
@@ -2369,6 +2369,12 @@ member_ref_alloc:     /* For allocation list only */
 /*         { $$ = list2(F95_MEMBER_REF, list2(XMP_COARRAY_REF,list2(F_ARRAY_REF,$1,$2),$3), $5); } */
         ;
 
+
+array_constructor_list_or_null:
+        { $$ = NULL; }
+        | array_constructor_list
+        { $$ = $1; }
+        ;
 
 array_constructor_list:
           io_item
