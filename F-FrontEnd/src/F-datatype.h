@@ -462,6 +462,8 @@ extern TYPE_DESC basic_type_desc[];
                 ((tp) != NULL && (TYPE_BASIC_TYPE(tp) == TYPE_VOID))
 #define IS_PROCEDURE_TYPE(tp) \
                 (IS_FUNCTION_TYPE(tp) || IS_SUBR(tp))
+#define IS_PROCEDURE_POINTER(tp) \
+                (IS_PROCEDURE_TYPE(tp) && (TYPE_REF(tp) != NULL))
 #define IS_GENERIC_PROCEDURE_TYPE(tp) \
                 (IS_PROCEDURE_TYPE(tp) && FUNCTION_TYPE_IS_GENERIC(tp))
 #define IS_COMPLEX(tp) \

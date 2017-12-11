@@ -418,7 +418,7 @@ declare_procedure(enum name_class class,
         }
 
         if (type != NULL) {
-            if (!IS_PROCEDURE_TYPE(type)) {
+            if (!IS_PROCEDURE_TYPE(type) || IS_PROCEDURE_POINTER(type)) {
                 type = function_type(type);
             }
             declare_id_type(id, type);
@@ -1015,7 +1015,7 @@ declare_function(ID id)
                         TYPE_SET_NOT_FIXED(FUNCTION_TYPE_RETURN_TYPE(tp));
                         TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) = TYPE_GNUMERIC_ALL;
                         ID_TYPE(id) = tp;
-                    } else if (!IS_SUBR(tp) && !IS_FUNCTION_TYPE(tp)) {
+                    } else if (!TYPE_IS_PROCEDURE(tp) || (TYPE_IS_PROCEDURE(tp) && TYPE_REF(tp) != NULL)) {
                         ID_TYPE(id) = function_type(tp);
                         /*
                          * For F_Front, There is no difference between an
@@ -1040,7 +1040,7 @@ declare_function(ID id)
                     }
                     PROC_CLASS(id) = P_UNDEFINEDPROC;
                 } else {
-                    if (!IS_SUBR(tp) && !IS_FUNCTION_TYPE(tp)) {
+                    if (!TYPE_IS_PROCEDURE(tp) || (TYPE_IS_PROCEDURE(tp) && TYPE_REF(tp) != NULL)) {
                         ID_TYPE(id) = function_type(tp);
                         TYPE_UNSET_SAVE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)));
                     }
@@ -2206,7 +2206,7 @@ declare_id_type(ID id, TYPE_DESC tp)
         IS_FUNCTION_TYPE(ID_TYPE(id))) {
 
         if (ID_TYPE(id) == NULL) {
-            if (!IS_PROCEDURE_TYPE(tp)) {
+            if (!IS_PROCEDURE_TYPE(tp) || IS_PROCEDURE_POINTER(tp)) {
                 /* change the type into function type */
                 ID_TYPE(id) = function_type(tp);
             } else {
@@ -3748,7 +3748,8 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
                  ID_CLASS(id) = CL_PROC;
                  PROC_CLASS(id) = P_INTRINSIC;
              }
-             if (TYPE_IS_EXTERNAL(ID_TYPE(id)) && !IS_PROCEDURE_TYPE(ID_TYPE(id))) {
+             if (TYPE_IS_EXTERNAL(ID_TYPE(id)) &&
+                 (!IS_PROCEDURE_TYPE(ID_TYPE(id)) || IS_PROCEDURE_POINTER(ID_TYPE(id)))) {
                  ID_TYPE(id) = function_type(ID_TYPE(id));
                  ID_CLASS(id) = CL_PROC;
                  PROC_CLASS(id) = P_EXTERNAL;
@@ -4652,7 +4653,9 @@ compile_EXTERNAL_decl(expr id_list)
         }
         if (PROC_CLASS(id) == P_UNKNOWN) {
             PROC_CLASS(id) = P_EXTERNAL;
-            if (ID_TYPE(id) != NULL && !IS_PROCEDURE_TYPE(ID_TYPE(id))) {
+            if (ID_TYPE(id) != NULL &&
+                (!IS_PROCEDURE_TYPE(ID_TYPE(id)) ||
+                 IS_PROCEDURE_POINTER(ID_TYPE(id)))) {
                 ID_TYPE(id) = function_type(ID_TYPE(id));
             }
             TYPE_SET_EXTERNAL(id);
@@ -5695,7 +5698,7 @@ compile_procedure_declaration(expr x)
         }
 
         if (tp) {
-            ID_TYPE(id) = procedure_type(tp);
+            declare_id_type(id, procedure_type(tp));
 
         } else {
             /*
@@ -5707,7 +5710,9 @@ compile_procedure_declaration(expr x)
              * the function return type cannot be determined.
              *
              */
-            ID_TYPE(id) = procedure_type(function_type(wrap_type(type_GNUMERIC_ALL)));
+            TYPE_DESC tp = function_type(wrap_type(type_GNUMERIC_ALL));
+            tp = procedure_type(tp);
+            declare_id_type(id, tp);
         }
 
         /*
@@ -5715,6 +5720,7 @@ compile_procedure_declaration(expr x)
          */
         ID_LINE(id) = EXPR_LINE(x);
 
+        TYPE_ATTR_FLAGS(id) |= type_attr_flags;
         TYPE_ATTR_FLAGS(ID_TYPE(id)) |= type_attr_flags;
         TYPE_BIND_NAME(ID_TYPE(id)) = bind_name;
         VAR_REF_PROC(id) = interface;

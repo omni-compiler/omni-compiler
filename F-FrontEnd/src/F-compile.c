@@ -2161,7 +2161,7 @@ update_procedure_variables_forall(ID ids, TYPE_DESC struct_decls, BLOCK_ENV bloc
             continue;
         }
 
-        if (IS_PROCEDURE_TYPE(ID_TYPE(id)) && TYPE_REF(ID_TYPE(id)) != NULL) {
+        if (IS_PROCEDURE_POINTER(ID_TYPE(id))) {
             if (VAR_REF_PROC(id) == NULL)
                 continue;
 

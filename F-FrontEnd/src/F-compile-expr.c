@@ -2298,7 +2298,8 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
             /* f_id is not defined yet. */
 
             if (ID_TYPE(f_id) != NULL) {
-                if (!IS_PROCEDURE_TYPE(ID_TYPE(f_id))) {
+                if (!IS_PROCEDURE_TYPE(ID_TYPE(f_id)) ||
+                    IS_PROCEDURE_POINTER(ID_TYPE(f_id))) {
                     if (TYPE_IS_SAVE(ID_TYPE(f_id))) {
                         TYPE_UNSET_SAVE(ID_TYPE(f_id));
                     }
@@ -2358,7 +2359,7 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
             }
             tp = ID_TYPE(f_id);
 
-            if (!IS_PROCEDURE_TYPE(tp)) {
+            if (!IS_PROCEDURE_TYPE(tp) || IS_PROCEDURE_POINTER(tp)) {
                 tp = function_type(tp);
                 ID_TYPE(f_id) = tp;
                 EXPV_TYPE(ID_ADDR(f_id)) = ID_TYPE(f_id);
