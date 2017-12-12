@@ -4696,7 +4696,10 @@ outx_structType(int l, TYPE_DESC tp)
                 ID binding;
                 int is_defined_io = FALSE;
                 outx_printi(l2, "<typeBoundGenericProcedure");
-                if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_IS_OPERATOR) {
+                if (TBP_BINDING_ATTRS(id) & (
+                        TYPE_BOUND_PROCEDURE_IS_OPERATOR |
+                        TYPE_BOUND_PROCEDURE_IS_UNARY_OPERATOR |
+                        TYPE_BOUND_PROCEDURE_IS_BINARY_OPERATOR)) {
                     outx_true(TRUE, "is_operator");
                 }
                 if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_IS_ASSIGNMENT) {

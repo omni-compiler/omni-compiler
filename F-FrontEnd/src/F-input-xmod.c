@@ -2216,7 +2216,34 @@ input_typeBoundGenericProcedure(xmlTextReaderPtr reader, HashTable * ht, ID *id)
 
     str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_operator");
     if (str != NULL) {
-        binding_attr_flags |= TYPE_BOUND_PROCEDURE_IS_OPERATOR;
+        if (strcmp(".not", name) == 0) {
+            binding_attr_flags |= TYPE_BOUND_PROCEDURE_IS_UNARY_OPERATOR;
+        } else if (
+            strcmp(".", name) == 0 ||
+            strcmp("**", name) == 0 ||
+            strcmp("*", name) == 0 ||
+            strcmp("/", name) == 0 ||
+            strcmp("==", name) == 0 ||
+            strcmp("/=", name) == 0 ||
+            strcmp("<", name) == 0 ||
+            strcmp("<=", name) == 0 ||
+            strcmp(">", name) == 0 ||
+            strcmp(">=", name) == 0 ||
+            strcmp(".eq.", name) == 0 ||
+            strcmp("/=", name) == 0 ||
+            strcmp(".lt.", name) == 0 ||
+            strcmp(".le.", name) == 0 ||
+            strcmp(".gt.", name) == 0 ||
+            strcmp(".ge.", name) == 0 ||
+            strcmp(".and.", name) == 0 ||
+            strcmp(".or.", name) == 0 ||
+            strcmp(".eqv.", name) == 0 ||
+            strcmp(".neqv.", name) == 0 ||
+            strcmp("//", name) == 0) {
+            binding_attr_flags |= TYPE_BOUND_PROCEDURE_IS_BINARY_OPERATOR;
+        } else {
+            binding_attr_flags |= TYPE_BOUND_PROCEDURE_IS_OPERATOR;
+        }
     }
 
     str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_assignment");
