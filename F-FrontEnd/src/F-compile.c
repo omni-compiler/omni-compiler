@@ -7437,29 +7437,29 @@ pointer_assignable(expr x, expv vPointer, expv vPointee) {
 
     if (!TYPE_IS_POINTER(vPtrTyp)) {
         if (EXPR_CODE(EXPR_ARG1(x)) == IDENT) {
-            error_at_node(x, "'%s' is not a pointer.",
+            if (x) error_at_node(x, "'%s' is not a pointer.",
                           SYM_NAME(EXPR_SYM(EXPR_ARG1(x))));
         } else {
-            error_at_node(x, "lhs is not a pointer.",
+            if (x) error_at_node(x, "lhs is not a pointer.",
                           SYM_NAME(EXPR_SYM(EXPR_ARG1(x))));
         }
         return FALSE;
     }
 
     if (TYPE_IS_PROTECTED(vPtrTyp) && TYPE_IS_READONLY(vPtrTyp)) {
-        error_at_node(x, "'%s' is PROTECTED.",
-                      SYM_NAME(EXPR_SYM(EXPR_ARG1(x))));
+        if (x) error_at_node(x, "'%s' is PROTECTED.",
+                             SYM_NAME(EXPR_SYM(EXPR_ARG1(x))));
         return FALSE;
     }
 
     if (IS_PROCEDURE_TYPE(EXPV_TYPE(vPointer)) &&
         FUNCTION_TYPE_IS_TYPE_BOUND(EXPV_TYPE(vPointer))) {
-            error("lhs expr is type bound procedure.");
+            if (x) error("lhs expr is type bound procedure.");
             return FALSE;
     }
     if (IS_PROCEDURE_TYPE(EXPV_TYPE(vPointee)) &&
         FUNCTION_TYPE_IS_TYPE_BOUND(EXPV_TYPE(vPointee))) {
-            error("rhs expr is type bound procedure.");
+            if (x) error("rhs expr is type bound procedure.");
             return FALSE;
     }
 
@@ -7471,13 +7471,13 @@ pointer_assignable(expr x, expv vPointer, expv vPointee) {
         if (!IS_PROCEDURE_TYPE(vPteTyp) &&
             TYPE_BASIC_TYPE(vPteTyp) != TYPE_UNKNOWN &&
             !TYPE_IS_IMPLICIT(vPteTyp)) {
-            error_at_node(x, "'%s' is not a function/subroutine",
-                          SYM_NAME(EXPR_SYM(EXPR_ARG2(x))));
+            if (x) error_at_node(x, "'%s' is not a function/subroutine",
+                                 SYM_NAME(EXPR_SYM(EXPR_ARG2(x))));
         }
 
         if (IS_PROCEDURE_TYPE(vPteTyp)) {
             if (!procedure_is_assignable(vPtrTyp, vPteTyp)) {
-                error_at_node(x, "procedures are type mismatch.");
+                if (x) error_at_node(x, "procedures are type mismatch.");
                 return FALSE;
             }
         }
@@ -7487,16 +7487,16 @@ pointer_assignable(expr x, expv vPointer, expv vPointee) {
             !TYPE_IS_POINTER(vPteTyp) &&
             !IS_PROCEDURE_TYPE(vPteTyp)) {
             if(EXPR_CODE(EXPR_ARG2(x)) == IDENT)
-                error_at_node(x, "'%s' is not a pointee.",
-                              SYM_NAME(EXPR_SYM(EXPR_ARG2(x))));
+                if (x) error_at_node(x, "'%s' is not a pointee.",
+                                     SYM_NAME(EXPR_SYM(EXPR_ARG2(x))));
             else
-                error_at_node(x, "right hand side expression is not a pointee.");
+                if (x) error_at_node(x, "right hand side expression is not a pointee.");
             return FALSE;
         }
     }
 
     if (TYPE_IS_ABSTRACT(vPteTyp)) {
-        error_at_node(x, "'%s' is an abstract interface",
+        if (x) error_at_node(x, "'%s' is an abstract interface",
                       SYM_NAME(EXPR_SYM(EXPR_ARG2(x))));
         return FALSE;
     }
@@ -7505,19 +7505,19 @@ pointer_assignable(expr x, expv vPointer, expv vPointee) {
         /* This statement is pointer remapping! */
         if (TYPE_N_DIM(IS_REFFERENCE(vPteTyp)?TYPE_REF(vPteTyp):vPteTyp) != 1 &&
             !type_is_contiguous(vPteTyp)) {
-            error_at_node(x, "POINTEE is not contiguous or one-rank array.");
+            if (x) error_at_node(x, "POINTEE is not contiguous or one-rank array.");
             return FALSE;
         }
     } else {
         if (TYPE_N_DIM(IS_REFFERENCE(vPtrTyp)?TYPE_REF(vPtrTyp):vPtrTyp) !=
             TYPE_N_DIM(IS_REFFERENCE(vPteTyp)?TYPE_REF(vPteTyp):vPteTyp)) {
-            error_at_node(x, "Rank mismatch.");
+            if (x) error_at_node(x, "Rank mismatch.");
             return FALSE;
         }
     }
 
     if (TYPE_IS_VOLATILE(vPtrTyp) != TYPE_IS_VOLATILE(vPteTyp)) {
-        error_at_node(x, "VOLATILE attribute mismatch.");
+        if (x) error_at_node(x, "VOLATILE attribute mismatch.");
         return FALSE;
     }
     if (TYPE_IS_ASYNCHRONOUS(vPtrTyp) != TYPE_IS_ASYNCHRONOUS(vPteTyp)) {
@@ -7527,7 +7527,7 @@ pointer_assignable(expr x, expv vPointer, expv vPointee) {
 
     if (IS_STRUCT_TYPE(vPtrTyp) &&
         !struct_type_is_compatible_for_assignment(vPtrTyp, vPteTyp, TRUE)) {
-        error_at_node(x, "Derived-type mismatch.");
+        if (x) error_at_node(x, "Derived-type mismatch.");
         return FALSE;
     }
 
