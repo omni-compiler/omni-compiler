@@ -5624,25 +5624,14 @@ outx_function_as_interfaceDecl(int l, EXT_ID ep)
 
 static int
 is_generic_interface(EXT_ID ep) {
-    switch(EXT_PROC_INTERFACE_CLASS(ep)) {
-        case INTF_ASSIGNMENT:
-        case INTF_OPERATOR:
-        case INTF_USEROP:
-        case INTF_GENERIC_WRITE_FORMATTED:
-        case INTF_GENERIC_WRITE_UNFORMATTED:
-        case INTF_GENERIC_READ_FORMATTED:
-        case INTF_GENERIC_READ_UNFORMATTED:
-            return TRUE;
-        case INTF_DECL:
-            if(EXT_IS_BLANK_NAME(ep) == FALSE)
-                return TRUE;
-            else
-                return FALSE;
-        case INTF_ABSTRACT:
-            return FALSE;
-        default:
-            return FALSE;
-    }
+    if (EXT_PROC_INTERFACE_CLASS(ep) == INTF_DECL &&
+        EXT_IS_BLANK_NAME(ep) == TRUE)
+        return FALSE;
+
+    if (EXT_PROC_INTERFACE_CLASS(ep) == INTF_ABSTRACT)
+        return FALSE;
+
+    return TRUE;
 }
 
 
