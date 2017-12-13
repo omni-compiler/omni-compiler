@@ -224,8 +224,21 @@ link_parent_defined_by(ID id)
 
         if (is_contain_proc) {
             if (conflict_parent_vs_sub_program_unit(parent)) {
-                error("%s has an explicit interface before", ID_NAME(parent));
-                return;
+
+                if (ID_CLASS(parent) == CL_PROC &&
+                    ID_TYPE(parent) != NULL &&
+                    IS_GENERIC_PROCEDURE_TYPE(ID_TYPE(parent))) {
+
+                    ID next = ID_NEXT(parent);
+                    id_multilize(parent);
+                    ID_NEXT(parent) = MULTI_ID_LIST(parent);
+                    ID_NEXT(ID_NEXT(parent)) = next;
+                    /* TODO(shingo-s): if the parent exists */
+                    return;
+                } else {
+                    error("%s has an explicit interface before", ID_NAME(parent));
+                    return;
+                }
             }
         }
 
@@ -236,7 +249,6 @@ link_parent_defined_by(ID id)
             PROC_CLASS(parent) = P_EXTERNAL;
         } else if (ID_IS_DECLARED(id) == FALSE) {
             ID_CLASS(parent) = CL_PROC;
-
         }
 
         /* Conditions below is written to make test programs to pass. */

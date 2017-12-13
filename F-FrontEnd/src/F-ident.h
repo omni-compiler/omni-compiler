@@ -32,7 +32,9 @@ enum name_class {
     CL_GENERICS,  /* generics name */
     CL_TYPE_PARAM, /* type parameter name */
     CL_TYPE_BOUND_PROC, /* type bound procedure */
-    CL_MULTI,     /* Both the derived type name and the generic procedure */
+    CL_MULTI,     /* Both the derived type name and the generic procedure name
+                   * OR
+                   * Both the interface name and the generic procedure name */
     CL_DECL_PRAGMA, /* Placeholder for declarative pragmas */
     CL_ENUM,      /* enum (dummy name) */
 };
