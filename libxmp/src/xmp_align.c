@@ -44,6 +44,10 @@ void _XMP_init_array_desc(_XMP_array_t **array, _XMP_template_t *template, int d
   a->type                 = type;
   a->type_size            = type_size;
   
+#ifdef _XMPT
+  a->xmpt_array_data= NULL;
+#endif
+
   size_t dummy;
   if(type != _XMP_N_TYPE_NONBASIC)
     _XMP_setup_reduce_type(&a->mpi_type, &dummy, type);
@@ -131,6 +135,10 @@ void _XMP_init_array_desc_NOT_ALIGNED(_XMP_array_t **adesc, _XMP_template_t *tem
   a->align_comm = NULL;
   a->align_comm_size = 1;
   a->align_comm_rank = _XMP_N_INVALID_RANK;
+
+#ifdef _XMPT
+  a->xmpt_array_data = NULL;
+#endif
 
 #ifdef _XMP_MPI3_ONESIDED
   a->coarray = NULL;

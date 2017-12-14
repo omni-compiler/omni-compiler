@@ -23,7 +23,10 @@ static _XMP_nodes_t *_XMP_create_new_nodes(int is_member, int dim, int comm_size
   n->dim       = dim;
   n->comm_size = comm_size;
   n->comm      = comm;
-
+#ifdef _XMPT
+  n->xmpt_nodes_data= NULL;
+#endif
+  
   if(is_member){
     int size, rank;
     MPI_Comm_size(*((MPI_Comm *)comm), &size);
