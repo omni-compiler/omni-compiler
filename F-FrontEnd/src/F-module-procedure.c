@@ -394,7 +394,7 @@ fixup_all_module_procedures(void) {
 
 
 static void
-colloct_module_procedure_types(mod_proc_t mp, expr l) {
+collect_module_procedure_types(mod_proc_t mp, expr l) {
     if (mp != NULL) {
         list lp;
         expv v;
@@ -433,7 +433,7 @@ collect_module_procedures_types(gen_proc_t gp, expr l) {
             HashSearch sCtx;
 
             FOREACH_IN_HASH(hPtr, &sCtx, tPtr) {
-                colloct_module_procedure_types((mod_proc_t)GetHashValue(hPtr),
+                collect_module_procedure_types((mod_proc_t)GetHashValue(hPtr),
                                                l);
             }
         }
