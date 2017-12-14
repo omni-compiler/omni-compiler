@@ -44,10 +44,8 @@ struct module_procedure_info_record {
     gen_proc_t belongsTo;	/* A generic procedure which consists
                                  * of this module procedure. */
     HashEntry *hPtr;		/* A hash entry. */
-    EXT_ID eId;                 /* external id. */
-    TYPE_DESC retType;		/* The return type of this procedure. */
-    expv args;			/* A dummy arguments list of this
-                                 * procedure. */
+    TYPE_DESC type;		/* The type of this procedure. */
+
     /*
      * Note:
      *	The retType and EXPV_TYPE() of each element in argSpec must
@@ -60,9 +58,7 @@ typedef struct module_procedure_info_record *mod_proc_t;
 #define MOD_PROC_HASH_ENTRY(gp)	((gp)->hPtr)
 #define MOD_PROC_GEN_PROC(mp)	((mp)->belongsTo)
 #define MOD_PROC_GEN_NAME(mp)	(GEN_PROC_NAME(MOD_PROC_GEN_PROC(mp)))
-#define MOD_PROC_EXT_ID(mp)	((mp)->eId)
-#define MOD_PROC_TYPE(mp)	((mp)->retType)
-#define MOD_PROC_ARGS(mp)	((mp)->args)
+#define MOD_PROC_TYPE(mp)	((mp)->type)
 
 extern void		module_procedure_manager_init(void);
 
@@ -76,7 +72,7 @@ extern mod_proc_t	find_module_procedure(const char *genName,
                                               const char *modName);
 extern mod_proc_t	add_module_procedure(const char *genName,
                                              const char *modName,
-                                             TYPE_DESC tp, expv args,
+                                             TYPE_DESC tp,
                                              int *isNewPtr);
 extern void		delete_module_procedure(mod_proc_t mp);
 extern void		delete_module_procdure_by_name(const char *genName,

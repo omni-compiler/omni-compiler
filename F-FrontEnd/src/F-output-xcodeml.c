@@ -1034,6 +1034,17 @@ outx_tagText(int l, const char *tag, const char *s)
  * output a symbol with function type (not a return type)
  */
 static void
+outx_symbolNameAndType_for_functionType(int l, const char * name, TYPE_DESC tp)
+{
+    outx_typeAttrOnly_functionType(l, tp, "name");
+    outx_print(">%s</name>\n", name);
+}
+
+
+/**
+ * output a symbol with function type (not a return type)
+ */
+static void
 outx_symbolNameWithFunctionType(int l, expv v)
 {
     outx_typeAttrOnly_functionType(l, EXPV_TYPE(v), "name");
@@ -1217,8 +1228,8 @@ get_sclass(ID id)
             return "ftype_name";
         case STG_UNKNOWN:
         case STG_NONE:
-	case STG_PRAGMA:
-	  fatal("%s: illegal storage class: symbol=%s", __func__, ID_NAME(id));
+        case STG_PRAGMA:
+            fatal("%s: illegal storage class: symbol=%s", __func__, ID_NAME(id));
             abort();
         }
         break;
@@ -5489,11 +5500,10 @@ outx_moduleProcedureDecl(int l, EXT_ID parent_ep, SYMBOL parentName)
                     HashEntry *hPtr;
                     HashSearch sCtx;
                     mod_proc_t mp;
-
                     FOREACH_IN_HASH(hPtr, &sCtx, tPtr) {
                         mp = (mod_proc_t)GetHashValue(hPtr);
-                        outx_symbolNameWithFunctionType_EXT(l1,
-                                                            MOD_PROC_EXT_ID(mp));
+                        outx_symbolNameAndType_for_functionType(
+                            l1, MOD_PROC_NAME(mp), MOD_PROC_TYPE(mp));
                     }
                 } else {
                     fatal("invalid generic procedure structure.");
@@ -6272,12 +6282,9 @@ output_module_file(struct module * mod, const char * filename)
     FOR_ITEMS_IN_LIST(lp, modTypeList) {
         v = LIST_ITEM(lp);
         if (EXPV_INT_VALUE(EXPR_ARG1(v)) == 1) {
-            if (EXPR_ARG3(v) != NULL) {
-                ep = EXPV_ANY(EXT_ID, EXPR_ARG3(v));
-                collect_types1(ep);
-                sTp = reduce_type(EXT_PROC_TYPE(ep));
-                mark_type_desc(sTp);
-                EXT_PROC_TYPE(ep) = sTp;
+            if (EXPR_ARG2(v) != NULL) {
+                TYPE_DESC ftp = EXPV_ANY(TYPE_DESC, EXPR_ARG2(v));
+                mark_type_desc(ftp);
             }
         }
     }

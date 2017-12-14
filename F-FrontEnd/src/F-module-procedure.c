@@ -14,7 +14,7 @@ destroy_module_procedure(mod_proc_t mp) {
 
 static mod_proc_t
 create_module_procedure(const char *genName, const char *modName,
-                        TYPE_DESC tp, expv args) {
+                        TYPE_DESC tp) {
     int succeeded = FALSE;
     mod_proc_t ret = NULL;
     gen_proc_t gp = NULL;
@@ -33,7 +33,6 @@ create_module_procedure(const char *genName, const char *modName,
             MOD_PROC_NAME(ret) = (const char *)strdup(modName);
             MOD_PROC_GEN_PROC(ret) = gp;
             MOD_PROC_TYPE(ret) = tp;
-            MOD_PROC_ARGS(ret) = args;
             hPtr = CreateHashEntry(GEN_PROC_MOD_TABLE(gp),
                                    MOD_PROC_NAME(ret),
                                    &isNew);
@@ -238,10 +237,10 @@ find_module_procedure(const char *genName, const char *modName) {
 
 mod_proc_t
 add_module_procedure(const char *genName, const char *modName,
-                     TYPE_DESC tp, expv args, int *isNewPtr) {
+                     TYPE_DESC tp, int *isNewPtr) {
     mod_proc_t ret = find_module_procedure(genName, modName);
     if (ret == NULL) {
-        ret = create_module_procedure(genName, modName, tp, args);
+        ret = create_module_procedure(genName, modName, tp);
         if (isNewPtr != NULL) {
             *isNewPtr = TRUE;
         }
@@ -282,14 +281,16 @@ delete_module_procdure_by_name(const char *genName, const char *modName) {
 }
 
 
-static expv
+static ID
 generate_module_procedure_dummy_args(expv args) {
-    expv ret = list0(LIST);
     expv v;
     list lp;
     TYPE_DESC tp;
     char symBuf[4096];
     SYMBOL s;
+    ID ip;
+    ID last_ip = NULL;
+    ID ret = NULL;
 
     FOR_ITEMS_IN_LIST(lp, args) {
         v = LIST_ITEM(lp);
@@ -303,8 +304,10 @@ generate_module_procedure_dummy_args(expv args) {
         snprintf(symBuf, sizeof(symBuf), "$[dummy]:%s$",
                  SYM_NAME(EXPR_SYM(EXPR_ARG1(v))));
         s = find_symbol(symBuf);
-        v = expv_sym_term(IDENT, tp, s);
-        list_put_last(ret, v);
+        ip = new_ident_desc(s);
+        ID_TYPE(ip) = tp;
+        ID_STORAGE(ip) = STG_ARG;
+        ID_LINK_ADD(ip, ret, last_ip);
     }
 
     return ret;
@@ -335,9 +338,6 @@ fixup_module_procedure(mod_proc_t mp) {
                 (EXT_PROC_CLASS(eId) == EP_MODULE_PROCEDURE ||
                  EXT_PROC_CLASS(eId) == EP_PROC)) {
                 tp = EXT_PROC_TYPE(eId);
-                if (tp != NULL && TYPE_BASIC_TYPE(tp) == TYPE_FUNCTION) {
-                    tp = TYPE_REF(tp);
-                }
                 args = EXT_PROC_ARGS(eId);
             }
 
@@ -351,15 +351,13 @@ fixup_module_procedure(mod_proc_t mp) {
             if (MOD_PROC_TYPE(mp) == NULL && tp != NULL) {
                 MOD_PROC_TYPE(mp) = copy_type_partially(tp, FALSE);
             }
-            if (MOD_PROC_ARGS(mp) == NULL && args != NULL) {
-                expv newArgs = generate_module_procedure_dummy_args(args);
-                if (newArgs == args) {
-                    fatal("noenoe");
+
+            if (tp != NULL) {
+                tp = get_bottom_ref_type(tp);
+                if (FUNCTION_TYPE_ARGS(tp) == NULL && args != NULL) {
+                    ID newArgs = generate_module_procedure_dummy_args(args);
+                    FUNCTION_TYPE_ARGS(tp) = newArgs;
                 }
-                MOD_PROC_ARGS(mp) = newArgs;
-            }
-            if (eId != NULL) {
-                MOD_PROC_EXT_ID(mp) = eId;
             }
         }
     }
@@ -396,29 +394,14 @@ fixup_all_module_procedures(void) {
 static void
 colloct_module_procedure_types(mod_proc_t mp, expr l) {
     if (mp != NULL) {
-        list lp;
         expv v;
-        TYPE_DESC tp;
+        TYPE_DESC ftp;
 
-        if (MOD_PROC_TYPE(mp) != NULL) {
-            v = list3(LIST, 
+        if ((ftp = MOD_PROC_TYPE(mp)) != NULL) {
+            v = list2(LIST,
                       expv_int_term(INT_CONSTANT, type_INT, 1),
-                      expv_any_term(IDENT, (void *)MOD_PROC_TYPE(mp)),
-                      expv_any_term(IDENT, (void *)MOD_PROC_EXT_ID(mp)));
+                      expv_any_term(IDENT, (void *)ftp));
             list_put_last(l, v);
-        }
-
-        FOR_ITEMS_IN_LIST(lp, MOD_PROC_ARGS(mp)) {
-            v = LIST_ITEM(lp);
-            if (v != NULL) {
-                tp = EXPV_TYPE(v);
-                if (tp != NULL) {
-                    v = list2(LIST,
-                              expv_int_term(INT_CONSTANT, type_INT, 0),
-                              expv_any_term(IDENT, (void *)tp));
-                    list_put_last(l, v);
-                }
-            }
         }
     }
 }
@@ -458,9 +441,13 @@ collect_all_module_procedures_types(void) {
 void
 dump_module_procedure(mod_proc_t mp, FILE *fd) {
     if (mp != NULL) {
+        TYPE_DESC tp = MOD_PROC_TYPE(mp);
         gen_proc_t gp = MOD_PROC_GEN_PROC(mp);
         const char *genName = (gp != NULL) ? GEN_PROC_NAME(gp) : "";
         const char *modName = MOD_PROC_NAME(mp);
+
+        tp = get_bottom_ref_type(tp);
+
         fprintf(fd, "'%s:%s', returns: ", genName, modName);
         if (MOD_PROC_TYPE(mp) != NULL) {
             print_type(MOD_PROC_TYPE(mp), fd, TRUE);
@@ -468,13 +455,12 @@ dump_module_procedure(mod_proc_t mp, FILE *fd) {
             fprintf(fd, "unknown");
         }
         fprintf(fd, "\nargs =\n");
-        if (MOD_PROC_ARGS(mp) != NULL) {
-            list lp;
-            expv v;
-            FOR_ITEMS_IN_LIST(lp, MOD_PROC_ARGS(mp)) {
-                v = LIST_ITEM(lp);
-                fprintf(fd, "\t'%s', ", SYM_NAME(EXPR_SYM(v)));
-                print_type(EXPV_TYPE(v), fd, TRUE);
+
+        if (FUNCTION_TYPE_ARGS(tp) != NULL) {
+            ID ip;
+            FOREACH_ID(ip, FUNCTION_TYPE_ARGS(tp)) {
+                fprintf(fd, "\t'%s', ", SYM_NAME(ID_SYM(ip)));
+                print_type(ID_TYPE(ip), fd, TRUE);
             }
         } else {
             fprintf(stderr, "()");

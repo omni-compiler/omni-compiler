@@ -616,5 +616,8 @@ extern TYPE_DESC basic_type_desc[];
 #define FUNCTION_TYPE_PASS_ARG(tp) ((tp)->proc_info.pass_arg)
 #define FUNCTION_TYPE_PASS_ARG_TYPE(tp) ((tp)->proc_info.pass_arg_type)
 
+#define IS_PROCEDURE_POINTER(tp) ((tp) != NULL && \
+                                  IS_PROCEDURE_TYPE(tp) && \
+                                  TYPE_REF(tp) != NULL)
 
 #endif /* _F_DATATYPE_H_ */

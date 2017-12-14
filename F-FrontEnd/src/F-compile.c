@@ -4044,6 +4044,11 @@ end_procedure()
                     } else if (EXT_IS_OFMODULE(intrDef)) {
                         continue;
                     } else if (id != NULL) {
+                        if (TYPE_IS_PROCEDURE(ID_TYPE(id)) &&
+                            TYPE_REF(ID_TYPE(id)) != NULL) {
+                            /* id is a procedure pointer */
+                            continue;
+                        }
                         ep = PROC_EXT_ID(id);
                     }
                     if (ep == NULL || EXT_TAG(ep) != STG_EXT ||
@@ -4971,7 +4976,6 @@ extern ID find_ident_head(SYMBOL s, ID head);
 static void
 import_module_procedure(const char * genName, EXT_ID mep) {
     TYPE_DESC tp = EXT_PROC_TYPE(mep);
-    expr modArgs = EXT_PROC_ARGS(mep);
     /*
      * TODO(shingo-s):
      *   If the module procedure is private and use-associated,
@@ -4980,12 +4984,10 @@ import_module_procedure(const char * genName, EXT_ID mep) {
      *   make invisible.
      */
     const char * modName = SYM_NAME(EXT_SYM(mep));
-    mod_proc_t mp = add_module_procedure(genName,
-                                         modName,
-                                         tp,
-                                         modArgs,
-                                         NULL);
-    MOD_PROC_EXT_ID(mp) = mep;
+    (void)add_module_procedure(genName,
+                               modName,
+                               tp,
+                               NULL);
 }
 
 /**
@@ -6205,10 +6207,14 @@ compile_interface_MODULEPROCEDURE_statement(expr x)
     genProcName = SYM_NAME(EXT_SYM(CURRENT_INTERFACE));
 
     FOR_ITEMS_IN_LIST(lp, EXPR_ARG1(x)) {
+        TYPE_DESC tp;
         ident = LIST_ITEM(lp);
         assert(EXPR_CODE(ident) == IDENT);
-        id = find_ident(EXPR_SYM(ident));
-        if (id == NULL) {
+        id = find_ident_outer_scope(EXPR_SYM(ident));
+        if (id != NULL &&
+            ID_TYPE(id) != NULL
+            && IS_PROCEDURE_POINTER(ID_TYPE(id))) {
+        } else if (id == NULL) {
             id = declare_ident(EXPR_SYM(ident), CL_PROC);
         } else {
             switch_id_to_proc(id);
@@ -6223,12 +6229,19 @@ compile_interface_MODULEPROCEDURE_statement(expr x)
         EXT_LINE(ep) = EXPR_LINE(x);
         EXT_PROC_CLASS(ep) = EP_MODULE_PROCEDURE;
         EXT_PROC_IS_MODULE_SPECIFIED(ep) = (EXPR_INT(EXPR_ARG2(x)) == 1);
+
         if (EXT_PROC_TYPE(ep) != NULL) {
             FUNCTION_TYPE_SET_MOUDLE_PROCEDURE(EXT_PROC_TYPE(ep));
         }
 
+        if (ID_TYPE(id) != NULL) {
+            tp = ID_TYPE(id);
+        } else {
+            tp = EXT_PROC_TYPE(ep);
+        }
+
         if (add_module_procedure(genProcName, SYM_NAME(EXPR_SYM(ident)),
-                                 NULL, NULL, NULL) == NULL) {
+                                 tp, NULL) == NULL) {
             fatal("can't add a module procedure '%s' for '%s'.",
                   SYM_NAME(EXPR_SYM(ident)), genProcName);
             /* not reached. */
