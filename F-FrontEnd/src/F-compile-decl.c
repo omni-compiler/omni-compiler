@@ -413,7 +413,8 @@ declare_procedure(enum name_class class,
 
         /* make local entry */
         id = declare_ident(s, CL_PROC);
-        ID_ORDER(id) = order_sequence++;
+        if (ID_ORDER(id) == 0)
+            ID_ORDER(id) = order_sequence++;
 
         if (result_opt != NULL) {
             PROC_RESULTVAR(id) = result_opt;
@@ -5720,6 +5721,7 @@ compile_procedure_declaration(expr x)
          * Now setup lines and types
          */
         ID_LINE(id) = EXPR_LINE(x);
+        ID_ORDER(id) = order_sequence++;
 
         TYPE_ATTR_FLAGS(ID_TYPE(id)) |= type_attr_flags;
         TYPE_BIND_NAME(ID_TYPE(id)) = bind_name;
