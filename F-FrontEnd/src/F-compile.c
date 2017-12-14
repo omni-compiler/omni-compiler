@@ -2284,6 +2284,9 @@ end_declaration()
     expv v;
     TYPE_DESC tp;
     UNIT_CTL uc = CURRENT_UNIT_CTL;
+    int is_subroutine = FALSE;
+    int is_pure = FALSE;
+    int is_elemental = FALSE;
 
     if (CURRENT_STATE == INENUM)
         error("expects END ENUM");
@@ -2343,7 +2346,7 @@ end_declaration()
                  */
                 tp = ID_TYPE(resId);
             }
-
+            
             if (IS_FUNCTION_TYPE(tp)) {
                 ID_TYPE(myId) = NULL;
                 declare_id_type(myId, tp);
@@ -2354,6 +2357,21 @@ end_declaration()
 
                 replace_or_assign_type(&FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(myId)), tp);
                 declare_id_type(resId, tp);
+            }
+
+            if ((TYPE_IS_ELEMENTAL(myId) ||
+                 PROC_IS_ELEMENTAL(myId))) {
+                if (IS_ARRAY_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp))) {
+                    error_at_id(myId,
+                                "result type of ELEMENTAL  "
+                                "should not be an array");
+                }
+                if (TYPE_IS_POINTER(FUNCTION_TYPE_RETURN_TYPE(tp)) ||
+                    TYPE_IS_ALLOCATABLE(FUNCTION_TYPE_RETURN_TYPE(tp))) {
+                    error_at_id(myId,
+                                "result type of ELEMENTAL  "
+                                "should not have POINTER or ALLOCATABLE attributes");
+                }
             }
 
             resId = declare_function_result_id(resS, ID_TYPE(resId));
@@ -2403,6 +2421,10 @@ end_declaration()
             }
         }
 
+        if (IS_SUBR(ID_TYPE(myId))) {
+            is_subroutine = TRUE;
+        }
+
         /* for recursive */
         assert(ID_TYPE(myId) != NULL);
         if (TYPE_IS_RECURSIVE(myId) ||
@@ -2415,12 +2437,14 @@ end_declaration()
             PROC_IS_PURE(myId)) {
             TYPE_SET_PURE(ID_TYPE(myId));
             TYPE_SET_PURE(EXT_PROC_TYPE(myEId));
+            is_pure = TRUE;
         }
         /* for elemental */
         if (TYPE_IS_ELEMENTAL(myId) ||
             PROC_IS_ELEMENTAL(myId)) {
             TYPE_SET_ELEMENTAL(ID_TYPE(myId));
             TYPE_SET_ELEMENTAL(EXT_PROC_TYPE(myEId));
+            is_elemental = TRUE;
         }
         /* for impure */
         if (TYPE_IS_IMPURE(myId)) {
@@ -2794,6 +2818,10 @@ end_declaration()
                        !(ID_IS_DUMMY_ARG(ip))) {
                 warning_at_id(ip, "INTENT is applied only "
                               "to dummy argument");
+            } else if (TYPE_IS_VALUE(tp) &&
+                       !(ID_IS_DUMMY_ARG(ip))) {
+                warning_at_id(ip, "VALUE is applied only "
+                              "to dummy argument");
             } else if (ID_STORAGE(ip) != STG_TAGNAME && type_is_nopolymorphic_abstract(tp)) {
                 error_at_id(ip, "No derived type should not have the ABSTRACT attribute");
             } else if (TYPE_IS_CONTIGUOUS(tp) &&
@@ -2809,6 +2837,44 @@ end_declaration()
                     }
                     if (TYPE_IS_INTENT_IN(tp) || TYPE_IS_INTENT_OUT(tp) || TYPE_IS_INTENT_INOUT(tp)) {
                         error_at_id(ip, "PROCEDURE variable should not have the INTENT attribute");
+                    }
+                }
+            }
+
+            if (myId) {
+                if (is_pure) {
+                    if (is_subroutine) {
+                        if (ID_IS_DUMMY_ARG(ip) &&
+                            !TYPE_IS_POINTER(tp) &&
+                            !TYPE_IS_INTENT_IN(tp) &&
+                            !TYPE_IS_INTENT_OUT(tp) &&
+                            !TYPE_IS_INTENT_INOUT(tp) &&
+                            !TYPE_IS_VALUE(tp)) {
+                            error_at_id(ip,
+                                        "nonpointer argument of PURE function "
+                                        "should have INTENT(*) or VALUE attribute");
+                        }
+                    } else {
+                        if (ID_IS_DUMMY_ARG(ip) &&
+                            !TYPE_IS_POINTER(tp) && !TYPE_IS_INTENT_IN(tp) && !TYPE_IS_VALUE(tp)) {
+                            error_at_id(ip,
+                                        "nonpointer argument of PURE subroutine "
+                                        "should have INTENT(IN) or VALUE attribute");
+                        }
+                    }
+                }
+                if (is_elemental) {
+                    if (ID_IS_DUMMY_ARG(ip)) {
+                        if (TYPE_IS_POINTER(tp) || TYPE_IS_ALLOCATABLE(tp)) {
+                            error_at_id(ip,
+                                        "argument of ELEMENTAL procedure "
+                                        "should not have PONTER or ALLOCATABLE attribute");
+                        }
+                        if (TYPE_IS_COINDEXED(tp)) {
+                            error_at_id(ip,
+                                        "argument of ELEMENTAL procedure "
+                                        "should not be a coarray");
+                        }
                     }
                 }
             }
@@ -9299,12 +9365,12 @@ check_select_types(expr x, TYPE_DESC tp)
                 TYPE_DESC btp, btq;
                 btp = get_bottom_ref_type(tp);
                 btq = get_bottom_ref_type(tq);
-                if (type_is_strict_compatible(tp, tq, TRUE) 
+                if (type_is_strict_compatible(tp, tq, FALSE, TRUE) 
                     && TYPE_TAGNAME(btp) == TYPE_TAGNAME(btq)) 
                 {
                     error_at_node(x, "duplicate derived-types in SELECT TYPE construct");
                 }
-            } else if (type_is_strict_compatible(tp, tq, TRUE)) {
+            } else if (type_is_strict_compatible(tp, tq, FALSE, TRUE)) {
                 error_at_node(x, "duplicate types in SELECT TYPE construct");
                 return;
             }
