@@ -462,8 +462,9 @@ extern TYPE_DESC basic_type_desc[];
                 ((tp) != NULL && (TYPE_BASIC_TYPE(tp) == TYPE_VOID))
 #define IS_PROCEDURE_TYPE(tp) \
                 (IS_FUNCTION_TYPE(tp) || IS_SUBR(tp))
-#define IS_PROCEDURE_POINTER(tp) \
-                (IS_PROCEDURE_TYPE(tp) && (TYPE_REF(tp) != NULL))
+#define IS_PROCEDURE_POINTER(tp) ((tp) != NULL && \
+                                  IS_PROCEDURE_TYPE(tp) && \
+                                  TYPE_REF(tp) != NULL)
 #define IS_GENERIC_PROCEDURE_TYPE(tp) \
                 (IS_PROCEDURE_TYPE(tp) && FUNCTION_TYPE_IS_GENERIC(tp))
 #define IS_COMPLEX(tp) \
@@ -617,9 +618,5 @@ extern TYPE_DESC basic_type_desc[];
 #define FUNCTION_TYPE_HAS_PASS_ARG(tp) ((tp)->proc_info.has_pass_arg)
 #define FUNCTION_TYPE_PASS_ARG(tp) ((tp)->proc_info.pass_arg)
 #define FUNCTION_TYPE_PASS_ARG_TYPE(tp) ((tp)->proc_info.pass_arg_type)
-
-#define IS_PROCEDURE_POINTER(tp) ((tp) != NULL && \
-                                  IS_PROCEDURE_TYPE(tp) && \
-                                  TYPE_REF(tp) != NULL)
 
 #endif /* _F_DATATYPE_H_ */
