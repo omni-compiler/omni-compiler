@@ -373,6 +373,9 @@ compile_expression(expr x)
                 }
                 v = NULL;
                 tp = ID_TYPE(id);
+                if (TYPE_IS_MODIFIED(tp)) {
+                    tp = TYPE_REF(tp);
+                }
             } else {
                 id = NULL;
                 v = compile_lhs_expression(x1);
@@ -1288,6 +1291,9 @@ compile_lhs_expression(x)
             }
             v = NULL;
             tp = ID_TYPE(id);
+            if (TYPE_IS_MODIFIED(tp)) {
+                tp = TYPE_REF(tp);
+            }
 
             if (ID_CLASS(id) == CL_PROC && PROC_CLASS(id) == P_THISPROC) {
                 tp = FUNCTION_TYPE_RETURN_TYPE(tp);
@@ -1721,6 +1727,10 @@ compile_array_ref(ID id, expv vary, expr args, int isLeft) {
 
     tp = (id ? ID_TYPE(id) : EXPV_TYPE(vary));
 
+    if (TYPE_IS_MODIFIED(tp)) {
+        tp = TYPE_REF(tp);
+    }
+
     if (id != NULL && (
         (tp != NULL && IS_PROCEDURE_TYPE(tp)
          && !IS_ARRAY_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp))) ||
@@ -1893,6 +1903,10 @@ compile_array_ref(ID id, expv vary, expr args, int isLeft) {
         ID_ADDR(id) = vary;
 
         tp = ID_TYPE(id);
+        if (TYPE_IS_MODIFIED(tp)) {
+            tp = TYPE_REF(tp);
+        }
+
         if (id != NULL && ID_CLASS(id) == CL_PROC && PROC_CLASS(id) == P_THISPROC) {
             tp = FUNCTION_TYPE_RETURN_TYPE(tp);
         }
