@@ -40,14 +40,14 @@ void _XMP_init(int argc, char** argv)
     _XMP_initialize_async_comm_tab();
 #endif
     xmp_reduce_initialize();
+#ifdef _XMPT
+    xmpt_enabled = xmpt_initialize();
+#endif
   }
   _XMP_init_world(NULL, NULL);
   _XMP_runtime_working = _XMP_N_INT_TRUE;
   _XMP_check_reflect_type();
 
-#ifdef _XMPT
-  xmpt_enabled = xmpt_initialize();
-#endif
 
 }
 
