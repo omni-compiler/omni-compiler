@@ -1,3 +1,6 @@
+/* needed when searching for other linked versions of xmpt_initialize */
+#define _GNU_SOURCE
+#include <dlfcn.h>
 #include "xmp_internal.h"
 
 xmpt_callback_t xmpt_callback[XMPT_EVENT_ALL+1] = { 0 };
@@ -45,7 +48,12 @@ int xmpt_support_level[XMPT_EVENT_ALL+1] = {
 };
 
 int __attribute__((weak)) xmpt_initialize(){
-  return 0;
+  
+  int ret = 0;
+  int (*next_tool)() = (int(*)()) dlsym(RTLD_NEXT, "xmpt_initialize");
+  if (next_tool)
+    ret = next_tool();
+  return ret;
 }
 
 xmp_desc_t on_desc;
