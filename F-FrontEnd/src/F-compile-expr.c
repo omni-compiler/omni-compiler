@@ -527,7 +527,7 @@ compile_expression(expr x)
             lt = EXPV_TYPE(left);
             rt = EXPV_TYPE(right);
             if(rt == NULL)
-                right = compile_expression(EXPR_ARG2(x));                
+                right = compile_expression(EXPR_ARG2(x));
 
             bLType = bottom_type(lt);
             bRType = bottom_type(rt);
@@ -638,10 +638,10 @@ compile_expression(expr x)
                  */
 /* FEAST add start */
                 if(!lt || !rt){
-                  type_is_not_fixed = TRUE;
-                  goto doEmit;
+                    type_is_not_fixed = TRUE;
+                    goto doEmit;
                 }
-/* FEAST add end */                
+/* FEAST add end */
                 if (TYPE_IS_RESHAPED(lt) || TYPE_IS_RESHAPED(rt)) {
                     if (bType == NULL) {
                         tp = TYPE_IS_RESHAPED(rt) ? lt : rt;
@@ -711,7 +711,7 @@ compile_expression(expr x)
                 if(shape == NULL) {
                     delete_list(lshape);
                     delete_list(rshape);
-		    error("operation between non-conformable arrays. ");
+                    error("operation between non-conformable arrays. ");
                     goto err;
                 }
 
@@ -743,8 +743,12 @@ compile_expression(expr x)
             doEmit:
 /* FEAST CHANGE start */
             /* if (type_is_not_fixed) */
-            if(type_is_not_fixed && tp) {
+            if(type_is_not_fixed) {
 /* FEAST CHANGE end */
+                if (tp == NULL) {
+                    tp = new_type_desc();
+                }
+
                 // Apply the attribute NOT FIXED on the result type if one 
                 // operand type is NOT FIXED.
                 TYPE_SET_NOT_FIXED(bottom_type(tp));
@@ -926,13 +930,17 @@ compile_expression(expr x)
                 EXPV_TYPE(v) = ID_TYPE(id);
             }
 /* FEAST change start */
-            /* if(!expv_is_specification(v)) */
-            /*     error_at_node(EXPR_ARG1(x), */
-            /*         "character string length must be integer."); */
-            if(!expv_is_specification(v)){
-              EXPV_TYPE(v) = NULL;
-              sp_link_expr((expr)v, SP_ERR_CHAR_LEN, current_line);
+#if 0
+            if(!expv_is_specification(v)) {
+                error_at_node(EXPR_ARG1(x),
+                    "character string length must be integer.");
             }
+#else
+            if(!expv_is_specification(v)){
+                EXPV_TYPE(v) = NULL;
+                sp_link_expr((expr)v, SP_ERR_CHAR_LEN, current_line);
+            }
+#endif
 /* FEAST change  end  */
             return v;
         }
@@ -1091,6 +1099,7 @@ compile_ident_expression(expr x)
         goto done;
     }
 
+#if 0
     if (ID_IS_DUMMY_ARG(id) && ID_TYPE(id) == NULL) {
         /*
          * Don't declare (means not determine the type) this variable
@@ -1100,6 +1109,7 @@ compile_ident_expression(expr x)
         ret = expv_sym_term(F_VAR,NULL,ID_SYM(id));
         goto done;
     }
+#endif
 
     if(ID_CLASS(id) == CL_PARAM) {
         if(VAR_INIT_VALUE(id) != NULL) {
