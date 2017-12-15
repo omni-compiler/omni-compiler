@@ -126,4 +126,9 @@
 #define _XMP_DESC_TEMPLATE                      2201
 #define _XMP_DESC_ARRAY                         2202
 
+#define _XMP_COMM_NONE                          3000
+#define _XMP_COMM_REFLECT                       3001
+#define _XMP_COMM_REDUCE_SHADOW                 3002
+#define _XMP_COMM_GMOVE                         3003
+
 #endif // _XMP_CONSTANT

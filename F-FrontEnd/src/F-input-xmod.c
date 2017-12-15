@@ -1662,8 +1662,10 @@ input_FbasicType(xmlTextReaderPtr reader, HashTable * ht)
 
     } else {
         TYPE_REF(tp) = NULL;
-        if (TYPE_IS_PROCEDURE(tp)) {
+        if (IS_FUNCTION_TYPE(tp)) {
             TYPE_BASIC_TYPE(tp) = TYPE_FUNCTION;
+        } else if (IS_SUBR(tp)) {
+            TYPE_BASIC_TYPE(tp) = TYPE_SUBR;
         } else if (TYPE_IS_CLASS(tp)) {
             TYPE_BASIC_TYPE(tp) = TYPE_STRUCT;
         }
@@ -2214,7 +2216,34 @@ input_typeBoundGenericProcedure(xmlTextReaderPtr reader, HashTable * ht, ID *id)
 
     str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_operator");
     if (str != NULL) {
-        binding_attr_flags |= TYPE_BOUND_PROCEDURE_IS_OPERATOR;
+        if (strcmp(".not", name) == 0) {
+            binding_attr_flags |= TYPE_BOUND_PROCEDURE_IS_UNARY_OPERATOR;
+        } else if (
+            strcmp(".", name) == 0 ||
+            strcmp("**", name) == 0 ||
+            strcmp("*", name) == 0 ||
+            strcmp("/", name) == 0 ||
+            strcmp("==", name) == 0 ||
+            strcmp("/=", name) == 0 ||
+            strcmp("<", name) == 0 ||
+            strcmp("<=", name) == 0 ||
+            strcmp(">", name) == 0 ||
+            strcmp(">=", name) == 0 ||
+            strcmp(".eq.", name) == 0 ||
+            strcmp("/=", name) == 0 ||
+            strcmp(".lt.", name) == 0 ||
+            strcmp(".le.", name) == 0 ||
+            strcmp(".gt.", name) == 0 ||
+            strcmp(".ge.", name) == 0 ||
+            strcmp(".and.", name) == 0 ||
+            strcmp(".or.", name) == 0 ||
+            strcmp(".eqv.", name) == 0 ||
+            strcmp(".neqv.", name) == 0 ||
+            strcmp("//", name) == 0) {
+            binding_attr_flags |= TYPE_BOUND_PROCEDURE_IS_BINARY_OPERATOR;
+        } else {
+            binding_attr_flags |= TYPE_BOUND_PROCEDURE_IS_OPERATOR;
+        }
     }
 
     str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_assignment");
@@ -3419,6 +3448,16 @@ update_struct_type(HashTable * ht)
         tep = GetHashValue(e);
         tp = tep->tp;
         if (TYPE_BASIC_TYPE(tp) == TYPE_STRUCT) {
+            FOREACH_MEMBER(mem, tp) {
+                if (IS_PROCEDURE_TYPE(ID_TYPE(mem))) {
+                    if (TYPE_REF(ID_TYPE(mem)) &&
+                        TYPE_BASIC_TYPE(ID_TYPE(mem)) !=
+                        TYPE_BASIC_TYPE(TYPE_REF(ID_TYPE(mem)))) {
+                        TYPE_BASIC_TYPE(ID_TYPE(mem)) = TYPE_BASIC_TYPE(TYPE_REF(ID_TYPE(mem)));
+                    }
+                }
+            }
+
             FOREACH_TYPE_BOUND_GENERIC(mem, tp) {
                 /*
                  * generic type bound procedure

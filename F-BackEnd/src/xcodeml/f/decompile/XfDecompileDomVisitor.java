@@ -293,8 +293,7 @@ XfDecompileDomVisitor {
     }
 
     private void _writeFunctionSymbol(XfSymbol symbol,
-                                      Node funcTypeNode,
-                                      Node node) {
+                                      Node funcTypeNode) {
         XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
         XmfWriter writer = _context.getWriter();
         Node lowType = null;
@@ -311,7 +310,7 @@ XfDecompileDomVisitor {
         if (typeManager.isDecompilableType(returnTypeName) &&
                 (_isUnderModuleDef() == false ||
                  XmDomUtil.getAttrBool(funcTypeNode, "is_external"))) {
-
+            isFirstToken = false;
             XfType type = XfType.getTypeIdFromXcodemlTypeName(returnTypeName);
             if (type.isPrimitive()) {
                 writer.writeToken(type.fortranName());
@@ -322,55 +321,24 @@ XfDecompileDomVisitor {
                 lowType = typeList.getLast();
                 Node topType = typeList.getFirst();
 
+                if (!_writeTopType(typeList, true)) {
+                    throw new XmTranslationException(lowType,
+                            "Invalid return type.");
+                }
+
                 if ("FbasicType".equals(lowType.getNodeName())) {
                     isPublicEmit = XmDomUtil.getAttrBool(lowType, "is_public");
                     isPrivateEmit = XmDomUtil.getAttrBool(lowType, "is_private");
                     isProtectedEmit = XmDomUtil.getAttrBool(lowType, "is_protected");
                 }
 
-                boolean isClass = XmDomUtil.getAttrBool(lowType, "is_class");
-
                 String topTypeName = topType.getNodeName();
                 if ("FbasicType".equals(topTypeName)) {
                     isPublicEmit |= XmDomUtil.getAttrBool(topType, "is_public");
                     isPrivateEmit |= XmDomUtil.getAttrBool(topType, "is_private");
                     isProtectedEmit |= XmDomUtil.getAttrBool(lowType, "is_protected");
-                    if (!isClass) {
-                        _writeBasicType(topType, typeList);
-                    } else {
-                        writer.writeToken("CLASS");
-                        writer.writeToken("(");
-                        writer.writeToken("*");
-                        writer.writeToken(")");
-                    }
-
-                } else if ("FstructType".equals(topTypeName)) {
-                    Node typeParamValues = typeList.findChildNode("typeParamValues");
-                    String aliasStructTypeName =
-                        typeManager.getAliasTypeName(XmDomUtil.getAttr(topType,
-                                                                       "type"));
-                    if (isClass) {
-                        writer.writeToken("CLASS");
-                    } else {
-                        writer.writeToken("TYPE");
-                    }
-                    writer.writeToken("(");
-                    writer.writeToken(aliasStructTypeName);
-                    if (typeParamValues != null) {
-                        writer.writeToken("(");
-                        _invokeChildEnterAndWriteDelim(typeParamValues, ",");
-                        writer.writeToken(")");
-                    }
-                    writer.writeToken(")");
-                } else {
-                    /* topType is FfunctionType. */
-                    throw new XmTranslationException(node,
-                                                     "Top type must be a FfunctionType.");
                 }
-
-                _writeDeclAttr(topType, lowType);
             }
-            isFirstToken = false;
         }
 
         if (_isUnderModuleDef()) {
@@ -637,7 +605,7 @@ XfDecompileDomVisitor {
         // ================
         String topTypeName = topTypeChoice.getNodeName();
         if (!isProcedure && "FfunctionType".equals(topTypeName)) {
-            _writeFunctionSymbol(symbol, topTypeChoice, node);
+            _writeFunctionSymbol(symbol, topTypeChoice);
             _writeDeclAttr(topTypeChoice, lowTypeChoice);
         } else {
             if (!_writeTopType(typeList, true)) {
@@ -6743,7 +6711,7 @@ XfDecompileDomVisitor {
 
             Boolean writeValue = false;
             if (!_isNameDefinedWithUseStmt(symbol.getSymbolName()))
-              writeValue = _writeSymbolDecl(symbol, n);
+                writeValue = _writeSymbolDecl(symbol, n);
 
             Node valueNode = XmDomUtil.getElement(n, "value");
             if (writeValue && valueNode != null) {

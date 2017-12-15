@@ -128,7 +128,11 @@ public class XobjectDef extends PropObject implements IXobject, XobjectVisitable
   {
     this.def = def;
   }
-    
+
+  public boolean isPragma(){
+    return def != null && def.Opcode() == Xcode.PRAGMA_LINE;
+  }
+  
   public boolean isFuncDef()
   {
     return def != null && (def.Opcode() == Xcode.FUNCTION_DEFINITION ||

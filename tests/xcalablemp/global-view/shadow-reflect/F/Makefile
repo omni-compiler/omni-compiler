@@ -18,6 +18,7 @@ run: full.x
 	$(XRUN) -n 8 ./ordinal_reflect.x
 	$(XRUN) -n 4 ./full2.x
 	$(XRUN) -n 4 ./full3.x
+	$(XRUN) -n 16 ./reduce_shadow.x
 
 RUN:
 	mkdir RUN

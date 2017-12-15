@@ -216,10 +216,16 @@ static void _XMP_reflect_shadow_FULL_BCAST(void *array_addr, _XMP_array_t *array
 
 
 void _XMP_init_reflect_sched(_XMP_reflect_sched_t *sched){
-  sched->is_periodic = -1; /* not used yet */
+  //sched->is_periodic = -1; /* not used yet */
+  sched->reflect_is_initialized = 0;
+  sched->reduce_is_initialized = 0;
+  sched->prev_pcopy_sched_type = 0;
   sched->datatype_lo = MPI_DATATYPE_NULL;
   sched->datatype_hi = MPI_DATATYPE_NULL;
-  for (int j = 0; j < 4; j++) sched->req[j] = MPI_REQUEST_NULL;
+  for (int j = 0; j < 4; j++){
+    sched->req[j] = MPI_REQUEST_NULL;
+    sched->req_reduce[j] = MPI_REQUEST_NULL;
+  }
   sched->lo_send_buf = NULL;
   sched->lo_recv_buf = NULL;
   sched->hi_send_buf = NULL;
@@ -234,9 +240,14 @@ void _XMP_finalize_reflect_sched(_XMP_reflect_sched_t *sched, _Bool free_buf){
   if (sched->datatype_hi != MPI_DATATYPE_NULL)
     MPI_Type_free(&sched->datatype_hi);
 
-  for (int j = 0; j < 4; j++)
-    if (sched->req[j] != MPI_REQUEST_NULL)
+  for (int j = 0; j < 4; j++){
+    if (sched->req[j] != MPI_REQUEST_NULL){
       MPI_Request_free(&sched->req[j]);
+    }
+    if (sched->req_reduce[j] != MPI_REQUEST_NULL){
+      MPI_Request_free(&sched->req_reduce[j]);
+    }
+  }
 
   if (free_buf){
     _XMP_free(sched->lo_send_buf);
@@ -373,14 +384,18 @@ void _XMP_init_shadow_dim(_XMP_array_t *array, int i, int type, int lo, int hi){
 
 	if (!ai->reflect_sched){
 	  _XMP_reflect_sched_t *sched = _XMP_alloc(sizeof(_XMP_reflect_sched_t));
-	  sched->is_periodic = -1; /* not used yet */
-	  sched->datatype_lo = MPI_DATATYPE_NULL;
-	  sched->datatype_hi = MPI_DATATYPE_NULL;
-	  for (int j = 0; j < 4; j++) sched->req[j] = MPI_REQUEST_NULL;
-	  sched->lo_send_buf = NULL;
-	  sched->lo_recv_buf = NULL;
-	  sched->hi_send_buf = NULL;
-	  sched->hi_recv_buf = NULL;
+	  _XMP_init_reflect_sched(sched);
+	/*   sched->is_periodic = -1; /\* not used yet *\/ */
+	/*   sched->datatype_lo = MPI_DATATYPE_NULL; */
+	/*   sched->datatype_hi = MPI_DATATYPE_NULL; */
+	/*   for (int j = 0; j < 4; j++){ */
+	/*     sched->req[j] = MPI_REQUEST_NULL; */
+	/*     sched->req_reduce[j] = MPI_REQUEST_NULL; */
+	/*   } */
+	/*   sched->lo_send_buf = NULL; */
+	/*   sched->lo_recv_buf = NULL; */
+	/*   sched->hi_send_buf = NULL; */
+	/*   sched->hi_recv_buf = NULL; */
 	  ai->reflect_sched = sched;
 	}
 	ai->reflect_acc_sched = NULL;
