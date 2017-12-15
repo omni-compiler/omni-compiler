@@ -3282,7 +3282,37 @@ check_labels_in_block(BLOCK_ENV block) {
 
 
 static int
-is_operator_proc(TYPE_DESC ftp)
+is_unary_operator_proc(TYPE_DESC ftp)
+{
+    ID arg1;
+    ID args;
+
+    if (ftp == NULL) {
+        return FALSE;
+    }
+
+    args = FUNCTION_TYPE_ARGS(ftp);
+
+    if (IS_SUBR(ftp)) {
+        return FALSE;
+    }
+
+    if (args == NULL || ID_NEXT(args) != NULL) {
+        return FALSE;
+    }
+
+    arg1 = args;
+
+    if (ID_TYPE(arg1) == NULL || !(TYPE_IS_INTENT_IN(ID_TYPE(arg1)))) {
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+
+static int
+is_binary_operator_proc(TYPE_DESC ftp)
 {
     ID arg1;
     ID arg2;
@@ -3783,6 +3813,8 @@ check_type_bound_procedures()
                 bindto = find_struct_member(tp, ID_SYM(binding));
                 TBP_BINDING_ATTRS(bindto) |= TBP_BINDING_ATTRS(mem) & (
                         TYPE_BOUND_PROCEDURE_IS_OPERATOR |
+                        TYPE_BOUND_PROCEDURE_IS_UNARY_OPERATOR |
+                        TYPE_BOUND_PROCEDURE_IS_BINARY_OPERATOR |
                         TYPE_BOUND_PROCEDURE_IS_ASSIGNMENT |
                         TYPE_BOUND_PROCEDURE_WRITE |
                         TYPE_BOUND_PROCEDURE_READ |
@@ -3817,16 +3849,37 @@ check_type_bound_procedures()
             if ((ftp = TYPE_REF(ID_TYPE(tbp))) != NULL) {
                 /* already bounded, so check type */
                 if (TBP_IS_OPERATOR(tbp)) {
-                    if (!is_operator_proc(ftp)) {
-                        error_at_id(tbp, "should be a function");
+                    if (!is_unary_operator_proc(ftp) && !is_binary_operator_proc(ftp)) {
+                        error_at_id(tbp,
+                                    "%s is refered as a unary or binary operator,"
+                                    " but it has a unexpected type", ID_NAME(tbp));
+                        return;
+                    }
+                }
+                if (TBP_IS_UNARY_OPERATOR(tbp)) {
+                    if (!is_unary_operator_proc(ftp)) {
+                        error_at_id(tbp,
+                                    "%s is refered as a unary operator,"
+                                    " but it has a unexpected type", ID_NAME(tbp));
+                        return;
+                    }
+                }
+                if (TBP_IS_BINARY_OPERATOR(tbp)) {
+                    if (!is_binary_operator_proc(ftp)) {
+                        error_at_id(tbp,
+                                    "%s is refered as a binary operator,"
+                                    " but it has a unexpected type", ID_NAME(tbp));
                         return;
                     }
                 }
                 if (TBP_IS_ASSIGNMENT(tbp)) {
                     if (!is_assignment_proc(ftp)) {
-                        error_at_id(tbp, "not assiginment");
+                        error_at_id(tbp,
+                                    "%s is refered as a assignment operator,"
+                                    " but it has a unexpected type", ID_NAME(tbp));
                         return;
                     }
+
                 }
             }
 

@@ -5872,7 +5872,6 @@ compile_type_bound_generic_procedure(expr x)
             if (id != NULL) {
                 // Multiple GENERIC statement for the same id. Have to add to 
                 // the binding list. 
-                
                 last_ip = TBP_BINDING(id);
                 while(ID_NEXT(last_ip) != NULL) {
                     last_ip = ID_NEXT(last_ip);
@@ -5886,26 +5885,48 @@ compile_type_bound_generic_procedure(expr x)
             expr arg;
             arg = EXPR_ARG1(generics_spec);
             SYMBOL sym = find_symbol(EXPR_CODE_SYMBOL(EXPR_CODE(arg)));
-            if ((id = find_struct_member(struct_tp, sym)) != NULL) {
-                error("already declared");
-                return;
+            if ((id = find_struct_member(struct_tp, sym)) == NULL) {
+                id = declare_ident(sym, CL_TYPE_BOUND_PROC);
             }
-            id = declare_ident(sym, CL_TYPE_BOUND_PROC);
-            if (strcmp("=", SYM_NAME(sym)) == 0) {
-                binding_attr_flags |= TYPE_BOUND_PROCEDURE_IS_ASSIGNMENT;
-            } else {
-                binding_attr_flags |= TYPE_BOUND_PROCEDURE_IS_OPERATOR;
+            switch (EXPR_CODE(arg)) {
+                case F95_ASSIGNOP:
+                    binding_attr_flags |= TYPE_BOUND_PROCEDURE_IS_ASSIGNMENT;
+                    break;
+                case F95_PLUSOP:
+                case F95_MINUSOP:
+                    binding_attr_flags |= TYPE_BOUND_PROCEDURE_IS_OPERATOR;
+                    break;
+                case F95_NOTOP:
+                    binding_attr_flags |= TYPE_BOUND_PROCEDURE_IS_UNARY_OPERATOR;
+                case F95_DOTOP:
+                case F95_POWEOP:
+                case F95_MULOP:
+                case F95_DIVOP:
+                case F95_EQOP:
+                case F95_NEOP:
+                case F95_LTOP:
+                case F95_LEOP:
+                case F95_GEOP:
+                case F95_GTOP:
+                case F95_ANDOP:
+                case F95_OROP:
+                case F95_EQVOP:
+                case F95_NEQVOP:
+                case F95_CONCATOP:
+                    binding_attr_flags |= TYPE_BOUND_PROCEDURE_IS_BINARY_OPERATOR;
+                    break;
+                default:
+                    binding_attr_flags |= TYPE_BOUND_PROCEDURE_IS_OPERATOR;
+                    break;
             }
         } break;
         case F95_USER_DEFINED:{
             expr arg;
             arg = EXPR_ARG1(generics_spec);
-            if ((id = find_struct_member(struct_tp, EXPR_SYM(arg))) != NULL) {
-                error("already declared");
-                return;
+            if ((id = find_struct_member(struct_tp, EXPR_SYM(arg))) == NULL) {
+                id = declare_ident(EXPR_SYM(arg), CL_TYPE_BOUND_PROC);
+                binding_attr_flags |= TYPE_BOUND_PROCEDURE_IS_OPERATOR;
             }
-            id = declare_ident(EXPR_SYM(arg), CL_TYPE_BOUND_PROC);
-            binding_attr_flags |= TYPE_BOUND_PROCEDURE_IS_OPERATOR;
         } break;
         case F03_GENERIC_WRITE: {
             expr formatted = EXPR_ARG1(generics_spec);
