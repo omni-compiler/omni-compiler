@@ -6813,7 +6813,7 @@ compile_ALLOCATE_DEALLOCATE_statement(expr x)
 
     FOR_ITEMS_IN_LIST(lp, args) {
         if (tp) {
-            if (type_is_compatible_for_allocation(EXPV_TYPE(LIST_ITEM(lp)),
+            if (!type_is_compatible_for_allocation(EXPV_TYPE(LIST_ITEM(lp)),
                                                   tp)) {
                 error("type incompatible");
                 return;
@@ -6825,14 +6825,14 @@ compile_ALLOCATE_DEALLOCATE_statement(expr x)
         }
 
         if (vsource) {
-            if (type_is_compatible_for_allocation(EXPV_TYPE(LIST_ITEM(lp)),
+            if (!type_is_compatible_for_allocation(EXPV_TYPE(LIST_ITEM(lp)),
                                                   EXPV_TYPE(vsource))) {
                 error("type incompatible");
                 return;
             }
         }
         if (vmold) {
-            if (type_is_compatible_for_allocation(EXPV_TYPE(LIST_ITEM(lp)),
+            if (!type_is_compatible_for_allocation(EXPV_TYPE(LIST_ITEM(lp)),
                                                   EXPV_TYPE(vmold))) {
                 return;
                 error("type incompatible");
