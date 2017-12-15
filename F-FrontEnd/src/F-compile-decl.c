@@ -264,7 +264,7 @@ declare_procedure(enum name_class class,
                   expr prefix_spec, expr result_opt, expr bind_opt)
 {
     SYMBOL s = NULL;
-    ID id, ip, last = NULL;
+    ID id = NULL, ip, last = NULL;
     EXT_ID ep;
     int recursive = FALSE;
     int pure = FALSE;
@@ -413,6 +413,9 @@ declare_procedure(enum name_class class,
 
         /* make local entry */
         id = declare_ident(s, CL_PROC);
+        if (ID_ORDER(id) == 0)
+            ID_ORDER(id) = order_sequence++;
+
         if (result_opt != NULL) {
             PROC_RESULTVAR(id) = result_opt;
         }
@@ -656,6 +659,10 @@ declare_procedure(enum name_class class,
         EXT_ID interface;
         int arg_len;
         list lp;
+
+        if (id != NULL && ID_TYPE(id) != NULL) {
+            FUNCTION_TYPE_SET_INTERFACE(ID_TYPE(id));
+        }
 
         arg_len = 0;
         FOR_ITEMS_IN_LIST(lp, args) {
@@ -5720,6 +5727,7 @@ compile_procedure_declaration(expr x)
          * Now setup lines and types
          */
         ID_LINE(id) = EXPR_LINE(x);
+        ID_ORDER(id) = order_sequence++;
 
         TYPE_ATTR_FLAGS(id) |= type_attr_flags;
         TYPE_ATTR_FLAGS(ID_TYPE(id)) |= type_attr_flags;

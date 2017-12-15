@@ -4284,6 +4284,10 @@ end_procedure()
 
 
     FOREACH_EXT_ID(ep, LOCAL_EXTERNAL_SYMBOLS) {
+        if (EXT_PROC_TYPE(ep) != NULL || !IS_PROCEDURE_TYPE(EXT_PROC_TYPE(ep))) {
+            continue;
+        }
+
         /*
          * Update procedure variables
          */
@@ -6017,6 +6021,10 @@ compile_INTERFACE_statement(expr x)
         s = find_symbol(genBlankInterfaceName());
     }
 
+    if (s != NULL && SYM_NAME(s) != NULL) {
+        add_generic_procedure(SYM_NAME(s), NULL);
+    }
+
     ep = new_external_id(s);
     EXT_LINE(ep) = EXPR_LINE(x);
     EXT_TAG(ep) = STG_EXT;
@@ -6120,11 +6128,14 @@ end_interface()
             ID_STORAGE(fid) = STG_EXT;
             PROC_CLASS(fid) = P_EXTERNAL;
             PROC_EXT_ID(fid) = ep;
+            ID_ORDER(fid) = ID_ORDER(EXT_PROC_ID_LIST(ep));
             EXT_PROC_CLASS(ep) = EP_INTERFACE_DEF;
-        } else if(IS_SUBR(EXT_PROC_TYPE(ep))) {
-            hasSub = TRUE;
         } else if(EXT_PROC_IS_MODULE_PROCEDURE(ep) == FALSE) {
-            hasFunc = TRUE;
+            if (IS_SUBR(EXT_PROC_TYPE(ep))) {
+                hasSub = TRUE;
+            } else {
+                hasFunc = TRUE;
+            }
             fid = declare_ident(EXT_SYM(ep), CL_PROC);
             if(fid == NULL)
                 return;
@@ -6133,6 +6144,7 @@ end_interface()
             PROC_CLASS(fid) = P_EXTERNAL;
             PROC_EXT_ID(fid) = ep;
             EXT_PROC_CLASS(ep) = EP_INTERFACE_DEF;
+            ID_ORDER(fid) = ID_ORDER(EXT_PROC_ID_LIST(ep));
         }
 
         if (INTF_IS_ABSTRACT(EXT_PROC_INTERFACE_INFO(intr))) {
@@ -6333,7 +6345,7 @@ compile_separate_MODULEPROCEDURE_statement(expr x)
         error("parent should be a procedure");
         return;
     } else if(!TYPE_IS_MODULE(ID_TYPE(ip))) {
-        error("parent should have a modure prefix");
+        error("parent should have a module prefix");
         return;
     } else if (FUNCTION_TYPE_IS_DEFINED(ID_TYPE(ip))) {
         error("%s is already defined", SYM_NAME(ID_SYM(ip)));
