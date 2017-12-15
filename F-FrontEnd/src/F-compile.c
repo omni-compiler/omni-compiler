@@ -2645,8 +2645,15 @@ end_declaration()
             /* multiple type attribute check */
             for (check = type_attr_checker; check->flag; check++) {
                 if (TYPE_ATTR_FLAGS(tp) & check->flag) {
+                    uint32_t mask = 0xFFFFFFFF;
+                    if (TYPE_IS_PROCEDURE(tp)) {
+                        /*
+                         * The procedure pointer can have a BIND attribute.
+                         */
+                        mask &= ~(TYPE_ATTR_POINTER | TYPE_ATTR_BIND);
+                    }
                     uint32_t a = TYPE_ATTR_FLAGS(tp) &
-                        ~check->acceptable_flags;
+                        ~check->acceptable_flags & mask;
                     if (debug_flag) {
                         fprintf(debug_fp,
                                 "ID '%s' attr 0x%08x : "
@@ -2660,7 +2667,7 @@ end_declaration()
                                 ~check->acceptable_flags,
                                 a);
                     }
-                    if (TYPE_ATTR_FLAGS(tp) & ~check->acceptable_flags) {
+                    if (TYPE_ATTR_FLAGS(tp) & ~check->acceptable_flags & mask) {
                         struct type_attr_check *e;
                         for (e = type_attr_checker; e->flag; e++) {
                             if (TYPE_ATTR_FLAGS(tp) & e->flag) {
