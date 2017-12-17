@@ -1,6 +1,6 @@
 _init_lib = None
 _libname = ""
-_procs   = 0
+_nodes   = 0
 
 def init_py(lib, comm):
     global _init_lib
@@ -11,10 +11,10 @@ def init_py(lib, comm):
 def finalize_py():
     _init_lib.xmp_finalize()
 
-def spawn(libname, procs):
-    global _libname, _procs
+def spawn(libname, nodes):
+    global _libname, _nodes
     _libname = libname
-    _procs   = procs
+    _nodes   = nodes
     
 def run(funcname, *args):
     from mpi4py import MPI
@@ -45,7 +45,7 @@ def run(funcname, *args):
     tmpf.write("lib.xmp_finalize()\n")
     tmpf.write("comm.Disconnect()\n")
     tmpf.close()
-    comm = MPI.COMM_SELF.Spawn(sys.executable, args=[tmpf.name], maxprocs=_procs)
+    comm = MPI.COMM_SELF.Spawn(sys.executable, args=[tmpf.name], maxprocs=_nodes)
     for a in args:
         comm.Bcast(a, root=MPI.ROOT)
         
