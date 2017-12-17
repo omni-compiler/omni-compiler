@@ -1,5 +1,5 @@
 _init_lib=None
-def init_py(libname, comm):
+def init(libname, comm):
     import ctypes
     global _init_lib
     fcomm   = comm.py2f()
@@ -7,7 +7,7 @@ def init_py(libname, comm):
     _init_lib.xmp_init_py(fcomm)
     return _init_lib
 
-def finalize_py():
+def finalize():
     _init_lib.xmp_finalize()
 
 def spawn(libname, nodes, funcname, *args):
