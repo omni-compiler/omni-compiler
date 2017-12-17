@@ -1,10 +1,11 @@
-_init_lib = None
-
-def init_py(lib, comm):
+_init_lib=None
+def init_py(libname, comm):
+    import ctypes
     global _init_lib
     fcomm   = comm.py2f()
-    _init_lib = lib
-    lib.xmp_init_py(fcomm)
+    _init_lib = ctypes.CDLL(libname)
+    _init_lib.xmp_init_py(fcomm)
+    return _init_lib
 
 def finalize_py():
     _init_lib.xmp_finalize()
@@ -43,5 +44,5 @@ def spawn(libname, nodes, funcname, *args):
         comm.Bcast(a, root=MPI.ROOT)
         
     comm.Disconnect()
-#    os.unlink(tmpf.name)
+    os.unlink(tmpf.name)
    
