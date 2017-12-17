@@ -1,6 +1,4 @@
 _init_lib = None
-_libname = ""
-_nodes   = 0
 
 def init_py(lib, comm):
     global _init_lib
@@ -11,12 +9,7 @@ def init_py(lib, comm):
 def finalize_py():
     _init_lib.xmp_finalize()
 
-def spawn(libname, nodes):
-    global _libname, _nodes
-    _libname = libname
-    _nodes   = nodes
-    
-def run(funcname, *args):
+def spawn(libname, nodes, funcname, *args):
     from mpi4py import MPI
     import tempfile,os,sys
 
@@ -31,7 +24,7 @@ def run(funcname, *args):
         tmpf.write(argname + " = numpy.zeros(" + str(a.size) + ")\n")
         tmpf.write("comm.Bcast(" + argname + ", root=0)\n")
         
-    tmpf.write("lib = CDLL(\"" + _libname + "\")\n")
+    tmpf.write("lib = CDLL(\"" + libname + "\")\n")
     tmpf.write("lib.xmp_init_py(comm.py2f())\n")
 
     tmpf.write("lib." + funcname + "(")
@@ -45,10 +38,10 @@ def run(funcname, *args):
     tmpf.write("lib.xmp_finalize()\n")
     tmpf.write("comm.Disconnect()\n")
     tmpf.close()
-    comm = MPI.COMM_SELF.Spawn(sys.executable, args=[tmpf.name], maxprocs=_nodes)
+    comm = MPI.COMM_SELF.Spawn(sys.executable, args=[tmpf.name], maxprocs=nodes)
     for a in args:
         comm.Bcast(a, root=MPI.ROOT)
         
     comm.Disconnect()
-    os.unlink(tmpf.name)
+#    os.unlink(tmpf.name)
    
