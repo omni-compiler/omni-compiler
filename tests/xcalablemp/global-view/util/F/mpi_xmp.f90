@@ -1,8 +1,11 @@
-program main
-  call xmp_init()
-
-  call ixmp_sub()
-
+program test
+  include 'mpif.h'
+  integer ierror
+  
+  call MPI_INIT(ierror)
+  call xmp_init(MPI_COMM_WORLD)
+  call hoge()
   call xmp_finalize()
-
-end program
+  call MPI_FINALIZE(ierror)
+  
+end program test

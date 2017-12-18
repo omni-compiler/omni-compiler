@@ -1,9 +1,3 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package xcodeml.util;
 
 import xcodeml.util.XmLanguage;
@@ -26,6 +20,7 @@ public class XmOption
     private static boolean _xcalableMPasync = false;
 
     private static boolean _tlog = false;
+    private static boolean _Fonesided = false;
 
     /** if compiling XcalableACC is enabled */
     private static boolean _xcalableACC = false;
@@ -168,6 +163,19 @@ public class XmOption
         _tlog = enable;
     }
 
+    /**
+     * Sets compiler to or not to use one-sided functions in Fortran.
+    */
+    public static void setFonesided(boolean enable)
+    {
+        _Fonesided = enable;
+    }
+
+    public static boolean isFonesided()
+    {
+        return _Fonesided;
+    }
+  
     /**
      * Checks does compiler use tlog for MPI.
      */

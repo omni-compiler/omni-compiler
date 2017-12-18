@@ -332,7 +332,7 @@ import_module(const SYMBOL name,
 }
 
 /**
- * import public identifiers from module-manager.
+ * import public identifiers from module-manager as submodule.
  */
 int
 import_submodule(const SYMBOL module_name,

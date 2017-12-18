@@ -1,9 +1,3 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package exc.object;
 
 /**
@@ -16,7 +10,7 @@ public class EnumType extends Xtype
     /** original type (to suppress output same type) */
     private Xtype original;
 
-    public EnumType(String id, XobjList moe_list, int typeQualFlags, Xobject gccAttrs)
+    public EnumType(String id, XobjList moe_list, long typeQualFlags, Xobject gccAttrs)
     {
         super(Xtype.ENUM, id, typeQualFlags, gccAttrs);
         this.moe_list = moe_list;

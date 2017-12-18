@@ -21,6 +21,7 @@ run:
 	$(XRUN) -n 4 ./loop.x
 	$(XRUN) -n 2 ./basic.x
 	$(XRUN) -n 4 ./shadow_check.x
+	$(XRUN) -n 16 ./reduce_shadow.x
 
 RUN:
 	mkdir RUN

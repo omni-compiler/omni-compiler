@@ -1084,14 +1084,9 @@ void _XMP_mpi_sync_images(const int num, int* image_set, int* status)
     _XMP_fatal_nomsg();
   }
 
-  int rank_set[num];
-  for(int i=0;i<num;i++){
-    rank_set[i] = image_set[i] - 1;
-  }
-
-  _notify_sync_images(num, rank_set);
-  _wait_sync_images(num, rank_set);
-
+  _notify_sync_images(num, image_set);
+  _wait_sync_images(num, image_set);
+  
   _XMP_mpi_sync_memory();
 }
 
@@ -1099,15 +1094,12 @@ void _XMP_mpi_sync_images(const int num, int* image_set, int* status)
 void _XMP_sync_images_EXEC(int* status)
 {
   _XMP_mpi_sync_memory();
-
   _XMP_barrier_EXEC();
 }
-
 
 void _XMP_sync_images_COMM(MPI_Comm *comm, int* status)
 {
   _XMP_mpi_sync_memory();
-
   MPI_Barrier(*comm);
 }
 

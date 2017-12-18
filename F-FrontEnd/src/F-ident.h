@@ -33,6 +33,8 @@ enum name_class {
     CL_TYPE_PARAM, /* type parameter name */
     CL_TYPE_BOUND_PROC, /* type bound procedure */
     CL_MULTI,     /* Both the derived type name and the generic procedure */
+    CL_DECL_PRAGMA, /* Placeholder for declarative pragmas */
+    CL_ENUM,      /* enum (dummy name) */
 };
 
 extern char *name_class_names[];
@@ -57,6 +59,7 @@ extern char *name_class_names[];
   "CL_TYPE_PARAM", \
   "CL_TYPE_BOUND_PROCS", \
   "CL_MULTI",   \
+  "CL_ENUM",   \
 }
 
 /* for CL_PROC  */
@@ -70,7 +73,7 @@ enum proc_class {
     /* defined_proc is a class for the procedure
        which is defined in the file. */
     P_UNDEFINEDPROC,
-    /* unddefined proc is a class for the procedure
+    /* undefined proc is a class for the procedure
        which is not defined, but used as function. */
 };
 
@@ -101,6 +104,7 @@ enum storage_class {
     STG_NONE,    /* for intrinsic, stfunction */
     STG_TYPE_PARAM, /* type parameter */
     STG_INDEX, /* indexes of forall */
+    STG_PRAGMA, /* placeholder for pragma */
 
 };
 
@@ -164,6 +168,8 @@ typedef struct ident_descriptor
                                            of this ID, otherwise
                                            NULL */
     int from_parent_module;             /* ID is imported from parent module  */
+    int imported;                       /* ID imported with the IMPORT statement */
+    expv bind_name;                     /* ISO BIND C name attribute */
 
     union {
         struct {
@@ -193,6 +199,7 @@ typedef struct ident_descriptor
             int has_bind;             /* if TRUE, proc uses BIND feature */
             expr bind;                /* temporary storage for bind
                                        * information */
+            int has_import_all;       /* has IMPORT statement with no arguments */
         } proc_info;
         struct {
 
@@ -252,18 +259,29 @@ typedef struct ident_descriptor
 #define TYPE_BOUND_PROCEDURE_NOPASS                0x0004
 #define TYPE_BOUND_PROCEDURE_NON_OVERRIDABLE       0x0008
 #define TYPE_BOUND_PROCEDURE_DEFERRED              0x0010
+/* for +, -, user-defined, may be unary or binary */
 #define TYPE_BOUND_PROCEDURE_IS_OPERATOR           0x0020
-#define TYPE_BOUND_PROCEDURE_IS_ASSIGNMENT         0x0040
-#define TYPE_BOUND_PROCEDURE_WRITE                 0x0080
-#define TYPE_BOUND_PROCEDURE_READ                  0x0100
-#define TYPE_BOUND_PROCEDURE_FORMATTED             0x0200
-#define TYPE_BOUND_PROCEDURE_UNFORMATTED           0x0400
-#define TYPE_BOUND_PROCEDURE_IS_FINAL              0x0800
+#define TYPE_BOUND_PROCEDURE_IS_UNARY_OPERATOR     0x0040
+#define TYPE_BOUND_PROCEDURE_IS_BINARY_OPERATOR    0x0080
+#define TYPE_BOUND_PROCEDURE_IS_ASSIGNMENT         0x0100
+#define TYPE_BOUND_PROCEDURE_WRITE                 0x0200
+#define TYPE_BOUND_PROCEDURE_READ                  0x0400
+#define TYPE_BOUND_PROCEDURE_FORMATTED             0x0800
+#define TYPE_BOUND_PROCEDURE_UNFORMATTED           0x1000
+#define TYPE_BOUND_PROCEDURE_IS_FINAL              0x2000
         } tbp_info;
         struct {
             /* for CL_MULTI */
             struct ident_descriptor * id_list;
         } multi_info;
+        struct {
+            /* for enumerator */
+            struct ident_descriptor * define;
+        } enumerator_info;
+        struct {
+	  /* for CL_DECL_PRAGMA */
+	  expv v;
+	} decl_pragma_info;
     } info;
 } *ID;
 
@@ -283,6 +301,11 @@ typedef struct ident_descriptor
 #define ID_LINE(id)     ((id)->line)
 #define ID_ORDER(id)    ((id)->order)
 #define ID_DEFINED_BY(id)       ((id)->defined_by)
+#define ID_BIND(id)     ((id)->bind_name)
+
+#define ID_IS_IMPORTED(id)       ((id)->imported)
+#define ID_SET_IMPORTED(id)      ((id)->imported = TRUE)
+#define ID_UNSET_IMPORTED(id)    ((id)->imported = FALSE)
 
 #define ID_INTF(id)     ((id)->interfaceId)
 
@@ -343,6 +366,7 @@ struct use_assoc_info {
     ((id)->info.proc_info.is_func_subr_ambiguous)
 #define PROC_HAS_BIND(id) ((id)->info.proc_info.has_bind)
 #define PROC_BIND(id)   ((id)->info.proc_info.bind)
+#define PROC_HAS_IMPORT_ALL(id) ((id)->info.proc_info.has_import_all)
 
 #define ID_IS_DUMMY_ARG(id) \
     ((ID_STORAGE((id)) == STG_ARG) || \
@@ -399,6 +423,14 @@ struct use_assoc_info {
     (ID_CLASS(id) == CL_TYPE_BOUND_PROC && \
      TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_IS_OPERATOR)
 
+#define TBP_IS_UNARY_OPERATOR(id) \
+    (ID_CLASS(id) == CL_TYPE_BOUND_PROC && \
+     TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_IS_UNARY_OPERATOR)
+
+#define TBP_IS_BINARY_OPERATOR(id) \
+    (ID_CLASS(id) == CL_TYPE_BOUND_PROC && \
+     TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_IS_BINARY_OPERATOR)
+
 #define TBP_IS_ASSIGNMENT(id) \
     (ID_CLASS(id) == CL_TYPE_BOUND_PROC && \
      TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_IS_ASSIGNMENT)
@@ -413,6 +445,8 @@ struct use_assoc_info {
      TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_DEFERRED)
 
 #define MULTI_ID_LIST(id)     ((id)->info.multi_info.id_list)
+
+#define ENUMERATOR_DEFINE(id) ((id)->info.enumerator_info.define)
 
 struct interface_info {
     enum {
@@ -490,6 +524,10 @@ typedef struct external_symbol
                 SYMBOL parent;
             } extends;
         } proc_info;
+        struct {
+	  /* for STG_PRAGMA */
+	  expv v;
+	} pragma_info;
     } info;
 } *EXT_ID;
 
@@ -510,6 +548,7 @@ typedef struct external_symbol
                                 EXT_PROC_INTERFACE_INFO(ep)->class == INTF_GENERIC_READ_UNFORMATTED || \
                                 EXT_PROC_INTERFACE_INFO(ep)->class == INTF_GENERIC_WRITE_FORMATTED || \
                                 EXT_PROC_INTERFACE_INFO(ep)->class == INTF_GENERIC_WRITE_UNFORMATTED))
+#define EXT_IS_PRAGMA(ep) (EXT_TAG(ep) == STG_PRAGMA)
 
 #define EXT_PROC_TYPE(ep)       ((ep)->info.proc_info.type)
 #define EXT_PROC_BODY(ep)       ((ep)->info.proc_info.body)

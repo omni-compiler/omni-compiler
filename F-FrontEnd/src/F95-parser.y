@@ -181,6 +181,11 @@ state 2058
 %token WAIT
 %token FLUSH
 %token ABSTRACT
+%token ENUM
+%token ENDENUM
+%token ENUMERATOR
+%token ASSOCIATE
+%token ENDASSOCIATE
 
 /* Coarray keywords #060 */
 %token SYNCALL
@@ -198,6 +203,7 @@ state 2058
 %token KW_ERROR
 
 /* Fortran 2008 keywords*/
+%token CONTIGUOUS
 %token BLOCK
 %token ENDBLOCK
 
@@ -205,6 +211,10 @@ state 2058
 %token ENDSUBMODULE
 %token ENDPROCEDURE
 
+%token DOCONCURRENT
+%token CONCURRENT
+
+%token IMPURE
 
 %token REF_OP
 
@@ -327,6 +337,7 @@ state 2058
 %token XMPKW_TASKS
 %token XMPKW_LOOP
 %token XMPKW_REFLECT
+%token XMPKW_REDUCE_SHADOW
 %token XMPKW_GMOVE
 %token XMPKW_BARRIER
 %token XMPKW_REDUCTION
@@ -507,14 +518,14 @@ static void type_spec_done();
 
 %type <val> statement label
 %type <val> expr /*expr1*/ lhs member_ref lhs_alloc member_ref_alloc substring expr_or_null complex_const
-%type <val> array_constructor array_constructor_list
+%type <val> array_constructor array_constructor_list array_constructor_list_or_null
 %type <val> program_name dummy_arg_list dummy_args dummy_arg file_name
 %type <val> declaration_statement executable_statement action_statement action_statement_let action_statement_key assign_statement_or_null assign_statement
-%type <val> declaration_list entity_decl type_spec type_spec0 expr_type_spec length_spec common_decl
+%type <val> declaration_list entity_decl type_spec type_spec0 type_spec1 expr_type_spec length_spec common_decl
 %type <val> type_param_value_list type_param_value
 %type <val> common_block external_decl intrinsic_decl equivalence_decl
 %type <val> cray_pointer_list cray_pointer_pair cray_pointer_var
-%type <val> equiv_list data data_list data_val_list data_val value simple_value save_list save_item const_list const_item common_var data_var data_var_list image_dims image_dim_list image_dim image_dims_alloc image_dim_list_alloc image_dim_alloc dims dim_list dim ubound label_list implicit_decl imp_list letter_group letter_groups namelist_decl namelist_list ident_list access_ident_list access_ident
+%type <val> equiv_list data data_list data_val_list data_val value simple_value save_list save_item const_list const_item common_var data_var data_var_list image_dims image_dim_list image_dim image_dims_alloc image_dim_list_alloc image_dim_alloc dims dim_list dim ubound label_list implicit_decl imp_list letter_group letter_groups namelist_decl namelist_list ident_list access_ident_list access_ident binding_entity_list binding_entity
 %type <val> do_spec arg arg_list parenthesis_arg_list image_selector cosubscript_list
 %type <val> parenthesis_arg_list_or_null
 %type <val> set_expr
@@ -523,19 +534,21 @@ static void type_spec_done();
 %type <val> string_const_substr
 %type <val> binding_attr_list binding_attr type_bound_proc_decl_list type_bound_proc_decl
 %type <val> proc_attr_list proc_def_attr proc_attr proc_decl proc_decl_list name_or_type_spec_or_null0 name_or_type_spec_or_null
-%type <val> name name_or_null name_list generic_name defined_operator intrinsic_operator func_prefix prefix_spec
+%type <val> name name_or_null name_list generic_name defined_operator intrinsic_operator func_prefix func_prefix0 prefix_spec func_suffix
 %type <val> forall_header forall_triplet forall_triplet_list
 %type <val> declaration_statement95 attr_spec_list attr_spec private_or_public_spec access_spec type_attr_spec_list type_attr_spec
 %type <val> declaration_statement2003 type_param_list
 %type <val> intent_spec kind_selector kind_or_len_selector char_selector len_key_spec len_spec kind_key_spec array_allocation_list  array_allocation defered_shape_list defered_shape
-%type <val> result_opt type_keyword
+%type <val> result_opt func_result type_keyword
 %type <val> action_statement95
-%type <val> action_coarray_statement other_coarray_keyword
+%type <val> action_coarray_statement
 %type <val> sync_stat_arg_list sync_stat_arg image_set
 %type <val> use_rename_list use_rename use_only_list use_only 
 %type <val> allocation_list allocation
 %type <val> scene_list scene_range
-%type <val> bind_opt
+%type <val> bind_opt bind_c
+%type <val> enumerator_list enumerator
+%type <val> association association_list
 
 
 %start program
@@ -552,6 +565,8 @@ TYPE_KW: { if (enable_need_type_keyword == TRUE) need_type_keyword = TRUE; };
 NEED_CHECK: {	      need_check_user_defined = FALSE; };
 
 TYPE_KW_COL2: { if (lookup_col2()) need_type_keyword = TRUE;  }
+
+DO_KW: { need_do_keyword = TRUE; }
 
 one_statement:
           STATEMENT_LABEL_NO  /* null statement */
@@ -650,14 +665,14 @@ statement:      /* entry */
           { $$ = list1(F08_ENDPROCEDURE_STATEMENT, $2); }
         | GENERIC COL2 type_bound_generic_spec REF_OP ident_list
           { $$ = list3(F03_TYPE_BOUND_GENERIC_STATEMENT,$3, $5, NULL); }
-        | GENERIC ',' private_or_public_spec COL2 type_bound_generic_spec REF_OP ident_list
-          { $$ = list3(F03_TYPE_BOUND_GENERIC_STATEMENT,$5, $7, $3); }
+        | GENERIC ',' KW private_or_public_spec COL2 type_bound_generic_spec REF_OP ident_list
+         { $$ = list3(F03_TYPE_BOUND_GENERIC_STATEMENT, $6, $8, $4); }
         | FINAL COL2_or_null ident_list
           { $$ = list1(F03_TYPE_BOUND_FINAL_STATEMENT, $3); }
         | BLOCKDATA program_name
           { $$ = list1(F_BLOCK_STATEMENT,$2); }
         | ENDBLOCKDATA name_or_null
-          { if ($2 == NULL && CTL_TYPE(ctl_top) == CTL_BLOCK) {
+          { if ($2 == NULL && CTL_TYPE(ctl_top) == CTL_BLK) {
               $$ = list1(F2008_ENDBLOCK_STATEMENT,
                          GEN_NODE(IDENT, find_symbol("data")));
             } else {
@@ -671,18 +686,10 @@ statement:      /* entry */
         | ENDSUBROUTINE name_or_null
           { $$ = list1(F95_ENDSUBROUTINE_STATEMENT,$2); }
 /* FUNCTION declaration */
-        | FUNCTION IDENTIFIER dummy_arg_list KW result_opt bind_opt
-          { $$ = list6(F_FUNCTION_STATEMENT, $2, $3, NULL, NULL, $5, $6); }
-        | func_prefix FUNCTION IDENTIFIER dummy_arg_list KW result_opt bind_opt
-          { $$ = list6(F_FUNCTION_STATEMENT, $3, $4, NULL, $1, $6, $7); }
-        | type_spec KW FUNCTION IDENTIFIER dummy_arg_list KW result_opt bind_opt
-          { $$ = list6(F_FUNCTION_STATEMENT, $4, $5, $1, NULL, $7, $8); }
-        | type_spec KW func_prefix FUNCTION IDENTIFIER dummy_arg_list
-          KW result_opt bind_opt
-          { $$ = list6(F_FUNCTION_STATEMENT, $5, $6, $1, $3, $8, $9); }
-        | func_prefix type_spec KW FUNCTION IDENTIFIER dummy_arg_list
-          KW result_opt bind_opt
-          { $$ = list6(F_FUNCTION_STATEMENT, $5, $6, $2, $1, $8, $9); }
+        | FUNCTION IDENTIFIER dummy_arg_list KW func_suffix
+          { $$ = list5(F_FUNCTION_STATEMENT, $2, $3, NULL, EXPR_ARG1($5), EXPR_ARG2($5)); }
+        | func_prefix FUNCTION IDENTIFIER dummy_arg_list KW func_suffix
+          { $$ = list5(F_FUNCTION_STATEMENT, $3, $4, $1, EXPR_ARG1($6), EXPR_ARG2($6)); }
 /* END: FUNCTION */
         | ENDFUNCTION name_or_null
           { $$ = list1(F95_ENDFUNCTION_STATEMENT,$2); }
@@ -710,8 +717,26 @@ statement:      /* entry */
           { $$ = list3(F08_SUBMODULE_STATEMENT,$7,$3,$5); }
         | ENDSUBMODULE name_or_null
           { $$ = list1(F08_ENDSUBMODULE_STATEMENT,$2); }
+        | ENUM /* for error */
+          { $$ = list1(F03_ENUM_STATEMENT,NULL); }
+        | ENUM ',' KW BIND '(' IDENTIFIER /* C */ ')'
+          { $$ = list1(F03_ENUM_STATEMENT,$6); }
+        | ENUMERATOR ident_list
+          { $$ = list1(F03_ENUMERATOR_STATEMENT,$2); }
+        | ENUMERATOR COL2 enumerator_list
+          { $$ = list1(F03_ENUMERATOR_STATEMENT,$3); }
+        | ENDENUM
+          { $$ = list0(F03_ENDENUM_STATEMENT); }
         ;
 
+func_suffix:        
+        /* empty */
+        { $$ = list2(LIST, NULL, NULL); }
+        | func_result KW bind_opt // Result with optional BIND(C)
+        { $$ = list2(LIST, $1, $3); }
+        | bind_c KW result_opt    // BIND(C) with optional result
+        { $$ = list2(LIST, $3, $1); }
+        ;
 
 name_or_type_spec_or_null:
         TYPE_KW name_or_type_spec_or_null0 { $$ = $2;};
@@ -833,20 +858,30 @@ program_name:   /* null */
         | IDENTIFIER
         ;
 
+func_result:
+        RESULT '(' name ')'
+        { $$ = $3; }
+        ;
+
 result_opt:    /* null */
           { $$ = NULL; }
-        | RESULT '(' name ')'
-          { $$ = $3; }
+        | func_result
+          {$$ = $1; } 
+        ;
+
+bind_c: 
+        /* BIND(C) */
+        BIND '(' IDENTIFIER /* C */ ')'
+        { $$ = list1(LIST, NULL); need_keyword = FALSE;}
+        /* BIND (C, NAME='<ident>') */
+        | BIND '(' IDENTIFIER /* C */ ',' KW KW_NAME '=' CONSTANT ')'
+        { $$ = list1(LIST, $8); need_keyword = FALSE;}
         ;
 
 bind_opt: /* null */
           { $$ = NULL; need_keyword = FALSE; }
-        /* BIND(C) */
-        | BIND '(' IDENTIFIER /* C */ ')'
-          { $$ = list1(LIST, NULL); need_keyword = FALSE;}
-        /* BIND (C, NAME='<ident>') */
-        | BIND '(' IDENTIFIER /* C */ ',' KW KW_NAME '=' CONSTANT ')'
-          { $$ = list1(LIST, $8); need_keyword = FALSE;}
+        | bind_c
+          { $$ = $1; }
         ;
 
 intrinsic_operator: '.'
@@ -896,10 +931,12 @@ generic_name:
         name
         ;
 
-func_prefix:
+func_prefix: func_prefix0 { $$ = $1; need_keyword = FALSE; }
+
+func_prefix0:
           prefix_spec
         { $$ = list1(LIST,$1); need_keyword = TRUE; }
-        | func_prefix prefix_spec
+        | func_prefix0 prefix_spec
         { $$ = list_put_last($1,$2); need_keyword = TRUE; }
         ;
 
@@ -908,10 +945,13 @@ prefix_spec:
         { $$ = list0(F95_RECURSIVE_SPEC); }
         | PURE
         { $$ = list0(F95_PURE_SPEC); }
+        | IMPURE
+        { $$ = list0(F08_IMPURE_SPEC); }
         | ELEMENTAL
         { $$ = list0(F95_ELEMENTAL_SPEC); }
         | MODULE
         { $$ = list0(F08_MODULE_SPEC); }
+        | type_spec
         ;
 
 name:  IDENTIFIER;
@@ -991,6 +1031,8 @@ declaration_statement:
             $$ = list1(F_FORMAT_DECL, GEN_NODE(STRING_CONSTANT, formatString));
             formatString = NULL;
         }
+        | CONTIGUOUS COL2_or_null ident_list
+        { $$ = list1(F08_CONTIGUOUS_STATEMENT, $3); }
         ;
 
 declaration_statement95:
@@ -1018,9 +1060,7 @@ declaration_statement95:
         { $$ = list1(F95_PRIVATE_STATEMENT,NULL); }
         | PRIVATE COL2_or_null access_ident_list
         { $$ = list1(F95_PRIVATE_STATEMENT, $3); }
-        | PROTECTED
-        { $$ = list1(F03_PROTECTED_STATEMENT,NULL); }
-        | PROTECTED COL2_or_null access_ident_list
+        | PROTECTED COL2_or_null ident_list
         { $$ = list1(F03_PROTECTED_STATEMENT, $3); }
         | SEQUENCE
         { $$ = list0(F95_SEQUENCE_STATEMENT); }
@@ -1042,15 +1082,17 @@ declaration_statement95:
         { $$ = list2(F95_INTENT_STATEMENT, $4, $7); }
         | ALLOCATABLE COL2_or_null array_allocation_list
         { $$ = list1(F95_ALLOCATABLE_STATEMENT,$3); }
+        | IMPORT
+        { $$ = list1(F03_IMPORT_STATEMENT, NULL); }
         | IMPORT COL2_or_null ident_list
         { $$ = list1(F03_IMPORT_STATEMENT, $3); }
         | VOLATILE COL2_or_null access_ident_list
         { $$ = list1(F03_VOLATILE_STATEMENT, $3); }
         | ASYNCHRONOUS COL2_or_null access_ident_list
         { $$ = list1(F03_ASYNCHRONOUS_STATEMENT, $3); }
+        | bind_c COL2_or_null binding_entity_list
+        { $$ = list2(F03_BIND_STATEMENT, $1, $3); }
         ;
-
-
 
 array_allocation_list:
           array_allocation
@@ -1080,15 +1122,19 @@ defered_shape: ':'
         ;
 
 use_rename_list:
-          use_rename
-        { $$ = list1(LIST,$1); }
-        | use_rename_list ',' use_rename
-        { $$ = list_put_last($1,$3); }
+          KW use_rename
+        { $$ = list1(LIST,$2); }
+        | use_rename_list ',' KW use_rename
+        { $$ = list_put_last($1,$4); }
         ;
 
 use_rename:
           IDENTIFIER REF_OP IDENTIFIER
         { $$ = list2(LIST,$1,$3); }
+        | OPERATOR REF_OP IDENTIFIER
+        { $$ = list2(LIST,GEN_NODE(IDENT, find_symbol("operator")),$3); }
+        | OPERATOR '(' USER_DEFINED_OP ')' REF_OP KW OPERATOR '(' USER_DEFINED_OP ')'
+        { $$ = list2(F03_OPERATOR_RENAMING,$3,$9); }
         ;
 
 use_only_list:
@@ -1100,6 +1146,7 @@ use_only_list:
 
 use_only:
           use_rename
+        | GENERIC_SPEC // e.g: USE ..., ONLY: assignement(=) 
         | IDENTIFIER
         ;
 
@@ -1161,9 +1208,13 @@ attr_spec:
         | KW_LEN
         { $$ = list0(F03_LEN_SPEC); }
         | BIND '(' IDENTIFIER /* C */ ')'
-        { $$ = list0(F03_BIND_SPEC); }
+        { $$ = list1(F03_BIND_SPEC, NULL); }
+        | BIND '(' IDENTIFIER /* C */ ',' KW KW_NAME '=' CONSTANT ')'
+        { $$ = list1(F03_BIND_SPEC, $8); }
         | VALUE
-        { $$ = list0(F03_VALUE_SPEC); } 
+        { $$ = list0(F03_VALUE_SPEC); }
+        | CONTIGUOUS
+        { $$ = list0(F08_CONTIGUOUS_SPEC); }
         ;
 
 private_or_public_spec:
@@ -1190,7 +1241,7 @@ type_attr_spec:
           EXTENDS '(' IDENTIFIER ')'
         { $$ = list1(F03_EXTENDS_SPEC, $3); }
         | BIND '(' IDENTIFIER /* C */ ')'
-        { $$ = list0(F03_BIND_SPEC); }        
+        { $$ = list0(F03_BIND_SPEC); }
         | ABSTRACT
         { $$ = list0(F03_ABSTRACT_SPEC); }
         | access_spec
@@ -1234,17 +1285,25 @@ entity_decl:
 type_spec: type_spec0 { $$ = $1; type_spec_done(); }
 
 type_spec0:
-          KW_TYPE '(' IDENTIFIER ')'
-        { $$ = $3; }
-        | KW_TYPE '(' IDENTIFIER '(' type_param_value_list ')' ')'
-        { $$ = list2(F03_PARAMETERIZED_TYPE,$3,$5); }
+          KW_TYPE '(' TYPE_KW IDENTIFIER ')'
+        { $$ = $4; }
+        | KW_TYPE '(' TYPE_KW IDENTIFIER '(' type_param_value_list ')' ')'
+        { $$ = list2(F03_PARAMETERIZED_TYPE,$4,$6); }
+        | KW_TYPE '(' TYPE_KW type_spec1 ')'
+        { $$ = $4; }
         | CLASS '(' IDENTIFIER ')'
         { $$ = list1(F03_CLASS, $3); }
         | CLASS '(' IDENTIFIER '(' type_param_value_list ')' ')'
         { $$ = list1(F03_CLASS, list2(F03_PARAMETERIZED_TYPE,$3,$5)); }
         | CLASS '(' '*' ')'
-        { $$ = list1(F03_CLASS, NULL);; }
-        | type_keyword kind_selector
+        { $$ = list1(F03_CLASS, NULL); }
+        | type_spec1
+        { $$ = $1; }
+        ;
+
+
+type_spec1:
+          type_keyword kind_selector
         { $$ = list2(LIST,$1,$2);}
         | type_keyword length_spec  /* compatibility */
         { $$ = list2(LIST, $1, $2);}
@@ -1259,7 +1318,6 @@ type_spec0:
                             GEN_NODE(INT_CONSTANT, 8)); }
         //                    gen_default_real_kind()); }
         ;
-
 
 /*
  * NOTE:
@@ -1356,6 +1414,10 @@ char_selector: /* empty */
 
 len_key_spec: KW_LEN '=' expr
          { $$ = list1(F95_LEN_SELECTOR_SPEC, $3); }
+         | KW_LEN '=' ':'
+         { $$ = list1(F95_LEN_SELECTOR_SPEC,  list0(F08_LEN_SPEC_COLON)); }
+         | KW_LEN '=' '*'
+         { $$ = list1(F95_LEN_SELECTOR_SPEC, NULL); } 
         ;
 
 len_spec: '*'
@@ -1518,6 +1580,20 @@ access_ident: GENERIC_SPEC
         | IDENTIFIER
         ;
 
+binding_entity_list:
+          binding_entity
+        { $$ = list1(LIST, $1); }
+        | binding_entity_list ',' binding_entity
+        { $$ = list_put_last($1, $3); }
+        ;
+
+binding_entity:
+          IDENTIFIER
+        { $$ = $1; }
+        | '/' IDENTIFIER '/' /* not common_block because '//' is not accepted */
+        { $$ = list1(LIST,$2); }
+        ;
+
 /*
 access_ident: KW OPERATOR_P defined_operator ')'
           { $$ = list1(F95_GENERIC_SPEC, $3); }
@@ -1659,23 +1735,44 @@ namelist_list:  IDENTIFIER
         { $$ = list_put_last($1,$3); }
         ;
 
+enumerator:
+          IDENTIFIER
+        { $$ = $1; }
+        | IDENTIFIER '=' expr
+        { $$ = list2(LIST,$1,$3); }
+        ;
+
+enumerator_list: enumerator
+        { $$ = list1(LIST,$1); }
+        | enumerator_list ',' enumerator
+        { $$ = list_put_last($1,$3); }
+        ;
+
 /*
  * executable statement
  */
 executable_statement:
           action_statement
-        | DO label KW_WHILE '(' expr ')'
-        { $$ = list3(F_DOWHILE_STATEMENT, $2, $5, st_name); }
-        | DO label do_spec
-        { $$ = list3(F_DO_STATEMENT, $2, $3, st_name); }
-        | DO label ',' do_spec  /* for dusty deck */
+        | DO label DO_KW KW_WHILE '(' expr ')'
+        { $$ = list3(F_DOWHILE_STATEMENT, $2, $6, st_name); }
+        | DO label DO_KW do_spec
         { $$ = list3(F_DO_STATEMENT, $2, $4, st_name); }
-        | DO label
+        | DO label DO_KW ',' KW do_spec  /* for dusty deck */
+        { $$ = list3(F_DO_STATEMENT, $2, $6, st_name); }
+        | DO label DO_KW
         { $$ = list3(F_DO_STATEMENT, $2, NULL, st_name); }
         | DO do_spec
         { $$ = list3(F_DO_STATEMENT,NULL, $2, st_name); }
         | DO
         { $$ = list3(F_DO_STATEMENT,NULL, NULL, st_name); }
+        | DOCONCURRENT '(' forall_header ')'
+        { $$ = list3(F08_DOCONCURRENT_STATEMENT, NULL, $3, st_name); }
+        | DO ',' DO_KW CONCURRENT '(' forall_header ')'
+        { $$ = list3(F08_DOCONCURRENT_STATEMENT, NULL, $6, st_name); }
+        | DO label DO_KW CONCURRENT '(' forall_header ')'
+        { $$ = list3(F08_DOCONCURRENT_STATEMENT, $2,   $6, st_name); }
+        | DO label DO_KW ',' KW CONCURRENT '(' forall_header ')'
+        { $$ = list3(F08_DOCONCURRENT_STATEMENT, $2,   $8, st_name); }
         | ENDDO name_or_null
         { $$ = list1(F_ENDDO_STATEMENT,$2); }
         | LOGIF '(' expr ')' action_statement_key /* with keyword */
@@ -1709,8 +1806,6 @@ executable_statement:
 	 CTL_WHERE/CTL_ELSE_WHERE and treat coming statement
 	 appropriately.
 	 ***/
-        | WHERE '(' expr ')' assign_statement_or_null
-        { $$ = list2(F_WHERE_STATEMENT,$3,$5); }
         | ELSEWHERE
         { $$ = list0(F_ELSEWHERE_STATEMENT); }
         | ELSEWHERE '(' expr ')' assign_statement_or_null
@@ -1743,6 +1838,10 @@ executable_statement:
         { $$ = list3(F_FORALL_STATEMENT, $3, $5, st_name); }
         | ENDFORALL name_or_null
         { $$ = list1(F_ENDFORALL_STATEMENT, $2); }
+        | ASSOCIATE '(' association_list ')'
+        { $$ = list2(F03_ASSOCIATE_STATEMENT,$3,st_name); }
+        | ENDASSOCIATE name_or_null
+        { $$ = list1(F03_ENDASSOCIATE_STATEMENT,$2); }
         ;
 
 assign_statement_or_null:
@@ -1758,7 +1857,7 @@ assign_statement: lhs '=' expr
 do_spec:
           IDENTIFIER '=' expr ',' expr
         { $$ = list4(LIST,$1,$3,$5,NULL); }
-        |  IDENTIFIER '=' expr ',' expr ',' expr
+        | IDENTIFIER '=' expr ',' expr ',' expr
         { $$ = list4(LIST,$1,$3,$5,$7); }
         ;
 
@@ -1786,6 +1885,18 @@ forall_header:
         { $$ = list3(LIST, $4, NULL,   $2); }
         | TYPE_KW type_spec COL2 forall_triplet_list ',' expr
         { $$ = list3(LIST, $4,   $6,   $2); }
+        ;
+
+association:
+        IDENTIFIER REF_OP expr
+        { $$ = list2(LIST, $1, $3); }
+        ;
+
+association_list:
+          association
+        { $$ = list1(LIST,$1); }
+        | association_list ',' association
+        { $$ = list_put_last($1,$3); }
         ;
 
 
@@ -1828,6 +1939,8 @@ action_statement_key: ASSIGN  label KW KW_TO IDENTIFIER
         { $$ = list1(F_PAUSE_STATEMENT,$2); }
         | STOP  expr_or_null
         { $$ = list1(F_STOP_STATEMENT,$2); }
+        | KW_ERROR KW STOP  expr_or_null
+        { $$ = list1(F08_ERROR_STOP_STATEMENT,$4); }
         | action_statement95 /* all has first key.  */
         | action_coarray_statement /* all has first key.  */
         | io_statement /* all has first key.  */
@@ -1837,6 +1950,8 @@ action_statement_key: ASSIGN  label KW KW_TO IDENTIFIER
                      GEN_NODE(STRING_CONSTANT, pragmaString));
          pragmaString = NULL;
         }
+        | WHERE '(' expr ')' assign_statement_or_null
+        { $$ = list2(F_WHERE_STATEMENT, $3, $5); }
         ;
 
 action_statement95:
@@ -1897,8 +2012,6 @@ action_coarray_statement:
         { $$ = list2(F2008_UNLOCK_STATEMENT,$3, NULL); }
         | UNLOCK '(' expr ',' sync_stat_arg_list ')'
         { $$ = list2(F2008_UNLOCK_STATEMENT,$3, $5); }
-        | other_coarray_keyword parenthesis_arg_list_or_null
-        { $$ = list2(F_CALL_STATEMENT,$1,$2); }
         ;
 
 
@@ -1919,11 +2032,6 @@ image_set:
         { $$ = $1; }
         | '*'
         { $$ = NULL; }
-        ;
-
-other_coarray_keyword:
-          ERRORSTOP
-        { $$ = GEN_NODE(IDENT, find_symbol("xmpf_error_stop")); }
         ;
 
 comma_or_null:
@@ -2117,9 +2225,9 @@ array_constructor:
         { $$ = list2(F95_ARRAY_CONSTRUCTOR, $3, NULL); }
         | '[' TYPE_KW_COL2 array_constructor_list ']'
         { $$ = list2(F95_ARRAY_CONSTRUCTOR, $3, NULL); }
-        | L_ARRAY_CONSTRUCTOR TYPE_KW_COL2 expr_type_spec COL2 array_constructor_list R_ARRAY_CONSTRUCTOR
+        | L_ARRAY_CONSTRUCTOR TYPE_KW_COL2 expr_type_spec COL2 array_constructor_list_or_null R_ARRAY_CONSTRUCTOR
         { $$ = list2(F95_ARRAY_CONSTRUCTOR, $5, $3); }
-        | '[' TYPE_KW_COL2 expr_type_spec COL2 array_constructor_list ']'
+        | '[' TYPE_KW_COL2 expr_type_spec COL2 array_constructor_list_or_null ']'
         { $$ = list2(F95_ARRAY_CONSTRUCTOR, $5, $3); }
         ;
 
@@ -2261,6 +2369,12 @@ member_ref_alloc:     /* For allocation list only */
 /*         { $$ = list2(F95_MEMBER_REF, list2(XMP_COARRAY_REF,list2(F_ARRAY_REF,$1,$2),$3), $5); } */
         ;
 
+
+array_constructor_list_or_null:
+        { $$ = NULL; }
+        | array_constructor_list
+        { $$ = $1; }
+        ;
 
 array_constructor_list:
           io_item
@@ -2589,6 +2703,8 @@ xmp_directive:
 	    { $$ = XMP_LIST(XMP_LOOP,$3); }
 	  | XMPKW_REFLECT xmp_reflect_clause
 	    { $$ = XMP_LIST(XMP_REFLECT,$2); }
+	  | XMPKW_REDUCE_SHADOW xmp_reflect_clause
+	    { $$ = XMP_LIST(XMP_REDUCE_SHADOW,$2); }
 	  | XMPKW_GMOVE { need_keyword = TRUE; } xmp_gmove_clause
 	    { $$ = XMP_LIST(XMP_GMOVE,$3); }
 	  | XMPKW_BARRIER { need_keyword = TRUE; } xmp_barrier_clause

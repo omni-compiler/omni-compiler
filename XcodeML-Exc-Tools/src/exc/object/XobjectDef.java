@@ -1,14 +1,7 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package exc.object;
 
 import java.util.LinkedList;
 import java.util.List;
-
 import exc.util.XobjectVisitable;
 import exc.util.XobjectVisitor;
 import xcodeml.util.ILineNo;
@@ -135,7 +128,11 @@ public class XobjectDef extends PropObject implements IXobject, XobjectVisitable
   {
     this.def = def;
   }
-    
+
+  public boolean isPragma(){
+    return def != null && def.Opcode() == Xcode.PRAGMA_LINE;
+  }
+  
   public boolean isFuncDef()
   {
     return def != null && (def.Opcode() == Xcode.FUNCTION_DEFINITION ||

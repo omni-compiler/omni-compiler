@@ -1,9 +1,3 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package exc.object;
 
 /**
@@ -13,7 +7,7 @@ public class PointerType extends Xtype
 {
     Xtype ref;
 
-    public PointerType(String id, Xtype ref, int typeQualFlags, Xobject gccAttrs)
+    public PointerType(String id, Xtype ref, long typeQualFlags, Xobject gccAttrs)
     {
         super(Xtype.POINTER, id, typeQualFlags, gccAttrs);
         this.ref = ref;

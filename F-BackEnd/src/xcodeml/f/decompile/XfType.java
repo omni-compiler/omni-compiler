@@ -19,6 +19,7 @@ enum XfType
     CHARACTER("Fcharacter", "CHARACTER", true),
     NUMERIC("Fnumeric", null, true),
     NUMERICALL("FnumericAll", null, true),
+    ENUM("FenumType", null, false),
     DERIVED(null, null, false);
 
     private boolean _isPrimitive = false;

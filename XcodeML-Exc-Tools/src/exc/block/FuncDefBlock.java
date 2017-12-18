@@ -1,16 +1,9 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package exc.block;
 
 import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
-
 import exc.object.*;
 import exc.openmp.OMPanalyzeDecl;
 import exc.openmp.OMPpragma;

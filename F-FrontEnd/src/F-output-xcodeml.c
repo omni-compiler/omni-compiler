@@ -29,11 +29,13 @@ int Addr2Uint(void *x)
 #endif
 
 int is_emitting_for_submodule;
+int is_inside_interface = FALSE;
 
 extern int      flag_module_compile;
 
 static void     outx_expv(int l, expv v);
 static void     outx_functionDefinition(int l, EXT_ID ep);
+static void     outx_function_as_interfaceDecl(int l, EXT_ID ep);
 static void     outx_interfaceDecl(int l, EXT_ID ep);
 static void     outx_definition_symbols(int l, EXT_ID ep);
 static void     outx_declarations(int l, EXT_ID parent_ep);
@@ -141,6 +143,8 @@ xtag(enum expr_code code)
     case F95_EXIT_STATEMENT:        return "FexitStatement";
     case F_ENTRY_STATEMENT:         return "FentryDecl";
     case F_FORALL_STATEMENT:        return "forallStatement";
+    case F_DATA_STATEMENT:          return "FdataStatement";
+    case F08_ERROR_STOP_STATEMENT:  return "FerrorStopStatement";
 
     /*
      * IO statements
@@ -216,6 +220,9 @@ xtag(enum expr_code code)
 
     case F2008_BLOCK_STATEMENT:      return "blockStatement";
 
+    case F08_DOCONCURRENT_STATEMENT: return "FdoConcurrentStatement";
+
+
     /*                          
      * misc.                    
      */                         
@@ -235,6 +242,8 @@ xtag(enum expr_code code)
      */
     case F03_IMPORT_STATEMENT:      return "FimportDecl";
     case F03_WAIT_STATEMENT:        return "FwaitStatement";
+    case F03_ASSOCIATE_STATEMENT:   return "associateStatement";
+
 
     /*
      * invalid or no corresponding tag
@@ -610,6 +619,13 @@ outx_true(int cond, const char *flagname)
         outx_print(" %s=\"true\"", flagname);
 }
 
+static void
+outx_false(int cond, const char *flagname)
+{
+    if(cond)
+        outx_print(" %s=\"false\"", flagname);
+}
+
 
 #define TOPT_TYPEONLY   (1 << 0)
 #define TOPT_NEXTLINE   (1 << 1)
@@ -645,6 +661,8 @@ has_attribute_except_func_attrs(TYPE_DESC tp)
         TYPE_IS_CLASS(tp) ||
         TYPE_IS_PROCEDURE(tp) ||
         TYPE_IS_ASYNCHRONOUS(tp) ||
+        TYPE_IS_CONTIGUOUS(tp) ||
+        TYPE_HAS_BIND(tp) ||
         tp->codims;
 }
 
@@ -659,7 +677,8 @@ has_attribute(TYPE_DESC tp)
         TYPE_IS_RECURSIVE(tp) ||
         TYPE_IS_PURE(tp) ||
         TYPE_IS_ELEMENTAL(tp) ||
-        TYPE_IS_MODULE(tp);
+        TYPE_IS_MODULE(tp) ||
+        TYPE_IS_IMPURE(tp);
 }
 
 static int
@@ -748,6 +767,7 @@ getTypeID(TYPE_DESC tp)
         case TYPE_LHS:		/* fall through too */
         case TYPE_GNUMERIC_ALL: pfx = 'V'; break;
         case TYPE_NAMELIST:     pfx = 'N'; break;
+        case TYPE_ENUM:         pfx = 'E'; break;
         default: abort();
         }
 
@@ -803,6 +823,7 @@ outx_typeAttrs(int l, TYPE_DESC tp, const char *tag, int options)
         outx_true(TYPE_IS_VALUE(tp),            "is_value");
         outx_true(TYPE_IS_PROCEDURE(tp),        "is_procedure");
         outx_true(TYPE_IS_ASYNCHRONOUS(tp),     "is_asynchronous");
+        outx_true(TYPE_IS_CONTIGUOUS(tp),       "is_contiguous");
 
         if (TYPE_PARENT(tp)) {
             outx_print(" extends=\"%s\"", getTypeID(TYPE_PARENT_TYPE(tp)));
@@ -1015,6 +1036,17 @@ outx_tagText(int l, const char *tag, const char *s)
  * output a symbol with function type (not a return type)
  */
 static void
+outx_symbolNameAndType_for_functionType(int l, const char * name, TYPE_DESC tp)
+{
+    outx_typeAttrOnly_functionType(l, tp, "name");
+    outx_print(">%s</name>\n", name);
+}
+
+
+/**
+ * output a symbol with function type (not a return type)
+ */
+static void
 outx_symbolNameWithFunctionType(int l, expv v)
 {
     outx_typeAttrOnly_functionType(l, EXPV_TYPE(v), "name");
@@ -1198,6 +1230,7 @@ get_sclass(ID id)
             return "ftype_name";
         case STG_UNKNOWN:
         case STG_NONE:
+        case STG_PRAGMA:
             fatal("%s: illegal storage class: symbol=%s", __func__, ID_NAME(id));
             abort();
         }
@@ -1214,7 +1247,10 @@ get_sclass(ID id)
 static void
 outx_id(int l, ID id)
 {
-    if(ID_STORAGE(id) == STG_EXT && !IS_PROCEDURE_TYPE(ID_TYPE(id)) &&  PROC_EXT_ID(id) == NULL) {
+    if (SYM_TYPE(ID_SYM(id)) == S_INTR ||
+        (ID_TYPE(id) && TYPE_IS_INTRINSIC(ID_TYPE(id)))) {
+        // do nothing
+    } else if(ID_STORAGE(id) == STG_EXT && !IS_PROCEDURE_TYPE(ID_TYPE(id)) &&  PROC_EXT_ID(id) == NULL) {
         fatal("outx_id: PROC_EXT_ID is NULL: symbol=%s", ID_NAME(id));
     }
 
@@ -1950,12 +1986,12 @@ outx_importStatement(int l, expv v) {
     list lp;
     outx_tagOfStatement(l, v);
     ident_list = EXPR_ARG1(v);
-    if(EXPR_LIST(ident_list)) {
+    if (ident_list != NULL && EXPR_LIST(ident_list)) {
         FOR_ITEMS_IN_LIST(lp, ident_list) {
             arg = LIST_ITEM(lp);
             if(EXPR_CODE(arg) == IDENT){
                 outx_printi(l1, "<name>%s</name>\n", getRawString(arg));
-            }            
+            }
         }
     }
     outx_expvClose(l, v);
@@ -2014,26 +2050,40 @@ outx_continueStatement(int l, expv v)
 }
 
 
+static void
+outx_STOPPAUSE_statement_with_expression_code(int l, expv v)
+{
+    const int l1 = l + 1, l2 = l1 + 1;
+    int is_int = IS_INT(EXPV_TYPE(EXPR_ARG1(v)));
+    const char * child = is_int?"code":"message";
+
+    outx_tagOfStatement(l, v);
+    outx_tag(l1, child);
+    outx_expv(l2, EXPR_ARG1(v));
+    outx_close(l1, child);
+    outx_expvClose(l, v);
+}
+
 /**
- * output FstopStatement/FpauseStatement
+ * output FstopStatement/FerrorStopStatement/FpauseStatement
  */
 static void
 outx_STOPPAUSE_statement(int l, expv v)
 {
     char buf[CHAR_BUF_SIZE];
-    expv x1 = EXPR_ARG1(v);
+    expv v1 = EXPR_ARG1(v);
     buf[0] = '\0';
 
-    if(x1) {
-        switch(EXPV_CODE(x1)) {
+    if (v1) {
+        switch(EXPV_CODE(v1)) {
         case INT_CONSTANT:
-            sprintf(buf, " code=\""OMLL_DFMT"\"", EXPV_INT_VALUE(x1));
+            sprintf(buf, " code=\""OMLL_DFMT"\"", EXPV_INT_VALUE(v1));
             break;
         case STRING_CONSTANT:
-            sprintf(buf, " message=\"%s\"", getXmlEscapedStr(EXPV_STR(x1)));
+            sprintf(buf, " message=\"%s\"", getXmlEscapedStr(EXPV_STR(v1)));
             break;
         default:
-            abort();
+            return outx_STOPPAUSE_statement_with_expression_code(l, v);
         }
     }
 
@@ -2246,6 +2296,56 @@ outx_characterRef(int l, expv v)
 
 
 /**
+ * output FcomplexPartRef
+ */
+static void
+outx_complexPartRef(int l, expv v)
+{
+    expv v_left = EXPV_LEFT(v);
+    expv v_right = EXPV_RIGHT(v);
+
+    outx_typeAttrOnly_EXPR(l, v, "FcomplexPartRef");
+    outx_print(" part=\"%s\"", SYM_NAME(EXPV_NAME(v_right)));
+    outx_print(">\n");
+    outx_varRef_EXPR(l + 1, v_left);
+    outx_close(l, "FcomplexPartRef");
+}
+
+
+static int
+expv_is_type_parameter_inquiry(expv v)
+{
+    expv designator = EXPR_ARG1(v);
+    expv mem = EXPR_ARG2(v);
+
+    if (IS_NUMERIC(EXPV_TYPE(designator)) &&
+        strcmp("kind", SYM_NAME(EXPV_NAME(mem))) == 0) {
+        return TRUE;
+    }
+    if (IS_CHAR(EXPV_TYPE(designator)) &&
+        (strcmp("kind", SYM_NAME(EXPV_NAME(mem))) == 0 ||
+         strcmp("len", SYM_NAME(EXPV_NAME(mem))) == 0)) {
+        return TRUE;
+    }
+    return FALSE;
+}
+
+/**
+ * output FmemberRef as type parameter inquiry
+ */
+static void
+outx_type_param_inquiry(int l, expv v)
+{
+    expv designator = EXPR_ARG1(v);
+    expv mem = EXPR_ARG2(v);
+
+    EXPR_CODE(v) = FUNCTION_CALL;
+    EXPR_ARG1(v) = mem;
+    EXPR_ARG2(v) = list1(LIST, designator);
+    outx_functionCall(l, v);
+}
+
+/**
  * output FmemberRef
  */
 static void
@@ -2254,8 +2354,15 @@ outx_memberRef(int l, expv v)
     expv v_left = EXPV_LEFT(v);
     expv v_right = EXPV_RIGHT(v);
 
+    if (expv_is_type_parameter_inquiry(v))
+        return outx_type_param_inquiry(l, v);
+
+    if (IS_COMPLEX(EXPV_TYPE(v_left)))
+        return outx_complexPartRef(l, v);
+
     outx_typeAttrOnly_EXPR(l, v, XTAG(v));
-    outx_print(" member=\"%s\">\n", SYM_NAME(EXPV_NAME(v_right)));
+    outx_print(" member=\"%s\"", SYM_NAME(EXPV_NAME(v_right)));
+    outx_print(">\n");
     outx_varRef_EXPR(l + 1, v_left);
     outx_expvClose(l, v);
 }
@@ -2501,7 +2608,9 @@ getKindParameter(TYPE_DESC tp)
 
     if(IS_DOUBLED_TYPE(tp)) {
         sprintf(buf, "%d", KIND_PARAM_DOUBLE);
-    } else if(v && (EXPV_CODE(v) == INT_CONSTANT || EXPV_CODE(v) == IDENT)) {
+    } else if(v && (EXPV_CODE(v) == INT_CONSTANT || EXPV_CODE(v) == IDENT 
+        || EXPV_CODE(v) == F_VAR || EXPV_CODE(v) == FLOAT_CONSTANT)) 
+    {
         strcpy(buf, getRawString(v));
     } else {
         return NULL;
@@ -2845,6 +2954,7 @@ outx_XMP_dir_string(int l,expv v)
   case XMP_TASKS: s = "TASKS"; break;
   case XMP_LOOP: s = "LOOP"; break;
   case XMP_REFLECT: s = "REFLECT"; break;
+  case XMP_REDUCE_SHADOW: s = "REDUCE_SHADOW"; break;
   case XMP_GMOVE: s = "GMOVE"; break;
   case XMP_ARRAY: s = "ARRAY"; break;
   case XMP_BARRIER: s = "BARRIER"; break;
@@ -3187,12 +3297,20 @@ outx_unaryOp(int l, expv v)
  * output rename
  */
 static void
-outx_useRename(int l, expv local, expv use)
+outx_useRename(int l, expv x)
 {
+    expv local, use;
+    local = EXPR_ARG1(x);
+    use = EXPR_ARG2(x);
+
     assert(local != NULL);
     assert(use != NULL);
 
-    outx_printi(l, "<rename local_name=\"%s\"", getRawString(local));
+    outx_printi(l, "<rename");
+    if (EXPR_CODE(x) == F03_OPERATOR_RENAMING) {
+        outx_true(TRUE, "is_operator");
+    }
+    outx_printi(0, " local_name=\"%s\"", getRawString(local));
     outx_printi(0, " use_name=\"%s\"/>\n", getRawString(use));
 }
 
@@ -3213,7 +3331,7 @@ outx_useDecl(int l, expv v, int is_intrinsic)
 
     FOR_ITEMS_IN_LIST(lp, EXPR_ARG2(v)) {
         expv x = LIST_ITEM(lp);
-        outx_useRename(l+1, EXPR_ARG1(x), EXPR_ARG2(x));
+        outx_useRename(l+1, x);
     }
 
     include_module_file(print_fp,EXPV_NAME(EXPR_ARG1(v)));
@@ -3225,11 +3343,15 @@ outx_useDecl(int l, expv v, int is_intrinsic)
  * output rename
  */
 static void
-outx_useRenamable(int l, expv local, expv use)
+outx_useRenamable(int l, int expr_code, expv local, expv use)
 {
     assert(use != NULL);
 
     outx_printi(l, "<renamable");
+    
+    if (expr_code == F95_GENERIC_SPEC) {
+        outx_true(TRUE, "is_operator");
+    }
 
     if (local != NULL)
         outx_printi(0," local_name=\"%s\"", getRawString(local));
@@ -3254,7 +3376,7 @@ outx_useOnlyDecl(int l, expv v, int is_intrinsic)
 
     FOR_ITEMS_IN_LIST(lp, EXPR_ARG2(v)) {
         expv x = LIST_ITEM(lp);
-        outx_useRenamable(l+1, EXPR_ARG1(x), EXPR_ARG2(x));
+        outx_useRenamable(l+1, EXPR_CODE(x), EXPR_ARG1(x), EXPR_ARG2(x));
     }
 
     include_module_file(print_fp,EXPV_NAME(EXPR_ARG1(v)));
@@ -3377,7 +3499,6 @@ outx_UNLOCK_statement(int l, expv v)
     outx_expvClose(l, v);
 }
 
-
 /*
  * output blockStatement
  */
@@ -3392,6 +3513,8 @@ outx_BLOCK_statement(int l, expv v)
     int l1 = l + 1;
     int l2 = l + 2;
 
+    block = EXPR_BLOCK(v);
+
     if (EXPR_HAS_ARG2(v) && EXPR_ARG2(v) != NULL) {
         sprintf(buf, " construct_name=\"%s\"",
                 SYM_NAME(EXPR_SYM(EXPR_ARG2(v))));
@@ -3399,7 +3522,6 @@ outx_BLOCK_statement(int l, expv v)
     } else {
         outx_tagOfStatement(l, v);
     }
-    block = EXPR_BLOCK(v);
 
     outx_tag(l1, "symbols");
     FOREACH_ID(id, BLOCK_LOCAL_SYMBOLS(block)) {
@@ -3424,7 +3546,7 @@ outx_BLOCK_statement(int l, expv v)
             break;
         case F03_USE_ONLY_INTRINSIC_STATEMENT:
             outx_useOnlyDecl(l2, u, TRUE);
-            break;            
+            break;
         case F95_USE_ONLY_STATEMENT:
             outx_useOnlyDecl(l2, u, FALSE);
             break;
@@ -3455,10 +3577,11 @@ outx_FORALL_statement(int l, expv v)
 {
     list lp;
     int l1 = l + 1;
-    expv init = EXPR_ARG1(v);
-    expv mask = EXPR_ARG2(v);
-    expv body = EXPR_ARG3(v);
+    expv init = EXPR_ARG1(EXPR_ARG1(v));
+    expv mask = EXPR_ARG2(EXPR_ARG1(v));
+    expv body = EXPR_ARG2(v);
     const char *tid = NULL;
+
 
     outx_vtagLineno(l, XTAG(v), EXPR_LINE(v), NULL);
 
@@ -3466,8 +3589,8 @@ outx_FORALL_statement(int l, expv v)
         outx_print(" construct_name=\"%s\"",
                    SYM_NAME(EXPR_SYM(EXPR_ARG4(v))));
     }
-    if (EXPV_TYPE(v)) {
-        tid = getTypeID(EXPV_TYPE(v));
+    if (EXPV_TYPE(init)) {
+        tid = getTypeID(EXPV_TYPE(init));
         outx_print(" type=\"%s\"", tid);
     }
     outx_print(">\n");
@@ -3499,6 +3622,49 @@ outx_FORALL_statement(int l, expv v)
     }
 #endif
 
+    FOR_ITEMS_IN_LIST(lp, init) {
+        expv name = EXPR_ARG1(LIST_ITEM(lp));
+        expv indexRange = EXPR_ARG2(LIST_ITEM(lp));
+
+        outx_varOrFunc(l1, name);
+        outx_indexRange(l1,
+                        EXPR_ARG1(indexRange),
+                        EXPR_ARG2(indexRange),
+                        EXPR_ARG3(indexRange));
+    }
+
+    if (mask) {
+        outx_condition(l1, mask);
+    }
+
+    outx_body(l1, body);
+    outx_expvClose(l, v);
+}
+
+/*
+ * output doConcurrentStatement
+ */
+static void
+outx_DOCONCURRENT_statement(int l, expv v)
+{
+    list lp;
+    int l1 = l + 1;
+    expv init = EXPR_ARG1(EXPR_ARG1(v));
+    expv mask = EXPR_ARG2(EXPR_ARG1(v));
+    expv body = EXPR_ARG2(v);
+    const char *tid = NULL;
+
+    outx_vtagLineno(l, XTAG(v), EXPR_LINE(v), NULL);
+
+    if (EXPR_HAS_ARG4(v) && EXPR_ARG4(v) != NULL) {
+        outx_print(" construct_name=\"%s\"",
+                   SYM_NAME(EXPR_SYM(EXPR_ARG4(v))));
+    }
+    if (EXPV_TYPE(EXPR_ARG1(v))) {
+        tid = getTypeID(EXPV_TYPE(EXPR_ARG1(v)));
+        outx_print(" type=\"%s\"", tid);
+    }
+    outx_print(">\n");
 
     FOR_ITEMS_IN_LIST(lp, init) {
         expv name = EXPR_ARG1(LIST_ITEM(lp));
@@ -3518,6 +3684,44 @@ outx_FORALL_statement(int l, expv v)
     outx_body(l1, body);
     outx_expvClose(l, v);
 }
+
+/*
+ * output forallStatement
+ */
+static void
+outx_ASSOCIATE_statement(int l, expv v)
+{
+    ID id;
+    int l1 = l + 1;
+    int l2 = l + 2;
+    int l3 = l + 3;
+    BLOCK_ENV block = EXPR_BLOCK(v);
+    expv body = EXPR_ARG1(v);
+
+    outx_vtagLineno(l, XTAG(v), EXPR_LINE(v), NULL);
+    if (EXPR_HAS_ARG2(v) && EXPR_ARG2(v) != NULL) {
+        outx_print(" construct_name=\"%s\"",
+                   SYM_NAME(EXPR_SYM(EXPR_ARG2(v))));
+    }
+    outx_print(">\n");
+
+    outx_tag(l1, "symbols");
+    FOREACH_ID(id, BLOCK_LOCAL_SYMBOLS(block)) {
+        if (id_is_visibleVar_for_symbols(id)) {
+            assert (ID_CLASS(id) = CL_VAR);
+            outx_typeAttrOnly_ID(l2, id, "id");
+            outx_print(" sclass=\"%s\">\n", get_sclass(id));
+            outx_symbolName(l3, ID_SYM(id));
+            outx_value(l3, VAR_INIT_VALUE(id));
+            outx_close(l2, "id");
+        }
+    }
+    outx_close(l1, "symbols");
+
+    outx_body(l1, body);
+    outx_expvClose(l, v);
+}
+
 
 static void
 outx_lenspec(int l, expv v)
@@ -3586,12 +3790,14 @@ outx_expv(int l, expv v)
     case F03_CLASSIS_STATEMENT:     outx_typeGuard(l, v, 1); break;
     case F03_TYPEIS_STATEMENT:      outx_typeGuard(l, v, 0); break;
     case F_STOP_STATEMENT:
+    case F08_ERROR_STOP_STATEMENT:
     case F_PAUSE_STATEMENT:         outx_STOPPAUSE_statement(l, v); break;
     case F_LET_STATEMENT:           outx_assignStatement(l, v); break;
     case F_PRAGMA_STATEMENT:        outx_pragmaStatement(l, v); break;
     case F95_CYCLE_STATEMENT:
     case F95_EXIT_STATEMENT:        outx_EXITCYCLE_statement(l, v); break;
     case F_ENTRY_STATEMENT:         outx_entryDecl(l, v); break;
+    case F_DATA_STATEMENT:          outx_dataDecl(l, v); break;
 
     /*
      * IO statements
@@ -3697,6 +3903,7 @@ outx_expv(int l, expv v)
     case F95_USE_ONLY_STATEMENT:
     case F03_USE_INTRINSIC_STATEMENT:
     case F03_USE_ONLY_INTRINSIC_STATEMENT:
+    case F03_ENUM_STATEMENT:
         break;
 
     /*
@@ -3896,8 +4103,16 @@ outx_expv(int l, expv v)
       outx_FORALL_statement(l, v);
       break;
 
+    case F08_DOCONCURRENT_STATEMENT:
+      outx_DOCONCURRENT_statement(l, v);
+      break;
+
+    case F03_ASSOCIATE_STATEMENT:
+      outx_ASSOCIATE_statement(l, v);
+      break;
+
     default:
-        fatal("unkown exprcode : %d", code);
+        fatal("unknown exprcode : %d", code);
         abort();
     }
 }
@@ -3913,7 +4128,7 @@ mark_type_desc_skip_tbp(TYPE_DESC tp, int skip_tbp)
     if (tp == NULL || TYPE_IS_REFERENCED(tp) == TRUE || IS_MODULE(tp))
         return;
 
-    if (skip_tbp &&  IS_PROCEDURE_TYPE(tp) && TYPE_REF(tp) != NULL) {
+    if (skip_tbp && IS_PROCEDURE_TYPE(tp) && TYPE_REF(tp) != NULL) {
         /* procedure variable or type-bound procedure with a PASS argument
          * may cause a circulation reference,
          * so store them to a list and check them later.
@@ -4381,13 +4596,16 @@ outx_functionType(int l, TYPE_DESC tp)
         outx_print(" return_type=\"%s\"", rtid);
         outx_true(FUNCTION_TYPE_IS_PROGRAM(tp), "is_program");
 
-        if (FUNCTION_TYPE_IS_VISIBLE_INTRINSIC(tp))
+        if (FUNCTION_TYPE_IS_VISIBLE_INTRINSIC(tp)) {
             outx_true(TYPE_IS_INTRINSIC(tp), "is_intrinsic");
+        }
 
         outx_true(TYPE_IS_RECURSIVE(tp), "is_recursive");
         outx_true(TYPE_IS_PURE(tp), "is_pure");
         outx_true(TYPE_IS_ELEMENTAL(tp), "is_elemental");
         outx_true(TYPE_IS_MODULE(tp), "is_module");
+
+        outx_false(TYPE_IS_IMPURE(tp), "is_pure");
 
         if (is_emitting_for_submodule) {
             /*
@@ -4491,7 +4709,10 @@ outx_structType(int l, TYPE_DESC tp)
                 ID binding;
                 int is_defined_io = FALSE;
                 outx_printi(l2, "<typeBoundGenericProcedure");
-                if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_IS_OPERATOR) {
+                if (TBP_BINDING_ATTRS(id) & (
+                        TYPE_BOUND_PROCEDURE_IS_OPERATOR |
+                        TYPE_BOUND_PROCEDURE_IS_UNARY_OPERATOR |
+                        TYPE_BOUND_PROCEDURE_IS_BINARY_OPERATOR)) {
                     outx_true(TRUE, "is_operator");
                 }
                 if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_IS_ASSIGNMENT) {
@@ -4513,6 +4734,8 @@ outx_structType(int l, TYPE_DESC tp)
                     }
                     outx_puts("\" ");
                 }
+                outx_true(TYPE_IS_PUBLIC(id), "is_public");
+                outx_true(TYPE_IS_PRIVATE(id), "is_private");
                 outx_printi(0,">\n");
                 if (!is_defined_io) {
                     outx_tagText(l3, "name", SYM_NAME(ID_SYM(id)));
@@ -4569,6 +4792,29 @@ outx_structType(int l, TYPE_DESC tp)
 
 
 /**
+ * output FenumType
+ */
+static void
+outx_enumType(int l, TYPE_DESC tp)
+{
+    ID id;
+    int l1 = l + 1;
+    int l2 = l1 + 1;
+    int l3 = l2 + 1;
+    outx_typeAttrs(l, tp ,"FenumType", TOPT_NEXTLINE);
+    outx_tag(l1, "symbols");
+    FOREACH_MEMBER(id, tp) {
+      outx_tag(l2, "id");
+      outx_symbolName(l3, ID_SYM(id));
+      outx_value(l3, VAR_INIT_VALUE(id));
+      outx_close(l2,"id");
+    }
+    outx_close(l1,"symbols");
+    outx_close(l,"FenumType");
+}
+
+
+/**
  * output types in typeTable
  */
 static void
@@ -4591,6 +4837,9 @@ outx_type(int l, TYPE_DESC tp)
         } else {
             outx_structType(l, tp);
         }
+
+    } else if(IS_ENUM(tp)) {
+        outx_enumType(l, tp);
 
     } else if(IS_PROCEDURE_TYPE(tp)) {
         outx_functionType(l, tp);
@@ -4638,7 +4887,7 @@ id_is_visibleVar(ID id)
             return TRUE;
         }
         if ((is_outputed_module && CRT_FUNCEP == NULL)
-            && (TYPE_IS_PUBLIC(tp) || TYPE_IS_PRIVATE(tp))) { // TODO PROTECTED
+            && (TYPE_IS_PUBLIC(tp) || TYPE_IS_PRIVATE(tp))) {
             return TRUE;
         }
         return FALSE;
@@ -4652,8 +4901,6 @@ id_is_visibleVar(ID id)
         if(TYPE_IS_MODIFIED(ID_TYPE(id)))
             return TRUE;
         if(VAR_IS_IMPLIED_DO_DUMMY(id))
-            return FALSE;
-        if(ID_STORAGE(id) == STG_INDEX) /* Don't declare as a variable */
             return FALSE;
         break;
     case CL_PARAM:
@@ -4672,6 +4919,11 @@ id_is_visibleVar(ID id)
                 return FALSE;
             }
         }
+        if (PROC_CLASS(id) == P_INTRINSIC &&
+            ID_TYPE(id) &&
+            FUNCTION_TYPE_IS_VISIBLE_INTRINSIC(ID_TYPE(id))) {
+                return TRUE;
+        }
         if (EXT_IS_DEFINED_IO(PROC_EXT_ID(id))) {
             return FALSE;
         }
@@ -4682,8 +4934,6 @@ id_is_visibleVar(ID id)
             return TRUE;
         case STG_UNKNOWN:
         case STG_NONE:
-            return FALSE;
-        case STG_INDEX:
             return FALSE;
         default:
             break;
@@ -4702,12 +4952,10 @@ id_is_visibleVar_for_symbols(ID id)
     if (id == NULL)
         return FALSE;
 
-    if (ID_STORAGE(id) == STG_INDEX)
-        return TRUE;
-
     return (id_is_visibleVar(id) && IS_MODULE(ID_TYPE(id)) == FALSE) ||
             ((ID_STORAGE(id) == STG_ARG ||
               ID_STORAGE(id) == STG_SAVE ||
+              ID_STORAGE(id) == STG_INDEX ||
               (ID_STORAGE(id) == STG_EXT && !EXT_IS_DEFINED_IO(PROC_EXT_ID(id))) ||
               ID_STORAGE(id) == STG_AUTO) && ID_CLASS(id) == CL_PROC);
 }
@@ -4754,17 +5002,24 @@ outx_commonDecl(int l, ID cid)
 {
     list lp;
     expv var;
-    char buf[256];
     const int l1 = l + 1, l2 = l1 + 1;
 
-    outx_tagOfDecl1(l, xtag(F_COMMON_DECL), ID_LINE(cid));
+    outx_tagOfDeclNoClose(l, xtag(F_COMMON_DECL), ID_LINE(cid));
 
-    if(COM_IS_BLANK_NAME(cid) == FALSE)
-        sprintf(buf, " name=\"%s\"", ID_NAME(cid));
-    else
-        buf[0] = '\0';
+    if(TYPE_HAS_BIND(cid)) {
+        outx_print(" bind=\"%s\"", "C"); // Only C for the moment
+        if(ID_BIND(cid)){
+            outx_print(" bind_name=\"%s\"", EXPR_STR(ID_BIND(cid)));
+        }
+    }
 
-    outx_tag(l1, "varList%s", buf);
+    outx_print(">\n");
+
+    outx_printi(l1, "<varList");
+    if(COM_IS_BLANK_NAME(cid) == FALSE) {
+        outx_print(" name=\"%s\"", ID_NAME(cid));
+    }
+    outx_print(">\n");
 
     FOR_ITEMS_IN_LIST(lp, COM_VARS(cid)) {
         var = LIST_ITEM(lp);
@@ -4789,6 +5044,24 @@ outx_equivalenceDecl(int l, expv v)
     outx_varRef_EXPR(l1, EXPR_ARG1(v1));
     outx_varList(l1, EXPR_ARG2(v1), NULL);
     outx_close(l, xtag(F_EQUIV_DECL));
+}
+
+
+
+/**
+ * output FenumDecl
+ */
+static void
+outx_enumDecl(int l, ID id)
+{
+    if(id == NULL)
+        return;
+
+    outx_tagOfDeclNoChild(l,
+                          "%s type=\"%s\"",
+                          ID_LINE(id),
+                          "FenumDecl",
+                          getTypeID(ID_TYPE(id)));
 }
 
 
@@ -4839,13 +5112,12 @@ genSortedIDs(ID ids, int *retnIDs)
         (FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)) != NULL && \
          !TYPE_IS_IMPLICIT(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)))))) || \
       (ID_TYPE(id) && TYPE_IS_EXTERNAL(ID_TYPE(id))) || \
-      (ID_TYPE(id) && TYPE_IS_INTRINSIC(ID_TYPE(id))) || \
       PROC_CLASS(id) == P_UNDEFINEDPROC || \
       PROC_CLASS(id) == P_DEFINEDPROC)     \
   && (PROC_EXT_ID(id) == NULL ||           \
       PROC_CLASS(id) == P_UNDEFINEDPROC || \
       PROC_CLASS(id) == P_DEFINEDPROC || \
-      (TYPE_IS_PUBLIC(id) || TYPE_IS_PRIVATE(id) || ( \
+      (TYPE_IS_PUBLIC(id) || TYPE_IS_PRIVATE(id)  || ( \
       EXT_PROC_IS_INTERFACE(PROC_EXT_ID(id)) == FALSE && \
       EXT_PROC_IS_INTERFACE_DEF(PROC_EXT_ID(id)) == FALSE)))    \
   && (ID_TYPE(id) \
@@ -4853,7 +5125,6 @@ genSortedIDs(ID ids, int *retnIDs)
       && IS_MODULE(ID_TYPE(id)) == FALSE   \
       && (IS_VOID(ID_TYPE(id)) == FALSE || \
       has_attribute_except_private_public(ID_TYPE(id)))))
-
 
 static int
 is_id_used_in_struct_member(ID id, TYPE_DESC sTp)
@@ -4893,8 +5164,14 @@ emit_decl(int l, ID id)
     if (ID_IS_OFMODULE(id) == TRUE && ID_CLASS(id) != CL_PARAM) {
         return;
     }
+    if (ID_IS_IMPORTED(id)) {
+        return;
+    }
 
-    if (CRT_FUNCEP != NULL && EXT_PROC_IS_PROCEDUREDECL(CRT_FUNCEP)) {
+    if (!is_inside_interface &&
+        CRT_FUNCEP != NULL &&
+        EXT_PROC_IS_PROCEDUREDECL(CRT_FUNCEP)) {
+
         /*
          * In the Separate Module Procedure,
          * a function, argments, and a result variable are not decleared
@@ -4928,6 +5205,31 @@ emit_decl(int l, ID id)
     case CL_ENTRY:
         break;
 
+    case CL_ENUM:
+        outx_enumDecl(l, id);
+        break;
+
+    case CL_DECL_PRAGMA:
+      outx_pragmaStatement(l, id->info.decl_pragma_info.v);
+      break;
+	
+    case CL_PROC:
+        if (ID_TYPE(id) &&
+            IS_PROCEDURE_TYPE(ID_TYPE(id)) &&
+            FUNCTION_TYPE_IS_VISIBLE_INTRINSIC(ID_TYPE(id))) {
+            outx_varDecl(l, id);
+            break;
+        }
+
+        if (ID_TYPE(id) &&
+            IS_PROCEDURE_TYPE(ID_TYPE(id)) &&
+            FUNCTION_TYPE_IS_INTERFACE(ID_TYPE(id)) &&
+            CRT_FUNCEP != PROC_EXT_ID(id)) {
+            outx_function_as_interfaceDecl(l, PROC_EXT_ID(id));
+            break;
+        }
+
+        /* fall through */
     default:
         switch (ID_STORAGE(id)) {
             case STG_ARG:
@@ -4956,6 +5258,7 @@ emit_decl(int l, ID id)
 
             case STG_UNKNOWN:
             case STG_NONE:
+	    case STG_PRAGMA:
                 break;
         }
         break;
@@ -4984,6 +5287,13 @@ outx_id_declarations(int l, ID id_list, int hasResultVar, const char * functionN
                 modname = ID_SYM(id);
             }
 
+            if (ID_CLASS(id) == CL_ENUM) {
+                ID enumerator;
+                FOREACH_MEMBER(enumerator, ID_TYPE(id)) {
+                    ID_IS_EMITTED(ENUMERATOR_DEFINE(enumerator)) = TRUE;
+                }
+            }
+
             if (ID_CLASS(id) != CL_TAGNAME) {
                 continue;
             }
@@ -4996,6 +5306,10 @@ outx_id_declarations(int l, ID id_list, int hasResultVar, const char * functionN
             }
 
             if (TYPE_IS_MODIFIED(ID_TYPE(id)) == TRUE) {
+                continue;
+            }
+
+            if (ID_IS_IMPORTED(id) == TRUE) {
                 continue;
             }
 
@@ -5016,6 +5330,7 @@ outx_id_declarations(int l, ID id_list, int hasResultVar, const char * functionN
                 outx_structDecl(l, id);
                 ID_IS_EMITTED(id) = TRUE;
             }
+
         }
 
         /*
@@ -5074,7 +5389,7 @@ outx_declarations1(int l, EXT_ID parent_ep, int outputPragmaInBody)
             break;
         case F03_USE_ONLY_INTRINSIC_STATEMENT:
             outx_useOnlyDecl(l1, v, TRUE);
-            break;            
+            break;
         case F03_IMPORT_STATEMENT:
             outx_importStatement(l1, v);
             break;
@@ -5105,8 +5420,10 @@ outx_declarations1(int l, EXT_ID parent_ep, int outputPragmaInBody)
     /*
      * FcommonDecl
      */
-    FOREACH_ID(id, EXT_PROC_COMMON_ID_LIST(parent_ep)) {
-        outx_commonDecl(l1, id);
+    if (!is_emitting_xmod()) {
+        FOREACH_ID(id, EXT_PROC_COMMON_ID_LIST(parent_ep)) {
+            outx_commonDecl(l1, id);
+        }
     }
 
     /*
@@ -5153,43 +5470,28 @@ outx_declarations(int l, EXT_ID parent_ep)
 }
 
 
-
 /**
  * output FmoduleProcedureDecl
  */
 static void
-outx_moduleProcedureDecl(int l, EXT_ID parent_ep, SYMBOL parentName)
+outx_moduleProcedureDecl(int l, EXT_ID ep, SYMBOL parentName)
 {
     const int l1 = l + 1;
-    int hasModProc = FALSE;
-    EXT_ID ep;
-
-    FOREACH_EXT_ID(ep, parent_ep) {
-        if(EXT_TAG(ep) == STG_EXT &&
-            EXT_PROC_IS_MODULE_PROCEDURE(ep)) {
-            hasModProc = TRUE;
-            break;
-        }
-    }
-
-    if(hasModProc == FALSE)
-        return;
-
-    if (EXT_PROC_IS_MODULE_SPECIFIED(parent_ep)) {
-        outx_tagOfDecl1(l, "FmoduleProcedureDecl is_module_specified=\"true\"",
-            GET_EXT_LINE(ep));
-    } else {
-        outx_tagOfDecl1(l, "FmoduleProcedureDecl", GET_EXT_LINE(ep));
-    }
 
     if (is_emitting_xmod() == FALSE) {
-        FOREACH_EXT_ID(ep, parent_ep) {
-            if (EXT_TAG(ep) == STG_EXT &&
-                EXT_PROC_IS_MODULE_PROCEDURE(ep) &&
-                !EXT_IS_OFMODULE(ep)) {
-                outx_symbolName(l1, EXT_SYM(ep));
+        if (EXT_TAG(ep) == STG_EXT &&
+            !EXT_IS_OFMODULE(ep)) {
+            if (EXT_PROC_IS_MODULE_SPECIFIED(ep)) {
+                outx_tagOfDecl1(l, "FmoduleProcedureDecl is_module_specified=\"true\"",
+                                GET_EXT_LINE(ep));
+            } else {
+                outx_tagOfDecl1(l, "FmoduleProcedureDecl", GET_EXT_LINE(ep));
             }
+            outx_symbolName(l1, EXT_SYM(ep));
+            outx_close(l, "FmoduleProcedureDecl");
+
         }
+
     } else {
         if (parentName != NULL) {
             gen_proc_t gp = find_generic_procedure(SYM_NAME(parentName));
@@ -5200,11 +5502,18 @@ outx_moduleProcedureDecl(int l, EXT_ID parent_ep, SYMBOL parentName)
                     HashSearch sCtx;
                     mod_proc_t mp;
 
+                    if (EXT_PROC_IS_MODULE_SPECIFIED(ep)) {
+                        outx_tagOfDecl1(l, "FmoduleProcedureDecl is_module_specified=\"true\"",
+                                        GET_EXT_LINE(ep));
+                    } else {
+                        outx_tagOfDecl1(l, "FmoduleProcedureDecl", GET_EXT_LINE(ep));
+                    }
                     FOREACH_IN_HASH(hPtr, &sCtx, tPtr) {
                         mp = (mod_proc_t)GetHashValue(hPtr);
-                        outx_symbolNameWithFunctionType_EXT(l1,
-                                                            MOD_PROC_EXT_ID(mp));
+                        outx_symbolNameAndType_for_functionType(
+                            l1, MOD_PROC_NAME(mp), MOD_PROC_TYPE(mp));
                     }
+                    outx_close(l, "FmoduleProcedureDecl");
                 } else {
                     fatal("invalid generic procedure structure.");
                     /* not reached. */
@@ -5223,7 +5532,17 @@ outx_moduleProcedureDecl(int l, EXT_ID parent_ep, SYMBOL parentName)
         }
     }
 
-    outx_close(l, "FmoduleProcedureDecl");
+}
+
+
+static void
+outx_moduleProcedureDecls(int l, EXT_ID extids, SYMBOL parentName)
+{
+    EXT_ID ep;
+
+    FOREACH_EXT_ID(ep, extids) {
+        outx_moduleProcedureDecl(l, ep, parentName);
+    }
 }
 
 
@@ -5237,6 +5556,7 @@ outx_functionDecl(int l, EXT_ID ep)
     CRT_FUNCEP_PUSH(ep);
     outx_tagOfDecl1(l, "FfunctionDecl", GET_EXT_LINE(ep));
     outx_symbolNameWithFunctionType_EXT(l1, ep);
+    outx_definition_symbols(l1, ep);
     outx_declarations(l1, ep);
     outx_close(l, "FfunctionDecl");
     CRT_FUNCEP_POP;
@@ -5266,8 +5586,6 @@ outx_innerDefinitions(int l, EXT_ID extids, SYMBOL parentName, int asDefOrDecl)
                 outx_functionDecl(l, ep);
         }
     }
-
-    outx_moduleProcedureDecl(l, extids, parentName);
 }
 
 
@@ -5293,6 +5611,46 @@ outx_contains(int l, EXT_ID parent)
 
 
 /**
+ * output a function as FinterfaceDecl
+ */
+static void
+outx_function_as_interfaceDecl(int l, EXT_ID ep)
+{
+    if(EXT_IS_OFMODULE(ep) == TRUE)
+        return;
+
+
+    CRT_FUNCEP_PUSH(NULL);
+    outx_printi(l, "<FinterfaceDecl");
+    is_inside_interface = TRUE;
+
+    if (TYPE_IS_ABSTRACT(EXT_PROC_TYPE(ep)))
+        outx_true(TRUE, "is_abstract");
+
+    outx_lineno(EXT_LINE(ep));
+    outx_printi(0,">\n");
+    outx_functionDecl(l + 1, ep);
+    outx_close(l, "FinterfaceDecl");
+    is_inside_interface = FALSE;
+    CRT_FUNCEP_POP;
+
+}
+
+
+static int
+is_generic_interface(EXT_ID ep) {
+    if (EXT_PROC_INTERFACE_CLASS(ep) == INTF_DECL &&
+        EXT_IS_BLANK_NAME(ep) == TRUE)
+        return FALSE;
+
+    if (EXT_PROC_INTERFACE_CLASS(ep) == INTF_ABSTRACT)
+        return FALSE;
+
+    return TRUE;
+}
+
+
+/**
  * output FinterfaceDecl
  */
 static void
@@ -5307,8 +5665,12 @@ outx_interfaceDecl(int l, EXT_ID ep)
     if(EXT_IS_OFMODULE(ep) == TRUE)
         return;
 
+    if(!is_generic_interface(ep))
+        return;
+
     CRT_FUNCEP_PUSH(NULL);
     outx_printi(l, "<FinterfaceDecl");
+    is_inside_interface = TRUE;
 
     switch(EXT_PROC_INTERFACE_CLASS(ep)) {
         case INTF_DECL:
@@ -5345,8 +5707,9 @@ outx_interfaceDecl(int l, EXT_ID ep)
 
     outx_lineno(EXT_LINE(ep));
     outx_printi(0,">\n");
-    outx_innerDefinitions(l + 1, extids, EXT_SYM(ep), FALSE);
+    outx_moduleProcedureDecls(l + 1, extids, EXT_SYM(ep));
     outx_close(l, "FinterfaceDecl");
+    is_inside_interface = FALSE;
     CRT_FUNCEP_POP;
 }
 
@@ -5393,6 +5756,7 @@ outx_moduleDefinition(int l, EXT_ID ep)
     const int l1 = l + 1;
 
     is_outputed_module = TRUE;
+
     CRT_FUNCEP = NULL;
 
     outx_tagOfDeclNoClose(l, "%s name=\"%s\"", GET_EXT_LINE(ep),
@@ -5628,7 +5992,7 @@ outx_globalSymbols(int l)
 
     outx_tag(l, "globalSymbols");
     FOREACH_EXT_ID(ep, EXTERNAL_SYMBOLS) {
-        if (EXT_IS_DUMMY(ep) || EXT_IS_BLANK_NAME(ep)) {
+        if (EXT_IS_DUMMY(ep) || EXT_IS_BLANK_NAME(ep) || EXT_IS_PRAGMA(ep)) {
             continue;
         }
         outx_ext_id(l1, ep);
@@ -5663,6 +6027,9 @@ outx_globalDeclarations(int l)
                     outx_functionDefinition(l1, ep);
             }
             break;
+	case STG_PRAGMA:
+	    outx_pragmaStatement(l + 1, ep->info.pragma_info.v);
+	    break;
         default:
             break;
         }
@@ -5723,7 +6090,10 @@ output_XcodeML_file()
 static void
 outx_id_mod(int l, ID id)
 {
-    if(ID_STORAGE(id) == STG_EXT && PROC_EXT_ID(id) == NULL) {
+    if (SYM_TYPE(ID_SYM(id)) == S_INTR ||
+        (ID_TYPE(id) && TYPE_IS_INTRINSIC(ID_TYPE(id)))) {
+        // do nothing
+    } else if(ID_STORAGE(id) == STG_EXT && PROC_EXT_ID(id) == NULL) {
         fatal("outx_id: PROC_EXT_ID is NULL: symbol=%s", ID_NAME(id));
     }
 
@@ -5975,12 +6345,9 @@ output_module_file(struct module * mod, const char * filename)
     FOR_ITEMS_IN_LIST(lp, modTypeList) {
         v = LIST_ITEM(lp);
         if (EXPV_INT_VALUE(EXPR_ARG1(v)) == 1) {
-            if (EXPR_ARG3(v) != NULL) {
-                ep = EXPV_ANY(EXT_ID, EXPR_ARG3(v));
-                collect_types1(ep);
-                sTp = reduce_type(EXT_PROC_TYPE(ep));
-                mark_type_desc(sTp);
-                EXT_PROC_TYPE(ep) = sTp;
+            if (EXPR_ARG2(v) != NULL) {
+                TYPE_DESC ftp = EXPV_ANY(TYPE_DESC, EXPR_ARG2(v));
+                mark_type_desc(ftp);
             }
         }
     }

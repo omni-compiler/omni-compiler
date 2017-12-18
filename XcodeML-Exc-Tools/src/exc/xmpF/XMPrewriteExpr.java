@@ -1,15 +1,8 @@
-/* 
- * $TSUKUBA_Release: Omni XMP Compiler $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package exc.xmpF;
 
 import exc.object.*;
 import exc.block.*;
 import exc.xcalablemp.*;
-
 import java.util.*;
 import static xcodeml.util.XmLog.fatal;
 

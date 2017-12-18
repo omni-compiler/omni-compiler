@@ -1,10 +1,5 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package exc.object;
+
 import exc.block.Block;
 
 /**
@@ -19,7 +14,7 @@ public class FarrayType extends Xtype
     private Xobject[] sizeExprs;
     
     /** constructor */
-    public FarrayType(String id, Xtype ref, int typeQualFlags, Xobject[] sizeExprs,
+    public FarrayType(String id, Xtype ref, long typeQualFlags, Xobject[] sizeExprs,
                       Xobject[] codimensions)
     {
         super(Xtype.F_ARRAY, id, typeQualFlags, null, codimensions);
@@ -27,7 +22,7 @@ public class FarrayType extends Xtype
         this.sizeExprs = sizeExprs;
     }
 
-    public FarrayType(String id, Xtype ref, int typeQualFlags, Xobject[] sizeExprs)
+    public FarrayType(String id, Xtype ref, long typeQualFlags, Xobject[] sizeExprs)
     {
         this(id, ref, typeQualFlags, sizeExprs, null);
     }
