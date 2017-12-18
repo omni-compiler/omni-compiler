@@ -930,17 +930,14 @@ compile_expression(expr x)
                 EXPV_TYPE(v) = ID_TYPE(id);
             }
 /* FEAST change start */
-#if 0
-            if(!expv_is_specification(v)) {
-                error_at_node(EXPR_ARG1(x),
-                    "character string length must be integer.");
-            }
-#else
+            /* if(!expv_is_specification(v)) { */
+            /*     error_at_node(EXPR_ARG1(x), */
+            /*         "character string length must be integer."); */
+            /* } */
             if(!expv_is_specification(v)){
                 EXPV_TYPE(v) = NULL;
                 sp_link_expr((expr)v, SP_ERR_CHAR_LEN, current_line);
             }
-#endif
 /* FEAST change  end  */
             return v;
         }
@@ -1098,18 +1095,6 @@ compile_ident_expression(expr x)
     if ((ret = is_statement_function_or_replace(id)) != NULL) {
         goto done;
     }
-
-#if 0
-    if (ID_IS_DUMMY_ARG(id) && ID_TYPE(id) == NULL) {
-        /*
-         * Don't declare (means not determine the type) this variable
-         * at this moment, since the id is a dummy arg and it is not
-         * declared yet.
-         */
-        ret = expv_sym_term(F_VAR,NULL,ID_SYM(id));
-        goto done;
-    }
-#endif
 
     if(ID_CLASS(id) == CL_PARAM) {
         if(VAR_INIT_VALUE(id) != NULL) {
