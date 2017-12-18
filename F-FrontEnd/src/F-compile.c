@@ -7486,11 +7486,12 @@ pointer_assignable(expr x, expv vPointer, expv vPointee) {
         if (!TYPE_IS_TARGET(vPteTyp) &&
             !TYPE_IS_POINTER(vPteTyp) &&
             !IS_PROCEDURE_TYPE(vPteTyp)) {
-            if(EXPR_CODE(EXPR_ARG2(x)) == IDENT)
+            if (EXPR_CODE(EXPR_ARG2(x)) == IDENT) {
                 if (x) error_at_node(x, "'%s' is not a pointee.",
                                      SYM_NAME(EXPR_SYM(EXPR_ARG2(x))));
-            else
+            } else {
                 if (x) error_at_node(x, "right hand side expression is not a pointee.");
+            }
             return FALSE;
         }
     }
