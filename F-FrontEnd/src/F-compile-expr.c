@@ -2719,7 +2719,7 @@ compile_struct_constructor_with_components(const ID struct_id,
                 ID pmem;
                 FOREACH_MEMBER(pmem, stp) {
                     if (find_ident_head(ID_SYM(pmem), used) != NULL) {
-                        error("member'%s' is already specified", SYM_NAME(sym));
+                        error("member'%s' is already specified", ID_NAME(pmem));
                         return NULL;
                     }
                     if ((match = find_ident_head(ID_SYM(pmem), members)) == NULL) {
