@@ -1,15 +1,8 @@
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
-
 package exc.xmpF;
 
 import exc.object.*;
 import exc.block.*;
 import java.util.*;
-
 
 /*
  * create an initialization subroutine 

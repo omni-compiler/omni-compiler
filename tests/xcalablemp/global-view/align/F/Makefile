@@ -1,7 +1,7 @@
 XFC     = xmpf90
 XRUN    = mpiexec
 TESTS = $(wildcard *.f90)
-EXES  = $(TESTS:.f90=.x)
+EXES  = offset.x offset2.x test.x
 OBJS  = $(TESTS:.f90=.o)
 
 .PHONY: clean all default run submit showlog cleanlog
@@ -13,9 +13,16 @@ all default: $(EXES)
 .f90.x:
 	$(XFC) -o $@ $<
 
+test.x: main.f90 init.o
+	$(XFC) -fbounds-check main.f90 init.o -o $@
+
+init.o: init.f90
+	$(XFC) -fbounds-check $< -c
+
 run: $(EXES)
 	$(XRUN) -n 2 ./offset.x
 	$(XRUN) -n 4 ./offset2.x
+	$(XRUN) -n 2 ./test.x
 
 RUN:
 	mkdir RUN
@@ -36,5 +43,5 @@ cleanlog:
 	rm -rf RUN
 
 clean: cleanlog
-	rm -f $(EXES) $(OBJS)
+	rm -f $(EXES) $(OBJS) *.mod *.xmod
 

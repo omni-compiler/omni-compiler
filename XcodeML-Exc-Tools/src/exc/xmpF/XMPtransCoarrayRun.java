@@ -680,8 +680,10 @@ public class XMPtransCoarrayRun
       if (onlyCafMode) {
         // SPECIAL HANDLING (TEMPORARY) to work XMPtransCoarray alone without XMPtranslate
         //  convert main program to soubroutine xmpf_main
-        if (isMainProgram())
+        if (isMainProgram()){
           _convMainProgramToSubroutine("xmpf_main");
+          XMPtranslate.create_main(def);
+        }
       }
     } else {
       XMP.fatal("XMPtransCoarrayRun.run1(), def kind unkown : " + def);

@@ -69,9 +69,25 @@ int xmp_array_lbound_(xmp_desc_t **d, int *dim, int *lbound) {
 
 }
 
+int xmp_lbound_(xmp_desc_t **d, int *dim) {
+
+  int lbound;
+  xmp_array_lbound(*d, *dim, &lbound);
+  return lbound;
+
+}
+
 int xmp_array_ubound_(xmp_desc_t **d, int *dim, int *ubound) {
 
   return xmp_array_ubound(*d, *dim, ubound);
+
+}
+
+int xmp_ubound_(xmp_desc_t **d, int *dim) {
+
+  int ubound;
+  xmp_array_ubound(*d, *dim, &ubound);
+  return ubound;
 
 }
 

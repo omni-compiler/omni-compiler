@@ -11,7 +11,7 @@ static expv compile_data_args _ANSI_ARGS_((expr args));
 static expv compile_implied_do_expression _ANSI_ARGS_((expr x));
 static expv compile_dup_decl _ANSI_ARGS_((expv x));
 static expv compile_array_constructor _ANSI_ARGS_((expr x));
-static int compile_array_ref_dimension _ANSI_ARGS_((expr x, expv dims, expv subs));
+static int  compile_array_ref_dimension _ANSI_ARGS_((expr x, expv dims, expv subs));
 static expv compile_member_array_ref  _ANSI_ARGS_((expr x, expv v));
 
 struct replace_item replace_stack[MAX_REPLACE_ITEMS];
@@ -1103,8 +1103,24 @@ compile_ident_expression(expr x)
 
     if(ID_CLASS(id) == CL_PARAM) {
         if(VAR_INIT_VALUE(id) != NULL) {
-            if(EXPV_CODE(VAR_INIT_VALUE(id)) != F95_STRUCT_CONSTRUCTOR) {
+            // Not a external module parameter. Can be replaced by value.
+            if(ID_IS_OFMODULE(id) == FALSE
+                && EXPV_CODE(VAR_INIT_VALUE(id)) != F95_STRUCT_CONSTRUCTOR) 
+            {
                 return VAR_INIT_VALUE(id);
+            } else if(EXPV_CODE(VAR_INIT_VALUE(id)) != F95_STRUCT_CONSTRUCTOR) {
+                // Only constant from external module can be replaced safely.
+                if(EXPV_CODE(VAR_INIT_VALUE(id)) == STRING_CONSTANT
+                || EXPV_CODE(VAR_INIT_VALUE(id)) == INT_CONSTANT
+                || EXPV_CODE(VAR_INIT_VALUE(id)) == FLOAT_CONSTANT
+                || EXPV_CODE(VAR_INIT_VALUE(id)) == COMPLEX_CONSTANT
+                || EXPV_CODE(VAR_INIT_VALUE(id)) == F_TRUE_CONSTANT
+                || EXPV_CODE(VAR_INIT_VALUE(id)) == F_FALSE_CONSTANT
+                || EXPV_CODE(VAR_INIT_VALUE(id)) == F_DOUBLE_CONSTANT
+                || EXPV_CODE(VAR_INIT_VALUE(id)) == F_QUAD_CONSTANT)
+                {
+                    return VAR_INIT_VALUE(id);
+                }
             }
         }
     }
@@ -1119,6 +1135,9 @@ compile_ident_expression(expr x)
         }
 
         TYPE_ATTR_FLAGS(tp) |= TYPE_ATTR_FLAGS(id);
+        if (TYPE_HAS_BIND(id)) {
+            TYPE_BIND_NAME(tp) = ID_BIND(id);
+        }
 
         if (ID_ADDR(id)) {
             /*
@@ -2239,6 +2258,28 @@ choose_module_procedure_by_args(EXT_ID mod_procedures, expv args)
     return NULL;
 }
 
+
+static expv
+max_rank_from_arguments(expv args)
+{
+    list lp;
+    expv maxRanked = NULL;
+
+    if (args == NULL || EXPR_CODE(args) != LIST) {
+        return NULL;
+    }
+    FOR_ITEMS_IN_LIST(lp, args) {
+        if (maxRanked == NULL ||
+            (TYPE_N_DIM(EXPV_TYPE(maxRanked)) <
+             TYPE_N_DIM(EXPV_TYPE(LIST_ITEM(lp))))) {
+            maxRanked = LIST_ITEM(lp);
+        }
+    }
+
+    return maxRanked;
+}
+
+
 expv
 compile_function_call(ID f_id, expr args) {
     return compile_function_call_check_intrinsic_arg_type(f_id, args, FALSE);
@@ -2247,7 +2288,7 @@ compile_function_call(ID f_id, expr args) {
 
 expv
 compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTypeMismatch) {
-    expv a, v = NULL;
+    expv a = NULL, v = NULL;
     EXT_ID ep = NULL;
     TYPE_DESC tp = NULL;
     ID tagname = NULL;
@@ -2279,7 +2320,8 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
             /* f_id is not defined yet. */
 
             if (ID_TYPE(f_id) != NULL) {
-                if (!IS_PROCEDURE_TYPE(ID_TYPE(f_id))) {
+                if (!IS_PROCEDURE_TYPE(ID_TYPE(f_id)) ||
+                    IS_PROCEDURE_POINTER(ID_TYPE(f_id))) {
                     if (TYPE_IS_SAVE(ID_TYPE(f_id))) {
                         TYPE_UNSET_SAVE(ID_TYPE(f_id));
                     }
@@ -2339,7 +2381,7 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
             }
             tp = ID_TYPE(f_id);
 
-            if (!IS_PROCEDURE_TYPE(tp)) {
+            if (!IS_PROCEDURE_TYPE(tp) || IS_PROCEDURE_POINTER(tp)) {
                 tp = function_type(tp);
                 ID_TYPE(f_id) = tp;
                 EXPV_TYPE(ID_ADDR(f_id)) = ID_TYPE(f_id);
@@ -2406,6 +2448,13 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
         default:
             fatal("%s: unknown proc_class %d", __func__,
                   PROC_CLASS(f_id));
+    }
+
+    if (ID_TYPE(f_id) != NULL && TYPE_IS_ELEMENTAL(ID_TYPE(f_id))) {
+        expv maxRanked = max_rank_from_arguments(a);
+        if (maxRanked != NULL && IS_ARRAY_TYPE(EXPV_TYPE(maxRanked))) {
+            EXPV_TYPE(v) = copy_dimension(EXPV_TYPE(maxRanked), EXPV_TYPE(v));
+        }
     }
 
 line_info:
@@ -3238,22 +3287,27 @@ compile_type_bound_procedure_call(expv memberRef, expr args) {
     expv v;
     expv a;
 
-    TYPE_DESC ftp;
-    TYPE_DESC stp;
+    expv parent;
+    TYPE_DESC ftp, stp, parent_tp;
     TYPE_DESC ret_type = type_GNUMERIC_ALL;
 
     a = compile_args(args);
 
+    parent = EXPR_ARG1(memberRef);
     ftp = EXPV_TYPE(memberRef);
-    stp = EXPV_TYPE(EXPR_ARG1(memberRef));
+    parent_tp = EXPV_TYPE(parent);
+    stp = get_bottom_ref_type(parent_tp);
+
     if (TYPE_BOUND_GENERIC_TYPE_GENERICS(ftp)) {
-        // for type-bound GENERIC
+        /*
+         * for type-bound GENERIC
+         */
         ID bind;
         ID bindto;
         FOREACH_ID(bind, TYPE_BOUND_GENERIC_TYPE_GENERICS(ftp)) {
             bindto = find_struct_member_allow_private(stp, ID_SYM(bind), TRUE);
             if (TYPE_REF(ID_TYPE(bindto)) &&
-                function_type_is_appliable(TYPE_REF(ID_TYPE(bindto)), a, TRUE)) 
+                function_type_is_appliable(TYPE_REF(ID_TYPE(bindto)), a, TRUE))
             {
                 ftp = TYPE_REF(ID_TYPE(bindto));
                 /* EXPV_TYPE(memberRef) = ftp; */
@@ -3270,14 +3324,23 @@ compile_type_bound_procedure_call(expv memberRef, expr args) {
         /* type-bound generic procedure type does not exist in XcodeML */
         EXPV_TYPE(memberRef) = NULL;
     } else {
-        // for type-bound PROCEDURE
+        /*
+         * for type-bound PROCEDURE
+         */
         if (ftp != NULL) {
-#if 0 // to be solved
+#if 0   /* Currently, don't check arugments are valid or not */
             if (function_type_is_appliable(ftp, a, TRUE)) {
                 error("argument type mismatch");
             }
 #endif
             if (TYPE_REF(ftp)) {
+                if(FUNCTION_TYPE_RETURN_TYPE(TYPE_REF(ftp)) == NULL){ 
+                    // might have some ref indirection before getting to the 
+                    // actual function type
+                    while(TYPE_REF(TYPE_REF(ftp))) {
+                        ftp = TYPE_REF(ftp);
+                    }
+                }
                 ret_type = FUNCTION_TYPE_RETURN_TYPE(TYPE_REF(ftp));
             } else {
                 /*
@@ -3291,6 +3354,21 @@ compile_type_bound_procedure_call(expv memberRef, expr args) {
 
     v = list2(FUNCTION_CALL, memberRef, a);
     EXPV_TYPE(v) = ret_type;
+
+    if (ftp != NULL) {
+        if (TYPE_IS_ELEMENTAL(get_bottom_ref_type(ftp))) {
+            expv maxRanked = max_rank_from_arguments(a);
+            if (maxRanked == NULL ||
+                (TYPE_N_DIM(parent_tp) >
+                 TYPE_N_DIM(EXPV_TYPE(maxRanked)))) {
+                maxRanked = parent;
+            }
+            if (maxRanked != NULL && IS_ARRAY_TYPE(parent_tp)) {
+                EXPV_TYPE(v) = copy_dimension(parent_tp, EXPV_TYPE(v));
+            }
+        }
+    }
+
     return v;
 }
 

@@ -269,6 +269,7 @@ void compile_XMP_directive(expr x)
       break;
 
     case XMP_REFLECT:
+    case XMP_REDUCE_SHADOW:
       check_INEXEC();
       /* check arg: (arrayNameList, width, opt) */
       x1 = EXPR_ARG1(c);
@@ -276,7 +277,7 @@ void compile_XMP_directive(expr x)
       x3 = compile_expression(EXPR_ARG3(c));
       x4 = XMP_compile_acc_clause(EXPR_ARG4(c));
       c = list4(LIST,x1,x2,x3,x4);
-      output_statement(XMP_pragma_list(XMP_REFLECT,c,NULL));
+      output_statement(XMP_pragma_list(EXPR_INT(dir), c, NULL));
       break;
 
     case XMP_BARRIER:

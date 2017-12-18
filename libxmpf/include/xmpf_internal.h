@@ -206,6 +206,10 @@ extern _XMP_async_comm_t* _XMP_get_async(int);
 extern void xmpc_init_async(int);
 extern void xmpc_start_async();
 
+/* From xmp_reduce_shadow.c */
+void _XMP_set_reduce_shadow__(_XMP_array_t *a, int dim, int lwidth, int uwidth, int is_periodic);
+void _XMP_reduce_shadow__(_XMP_array_t *a);
+
 /* From xmpf_pack.c */
 void _XMPF_pack_array(void *buffer, void *src, int array_type, size_t array_type_size,
 		      int array_dim, int *l, int *u, int *s, unsigned long long *d);

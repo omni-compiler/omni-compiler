@@ -301,6 +301,10 @@ extern void _XMP_reflect__(_XMP_array_t *a);
 extern void _XMP_wait_async__(int async_id);
 extern void _XMP_reflect_async__(_XMP_array_t *a, int async_id);
 
+// xmp_reduce_shadow.c
+extern void _XMP_reduce_shadow_wait(_XMP_array_t *a);
+extern void _XMP_reduce_shadow_sum(_XMP_array_t *a);
+  
 // xmp_runtime.c
 extern void _XMP_init(int argc, char** argv, MPI_Comm comm);
 extern void _XMP_finalize(bool isFinalize);

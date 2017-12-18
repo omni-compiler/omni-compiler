@@ -1638,7 +1638,6 @@ classify_statement()
     case KW_OUT:
     case KW_TO:
     case KW_TYPE:
-    case KW_USE:
     case NAMELIST:
     case NULLIFY:
     case OPTIONAL:
@@ -1695,6 +1694,8 @@ classify_statement()
         }
         break;
 
+    case KW_ONLY:
+    case KW_USE:        
     case GENERIC:
         may_generic_spec = TRUE;
         break;
@@ -3997,6 +3998,7 @@ struct keyword_token keywords[ ] =
     { "abstract",       ABSTRACT  },     /* F2003 spec */
     { "assignment",     ASSIGNMENT  },
     { "assign",         ASSIGN  },
+    { "associate",      ASSOCIATE  },    /* F2003 spec */
     { "allocatable",    ALLOCATABLE },
     { "allocate",       ALLOCATE },
     { "all",            KW_ALL },       /* #060 coarray */
@@ -4035,6 +4037,7 @@ struct keyword_token keywords[ ] =
     { "enum",           ENUM },          /* F2003 spec */
     { "enumerator",     ENUMERATOR },          /* F2003 spec */
     { "exit",           EXIT },
+    { "endassociate",   ENDASSOCIATE },  /* F2003 spec */
     { "endblock",       ENDBLOCK },
     { "endcritical",    ENDCRITICAL },     /* #060 coarray */
     { "enddo",          ENDDO },
@@ -4150,6 +4153,7 @@ struct keyword_token keywords[ ] =
 
 struct keyword_token end_keywords[ ] =
 {
+    { "associate",      ENDASSOCIATE },
     { "block",          BLOCK },
     { "blockdata",      BLOCKDATA },
     { "critical",       ENDCRITICAL },     /* #060 coarray */
@@ -4418,6 +4422,7 @@ struct keyword_token XMP_keywords[ ] =
     {"tasks",	XMPKW_TASKS },
     {"loop",	XMPKW_LOOP },
     {"reflect",	XMPKW_REFLECT },
+    {"reduce_shadow",	XMPKW_REDUCE_SHADOW },
     {"gmove",	XMPKW_GMOVE },
     {"barrier",	XMPKW_BARRIER},
     {"reduction",	XMPKW_REDUCTION },

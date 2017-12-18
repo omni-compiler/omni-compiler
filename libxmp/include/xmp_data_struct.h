@@ -112,9 +112,13 @@ typedef struct _XMP_template_type {
   _XMP_template_info_t info[1];
 } _XMP_template_t;
 
-// schedule of reflect comm.
+// schedule of shadow comm.
 typedef struct _XMP_reflect_sched_type {
 
+  int reflect_is_initialized;
+  int reduce_is_initialized;
+  int prev_pcopy_sched_type;
+  
   int lo_width, hi_width;
   int is_periodic;
 
@@ -122,6 +126,7 @@ typedef struct _XMP_reflect_sched_type {
   MPI_Datatype datatype_hi;
 
   MPI_Request req[4];
+  MPI_Request req_reduce[4];
 
   void *lo_send_buf, *lo_recv_buf;
   void *hi_send_buf, *hi_recv_buf;
@@ -177,6 +182,7 @@ typedef struct _XMP_async_reflect_type {
 
   MPI_Datatype *datatype;
   MPI_Request *reqs;
+  MPI_Request *reqs_reduce;
   int nreqs;
 
 } _XMP_async_reflect_t;
@@ -447,9 +453,11 @@ typedef struct _XMP_async_comm {
   int   nreqs;
   int   nnodes;
   _Bool is_used;
+  int type;
   MPI_Request *reqs;
   _XMP_nodes_t **node;
   _XMP_async_gmove_t *gmove;
+  _XMP_array_t *a;
   struct _XMP_async_comm *next;
 } _XMP_async_comm_t;
 

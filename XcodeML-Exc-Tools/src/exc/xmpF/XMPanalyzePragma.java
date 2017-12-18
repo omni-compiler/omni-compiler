@@ -1,14 +1,7 @@
-/* 
- * $TSUKUBA_Release: Omni XcalableMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package exc.xmpF;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import exc.object.*;
 import exc.block.*;
 import java.util.*;
@@ -200,6 +193,7 @@ public class XMPanalyzePragma
       break; 
 
     case REFLECT:
+    case REDUCE_SHADOW:
       analyzeReflect(pb.getClauses(),info,pb);
       break;
 
@@ -1078,7 +1072,7 @@ public class XMPanalyzePragma
 	int tidx = leftArray.getAlignSubscriptIndexAt(i);
 	if (tidx == -1) continue;
 
-    	var = env.declIdent(XMP.genSym("XMP_loop_i"), Xtype.intType, pb);
+    	var = env.declIdent(XMP.genSym("loop_i"), Xtype.intType, pb);
     	varList.add(var);
 	varListTemplate.set(tidx, var);
 
@@ -1088,8 +1082,10 @@ public class XMPanalyzePragma
 	    lb = sizeExprs[i].getArg(0);
 	  }
 	  if (lb == null){
-	    lb = env.declIntrinsicIdent("lbound", Xtype.FintFunctionType).
-	      Call(Xcons.List(left_var, Xcons.IntConstant(i+1)));
+	    // lb = env.declIntrinsicIdent("lbound", Xtype.FintFunctionType).
+	    //   Call(Xcons.List(left_var, Xcons.IntConstant(i+1)));
+	    lb = env.declInternIdent("xmp_lbound", Xtype.FintFunctionType).
+	      Call(Xcons.List(leftArray.getDescId().Ref(), Xcons.IntConstant(i+1)));
 	  }
 	}
 
@@ -1099,8 +1095,10 @@ public class XMPanalyzePragma
 	    ub = sizeExprs[i].getArg(1);
 	  }
 	  if (ub == null){
-	    ub = env.declIntrinsicIdent("ubound", Xtype.FintFunctionType).
-	      Call(Xcons.List(left_var, Xcons.IntConstant(i+1)));
+	    // ub = env.declIntrinsicIdent("ubound", Xtype.FintFunctionType).
+	    //   Call(Xcons.List(left_var, Xcons.IntConstant(i+1)));
+	    ub = env.declInternIdent("xmp_ubound", Xtype.FintFunctionType).
+	      Call(Xcons.List(leftArray.getDescId().Ref(), Xcons.IntConstant(i+1)));
 	  }
 	}
 
@@ -1154,8 +1152,10 @@ public class XMPanalyzePragma
 		lb = sizeExprs1[i].getArg(0);
 	      }
 	      if (lb == null){
-		lb = env.declIntrinsicIdent("lbound", Xtype.FintFunctionType).
-		  Call(Xcons.List(x_var, Xcons.IntConstant(i+1)));
+		// lb = env.declIntrinsicIdent("lbound", Xtype.FintFunctionType).
+		//   Call(Xcons.List(x_var, Xcons.IntConstant(i+1)));
+		lb = env.declInternIdent("xmp_lbound", Xtype.FintFunctionType).
+		  Call(Xcons.List(array1.getDescId().Ref(), Xcons.IntConstant(i+1)));
 	      }
 	    }
 
@@ -1241,8 +1241,8 @@ public class XMPanalyzePragma
 	      lb = template.getLowerAt(i);
 	    }
 	    else {
-	      Ident ret = env.declIdent(XMP.genSym("XMP_ret_"), Xtype.intType, pb);
-	      Ident tlb = env.declIdent(XMP.genSym("XMP_" + template.getName() + "_lb"), Xtype.intType, pb);
+	      Ident ret = env.declIdent(XMP.genSym("ret_"), Xtype.intType, pb);
+	      Ident tlb = env.declIdent(XMP.genSym(template.getName() + "_lb"), Xtype.intType, pb);
 	      
 	      Ident f = env.declInternIdent("xmp_template_lbound", Xtype.FintFunctionType);
 	      Xobject args1 = Xcons.List(template.getDescId().Ref(), Xcons.IntConstant(i+1), tlb.Ref());
@@ -1300,8 +1300,8 @@ public class XMPanalyzePragma
 	  lb = template.getLowerAt(i);
 	}
 	else {
-	  Ident ret = env.declIdent(XMP.genSym("XMP_ret_"), Xtype.intType, pb);
-	  Ident tlb = env.declIdent(XMP.genSym("XMP_" + template.getName() + "_lb"), Xtype.intType, pb);
+	  Ident ret = env.declIdent(XMP.genSym("ret_"), Xtype.intType, pb);
+	  Ident tlb = env.declIdent(XMP.genSym(template.getName() + "_lb"), Xtype.intType, pb);
 	      
 	  Ident f = env.declInternIdent("xmp_template_lbound", Xtype.FintFunctionType);
 	  Xobject args1 = Xcons.List(template.getDescId().Ref(), Xcons.IntConstant(i+1), tlb.Ref());

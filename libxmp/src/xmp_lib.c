@@ -17,6 +17,10 @@ MPI_Comm xmp_get_mpi_comm(void)
 void xmp_init_mpi(int *argc, char ***argv) {}
 void xmp_finalize_mpi(void) {}
 
+void xmp_init_py(MPI_Fint comm) {
+  _XMP_init(1, NULL, MPI_Comm_f2c(comm));
+}
+
 void xmp_init(MPI_Comm comm)
 {
   _XMP_init(1, NULL, comm);

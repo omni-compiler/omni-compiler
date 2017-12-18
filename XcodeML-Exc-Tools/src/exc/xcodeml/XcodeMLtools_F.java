@@ -342,6 +342,7 @@ public class XcodeMLtools_F extends XcodeMLtools {
     case FUNCTION_DEFINITION:
     case F_MODULE_DEFINITION:
     case F_BLOCK_DATA_DEFINITION:
+    case PRAGMA_LINE:
       xobjFile.add(xobj);
       break;
     default:
