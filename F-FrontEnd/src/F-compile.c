@@ -6831,7 +6831,7 @@ compile_ALLOCATE_DEALLOCATE_statement(expr x)
     FOR_ITEMS_IN_LIST(lp, args) {
         if (tp) {
             if (!type_is_compatible_for_allocation(EXPV_TYPE(LIST_ITEM(lp)),
-                                                  tp)) {
+                                                   tp)) {
                 error("type incompatible");
                 return;
             }
