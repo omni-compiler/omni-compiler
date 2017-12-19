@@ -1153,6 +1153,7 @@ compile_ident_expression(expr x)
     }
 
     done:
+
 #ifdef not
     if (ret == NULL) {
 /* FEAST change start */
@@ -2721,7 +2722,7 @@ compile_struct_constructor_with_components(const ID struct_id,
     ID ip, cur, members, used = NULL, used_last = NULL;
     ID match = NULL;
     SYMBOL sym;
-    expv v;
+    expv v = NULL;
     expv result, components;
     TYPE_DESC tp;
     components = list0(LIST);
@@ -2782,7 +2783,11 @@ compile_struct_constructor_with_components(const ID struct_id,
         }
 
         v = compile_expression(arg);
-        assert(EXPV_TYPE(v) != NULL);
+
+        if (v == NULL || !isValidType(EXPV_TYPE(v))) {
+            return NULL;
+        }
+
         if (!type_is_compatible_for_assignment(ID_TYPE(match),
                                                EXPV_TYPE(v))) {
             error("type is not applicable in struct constructor");
