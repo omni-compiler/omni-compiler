@@ -671,7 +671,6 @@ declare_procedure(enum name_class class,
 
         if (class != CL_PROC) {
             error("unexpected statement in interface block");
-            fprintf(stderr, "HERE\n");
             abort();
         }
 
