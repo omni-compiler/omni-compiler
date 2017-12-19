@@ -2346,7 +2346,7 @@ end_declaration()
                  */
                 tp = ID_TYPE(resId);
             }
-            
+
             if (IS_FUNCTION_TYPE(tp)) {
                 ID_TYPE(myId) = NULL;
                 declare_id_type(myId, tp);
@@ -2361,15 +2361,17 @@ end_declaration()
 
             if ((TYPE_IS_ELEMENTAL(myId) ||
                  PROC_IS_ELEMENTAL(myId))) {
-                if (IS_ARRAY_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp))) {
+                TYPE_DESC retType = ID_TYPE(resId)?:FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(myId));
+
+                if (IS_ARRAY_TYPE(retType)) {
                     error_at_id(myId,
-                                "result type of ELEMENTAL  "
+                                "result type of ELEMENTAL procedure "
                                 "should not be an array");
                 }
-                if (TYPE_IS_POINTER(FUNCTION_TYPE_RETURN_TYPE(tp)) ||
-                    TYPE_IS_ALLOCATABLE(FUNCTION_TYPE_RETURN_TYPE(tp))) {
+                if (TYPE_IS_POINTER(retType) ||
+                    TYPE_IS_ALLOCATABLE(retType)) {
                     error_at_id(myId,
-                                "result type of ELEMENTAL  "
+                                "result type of ELEMENTAL procedure "
                                 "should not have POINTER or ALLOCATABLE attributes");
                 }
             }

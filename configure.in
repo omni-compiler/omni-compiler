@@ -463,6 +463,7 @@ T_FJMODULE=$FALSE
 POWERPC=$FALSE
 CRAY=$FALSE
 SUPERUX=$FALSE
+FPP_FLAGS="-E -cpp"
 if test "x${target}" = "xKcomputer-linux-gnu" -o "x${target}" = "xFX10-linux-gnu" -o "x${target}" = "xFX100-linux-gnu"; then
     if test "x${domod2xmod}" = "xyes"; then
         T_FJMODULE=$TRUE
@@ -483,6 +484,7 @@ elif test "x${target}" = "xpowerpc-ibm-cnk" -o "x${target}" = "xpowerpc-hitachi-
     POWERPC=$TRUE
 elif test "x${target}" = "xCray-linux-gnu"; then
     CRAY=$TRUE
+    FPP_FLAGS="-e P"
 elif test "x${target}" = "xsxace-nec-superux" -o "x${target}" = "xsx9-nec-superux"; then
     SUPERUX=$TRUE
 fi
@@ -495,6 +497,7 @@ AC_SUBST(POWERPC)
 AC_SUBST(CRAY)
 AC_SUBST(SUPERUX)
 AC_SUBST(T_FJMODULE)
+AC_SUBST(FPP_FLAGS)
 
 SUPERUX_OR_POWERPC=$FALSE
 if test $SUPERUX -eq $TRUE -o $POWERPC -eq $TRUE; then
