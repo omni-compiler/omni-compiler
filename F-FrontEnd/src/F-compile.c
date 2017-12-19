@@ -4035,7 +4035,6 @@ end_procedure()
     ID id;
     EXT_ID ext;
     BLOCK_ENV bp;
-    EXT_ID ep;
 
     /* Check if a block construct is closed */
     if (CTL_TYPE(ctl_top) == CTL_BLK &&
@@ -4281,23 +4280,6 @@ end_procedure()
             }
         }
     }
-
-
-    FOREACH_EXT_ID(ep, LOCAL_EXTERNAL_SYMBOLS) {
-        if (EXT_PROC_TYPE(ep) != NULL || !IS_PROCEDURE_TYPE(EXT_PROC_TYPE(ep))) {
-            continue;
-        }
-
-        /*
-         * Update procedure variables
-         */
-        update_procedure_variables_forall(EXT_PROC_ID_LIST(ep),
-                                          EXT_PROC_STRUCT_DECLS(ep),
-                                          EXT_PROC_BLOCKS(ep),
-                                          LOCAL_SYMBOLS, /* is_final = */ TRUE);
-    }
-
-
 
     if (CTL_TYPE(ctl_top) == CTL_BLK) {
         return;
@@ -6831,7 +6813,7 @@ compile_ALLOCATE_DEALLOCATE_statement(expr x)
 
     FOR_ITEMS_IN_LIST(lp, args) {
         if (tp) {
-            if (type_is_compatible_for_allocation(EXPV_TYPE(LIST_ITEM(lp)),
+            if (!type_is_compatible_for_allocation(EXPV_TYPE(LIST_ITEM(lp)),
                                                   tp)) {
                 error("type incompatible");
                 return;
@@ -6843,14 +6825,14 @@ compile_ALLOCATE_DEALLOCATE_statement(expr x)
         }
 
         if (vsource) {
-            if (type_is_compatible_for_allocation(EXPV_TYPE(LIST_ITEM(lp)),
+            if (!type_is_compatible_for_allocation(EXPV_TYPE(LIST_ITEM(lp)),
                                                   EXPV_TYPE(vsource))) {
                 error("type incompatible");
                 return;
             }
         }
         if (vmold) {
-            if (type_is_compatible_for_allocation(EXPV_TYPE(LIST_ITEM(lp)),
+            if (!type_is_compatible_for_allocation(EXPV_TYPE(LIST_ITEM(lp)),
                                                   EXPV_TYPE(vmold))) {
                 return;
                 error("type incompatible");
