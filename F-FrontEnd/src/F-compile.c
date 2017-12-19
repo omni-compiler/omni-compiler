@@ -2361,7 +2361,10 @@ end_declaration()
 
             if ((TYPE_IS_ELEMENTAL(myId) ||
                  PROC_IS_ELEMENTAL(myId))) {
-                TYPE_DESC retType = ID_TYPE(resId)?:FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(myId));
+                TYPE_DESC retType = ID_TYPE(resId);
+                if (retType == NULL) {
+                    retType = FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(myId));
+                }
 
                 if (IS_ARRAY_TYPE(retType)) {
                     error_at_id(myId,
