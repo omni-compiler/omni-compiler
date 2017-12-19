@@ -421,7 +421,7 @@ declare_procedure(enum name_class class,
         }
 
         if (type != NULL) {
-            if (!IS_PROCEDURE_TYPE(type) || IS_PROCEDURE_POINTER(type)) {
+            if (!IS_PROCEDURE_TYPE(type)) {
                 type = function_type(type);
             }
             declare_id_type(id, type);
