@@ -15,6 +15,8 @@ int unit_ctl_contains_level;
 
 ENV current_local_env;
 
+expr TOP_PRAGMAS;
+
 /* flags and defaults */
 int save_all = FALSE;
 int sub_stars = FALSE;
@@ -1241,8 +1243,13 @@ compile_statement1(int st_no, expr x)
 	compile_pragma_outside(x);
       else if (CURRENT_STATE == INDCL)
 	compile_pragma_decl(x);
-      else // INEXEC || INSIDE
+      else if (CURRENT_STATE == INEXEC)
 	compile_pragma_statement(x);
+      else { // INSIDE: the first line in this scoping unit is F_PRAGMA.
+	char *str = strdup(EXPR_STR(EXPR_ARG1(x)));
+	TOP_PRAGMAS = list_put_last(TOP_PRAGMAS, list1(F_PRAGMA_STATEMENT,
+						       make_enode(STRING_CONSTANT, str)));
+      }
       break;
 
     case F95_TYPEDECL_STATEMENT:
@@ -1711,6 +1718,8 @@ begin_procedure()
     CURRENT_PROC_CLASS = CL_MAIN;       /* default */
     current_proc_state = P_DEFAULT;
 
+    TOP_PRAGMAS = list0(LIST);
+    
     /*
      * NOTE:
      * The function/subroutine in the interface body
@@ -1770,6 +1779,18 @@ check_INDCL()
     default:
         error("declaration among executables");
     }
+
+    list lp;
+    FOR_ITEMS_IN_LIST(lp, TOP_PRAGMAS){
+      expv x = LIST_ITEM(lp);
+      compile_statement1(0, x);
+      free(EXPR_STR(EXPR_ARG1(x)));
+    }
+    if (TOP_PRAGMAS){
+      delete_list(TOP_PRAGMAS);
+      TOP_PRAGMAS = NULL;
+    }
+    
 }
 
 void
@@ -1791,6 +1812,18 @@ check_INEXEC()
         }
     }
     if(NOT_INDATA_YET) end_declaration();
+
+    list lp;
+    FOR_ITEMS_IN_LIST(lp, TOP_PRAGMAS){
+      expv x = LIST_ITEM(lp);
+      compile_statement1(0, x);
+      free(EXPR_STR(EXPR_ARG1(x)));
+    }
+    if (TOP_PRAGMAS){
+      delete_list(TOP_PRAGMAS);
+      TOP_PRAGMAS = NULL;
+    }
+
 }
 
 
