@@ -4216,7 +4216,7 @@ end_procedure()
                 ID id_in_parent = NULL;
                 ID parent_id_list;
 
-                id_in_parent = find_ident_parent(ID_SYM(id));
+                id_in_parent = find_ident_head(ID_SYM(id), UNIT_CTL_LOCAL_SYMBOLS(PARENT_UNIT_CTL));
                 parent_id_list = UNIT_CTL_LOCAL_SYMBOLS(PARENT_UNIT_CTL);
 
                 if(id_in_parent == NULL) {
@@ -4296,7 +4296,6 @@ end_procedure()
                                           EXT_PROC_BLOCKS(ep),
                                           LOCAL_SYMBOLS, /* is_final = */ TRUE);
     }
-
 
 
     if (CTL_TYPE(ctl_top) == CTL_BLK) {
