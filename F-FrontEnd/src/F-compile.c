@@ -6789,9 +6789,9 @@ compile_ALLOCATE_DEALLOCATE_statement(expr x)
             case F95_MEMBER_REF:
             case F_VAR:
             case ARRAY_REF:
-                case XMP_COARRAY_REF:
-                if(isVarSetTypeAttr(ev,
-                    TYPE_ATTR_POINTER | TYPE_ATTR_ALLOCATABLE) == FALSE) {
+            case XMP_COARRAY_REF:
+                if (!isVarSetTypeAttr(ev,
+                                      TYPE_ATTR_POINTER | TYPE_ATTR_ALLOCATABLE)) {
                     error("argument is not a pointer nor allocatable type");
                     continue;
                 }

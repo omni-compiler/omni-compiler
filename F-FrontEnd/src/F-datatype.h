@@ -368,6 +368,7 @@ extern TYPE_DESC basic_type_desc[];
     TYPE_ATTR_TARGET |                          \
     TYPE_ATTR_VOLATILE |                        \
     TYPE_ATTR_ASYNCHRONOUS |                    \
+    TYPE_ATTR_ALLOCATABLE |                     \
     TYPE_ATTR_PROTECTED)
 
 #define TYPE_HAS_SUBOBJECT_PROPAGATE_ATTRS(tp)  \
