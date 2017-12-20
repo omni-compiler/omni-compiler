@@ -1064,28 +1064,38 @@ compile_statement1(int st_no, expr x)
 
         break;
 
-    case F03_SELECTTYPE_STATEMENT:
-          check_INEXEC();
-          push_ctl(CTL_SELECT_TYPE);
-          v = compile_expression(EXPR_ARG1(x));
-          ID selector = find_ident(EXPR_SYM(EXPR_ARG1(x)));
-          if(EXPR_HAS_ARG3(x)){
-              ID associate_name = find_ident(EXPR_SYM(EXPR_ARG3(x)));
-              if(associate_name == NULL){
-                  // Define the associate variable
-                  associate_name = declare_ident(EXPR_SYM(EXPR_ARG3(x)), CL_VAR);
-                  ID_IS_ASSOCIATIVE(associate_name) = TRUE;
-                  ID_TYPE(associate_name) = ID_TYPE(selector);
-              }
-              expv tmp = expv_sym_term(IDENT, ID_TYPE(associate_name),
-                                       ID_SYM(associate_name));
-              st = list4(F03_SELECTTYPE_STATEMENT, v, NULL, EXPR_ARG2(x), tmp);
-          } else {
-              st = list4(F03_SELECTTYPE_STATEMENT, v, NULL, EXPR_ARG2(x), NULL);
-          }
+    case F03_SELECTTYPE_STATEMENT: {
+        ID selector = NULL;
 
-          CTL_BLOCK(ctl_top) = st;
-          break;
+        check_INEXEC();
+        push_ctl(CTL_SELECT_TYPE);
+
+        if (EXPR_CODE(EXPR_ARG1(x)) == IDENT) {
+            selector = find_ident(EXPR_SYM(EXPR_ARG1(x)));
+        }
+
+        v = compile_expression(EXPR_ARG1(x));
+        if (EXPR_HAS_ARG3(x)){
+            ID associate_name = find_ident(EXPR_SYM(EXPR_ARG3(x)));
+            if(associate_name == NULL){
+                /* Define the associate variable */
+                associate_name = declare_ident(EXPR_SYM(EXPR_ARG3(x)), CL_VAR);
+                ID_IS_ASSOCIATIVE(associate_name) = TRUE;
+                ID_TYPE(associate_name) = EXPV_TYPE(v);
+            }
+            expv tmp = expv_sym_term(IDENT, ID_TYPE(associate_name),
+                                     ID_SYM(associate_name));
+
+            st = list4(F03_SELECTTYPE_STATEMENT, v, NULL, EXPR_ARG2(x), tmp);
+        } else {
+            if (selector == NULL) {
+                error_at_node(x, "If selector is an expression, associate name is required");
+            }
+            st = list4(F03_SELECTTYPE_STATEMENT, v, NULL, EXPR_ARG2(x), NULL);
+        }
+
+        CTL_BLOCK(ctl_top) = st;
+    } break;
     case F_CASELABEL_STATEMENT:
         if(CTL_TYPE(ctl_top) == CTL_SELECT  ||
            CTL_TYPE(ctl_top) == CTL_CASE) {
