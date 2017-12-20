@@ -1531,6 +1531,8 @@ compile_exec_statement(expr x)
             case F95_MEMBER_REF:
             case XMP_COARRAY_REF:
 
+	        check_INEXEC();
+
                 if (NOT_INDATA_YET) end_declaration();
                 if ((v1 = compile_lhs_expression(x1)) == NULL ||
                     (v2 = compile_expression(EXPR_ARG2(x))) == NULL) {
