@@ -6574,6 +6574,10 @@ compile_member_ref(expr x)
     }
 
     stVTyp = EXPV_TYPE(struct_v);
+    if (TYPE_IS_MODIFIED(stVTyp)) {
+        stVTyp = TYPE_REF(stVTyp);
+    }
+
     mX = EXPR_ARG2(x);
     assert(EXPR_CODE(mX) == IDENT);
 

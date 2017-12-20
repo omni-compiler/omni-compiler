@@ -4959,6 +4959,9 @@ compile_declare_or_add_attribute_statement(expr id_list, uint32_t type_attr)
                 tp = wrap_type(tp);
                 ID_TYPE(id) = tp;
                 SET_MODIFIED(tp);
+
+                TYPE_KIND(tp) = TYPE_KIND(TYPE_REF(tp));
+                TYPE_N_DIM(tp) = TYPE_N_DIM(TYPE_REF(tp));
             }
         }
         if (ID_IS_AMBIGUOUS(id)) {
