@@ -15,6 +15,8 @@ int unit_ctl_contains_level;
 
 ENV current_local_env;
 
+expr preceding_pragmas = NULL;
+
 /* flags and defaults */
 int save_all = FALSE;
 int sub_stars = FALSE;
@@ -1239,10 +1241,12 @@ compile_statement1(int st_no, expr x)
     case F_PRAGMA_STATEMENT:
       if (CURRENT_STATE == OUTSIDE)
 	compile_pragma_outside(x);
-      else if (CURRENT_STATE == INDCL)
-	compile_pragma_decl(x);
-      else // INEXEC || INSIDE
-	compile_pragma_statement(x);
+      else { // others should be issued at the next statemet.
+	char *str = strdup(EXPR_STR(EXPR_ARG1(x)));
+	expr new_pragma = list1(F_PRAGMA_STATEMENT, make_enode(STRING_CONSTANT, str));
+	if (!preceding_pragmas) preceding_pragmas = list0(LIST);
+	preceding_pragmas = list_put_last(preceding_pragmas, new_pragma);
+      }
       break;
 
     case F95_TYPEDECL_STATEMENT:
@@ -1527,6 +1531,8 @@ compile_exec_statement(expr x)
             case F95_MEMBER_REF:
             case XMP_COARRAY_REF:
 
+	        check_INEXEC();
+
                 if (NOT_INDATA_YET) end_declaration();
                 if ((v1 = compile_lhs_expression(x1)) == NULL ||
                     (v2 = compile_expression(EXPR_ARG2(x))) == NULL) {
@@ -1711,6 +1717,8 @@ begin_procedure()
     CURRENT_PROC_CLASS = CL_MAIN;       /* default */
     current_proc_state = P_DEFAULT;
 
+    free(preceding_pragmas); preceding_pragmas = NULL;
+    
     /*
      * NOTE:
      * The function/subroutine in the interface body
@@ -1770,6 +1778,19 @@ check_INDCL()
     default:
         error("declaration among executables");
     }
+
+    list lp;
+    FOR_ITEMS_IN_LIST(lp, preceding_pragmas){
+      expv x = LIST_ITEM(lp);
+      compile_pragma_decl(x);
+      free(EXPR_STR(EXPR_ARG1(x)));
+      free(x);
+    }
+    if (preceding_pragmas){
+      delete_list(preceding_pragmas);
+      preceding_pragmas = NULL;
+    }
+    
 }
 
 void
@@ -1791,6 +1812,19 @@ check_INEXEC()
         }
     }
     if(NOT_INDATA_YET) end_declaration();
+
+    list lp;
+    FOR_ITEMS_IN_LIST(lp, preceding_pragmas){
+      expv x = LIST_ITEM(lp);
+      compile_pragma_statement(x);
+      free(EXPR_STR(EXPR_ARG1(x)));
+      free(x);
+    }
+    if (preceding_pragmas){
+      delete_list(preceding_pragmas);
+      preceding_pragmas = NULL;
+    }
+
 }
 
 
@@ -4339,6 +4373,7 @@ end_procedure()
         ID_CLASS(id) = CL_PROC;
     }
 
+    free(preceding_pragmas); preceding_pragmas = NULL;
 
     /* output */
     switch (CURRENT_PROC_CLASS) {
