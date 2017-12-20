@@ -1,2 +1,2 @@
-      CLASS(*), DIMENSION(1:3) :: v
+      CLASS(*), POINTER, DIMENSION(:) :: v
       END
