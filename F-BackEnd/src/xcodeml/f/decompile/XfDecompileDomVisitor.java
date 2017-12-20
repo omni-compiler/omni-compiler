@@ -478,7 +478,9 @@ XfDecompileDomVisitor {
         String topTypeName = topTypeChoice.getNodeName();
         if ("FbasicType".equals(topTypeName) && !isClass && !isProcedure) {
             _writeBasicType(topTypeChoice, typeList);
-        } else if (XmDomUtil.getAttr(lowTypeChoice, "ref") == null && isClass) {
+        } else if ("FbasicType".equals(topTypeName) &&
+                XmDomUtil.getAttr(topTypeChoice, "ref") == null &&
+                isClass) {
             /*
              * <FbasicType is_class="true"/> is `CLASS(*)`
              */
