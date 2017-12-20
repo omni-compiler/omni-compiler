@@ -1144,6 +1144,8 @@ compile_statement1(int st_no, expr x)
             expr parent_const_name = NULL;
             expv type = NULL;
             expv selector = NULL;
+            expv shape = NULL;
+
 
             if (CTL_TYPE(ctl_top) == CTL_TYPE_GUARD) {
                 CTL_CASE_BLOCK(ctl_top) = CURRENT_STATEMENTS;
@@ -1162,6 +1164,12 @@ compile_statement1(int st_no, expr x)
 
             (void)check_valid_construction_name(parent_const_name, const_name);
 
+            selector = EXPR_ARG1(CTL_BLOCK(ctl_top));
+            if (IS_ARRAY_TYPE(EXPV_TYPE(selector))) {
+                shape = list0(LIST);
+                generate_shape_expr(EXPV_TYPE(selector), shape);
+            }
+
             push_ctl(CTL_TYPE_GUARD);
             push_env(CTL_TYPE_GUARD_LOCAL_ENV(ctl_top));
 
@@ -1175,6 +1183,9 @@ compile_statement1(int st_no, expr x)
                     break;
                 }
             }
+
+            tp = compile_dimensions(tp, shape);
+            fix_array_dimensions(tp);
 
             check_select_types(x, tp);
 
@@ -9426,6 +9437,8 @@ check_select_types(expr x, TYPE_DESC tp)
         return;
     }
 
+    tp = bottom_type(tp);
+
     FOR_ITEMS_IN_LIST(lp, CTL_SAVE(ctl_top)) {
         expv statement;
         TYPE_DESC tq;
@@ -9438,6 +9451,7 @@ check_select_types(expr x, TYPE_DESC tp)
         }
 
         tq = EXPR_ARG1(statement)?EXPV_TYPE(EXPR_ARG1(statement)):NULL;
+        tq = bottom_type(tq);
 
         if (tp == NULL && tq == NULL) {
             error_at_node(x, "duplicate CLASS DEFAULT");
