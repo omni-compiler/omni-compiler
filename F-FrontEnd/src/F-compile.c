@@ -2684,38 +2684,45 @@ end_declaration()
      * Check type parameter values like '*' or ':'
      */
     FOREACH_ID (ip, LOCAL_SYMBOLS) {
-        if (ID_TYPE(ip) && IS_STRUCT_TYPE(ID_TYPE(ip))) {
-            TYPE_DESC struct_tp = ID_TYPE(ip);
-            if (!TYPE_TYPE_PARAM_VALUES(struct_tp))
-                continue;
+        if (ID_TYPE(ip) == NULL)
+            continue;
 
-            FOR_ITEMS_IN_LIST(lp, TYPE_TYPE_PARAM_VALUES(struct_tp)) {
-                if (EXPV_CODE(LIST_ITEM(lp)) == F08_LEN_SPEC_COLON) {
-                    if (!TYPE_IS_POINTER(struct_tp) && !TYPE_IS_ALLOCATABLE(struct_tp)) {
-                        error_at_id(ip,
-                                    "type parameter value ':' should be used "
-                                    "with a POINTER or ALLOCATABLE object");
-                    }
-                } else if (EXPV_CODE(LIST_ITEM(lp)) == LEN_SPEC_ASTERISC) {
-                    if (!ID_IS_DUMMY_ARG(ip)) {
-                        error_at_id(ip,
-                                    "type parameter value '*' should be used "
-                                    "with a dummy argument");
-                    }
-                }
-            }
+        TYPE_DESC tp = bottom_type(ID_TYPE(ip));
 
-            if (TYPE_IS_CLASS(struct_tp)) {
+        if (IS_STRUCT_TYPE(tp)) {
+
+            if (TYPE_IS_CLASS(tp)) {
                 /*
                  * CLASS() shoule be a POINTER object, an ALLOCATABLE object, or a dummy argument
                  */
-                if (!TYPE_IS_POINTER(struct_tp) &&
-                    !TYPE_IS_ALLOCATABLE(struct_tp) &&
+                if (!TYPE_IS_POINTER(tp) && !TYPE_IS_POINTER(ID_TYPE(ip)) &&
+                    !TYPE_IS_ALLOCATABLE(tp) && !TYPE_IS_ALLOCATABLE(ID_TYPE(ip)) &&
                     !ID_IS_DUMMY_ARG(ip)) {
                     error_at_id(ip,
                                 "CLASS should be used "
                                 "to a POINTER object, an ALLOCATABLE object, or a dummy argument");
                 }
+            }
+
+            if (TYPE_TYPE_PARAM_VALUES(tp)) {
+
+                FOR_ITEMS_IN_LIST(lp, TYPE_TYPE_PARAM_VALUES(tp)) {
+                    if (EXPV_CODE(LIST_ITEM(lp)) == F08_LEN_SPEC_COLON) {
+                        if (!TYPE_IS_POINTER(tp) && !TYPE_IS_POINTER(ID_TYPE(ip)) &&
+                            !TYPE_IS_ALLOCATABLE(tp) && !TYPE_IS_ALLOCATABLE(ID_TYPE(ip))) {
+                            error_at_id(ip,
+                                        "type parameter value ':' should be used "
+                                        "with a POINTER or ALLOCATABLE object");
+                        }
+                    } else if (EXPV_CODE(LIST_ITEM(lp)) == LEN_SPEC_ASTERISC) {
+                        if (!ID_IS_DUMMY_ARG(ip)) {
+                            error_at_id(ip,
+                                        "type parameter value '*' should be used "
+                                        "with a dummy argument");
+                        }
+                    }
+                }
+
             }
         }
     }
