@@ -818,6 +818,9 @@ copy_parent_type(ID id)
         return;
     }
     ID_DEFINED_BY(id) = parent_id;
+    if (ID_CLASS(parent_id) == CL_PROC) {
+        PROC_CLASS(id) = PROC_CLASS(parent_id);
+    }
     declare_id_type(id, ID_TYPE(parent_id));
     id->use_assoc = parent_id->use_assoc;
     TYPE_SET_OVERRIDDEN(id);
