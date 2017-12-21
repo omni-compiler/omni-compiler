@@ -224,8 +224,21 @@ link_parent_defined_by(ID id)
 
         if (is_contain_proc) {
             if (conflict_parent_vs_sub_program_unit(parent)) {
-                error("%s has an explicit interface before", ID_NAME(parent));
-                return;
+
+                if (ID_CLASS(parent) == CL_PROC &&
+                    ID_TYPE(parent) != NULL &&
+                    IS_GENERIC_PROCEDURE_TYPE(ID_TYPE(parent))) {
+
+                    ID next = ID_NEXT(parent);
+                    id_multilize(parent);
+                    ID_NEXT(parent) = MULTI_ID_LIST(parent);
+                    ID_NEXT(ID_NEXT(parent)) = next;
+                    /* TODO(shingo-s): if the parent exists */
+                    return;
+                } else {
+                    error("%s has an explicit interface before", ID_NAME(parent));
+                    return;
+                }
             }
         }
 
@@ -236,7 +249,6 @@ link_parent_defined_by(ID id)
             PROC_CLASS(parent) = P_EXTERNAL;
         } else if (ID_IS_DECLARED(id) == FALSE) {
             ID_CLASS(parent) = CL_PROC;
-
         }
 
         /* Conditions below is written to make test programs to pass. */
@@ -671,7 +683,6 @@ declare_procedure(enum name_class class,
 
         if (class != CL_PROC) {
             error("unexpected statement in interface block");
-            fprintf(stderr, "HERE\n");
             abort();
         }
 
@@ -4847,11 +4858,11 @@ compile_pragma_statement(expr x)
 	    break;
 	}
 	else {
-        v = expv_str_term(STRING_CONSTANT,
-                          NULL,
-                          strdup(EXPR_STR(EXPR_ARG1(x))));
-        break;
-      }
+	  v = expv_str_term(STRING_CONSTANT,
+			    NULL,
+			    strdup(EXPR_STR(EXPR_ARG1(x))));
+	  break;
+	}
     default:
       {
         error("invalid format.");
@@ -4960,6 +4971,9 @@ compile_declare_or_add_attribute_statement(expr id_list, uint32_t type_attr)
                 tp = wrap_type(tp);
                 ID_TYPE(id) = tp;
                 SET_MODIFIED(tp);
+
+                TYPE_KIND(tp) = TYPE_KIND(TYPE_REF(tp));
+                TYPE_N_DIM(tp) = TYPE_N_DIM(TYPE_REF(tp));
             }
         }
         if (ID_IS_AMBIGUOUS(id)) {

@@ -80,10 +80,6 @@ declare_storage(ID id, enum storage_class stg)
 void
 id_multilize(ID id)
 {
-    /*
-     * TODO(shingo-s): copy necessary type ?
-     */
-
     ID new_child;
 
     new_child = new_ident_desc(ID_SYM(id));

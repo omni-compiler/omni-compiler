@@ -1665,6 +1665,10 @@ function_type_is_appliable(TYPE_DESC ftp, expv actual_args, int issue_error)
             return FALSE;
         }
 
+        if (!isValidType(EXPV_TYPE(actual_arg))) {
+            return FALSE;
+        }
+
         if (!type_is_match_for_argument(EXPV_TYPE(actual_arg),
                                        ID_TYPE(dummy_arg), compare_rank, issue_error))
         {
@@ -1767,6 +1771,10 @@ type_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2)
 {
     BASIC_DATA_TYPE b1;
     BASIC_DATA_TYPE b2;
+
+    if (!isValidType(tp1) || !isValidType(tp2)) {
+        return FALSE;
+    }
 
     assert(TYPE_BASIC_TYPE(tp1));
     b1 = TYPE_BASIC_TYPE(tp1);

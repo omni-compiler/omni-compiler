@@ -930,10 +930,17 @@ public class XcodeMLtools_F extends XcodeMLtools {
                | (getAttrBool(n, "is_public" ) ? Xtype.TQ_FPUBLIC  : 0)
 	       | (getAttrBool(n, "is_protected") ? Xtype.TQ_FPROTECTED : 0);
         Node bdg = getElement(n, "binding");
+
+	Xobject name = toXobject(getElement(n, "name"));
+	if (name == null){
+	  String defined_io = getAttr(n, "is_defined_io");
+	  name = Xcons.String(defined_io);
+	}
+	
         return setCommonAttributes(n, Xcons.List(code, (Xtype)null,
                                                  getAttrIntFlag(n, "is_operator"),
                                                  getAttrIntFlag(n, "is_assignment"),
-                                                 toXobject(getElement(n, "name")),
+                                                 name,
                                                  Xcons.LongConstant(tq),
                                                  toXobject(bdg)
                                                 ));

@@ -15,6 +15,8 @@ int unit_ctl_contains_level;
 
 ENV current_local_env;
 
+expr preceding_pragmas = NULL;
+
 /* flags and defaults */
 int save_all = FALSE;
 int sub_stars = FALSE;
@@ -249,6 +251,7 @@ initialize_compile()
 void finalize_compile()
 {
     isInFinalizer = TRUE;
+    finalize_lex();
     begin_procedure();
 }
 
@@ -1239,10 +1242,12 @@ compile_statement1(int st_no, expr x)
     case F_PRAGMA_STATEMENT:
       if (CURRENT_STATE == OUTSIDE)
 	compile_pragma_outside(x);
-      else if (CURRENT_STATE == INDCL)
-	compile_pragma_decl(x);
-      else // INEXEC || INSIDE
-	compile_pragma_statement(x);
+      else { // others should be issued at the next statemet.
+	char *str = strdup(EXPR_STR(EXPR_ARG1(x)));
+	expr new_pragma = list1(F_PRAGMA_STATEMENT, make_enode(STRING_CONSTANT, str));
+	if (!preceding_pragmas) preceding_pragmas = list0(LIST);
+	preceding_pragmas = list_put_last(preceding_pragmas, new_pragma);
+      }
       break;
 
     case F95_TYPEDECL_STATEMENT:
@@ -1527,6 +1532,8 @@ compile_exec_statement(expr x)
             case F95_MEMBER_REF:
             case XMP_COARRAY_REF:
 
+	        check_INEXEC();
+
                 if (NOT_INDATA_YET) end_declaration();
                 if ((v1 = compile_lhs_expression(x1)) == NULL ||
                     (v2 = compile_expression(EXPR_ARG2(x))) == NULL) {
@@ -1711,6 +1718,8 @@ begin_procedure()
     CURRENT_PROC_CLASS = CL_MAIN;       /* default */
     current_proc_state = P_DEFAULT;
 
+    free(preceding_pragmas); preceding_pragmas = NULL;
+    
     /*
      * NOTE:
      * The function/subroutine in the interface body
@@ -1770,6 +1779,19 @@ check_INDCL()
     default:
         error("declaration among executables");
     }
+
+    list lp;
+    FOR_ITEMS_IN_LIST(lp, preceding_pragmas){
+      expv x = LIST_ITEM(lp);
+      compile_pragma_decl(x);
+      free(EXPR_STR(EXPR_ARG1(x)));
+      free(x);
+    }
+    if (preceding_pragmas){
+      delete_list(preceding_pragmas);
+      preceding_pragmas = NULL;
+    }
+    
 }
 
 void
@@ -1791,6 +1813,19 @@ check_INEXEC()
         }
     }
     if(NOT_INDATA_YET) end_declaration();
+
+    list lp;
+    FOR_ITEMS_IN_LIST(lp, preceding_pragmas){
+      expv x = LIST_ITEM(lp);
+      compile_pragma_statement(x);
+      free(EXPR_STR(EXPR_ARG1(x)));
+      free(x);
+    }
+    if (preceding_pragmas){
+      delete_list(preceding_pragmas);
+      preceding_pragmas = NULL;
+    }
+
 }
 
 
@@ -2346,7 +2381,7 @@ end_declaration()
                  */
                 tp = ID_TYPE(resId);
             }
-            
+
             if (IS_FUNCTION_TYPE(tp)) {
                 ID_TYPE(myId) = NULL;
                 declare_id_type(myId, tp);
@@ -2361,15 +2396,20 @@ end_declaration()
 
             if ((TYPE_IS_ELEMENTAL(myId) ||
                  PROC_IS_ELEMENTAL(myId))) {
-                if (IS_ARRAY_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp))) {
+                TYPE_DESC retType = ID_TYPE(resId);
+                if (retType == NULL) {
+                    retType = FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(myId));
+                }
+
+                if (IS_ARRAY_TYPE(retType)) {
                     error_at_id(myId,
-                                "result type of ELEMENTAL  "
+                                "result type of ELEMENTAL procedure "
                                 "should not be an array");
                 }
-                if (TYPE_IS_POINTER(FUNCTION_TYPE_RETURN_TYPE(tp)) ||
-                    TYPE_IS_ALLOCATABLE(FUNCTION_TYPE_RETURN_TYPE(tp))) {
+                if (TYPE_IS_POINTER(retType) ||
+                    TYPE_IS_ALLOCATABLE(retType)) {
                     error_at_id(myId,
-                                "result type of ELEMENTAL  "
+                                "result type of ELEMENTAL procedure "
                                 "should not have POINTER or ALLOCATABLE attributes");
                 }
             }
@@ -2645,8 +2685,15 @@ end_declaration()
             /* multiple type attribute check */
             for (check = type_attr_checker; check->flag; check++) {
                 if (TYPE_ATTR_FLAGS(tp) & check->flag) {
+                    uint32_t mask = 0xFFFFFFFF;
+                    if (TYPE_IS_PROCEDURE(tp)) {
+                        /*
+                         * The procedure pointer can have a BIND attribute.
+                         */
+                        mask &= ~(TYPE_ATTR_POINTER | TYPE_ATTR_BIND);
+                    }
                     uint32_t a = TYPE_ATTR_FLAGS(tp) &
-                        ~check->acceptable_flags;
+                        ~check->acceptable_flags & mask;
                     if (debug_flag) {
                         fprintf(debug_fp,
                                 "ID '%s' attr 0x%08x : "
@@ -2660,7 +2707,7 @@ end_declaration()
                                 ~check->acceptable_flags,
                                 a);
                     }
-                    if (TYPE_ATTR_FLAGS(tp) & ~check->acceptable_flags) {
+                    if (TYPE_ATTR_FLAGS(tp) & ~check->acceptable_flags & mask) {
                         struct type_attr_check *e;
                         for (e = type_attr_checker; e->flag; e++) {
                             if (TYPE_ATTR_FLAGS(tp) & e->flag) {
@@ -4333,6 +4380,7 @@ end_procedure()
         ID_CLASS(id) = CL_PROC;
     }
 
+    free(preceding_pragmas); preceding_pragmas = NULL;
 
     /* output */
     switch (CURRENT_PROC_CLASS) {
@@ -6533,6 +6581,10 @@ compile_member_ref(expr x)
     }
 
     stVTyp = EXPV_TYPE(struct_v);
+    if (TYPE_IS_MODIFIED(stVTyp)) {
+        stVTyp = TYPE_REF(stVTyp);
+    }
+
     mX = EXPR_ARG2(x);
     assert(EXPR_CODE(mX) == IDENT);
 
