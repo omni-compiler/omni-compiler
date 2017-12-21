@@ -281,9 +281,9 @@ public class XMPtransPragma
 
       // transform
       Xtype btype = local_loop_var.Type();
-      Ident lb_var = env.declIdent(XMP.genSym("XMP_loop_lb"), btype,pb);
-      Ident ub_var = env.declIdent(XMP.genSym("XMP_loop_ub"), btype,pb);
-      Ident step_var = env.declIdent(XMP.genSym("XMP_loop_step"), step_type,pb);
+      Ident lb_var = env.declIdent(XMP.genSym("loop_lb"), btype,pb);
+      Ident ub_var = env.declIdent(XMP.genSym("loop_ub"), btype,pb);
+      Ident step_var = env.declIdent(XMP.genSym("loop_step"), step_type,pb);
       
       Xobject org_loop_ind_var = for_block.getInductionVar();
 
@@ -322,7 +322,7 @@ public class XMPtransPragma
           case XMPtemplate.BLOCK:
           case XMPtemplate.GBLOCK:
           {
-            Ident l2g_off_var = env.declIdent(XMP.genSym("XMP_l2g_off"), Xtype.FintType, pb);
+            Ident l2g_off_var = env.declIdent(XMP.genSym("l2g_off"), Xtype.FintType, pb);
             Ident l2g_f =
                     env.declInternIdent(XMP.l2g_f, Xtype.FsubroutineType);
             args = Xcons.List(l2g_off_var.Ref(),
@@ -838,7 +838,7 @@ public class XMPtransPragma
     Block b = on_ref.buildConstructor(env);
     BasicBlock bb = b.getBasicBlock();
 
-    Ident taskNodesDescId = env.declObjectId(XMP.genSym("XMP_TASK_NODES"), pb);
+    Ident taskNodesDescId = env.declObjectId(XMP.genSym("TASK_NODES"), pb);
 
     Ident f;
     if (!info.isNocomm()){
