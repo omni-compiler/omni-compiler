@@ -259,13 +259,16 @@ typedef struct ident_descriptor
 #define TYPE_BOUND_PROCEDURE_NOPASS                0x0004
 #define TYPE_BOUND_PROCEDURE_NON_OVERRIDABLE       0x0008
 #define TYPE_BOUND_PROCEDURE_DEFERRED              0x0010
+/* for +, -, user-defined, may be unary or binary */
 #define TYPE_BOUND_PROCEDURE_IS_OPERATOR           0x0020
-#define TYPE_BOUND_PROCEDURE_IS_ASSIGNMENT         0x0040
-#define TYPE_BOUND_PROCEDURE_WRITE                 0x0080
-#define TYPE_BOUND_PROCEDURE_READ                  0x0100
-#define TYPE_BOUND_PROCEDURE_FORMATTED             0x0200
-#define TYPE_BOUND_PROCEDURE_UNFORMATTED           0x0400
-#define TYPE_BOUND_PROCEDURE_IS_FINAL              0x0800
+#define TYPE_BOUND_PROCEDURE_IS_UNARY_OPERATOR     0x0040
+#define TYPE_BOUND_PROCEDURE_IS_BINARY_OPERATOR    0x0080
+#define TYPE_BOUND_PROCEDURE_IS_ASSIGNMENT         0x0100
+#define TYPE_BOUND_PROCEDURE_WRITE                 0x0200
+#define TYPE_BOUND_PROCEDURE_READ                  0x0400
+#define TYPE_BOUND_PROCEDURE_FORMATTED             0x0800
+#define TYPE_BOUND_PROCEDURE_UNFORMATTED           0x1000
+#define TYPE_BOUND_PROCEDURE_IS_FINAL              0x2000
         } tbp_info;
         struct {
             /* for CL_MULTI */
@@ -419,6 +422,14 @@ struct use_assoc_info {
 #define TBP_IS_OPERATOR(id) \
     (ID_CLASS(id) == CL_TYPE_BOUND_PROC && \
      TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_IS_OPERATOR)
+
+#define TBP_IS_UNARY_OPERATOR(id) \
+    (ID_CLASS(id) == CL_TYPE_BOUND_PROC && \
+     TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_IS_UNARY_OPERATOR)
+
+#define TBP_IS_BINARY_OPERATOR(id) \
+    (ID_CLASS(id) == CL_TYPE_BOUND_PROC && \
+     TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_IS_BINARY_OPERATOR)
 
 #define TBP_IS_ASSIGNMENT(id) \
     (ID_CLASS(id) == CL_TYPE_BOUND_PROC && \

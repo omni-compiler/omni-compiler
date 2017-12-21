@@ -1058,7 +1058,9 @@ type_is_compatible(TYPE_DESC left, TYPE_DESC right,
                    int is_strict,
                    int for_argunemt,
                    int for_assignment,
-                   int is_pointer_assignment, int issue_error)
+                   int is_pointer_assignment,
+                   int compare_rank,
+                   int issue_error)
 {
     TYPE_DESC left_basic, right_basic;
 
@@ -1067,6 +1069,11 @@ type_is_compatible(TYPE_DESC left, TYPE_DESC right,
             fprintf(debug_fp, "# unexpected comparison\n");
         }
         return FALSE;
+    }
+
+    if (!compare_rank) {
+        left = bottom_type(left);
+        right = bottom_type(right);
     }
 
     left_basic = getBaseParameterizedType(left);
@@ -1168,7 +1175,7 @@ rank_compatibility:
 
 attribute_compatibility:
 
-    if (for_assignment) {
+    if (for_assignment || for_argunemt) {
         goto compatible;
     }
 
@@ -1198,10 +1205,28 @@ incompatible:
 
 
 int
-type_is_strict_compatible(TYPE_DESC left, TYPE_DESC right, int issue_error)
+type_is_strict_compatible(TYPE_DESC left, TYPE_DESC right, int compare_rank, int issue_error)
 {
-    return type_is_compatible(left, right, TRUE, FALSE, FALSE, FALSE,
-        issue_error);
+    return type_is_compatible(left, right,
+                              /*is_strict=*/TRUE,
+                              /*for_argument=*/FALSE,
+                              /*for_assignment=*/FALSE,
+                              /*is_pointer_assignment=*/FALSE,
+                              /*compare_rank=*/compare_rank,
+                              issue_error);
+}
+
+
+static int
+type_is_match_for_argument(TYPE_DESC left, TYPE_DESC right, int compare_rank, int issue_error)
+{
+    return type_is_compatible(left, right,
+                              /*is_strict=*/TRUE,
+                              /*for_argument=*/TRUE,
+                              /*for_assignment=*/FALSE,
+                              /*is_pointer_assignment=*/FALSE,
+                              /*compare_rank=*/compare_rank,
+                              issue_error);
 }
 
 
@@ -1211,8 +1236,10 @@ type_is_compatible_for_allocation(TYPE_DESC left, TYPE_DESC right)
     return type_is_compatible(left, right,
                               /*is_strict=*/TRUE,
                               /*for_argument=*/FALSE,
-                              /*for_assignment=*/FALSE,
-                              /*is_pointer_assignment=*/TRUE, TRUE);
+                              /*for_assignment=*/TRUE,
+                              /*is_pointer_assignment=*/TRUE,
+                              /*compare_rank=*/TRUE,
+                              TRUE);
 }
 
 
@@ -1255,7 +1282,7 @@ function_type_is_compatible0(const TYPE_DESC ftp1, const TYPE_DESC ftp2,
      * compare return types
      */
     if (!type_is_strict_compatible(FUNCTION_TYPE_RETURN_TYPE(bftp1),
-                                   FUNCTION_TYPE_RETURN_TYPE(bftp2), TRUE)) 
+                                   FUNCTION_TYPE_RETURN_TYPE(bftp2), TRUE, TRUE)) 
     {
         if (debug_flag) {
             fprintf(debug_fp, "return types are not match\n");
@@ -1338,7 +1365,7 @@ function_type_is_compatible0(const TYPE_DESC ftp1, const TYPE_DESC ftp2,
             }
         }
 
-        if (!type_is_strict_compatible(ID_TYPE(arg1), ID_TYPE(arg2), TRUE)) {
+        if (!type_is_strict_compatible(ID_TYPE(arg1), ID_TYPE(arg2), TRUE, TRUE)) {
             if (debug_flag) {
                 fprintf(debug_fp, "argument types are not match ('%s' and '%s')\n",
                         SYM_NAME(ID_SYM(arg1)), SYM_NAME(ID_SYM(arg2)));
@@ -1549,7 +1576,7 @@ procedure_is_assignable(const TYPE_DESC left, const TYPE_DESC right)
 
         return type_is_strict_compatible(
             FUNCTION_TYPE_RETURN_TYPE(left_ftp),
-            FUNCTION_TYPE_RETURN_TYPE(right_ftp), TRUE);
+            FUNCTION_TYPE_RETURN_TYPE(right_ftp), TRUE, TRUE);
 
     } else {
 
@@ -1596,9 +1623,14 @@ function_type_is_appliable(TYPE_DESC ftp, expv actual_args, int issue_error)
     ID dummy_args;
     list actual_lp;
     TYPE_DESC tbp_tp = NULL;
+    int compare_rank = TRUE;
 
     if (ftp == NULL) {
         return FALSE;
+    }
+
+    if (TYPE_IS_ELEMENTAL(ftp)) {
+        compare_rank = FALSE;
     }
 
     if (TYPE_REF(ftp) != NULL && FUNCTION_TYPE_IS_TYPE_BOUND(ftp)) {
@@ -1640,8 +1672,12 @@ function_type_is_appliable(TYPE_DESC ftp, expv actual_args, int issue_error)
             return FALSE;
         }
 
-        if (!type_is_strict_compatible(EXPV_TYPE(actual_arg), 
-            ID_TYPE(dummy_arg), issue_error)) 
+        if (!isValidType(EXPV_TYPE(actual_arg))) {
+            return FALSE;
+        }
+
+        if (!type_is_match_for_argument(EXPV_TYPE(actual_arg),
+                                       ID_TYPE(dummy_arg), compare_rank, issue_error))
         {
             return FALSE;
         }
@@ -1742,6 +1778,10 @@ type_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2)
 {
     BASIC_DATA_TYPE b1;
     BASIC_DATA_TYPE b2;
+
+    if (!isValidType(tp1) || !isValidType(tp2)) {
+        return FALSE;
+    }
 
     assert(TYPE_BASIC_TYPE(tp1));
     b1 = TYPE_BASIC_TYPE(tp1);
