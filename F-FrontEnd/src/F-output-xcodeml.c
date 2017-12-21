@@ -3655,9 +3655,9 @@ outx_DOCONCURRENT_statement(int l, expv v)
 
     outx_vtagLineno(l, XTAG(v), EXPR_LINE(v), NULL);
 
-    if (EXPR_HAS_ARG4(v) && EXPR_ARG4(v) != NULL) {
+    if (EXPR_HAS_ARG3(v) && EXPR_ARG3(v) != NULL) {
         outx_print(" construct_name=\"%s\"",
-                   SYM_NAME(EXPR_SYM(EXPR_ARG4(v))));
+                   SYM_NAME(EXPR_SYM(EXPR_ARG3(v))));
     }
     if (EXPV_TYPE(EXPR_ARG1(v))) {
         tid = getTypeID(EXPV_TYPE(EXPR_ARG1(v)));
