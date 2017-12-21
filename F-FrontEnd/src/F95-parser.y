@@ -639,7 +639,7 @@ statement:      /* entry */
           { $$ = list1(F95_ENDINTERFACE_STATEMENT,NULL); }
         | MODULEPROCEDURE COL2_or_null ident_list
           {
-              if (unit_ctl_level > 0 && (PARENT_STATE == ININTR || PARENT_STATE == INCONT)) {
+              if (unit_ctl_level > 0 && (PARENT_STATE == INCONT)) {
                   if ($2 == COL2) {
                       yyerror("unexpected collon");
                   }
