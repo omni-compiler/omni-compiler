@@ -1252,10 +1252,10 @@ declare_label(int st_no,LABEL_TYPE type,int def_flag)
             CTL_TYPE(cp) == CTL_FORALL ||
             CTL_TYPE(cp) == CTL_ASSOCIATE) {
             in_block = TRUE;
-            if (CTL_BLOCK_LOCAL_LABELS(cp) == LOCAL_LABELS) {
+            if (CTL_LABELS(cp) == LOCAL_LABELS) {
                 continue;
             }
-            FOREACH_ID(ip, CTL_LOCAL_LABELS(cp)) {
+            FOREACH_ID(ip, CTL_LABELS(cp)) {
                 if(LAB_ST_NO(ip) == st_no) {
                     goto found;
                 }
@@ -1656,10 +1656,10 @@ find_ident_block_parent(SYMBOL s)
             CTL_TYPE(cp) == CTL_DO || \
             CTL_TYPE(cp) == CTL_TYPE_GUARD) {
             in_block = TRUE;
-            if (CTL_BLOCK_LOCAL_SYMBOLS(cp) == LOCAL_SYMBOLS) {
+            if (CTL_SYMBOLS(cp) == LOCAL_SYMBOLS) {
                 continue;
             }
-            ip = find_ident_head(s, CTL_BLOCK_LOCAL_SYMBOLS(cp));
+            ip = find_ident_head(s, CTL_SYMBOLS(cp));
             if (ip != NULL) {
                 return ip;
             }
@@ -3828,10 +3828,10 @@ find_struct_decl_block_parent(SYMBOL s)
             CTL_TYPE(cp) == CTL_FORALL ||
             CTL_TYPE(cp) == CTL_ASSOCIATE) {
             in_block = TRUE;
-            if (CTL_BLOCK_LOCAL_STRUCT_DECLS(cp) == LOCAL_STRUCT_DECLS) {
+            if (CTL_STRUCT_DECLS(cp) == LOCAL_STRUCT_DECLS) {
                 continue;
             }
-            tp = find_struct_decl_head(s, CTL_BLOCK_LOCAL_STRUCT_DECLS(cp));
+            tp = find_struct_decl_head(s, CTL_STRUCT_DECLS(cp));
             if (tp != NULL) {
                 return tp;
             }
