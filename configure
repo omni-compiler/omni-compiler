@@ -718,6 +718,9 @@ XMPF_DEF
 XMPC_DEF
 OPENMP_OPT_F
 OPENMP_OPT_C
+UCHARDET_LIB_DIR
+UCHARDET_INCLUDE_DIR
+ENABLE_UCHARDET
 GASNET_LIBS
 GASNET
 TCA_PREFIX
@@ -822,6 +825,7 @@ infodir
 docdir
 oldincludedir
 includedir
+runstatedir
 localstatedir
 sharedstatedir
 sysconfdir
@@ -859,6 +863,10 @@ with_mpfr_lib
 with_gmp
 with_gmp_include
 with_gmp_lib
+enable_uchardet
+with_uchardet
+with_uchardet_include
+with_uchardet_lib
 enable_debug
 enable_openacc
 enable_atool
@@ -929,6 +937,7 @@ datadir='${datarootdir}'
 sysconfdir='${prefix}/etc'
 sharedstatedir='${prefix}/com'
 localstatedir='${prefix}/var'
+runstatedir='${localstatedir}/run'
 includedir='${prefix}/include'
 oldincludedir='/usr/include'
 docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
@@ -1181,6 +1190,15 @@ do
   | -silent | --silent | --silen | --sile | --sil)
     silent=yes ;;
 
+  -runstatedir | --runstatedir | --runstatedi | --runstated \
+  | --runstate | --runstat | --runsta | --runst | --runs \
+  | --run | --ru | --r)
+    ac_prev=runstatedir ;;
+  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
+  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
+  | --run=* | --ru=* | --r=*)
+    runstatedir=$ac_optarg ;;
+
   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
     ac_prev=sbindir ;;
   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
@@ -1318,7 +1336,7 @@ fi
 for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
 		datadir sysconfdir sharedstatedir localstatedir includedir \
 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
-		libdir localedir mandir
+		libdir localedir mandir runstatedir
 do
   eval ac_val=\$$ac_var
   # Remove trailing slashes.
@@ -1471,6 +1489,7 @@ Fine tuning of the installation directories:
   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
+  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
   --libdir=DIR            object code libraries [EPREFIX/lib]
   --includedir=DIR        C header files [PREFIX/include]
   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
@@ -1505,6 +1524,7 @@ Optional Features:
   --disable-option-checking  ignore unrecognized --enable/--with options
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
+  --enable-uchardet       enable uchardet Library (false default)
   --enable-debug          enable to generate executable with debug symbol (false default)
   --enable-openacc        enable OpenACC (false default)
   --enable-atool          enable atool (false default)
@@ -1538,6 +1558,10 @@ Optional Packages:
                               Equivalent to --with-gmp-include=PATH/include plus --with-gmp-lib=PATH/lib64
   --with-gmp-include=DIR      specify directory for installed gmp include files
   --with-gmp-lib=DIR          specify directory for installed gmp library
+  --with-uchardet=DIR         specify prefix directory for installed uchardet package (default: /usr)
+                              Equivalent to --with-uchardet-include=PATH/include plus --with-uchardet-lib=PATH/lib64
+  --with-uchardet-include=DIR  specify directory for installed uchardet include files
+  --with-uchardet-lib=DIR      specify directory for installed uchardet library
   --with-libblas=DIR          BLAS Library (e.g. /foo/blas_LINUX.a)
   --with-TCA=DIR              TCA installation path
   --with-gasnet=DIR           GASNet installation path
@@ -8283,6 +8307,7 @@ if ! test -d "$GMP_LIB_DIR"; then
   GMP_LIB_DIR=${GMP_PREFIX}/lib
 fi
 
+
 #--------------------------------------------------------------------
 # For OpenMP
 #--------------------------------------------------------------------
@@ -8321,6 +8346,43 @@ esac
 
 
 
+
+
+ENABLE_UCHARDET=no
+# Check whether --enable-uchardet was given.
+if test "${enable_uchardet+set}" = set; then :
+  enableval=$enable_uchardet; ENABLE_UCHARDET=yes
+else
+  ENABLE_UCHARDET=no
+fi
+
+
+#specify uchardet path
+
+# Check whether --with-uchardet was given.
+if test "${with_uchardet+set}" = set; then :
+  withval=$with_uchardet; UCHARDET_PREFIX="${withval}"
+else
+  UCHARDET_PREFIX="/usr"
+fi
+
+
+
+# Check whether --with-uchardet-include was given.
+if test "${with_uchardet_include+set}" = set; then :
+  withval=$with_uchardet_include; UCHARDET_INCLUDE_DIR="${withval}"
+else
+  UCHARDET_INCLUDE_DIR="${UCHARDET_PREFIX}/include/"
+fi
+
+
+
+# Check whether --with-uchardet-lib was given.
+if test "${with_uchardet_lib+set}" = set; then :
+  withval=$with_uchardet_lib; UCHARDET_LIB_DIR="${withval}"
+else
+  UCHARDET_LIB_DIR="${UCHARDET_PREFIX}/lib64"
+fi
 
 
 #--------------------------------------------------------------------
@@ -10949,6 +11011,9 @@ if test x${use_gasnet} = xyes; then
     OMNI_LNK_FCFLAGS="${OMNI_LNK_FCFLAGS} ${GASNET_LIBS}"
     TCA_PREFIX="${TCA_PREFIX}"
 fi
+
+
+
 
 
 

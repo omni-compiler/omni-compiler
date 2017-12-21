@@ -1396,6 +1396,8 @@ char_selector: /* empty */
         { $$ = NULL; }
         | '(' len_spec ')'
         { $$ = list2(LIST, $2, NULL); }
+        | '(' len_spec ',' expr ')'
+        { $$ = list2(LIST, $2, $4); }
         | SET_LEN  len_spec ')'
         { $$ = list2(LIST, $2, NULL); }
         | SET_LEN len_spec ',' KW kind_key_spec ')'
