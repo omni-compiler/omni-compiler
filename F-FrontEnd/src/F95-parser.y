@@ -235,6 +235,8 @@ state 2058
 %token OPERATOR
 
 %token COL2     /* :: */
+%type <code> COL2
+%type <code> COL2_or_null
 
 %token POWER    /* ** */
 %token CONCAT   /* // */
@@ -602,8 +604,8 @@ statement:      /* entry */
           { $$ = list1(F95_ENDMODULE_STATEMENT,$2); }
         | INTERFACEOPERATOR NEED_CHECK '(' defined_operator ')'
           {
-	      $$ = list1(F95_INTERFACE_STATEMENT, $4);
-	      need_check_user_defined = TRUE;
+              $$ = list1(F95_INTERFACE_STATEMENT, $4);
+              need_check_user_defined = TRUE;
           }
         | INTERFACEASSIGNMENT '(' '=' ')'
           { $$ = list1(F95_INTERFACE_STATEMENT, list0(F95_ASSIGNOP)); }
@@ -635,19 +637,33 @@ statement:      /* entry */
           { $$ = list1(F95_ENDINTERFACE_STATEMENT, list1(F03_GENERIC_WRITE, $5)); }
         | ENDINTERFACE
           { $$ = list1(F95_ENDINTERFACE_STATEMENT,NULL); }
-        | MODULEPROCEDURE ident_list
-          { $$ = list2(F95_MODULEPROCEDURE_STATEMENT, $2, make_int_enode(1)); }
-        | PROCEDURE ident_list
+        | MODULEPROCEDURE COL2_or_null ident_list
+          {
+              if (unit_ctl_level > 0 && (PARENT_STATE == INCONT)) {
+                  if ($2 == COL2) {
+                      yyerror("unexpected collon");
+                  }
+                  if (EXPR_LIST2($3) != NULL) {
+                      yyerror("too many identifiers");
+                  }
+              }
+              $$ = list2(F95_MODULEPROCEDURE_STATEMENT, $3, make_int_enode(1));
+          }
+        | PROCEDURE COL2_or_null type_bound_proc_decl_list
           {
             if (CTL_TYPE(ctl_top) == CTL_STRUCT &&
                 CURRENT_STATE == IN_TYPE_BOUND_PROCS) {
-                $$ = list3(F03_TYPE_BOUND_PROCEDURE_STATEMENT, $2, NULL, NULL);
+                $$ = list3(F03_TYPE_BOUND_PROCEDURE_STATEMENT, $3, NULL, NULL);
             } else {
-                $$ = list2(F08_PROCEDURE_STATEMENT, $2, make_int_enode(0));
+                list lp = NULL;
+                FOR_ITEMS_IN_LIST(lp, $3) {
+                    if (EXPR_CODE(LIST_ITEM(lp)) != IDENT) {
+                        yyerror("syntax error");
+                    }
+                }
+                $$ = list2(F08_PROCEDURE_STATEMENT, $3, make_int_enode(0));
             }
           }
-        | PROCEDURE COL2 type_bound_proc_decl_list
-          { $$ = list3(F03_TYPE_BOUND_PROCEDURE_STATEMENT, $3, NULL, NULL); }
         | PROCEDURE ',' binding_attr_list COL2 type_bound_proc_decl_list
           { $$ = list3(F03_TYPE_BOUND_PROCEDURE_STATEMENT, $5, $3, NULL); }
         | PROCEDURE '(' name_or_type_spec_or_null ')' ',' proc_attr_list COL2 proc_decl_list
@@ -1151,6 +1167,7 @@ use_only:
         ;
 
 COL2_or_null:
+        { $$ = 0; }
         | COL2
         ;
 
