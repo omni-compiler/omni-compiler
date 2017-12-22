@@ -4690,7 +4690,7 @@ compile_DO_concurrent_end()
     CURRENT_STATE = INEXEC;
 
     /*
-     * Close the block construct which is genereted in compile_FORALL_statement().
+     * Close the block construct which is genereted in compile_DOCONCURRENT_statement()
      */
     if (CTL_TYPE(ctl_top) == CTL_BLK) {
         compile_ENDBLOCK_statement(list0(F2008_ENDBLOCK_STATEMENT));
@@ -9315,6 +9315,9 @@ compile_end_forall_header(expv init)
              */
             ID_SYM(ip) = EXPV_NAME(ID_ADDR(ip));
             EXPR_SYM(EXPR_ARG1(LIST_ITEM(lp))) = EXPV_NAME(ID_ADDR(ip));
+
+            ID_TYPE(ip) = wrap_type(ID_TYPE(ip));
+            TYPE_UNSET_IMPLICIT(ID_TYPE(ip));
         }
     }
 
