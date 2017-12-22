@@ -5,12 +5,6 @@
 #include <stdint.h>
 #include <alloca.h>
 
-#ifdef ENABLE_UCHARDET
-# include <iconv.h>
-# include <uchardet.h>
-# include <errno.h>
-#endif
-
 // #define LEX_DEBUG 1
 
 /* Lexical analyzer, enable open mp.  */
@@ -83,17 +77,6 @@ char stn_cols[7];                       /* line number colums */
 char *line_buffer = NULL;       /* pre_read line buffer */
 char *buffio = NULL;
 
-#ifdef ENABLE_UCHARDET
-char *convert_buffer1 = NULL;    /* line buffer for convert encoding */
-char *convert_buffer2 = NULL;    /* line buffer for convert encoding */
-uchardet_t *current_detector;
-iconv_t current_cd;
-# define DEFAULT_ENCODING "UTF-8"
-
-static void     detect_encoding(void);
-static int      convert_encoding(void);
-#endif
-
 int prevline_is_inQuote = 0;
 int prevline_is_inComment = FALSE;
 
@@ -117,9 +100,6 @@ struct saved_file_state {
     /* when include by USE, must specify -force-free-format.  */
     int save_fixed_format_flag;
     int save_no_countup; /* reach ';', we do not count up the line number.  */
-#ifdef ENABLE_UCHARDET
-    iconv_t cd;
-#endif
 } file_state[N_NESTED_FILE];
 
 int n_nested_file = 0;
@@ -305,12 +285,6 @@ initialize_lex()
   st_buffer_org = XMALLOC(char *, st_buf_size);
   buffio = XMALLOC(char *, st_buf_size);
   pragmaBuf = XMALLOC(char *, st_buf_size);
-#ifdef ENABLE_UCHARDET
-  convert_buffer1 = XMALLOC(char *, line_buf_size);
-  convert_buffer2 = XMALLOC(char *, line_buf_size);
-  current_cd = 0;
-  current_detector = uchardet_new();
-#endif
 
   memset(last_ln_nos, 0, sizeof(last_ln_nos));
 
@@ -341,17 +315,6 @@ initialize_lex()
     add_sentinel( &sentinels, ACC_SENTINEL );
     if (ocl_flag) add_sentinel( &sentinels, OCL_SENTINEL );
     if (cdir_flag) add_sentinel( &sentinels, CDIR_SENTINEL );
-}
-
-void
-finalize_lex()
-{
-#ifdef ENABLE_UCHARDET
-    uchardet_delete(current_detector);
-    if (current_cd) {
-        iconv_close(current_cd);
-    }
-#endif
 }
 
 static void
@@ -2099,11 +2062,6 @@ include_file(char *name, int inside_use)
     p->save_fixed_format_flag = fixed_format_flag;
     /* save the context for no count up of line number.  */
     p->save_no_countup = no_countup;
-#ifdef ENABLE_UCHARDET
-    p->cd = current_cd;
-    current_cd = 0;
-#endif
-
     is_using_module = inside_use;
 
     if(p->save_buffer == NULL){
@@ -2149,11 +2107,6 @@ static void restore_file()
     no_countup = p->save_no_countup;
     bcopy(p->save_buffer,line_buffer,LINE_BUF_SIZE);
     bcopy(p->save_stn_cols,stn_cols,7);
-#ifdef ENABLE_UCHARDET
-    if (current_cd)
-        iconv_close(current_cd);
-    current_cd = p->cd;
-#endif
 
     if (is_using_module == TRUE) {
         pop_filter();
@@ -2665,15 +2618,6 @@ done:
     if((bp - line_buffer) > max_line_len &&
        (!inComment || is_pragma_sentinel(&sentinels, line_buffer, &index)))
         error("line contains more than %d characters", max_line_len);
-
-#ifdef ENABLE_UCHARDET
-    detect_encoding();
-    if (current_cd) {
-        if (!convert_encoding()) {
-            error("failed to convert encoding");
-        }
-    }
-#endif
     return(ST_INIT);
 }
 
@@ -3035,7 +2979,6 @@ next_line0:
         /* read error or eof */
         return ST_EOF;
     }
-
     /* check end of line and fix to unix style */
     linelen = strlen( line_buffer );
     if (linelen > 2) {
@@ -3056,15 +2999,6 @@ next_line0:
         line_buffer[i++] = 0x0;
       linelen = max_line_len;
     }
-
-#ifdef ENABLE_UCHARDET
-    detect_encoding();
-    if (current_cd) {
-        if (!convert_encoding()) {
-            error("failed to convert encoding");
-        }
-    }
-#endif
 
     /* truncate characters after '!' */
     if (line_buffer[0] != '!' ||
@@ -4331,82 +4265,6 @@ static int sentinel_index( sentinel_list * p, char * name )
     }
     return -1;
 }
-
-
-#ifdef ENABLE_UCHARDET
-/*
- * Detects the encoding from line_buffer.
- */
-void
-detect_encoding()
-{
-    const char * encoding = NULL;
-
-    /* if current_encoding is already detected, return */
-    if (current_cd > 0) {
-        return;
-    }
-
-    if (uchardet_handle_data(current_detector,
-                              line_buffer,
-                              strnlen(line_buffer, LINE_BUF_SIZE)) != 0) {
-        return;
-    }
-
-    uchardet_data_end(current_detector);
-
-    encoding = uchardet_get_charset(current_detector);
-
-    if (encoding == NULL || strncmp(encoding, "", 1) == 0) {
-        /* error or the encoding is pure-ascii */
-        uchardet_reset(current_detector);
-        return;
-    }
-
-    current_cd = iconv_open(DEFAULT_ENCODING, encoding);
-
-    uchardet_reset(current_detector);
-}
-
-
-/*
- * Convert encoding
- */
-int
-convert_encoding(void)
-{
-    size_t in_size = strlen(line_buffer) + 1;
-    size_t out_size = line_buf_size;
-    int count = 0;
-    char * out, *in;
-
-    strcpy(convert_buffer1, line_buffer);
-
-    in = convert_buffer1;
-    out = convert_buffer2;
-
-    if (current_cd < 0) {
-        /* pure-ascii, do nothing*/
-        return TRUE;
-    }
-
-    iconv(current_cd, NULL, 0, NULL, 0);
-    while (in_size > 0) {
-        if ((count = iconv(current_cd,
-                           &in, &in_size,
-                           &out, &out_size)) < 0) {
-            return FALSE;
-        }
-    }
-
-    /* reset */
-    (void)iconv(current_cd, NULL, 0, NULL, 0);
-
-    strcpy(line_buffer, convert_buffer2);
-
-    return TRUE;
-}
-#endif
 
 struct keyword_token XMP_keywords[ ] =
 {

@@ -251,7 +251,6 @@ initialize_compile()
 void finalize_compile()
 {
     isInFinalizer = TRUE;
-    finalize_lex();
     begin_procedure();
 }
 
