@@ -1131,13 +1131,17 @@ compile_ident_expression(expr x)
 
     if ((id = declare_variable(id)) != NULL) {
         tp = ID_TYPE(id);
-        if (ID_CLASS(id) == CL_PROC && PROC_CLASS(id) == P_THISPROC) {
+        if ((ID_CLASS(id) == CL_PROC && PROC_CLASS(id) == P_THISPROC) ||
+            (ID_CLASS(id) == CL_ENTRY)) {
             tp = FUNCTION_TYPE_RETURN_TYPE(tp);
-        } else if (ID_CLASS(id) == CL_ENTRY) {
-            tp = FUNCTION_TYPE_RETURN_TYPE(tp);
+            /*
+             * If id is this proc, BIND attribute is owned by the procedrue iteself.
+             */
+            TYPE_ATTR_FLAGS(tp) |= TYPE_ATTR_FLAGS(id) & ~(TYPE_ATTR_BIND);
+        } else {
+            TYPE_ATTR_FLAGS(tp) |= TYPE_ATTR_FLAGS(id);
         }
 
-        TYPE_ATTR_FLAGS(tp) |= TYPE_ATTR_FLAGS(id);
         if (TYPE_HAS_BIND(id)) {
             TYPE_BIND_NAME(tp) = ID_BIND(id);
         }
