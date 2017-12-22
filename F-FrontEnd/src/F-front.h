@@ -776,6 +776,7 @@ extern int      type_is_compatible_for_assignment
                     _ANSI_ARGS_((TYPE_DESC tp1, TYPE_DESC tp2));
 extern int      type_is_compatible_for_allocation
                     _ANSI_ARGS_((TYPE_DESC left, TYPE_DESC right));
+extern int      pointer_assignable(expv x, expr vPointer, expr vPointee);
 extern int      struct_type_is_compatible_for_assignment
                     _ANSI_ARGS_((TYPE_DESC tp1, TYPE_DESC tp2, int is_pointer_set));
 extern int      type_is_specific_than
@@ -790,7 +791,6 @@ extern int      type_bound_procedure_types_are_compatible
                     _ANSI_ARGS_((const TYPE_DESC tbp1, const TYPE_DESC tbp2));
 
 extern int      check_tbp_pass_arg(TYPE_DESC stp, TYPE_DESC tbp, TYPE_DESC ftp);
-
 extern int      procedure_has_pass_arg
                     _ANSI_ARGS_((const TYPE_DESC ftp,
                                  const SYMBOL pass_arg,

@@ -201,6 +201,15 @@ compile_intrinsic_call0(ID id, expv args, int ignoreTypeMismatch) {
                 //return NULL;    /* error recovery */
                 continue;
             }
+
+            if (i == 1 &&
+                INTR_ARG_TYPE(ep)[i] == INTR_TYPE_PASSIGNABLE) {
+
+                if (pointer_assignable(NULL, expr_list_get_n(args, 0), a)) {
+                    break;
+                }
+            }
+
             if (compare_intrinsic_arg_type(a, tp,
                                            ((isVarArgs == 0) ?
                                             INTR_ARG_TYPE(ep)[i] :

@@ -684,8 +684,7 @@ intrinsic_entry intrinsic_table[] = {
 
     // ASSOCIATED (POINTER [, TARGET])
     { INTR_ASSOCIATED,  INTR_NAME_GENERIC,      "associated",   0,      { INTR_TYPE_POINTER },                          INTR_TYPE_LOGICAL,      1, -6, LANGSPEC_F90, INTR_CLASS_I },
-    { INTR_ASSOCIATED,  INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_POINTER, INTR_TYPE_POINTER },       INTR_TYPE_LOGICAL,      2, -6, LANGSPEC_F90, INTR_CLASS_I },
-    { INTR_ASSOCIATED,  INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_POINTER, INTR_TYPE_TARGET },        INTR_TYPE_LOGICAL,      2, -6, LANGSPEC_F90, INTR_CLASS_I },
+    { INTR_ASSOCIATED,  INTR_NAME_GENERIC,      "",             0,      { INTR_TYPE_POINTER, INTR_TYPE_PASSIGNABLE },        INTR_TYPE_LOGICAL,      2, -6, LANGSPEC_F90, INTR_CLASS_I },
 
 
     /* 21. Intrinsic subroutines */
