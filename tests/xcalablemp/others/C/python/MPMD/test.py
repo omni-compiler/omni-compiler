@@ -1,10 +1,8 @@
 import xmp
-import numpy
 
-arg1 = numpy.array([1,2,3])
-arg2 = numpy.array([4,5,6])
-hello = xmp.spawn(4, "test.so", "hello")
-hello.run(arg1, arg2)
+prog1 = xmp.Program("test.so", "hello")
+arg1 = [1,2,3]
+arg2 = [7,8,9]
+prog1.spawn(4, arg1, arg2)
 
 
-        
