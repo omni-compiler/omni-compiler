@@ -10,13 +10,13 @@ def init(libfile, comm):
 def finalize():
     _init_lib.xmp_finalize()
 
-class xmp:
+class spawn:
     def __init__(self, nodes, libfile, funcname):
         self._nodes    = nodes
         self._libfile  = libfile
         self._funcname = funcname
         
-    def spawn(self, *args):
+    def run(self, *args):
         from mpi4py import MPI
         import tempfile, os, sys
         
