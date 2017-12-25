@@ -10,13 +10,19 @@ def init(libfile, comm):
 def finalize():
     _init_lib.xmp_finalize()
 
-class xmp:
-    def __init__(self, nodes, libfile, funcname):
+class spawn:
+    def __init__(self, nodes, libfile, funcname, async=False):
         self._nodes    = nodes
         self._libfile  = libfile
         self._funcname = funcname
+        self._isAsync  = async
+        self._comm     = None
+        self._running  = False
         
-    def spawn(self, *args):
+    def __del__(self):
+        spawn.wait(self)
+        
+    def run(self, *args):
         from mpi4py import MPI
         import tempfile, os, sys
         
@@ -45,10 +51,17 @@ class xmp:
         tmpf.write("lib.xmp_finalize()\n")
         tmpf.write("comm.Disconnect()\n")
         tmpf.close()
-        comm = MPI.COMM_SELF.Spawn(sys.executable, args=[tmpf.name], maxprocs=self._nodes)
+        self._comm = MPI.COMM_SELF.Spawn(sys.executable, args=[tmpf.name], maxprocs=self._nodes)
         for a in args:
-            comm.Bcast(a, root=MPI.ROOT)
-        
-        comm.Disconnect()
+            self._comm.Bcast(a, root=MPI.ROOT)
+            
         os.unlink(tmpf.name)
-   
+        if self._isAsync == False:
+            self._comm.Disconnect()
+        else:
+            self._running = True
+        
+    def wait(self):
+        if self._isAsync and self._running:
+           self._comm.Disconnect()
+           self._running = False
