@@ -2558,11 +2558,16 @@ compile_basic_type(expr x)
         } else if (EXPV_CODE(vcharLen) == F08_LEN_SPEC_COLON) {
             charLen = CHAR_LEN_ALLOCATABLE;
         } else {
-            if((vcharLen1 = expv_reduce(vcharLen, TRUE)) == NULL) {
-                charLen = CHAR_LEN_UNFIXED;
-            } else {
+            vcharLen1 = expv_reduce(vcharLen, TRUE);
+            if (vcharLen1 != NULL && EXPV_CODE(vcharLen1) == INT_CONSTANT) {
                 vcharLen = vcharLen1;
                 charLen = EXPV_INT_VALUE(vcharLen1);
+            } else if (vcharLen1 != NULL && expv_is_specification(vcharLen1)) {
+                vcharLen = vcharLen1;
+                charLen = 0;
+            } else {
+                vcharLen = vcharLen1;
+                charLen = CHAR_LEN_UNFIXED;
             }
         }
     } else if(charLen == 0) {
