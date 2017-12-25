@@ -644,6 +644,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             e = createElement(name, "construct_name", getArg0Name(xobj));
             addChildNode(e, transBody((XobjList)xobj.getArg(1)));
             break;
+
         case F_BLOCK_STATEMENT:
             e = createElement(name, "construct_name", getArg0Name(xobj));
             XobjList identList = (XobjList)xobj.getArg(1);
@@ -653,6 +654,15 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             e = addChildNodes(e,
                               transSymbols(identList),
                               transDeclarations(declList),
+                              transBody(body));
+            break;
+
+	case F_ASSOCIATE_STATEMENT:
+            e = createElement(name, "construct_name", getArg0Name(xobj));
+            identList = (XobjList)xobj.getArg(1);
+            body = (XobjList)xobj.getArg(2);
+            e = addChildNodes(e,
+                              transSymbols(identList),
                               transBody(body));
             break;
 
