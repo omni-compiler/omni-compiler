@@ -424,7 +424,8 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
 
 
         case F_WHERE_STATEMENT: {
-            e = addChildNodes(createElement(name),
+            e = addChildNodes(createElement(name,
+					    "construct_name", getArg0Name(xobj)),
                               transCondition(xobj.getArg(1)),
                               transThen(xobj.getArgOrNull(2)));
             Xobject xelse = xobj.getArgOrNull(3);

@@ -972,6 +972,11 @@ compile_statement1(int st_no, expr x)
         CTL_BLOCK(ctl_top) = CURRENT_STATEMENTS;
         CURRENT_STATEMENTS = NULL;
 
+        /* construct name */
+        if (EXPR_HAS_ARG3(x)) {
+	  EXPR_ARG4(st) = EXPR_ARG3(x);
+        }
+	
         /* set current WHERE_STATEMENT */
         CTL_WHERE_STATEMENT(ctl_top) = st;
         if(EXPR_ARG2(x) != NULL) {
