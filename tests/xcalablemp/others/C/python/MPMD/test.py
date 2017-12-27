@@ -1,7 +1,8 @@
 import xmp
-import numpy
-from ctypes import *
 
-n1 = numpy.array([1,2,3])
-xmp.spawn("test.so", 4, "hello", n1)
-        
+prog1 = xmp.Program("test.so", "hello")
+arg1 = [1,2,3]
+arg2 = [7,8,9]
+prog1.spawn(4, arg1, arg2)
+
+

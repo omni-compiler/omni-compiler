@@ -80,9 +80,17 @@ typedef enum {
     INTR_TYPE_SCALAR_COARRAY_REAL,
     INTR_TYPE_SCALAR_COARRAY_LOGICAL,
 
+
+
+    /*
+     * for ASSOCIATED().
+     * Check if argument can be Pointer ASSIGNed to the previous argument
+     */
+    INTR_TYPE_PASSIGNABLE,
+
 
     /* Others. */
-    INTR_TYPE_POINTER, 
+    INTR_TYPE_POINTER,
     INTR_TYPE_TARGET,
 
     INTR_TYPE_ANY_ARRAY_ALLOCATABLE,

@@ -5659,6 +5659,12 @@ XfDecompileDomVisitor {
 
             XmfWriter writer = _context.getWriter();
 
+            String constuctName = XmDomUtil.getAttr(n, "construct_name");
+            if (XfUtilForDom.isNullOrEmpty(constuctName) == false) {
+                writer.writeToken(constuctName);
+                writer.writeToken(": ");
+            }
+
             writer.writeToken("WHERE ");
             invokeEnter(XmDomUtil.getElement(n, "condition"));
 
@@ -5674,6 +5680,10 @@ XfDecompileDomVisitor {
             }
 
             writer.writeToken("END WHERE");
+            if (XfUtilForDom.isNullOrEmpty(constuctName) == false) {
+                writer.writeToken(" ");
+                writer.writeToken(constuctName);
+            }
             writer.setupNewLine();
         }
     }
