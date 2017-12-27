@@ -1,8 +1,8 @@
-import xmp
+import xmp                                                    
+import numpy
 
 prog1 = xmp.Program("test.so", "hello")
-arg1 = [1,2,3]
-arg2 = [7,8,9]
-prog1.spawn(4, arg1, arg2)
+job   = prog1.spawn(4, numpy.array([1,2,3]), numpy.array([1,2,3]))
 
+print ("elapsed_time:{0}".format(job.elapsed_time()) + "[sec]")
 
