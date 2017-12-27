@@ -1,4 +1,5 @@
 from boundinnerclass import BoundInnerClass
+import time
 
 _so = None
 def init(so, comm):
@@ -21,7 +22,7 @@ class Program:
     class spawn:        
         def __init__(self, outer, nodes, *args, async=False):
             from mpi4py import MPI
-            import tempfile, os, sys, numpy, time
+            import tempfile, os, sys, numpy
 
             self.start_time = time.time()
             self.time       = 0
@@ -74,7 +75,6 @@ class Program:
             self.wait()
         
         def wait(self):
-            import time
             if self._isAsync and self._running:
                 self._comm.Disconnect()
                 self._running = False
