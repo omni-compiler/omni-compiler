@@ -699,7 +699,7 @@ public class XcodeMLtools_F extends XcodeMLtools {
 
     case F_WHERE_STATEMENT:
       x = new XobjList(code, type);
-      x.add(null);
+      x.add(getSymbol(n, "construct_name"));
       x.add(toXobject(getContent(getElement(n, "condition"))));
       x.add(toXobject(getContent(getElement(n, "then"))));
       x.add(toXobject(getContent(getElement(n, "else"))));
