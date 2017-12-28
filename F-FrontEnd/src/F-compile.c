@@ -251,7 +251,6 @@ initialize_compile()
 void finalize_compile()
 {
     isInFinalizer = TRUE;
-    finalize_lex();
     begin_procedure();
 }
 
@@ -973,6 +972,11 @@ compile_statement1(int st_no, expr x)
         CTL_BLOCK(ctl_top) = CURRENT_STATEMENTS;
         CURRENT_STATEMENTS = NULL;
 
+        /* construct name */
+        if (EXPR_HAS_ARG3(x)) {
+	  EXPR_ARG4(st) = EXPR_ARG3(x);
+        }
+	
         /* set current WHERE_STATEMENT */
         CTL_WHERE_STATEMENT(ctl_top) = st;
         if(EXPR_ARG2(x) != NULL) {
@@ -1112,7 +1116,7 @@ compile_statement1(int st_no, expr x)
             v = compile_scene_range_expression_list(EXPR_ARG1(x));
             push_ctl(CTL_CASE);
 
-            (void)check_valid_construction_name(parent_const_name, const_name);
+            if (const_name) (void)check_valid_construction_name(parent_const_name, const_name);
 
             /*
              *  (F_CASELABEL_STATEMENT
@@ -1123,6 +1127,7 @@ compile_statement1(int st_no, expr x)
             st = list3(F_CASELABEL_STATEMENT, v, NULL, const_name);
 
             CTL_BLOCK(ctl_top) = st;
+	    CTL_CASE_CONST_NAME(ctl_top) = parent_const_name;
 
         } else error("'case label', out of place");
         break;
@@ -8790,10 +8795,10 @@ static int
 check_valid_construction_name(expr x, expr y)
 {
     if (x != NULL && y == NULL) {
-        error("expect construnct name");
+        error("expect construct name");
         return FALSE;
     } else if (x == NULL && y != NULL) {
-        error("unexpected construnct name");
+        error("unexpected construct name");
         return FALSE;
     } else if (x != NULL && y != NULL) {
         if (EXPR_SYM(x) != EXPR_SYM(y)) {

@@ -699,7 +699,7 @@ public class XcodeMLtools_F extends XcodeMLtools {
 
     case F_WHERE_STATEMENT:
       x = new XobjList(code, type);
-      x.add(null);
+      x.add(getSymbol(n, "construct_name"));
       x.add(toXobject(getContent(getElement(n, "condition"))));
       x.add(toXobject(getContent(getElement(n, "then"))));
       x.add(toXobject(getContent(getElement(n, "else"))));
@@ -884,6 +884,15 @@ public class XcodeMLtools_F extends XcodeMLtools {
 						 ));
       }
 
+    case F_ASSOCIATE_STATEMENT:
+      {
+        attr = getSymbol(n, "construct_name");
+        return setCommonAttributes(n, Xcons.List(code, type, attr,
+						 toXobject(getElement(n, "symbols")),
+						 toXobject(getElement(n, "body"))
+						 ));
+      }
+      
     case F_SYNC_STAT:
       {
         attr = getSymbol(n, "kind");
@@ -1048,8 +1057,10 @@ public class XcodeMLtools_F extends XcodeMLtools {
 	addr.setScope(VarScope.LOCAL);
 	break;
       }
-    } else if (valueNode != null) {
-        addr = toXobject(valueNode);
+    }
+    
+    if (valueNode != null) {
+      addr = toXobject(valueNode);
     }
 
     // create ident

@@ -1413,8 +1413,6 @@ char_selector: /* empty */
         { $$ = NULL; }
         | '(' len_spec ')'
         { $$ = list2(LIST, $2, NULL); }
-        | '(' len_spec ',' expr ')'
-        { $$ = list2(LIST, $2, $4); }
         | SET_LEN  len_spec ')'
         { $$ = list2(LIST, $2, NULL); }
         | SET_LEN len_spec ',' KW kind_key_spec ')'
@@ -1829,8 +1827,8 @@ executable_statement:
         { $$ = list0(F_ELSEWHERE_STATEMENT); }
         | ELSEWHERE '(' expr ')' assign_statement_or_null
         { $$ = list2(F_ELSEWHERE_STATEMENT, $3, $5); }
-        | ENDWHERE
-        { $$ = list0(F_ENDWHERE_STATEMENT); }
+        | ENDWHERE name_or_null
+        { $$ = list1(F_ENDWHERE_STATEMENT,$2); }
         | SELECT '(' expr ')'
         { $$ = list2(F_SELECTCASE_STATEMENT, $3, st_name); }
         | SELECTTYPE '(' expr ')'
@@ -1970,7 +1968,7 @@ action_statement_key: ASSIGN  label KW KW_TO IDENTIFIER
          pragmaString = NULL;
         }
         | WHERE '(' expr ')' assign_statement_or_null
-        { $$ = list2(F_WHERE_STATEMENT, $3, $5); }
+        { $$ = list3(F_WHERE_STATEMENT, $3, $5, st_name); }
         ;
 
 action_statement95:
