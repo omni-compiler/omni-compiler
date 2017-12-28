@@ -908,7 +908,13 @@ compile_statement1(int st_no, expr x)
     case F_ENDDO_STATEMENT: {
         check_INEXEC();
 
-	expr parent_const_name = CTL_DO_CONST_NAME(ctl_top);
+	expr parent_const_name = NULL;
+	if (EXPR_CODE(CTL_BLOCK(ctl_top)) == F_DO_STATEMENT)
+	  parent_const_name = CTL_DO_CONST_NAME(ctl_top);
+	else if (EXPR_CODE(CTL_BLOCK(ctl_top)) == F08_DOCONCURRENT_STATEMENT)
+	  parent_const_name = CTL_DOCONCURRENT_CONST_NAME(ctl_top);
+	else if (EXPR_CODE(CTL_BLOCK(ctl_top)) == F_DOWHILE_STATEMENT)
+	  parent_const_name = CTL_DOWHILE_CONST_NAME(ctl_top);
 	expr const_name = EXPR_HAS_ARG1(x) ? EXPR_ARG1(x) : NULL;
 	(void)check_valid_construction_name(parent_const_name, const_name);
 
