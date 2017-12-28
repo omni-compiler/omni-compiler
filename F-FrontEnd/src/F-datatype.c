@@ -1238,7 +1238,7 @@ type_is_compatible_for_allocation(TYPE_DESC left, TYPE_DESC right)
                               /*for_argument=*/FALSE,
                               /*for_assignment=*/TRUE,
                               /*is_pointer_assignment=*/TRUE,
-                              /*compare_rank=*/FALSE,
+                              /*compare_rank=*/TRUE,
                               TRUE);
 }
 
