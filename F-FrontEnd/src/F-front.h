@@ -263,6 +263,10 @@ typedef struct control
 #define CTL_DO_LABEL(l)         ((l)->dolabel)
 #define CTL_DO_VAR(l)           ((l)->dovar)
 #define CTL_DO_LOCAL_ENV(l)     (&((l)->local_env))
+#define CTL_DO_CONST_NAME(l)    (EXPR_ARG1((l)->v1))
+
+#define CTL_DOWHILE_CONST_NAME(l)         (EXPR_ARG3((l)->v1))
+#define CTL_DOCONCURRENT_CONST_NAME(l)    (EXPR_ARG3((l)->v1))
 
 #define CTL_STRUCT_TYPEDESC(l)  (EXPV_TYPE((l)->v1))
 

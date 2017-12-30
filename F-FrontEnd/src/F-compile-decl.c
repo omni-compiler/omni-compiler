@@ -2256,6 +2256,7 @@ declare_id_type(ID id, TYPE_DESC tp)
         /* override implicit declared type */
         TYPE_ATTR_FLAGS(tp) |= TYPE_ATTR_FLAGS(tq);
         replace_or_assign_type(id_type, tp);
+        TYPE_ATTR_FLAGS(ID_TYPE(id)) |= TYPE_ATTR_FLAGS(tp);
         return;
     }
 

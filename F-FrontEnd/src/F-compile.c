@@ -905,9 +905,20 @@ compile_statement1(int st_no, expr x)
         break;
     }
 
-    case F_ENDDO_STATEMENT:
+    case F_ENDDO_STATEMENT: {
         check_INEXEC();
-        check_DO_end(NULL);
+
+	expr parent_const_name = NULL;
+	if (EXPR_CODE(CTL_BLOCK(ctl_top)) == F_DO_STATEMENT)
+	  parent_const_name = CTL_DO_CONST_NAME(ctl_top);
+	else if (EXPR_CODE(CTL_BLOCK(ctl_top)) == F08_DOCONCURRENT_STATEMENT)
+	  parent_const_name = CTL_DOCONCURRENT_CONST_NAME(ctl_top);
+	else if (EXPR_CODE(CTL_BLOCK(ctl_top)) == F_DOWHILE_STATEMENT)
+	  parent_const_name = CTL_DOWHILE_CONST_NAME(ctl_top);
+	expr const_name = EXPR_HAS_ARG1(x) ? EXPR_ARG1(x) : NULL;
+	(void)check_valid_construction_name(parent_const_name, const_name);
+
+	check_DO_end(NULL);
 
 	if (CTL_TYPE(ctl_top) == CTL_OMP){
 	  if (CTL_OMP_ARG_DIR(ctl_top) == OMP_F_PARALLEL_DO){
@@ -932,6 +943,7 @@ compile_statement1(int st_no, expr x)
 	}
 
         break;
+    }
 
     case F_DOWHILE_STATEMENT: {
         int doStNo = -1;
@@ -6847,7 +6859,7 @@ compile_ALLOCATE_DEALLOCATE_statement(expr x)
             case F95_MEMBER_REF:
             case F_VAR:
             case ARRAY_REF:
-                case XMP_COARRAY_REF:
+	    case XMP_COARRAY_REF:
                 if(isVarSetTypeAttr(ev,
                     TYPE_ATTR_POINTER | TYPE_ATTR_ALLOCATABLE) == FALSE) {
                     error("argument is not a pointer nor allocatable type");
