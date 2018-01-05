@@ -1085,6 +1085,11 @@ type_is_compatible(TYPE_DESC left, TYPE_DESC right,
         fprintf(debug_fp, "# comparing basic types\n");
     }
 
+    if (IS_ANY_CLASS(left) || IS_ANY_CLASS(right)) {
+        fprintf(debug_fp, "# CLASS(*) \n");
+        goto rank_compatibility;
+    }
+
     if (TYPE_BASIC_TYPE(left_basic) == TYPE_BASIC_TYPE(right_basic)) {
         goto kind_compatibility;
     }
@@ -1184,6 +1189,11 @@ attribute_compatibility:
         fprintf(debug_fp, "#  left is '%x', right is '%x'\n",
                 TYPE_ATTR_FOR_COMPARE & TYPE_ATTR_FLAGS(left),
                 TYPE_ATTR_FOR_COMPARE & TYPE_ATTR_FLAGS(right));
+    }
+
+    if (IS_ANY_CLASS(left) || IS_ANY_CLASS(right)) {
+        fprintf(debug_fp, "# CLASS(*) \n");
+        goto compatible;
     }
 
     if ((TYPE_ATTR_FOR_COMPARE & TYPE_ATTR_FLAGS(left)) !=
