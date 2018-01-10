@@ -47,6 +47,11 @@ typedef enum array_assume_kind {
     ASSUMED_SHAPE
 } ARRAY_ASSUME_KIND;
 
+#define isValidType(tp)         \
+    (tp != NULL && get_basic_type(tp) != TYPE_UNKNOWN)
+
+#define isValidTypedExpv(v)     (v != NULL && isValidType(EXPV_TYPE(v)))
+
 #define N_BASIC_TYPES ((int)TYPE_END)
 
 #define KIND_PARAM_DOUBLE   8

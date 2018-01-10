@@ -373,6 +373,9 @@ compile_expression(expr x)
                 }
                 v = NULL;
                 tp = ID_TYPE(id);
+                if (TYPE_IS_MODIFIED(tp)) {
+                    tp = TYPE_REF(tp);
+                }
             } else {
                 id = NULL;
                 v = compile_lhs_expression(x1);
@@ -1128,13 +1131,17 @@ compile_ident_expression(expr x)
 
     if ((id = declare_variable(id)) != NULL) {
         tp = ID_TYPE(id);
-        if (ID_CLASS(id) == CL_PROC && PROC_CLASS(id) == P_THISPROC) {
+        if ((ID_CLASS(id) == CL_PROC && PROC_CLASS(id) == P_THISPROC) ||
+            (ID_CLASS(id) == CL_ENTRY)) {
             tp = FUNCTION_TYPE_RETURN_TYPE(tp);
-        } else if (ID_CLASS(id) == CL_ENTRY) {
-            tp = FUNCTION_TYPE_RETURN_TYPE(tp);
+            /*
+             * If id is this proc, BIND attribute is owned by the procedrue iteself.
+             */
+            TYPE_ATTR_FLAGS(tp) |= TYPE_ATTR_FLAGS(id) & ~(TYPE_ATTR_BIND);
+        } else {
+            TYPE_ATTR_FLAGS(tp) |= TYPE_ATTR_FLAGS(id);
         }
 
-        TYPE_ATTR_FLAGS(tp) |= TYPE_ATTR_FLAGS(id);
         if (TYPE_HAS_BIND(id)) {
             TYPE_BIND_NAME(tp) = ID_BIND(id);
         }
@@ -1153,6 +1160,7 @@ compile_ident_expression(expr x)
     }
 
     done:
+
 #ifdef not
     if (ret == NULL) {
 /* FEAST change start */
@@ -1288,6 +1296,9 @@ compile_lhs_expression(x)
             }
             v = NULL;
             tp = ID_TYPE(id);
+            if (TYPE_IS_MODIFIED(tp)) {
+                tp = TYPE_REF(tp);
+            }
 
             if (ID_CLASS(id) == CL_PROC && PROC_CLASS(id) == P_THISPROC) {
                 tp = FUNCTION_TYPE_RETURN_TYPE(tp);
@@ -1721,6 +1732,10 @@ compile_array_ref(ID id, expv vary, expr args, int isLeft) {
 
     tp = (id ? ID_TYPE(id) : EXPV_TYPE(vary));
 
+    if (TYPE_IS_MODIFIED(tp)) {
+        tp = TYPE_REF(tp);
+    }
+
     if (id != NULL && (
         (tp != NULL && IS_PROCEDURE_TYPE(tp)
          && !IS_ARRAY_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp))) ||
@@ -1893,6 +1908,10 @@ compile_array_ref(ID id, expv vary, expr args, int isLeft) {
         ID_ADDR(id) = vary;
 
         tp = ID_TYPE(id);
+        if (TYPE_IS_MODIFIED(tp)) {
+            tp = TYPE_REF(tp);
+        }
+
         if (id != NULL && ID_CLASS(id) == CL_PROC && PROC_CLASS(id) == P_THISPROC) {
             tp = FUNCTION_TYPE_RETURN_TYPE(tp);
         }
@@ -2710,20 +2729,21 @@ get_struct_members(TYPE_DESC struct_tp)
     return head;
 }
 
-
 static expv
 compile_struct_constructor_with_components(const ID struct_id,
                                            const TYPE_DESC stp,
                                            const expr args)
 {
     int has_keyword = FALSE;
+    int is_first_arg = TRUE;
     list lp;
     ID ip, cur, members, used = NULL, used_last = NULL;
     ID match = NULL;
     SYMBOL sym;
-    expv v;
     expv result, components;
     TYPE_DESC tp;
+    TYPE_DESC this;
+
     components = list0(LIST);
     result = list2(F95_STRUCT_CONSTRUCTOR, NULL, components);
 
@@ -2731,11 +2751,45 @@ compile_struct_constructor_with_components(const ID struct_id,
     // (PRIVATE works if the derived type is use-associated)
     int is_use_associated = ID_USEASSOC_INFO(struct_id) != NULL;
 
-    members = get_struct_members(stp?:ID_TYPE(struct_id));
+    this = stp?:ID_TYPE(struct_id);
+
+    members = get_struct_members(this);
     cur = members;
 
     FOR_ITEMS_IN_LIST(lp, args) {
         expr arg = LIST_ITEM(lp);
+        expv v = compile_expression(arg);
+        assert(EXPV_TYPE(v) != NULL);
+
+        if (type_is_parent_type(EXPV_TYPE(v), this)) {
+            TYPE_DESC stp = get_bottom_ref_type(EXPV_TYPE(v));
+            if ((EXPV_CODE(arg) != F_SET_EXPR && is_first_arg) ||
+                (EXPV_CODE(arg) == F_SET_EXPR && ID_SYM(TYPE_TAGNAME(stp)) == EXPR_SYM(EXPR_ARG1(arg)))) {
+                ID pmem;
+                FOREACH_MEMBER(pmem, stp) {
+                    if (find_ident_head(ID_SYM(pmem), used) != NULL) {
+                        error("member'%s' is already specified", ID_NAME(pmem));
+                        return NULL;
+                    }
+                    if ((match = find_ident_head(ID_SYM(pmem), members)) == NULL) {
+                        error_at_node(args,
+                                      "'%s' is specified as a parent type, "
+                                      "but member '%s' is already in the constructor",
+                                      ID_NAME(TYPE_TAGNAME(stp)), ID_NAME(pmem));
+                        return NULL;
+                    } else {
+                        id_link_remove(&members, match);
+                        ID_LINK_ADD(match, used, used_last);
+                    }
+                }
+            }
+            list_put_last(components, v);
+            cur = members;
+            is_first_arg = FALSE;
+            if (EXPV_CODE(arg) == F_SET_EXPR)
+                has_keyword = TRUE;
+            continue;
+        }
 
         if (EXPV_CODE(arg) == F_SET_EXPR) {
             sym = EXPR_SYM(EXPR_ARG1(arg));
@@ -2781,8 +2835,10 @@ compile_struct_constructor_with_components(const ID struct_id,
             return NULL;
         }
 
-        v = compile_expression(arg);
-        assert(EXPV_TYPE(v) != NULL);
+        if (!isValidType(EXPV_TYPE(v))) {
+            return NULL;
+        }
+
         if (!type_is_compatible_for_assignment(ID_TYPE(match),
                                                EXPV_TYPE(v))) {
             error("type is not applicable in struct constructor");
@@ -2792,10 +2848,13 @@ compile_struct_constructor_with_components(const ID struct_id,
         if (!has_keyword) {
             cur = ID_NEXT(cur);
         }
+
         id_link_remove(&members, match);
 
         ID_LINK_ADD(match, used, used_last);
         list_put_last(components, v);
+
+        is_first_arg = FALSE;
     }
 
     /*

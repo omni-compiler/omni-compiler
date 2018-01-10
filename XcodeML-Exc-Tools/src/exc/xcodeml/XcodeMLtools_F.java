@@ -699,7 +699,7 @@ public class XcodeMLtools_F extends XcodeMLtools {
 
     case F_WHERE_STATEMENT:
       x = new XobjList(code, type);
-      x.add(null);
+      x.add(getSymbol(n, "construct_name"));
       x.add(toXobject(getContent(getElement(n, "condition"))));
       x.add(toXobject(getContent(getElement(n, "then"))));
       x.add(toXobject(getContent(getElement(n, "else"))));
@@ -884,6 +884,15 @@ public class XcodeMLtools_F extends XcodeMLtools {
 						 ));
       }
 
+    case F_ASSOCIATE_STATEMENT:
+      {
+        attr = getSymbol(n, "construct_name");
+        return setCommonAttributes(n, Xcons.List(code, type, attr,
+						 toXobject(getElement(n, "symbols")),
+						 toXobject(getElement(n, "body"))
+						 ));
+      }
+      
     case F_SYNC_STAT:
       {
         attr = getSymbol(n, "kind");
@@ -930,10 +939,17 @@ public class XcodeMLtools_F extends XcodeMLtools {
                | (getAttrBool(n, "is_public" ) ? Xtype.TQ_FPUBLIC  : 0)
 	       | (getAttrBool(n, "is_protected") ? Xtype.TQ_FPROTECTED : 0);
         Node bdg = getElement(n, "binding");
+
+	Xobject name = toXobject(getElement(n, "name"));
+	if (name == null){
+	  String defined_io = getAttr(n, "is_defined_io");
+	  name = Xcons.String(defined_io);
+	}
+	
         return setCommonAttributes(n, Xcons.List(code, (Xtype)null,
                                                  getAttrIntFlag(n, "is_operator"),
                                                  getAttrIntFlag(n, "is_assignment"),
-                                                 toXobject(getElement(n, "name")),
+                                                 name,
                                                  Xcons.LongConstant(tq),
                                                  toXobject(bdg)
                                                 ));
@@ -1041,8 +1057,10 @@ public class XcodeMLtools_F extends XcodeMLtools {
 	addr.setScope(VarScope.LOCAL);
 	break;
       }
-    } else if (valueNode != null) {
-        addr = toXobject(valueNode);
+    }
+    
+    if (valueNode != null) {
+      addr = toXobject(valueNode);
     }
 
     // create ident

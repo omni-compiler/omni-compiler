@@ -478,7 +478,9 @@ XfDecompileDomVisitor {
         String topTypeName = topTypeChoice.getNodeName();
         if ("FbasicType".equals(topTypeName) && !isClass && !isProcedure) {
             _writeBasicType(topTypeChoice, typeList);
-        } else if (XmDomUtil.getAttr(lowTypeChoice, "ref") == null && isClass) {
+        } else if ("FbasicType".equals(topTypeName) &&
+                XmDomUtil.getAttr(topTypeChoice, "ref") == null &&
+                isClass) {
             /*
              * <FbasicType is_class="true"/> is `CLASS(*)`
              */
@@ -5659,6 +5661,12 @@ XfDecompileDomVisitor {
 
             XmfWriter writer = _context.getWriter();
 
+            String constuctName = XmDomUtil.getAttr(n, "construct_name");
+            if (XfUtilForDom.isNullOrEmpty(constuctName) == false) {
+                writer.writeToken(constuctName);
+                writer.writeToken(": ");
+            }
+
             writer.writeToken("WHERE ");
             invokeEnter(XmDomUtil.getElement(n, "condition"));
 
@@ -5674,6 +5682,10 @@ XfDecompileDomVisitor {
             }
 
             writer.writeToken("END WHERE");
+            if (XfUtilForDom.isNullOrEmpty(constuctName) == false) {
+                writer.writeToken(" ");
+                writer.writeToken(constuctName);
+            }
             writer.setupNewLine();
         }
     }

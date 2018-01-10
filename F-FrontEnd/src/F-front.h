@@ -263,6 +263,10 @@ typedef struct control
 #define CTL_DO_LABEL(l)         ((l)->dolabel)
 #define CTL_DO_VAR(l)           ((l)->dovar)
 #define CTL_DO_LOCAL_ENV(l)     (&((l)->local_env))
+#define CTL_DO_CONST_NAME(l)    (EXPR_ARG1((l)->v1))
+
+#define CTL_DOWHILE_CONST_NAME(l)         (EXPR_ARG3((l)->v1))
+#define CTL_DOCONCURRENT_CONST_NAME(l)    (EXPR_ARG3((l)->v1))
 
 #define CTL_STRUCT_TYPEDESC(l)  (EXPV_TYPE((l)->v1))
 
@@ -775,6 +779,7 @@ extern int      type_is_compatible_for_assignment
                     _ANSI_ARGS_((TYPE_DESC tp1, TYPE_DESC tp2));
 extern int      type_is_compatible_for_allocation
                     _ANSI_ARGS_((TYPE_DESC left, TYPE_DESC right));
+extern int      pointer_assignable(expv x, expr vPointer, expr vPointee);
 extern int      struct_type_is_compatible_for_assignment
                     _ANSI_ARGS_((TYPE_DESC tp1, TYPE_DESC tp2, int is_pointer_set));
 extern int      type_is_specific_than
@@ -789,7 +794,6 @@ extern int      type_bound_procedure_types_are_compatible
                     _ANSI_ARGS_((const TYPE_DESC tbp1, const TYPE_DESC tbp2));
 
 extern int      check_tbp_pass_arg(TYPE_DESC stp, TYPE_DESC tbp, TYPE_DESC ftp);
-
 extern int      procedure_has_pass_arg
                     _ANSI_ARGS_((const TYPE_DESC ftp,
                                  const SYMBOL pass_arg,

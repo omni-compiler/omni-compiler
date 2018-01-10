@@ -15,6 +15,8 @@ int unit_ctl_contains_level;
 
 ENV current_local_env;
 
+expr preceding_pragmas = NULL;
+
 /* flags and defaults */
 int save_all = FALSE;
 int sub_stars = FALSE;
@@ -903,9 +905,20 @@ compile_statement1(int st_no, expr x)
         break;
     }
 
-    case F_ENDDO_STATEMENT:
+    case F_ENDDO_STATEMENT: {
         check_INEXEC();
-        check_DO_end(NULL);
+
+	expr parent_const_name = NULL;
+	if (EXPR_CODE(CTL_BLOCK(ctl_top)) == F_DO_STATEMENT)
+	  parent_const_name = CTL_DO_CONST_NAME(ctl_top);
+	else if (EXPR_CODE(CTL_BLOCK(ctl_top)) == F08_DOCONCURRENT_STATEMENT)
+	  parent_const_name = CTL_DOCONCURRENT_CONST_NAME(ctl_top);
+	else if (EXPR_CODE(CTL_BLOCK(ctl_top)) == F_DOWHILE_STATEMENT)
+	  parent_const_name = CTL_DOWHILE_CONST_NAME(ctl_top);
+	expr const_name = EXPR_HAS_ARG1(x) ? EXPR_ARG1(x) : NULL;
+	(void)check_valid_construction_name(parent_const_name, const_name);
+
+	check_DO_end(NULL);
 
 	if (CTL_TYPE(ctl_top) == CTL_OMP){
 	  if (CTL_OMP_ARG_DIR(ctl_top) == OMP_F_PARALLEL_DO){
@@ -930,6 +943,7 @@ compile_statement1(int st_no, expr x)
 	}
 
         break;
+    }
 
     case F_DOWHILE_STATEMENT: {
         int doStNo = -1;
@@ -970,6 +984,11 @@ compile_statement1(int st_no, expr x)
         CTL_BLOCK(ctl_top) = CURRENT_STATEMENTS;
         CURRENT_STATEMENTS = NULL;
 
+        /* construct name */
+        if (EXPR_HAS_ARG3(x)) {
+	  EXPR_ARG4(st) = EXPR_ARG3(x);
+        }
+	
         /* set current WHERE_STATEMENT */
         CTL_WHERE_STATEMENT(ctl_top) = st;
         if(EXPR_ARG2(x) != NULL) {
@@ -1119,7 +1138,7 @@ compile_statement1(int st_no, expr x)
             v = compile_scene_range_expression_list(EXPR_ARG1(x));
             push_ctl(CTL_CASE);
 
-            (void)check_valid_construction_name(parent_const_name, const_name);
+            if (const_name) (void)check_valid_construction_name(parent_const_name, const_name);
 
             /*
              *  (F_CASELABEL_STATEMENT
@@ -1130,6 +1149,7 @@ compile_statement1(int st_no, expr x)
             st = list3(F_CASELABEL_STATEMENT, v, NULL, const_name);
 
             CTL_BLOCK(ctl_top) = st;
+	    CTL_CASE_CONST_NAME(ctl_top) = parent_const_name;
 
         } else error("'case label', out of place");
         break;
@@ -1260,10 +1280,12 @@ compile_statement1(int st_no, expr x)
     case F_PRAGMA_STATEMENT:
       if (CURRENT_STATE == OUTSIDE)
 	compile_pragma_outside(x);
-      else if (CURRENT_STATE == INDCL)
-	compile_pragma_decl(x);
-      else // INEXEC || INSIDE
-	compile_pragma_statement(x);
+      else { // others should be issued at the next statemet.
+	char *str = strdup(EXPR_STR(EXPR_ARG1(x)));
+	expr new_pragma = list1(F_PRAGMA_STATEMENT, make_enode(STRING_CONSTANT, str));
+	if (!preceding_pragmas) preceding_pragmas = list0(LIST);
+	preceding_pragmas = list_put_last(preceding_pragmas, new_pragma);
+      }
       break;
 
     case F95_TYPEDECL_STATEMENT:
@@ -1548,6 +1570,8 @@ compile_exec_statement(expr x)
             case F95_MEMBER_REF:
             case XMP_COARRAY_REF:
 
+	        check_INEXEC();
+
                 if (NOT_INDATA_YET) end_declaration();
                 if ((v1 = compile_lhs_expression(x1)) == NULL ||
                     (v2 = compile_expression(EXPR_ARG2(x))) == NULL) {
@@ -1732,6 +1756,8 @@ begin_procedure()
     CURRENT_PROC_CLASS = CL_MAIN;       /* default */
     current_proc_state = P_DEFAULT;
 
+    free(preceding_pragmas); preceding_pragmas = NULL;
+    
     /*
      * NOTE:
      * The function/subroutine in the interface body
@@ -1791,6 +1817,19 @@ check_INDCL()
     default:
         error("declaration among executables");
     }
+
+    list lp;
+    FOR_ITEMS_IN_LIST(lp, preceding_pragmas){
+      expv x = LIST_ITEM(lp);
+      compile_pragma_decl(x);
+      free(EXPR_STR(EXPR_ARG1(x)));
+      free(x);
+    }
+    if (preceding_pragmas){
+      delete_list(preceding_pragmas);
+      preceding_pragmas = NULL;
+    }
+    
 }
 
 void
@@ -1812,6 +1851,19 @@ check_INEXEC()
         }
     }
     if(NOT_INDATA_YET) end_declaration();
+
+    list lp;
+    FOR_ITEMS_IN_LIST(lp, preceding_pragmas){
+      expv x = LIST_ITEM(lp);
+      compile_pragma_statement(x);
+      free(EXPR_STR(EXPR_ARG1(x)));
+      free(x);
+    }
+    if (preceding_pragmas){
+      delete_list(preceding_pragmas);
+      preceding_pragmas = NULL;
+    }
+
 }
 
 
@@ -2367,7 +2419,7 @@ end_declaration()
                  */
                 tp = ID_TYPE(resId);
             }
-            
+
             if (IS_FUNCTION_TYPE(tp)) {
                 ID_TYPE(myId) = NULL;
                 declare_id_type(myId, tp);
@@ -2382,15 +2434,20 @@ end_declaration()
 
             if ((TYPE_IS_ELEMENTAL(myId) ||
                  PROC_IS_ELEMENTAL(myId))) {
-                if (IS_ARRAY_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp))) {
+                TYPE_DESC retType = ID_TYPE(resId);
+                if (retType == NULL) {
+                    retType = FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(myId));
+                }
+
+                if (IS_ARRAY_TYPE(retType)) {
                     error_at_id(myId,
-                                "result type of ELEMENTAL  "
+                                "result type of ELEMENTAL procedure "
                                 "should not be an array");
                 }
-                if (TYPE_IS_POINTER(FUNCTION_TYPE_RETURN_TYPE(tp)) ||
-                    TYPE_IS_ALLOCATABLE(FUNCTION_TYPE_RETURN_TYPE(tp))) {
+                if (TYPE_IS_POINTER(retType) ||
+                    TYPE_IS_ALLOCATABLE(retType)) {
                     error_at_id(myId,
-                                "result type of ELEMENTAL  "
+                                "result type of ELEMENTAL procedure "
                                 "should not have POINTER or ALLOCATABLE attributes");
                 }
             }
@@ -2666,8 +2723,15 @@ end_declaration()
             /* multiple type attribute check */
             for (check = type_attr_checker; check->flag; check++) {
                 if (TYPE_ATTR_FLAGS(tp) & check->flag) {
+                    uint32_t mask = 0xFFFFFFFF;
+                    if (TYPE_IS_PROCEDURE(tp)) {
+                        /*
+                         * The procedure pointer can have a BIND attribute.
+                         */
+                        mask &= ~(TYPE_ATTR_POINTER | TYPE_ATTR_BIND);
+                    }
                     uint32_t a = TYPE_ATTR_FLAGS(tp) &
-                        ~check->acceptable_flags;
+                        ~check->acceptable_flags & mask;
                     if (debug_flag) {
                         fprintf(debug_fp,
                                 "ID '%s' attr 0x%08x : "
@@ -2681,7 +2745,7 @@ end_declaration()
                                 ~check->acceptable_flags,
                                 a);
                     }
-                    if (TYPE_ATTR_FLAGS(tp) & ~check->acceptable_flags) {
+                    if (TYPE_ATTR_FLAGS(tp) & ~check->acceptable_flags & mask) {
                         struct type_attr_check *e;
                         for (e = type_attr_checker; e->flag; e++) {
                             if (TYPE_ATTR_FLAGS(tp) & e->flag) {
@@ -2705,38 +2769,45 @@ end_declaration()
      * Check type parameter values like '*' or ':'
      */
     FOREACH_ID (ip, LOCAL_SYMBOLS) {
-        if (ID_TYPE(ip) && IS_STRUCT_TYPE(ID_TYPE(ip))) {
-            TYPE_DESC struct_tp = ID_TYPE(ip);
-            if (!TYPE_TYPE_PARAM_VALUES(struct_tp))
-                continue;
+        if (ID_TYPE(ip) == NULL)
+            continue;
 
-            FOR_ITEMS_IN_LIST(lp, TYPE_TYPE_PARAM_VALUES(struct_tp)) {
-                if (EXPV_CODE(LIST_ITEM(lp)) == F08_LEN_SPEC_COLON) {
-                    if (!TYPE_IS_POINTER(struct_tp) && !TYPE_IS_ALLOCATABLE(struct_tp)) {
-                        error_at_id(ip,
-                                    "type parameter value ':' should be used "
-                                    "with a POINTER or ALLOCATABLE object");
-                    }
-                } else if (EXPV_CODE(LIST_ITEM(lp)) == LEN_SPEC_ASTERISC) {
-                    if (!ID_IS_DUMMY_ARG(ip)) {
-                        error_at_id(ip,
-                                    "type parameter value '*' should be used "
-                                    "with a dummy argument");
-                    }
-                }
-            }
+        TYPE_DESC tp = bottom_type(ID_TYPE(ip));
 
-            if (TYPE_IS_CLASS(struct_tp)) {
+        if (IS_STRUCT_TYPE(tp)) {
+
+            if (TYPE_IS_CLASS(tp)) {
                 /*
                  * CLASS() shoule be a POINTER object, an ALLOCATABLE object, or a dummy argument
                  */
-                if (!TYPE_IS_POINTER(struct_tp) &&
-                    !TYPE_IS_ALLOCATABLE(struct_tp) &&
+                if (!TYPE_IS_POINTER(tp) && !TYPE_IS_POINTER(ID_TYPE(ip)) &&
+                    !TYPE_IS_ALLOCATABLE(tp) && !TYPE_IS_ALLOCATABLE(ID_TYPE(ip)) &&
                     !ID_IS_DUMMY_ARG(ip)) {
                     error_at_id(ip,
                                 "CLASS should be used "
                                 "to a POINTER object, an ALLOCATABLE object, or a dummy argument");
                 }
+            }
+
+            if (TYPE_TYPE_PARAM_VALUES(tp)) {
+
+                FOR_ITEMS_IN_LIST(lp, TYPE_TYPE_PARAM_VALUES(tp)) {
+                    if (EXPV_CODE(LIST_ITEM(lp)) == F08_LEN_SPEC_COLON) {
+                        if (!TYPE_IS_POINTER(tp) && !TYPE_IS_POINTER(ID_TYPE(ip)) &&
+                            !TYPE_IS_ALLOCATABLE(tp) && !TYPE_IS_ALLOCATABLE(ID_TYPE(ip))) {
+                            error_at_id(ip,
+                                        "type parameter value ':' should be used "
+                                        "with a POINTER or ALLOCATABLE object");
+                        }
+                    } else if (EXPV_CODE(LIST_ITEM(lp)) == LEN_SPEC_ASTERISC) {
+                        if (!ID_IS_DUMMY_ARG(ip)) {
+                            error_at_id(ip,
+                                        "type parameter value '*' should be used "
+                                        "with a dummy argument");
+                        }
+                    }
+                }
+
             }
         }
     }
@@ -4355,6 +4426,7 @@ end_procedure()
         ID_CLASS(id) = CL_PROC;
     }
 
+    free(preceding_pragmas); preceding_pragmas = NULL;
 
     /* output */
     switch (CURRENT_PROC_CLASS) {
@@ -6555,6 +6627,10 @@ compile_member_ref(expr x)
     }
 
     stVTyp = EXPV_TYPE(struct_v);
+    if (TYPE_IS_MODIFIED(stVTyp)) {
+        stVTyp = TYPE_REF(stVTyp);
+    }
+
     mX = EXPR_ARG2(x);
     assert(EXPR_CODE(mX) == IDENT);
 
@@ -6811,7 +6887,7 @@ compile_ALLOCATE_DEALLOCATE_statement(expr x)
             case F95_MEMBER_REF:
             case F_VAR:
             case ARRAY_REF:
-                case XMP_COARRAY_REF:
+	    case XMP_COARRAY_REF:
                 if(isVarSetTypeAttr(ev,
                     TYPE_ATTR_POINTER | TYPE_ATTR_ALLOCATABLE) == FALSE) {
                     error("argument is not a pointer nor allocatable type");
@@ -7584,6 +7660,121 @@ type_is_contiguous(TYPE_DESC tp)
     return FALSE;
 }
 
+int
+pointer_assignable(expr x, expv vPointer, expv vPointee) {
+    TYPE_DESC vPtrTyp = NULL;
+    TYPE_DESC vPteTyp = NULL;
+
+    vPtrTyp = EXPV_TYPE(vPointer);
+    if (vPtrTyp == NULL || TYPE_BASIC_TYPE(vPtrTyp) == TYPE_UNKNOWN) {
+        fatal("%s: Undetermined type for a pointer.", __func__);
+        return FALSE;
+    }
+    vPteTyp = EXPV_TYPE(vPointee);
+    if (vPteTyp == NULL || TYPE_BASIC_TYPE(vPteTyp) == TYPE_UNKNOWN) {
+        fatal("%s: Undetermined type for a pointee.", __func__);
+        return FALSE;
+    }
+
+    if (!TYPE_IS_POINTER(vPtrTyp)) {
+        if (EXPR_CODE(EXPR_ARG1(x)) == IDENT) {
+            if (x) error_at_node(x, "'%s' is not a pointer.",
+                          SYM_NAME(EXPR_SYM(EXPR_ARG1(x))));
+        } else {
+            if (x) error_at_node(x, "lhs is not a pointer.",
+                          SYM_NAME(EXPR_SYM(EXPR_ARG1(x))));
+        }
+        return FALSE;
+    }
+
+    if (TYPE_IS_PROTECTED(vPtrTyp) && TYPE_IS_READONLY(vPtrTyp)) {
+        if (x) error_at_node(x, "'%s' is PROTECTED.",
+                             SYM_NAME(EXPR_SYM(EXPR_ARG1(x))));
+        return FALSE;
+    }
+
+    if (IS_PROCEDURE_TYPE(EXPV_TYPE(vPointer)) &&
+        FUNCTION_TYPE_IS_TYPE_BOUND(EXPV_TYPE(vPointer))) {
+            if (x) error("lhs expr is type bound procedure.");
+            return FALSE;
+    }
+    if (IS_PROCEDURE_TYPE(EXPV_TYPE(vPointee)) &&
+        FUNCTION_TYPE_IS_TYPE_BOUND(EXPV_TYPE(vPointee))) {
+            if (x) error("rhs expr is type bound procedure.");
+            return FALSE;
+    }
+
+    if (IS_PROCEDURE_TYPE(vPtrTyp)) {
+        /* if left operand is a procedure type,
+         * right operand is a function/subroutine,
+         * and they may be declared in the CONTAINS block.
+         */
+        if (!IS_PROCEDURE_TYPE(vPteTyp) &&
+            TYPE_BASIC_TYPE(vPteTyp) != TYPE_UNKNOWN &&
+            !TYPE_IS_IMPLICIT(vPteTyp)) {
+            if (x) error_at_node(x, "'%s' is not a function/subroutine",
+                                 SYM_NAME(EXPR_SYM(EXPR_ARG2(x))));
+        }
+
+        if (IS_PROCEDURE_TYPE(vPteTyp)) {
+            if (!procedure_is_assignable(vPtrTyp, vPteTyp)) {
+                if (x) error_at_node(x, "procedures are type mismatch.");
+                return FALSE;
+            }
+        }
+
+    } else {
+        if (!TYPE_IS_TARGET(vPteTyp) &&
+            !TYPE_IS_POINTER(vPteTyp) &&
+            !IS_PROCEDURE_TYPE(vPteTyp)) {
+            if (EXPR_CODE(EXPR_ARG2(x)) == IDENT) {
+                if (x) error_at_node(x, "'%s' is not a pointee.",
+                                     SYM_NAME(EXPR_SYM(EXPR_ARG2(x))));
+            } else {
+                if (x) error_at_node(x, "right hand side expression is not a pointee.");
+            }
+            return FALSE;
+        }
+    }
+
+    if (TYPE_IS_ABSTRACT(vPteTyp)) {
+        if (x) error_at_node(x, "'%s' is an abstract interface",
+                      SYM_NAME(EXPR_SYM(EXPR_ARG2(x))));
+        return FALSE;
+    }
+
+    if (is_array_with_bounds_remapping_list(vPointer)) {
+        /* This statement is pointer remapping! */
+        if (TYPE_N_DIM(IS_REFFERENCE(vPteTyp)?TYPE_REF(vPteTyp):vPteTyp) != 1 &&
+            !type_is_contiguous(vPteTyp)) {
+            if (x) error_at_node(x, "POINTEE is not contiguous or one-rank array.");
+            return FALSE;
+        }
+    } else {
+        if (TYPE_N_DIM(IS_REFFERENCE(vPtrTyp)?TYPE_REF(vPtrTyp):vPtrTyp) !=
+            TYPE_N_DIM(IS_REFFERENCE(vPteTyp)?TYPE_REF(vPteTyp):vPteTyp)) {
+            if (x) error_at_node(x, "Rank mismatch.");
+            return FALSE;
+        }
+    }
+
+    if (TYPE_IS_VOLATILE(vPtrTyp) != TYPE_IS_VOLATILE(vPteTyp)) {
+        if (x) error_at_node(x, "VOLATILE attribute mismatch.");
+        return FALSE;
+    }
+    if (TYPE_IS_ASYNCHRONOUS(vPtrTyp) != TYPE_IS_ASYNCHRONOUS(vPteTyp)) {
+        error_at_node(x, "ASYNCHRONOUS attribute mismatch.");
+        return FALSE;
+    }
+
+    if (IS_STRUCT_TYPE(vPtrTyp) &&
+        !struct_type_is_compatible_for_assignment(vPtrTyp, vPteTyp, TRUE)) {
+        if (x) error_at_node(x, "Derived-type mismatch.");
+        return FALSE;
+    }
+
+    return TRUE;
+}
 
 static void
 compile_POINTER_SET_statement(expr x) {
@@ -7607,6 +7798,7 @@ compile_POINTER_SET_statement(expr x) {
 
     vPointer = compile_lhs_expression(EXPR_ARG1(x));
     vPointee = compile_expression(EXPR_ARG2(x));
+
     if (vPointer == NULL || vPointee == NULL) {
         return;
     }
@@ -7625,51 +7817,13 @@ compile_POINTER_SET_statement(expr x) {
         return;
     }
 
-    if (!TYPE_IS_POINTER(vPtrTyp)) {
-        if (EXPR_CODE(EXPR_ARG1(x)) == IDENT) {
-            error_at_node(x, "'%s' is not a pointer.",
-                          SYM_NAME(EXPR_SYM(EXPR_ARG1(x))));
-        } else {
-            error_at_node(x, "lhs is not a pointer.",
-                          SYM_NAME(EXPR_SYM(EXPR_ARG1(x))));
-        }
+    if (!pointer_assignable(x, vPointer, vPointee)) {
         return;
     }
 
-    if (TYPE_IS_PROTECTED(vPtrTyp) && TYPE_IS_READONLY(vPtrTyp)) {
-        error_at_node(x, "'%s' is PROTECTED.",
-                      SYM_NAME(EXPR_SYM(EXPR_ARG1(x))));
-        return;
-    }
-
-    if (IS_PROCEDURE_TYPE(EXPV_TYPE(vPointer)) &&
-        FUNCTION_TYPE_IS_TYPE_BOUND(EXPV_TYPE(vPointer))) {
-            error("lhs expr is type bound procedure.");
-            return;
-    }
-    if (IS_PROCEDURE_TYPE(EXPV_TYPE(vPointee)) &&
-        FUNCTION_TYPE_IS_TYPE_BOUND(EXPV_TYPE(vPointee))) {
-            error("rhs expr is type bound procedure.");
-            return;
-    }
+accept:
 
     if (IS_PROCEDURE_TYPE(vPtrTyp)) {
-        /* if left operand is a procedure type,
-         * right operand is a function/subroutine,
-         * and they may be declared in the CONTAINS block.
-         */
-        if (!IS_PROCEDURE_TYPE(vPteTyp) &&
-            TYPE_BASIC_TYPE(vPteTyp) != TYPE_UNKNOWN &&
-            !TYPE_IS_IMPLICIT(vPteTyp)) {
-            error_at_node(x, "'%s' is not a function/subroutine",
-                          SYM_NAME(EXPR_SYM(EXPR_ARG2(x))));
-        }
-        if (TYPE_IS_ABSTRACT(vPteTyp)) {
-            error_at_node(x, "'%s' is an abstract interface",
-                          SYM_NAME(EXPR_SYM(EXPR_ARG2(x))));
-        }
-
-
         if (EXPR_CODE(vPointee) == F_VAR) {
             ID id = find_ident(EXPR_SYM(vPointee));
             if (!IS_PROCEDURE_TYPE(vPteTyp)) {
@@ -7759,40 +7913,6 @@ compile_POINTER_SET_statement(expr x) {
             }
         }
 
-    } else {
-        if (!TYPE_IS_TARGET(vPteTyp) &&
-            !TYPE_IS_POINTER(vPteTyp) &&
-            !IS_PROCEDURE_TYPE(vPteTyp)) {
-            if(EXPR_CODE(EXPR_ARG2(x)) == IDENT)
-                error_at_node(x, "'%s' is not a pointee.",
-                              SYM_NAME(EXPR_SYM(EXPR_ARG2(x))));
-            else
-                error_at_node(x, "right hand side expression is not a pointee.");
-            return;
-        }
-    }
-
-    if (is_array_with_bounds_remapping_list(vPointer)) {
-        /* This statement is pointer remapping! */
-        if (TYPE_N_DIM(IS_REFFERENCE(vPteTyp)?TYPE_REF(vPteTyp):vPteTyp) != 1 &&
-            !type_is_contiguous(vPteTyp)) {
-            error_at_node(x, "POINTEE is not contiguous or one-rank array.");
-            return;
-        }
-    } else {
-        if (TYPE_N_DIM(IS_REFFERENCE(vPtrTyp)?TYPE_REF(vPtrTyp):vPtrTyp) !=
-            TYPE_N_DIM(IS_REFFERENCE(vPteTyp)?TYPE_REF(vPteTyp):vPteTyp)) {
-            error_at_node(x, "Rank mismatch.");
-            return;
-        }
-    }
-
-    if (IS_PROCEDURE_TYPE(vPtrTyp)) {
-        if (!procedure_is_assignable(vPtrTyp, vPteTyp)) {
-            error_at_node(x, "Type mismatch.");
-            return;
-        }
-
         if (TYPE_IS_NOT_FIXED(vPtrTyp)) {
             TYPE_DESC subr, ftp;
 
@@ -7804,29 +7924,8 @@ compile_POINTER_SET_statement(expr x) {
             }
             TYPE_UNSET_NOT_FIXED(vPtrTyp);
         }
-
-    } else {
-        if (get_basic_type(vPtrTyp) != get_basic_type(vPteTyp)) {
-            error_at_node(x, "Type mismatch.");
-            return;
-        }
     }
 
-    if (TYPE_IS_VOLATILE(vPtrTyp) != TYPE_IS_VOLATILE(vPteTyp)) {
-        error_at_node(x, "VOLATILE attribute mismatch.");
-        return;
-    }
-    if (TYPE_IS_ASYNCHRONOUS(vPtrTyp) != TYPE_IS_ASYNCHRONOUS(vPteTyp)) {
-        error_at_node(x, "ASYNCHRONOUS attribute mismatch.");
-        return;
-    }
-
-    if (IS_STRUCT_TYPE(vPtrTyp) &&
-        !struct_type_is_compatible_for_assignment(vPtrTyp, vPteTyp, TRUE)) {
-        error_at_node(x, "Derived-type mismatch.");
-    }
-
-accept:
 
     EXPV_LINE(vPointer) = EXPR_LINE(x);
     EXPV_LINE(vPointee) = EXPR_LINE(x);
@@ -8737,10 +8836,10 @@ static int
 check_valid_construction_name(expr x, expr y)
 {
     if (x != NULL && y == NULL) {
-        error("expect construnct name");
+        error("expect construct name");
         return FALSE;
     } else if (x == NULL && y != NULL) {
-        error("unexpected construnct name");
+        error("unexpected construct name");
         return FALSE;
     } else if (x != NULL && y != NULL) {
         if (EXPR_SYM(x) != EXPR_SYM(y)) {

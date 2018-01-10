@@ -1,9 +1,14 @@
 Omni Compiler Software RELEASE NOTES
 
+# ver. 1.2.3    2018/01/15
+* Add Python module for master-worker model.
+* Improve performance of XMP/C on for-loop statement.
+* Fixed lots of bugs.
+
 # ver. 1.2.2    2017/12/04
 * Add Python module.
 * Support KNL : "./configure --target=KNL-linux-gnu".
-* Improve performance of XMP/C on for-loop statement
+* Improve performance of XMP/C on for-loop statement.
 * Fixed lots of bugs.
 
 # ver. 1.2.1    2017/09/04

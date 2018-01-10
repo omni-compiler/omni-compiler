@@ -224,8 +224,21 @@ link_parent_defined_by(ID id)
 
         if (is_contain_proc) {
             if (conflict_parent_vs_sub_program_unit(parent)) {
-                error("%s has an explicit interface before", ID_NAME(parent));
-                return;
+
+                if (ID_CLASS(parent) == CL_PROC &&
+                    ID_TYPE(parent) != NULL &&
+                    IS_GENERIC_PROCEDURE_TYPE(ID_TYPE(parent))) {
+
+                    ID next = ID_NEXT(parent);
+                    id_multilize(parent);
+                    ID_NEXT(parent) = MULTI_ID_LIST(parent);
+                    ID_NEXT(ID_NEXT(parent)) = next;
+                    /* TODO(shingo-s): if the parent exists */
+                    return;
+                } else {
+                    error("%s has an explicit interface before", ID_NAME(parent));
+                    return;
+                }
             }
         }
 
@@ -236,7 +249,6 @@ link_parent_defined_by(ID id)
             PROC_CLASS(parent) = P_EXTERNAL;
         } else if (ID_IS_DECLARED(id) == FALSE) {
             ID_CLASS(parent) = CL_PROC;
-
         }
 
         /* Conditions below is written to make test programs to pass. */
@@ -671,7 +683,6 @@ declare_procedure(enum name_class class,
 
         if (class != CL_PROC) {
             error("unexpected statement in interface block");
-            fprintf(stderr, "HERE\n");
             abort();
         }
 
@@ -818,6 +829,9 @@ copy_parent_type(ID id)
         return;
     }
     ID_DEFINED_BY(id) = parent_id;
+    if (ID_CLASS(parent_id) == CL_PROC) {
+        PROC_CLASS(id) = PROC_CLASS(parent_id);
+    }
     declare_id_type(id, ID_TYPE(parent_id));
     id->use_assoc = parent_id->use_assoc;
     TYPE_SET_OVERRIDDEN(id);
@@ -2007,11 +2021,15 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
     expr v;
     list lp;
 
-    // The ALLOCATABLE attribute must be checked in advance.
+    // The ALLOCATABLE/POINTER attribute must be checked in advance.
     FOR_ITEMS_IN_LIST(lp, attributes){
         v = LIST_ITEM(lp);
         if (EXPR_CODE(v) == F95_ALLOCATABLE_SPEC){
             TYPE_SET_ALLOCATABLE(tp);
+            break;
+        }
+        else if (EXPR_CODE(v) == F95_POINTER_SPEC){
+            TYPE_SET_POINTER(tp);
             break;
         }
     }
@@ -2245,6 +2263,7 @@ declare_id_type(ID id, TYPE_DESC tp)
         /* override implicit declared type */
         TYPE_ATTR_FLAGS(tp) |= TYPE_ATTR_FLAGS(tq);
         replace_or_assign_type(id_type, tp);
+        TYPE_ATTR_FLAGS(ID_TYPE(id)) |= TYPE_ATTR_FLAGS(tp);
         return;
     }
 
@@ -4847,11 +4866,11 @@ compile_pragma_statement(expr x)
 	    break;
 	}
 	else {
-        v = expv_str_term(STRING_CONSTANT,
-                          NULL,
-                          strdup(EXPR_STR(EXPR_ARG1(x))));
-        break;
-      }
+	  v = expv_str_term(STRING_CONSTANT,
+			    NULL,
+			    strdup(EXPR_STR(EXPR_ARG1(x))));
+	  break;
+	}
     default:
       {
         error("invalid format.");
@@ -4960,6 +4979,9 @@ compile_declare_or_add_attribute_statement(expr id_list, uint32_t type_attr)
                 tp = wrap_type(tp);
                 ID_TYPE(id) = tp;
                 SET_MODIFIED(tp);
+
+                TYPE_KIND(tp) = TYPE_KIND(TYPE_REF(tp));
+                TYPE_N_DIM(tp) = TYPE_N_DIM(TYPE_REF(tp));
             }
         }
         if (ID_IS_AMBIGUOUS(id)) {
