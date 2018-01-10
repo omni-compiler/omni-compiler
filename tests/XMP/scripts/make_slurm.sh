@@ -19,7 +19,7 @@ for subdir in `awk '{print $2}' $SORTED_LIST`; do
     subdir=${subdir%/}
     BFILE=${BASE_TESTDIR}/$subdir/slurm.sh
     NORM_DIRNAME=`echo ${BASE_TESTDIR}/$subdir | sed "s/\//\\\\\\\\\//g"`
-    sed "s/@DIRNAME@/$NORM_DIRNAME/" ./tests/xcalablemp/scripts/slurm_template.sh > $BFILE
+    sed "s/@DIRNAME@/$NORM_DIRNAME/" ./tests/XMP/scripts/slurm_template.sh > $BFILE
     JOBNAME=`echo $subdir | awk -F/ '{print $(NF-1)"-"$NF}'`
     sed "s/@JOBNAME@/$JOBNAME/" $BFILE > $BFILE-2
     NORM_XMP_PATH=`echo $XMP_PATH | sed "s/\//\\\\\\\\\//g"`

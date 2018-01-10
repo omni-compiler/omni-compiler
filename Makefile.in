@@ -56,7 +56,7 @@ clean:
 	  if test $$? -ne 0; then exit 1; fi; \
 	done
 
-BASE_TESTDIR = "tests/xcalablemp/"
+BASE_TESTDIR = "tests/XMP/"
 TESTDIRS1    = "global-view/array/C-Square"     "global-view/array/C-Round" "global-view/array/F" \
                "global-view/bcast/C-Square"     "global-view/bcast/C-Round" "global-view/bcast/F" \
 	       "global-view/loop/C-Square"      "global-view/loop/C-Round"  "global-view/loop/F" \
@@ -75,7 +75,7 @@ IS_MPI3_ASYNC=@MPI3_ASYNC@
 ifeq ($(IS_MPI3_ASYNC), $(TRUE))
    TESTDIRS3 += "global-view/async/C-Square" "global-view/async/C-Round" "global-view/async/F"
 endif
-BASE_LARGE_TESTDIR = "tests/xcalablemp/LARGE-SIZE-TESTS"
+BASE_LARGE_TESTDIR = "tests/XMP/LARGE-SIZE-TESTS"
 LARGE_TESTDIRS = "others/C"
 
 # "global-view/intrinsic/C/" includes imaginary numbers.
@@ -243,10 +243,10 @@ release:
 
 
 remote-tests:
-	@bash ./tests/xcalablemp/scripts/remote-tests.sh $(USER)
+	@bash ./tests/XMP/scripts/remote-tests.sh $(USER)
 
 remote-tests-short:
-	@bash ./tests/xcalablemp/scripts/remote-tests.sh $(USER) short
+	@bash ./tests/XMP/scripts/remote-tests.sh $(USER) short
 
 distclean: clean
 	rm -rf autom4te.cache
