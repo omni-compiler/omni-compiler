@@ -1,14 +1,13 @@
 import xmp
 
-#prog = xmp.Program("test.so", "hello_2")
-#job   = prog.spawn(4, ([1,2,3], [4,5,6]))
+lib = xmp.Lib("test.so")
+job = lib.spawn(4, "hello_2", ([1,2,3], [4,5,6]))
 
-#prog = xmp.Program("test.so", "hello_1")
-#job  = prog1.spawn(4, [1,2,3])
+#lib = xmp.Lib("test.so")
+#job = lib.spawn(4, "hello_1", [1,2,3])
 
-prog = xmp.Program("test.so", "hello_0")
-job   = prog.spawn(4)
-
+#lib = xmp.Lib("test.so")
+#job = lib.spawn(4, "hello_0")
 
 print ("elapsed_time:{0}".format(job.elapsed_time()) + "[sec]")
 

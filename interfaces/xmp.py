@@ -1,27 +1,27 @@
 import time, ctypes, tempfile, os, sys, numpy
 from mpi4py import MPI
 
-class Program:
-    def __init__(self, so="", name=""):
-        self.so   = so
-        self.name = name
+class Lib:
+    def __init__(self, so=""):
+        self.so = so
             
-    def spawn(self, nodes, args=(), async=False):
-        job = Job_spawn(nodes, self, args, async)
+    def spawn(self, name, nodes, args=(), async=False):
+        job = Job_spawn(name, nodes, self.so, args, async)
         job.run()
         
         return job
 
-    def call(self, comm, args=()):
-        job = Job_call(comm, self, args)
+    def call(self, comm, name, args=()):
+        job = Job_call(comm, name, self.so, args)
         job.run()
 
         return job
         
 class Job_spawn:
-    def __init__(self, nodes, prog, args=(), async=False):
+    def __init__(self, nodes, name, so, args=(), async=False):
         self.nodes    = nodes
-        self.prog     = prog
+        self.name     = name
+        self.so       = so
         self.args     = args if isinstance(args, tuple) else (args,)
         self.async    = async
         self._comm    = None
@@ -44,9 +44,9 @@ class Job_spawn:
             f.write(argname.encode() + b" = numpy.zeros(" + str(tmp_a.size).encode() + b")\n")
             f.write(b"comm.Bcast(" + argname.encode() + b", root=0)\n")
 
-        f.write(b"lib = CDLL(\"" + self.prog.so.encode() + b"\")\n")
+        f.write(b"lib = CDLL(\"" + self.so.encode() + b"\")\n")
         f.write(b"lib.xmp_init_py(comm.py2f())\n")
-        f.write(b"lib." + self.prog.name.encode() + b"(")
+        f.write(b"lib." + self.name.encode() + b"(")
 
         for (i,a) in enumerate(self.args):
             f.write(b"arg" + str(i).encode() + b".ctypes")
@@ -86,12 +86,12 @@ class Job_spawn:
         return self._time
 
 class Job_call:
-    def __init__(self, comm, prog, args=()):
-        self.comm     = comm.py2f()
-        self.lib      = ctypes.CDLL(prog.so)
-        self.name     = prog.name
-        self.args     = args if isinstance(args, tuple) else (args,)
-        self._time    = 0
+    def __init__(self, comm, name, so, args=()):
+        self.comm  = comm.py2f()
+        self.lib   = ctypes.CDLL(so)
+        self.name  = name
+        self.args  = args if isinstance(args, tuple) else (args,)
+        self._time = 0
 
     def run(self):
         self._start_time = time.time()

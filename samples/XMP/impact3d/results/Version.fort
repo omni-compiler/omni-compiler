@@ -1,8 +1,5 @@
-GNU Fortran (Ubuntu 4.9.1-16ubuntu6) 4.9.1
-Copyright (C) 2014 Free Software Foundation, Inc.
-
-GNU Fortran comes with NO WARRANTY, to the extent permitted by law.
-You may redistribute copies of GNU Fortran
-under the terms of the GNU General Public License.
-For more information about these matters, see the file named COPYING
+GNU Fortran (Debian 6.3.0-18) 6.3.0 20170516
+Copyright (C) 2016 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
