@@ -829,6 +829,9 @@ copy_parent_type(ID id)
         return;
     }
     ID_DEFINED_BY(id) = parent_id;
+    if (ID_CLASS(parent_id) == CL_PROC) {
+        PROC_CLASS(id) = PROC_CLASS(parent_id);
+    }
     declare_id_type(id, ID_TYPE(parent_id));
     id->use_assoc = parent_id->use_assoc;
     TYPE_SET_OVERRIDDEN(id);
@@ -2018,11 +2021,15 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
     expr v;
     list lp;
 
-    // The ALLOCATABLE attribute must be checked in advance.
+    // The ALLOCATABLE/POINTER attribute must be checked in advance.
     FOR_ITEMS_IN_LIST(lp, attributes){
         v = LIST_ITEM(lp);
         if (EXPR_CODE(v) == F95_ALLOCATABLE_SPEC){
             TYPE_SET_ALLOCATABLE(tp);
+            break;
+        }
+        else if (EXPR_CODE(v) == F95_POINTER_SPEC){
+            TYPE_SET_POINTER(tp);
             break;
         }
     }
@@ -2256,6 +2263,7 @@ declare_id_type(ID id, TYPE_DESC tp)
         /* override implicit declared type */
         TYPE_ATTR_FLAGS(tp) |= TYPE_ATTR_FLAGS(tq);
         replace_or_assign_type(id_type, tp);
+        TYPE_ATTR_FLAGS(ID_TYPE(id)) |= TYPE_ATTR_FLAGS(tp);
         return;
     }
 

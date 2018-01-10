@@ -604,6 +604,14 @@ getRawString(expv v)
         snprintf(buf, CHAR_BUF_SIZE,
                  "%s", getXmlEscapedStr(SYM_NAME(EXPV_NAME(EXPR_ARG1(v)))));
         break;
+    case F_CONCAT_EXPR: {
+      char buf1[CHAR_BUF_SIZE], buf2[CHAR_BUF_SIZE];
+      strncpy(buf1, getRawString(EXPR_ARG1(v)), CHAR_BUF_SIZE);
+      strncpy(buf2, getRawString(EXPR_ARG2(v)), CHAR_BUF_SIZE);
+      snprintf(buf, CHAR_BUF_SIZE, "%s // %s", buf1, buf2);
+
+      break;
+    }
     default:
         abort();
     }
@@ -2149,11 +2157,15 @@ outx_printStatement(int l, expv v)
 
     if (format != NULL)
     switch(EXPV_CODE(format)) {
+      /* NOTE: If conforming to the language specification.,
+	 any character expression should be accepted as a format specifier.
+	 Now, however, the specifier is represented as a string in XcodeML. */
     case INT_CONSTANT:
     case STRING_CONSTANT:
     case IDENT:
     case F_VAR:
     case F_PARAM:
+    case F_CONCAT_EXPR:
         break;
     case F_ARRAY_REF:
         error_at_node(v, "cannot use array in format specifier");
