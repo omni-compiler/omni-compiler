@@ -1,0 +1,20 @@
+# 2014.6.20
+* Add Makefile-K which is makefile for the K computer
+
+# 2013.12.04
+* mpifft.c : 4*commSize -> (4*commSize)
+* Makefile : Add an option "-fopenmp"
+* "XMP_DESC_OF" is removed from arguments of a subroutine XMP_TRANSPOSE()
+
+# 2013.11.21
+* Release
+
+# 2014.10.17
+* renewal
+  - factor.f fft235.f  kernel.f  zfft1d.f pfactor.f and param.h
+	were downloaded from ffte-6.0 without modification except
+	replacement of "!DIR$ VECTOR ALIGNED" to "!OCL  SIMD(ALIGNED)"
+  - main.f90 xmp-fft.f90 xmp-zfft1d.f90 and common.f90
+	were written by XcalableMP/Fortran to call ffte-6.0 programs.
+  - random.f
+	was written by Fortran and no MPI programs and no C programs.

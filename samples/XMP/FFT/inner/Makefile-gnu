@@ -1,0 +1,52 @@
+XMPF = xmpf90
+FC = mpif90
+
+XMPFLAGS = -O2 -J. --openmp
+FFLAGS = -O2 -fopenmp
+LDFLAGS = $(XMPFLAGS)
+
+AOBJS = factor.o fft235.o kernel.o zfft1d.o pfactor.o
+OBJS = main.o xmp-fft.o xmp-zfft1d.o random.o
+MOBJS = common.o
+
+### for debug
+XMPFLAGS_d = -g --debug -J. --openmp
+FFLAGS_d = -g -fopenmp
+LDFLAGS_d = $(XMPFLAGS_d)
+
+AOBJS_d = $(AOBJS:%.o=%_d.o)
+OBJS_d = $(OBJS:%.o=%_d.o)
+MOBJS_d = $(MOBJS:%.o=%_d.o)
+###
+
+%.o: %.f90
+	$(XMPF) $(XMPFLAGS) -c $< -o $@
+%.o: %.f param.h
+	$(FC) $(FFLAGS) -c $< -o $@
+
+### for debug
+%_d.o: %.f90
+	$(XMPF) $(XMPFLAGS_d) -c $< -o $@
+%_d.o: %.f param.h
+	$(FC) $(FFLAGS_d) -c $< -o $@
+### 
+
+all: FFT_d FFT
+
+FFT: $(MOBJS) $(OBJS) $(AOBJS)
+	$(XMPF) $(LDFLAGS) -o $@ $(OBJS) $(MOBJS) $(AOBJS)
+	@echo "<><><><><><><><><><><><><><><><><><><><><><><><>"
+	@echo "Makefile ver.2: OpenMP enable inside zfft1d"
+	@echo "usage:  mpirun -n <Npe> FFT <Datasize>"
+	@echo "<><><><><><><><><><><><><><><><><><><><><><><><>"
+
+FFT_d: $(MOBJS_d) $(OBJS_d) $(AOBJS_d)
+	$(XMPF) $(LDFLAGS_d) -o $@ $(OBJS_d) $(MOBJS_d) $(AOBJS_d)
+	@echo "<><><><><><><><><><><><><><><><><><><><><><><><>"
+	@echo "For debugging:"
+	@echo "$ mpirun -n <Npe> xterm -e gdb --args FFT_d <Datasize>"
+	@echo "<><><><><><><><><><><><><><><><><><><><><><><><>"
+
+clean:
+	rm -f *.o *~ *.a *.mod *.xmod FFT *.lst FFT_d
+	rm -rf __omni_tmp__/

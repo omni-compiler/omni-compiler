@@ -1,0 +1,16 @@
+Included Versions:
+
+- serialh    serial version
+- mpi1h      MPI version of 1D-distribution
+- mpi2h      MPI version of 2D-distribution
+- mpi3h      MPI version of 3D-distribution
+- xmp1h      XMP version of 1D-distribution
+- xmp2rh     XMP version of 2D-distribution
+- xmp3rh     XMP version of 3D-distribution
+
+How to build and run:
+
+1. Edit Config.env for your environment.
+2. Edit the TARGET variable in Makefile to specify which version(s) to be
+   executed and then make.
+3. Run ./go.sh

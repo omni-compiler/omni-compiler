@@ -905,9 +905,20 @@ compile_statement1(int st_no, expr x)
         break;
     }
 
-    case F_ENDDO_STATEMENT:
+    case F_ENDDO_STATEMENT: {
         check_INEXEC();
-        check_DO_end(NULL);
+
+	expr parent_const_name = NULL;
+	if (EXPR_CODE(CTL_BLOCK(ctl_top)) == F_DO_STATEMENT)
+	  parent_const_name = CTL_DO_CONST_NAME(ctl_top);
+	else if (EXPR_CODE(CTL_BLOCK(ctl_top)) == F08_DOCONCURRENT_STATEMENT)
+	  parent_const_name = CTL_DOCONCURRENT_CONST_NAME(ctl_top);
+	else if (EXPR_CODE(CTL_BLOCK(ctl_top)) == F_DOWHILE_STATEMENT)
+	  parent_const_name = CTL_DOWHILE_CONST_NAME(ctl_top);
+	expr const_name = EXPR_HAS_ARG1(x) ? EXPR_ARG1(x) : NULL;
+	(void)check_valid_construction_name(parent_const_name, const_name);
+
+	check_DO_end(NULL);
 
 	if (CTL_TYPE(ctl_top) == CTL_OMP){
 	  if (CTL_OMP_ARG_DIR(ctl_top) == OMP_F_PARALLEL_DO){
@@ -932,6 +943,7 @@ compile_statement1(int st_no, expr x)
 	}
 
         break;
+    }
 
     case F_DOWHILE_STATEMENT: {
         int doStNo = -1;
@@ -1071,28 +1083,38 @@ compile_statement1(int st_no, expr x)
 
         break;
 
-    case F03_SELECTTYPE_STATEMENT:
-          check_INEXEC();
-          push_ctl(CTL_SELECT_TYPE);
-          v = compile_expression(EXPR_ARG1(x));
-          ID selector = find_ident(EXPR_SYM(EXPR_ARG1(x)));
-          if(EXPR_HAS_ARG3(x)){
+    case F03_SELECTTYPE_STATEMENT: {
+        ID selector = NULL;
+
+        check_INEXEC();
+        push_ctl(CTL_SELECT_TYPE);
+
+        if (EXPR_CODE(EXPR_ARG1(x)) == IDENT) {
+            selector = find_ident(EXPR_SYM(EXPR_ARG1(x)));
+        }
+
+        v = compile_expression(EXPR_ARG1(x));
+        if (EXPR_HAS_ARG3(x)){
             ID associate_name = find_ident(EXPR_SYM(EXPR_ARG3(x)));
             if(associate_name == NULL){
-                // Define the associate variable
+                /* Define the associate variable */
                 associate_name = declare_ident(EXPR_SYM(EXPR_ARG3(x)), CL_VAR);
                 ID_IS_ASSOCIATIVE(associate_name) = TRUE;
-                ID_TYPE(associate_name) = ID_TYPE(selector);
+                ID_TYPE(associate_name) = EXPV_TYPE(v);
             }
             expv tmp = expv_sym_term(IDENT, ID_TYPE(associate_name),
-                ID_SYM(associate_name));
-            st = list4(F03_SELECTTYPE_STATEMENT, v, NULL, EXPR_ARG2(x), tmp);
-          } else {
-            st = list4(F03_SELECTTYPE_STATEMENT, v, NULL, EXPR_ARG2(x), NULL);
-          }
+                                     ID_SYM(associate_name));
 
-          CTL_BLOCK(ctl_top) = st;
-          break;
+            st = list4(F03_SELECTTYPE_STATEMENT, v, NULL, EXPR_ARG2(x), tmp);
+        } else {
+            if (selector == NULL) {
+                error_at_node(x, "If selector is an expression, associate name is required");
+            }
+            st = list4(F03_SELECTTYPE_STATEMENT, v, NULL, EXPR_ARG2(x), NULL);
+        }
+
+        CTL_BLOCK(ctl_top) = st;
+    } break;
     case F_CASELABEL_STATEMENT:
         if(CTL_TYPE(ctl_top) == CTL_SELECT  ||
            CTL_TYPE(ctl_top) == CTL_CASE) {
@@ -1131,61 +1153,72 @@ compile_statement1(int st_no, expr x)
 
         } else error("'case label', out of place");
         break;
-        case F03_TYPEIS_STATEMENT:
-        case F03_CLASSIS_STATEMENT:
-            if(CTL_TYPE(ctl_top) == CTL_SELECT_TYPE ||
-               CTL_TYPE(ctl_top) == CTL_TYPE_GUARD)
-            {
-                ID id = NULL;
-                TYPE_DESC tp = NULL;
-                expr const_name = EXPR_ARG2(x);
-                expr parent_const_name = NULL;
-                expv type = NULL;
-                expv selector = NULL;
+    case F03_TYPEIS_STATEMENT:
+    case F03_CLASSIS_STATEMENT:
+        if(CTL_TYPE(ctl_top) == CTL_SELECT_TYPE ||
+           CTL_TYPE(ctl_top) == CTL_TYPE_GUARD)
+        {
+            ID id = NULL;
+            TYPE_DESC tp = NULL;
+            expr const_name = EXPR_ARG2(x);
+            expr parent_const_name = NULL;
+            expv type = NULL;
+            expv selector = NULL;
+            expv shape = NULL;
 
-                if (CTL_TYPE(ctl_top) == CTL_TYPE_GUARD) {
-                    CTL_CASE_BLOCK(ctl_top) = CURRENT_STATEMENTS;
-                    CURRENT_STATEMENTS = NULL;
 
-                    if (endlineno_flag)
-                         EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
-                    pop_ctl();
-                    move_vars_to_parent_from_type_guard();
-                    pop_env();
+            if (CTL_TYPE(ctl_top) == CTL_TYPE_GUARD) {
+                CTL_CASE_BLOCK(ctl_top) = CURRENT_STATEMENTS;
+                CURRENT_STATEMENTS = NULL;
 
-                    parent_const_name = CTL_TYPE_GUARD_CONST_NAME(ctl_top);
-                } else {
-                    parent_const_name = CTL_SELECT_CONST_NAME(ctl_top);
-                }
+                if (endlineno_flag)
+                    EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+                pop_ctl();
+                move_vars_to_parent_from_type_guard();
+                pop_env();
 
-                (void)check_valid_construction_name(parent_const_name, const_name);
-
-                push_ctl(CTL_TYPE_GUARD);
-                push_env(CTL_TYPE_GUARD_LOCAL_ENV(ctl_top));
-
-                if (EXPR_ARG1(x) != NULL) { // NULL for CLASS DEFAULT
-                    tp = compile_type(EXPR_ARG1(x), /* allow_predecl=*/ FALSE);
-                    type = expv_sym_term(IDENT, tp, EXPR_SYM(EXPR_ARG1(x)));
-                }
-                if (EXPR_CODE(x) == F03_CLASSIS_STATEMENT) {
-                    if (tp != NULL && !IS_STRUCT_TYPE(tp)) {
-                        error("'class is' accepts only derived-type");
-                        break;
-                    }
-                }
-
-                check_select_types(x, tp);
-
-                selector = CTL_SELECT_TYPE_ASSICIATE(CTL_PREV(ctl_top))?:CTL_SELECT_TYPE_SELECTOR(CTL_PREV(ctl_top));
-                id = declare_ident(EXPR_SYM(selector), CL_VAR);
-                declare_id_type(id, tp);
-
-                st = list3(EXPR_CODE(x), type, NULL, const_name);
-                CTL_BLOCK(ctl_top) = st;
+                parent_const_name = CTL_TYPE_GUARD_CONST_NAME(ctl_top);
             } else {
-                error("'class is/type is label', out of place");
+                parent_const_name = CTL_SELECT_CONST_NAME(ctl_top);
             }
-            break;
+
+            (void)check_valid_construction_name(parent_const_name, const_name);
+
+            selector = EXPR_ARG1(CTL_BLOCK(ctl_top));
+            if (IS_ARRAY_TYPE(EXPV_TYPE(selector))) {
+                shape = list0(LIST);
+                generate_shape_expr(EXPV_TYPE(selector), shape);
+            }
+
+            push_ctl(CTL_TYPE_GUARD);
+            push_env(CTL_TYPE_GUARD_LOCAL_ENV(ctl_top));
+
+            if (EXPR_ARG1(x) != NULL) { // NULL for CLASS DEFAULT
+                tp = compile_type(EXPR_ARG1(x), /* allow_predecl=*/ FALSE);
+                type = expv_sym_term(IDENT, tp, EXPR_SYM(EXPR_ARG1(x)));
+            }
+            if (EXPR_CODE(x) == F03_CLASSIS_STATEMENT) {
+                if (tp != NULL && !IS_STRUCT_TYPE(tp)) {
+                    error("'class is' accepts only derived-type");
+                    break;
+                }
+            }
+
+            tp = compile_dimensions(tp, shape);
+            fix_array_dimensions(tp);
+
+            check_select_types(x, tp);
+
+            selector = CTL_SELECT_TYPE_ASSICIATE(CTL_PREV(ctl_top))?:CTL_SELECT_TYPE_SELECTOR(CTL_PREV(ctl_top));
+            id = declare_ident(EXPR_SYM(selector), CL_VAR);
+            declare_id_type(id, tp);
+
+            st = list3(EXPR_CODE(x), type, NULL, const_name);
+            CTL_BLOCK(ctl_top) = st;
+        } else {
+            error("'class is/type is label', out of place");
+        }
+        break;
     case F_ENDSELECT_STATEMENT:
         if (CTL_TYPE(ctl_top) == CTL_SELECT ||
             CTL_TYPE(ctl_top) == CTL_SELECT_TYPE) {
@@ -2736,38 +2769,45 @@ end_declaration()
      * Check type parameter values like '*' or ':'
      */
     FOREACH_ID (ip, LOCAL_SYMBOLS) {
-        if (ID_TYPE(ip) && IS_STRUCT_TYPE(ID_TYPE(ip))) {
-            TYPE_DESC struct_tp = ID_TYPE(ip);
-            if (!TYPE_TYPE_PARAM_VALUES(struct_tp))
-                continue;
+        if (ID_TYPE(ip) == NULL)
+            continue;
 
-            FOR_ITEMS_IN_LIST(lp, TYPE_TYPE_PARAM_VALUES(struct_tp)) {
-                if (EXPV_CODE(LIST_ITEM(lp)) == F08_LEN_SPEC_COLON) {
-                    if (!TYPE_IS_POINTER(struct_tp) && !TYPE_IS_ALLOCATABLE(struct_tp)) {
-                        error_at_id(ip,
-                                    "type parameter value ':' should be used "
-                                    "with a POINTER or ALLOCATABLE object");
-                    }
-                } else if (EXPV_CODE(LIST_ITEM(lp)) == LEN_SPEC_ASTERISC) {
-                    if (!ID_IS_DUMMY_ARG(ip)) {
-                        error_at_id(ip,
-                                    "type parameter value '*' should be used "
-                                    "with a dummy argument");
-                    }
-                }
-            }
+        TYPE_DESC tp = bottom_type(ID_TYPE(ip));
 
-            if (TYPE_IS_CLASS(struct_tp)) {
+        if (IS_STRUCT_TYPE(tp)) {
+
+            if (TYPE_IS_CLASS(tp)) {
                 /*
                  * CLASS() shoule be a POINTER object, an ALLOCATABLE object, or a dummy argument
                  */
-                if (!TYPE_IS_POINTER(struct_tp) &&
-                    !TYPE_IS_ALLOCATABLE(struct_tp) &&
+                if (!TYPE_IS_POINTER(tp) && !TYPE_IS_POINTER(ID_TYPE(ip)) &&
+                    !TYPE_IS_ALLOCATABLE(tp) && !TYPE_IS_ALLOCATABLE(ID_TYPE(ip)) &&
                     !ID_IS_DUMMY_ARG(ip)) {
                     error_at_id(ip,
                                 "CLASS should be used "
                                 "to a POINTER object, an ALLOCATABLE object, or a dummy argument");
                 }
+            }
+
+            if (TYPE_TYPE_PARAM_VALUES(tp)) {
+
+                FOR_ITEMS_IN_LIST(lp, TYPE_TYPE_PARAM_VALUES(tp)) {
+                    if (EXPV_CODE(LIST_ITEM(lp)) == F08_LEN_SPEC_COLON) {
+                        if (!TYPE_IS_POINTER(tp) && !TYPE_IS_POINTER(ID_TYPE(ip)) &&
+                            !TYPE_IS_ALLOCATABLE(tp) && !TYPE_IS_ALLOCATABLE(ID_TYPE(ip))) {
+                            error_at_id(ip,
+                                        "type parameter value ':' should be used "
+                                        "with a POINTER or ALLOCATABLE object");
+                        }
+                    } else if (EXPV_CODE(LIST_ITEM(lp)) == LEN_SPEC_ASTERISC) {
+                        if (!ID_IS_DUMMY_ARG(ip)) {
+                            error_at_id(ip,
+                                        "type parameter value '*' should be used "
+                                        "with a dummy argument");
+                        }
+                    }
+                }
+
             }
         }
     }
@@ -6847,8 +6887,8 @@ compile_ALLOCATE_DEALLOCATE_statement(expr x)
             case F_VAR:
             case ARRAY_REF:
             case XMP_COARRAY_REF:
-                if (!isVarSetTypeAttr(ev,
-                                      TYPE_ATTR_POINTER | TYPE_ATTR_ALLOCATABLE)) {
+                if(isVarSetTypeAttr(ev,
+                                    TYPE_ATTR_POINTER | TYPE_ATTR_ALLOCATABLE) == FALSE) {
                     error("argument is not a pointer nor allocatable type");
                     continue;
                 }
@@ -9495,6 +9535,8 @@ check_select_types(expr x, TYPE_DESC tp)
         return;
     }
 
+    tp = bottom_type(tp);
+
     FOR_ITEMS_IN_LIST(lp, CTL_SAVE(ctl_top)) {
         expv statement;
         TYPE_DESC tq;
@@ -9507,6 +9549,7 @@ check_select_types(expr x, TYPE_DESC tp)
         }
 
         tq = EXPR_ARG1(statement)?EXPV_TYPE(EXPR_ARG1(statement)):NULL;
+        tq = bottom_type(tq);
 
         if (tp == NULL && tq == NULL) {
             error_at_node(x, "duplicate CLASS DEFAULT");

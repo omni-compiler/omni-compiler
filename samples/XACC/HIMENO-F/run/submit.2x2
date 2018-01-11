@@ -1,0 +1,19 @@
+#PBS -S /bin/bash
+#PBS -N mnakao_job
+#PBS -A XMPTCA
+#PBS -q tcaq
+#PBS -l select=1:ncpus=4:mpiprocs=4:ompthreads=10
+#PBS -l walltime=03:00:00
+. /opt/Modules/default/init/bash
+#---------------
+# select=NODES:ncpus=CORES:mpiprocs=PROCS:ompthreads=THREADS:mem=MEMORY
+# NODES   : num of nodes
+# CORES   : num of cores per node
+# PROCS   : num of procs per node
+# THREADS : num of threads per process
+#----------------
+module purge
+module load pgi/16.10 cuda/8.0.44 mvapich2/2.2_pgi_medium_cuda-8.0.44
+OPT="MV2_ENABLE_AFFINITY=0 MV2_SHOW_CPU_BINDING=1 MV2_USE_CUDA=1 MV2_USE_GPUDIRECT=1 MV2_NUM_PORTS=2"
+cd $PBS_O_WORKDIR
+mpirun_rsh -np 4 -hostfile $PBS_NODEFILE $OPT ./numa.sh ./himenoXACC_2x2

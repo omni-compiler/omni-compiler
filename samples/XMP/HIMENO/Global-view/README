@@ -1,0 +1,16 @@
+1. Set number of nodes in Line 15 in himeno.f90.
+---
+!$xmp nodes n(2,4)    ! Number of nodes is 2 x 4 = 8
+---
+
+2. Create execution file
+---
+$ make
+ or
+$ make arch=K   // on the K computer
+---
+
+3. run when you can use mpirun command
+---_
+$ mpirun -np 8 ./himeno
+---

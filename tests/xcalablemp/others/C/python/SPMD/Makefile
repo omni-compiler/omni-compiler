@@ -1,8 +1,0 @@
-all: test.so
-test.so : test.c
-	xmpcc -fPIC -shared test.c -o test.so
-run:
-	mpirun -np 4 python ./test.py
-clean:
-	rm -f *.o *.so *.pyc
-

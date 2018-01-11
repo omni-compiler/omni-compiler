@@ -1,0 +1,304 @@
+#!/bin/bash
+
+write_go () {
+   for pn in $np
+   do
+      cat >> ../$GO <<EOD
+if [ "\$EXEPR" = "" -o "\$EXEPR" = "$pn" ]
+then
+   echo "impact3d-$code-$pn started at \`date\`"
+EOD
+   if [ "$PRERUN" ]
+   then
+      echo "   "`echo "$PRERUN" | sed -e "s/%PR/$pn/g" -e "s/%CN/$code/g"` >> ../$GO
+   fi
+   cat >> ../$GO <<EOD
+   echo "impact3d-$code-$pn started at \`date\`" > ./results/$code-$pn.list
+   `echo "$RUNCOM" | sed -e "s/%PR/$pn/g" -e "s/%CN/$code/g"` `echo "$RUNOPT1" | sed -e "s/%PR/$pn/g" -e "s/%CN/$code/g"` ./lm/$code-$pn `echo "$RUNOPT2" | sed -e "s/%PR/$pn/g" -e "s/%CN/$code/g"`
+   echo "impact3d-$code-$pn  ended  at \`date\`" >> ./results/$code-$pn.list
+   echo "impact3d-$code-$pn  ended  at \`date\`"
+EOD
+   if [ "$POSTRUN" ]
+   then
+      echo "   "`echo "$POSTRUN" | sed -e "s/%PR/$pn/g" -e "s/%CN/$code/g"` >> ../$GO
+   fi
+   cat >> ../$GO <<EOD
+fi
+EOD
+   done
+}
+
+. ./Config.env
+
+GO=${GO:-go.sh}
+
+export CC CFLAGS AR ARFLAG RANLIB RANLIBFLAG
+
+if [ ! "$NOMAKE" ]
+then
+   $FRTC $FRTVERS > results/Version.fort 2>&1
+   $XMPC $XMPVERS > results/Version.xmp 2>&1
+fi
+cp Config.env  results
+
+#
+cat > ./$GO <<EOD
+#!/bin/sh
+trap exit 1 2 3
+#
+EOD
+#
+if [ "$PREEXEC" ]
+then
+   echo "$PREEXEC" >> ./$GO
+fi
+
+#
+for code in $*
+do
+#
+case $code in
+serial*)
+########################################## serial start
+cd $code
+#
+if [ ! "$NOMAKE" ]
+then
+   FC=$FRTC
+   FFLAGS=$FRTFLAGS
+   export FC FFLAGS
+   sed -e "s/@lx@/$LX/" -e "s/@ly@/$LY/" -e "s/@lz@/$LZ/" -e "s/@lstep@/$LSTEP/" mod-parameter.f90.tpl > mod-parameter.f90
+   cat mod-parameter.f90
+   make clean
+   make -e
+   /bin/mv -f impact3d ../lm/$code
+fi
+
+cat >> ../$GO <<EOD
+if [ "\$EXEPR" = "" -o "\$EXEPR" = "1" ]
+then
+   echo "impact3d-$code started at \`date\`"
+EOD
+if [ "$PRERUN" ]
+then
+   echo "   "`echo "$PRERUN" | sed -e "s/%PR/1/g" -e "s/%CN/$code/g"`>> ../$GO
+fi
+cat >> ../$GO <<EOD
+   echo "impact3d-$code started at \`date\`" > ./results/$code.list
+   ./lm/$code < /dev/null >> ./results/$code.list 2> ./results/$code.err
+   echo "impact3d-$code  ended  at \`date\`" >> ./results/$code.list
+   echo "impact3d-$code  ended  at \`date\`"
+EOD
+if [ "$POSTRUN" ]
+then
+   echo "   "`echo "$POSTRUN" | sed -e "s/%PR/1/g" -e "s/%CN/$code/g"`>> ../$GO
+fi
+cat >> ../$GO <<EOD
+fi
+EOD
+
+cd ..
+########################################## serial  end
+;;
+#
+*1* )
+########################################## 1D start
+cd $code
+#
+if [ ! "$NOMAKE" ]
+then
+   case $code in
+   mpi* )
+      FC=$MPIC
+      FFLAGS=$MPIFLAGS
+      export FC FFLAGS
+      ;;
+   xmp* )
+      FC=$XMPC
+      FFLAGS=$XMPFLAGS
+      export FC FFLAGS
+      ;;
+   esac
+   cnt=0
+   xa1=($LX1)
+   ya1=($LY1)
+   za1=($LZ1)
+   for pn in $LN1Z
+   do
+      xs=${xa1[$cnt]:-$LX}
+      ys=${ya1[$cnt]:-$LY}
+      zs=${za1[$cnt]:-$LZ}
+      case $code in
+      mpi* )
+         sed -e "s/@lx@/$xs/" -e "s/@ly@/$ys/" -e "s/@lz@/$zs/" -e "s/@lstep@/$LSTEP/" -e "s/@lnpz@/$pn/" mod-parameter.f90.tpl > mod-parameter.f90
+         cat mod-parameter.f90
+         ;;
+      xmp* )
+         sed -e "s/@lx@/$xs/" -e "s/@ly@/$ys/" -e "s/@lz@/$zs/" -e "s/@lstep@/$LSTEP/" -e "s/@lnpz@/$pn/" mod-parameter.f90.tpl > mod-parameter.f90
+         cat mod-parameter.f90
+         ;;
+      esac
+      make clean
+      make -e
+      /bin/mv -f impact3d ../lm/$code-$pn
+      cnt=`expr $cnt + 1`
+   done
+fi
+
+np=$LN1Z
+
+write_go
+
+cd ..
+########################################## 1D  end
+;;
+#
+*2* )
+########################################## 2D start
+cd $code
+#
+if [ ! "$NOMAKE" ]
+then
+   case $code in
+   mpi* )
+      FC=$MPIC
+      FFLAGS=$MPIFLAGS
+      export FC FFLAGS
+      ;;
+   xmp* )
+      FC=$XMPC
+      FFLAGS=$XMPFLAGS
+      export FC FFLAGS
+      ;;
+   esac
+   cnt=0
+   xa2=($LX2)
+   ya2=($LY2)
+   za2=($LZ2)
+   np=""
+   npz=($LN2Z)
+   for pny in $LN2Y
+   do
+      xs=${xa2[$cnt]:-$LX}
+      ys=${ya2[$cnt]:-$LY}
+      zs=${za2[$cnt]:-$LZ}
+      pnz=${npz[$cnt]}
+      pn=`expr $pny '*' $pnz`
+      np="$np $pn"
+      case $code in
+      mpi* )
+         sed -e "s/@lx@/$xs/" -e "s/@ly@/$ys/" -e "s/@lz@/$zs/" -e "s/@lstep@/$LSTEP/" -e "s/@lnpy@/$pny/" -e "s/@lnpz@/$pnz/" mod-parameter.f90.tpl > mod-parameter.f90
+         cat mod-parameter.f90
+         ;;
+      xmp* )
+         sed -e "s/@lx@/$xs/" -e "s/@ly@/$ys/" -e "s/@lz@/$zs/" -e "s/@lstep@/$LSTEP/" -e "s/@lnpy@/$pny/" -e "s/@lnpz@/$pnz/" mod-parameter.f90.tpl > mod-parameter.f90
+         cat mod-parameter.f90
+         ;;
+      esac
+      make clean
+      make -e
+      /bin/mv -f impact3d ../lm/$code-$pn
+      cnt=`expr $cnt + 1`
+   done
+else
+   cnt=0
+   np=""
+   npz=($LN2Z)
+   for pny in $LN2Y
+   do
+      pnz=${npz[$cnt]}
+      pn=`expr $pny '*' $pnz`
+      np="$np $pn"
+      cnt=`expr $cnt + 1`
+   done
+fi
+
+write_go
+
+cd ..
+########################################## 2D  end
+;;
+#
+*3* )
+########################################## 3D start
+cd $code
+#
+if [ ! "$NOMAKE" ]
+then
+   case $code in
+   mpi* )
+      FC=$MPIC
+      FFLAGS=$MPIFLAGS
+      export FC FFLAGS
+      ;;
+   xmp* )
+      FC=$XMPC
+      FFLAGS=$XMPFLAGS
+      export FC FFLAGS
+      ;;
+   esac
+   cnt=0
+   xa3=($LX3)
+   ya3=($LY3)
+   za3=($LZ3)
+   np=""
+   npy=($LN3Y)
+   npz=($LN3Z)
+   for pnx in $LN3X
+   do
+      xs=${xa3[$cnt]:-$LX}
+      ys=${ya3[$cnt]:-$LY}
+      zs=${za3[$cnt]:-$LZ}
+      pny=${npy[$cnt]}
+      pnz=${npz[$cnt]}
+      pn=`expr $pnx '*' $pny '*' $pnz`
+      np="$np $pn"
+      case $code in
+      mpi* )
+         sed -e "s/@lx@/$xs/" -e "s/@ly@/$ys/" -e "s/@lz@/$zs/" -e "s/@lstep@/$LSTEP/" -e "s/@lnpx@/$pnx/" -e "s/@lnpy@/$pny/" -e "s/@lnpz@/$pnz/" mod-parameter.f90.tpl > mod-parameter.f90
+         cat mod-parameter.f90
+         ;;
+      xmp* )
+         sed -e "s/@lx@/$xs/" -e "s/@ly@/$ys/" -e "s/@lz@/$zs/" -e "s/@lstep@/$LSTEP/" -e "s/@lnpx@/$pnx/" -e "s/@lnpy@/$pny/" -e "s/@lnpz@/$pnz/" mod-parameter.f90.tpl > mod-parameter.f90
+         cat mod-parameter.f90
+         ;;
+      esac
+      make clean
+      make -e
+      /bin/mv -f impact3d ../lm/$code-$pn
+      cnt=`expr $cnt + 1`
+   done
+else
+   cnt=0
+   np=""
+   npy=($LN3Y)
+   npz=($LN3Z)
+   for pnx in $LN3X
+   do
+      pny=${npy[$cnt]}
+      pnz=${npz[$cnt]}
+      pn=`expr $pnx '*' $pny '*' $pnz`
+      np="$np $pn"
+      cnt=`expr $cnt + 1`
+   done
+fi
+
+write_go
+
+cd ..
+########################################## 3D  end
+;;
+esac
+#
+done
+#
+if [ "$POSTEXEC" ]
+then
+   echo "$POSTEXEC" >> ./$GO
+fi
+#
+echo "exit" >> ./$GO
+#
+chmod u+x ./$GO
+#
+exit

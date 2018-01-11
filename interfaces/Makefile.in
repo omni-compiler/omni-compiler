@@ -6,7 +6,7 @@ INSTALL   = @INSTALL@
 
 all:
 
-install: xmp.py boundinnerclass.py
+install: XMP.py
 	$(MKDIR_P) $(DESTDIR)$(LIBDIR)
 	$(INSTALL) $^ $(DESTDIR)$(LIBDIR)
 

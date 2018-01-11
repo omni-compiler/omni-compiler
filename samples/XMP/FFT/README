@@ -1,0 +1,11 @@
+We have implement two types FFT program.
+One is inner-version where a process calls multi-threads FFTE library.
+The other is outer version where multi-threads are call a single-thread FFTE library.
+
+In small number of processes, performance of inner-version tends better that of outer-version. 
+But, in large number of processes, performance of outer-version tends better that of inner-version.
+
+On linux, the following setting may be needed.
+
+$ ulimit -s unlimited
+$ export OMP_STACKSIZE=32G
