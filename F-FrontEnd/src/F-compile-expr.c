@@ -773,8 +773,8 @@ compile_expression(expr x)
             if (left == NULL || right == NULL) {
                 goto err;
             }
-            lt = EXPV_TYPE(left);
-            rt = EXPV_TYPE(right);
+            lt = bottom_type(EXPV_TYPE(left));
+            rt = bottom_type(EXPV_TYPE(right));
             if ((!IS_CHAR(lt) && !IS_GNUMERIC(lt) && !IS_GNUMERIC_ALL(lt)) ||
                 (!IS_CHAR(rt) && !IS_GNUMERIC(rt) && !IS_GNUMERIC_ALL(rt))) {
                 error("concatenation of nonchar data");
