@@ -597,6 +597,7 @@ extern void     warning_at_id EXC_VARARGS(ID, x);
 extern void     debug EXC_VARARGS(char *, fmt);
 
 extern void     initialize_lex _ANSI_ARGS_((void));
+extern void     finalize_lex _ANSI_ARGS_((void));
 extern void     initialize_compile _ANSI_ARGS_((void));
 extern void     finalize_compile _ANSI_ARGS_((void));
 extern void     initialize_compile_procedure _ANSI_ARGS_((void));
