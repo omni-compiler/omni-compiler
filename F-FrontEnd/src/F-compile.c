@@ -7661,22 +7661,11 @@ type_is_contiguous(TYPE_DESC tp)
     return FALSE;
 }
 
-int
-pointer_assignable(expr x, expv vPointer, expv vPointee) {
-    TYPE_DESC vPtrTyp = NULL;
-    TYPE_DESC vPteTyp = NULL;
-
-    vPtrTyp = EXPV_TYPE(vPointer);
-    if (vPtrTyp == NULL || TYPE_BASIC_TYPE(vPtrTyp) == TYPE_UNKNOWN) {
-        fatal("%s: Undetermined type for a pointer.", __func__);
-        return FALSE;
-    }
-    vPteTyp = EXPV_TYPE(vPointee);
-    if (vPteTyp == NULL || TYPE_BASIC_TYPE(vPteTyp) == TYPE_UNKNOWN) {
-        fatal("%s: Undetermined type for a pointee.", __func__);
-        return FALSE;
-    }
-
+static int
+pointer_assignable(expr x,
+                   expv vPointer, expv vPointee,
+                   TYPE_DESC vPtrTyp, TYPE_DESC vPteTyp)
+{
     if (!TYPE_IS_POINTER(vPtrTyp)) {
         if (EXPR_CODE(EXPR_ARG1(x)) == IDENT) {
             if (x) error_at_node(x, "'%s' is not a pointer.",
@@ -7694,15 +7683,19 @@ pointer_assignable(expr x, expv vPointer, expv vPointee) {
         return FALSE;
     }
 
-    if (IS_PROCEDURE_TYPE(EXPV_TYPE(vPointer)) &&
+    if (vPointer != NULL && IS_PROCEDURE_TYPE(EXPV_TYPE(vPointer)) &&
         FUNCTION_TYPE_IS_TYPE_BOUND(EXPV_TYPE(vPointer))) {
             if (x) error("lhs expr is type bound procedure.");
             return FALSE;
     }
-    if (IS_PROCEDURE_TYPE(EXPV_TYPE(vPointee)) &&
+    if (vPointee != NULL && IS_PROCEDURE_TYPE(EXPV_TYPE(vPointee)) &&
         FUNCTION_TYPE_IS_TYPE_BOUND(EXPV_TYPE(vPointee))) {
             if (x) error("rhs expr is type bound procedure.");
             return FALSE;
+    }
+
+    if (TYPE_BASIC_TYPE(vPteTyp) == TYPE_LHS) {
+        return TRUE;
     }
 
     if (IS_PROCEDURE_TYPE(vPtrTyp)) {
@@ -7744,7 +7737,7 @@ pointer_assignable(expr x, expv vPointer, expv vPointee) {
         return FALSE;
     }
 
-    if (is_array_with_bounds_remapping_list(vPointer)) {
+    if (vPointer != NULL && is_array_with_bounds_remapping_list(vPointer)) {
         /* This statement is pointer remapping! */
         if (TYPE_N_DIM(IS_REFFERENCE(vPteTyp)?TYPE_REF(vPteTyp):vPteTyp) != 1 &&
             !type_is_contiguous(vPteTyp)) {
@@ -7777,6 +7770,35 @@ pointer_assignable(expr x, expv vPointer, expv vPointee) {
     return TRUE;
 }
 
+int
+type_is_pointer_assignable(TYPE_DESC vPtrTyp, TYPE_DESC vPteTyp)
+{
+    return pointer_assignable(NULL, NULL, NULL, vPtrTyp, vPteTyp);
+}
+
+
+int
+expv_is_pointer_assignable(expr x, expv vPointer, expv vPointee)
+{
+    TYPE_DESC vPtrTyp = NULL;
+    TYPE_DESC vPteTyp = NULL;
+
+    vPtrTyp = EXPV_TYPE(vPointer);
+    if (vPtrTyp == NULL || TYPE_BASIC_TYPE(vPtrTyp) == TYPE_UNKNOWN) {
+        fatal("%s: Undetermined type for a pointer.", __func__);
+        return FALSE;
+    }
+    vPteTyp = EXPV_TYPE(vPointee);
+    if (vPteTyp == NULL || TYPE_BASIC_TYPE(vPteTyp) == TYPE_UNKNOWN) {
+        fatal("%s: Undetermined type for a pointee.", __func__);
+        return FALSE;
+    }
+
+    return pointer_assignable(x, vPointer, vPointee, vPtrTyp, vPteTyp);
+}
+
+
+
 static void
 compile_POINTER_SET_statement(expr x) {
     list lp;
@@ -7804,7 +7826,7 @@ compile_POINTER_SET_statement(expr x) {
         return;
     }
 
-    if(EXPV_CODE(vPointee) == FUNCTION_CALL)
+    if (EXPV_CODE(vPointee) == FUNCTION_CALL)
         goto accept;
 
     vPtrTyp = EXPV_TYPE(vPointer);
@@ -7818,7 +7840,7 @@ compile_POINTER_SET_statement(expr x) {
         return;
     }
 
-    if (!pointer_assignable(x, vPointer, vPointee)) {
+    if (!expv_is_pointer_assignable(x, vPointer, vPointee)) {
         return;
     }
 
@@ -9195,26 +9217,29 @@ compile_forall_header(expr x)
             id = declare_ident(sym, CL_VAR);
             ID_STORAGE(id) = STG_INDEX;
         } else {
-            TYPE_DESC tp;
             id = find_ident(sym);
             if (id) {
-                tp = ID_TYPE(id);
-                if (tp == NULL) {
+                if (ID_TYPE(id) == NULL) {
                     error("%s is not declared", SYM_NAME(sym));
-                } else if (!IS_INT(tp)) {
+                } else if (!IS_INT(ID_TYPE(id))) {
                     error("%s is not integer", SYM_NAME(sym));
                 }
+                tp = new_type_desc();
+                *tp = *ID_TYPE(id);
                 id = declare_ident(sym, CL_VAR);
-
             } else {
                 id = declare_ident(sym, CL_VAR);
                 implicit_declaration(id);
-
+                if (!IS_INT(ID_TYPE(id))) {
+                    error("%s is not integer", SYM_NAME(sym));
+                }
             }
 
             ID_STORAGE(id) = STG_AUTO;
         }
         declare_id_type(id, tp);
+        TYPE_UNSET_IMPLICIT(id);
+        TYPE_UNSET_IMPLICIT(ID_TYPE(id));
         declare_variable(id);
 
         for (;;) {

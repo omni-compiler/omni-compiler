@@ -1708,7 +1708,6 @@ struct_type_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2, int is_po
     TYPE_DESC btp2;
 
     assert(tp1 != NULL && TYPE_BASIC_TYPE(tp1) == TYPE_STRUCT);
-    assert(tp2 == NULL || TYPE_BASIC_TYPE(tp2) == TYPE_STRUCT);
 
     if (debug_flag) {
         fprintf(debug_fp,"\ncomparing derived-type %p and %p\n", tp1, tp2);
@@ -1717,6 +1716,11 @@ struct_type_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2, int is_po
     if (tp2 == NULL) {
         if (debug_flag) fprintf(debug_fp,"* right side type is null, return false\n");
         return FALSE;
+    }
+
+    if (IS_GNUMERIC_ALL(tp2)) {
+        if (debug_flag) fprintf(debug_fp,"* right hand type is GNUMERIC ALL, return true");
+        return TRUE;
     }
 
     if (debug_flag) fprintf(debug_fp,"* compare addresses                   ... ");
