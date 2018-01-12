@@ -530,7 +530,7 @@ compile_expression(expr x)
             lt = EXPV_TYPE(left);
             rt = EXPV_TYPE(right);
             if(rt == NULL)
-                right = compile_expression(EXPR_ARG2(x));                
+                right = compile_expression(EXPR_ARG2(x));
 
             bLType = bottom_type(lt);
             bRType = bottom_type(rt);
@@ -641,10 +641,10 @@ compile_expression(expr x)
                  */
 /* FEAST add start */
                 if(!lt || !rt){
-                  type_is_not_fixed = TRUE;
-                  goto doEmit;
+                    type_is_not_fixed = TRUE;
+                    goto doEmit;
                 }
-/* FEAST add end */                
+/* FEAST add end */
                 if (TYPE_IS_RESHAPED(lt) || TYPE_IS_RESHAPED(rt)) {
                     if (bType == NULL) {
                         tp = TYPE_IS_RESHAPED(rt) ? lt : rt;
@@ -714,7 +714,7 @@ compile_expression(expr x)
                 if(shape == NULL) {
                     delete_list(lshape);
                     delete_list(rshape);
-		    error("operation between non-conformable arrays. ");
+                    error("operation between non-conformable arrays. ");
                     goto err;
                 }
 
@@ -746,8 +746,12 @@ compile_expression(expr x)
             doEmit:
 /* FEAST CHANGE start */
             /* if (type_is_not_fixed) */
-            if(type_is_not_fixed && tp) {
+            if(type_is_not_fixed) {
 /* FEAST CHANGE end */
+                if (tp == NULL) {
+                    tp = new_type_desc();
+                }
+
                 // Apply the attribute NOT FIXED on the result type if one 
                 // operand type is NOT FIXED.
                 TYPE_SET_NOT_FIXED(bottom_type(tp));
@@ -769,8 +773,8 @@ compile_expression(expr x)
             if (left == NULL || right == NULL) {
                 goto err;
             }
-            lt = EXPV_TYPE(left);
-            rt = EXPV_TYPE(right);
+            lt = bottom_type(EXPV_TYPE(left));
+            rt = bottom_type(EXPV_TYPE(right));
             if ((!IS_CHAR(lt) && !IS_GNUMERIC(lt) && !IS_GNUMERIC_ALL(lt)) ||
                 (!IS_CHAR(rt) && !IS_GNUMERIC(rt) && !IS_GNUMERIC_ALL(rt))) {
                 error("concatenation of nonchar data");
@@ -929,12 +933,13 @@ compile_expression(expr x)
                 EXPV_TYPE(v) = ID_TYPE(id);
             }
 /* FEAST change start */
-            /* if(!expv_is_specification(v)) */
+            /* if(!expv_is_specification(v)) { */
             /*     error_at_node(EXPR_ARG1(x), */
             /*         "character string length must be integer."); */
+            /* } */
             if(!expv_is_specification(v)){
-              EXPV_TYPE(v) = NULL;
-              sp_link_expr((expr)v, SP_ERR_CHAR_LEN, current_line);
+                EXPV_TYPE(v) = NULL;
+                sp_link_expr((expr)v, SP_ERR_CHAR_LEN, current_line);
             }
 /* FEAST change  end  */
             return v;
@@ -1091,16 +1096,6 @@ compile_ident_expression(expr x)
 
     /* check if name is on the replace list? */
     if ((ret = is_statement_function_or_replace(id)) != NULL) {
-        goto done;
-    }
-
-    if (ID_IS_DUMMY_ARG(id) && ID_TYPE(id) == NULL) {
-        /*
-         * Don't declare (means not determine the type) this variable
-         * at this moment, since the id is a dummy arg and it is not
-         * declared yet.
-         */
-        ret = expv_sym_term(F_VAR,NULL,ID_SYM(id));
         goto done;
     }
 
@@ -2839,10 +2834,18 @@ compile_struct_constructor_with_components(const ID struct_id,
             return NULL;
         }
 
-        if (!type_is_compatible_for_assignment(ID_TYPE(match),
-                                               EXPV_TYPE(v))) {
-            error("type is not applicable in struct constructor");
-            return NULL;
+        if (TYPE_IS_POINTER(ID_TYPE(match))) {
+            if (!type_is_pointer_assignable(ID_TYPE(match),
+                                            EXPV_TYPE(v))) {
+                error("type is not applicable in struct constructor");
+                return NULL;
+            }
+        } else {
+            if (!type_is_compatible_for_assignment(ID_TYPE(match),
+                                                   EXPV_TYPE(v))) {
+                error("type is not applicable in struct constructor");
+                return NULL;
+            }
         }
 
         if (!has_keyword) {

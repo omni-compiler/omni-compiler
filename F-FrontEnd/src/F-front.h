@@ -597,6 +597,7 @@ extern void     warning_at_id EXC_VARARGS(ID, x);
 extern void     debug EXC_VARARGS(char *, fmt);
 
 extern void     initialize_lex _ANSI_ARGS_((void));
+extern void     finalize_lex _ANSI_ARGS_((void));
 extern void     initialize_compile _ANSI_ARGS_((void));
 extern void     finalize_compile _ANSI_ARGS_((void));
 extern void     initialize_compile_procedure _ANSI_ARGS_((void));
@@ -779,7 +780,8 @@ extern int      type_is_compatible_for_assignment
                     _ANSI_ARGS_((TYPE_DESC tp1, TYPE_DESC tp2));
 extern int      type_is_compatible_for_allocation
                     _ANSI_ARGS_((TYPE_DESC left, TYPE_DESC right));
-extern int      pointer_assignable(expv x, expr vPointer, expr vPointee);
+extern int      type_is_pointer_assignable(TYPE_DESC vPtrTyp, TYPE_DESC vPteTyp);
+extern int      expv_is_pointer_assignable(expv x, expr vPointer, expr vPointee);
 extern int      struct_type_is_compatible_for_assignment
                     _ANSI_ARGS_((TYPE_DESC tp1, TYPE_DESC tp2, int is_pointer_set));
 extern int      type_is_specific_than

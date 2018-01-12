@@ -496,7 +496,7 @@ getXmlEscapedStr(const char *s)
         case '\n': xstrcat(&px, "\\n"); break;
         case '\t': xstrcat(&px, "\\t"); break;
         default:
-            if(c <= 31 || c >= 127) {
+            if((c >= 0 && c <= 0x1F) || c == 0x7F) {
                 char buf[16];
                 sprintf(buf, "&#x%x;", (unsigned int)(c & 0xFF));
                 xstrcat(&px, buf);
@@ -506,7 +506,6 @@ getXmlEscapedStr(const char *s)
             break;
         }
     }
-
     *px = 0;
 
     return x;
