@@ -2834,10 +2834,18 @@ compile_struct_constructor_with_components(const ID struct_id,
             return NULL;
         }
 
-        if (!type_is_compatible_for_assignment(ID_TYPE(match),
-                                               EXPV_TYPE(v))) {
-            error("type is not applicable in struct constructor");
-            return NULL;
+        if (TYPE_IS_POINTER(ID_TYPE(match))) {
+            if (!type_is_pointer_assignable(ID_TYPE(match),
+                                            EXPV_TYPE(v))) {
+                error("type is not applicable in struct constructor");
+                return NULL;
+            }
+        } else {
+            if (!type_is_compatible_for_assignment(ID_TYPE(match),
+                                                   EXPV_TYPE(v))) {
+                error("type is not applicable in struct constructor");
+                return NULL;
+            }
         }
 
         if (!has_keyword) {
