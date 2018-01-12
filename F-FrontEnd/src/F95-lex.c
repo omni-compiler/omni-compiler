@@ -486,6 +486,7 @@ is_function_statement_context()
                     }
                 }
 		else if (token_history_buf[i] == '*'){
+		  // for a type_spec like 'character*8'
 		  i+=2;
 		}
                 continue;
@@ -1293,12 +1294,17 @@ read_number()
     p = buffio;
     while((ch = *bufptr) != '\0'){
         if(ch == '.'){
+	    if (isalpha((int)bufptr[1])){
+	      // for case that '4444.aa'
+	      break;
+            } else
             if (have_dot) {
-                break;
-            } else if (isalpha((int)bufptr[1]) &&
-                       isalpha((int)bufptr[2])) {
-                break;
-            }
+	      break;
+	    }
+            /* } else if (isalpha((int)bufptr[1]) && */
+            /*            isalpha((int)bufptr[2])) { */
+            /*     break; */
+            /* } */
             have_dot = TRUE;
             e = PREC_SINGLE;
         } else if (ch == 'd' || ch == 'e' || ch == 'q') {

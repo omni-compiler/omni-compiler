@@ -1,0 +1,33 @@
+MODULE mod
+  INTERFACE OPERATOR(.add.)
+     MODULE PROCEDURE iadd
+     MODULE PROCEDURE fadd
+  END INTERFACE OPERATOR(.add.)
+CONTAINS
+  FUNCTION iadd(i,j) RESULT (ret)
+    INTEGER,INTENT(IN) :: i,j
+    INTEGER :: ret
+    ret = i+j
+  END FUNCTION iadd
+  FUNCTION fadd(x, y) RESULT (ret)
+    real, INTENT(IN) :: x, y
+    real :: ret
+    ret = x + y
+  END FUNCTION fadd
+END MODULE mod
+
+program test
+
+  USE mod, OPERATOR(.x.) => OPERATOR(.add.)
+
+  PRINT *, 1.x.2
+  PRINT *, 1 .x. 2
+
+  PRINT *, 1..x.2.
+  PRINT *, 1. .x.2.
+
+  PRINT *, 1.5.x.2.
+  PRINT *, 1.5 .x. 2.
+
+END program test
+    

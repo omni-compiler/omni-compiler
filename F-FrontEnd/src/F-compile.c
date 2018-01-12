@@ -6039,7 +6039,7 @@ compile_INTERFACE_statement(expr x)
 
             name = SYM_NAME(EXPR_SYM(id));
 
-            if (strlen(name) - END_LENGTH > MAXLEN_USEROP) {
+            if (strlen(name) + END_LENGTH > MAXLEN_USEROP) {
                 error("a name of operator is too long");
                 return;
             }
