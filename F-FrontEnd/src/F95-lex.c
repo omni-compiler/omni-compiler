@@ -437,7 +437,6 @@ is_function_statement_context()
                 /* type_spec */
             case CLASS:
             case KW_TYPE:
-            case KW_CHARACTER:
             case KW_COMPLEX:
             case KW_DOUBLE:
             case KW_DCOMPLEX:
@@ -464,6 +463,31 @@ is_function_statement_context()
                         return FALSE;
                     }
                 }
+                continue;
+            case KW_CHARACTER:
+                i++;
+                paran_level = 0;
+                /* SET_KIND and SET_LEN include a left parenthesis directly */
+                if (token_history_buf[i] == '(' ||
+                    token_history_buf[i] == SET_KIND ||
+                    token_history_buf[i] == SET_LEN) {
+                    paran_level++;
+                    for (i++; i < token_history_count; i++){
+                        if(token_history_buf[i] == ')') paran_level--;
+                        if(token_history_buf[i] == '(') paran_level++;
+                        if(paran_level == 0) {
+                            i++;
+                            break;
+                        }
+                    }
+                    if(paran_level != 0) {
+                        /* parenthesis is not closed! */
+                        return FALSE;
+                    }
+                }
+		else if (token_history_buf[i] == '*'){
+		  i+=2;
+		}
                 continue;
             default:
                 break;
