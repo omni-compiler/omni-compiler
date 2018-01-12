@@ -9217,26 +9217,29 @@ compile_forall_header(expr x)
             id = declare_ident(sym, CL_VAR);
             ID_STORAGE(id) = STG_INDEX;
         } else {
-            TYPE_DESC tp;
             id = find_ident(sym);
             if (id) {
-                tp = ID_TYPE(id);
-                if (tp == NULL) {
+                if (ID_TYPE(id) == NULL) {
                     error("%s is not declared", SYM_NAME(sym));
-                } else if (!IS_INT(tp)) {
+                } else if (!IS_INT(ID_TYPE(id))) {
                     error("%s is not integer", SYM_NAME(sym));
                 }
+                tp = new_type_desc();
+                *tp = *ID_TYPE(id);
                 id = declare_ident(sym, CL_VAR);
-
             } else {
                 id = declare_ident(sym, CL_VAR);
                 implicit_declaration(id);
-
+                if (!IS_INT(ID_TYPE(id))) {
+                    error("%s is not integer", SYM_NAME(sym));
+                }
             }
 
             ID_STORAGE(id) = STG_AUTO;
         }
         declare_id_type(id, tp);
+        TYPE_UNSET_IMPLICIT(id);
+        TYPE_UNSET_IMPLICIT(ID_TYPE(id));
         declare_variable(id);
 
         for (;;) {
