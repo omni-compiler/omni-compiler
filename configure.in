@@ -671,13 +671,13 @@ elif test "$target" = "KNL-linux-gnu"; then
     # MPI C
     AC_CHECK_PROG([MPI_CC], [mpiicc], [mpiicc])
     MPI_CPPFLAGS="-E -std=gnu99"
-    MPI_CFLAGS="-O2 -fp-model fast=2 -ipo -xHost -no-prec-div -axMIC-AVX512 $OPENMP_OPT_C"
+    MPI_CFLAGS="-O2 -fp-model fast=2 -ipo -no-prec-div -xMIC-AVX512 $OPENMP_OPT_C"
     MPI_CLIBS=""
 
     # MPI F
     AC_CHECK_PROG([MPI_FC], [mpiifort], [mpiifort])
     MPI_FPPFLAGS="-E -cpp"
-    MPI_FCFLAGS="-O2 -fp-model fast=2 -ipo -xHost -no-prec-div -axMIC-AVX512 $OPENMP_OPT_F"
+    MPI_FCFLAGS="-O2 -fp-model fast=2 -ipo -no-prec-div -xMIC-AVX512 $OPENMP_OPT_F"
     MPI_MODINC="-module"
     MPI_FCLIBS=""
     KIND_MPI_FORTRAN=other
