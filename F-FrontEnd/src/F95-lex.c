@@ -1294,17 +1294,19 @@ read_number()
     p = buffio;
     while((ch = *bufptr) != '\0'){
         if(ch == '.'){
-	    if (isalpha((int)bufptr[1])){
-	      // for case that '4444.aa'
-	      break;
-            } else
             if (have_dot) {
 	      break;
+            } else if (isalpha((int)bufptr[1]) &&
+                       isalpha((int)bufptr[2])) {
+	      // for case that '1234.xx.'
+	      // where .xx. is an operator.
+	      break;
+            } else if (isalpha((int)bufptr[1]) &&
+                       bufptr[2] == '.') {
+	      // for case that '1234.x.'
+	      // where .x. is an operator.
+	      break;
 	    }
-            /* } else if (isalpha((int)bufptr[1]) && */
-            /*            isalpha((int)bufptr[2])) { */
-            /*     break; */
-            /* } */
             have_dot = TRUE;
             e = PREC_SINGLE;
         } else if (ch == 'd' || ch == 'e' || ch == 'q') {

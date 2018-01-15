@@ -29,5 +29,7 @@ program test
   PRINT *, 1.5.x.2.
   PRINT *, 1.5 .x. 2.
 
+  PRINT *, -16.E-4.x.2.E4
+  PRINT *, -16.E-4 .x. 2.E4
+
 END program test
-    
