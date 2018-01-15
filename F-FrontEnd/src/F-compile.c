@@ -1192,7 +1192,7 @@ compile_statement1(int st_no, expr x)
             }
 
             push_ctl(CTL_TYPE_GUARD);
-            push_env(CTL_TYPE_GUARD_LOCAL_ENV(ctl_top));
+            push_env(CTL_ENV(ctl_top));
 
             if (EXPR_ARG1(x) != NULL) { // NULL for CLASS DEFAULT
                 tp = compile_type(EXPR_ARG1(x), /* allow_predecl=*/ FALSE);
@@ -4736,7 +4736,7 @@ compile_DO_concurrent_end()
     CURRENT_STATE = INEXEC;
 
     /*
-     * Close the block construct which is genereted in compile_FORALL_statement().
+     * Close the block construct which is genereted in compile_DOCONCURRENT_statement()
      */
     if (CTL_TYPE(ctl_top) == CTL_BLK) {
         compile_ENDBLOCK_statement(list0(F2008_ENDBLOCK_STATEMENT));
@@ -8468,7 +8468,7 @@ new_ctl() {
     if (ctl == NULL)
         fatal("memory allocation failed");
     cleanup_ctl(ctl);
-    CTL_BLOCK_LOCAL_EXTERNAL_SYMBOLS(ctl) = NULL;
+    CTL_EXTERNAL_SYMBOLS(ctl) = NULL;
     return ctl;
 }
 
@@ -8999,7 +8999,7 @@ compile_BLOCK_statement(expr x)
     expv st;
 
     push_ctl(CTL_BLK);
-    push_env(CTL_BLOCK_LOCAL_ENV(ctl_top));
+    push_env(CTL_ENV(ctl_top));
 
     st = list2(F2008_BLOCK_STATEMENT, NULL, NULL);
     output_statement(st);
@@ -9346,7 +9346,7 @@ compile_FORALL_statement(int st_no, expr x)
     }
 
     push_ctl(CTL_FORALL);
-    push_env(CTL_FORALL_LOCAL_ENV(ctl_top));
+    push_env(CTL_ENV(ctl_top));
 
     assert(LOCAL_SYMBOLS == NULL);
 
@@ -9409,6 +9409,9 @@ compile_end_forall_header(expv init)
              */
             ID_SYM(ip) = EXPV_NAME(ID_ADDR(ip));
             EXPR_SYM(EXPR_ARG1(LIST_ITEM(lp))) = EXPV_NAME(ID_ADDR(ip));
+
+            ID_TYPE(ip) = wrap_type(ID_TYPE(ip));
+            TYPE_UNSET_IMPLICIT(ID_TYPE(ip));
         }
     }
 
@@ -9461,6 +9464,9 @@ compile_ENDFORALL_statement(expr x)
 
     CTL_FORALL_BODY(ctl_top) = CURRENT_STATEMENTS;
 
+    /*
+     * Check the statements inside FORALL
+     */
     FOR_ITEMS_IN_LIST(lp, CTL_FORALL_BODY(ctl_top)) {
         switch (EXPV_CODE(LIST_ITEM(lp))) {
             case F_FORALL_STATEMENT:
@@ -9743,7 +9749,7 @@ compile_DOCONCURRENT_statement(expr range_st_no,
     }
 
     push_ctl(CTL_DO);
-    push_env(CTL_DO_LOCAL_ENV(ctl_top));
+    push_env(CTL_ENV(ctl_top));
 
     if ((vforall_header = compile_forall_header(forall_header)) == NULL) {
         return;
@@ -9825,7 +9831,7 @@ compile_ASSOCIATE_statement(expr x)
     }
 
     push_ctl(CTL_ASSOCIATE);
-    push_env(CTL_LOCAL_ENV(ctl_top));
+    push_env(CTL_ENV(ctl_top));
     CTL_BLOCK(ctl_top) = st;
 
     FOR_ITEMS_IN_LIST(lp, association_list) {
