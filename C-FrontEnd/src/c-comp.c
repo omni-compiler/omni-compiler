@@ -8,6 +8,7 @@
 #include "c-option.h"
 #include "c-pragma.h"
 #include "c-xmp.h"
+#include "c-acc.h"
 
 PRIVATE_STATIC void
 compile_typeDesc(CExprOfTypeDesc *td, CDeclaratorContext declrContext);
@@ -2148,6 +2149,8 @@ compile1(CExpr *expr, CExpr *parent)
                     compile1(tag, expr);
                 }
             }
+
+            if(IS_ACC_PRAGMA_CODE(code)) compile_acc_pragma(expr, parent);
         }
     }
 

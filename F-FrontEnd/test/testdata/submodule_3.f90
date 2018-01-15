@@ -5,6 +5,7 @@
 
         INTERFACE
            MODULE FUNCTION point_dist(a, b) RESULT(distance)
+             !IMPORT POINT
              TYPE(POINT), INTENT(IN) :: a, b
              REAL :: distance
            END FUNCTION point_dist

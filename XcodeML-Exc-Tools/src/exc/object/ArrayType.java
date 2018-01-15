@@ -1,9 +1,3 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package exc.object;
 
 /**
@@ -19,7 +13,7 @@ public class ArrayType extends Xtype
     private Xobject sizeExpr;
 
     protected ArrayType(int type_kind, String id, Xtype ref,
-        int typeQualFlags, long size, Xobject sizeExpr, Xobject gccAttrs)
+        long typeQualFlags, long size, Xobject sizeExpr, Xobject gccAttrs)
     {
         super(type_kind, id, typeQualFlags, gccAttrs);
         this.ref = ref;
@@ -28,7 +22,7 @@ public class ArrayType extends Xtype
     }
 
     public ArrayType(String id, Xtype ref,
-        int typeQualFlags, long size, Xobject sizeExpr, Xobject gccAttrs)
+        long typeQualFlags, long size, Xobject sizeExpr, Xobject gccAttrs)
     {
         this(Xtype.ARRAY, id, ref, typeQualFlags, size, sizeExpr, gccAttrs);
     }

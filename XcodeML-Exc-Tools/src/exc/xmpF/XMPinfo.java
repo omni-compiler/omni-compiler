@@ -1,9 +1,3 @@
-/* 
- * $TSUKUBA_Release: Omni XcalableMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package exc.xmpF;
 
 import exc.object.*;

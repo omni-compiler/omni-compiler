@@ -4,14 +4,19 @@
 *.mod
 *.xmod
 *.so
+*.hex
+a.out
+Xcode.java
 
 # Top directory
 autom4te.cache
 config.log
 config.status
-Makefile
+/Makefile
 
 # Sub directories
+interfaces/Makefile
+
 C-BackEnd/Makefile
 C-BackEnd/build/
 C-FrontEnd/src/C_Front
@@ -55,6 +60,8 @@ F-BackEnd/build/
 F-BackEnd/src/xcodeml/f/decompile/XfDecompileDomVisitor_coarrayLibs.java
 
 F-FrontEnd/gnu_module/Makefile
+F-FrontEnd/gnu_module/T_Module
+F-FrontEnd/gnu_module/xmpmod
 F-FrontEnd/src/C-exprcode.c
 F-FrontEnd/src/C-exprcode.h
 F-FrontEnd/src/F_Front
@@ -100,6 +107,7 @@ libxmpf/include/xmp_coarray_alloc.h
 libxmpf/include/xmp_coarray_get.h
 libxmpf/include/xmp_coarray_put.h
 libxmpf/include/xmp_coarray_reduction.h
+libxmpf/include/xmp_coarray_getsub.h
 libxmpf/src/Makefile
 libxmpf/src/include_work/
 

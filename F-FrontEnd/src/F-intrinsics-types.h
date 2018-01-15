@@ -80,9 +80,17 @@ typedef enum {
     INTR_TYPE_SCALAR_COARRAY_REAL,
     INTR_TYPE_SCALAR_COARRAY_LOGICAL,
 
+
+
+    /*
+     * for ASSOCIATED().
+     * Check if argument can be Pointer ASSIGNed to the previous argument
+     */
+    INTR_TYPE_PASSIGNABLE,
+
 
     /* Others. */
-    INTR_TYPE_POINTER, 
+    INTR_TYPE_POINTER,
     INTR_TYPE_TARGET,
 
     INTR_TYPE_ANY_ARRAY_ALLOCATABLE,
@@ -172,6 +180,8 @@ typedef enum {
     INTR_KIND,
     INTR_SELECTED_INT_KIND,
     INTR_SELECTED_REAL_KIND,
+    /* F2003 kind function */
+    INTR_SELECTED_CHAR_KIND,
 
     /* 7. Logical function */
 
@@ -280,6 +290,22 @@ typedef enum {
     INTR_ATOMIC_DEFINE,
     INTR_ATOMIC_REF,
 
+    /* F03 intrinsic subroutins */
+    INTR_IS_IOSTAT_END,
+    INTR_IS_IOSTAT_EOR,
+
+    INTR_EXTENDS_TYPE_OF,
+    INTR_SAME_TYPE_AS,
+    INTR_MOVE_ALLOC,
+
+    /* F08 intrinsic subroutines */
+    INTR_COMMAND_ARUGMENT_COUNT,
+    INTR_GET_COMMAND,
+    INTR_GET_COMMAND_ARUGMENT,
+    INTR_GET_ENVIRONMENT_VARIABLE,
+    INTR_GAMMA,
+    INTR_LOGGAMMA,
+
     INTR_COARRAY_MALLOC_BYTES,       // hidden interface
     INTR_COARRAY_ALLOCATED_BYTES,    // hidden interface
     INTR_COARRAY_GARBAGE_BYTES,      // hidden interface
@@ -374,6 +400,25 @@ typedef struct {
                             may assume INTR_TYPE_INT. */
 
     int langSpec;
+    int intrinsicClass;
+#define INTRINSIC_CLASS_NONE           0x0000
+#define INTRINSIC_CLASS_ATOMIC         0x0001
+#define INTRINSIC_CLASS_ELEMENTAL_FUN  0x0002
+#define INTRINSIC_CLASS_ELEMENTAL_SUB  0x0004
+#define INTRINSIC_CLASS_INQUIRY        0x0008
+#define INTRINSIC_CLASS_PURE_SUB       0x0010
+#define INTRINSIC_CLASS_SUB            0x0020
+#define INTRINSIC_CLASS_TRANS          0x0040
+
+#define INTR_CLASS_N       INTRINSIC_CLASS_NONE
+#define INTR_CLASS_A       INTRINSIC_CLASS_ATOMIC
+#define INTR_CLASS_E       INTRINSIC_CLASS_ELEMENTAL_FUN
+#define INTR_CLASS_ES      INTRINSIC_CLASS_ELEMENTAL_SUB
+#define INTR_CLASS_I       INTRINSIC_CLASS_INQUIRY
+#define INTR_CLASS_PS      INTRINSIC_CLASS_PURE_SUB
+#define INTR_CLASS_S       INTRINSIC_CLASS_SUB
+#define INTR_CLASS_T       INTRINSIC_CLASS_TRANS
+
 } intrinsic_entry;
 #define INTR_OP(ep)             ((ep)->ops)
 #define INTR_NAMETYPE(ep)       ((ep)->nameType)
@@ -385,6 +430,7 @@ typedef struct {
 #define INTR_RETURN_TYPE(ep)    ((ep)->returnType)
 #define INTR_N_ARGS(ep)         ((ep)->nArgs)
 #define INTR_RETURN_TYPE_SAME_AS(ep)    ((ep)->retTypeSameAs)
+#define INTR_CLASS(ep)          ((ep)->intrinsicClass)
 
 #define INTR_IS_RETURN_TYPE_DYNAMIC(ep) \
     (INTR_RETURN_TYPE(ep) == INTR_TYPE_INT_DYNAMIC_ARRAY || \

@@ -24,6 +24,7 @@ public class AccKernel {
   private final Xobject _accThreadIndex = Xcons.Symbol(Xcode.VAR, Xtype.intType, "_ACC_thread_x_id");
   private final Xobject _accBlockIndex = Xcons.Symbol(Xcode.VAR, Xtype.intType, "_ACC_block_x_id");
   private final Xobject _accSyncThreads = ACCutil.getMacroFuncId("_ACC_sync_threads", Xtype.voidType).Call();
+  private final Xobject _accSyncGangs = ACCutil.getMacroFuncId("_ACC_sync_gangs", Xtype.voidType).Call();
   private final Xobject _accAsyncSync = Xcons.Symbol(Xcode.VAR, Xtype.intType, "ACC_ASYNC_SYNC");
   private final Xobject _accFlush = ACCutil.getMacroFuncId("_ACC_flush", Xtype.voidType).Call();
 
@@ -36,6 +37,7 @@ public class AccKernel {
   private final Set<Ident> _useMemPoolOuterIdSet = new LinkedHashSet<Ident>();
   private final List<XobjList> allocList = new ArrayList<XobjList>(); //for private array or reduction tmp array
   private List<ACCvar> _outerVarList;
+  private boolean hasGangSync = false;
 
   public AccKernel(ACCglobalDecl decl, PragmaBlock pb, AccInformation info, List<Block> kernelBlocks) {
     this._decl = decl;
@@ -328,12 +330,14 @@ public class AccKernel {
 
     XobjList deviceKernelParamIds = kernelBuildInfo.getParamIdList();
 
-    rewriteReferenceType(deviceKernelMainBlock, deviceKernelParamIds);
+    Block resultBlock = Bcons.COMPOUND(result);
+
+    rewriteReferenceType(resultBlock, deviceKernelParamIds);
 
     Ident deviceKernelId = _decl.getEnvDevice().declGlobalIdent(deviceKernelName, Xtype.Function(Xtype.voidType));
     ((FunctionType) deviceKernelId.Type()).setFuncParamIdList(deviceKernelParamIds);
 
-    return XobjectDef.Func(deviceKernelId, deviceKernelParamIds, null, result.toXobject());
+    return XobjectDef.Func(deviceKernelId, deviceKernelParamIds, null, resultBlock.toXobject());
   }
 
   private Xtype makeConstRestrictVoidType() {
@@ -630,11 +634,13 @@ public class AccKernel {
       if (!var.isReduction()) continue;
 
       Reduction reduction = reductionManager.addReduction(var, execMethodSet);
-      if (!_readOnlyOuterIdSet.contains(var.getId()) && !execMethodSet.contains(ACCpragma.GANG)) {
-        // only thread reduction
+      if(_readOnlyOuterIdSet.contains(var.getId())){
+        ACC.fatal("reduction variable is read-only, isn't it?");
+      }
+      if (! reduction.onlyKernelLast()) {
         resultBlockBuilder.addIdent(reduction.getLocalReductionVarId());
         resultBlockBuilder.addInitBlock(reduction.makeInitReductionVarFuncCall());
-        resultBlockBuilder.addFinalizeBlock(reduction.makeThreadReductionFuncCall());
+        resultBlockBuilder.addFinalizeBlock(reduction.makeInKernelReductionFuncCall(null));
       }
       reductionList.add(reduction);
     }//end reduction
@@ -760,6 +766,9 @@ public class AccKernel {
 
     if (execMethodSet.contains(ACCpragma.VECTOR)) {
       resultBlockBuilder.addFinalizeBlock(Bcons.Statement(_accSyncThreads));
+    }
+    if (hasGangSync && execMethodSet.contains(ACCpragma.GANG)){
+      resultBlockBuilder.addFinalizeBlock(Bcons.Statement(_accSyncGangs));
     }
 
     //pop stack
@@ -938,7 +947,7 @@ public class AccKernel {
       deviceKernelCallArgs.add(paramRef);
       {
         Reduction red = reductionManager.findReduction(varId);
-        if (red != null && red.useBlock() && red.usesTmp()) {
+        if (red != null && red.needsExternalReduction()) {
           reductionKernelCallArgs.add(paramRef);
           reductionKernelVarCount++;
         }
@@ -1833,7 +1842,7 @@ public class AccKernel {
       Iterator<Reduction> blockRedIter = reductionManager.BlockReductionIterator();
       while (blockRedIter.hasNext()) {
         Reduction reduction = blockRedIter.next();
-        if (!(reduction.useBlock() && reduction.usesTmp())) continue;
+        if (! reduction.needsExternalReduction()) continue;
 
         Block blockReduction = reduction.makeBlockReductionFuncCall(tempPtr, offsetMap.get(reduction), numBlocksId);//reduction.makeBlockReductionFuncCall(tempPtr, tmpOffsetElementSize)
         Block ifBlock = Bcons.IF(Xcons.binaryOp(Xcode.LOG_EQ_EXPR, blockIdx, Xcons.IntConstant(count)), blockReduction, null);
@@ -1844,7 +1853,7 @@ public class AccKernel {
       for (Xobject x : _outerIdList) {
         Ident id = (Ident) x;
         Reduction reduction = reductionManager.findReduction(id);
-        if (reduction != null && reduction.usesTmp()) {
+        if (reduction != null && reduction.needsExternalReduction()) {
           deviceKernelParamIds.add(makeParamId_new(id)); //getVarId();
         }
       }
@@ -1866,7 +1875,9 @@ public class AccKernel {
       Iterator<Reduction> blockRedIter = reductionManager.BlockReductionIterator();
       while (blockRedIter.hasNext()) {
         Reduction reduction = blockRedIter.next();
-        body.add(reduction.makeInitReductionVarFuncCall());
+	if(reduction.onlyKernelLast()){
+          body.add(reduction.makeInitReductionVarFuncCall());
+	}
       }
 
       if (body.isSingle()) {
@@ -1881,7 +1892,9 @@ public class AccKernel {
       Iterator<Reduction> blockRedIter = reductionManager.BlockReductionIterator();
       while (blockRedIter.hasNext()) {
         Reduction reduction = blockRedIter.next();
-        blockLocalIds.add(reduction.getLocalReductionVarId());
+	if(reduction.onlyKernelLast()){
+          blockLocalIds.add(reduction.getLocalReductionVarId());
+	}
       }
       return blockLocalIds;
     }
@@ -1907,14 +1920,12 @@ public class AccKernel {
       Iterator<Reduction> blockRedIter = reductionManager.BlockReductionIterator();
       while (blockRedIter.hasNext()) {
         Reduction reduction = blockRedIter.next();
-        Ident tmpVar = Ident.Local("_ACC_gpu_reduction_tmp_" + reduction.var.getName(), reduction.varId.Type());
-        if (reduction.useThread()) {
-          body.addIdent(tmpVar);
-          body.add(ACCutil.createFuncCallBlock("_ACC_gpu_init_reduction_var", Xcons.List(tmpVar.getAddr(), Xcons.IntConstant(reduction.getReductionKindInt()))));
-          body.add(reduction.makeThreadReductionFuncCall(tmpVar));
-        }
-        if (reduction.useBlock() && reduction.usesTmp()) {
+	if (reduction.needsExternalReduction()) {
+          Ident tmpVar = Ident.Local("_ACC_gpu_reduction_tmp_" + reduction.var.getName(), reduction.varId.Type());
           if (reduction.useThread()) {
+            body.addIdent(tmpVar);
+            body.add(reduction.makeInitReductionVarFuncCall(tmpVar));
+            body.add(reduction.makeInKernelReductionFuncCall(tmpVar));
             tempWriteBody.add(reduction.makeTempWriteFuncCall(tmpVar, tempPtr, offsetMap.get(reduction)));
             thenBody.add(reduction.makeSingleBlockReductionFuncCall(tmpVar));
           } else {
@@ -1922,10 +1933,8 @@ public class AccKernel {
             thenBody.add(reduction.makeSingleBlockReductionFuncCall());
           }
         } else {
-          if (reduction.useThread()) {
-            body.add(reduction.makeAtomicBlockReductionFuncCall(tmpVar));
-          } else {
-            body.add(reduction.makeAtomicBlockReductionFuncCall(null));
+          if(reduction.onlyKernelLast()) {
+            body.add(reduction.makeInKernelReductionFuncCall(null));
           }
         }
       }
@@ -1942,9 +1951,7 @@ public class AccKernel {
       Reduction reduction = new Reduction(var, execMethodSet);
       reductionList.add(reduction);
 
-      if (!execMethodSet.contains(ACCpragma.GANG)) return reduction;
-
-      if (!reduction.usesTmp()) return reduction;
+      if (!reduction.needsExternalReduction()) return reduction;
 
       //tmp setting
       offsetMap.put(reduction, totalElementSize);
@@ -2040,13 +2047,12 @@ public class AccKernel {
     }
 
     public Block makeSingleBlockReductionFuncCall(Ident tmpPtrId) {
-      XobjList args = Xcons.List(varId.Ref(), tmpPtrId.Ref(), Xcons.IntConstant(getReductionKindInt()));
+      XobjList args = Xcons.List(varId.getAddr(), tmpPtrId.Ref(), Xcons.IntConstant(getReductionKindInt()));
       return ACCutil.createFuncCallBlock("_ACC_gpu_reduction_singleblock", args);
     }
 
     public Block makeSingleBlockReductionFuncCall() {
-      XobjList args = Xcons.List(varId.Ref(), localVarId.Ref(), Xcons.IntConstant(getReductionKindInt()));
-      return ACCutil.createFuncCallBlock("_ACC_gpu_reduction_singleblock", args);
+      return makeSingleBlockReductionFuncCall(localVarId);
     }
 
     public void rewrite(Block b) {
@@ -2084,14 +2090,18 @@ public class AccKernel {
       return localVarId;
     }
 
-    public Block makeInitReductionVarFuncCall() {
-      int reductionKind = getReductionKindInt();
+    public Block makeInitReductionVarFuncCall(Ident id) {
+      String funcName = "_ACC_gpu_init_reduction_var";
 
       if (!execMethodSet.contains(ACCpragma.VECTOR)) { //execMethod == ACCpragma._BLOCK) {
-        return ACCutil.createFuncCallBlock("_ACC_gpu_init_reduction_var_single", Xcons.List(localVarId.getAddr(), Xcons.IntConstant(reductionKind)));
-      } else {
-        return ACCutil.createFuncCallBlock("_ACC_gpu_init_reduction_var", Xcons.List(localVarId.getAddr(), Xcons.IntConstant(reductionKind)));
+        funcName += "_single";
       }
+
+      return ACCutil.createFuncCallBlock(funcName, Xcons.List(id.getAddr(), Xcons.IntConstant(getReductionKindInt())));
+    }
+
+    public Block makeInitReductionVarFuncCall() {
+      return makeInitReductionVarFuncCall(localVarId);
     }
 
     public Block makeBlockReductionFuncCall(Ident tmpPtrId, Xobject tmpOffsetElementSize, Ident numBlocks) {
@@ -2102,28 +2112,46 @@ public class AccKernel {
       return ACCutil.createFuncCallBlock("_ACC_gpu_reduction_block", args);
     }
 
-    public Block makeAtomicBlockReductionFuncCall(Ident tmpVar) {
-      XobjList args;
-      if (tmpVar != null) {
-        args = Xcons.List(varId.Ref(), Xcons.IntConstant(getReductionKindInt()), tmpVar.Ref());
-      } else {
-        args = Xcons.List(varId.Ref(), Xcons.IntConstant(getReductionKindInt()), localVarId.Ref());
+    String makeExecString(EnumSet<ACCpragma> execSet){
+      StringBuilder sb = new StringBuilder();
+      if(execSet.contains(ACCpragma.GANG)){
+        sb.append('b');
       }
-      return ACCutil.createFuncCallBlock("_ACC_gpu_reduction_block", args);
+      if(execSet.contains(ACCpragma.VECTOR)){
+        sb.append('t');
+      }
+
+      return sb.toString();
     }
 
-    public Block makeAtomicBlockThreadReductionFuncCall() {
-      XobjList args;
-      args = Xcons.List(varId.Ref(), localVarId.Ref(), Xcons.IntConstant(getReductionKindInt()));
-      return ACCutil.createFuncCallBlock("_ACC_gpu_reduction_bt", args);
+    public Block makeInKernelReductionFuncCall_CUDA(Ident dstId){
+      Xobject dstArg = null;
+
+      EnumSet<ACCpragma> execSet = EnumSet.copyOf(execMethodSet);
+      dstArg = dstId != null? dstId.getAddr() : varId.getAddr();
+      if(needsExternalReduction()){
+        execSet.remove(ACCpragma.GANG);
+        if(dstId == null){
+          ACC.fatal("dstId must be specified");
+        }
+        //dstArg = localVarId.getAddr();
+      }else{
+        //dstArg = varId.Type().isPointer()? varId.Ref() : varId.getAddr();
+      }
+
+      String funcName = "_ACC_gpu_reduction_" + makeExecString(execSet);
+      XobjList args = Xcons.List(dstArg, Xcons.IntConstant(getReductionKindInt()), localVarId.Ref());
+
+      return ACCutil.createFuncCallBlock(funcName, args);
     }
 
-    public Block makeThreadReductionFuncCall() {
-      if (!execMethodSet.contains(ACCpragma.GANG)) { //execMethod == ACCpragma._THREAD) {
-        return makeThreadReductionFuncCall(varId);
-      } else {
-        return makeThreadReductionFuncCall(localVarId);
+    public Block makeInKernelReductionFuncCall(Ident dstId){
+      switch(ACC.platform){
+      case CUDA:
+      case OpenCL:
+        return makeInKernelReductionFuncCall_CUDA(dstId);
       }
+      return null;
     }
 
     public Block makeThreadReductionFuncCall(Ident varId) {
@@ -2132,7 +2160,7 @@ public class AccKernel {
     }
 
     public Block makeTempWriteFuncCall(Ident tmpPtrId, Xobject tmpOffsetElementSize) {
-      return ACCutil.createFuncCallBlock("_ACC_gpu_reduction_tmp", Xcons.List(localVarId.Ref(), tmpPtrId.Ref(), tmpOffsetElementSize));
+      return makeTempWriteFuncCall(localVarId, tmpPtrId, tmpOffsetElementSize);
     }
 
     public Block makeTempWriteFuncCall(Ident id, Ident tmpPtrId, Xobject tmpOffsetElementSize) {
@@ -2170,14 +2198,22 @@ public class AccKernel {
       return execMethodSet.contains(ACCpragma.GANG);
     }
 
-    public boolean usesTmp() {
+    public boolean existsAtomicOperation(){
       ACCpragma op = var.getReductionOperator();
       switch (var.getId().Type().getBasicType()) {
       case BasicType.FLOAT:
       case BasicType.INT:
-        return op == ACCpragma.REDUCTION_MUL;
+        return op != ACCpragma.REDUCTION_MUL;
       }
-      return true;
+      return false;
+    }
+
+    public boolean onlyKernelLast() {
+      return execMethodSet.contains(ACCpragma.GANG);
+    }
+
+    public boolean needsExternalReduction(){
+      return !existsAtomicOperation() && execMethodSet.contains(ACCpragma.GANG);
     }
   }
 

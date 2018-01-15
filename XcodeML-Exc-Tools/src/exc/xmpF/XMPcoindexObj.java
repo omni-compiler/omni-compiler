@@ -1,9 +1,3 @@
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
-
 package exc.xmpF;
 
 import exc.object.*;
@@ -27,6 +21,8 @@ public class XMPcoindexObj {
   final static String COARRAYGET_PREFIX = "xmpf_coarray_get";                // for Type 6
   final static String COARRAYGET_GENERIC_NAME = "xmpf_coarray_get_generic";  // for Type 8
   final static String COARRAYPUT_GENERIC_NAME = "xmpf_coarray_put_generic";  // for Type 8
+  // optimization
+  final static String COARRAYGETSUB_GENERIC_NAME = "xmpf_coarray_getsub_generic";
 
   // attributes
   String name;
@@ -850,10 +846,18 @@ public class XMPcoindexObj {
     return ident;
   }
 
-
   //------------------------------
   //  inquire
   //------------------------------
+  public static Boolean isGETfunc(Xobject xobj) {
+    if (xobj.Opcode() == Xcode.FUNCTION_CALL) {
+
+      if (COARRAYGET_GENERIC_NAME.equals(xobj.getName()))
+        return true;
+    }
+    return false;
+  }
+
   public Xobject getObj() {
     return obj;
   }

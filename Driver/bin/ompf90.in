@@ -69,7 +69,6 @@ omni_f_check_file_exist
 # Note that, if TEMP_DIR exists, the TEMP_DIR is not deleted (KAGEMAI #379)
 
 omni_exec mkdir -p $TEMP_DIR
-[ $ENABLE_DEBUG = true ] && echo "Create ${TEMP_DIR}/"
 
 ### Clean temporal directory before exit ###
 omni_set_trap
@@ -131,7 +130,7 @@ for file in "${f_files[@]}"; do
     FILE_IN_X=${TEMP_DIR}/"${FILE_NAME}"_${EXT}_in.xml
     FILE_OUT_X=${TEMP_DIR}/"${FILE_NAME}"_${EXT}_out.xml
 
-    omni_exec $OMNI_FX2X_CMD $OMNI_FX2X_OPT "${xcode_translator_add_opt[@]}" "${module_opt[@]}" "${trans_module_opt[@]}" "${FILE_IN_X}" -o "${FILE_OUT_X}"
+    omni_exec $OMNI_FX2X_CMD $OMNI_FX2X_OPT "${xcode_translator_add_opt[@]}" "${module_opt[@]}" "${trans_module_opt[@]}" "${FILE_IN_X}"
     # also create ${TEMP_DIR}/${FILE_NAME}_${EXT}_in.F90
 done
 [ $STOP_TRANSLATOR = true ] && exit 0;
@@ -163,7 +162,7 @@ for file in "${f_files[@]}"; do
     FILE_O=${TEMP_DIR}/"${FILE_NAME}"_${EXT}.o
 
     if [ "$target" != "sxace-nec-superux" ]; then
-	omni_exec mkdir -p "${module_dir[@]}"
+	[ "${module_dir}" != "" ] && omni_exec mkdir -p "${module_dir[@]}"
 	omni_exec $OMNI_FC_CMD "${module_dirs[@]}" "${native_add_opt[@]}" $OMNI_FC_OPT "${other_args[@]}" "${FILE_F90}" -o "${FILE_O}"
     else
 	## On SX-ACE, when indicating "${FILE_F90}" by an absolute path, "-to" option is ignored.

@@ -1,9 +1,3 @@
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
-
 package exc.xmpF;
 
 import exc.object.*;
@@ -28,7 +22,8 @@ public class XMPcoarray {
   final static String XMPF_LCOBOUND = "xmpf_lcobound";
   final static String XMPF_UCOBOUND = "xmpf_ucobound";
   final static String XMPF_COSIZE = "xmpf_cosize";
-  final static String GET_IMAGE_INDEX_NAME = "xmpf_coarray_get_image_index";
+  //  final static String GET_IMAGE_INDEX_NAME = "xmpf_coarray_get_image_index";
+  final static String GET_IMAGE_INDEX_NAME = "xmpf_image_index_generic";
   //  final static String SET_COSHAPE_NAME = "xmpf_coarray_set_coshape";
   final static String SET_CORANK_NAME = "xmpf_coarray_set_corank";
   final static String SET_CODIMENSION_NAME = "xmpf_coarray_set_codim";
@@ -437,6 +432,12 @@ public class XMPcoarray {
   }
   ***********************************/
 
+  public void addStmts_setCoshapeAndName(BlockList list, XMPenv env) {
+    addStmts_setCoshape(list, env);
+    Xobject subrCall = makeStmt_setVarName();
+    list.add(subrCall);
+  }
+
   public void addStmts_setCoshape(BlockList list) {
     addStmts_setCoshape(list, env);
   }
@@ -721,22 +722,25 @@ public class XMPcoarray {
   //  generate and add "CALL xmpf_coarray_set_nodes(descPtr, nodesDesc)"
   //-----------------------------------------------------
   //
-  public void build_setMappingNodes(BlockList blist)
+  public void build_setMappingNodes(BlockList blist, Block block)
   {
     if (nodesDescId != null)
-      blist.add(makeStmt_setMappingNodes());
+      blist.add(makeStmt_setMappingNodes(block));
   }
 
-  public Xobject makeStmt_setMappingNodes()
+  public Xobject makeStmt_setMappingNodes(Block block)
   {
     // descPtrId must be declarad previously in the coarray pass
     if (descPtrId == null)
-      descPtrId = env.findVarIdent(getDescPointerName(), fblock);
+      descPtrId = env.findVarIdent(getDescPointerName(), block);
 
     Xobject args = Xcons.List(descPtrId, nodesDescId);
     Ident subr = env.findVarIdent(SET_NODES_NAME, null);
     if (subr == null) {
-      subr = env.declExternIdent(SET_NODES_NAME,
+      subr = (block == null ) ?
+             env.declExternIdent(SET_NODES_NAME,
+                                 BasicType.FexternalSubroutineType) :
+             block.getBody().declLocalIdent(SET_NODES_NAME,
                                  BasicType.FexternalSubroutineType);
     }
     Xobject subrCall = subr.callSubroutine(args);
@@ -762,9 +766,12 @@ public class XMPcoarray {
     Ident imageNodesId = nodes.getDescId();
 
     Xobject args = Xcons.List(imageNodesId);
-    Ident subr = env.findVarIdent(SET_IMAGE_NODES_NAME, null);
+    Ident subr = env.findVarIdent(SET_IMAGE_NODES_NAME, block);
     if (subr == null) {
-      subr = env.declExternIdent(SET_IMAGE_NODES_NAME,
+      subr = (block == null) ?
+             env.declExternIdent(SET_IMAGE_NODES_NAME,
+                                 BasicType.FexternalSubroutineType) :
+             block.getBody().declLocalIdent(SET_IMAGE_NODES_NAME,
                                  BasicType.FexternalSubroutineType);
     }
     Xobject subrCall = subr.callSubroutine(args);
@@ -1363,8 +1370,11 @@ public class XMPcoarray {
     if (fnameId == null)
       fnameId = getEnv().declExternIdent(fname, Xtype.FintFunctionType);
 
-    XobjList args = Xcons.List(getDescPointerIdExpr(baseAddr), 
-                               Xcons.IntConstant(getCorank()));
+    // Old interface for xmpf_coarray_get_image_index
+    //    XobjList args = Xcons.List(getDescPointerIdExpr(baseAddr), 
+    //                               Xcons.IntConstant(getCorank()));
+    // Interface for xmpf_image_index_generic
+    XobjList args = Xcons.List(getDescPointerIdExpr(baseAddr));
     for (Xobject cosubs: (XobjList)cosubscripts) {
       args.add(cosubs);
     }

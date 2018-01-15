@@ -23,11 +23,10 @@ void _XMP_lock_0(_XMP_coarray_t* c, const unsigned int offset, void* lock_obj)
 }
 
 /**
-   Wrapper function of executing Lock using 1-dim coarray (#pragma xmp lock(lockobj[offset]:[e0]))
+   Wrapper function of executing Lock using 1-dim coarray (#pragma xmp lock(lockobj[offset]:[rank]))
 */
-void _XMP_lock_1(_XMP_coarray_t* c, const unsigned int offset, const unsigned int e0)
+void _XMP_lock_1(_XMP_coarray_t* c, const unsigned int offset, const unsigned int rank)
 {
-  unsigned int rank = e0-1;
   _XMP_lock(c, offset, rank);
 }
 
@@ -36,7 +35,7 @@ void _XMP_lock_1(_XMP_coarray_t* c, const unsigned int offset, const unsigned in
 */
 void _XMP_lock_2(_XMP_coarray_t* c, const unsigned int offset, const unsigned int e0, const unsigned int e1)
 {
-  unsigned int rank = (e0-1) + c->distance_of_image_elmts[1] * (e1-1);
+  unsigned int rank = e0 + c->distance_of_image_elmts[1] * e1;
   _XMP_lock(c, offset, rank);
 }
 
@@ -46,7 +45,7 @@ void _XMP_lock_2(_XMP_coarray_t* c, const unsigned int offset, const unsigned in
 void _XMP_lock_3(_XMP_coarray_t* c, const unsigned int offset, const unsigned int e0, const unsigned int e1,
 		 const unsigned int e2)
 {
-  unsigned int rank = (e0-1) + c->distance_of_image_elmts[1] * (e1-1) + c->distance_of_image_elmts[2] * (e2-1);
+  unsigned int rank = e0 + c->distance_of_image_elmts[1] * e1 + c->distance_of_image_elmts[2] * e2;
   _XMP_lock(c, offset, rank);
 }
 
@@ -56,8 +55,8 @@ void _XMP_lock_3(_XMP_coarray_t* c, const unsigned int offset, const unsigned in
 void _XMP_lock_4(_XMP_coarray_t* c, const unsigned int offset, const unsigned int e0, const unsigned int e1,
 		 const unsigned int e2, const unsigned int e3)
 {
-  unsigned int rank = (e0-1) + c->distance_of_image_elmts[1] * (e1-1) + c->distance_of_image_elmts[2] * (e2-1) +
-    c->distance_of_image_elmts[3] * (e3-1);
+  unsigned int rank = e0 + c->distance_of_image_elmts[1] * e1 + c->distance_of_image_elmts[2] * e2 +
+    c->distance_of_image_elmts[3] * e3;
   _XMP_lock(c, offset, rank);
 }
 
@@ -67,8 +66,8 @@ void _XMP_lock_4(_XMP_coarray_t* c, const unsigned int offset, const unsigned in
 void _XMP_lock_5(_XMP_coarray_t* c, const unsigned int offset, const unsigned int e0, const unsigned int e1,
 		 const unsigned int e2, const unsigned int e3, const unsigned int e4)
 {
-  unsigned int rank = (e0-1) + c->distance_of_image_elmts[1] * (e1-1) + c->distance_of_image_elmts[2] * (e2-1) +
-    c->distance_of_image_elmts[3] * (e3-1) + c->distance_of_image_elmts[4] * (e4-1);
+  unsigned int rank = e0 + c->distance_of_image_elmts[1] * e1 + c->distance_of_image_elmts[2] * e2 +
+    c->distance_of_image_elmts[3] * e3 + c->distance_of_image_elmts[4] * e4;
   _XMP_lock(c, offset, rank);
 }
 
@@ -78,8 +77,8 @@ void _XMP_lock_5(_XMP_coarray_t* c, const unsigned int offset, const unsigned in
 void _XMP_lock_6(_XMP_coarray_t* c, const unsigned int offset, const unsigned int e0, const unsigned int e1,
 		 const unsigned int e2, const unsigned int e3, const unsigned int e4, const unsigned int e5)
 {
-  unsigned int rank = (e0-1) + c->distance_of_image_elmts[1] * (e1-1) + c->distance_of_image_elmts[2] * (e2-1) +
-    c->distance_of_image_elmts[3] * (e3-1) + c->distance_of_image_elmts[4] * (e4-1) + c->distance_of_image_elmts[5] * (e5-1);
+  unsigned int rank = e0 + c->distance_of_image_elmts[1] * e1 + c->distance_of_image_elmts[2] * e2 +
+    c->distance_of_image_elmts[3] * e3 + c->distance_of_image_elmts[4] * e4 + c->distance_of_image_elmts[5] * e5;
   _XMP_lock(c, offset, rank);
 }
 
@@ -90,9 +89,9 @@ void _XMP_lock_7(_XMP_coarray_t* c, const unsigned int offset, const unsigned in
 		 const unsigned int e2, const unsigned int e3, const unsigned int e4, const unsigned int e5,
 		 const unsigned int e6)
 {
-  unsigned int rank = (e0-1) + c->distance_of_image_elmts[1] * (e1-1) + c->distance_of_image_elmts[2] * (e2-1) +
-    c->distance_of_image_elmts[3] * (e3-1) + c->distance_of_image_elmts[4] * (e4-1) + c->distance_of_image_elmts[5] * (e5-1) +
-    c->distance_of_image_elmts[6] * (e6-1);
+  unsigned int rank = e0 + c->distance_of_image_elmts[1] * e1 + c->distance_of_image_elmts[2] * e2 +
+    c->distance_of_image_elmts[3] * e3 + c->distance_of_image_elmts[4] * e4 + c->distance_of_image_elmts[5] * e5 +
+    c->distance_of_image_elmts[6] * e6;
   _XMP_lock(c, offset, rank);
 }
 
@@ -119,11 +118,10 @@ void _XMP_unlock_0(_XMP_coarray_t* c, const unsigned int offset, void* lock_obj)
 }
 
 /**
-   Wrapper function of executing Lock using 1-dim coarray (#pragma xmp lock(lockobj[offset]:[e0]))
+   Wrapper function of executing Lock using 1-dim coarray (#pragma xmp lock(lockobj[offset]:[rank]))
 */
-void _XMP_unlock_1(_XMP_coarray_t* c, const unsigned int offset, const unsigned int e0)
+void _XMP_unlock_1(_XMP_coarray_t* c, const unsigned int offset, const unsigned int rank)
 {
-  unsigned int rank = e0-1;
   _XMP_unlock(c, offset, rank);
 }
 
@@ -132,7 +130,7 @@ void _XMP_unlock_1(_XMP_coarray_t* c, const unsigned int offset, const unsigned 
 */
 void _XMP_unlock_2(_XMP_coarray_t* c, const unsigned int offset, const unsigned int e0, const unsigned int e1)
 {
-  unsigned int rank = (e0-1) + c->distance_of_image_elmts[1] * (e1-1);
+  unsigned int rank = e0 + c->distance_of_image_elmts[1] * e1;
   _XMP_unlock(c, offset, rank);
 }
 
@@ -142,7 +140,7 @@ void _XMP_unlock_2(_XMP_coarray_t* c, const unsigned int offset, const unsigned 
 void _XMP_unlock_3(_XMP_coarray_t* c, const unsigned int offset, const unsigned int e0, const unsigned int e1,
 		   const unsigned int e2)
 {
-  unsigned int rank = (e0-1) + c->distance_of_image_elmts[1] * (e1-1) + c->distance_of_image_elmts[2] * (e2-1);
+  unsigned int rank = e0 + c->distance_of_image_elmts[1] * e1 + c->distance_of_image_elmts[2] * e2;
   _XMP_unlock(c, offset, rank);
 }
 
@@ -152,8 +150,8 @@ void _XMP_unlock_3(_XMP_coarray_t* c, const unsigned int offset, const unsigned 
 void _XMP_unlock_4(_XMP_coarray_t* c, const unsigned int offset, const unsigned int e0, const unsigned int e1,
 		   const unsigned int e2, const unsigned int e3)
 {
-  unsigned int rank = (e0-1) + c->distance_of_image_elmts[1] * (e1-1) + c->distance_of_image_elmts[2] * (e2-1) +
-    c->distance_of_image_elmts[3] * (e3-1);
+  unsigned int rank = e0 + c->distance_of_image_elmts[1] * e1 + c->distance_of_image_elmts[2] * e2 +
+    c->distance_of_image_elmts[3] * e3;
   _XMP_unlock(c, offset, rank);
 }
 /**
@@ -162,8 +160,8 @@ void _XMP_unlock_4(_XMP_coarray_t* c, const unsigned int offset, const unsigned 
 void _XMP_unlock_5(_XMP_coarray_t* c, const unsigned int offset, const unsigned int e0, const unsigned int e1,
 		   const unsigned int e2, const unsigned int e3, const unsigned int e4)
 {
-  unsigned int rank = (e0-1) + c->distance_of_image_elmts[1] * (e1-1) + c->distance_of_image_elmts[2] * (e2-1) +
-    c->distance_of_image_elmts[3] * (e3-1) + c->distance_of_image_elmts[4] * (e4-1);
+  unsigned int rank = e0 + c->distance_of_image_elmts[1] * e1 + c->distance_of_image_elmts[2] * e2 +
+    c->distance_of_image_elmts[3] * e3 + c->distance_of_image_elmts[4] * e4;
   _XMP_unlock(c, offset, rank);
 }
 
@@ -173,8 +171,8 @@ void _XMP_unlock_5(_XMP_coarray_t* c, const unsigned int offset, const unsigned 
 void _XMP_unlock_6(_XMP_coarray_t* c, const unsigned int offset, const unsigned int e0, const unsigned int e1,
 		   const unsigned int e2, const unsigned int e3, const unsigned int e4, const unsigned int e5)
 {
-  unsigned int rank = (e0-1) + c->distance_of_image_elmts[1] * (e1-1) + c->distance_of_image_elmts[2] * (e2-1) +
-    c->distance_of_image_elmts[3] * (e3-1) + c->distance_of_image_elmts[4] * (e4-1) + c->distance_of_image_elmts[5] * (e5-1);
+  unsigned int rank = e0 + c->distance_of_image_elmts[1] * e1 + c->distance_of_image_elmts[2] * e2 +
+    c->distance_of_image_elmts[3] * e3 + c->distance_of_image_elmts[4] * e4 + c->distance_of_image_elmts[5] * e5;
   _XMP_unlock(c, offset, rank);
 }
 
@@ -185,9 +183,9 @@ void _XMP_unlock_7(_XMP_coarray_t* c, const unsigned int offset, const unsigned 
 		   const unsigned int e2, const unsigned int e3, const unsigned int e4, const unsigned int e5,
 		   const unsigned int e6)
 {
-  unsigned int rank = (e0-1) + c->distance_of_image_elmts[1] * (e1-1) + c->distance_of_image_elmts[2] * (e2-1) +
-    c->distance_of_image_elmts[3] * (e3-1) + c->distance_of_image_elmts[4] * (e4-1) + c->distance_of_image_elmts[5] * (e5-1) +
-    c->distance_of_image_elmts[6] * (e6-1);
+  unsigned int rank = e0 + c->distance_of_image_elmts[1] * e1 + c->distance_of_image_elmts[2] * e2 +
+    c->distance_of_image_elmts[3] * e3 + c->distance_of_image_elmts[4] * e4 + c->distance_of_image_elmts[5] * e5 +
+    c->distance_of_image_elmts[6] * e6;
   _XMP_unlock(c, offset, rank);
 }
 

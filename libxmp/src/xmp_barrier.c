@@ -1,8 +1,3 @@
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
 #ifndef MPI_PORTABLE_PLATFORM_H
 #define MPI_PORTABLE_PLATFORM_H
 #endif 
@@ -20,6 +15,7 @@ void _XMP_barrier_NODES_ENTIRE(_XMP_nodes_t *nodes) {
 
 void _XMP_barrier_EXEC(void) {
   _XMP_RETURN_IF_SINGLE;
+  _XMP_RETURN_IF_AFTER_FINALIZATION;
 
   MPI_Barrier(*((MPI_Comm *)(_XMP_get_execution_nodes())->comm));
 }

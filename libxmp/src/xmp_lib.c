@@ -17,16 +17,19 @@ MPI_Comm xmp_get_mpi_comm(void)
 void xmp_init_mpi(int *argc, char ***argv) {}
 void xmp_finalize_mpi(void) {}
 
-void xmp_init(int *argc, char ***argv)
-{
-  _XMP_init(*argc, *argv);
+void xmp_init_py(MPI_Fint comm) {
+  _XMP_init(1, NULL, MPI_Comm_f2c(comm));
 }
 
-void xmp_finalize(void)
+void xmp_init(MPI_Comm comm)
 {
-  _XMP_finalize(0);
+  _XMP_init(1, NULL, comm);
 }
 
+void xmp_finalize()
+{
+  _XMP_finalize(false);
+}
 
 int xmp_desc_kind(xmp_desc_t d, int *kind) 
 {
@@ -34,8 +37,12 @@ int xmp_desc_kind(xmp_desc_t d, int *kind)
   return 0;
 }
 
-
 int xmp_num_nodes(void)
+{
+  return _XMP_get_execution_nodes()->comm_size;
+}
+
+int xmp_num_images(void)
 {
   return _XMP_get_execution_nodes()->comm_size;
 }
@@ -43,6 +50,16 @@ int xmp_num_nodes(void)
 int xmp_node_num(void)
 {
   return _XMP_get_execution_nodes()->comm_rank + 1;
+}
+
+int xmpc_node_num(void)
+{
+  return _XMP_get_execution_nodes()->comm_rank;
+}
+
+int xmpc_this_image(void)
+{
+  return _XMP_get_execution_nodes()->comm_rank;
 }
 
 void xmp_barrier(void)
@@ -58,6 +75,11 @@ int xmp_all_num_nodes(void)
 int xmp_all_node_num(void)
 {
   return _XMP_world_rank + 1;
+}
+
+int xmpc_all_node_num(void)
+{
+  return _XMP_world_rank;
 }
 
 double xmp_wtime(void)
@@ -599,6 +621,6 @@ void xmp_free(xmp_desc_t d){
 
 
 void xmp_exit(int status){
-  _XMP_finalize(0);
+  _XMP_finalize(true);
   exit(status);
 }

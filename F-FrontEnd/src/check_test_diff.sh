@@ -53,7 +53,7 @@ do_test_should_be_ok() {
 do_test_should_be_ng() {
 	local testfile
 	for testfile in \
-	    $(find ${should_be_ng} -name "*.f90" -o -name "*.f" | sort); do
+	    $(find ${should_be_ng} -name "*.f90" -o -name "*.f" -o -name '*.f03' | sort); do
 		do_compile ${testfile} 2>&1
 		if test $? -eq 0; then
 			echo "Error: ${testfile} should have exit code != 0"
@@ -67,7 +67,7 @@ do_test_should_be_ng() {
 do_test_result_no_care() {
 	local testfile
 	for testfile in \
-	    $(find ${result_no_care} -name "*.f90" -o -name "*.f" | sort); do
+	    $(find ${result_no_care} -name "*.f90" -o -name "*.f" -o -name '*.f03' | sort); do
 		do_compile ${testfile}
 	done
 	rm -f *.xmod
@@ -80,7 +80,7 @@ show_diff() {
 
 	for testfile in \
 	    $(find ${should_be_ok} ${should_be_ng} ${result_no_care} \
-	    -name "*.f90" -o -name "*.f") ; do
+	    -name "*.f90" -o -name "*.f" -o -name '*.f03' ) ; do
 		md5=$(md5sum ${testfile} | awk '{print $1}')
 		if test ! -e ${BASE_DIR}/${md5}; then
 			echo ${testfile} is modified or new

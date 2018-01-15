@@ -29,21 +29,17 @@ gasnet_handlerentry_t htable[] = {
 /**
    Initialize GASNet job
 */
-void _XMP_gasnet_initialize(int argc, char **argv, const size_t xmp_gasnet_heap_size, 
+void _XMP_gasnet_initialize(const size_t xmp_gasnet_heap_size, 
 			    const size_t xmp_gasnet_stride_size)
 {
-  if(argc != 0)
-    gasnet_init(&argc, &argv);
-  else{
-    // In XMP/Fortran, this function is called with "argc == 0" & "**argv == NULL".
-    // But if the second argument of gasnet_init() is NULL, gasnet_init() returns error.
-    // So dummy argument is created and used.
-    char **s;
-    s = malloc(sizeof(char *));
-    s[0] = malloc(sizeof(char));
-    gasnet_init(&argc, &s);
-  }
-
+  // In XMP/Fortran, this function is called with "argc == 0" & "**argv == NULL".
+  // But if the second argument of gasnet_init() is NULL, gasnet_init() returns error.
+  // So dummy argument is created and used.
+  int argc = 1;
+  char **c = malloc(sizeof(char *));
+  c[0] = malloc(sizeof(char));
+  gasnet_init(&argc, &c);
+  
   _XMP_world_rank = gasnet_mynode();
   _XMP_world_size = gasnet_nodes();
 
@@ -60,9 +56,7 @@ void _XMP_gasnet_initialize(int argc, char **argv, const size_t xmp_gasnet_heap_
   }
 
   _xmp_gasnet_stride_size = xmp_gasnet_stride_size;
-
   gasnet_attach(htable, sizeof(htable)/sizeof(gasnet_handlerentry_t), (uintptr_t)_xmp_gasnet_heap_size, 0);
-
   _xmp_gasnet_buf = (char **)malloc(sizeof(char*) * _XMP_world_size);
 
   gasnet_node_t i;
@@ -80,9 +74,9 @@ void _XMP_gasnet_initialize(int argc, char **argv, const size_t xmp_gasnet_heap_
 /**
    Finalize GASNet job
 */
-void _XMP_gasnet_finalize(const int val)
+void _XMP_gasnet_finalize()
 {
   _XMP_gasnet_sync_all();
-  gasnet_exit(val);
+  gasnet_exit(0);
 }
 

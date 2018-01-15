@@ -7,8 +7,7 @@ import java.util.List;
 import exc.util.XobjectVisitable;
 import exc.util.XobjectVisitor;
 
-import xcodeml.ILineNo;
-import xcodeml.IXobject;
+import xcodeml.util.ILineNo;
 
 public class XobjectDefEnv extends PropObject
     implements Iterable<XobjectDef>, IXobject, XobjectVisitable, XobjContainer
@@ -88,7 +87,7 @@ public class XobjectDefEnv extends PropObject
     {
         topdownXobjectDefIterator ite = new topdownXobjectDefIterator(this);
         for(ite.init(); !ite.end(); ite.next())
-            op.doDef(ite.getDef());
+            if (!ite.getDef().isPragma()) op.doDef(ite.getDef());
     }
 
     public void iterateFuncDef(XobjectDefVisitor op)

@@ -1,19 +1,11 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package exc.openmp;
 
 import exc.object.*;
 import exc.xcodeml.XcodeMLtools;
 import exc.block.*;
-
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-
 import xcodeml.util.XmOption;
 
 /**
@@ -900,6 +892,19 @@ public class OMPinfo
         for(OMPinfo i = this.parent; i != null; i = i.parent)
             if(i.pragma == pragma && i.arg == arg)
                 return i;
+        return null;
+    }
+
+    OMPinfo findContext(OMPpragma pragma, OMPpragma limit)
+    {
+        for (OMPinfo i = this.parent; i != null; i = i.parent) {
+            if (i.pragma == limit) {
+                break;
+            }
+            if (i.pragma == pragma) {
+                return i;
+            }
+        }
         return null;
     }
 

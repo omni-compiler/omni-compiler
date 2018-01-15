@@ -1,18 +1,10 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package exc.object;
 
 import exc.block.Block;
 import exc.util.XobjectVisitable;
 import exc.util.XobjectVisitor;
-import xcodeml.IXobject;
-import xcodeml.XmException;
+import xcodeml.util.XmException;
 import xcodeml.util.XmOption;
-
 
 /**
  * Abstract class of expression tree objects in Xobject.
@@ -549,7 +541,6 @@ public class Xobject extends PropObject implements IXobject, XobjectVisitable, I
         o.scope = scope;
         return o;
     }
-
 
     /**
      * 

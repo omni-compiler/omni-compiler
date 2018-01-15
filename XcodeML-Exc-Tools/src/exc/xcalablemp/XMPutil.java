@@ -367,4 +367,60 @@ public class XMPutil {
     else
       throw new XMPexception("exception in exc.xcalablemp.XMPutil.getLastIndex(), element does not exist");
   }
+
+  public static Xobject foldIntConstant(Xobject expr){
+    if(expr.isBinaryOp()){
+      Xcode code    = expr.Opcode();
+      Xobject left  = foldIntConstant(expr.left());
+      Xobject right = foldIntConstant(expr.right());
+      if(left.isIntConstant() && right.isIntConstant()){
+        switch(code){
+        case PLUS_EXPR:
+          return Xcons.IntConstant(left.getInt() + right.getInt());
+        case MINUS_EXPR:
+          return Xcons.IntConstant(left.getInt() - right.getInt());
+        case MUL_EXPR:
+          return Xcons.IntConstant(left.getInt() * right.getInt());
+        case DIV_EXPR:
+          return Xcons.IntConstant(left.getInt() / right.getInt());
+        }
+      }
+    }
+    return expr;
+  }
+
+  public static Boolean is_Constant(Xobject obj, int index)
+  {
+    topdownXobjectIterator iter = obj.topdownIterator();
+    for(iter.init(); !iter.end(); iter.next()){
+      Xobject expr = iter.getXobject();
+      Xcode code   = expr.Opcode();
+      if(code == Xcode.PLUS_EXPR || code == Xcode.MINUS_EXPR ||
+         code == Xcode.MUL_EXPR  || code == Xcode.DIV_EXPR)
+        continue;
+      else if(! expr.isConstant())
+        return false;
+    }
+
+    return true;
+  }
+
+  public static Boolean is_AllConstant(XMPnodes n)
+  {
+    for(int i=0;i<n.getDim();i++)
+      if(is_Constant(n.getSizeAt(i), i) == false)
+        return false;
+          
+    return true;
+  }
+
+  public static Boolean is_AllConstant(XMPtemplate t)
+  {
+    for(int i=0;i<t.getDim();i++)
+      if(is_Constant(t.getSizeAt(i), i) == false)
+        return false;
+
+    return true;
+  }
 }
+  

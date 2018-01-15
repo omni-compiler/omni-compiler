@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include "xmp_internal.h"
 int _XMP_flag_put_nb      = false; // This variable is temporal
+int _XMP_flag_get_nb      = false; // This variable is temporal
 #if defined(_XMP_FJRDMA)
 int _XMP_flag_put_nb_rr   = false; // This variable is temporal
 int _XMP_flag_put_nb_rr_i = false; // This variable is temporal
@@ -67,7 +68,7 @@ static size_t _get_size(char *env)
 }
 #endif
 
-void _XMP_initialize_onesided_functions(int argc, char **argv)
+void _XMP_initialize_onesided_functions()
 {
 #ifdef _XMP_FJRDMA
   if(_XMP_world_size > _XMP_ONESIDED_MAX_PROCS){
@@ -84,18 +85,18 @@ void _XMP_initialize_onesided_functions(int argc, char **argv)
   _xmp_heap_size   = _get_size("XMP_ONESIDED_HEAP_SIZE");
   _xmp_stride_size = _get_size("XMP_ONESIDED_STRIDE_SIZE");
   _xmp_heap_size  += _xmp_stride_size;
-  _XMP_gasnet_initialize(argc, argv, _xmp_heap_size, _xmp_stride_size);
+  _XMP_gasnet_initialize(_xmp_heap_size, _xmp_stride_size);
   _XMP_gasnet_intrinsic_initialize();
 #elif _XMP_FJRDMA
-  _XMP_fjrdma_initialize(argc, argv);
+  _XMP_fjrdma_initialize();
 #elif _XMP_MPI3_ONESIDED
   size_t _xmp_heap_size;
   _xmp_heap_size   = _get_size("XMP_ONESIDED_HEAP_SIZE");
-  _XMP_mpi_onesided_initialize(argc, argv, _xmp_heap_size);
+  _XMP_mpi_onesided_initialize(_xmp_heap_size);
 #endif
 
 #ifdef _XMP_TCA
-  _XMP_tca_initialize(argc, argv);
+  _XMP_tca_initialize();
 #endif
 
 #if defined(_XMP_GASNET) || defined(_XMP_FJRDMA) || defined(_XMP_TCA) || defined(_XMP_MPI3_ONESIDED)
@@ -109,6 +110,12 @@ void _XMP_initialize_onesided_functions(int argc, char **argv)
     _XMP_flag_put_nb = true;  // defalt false
     if(_XMP_world_rank == 0)
       printf("*** _XMP_coarray_contiguous_put() is Non-Blocking ***\n");
+  }
+
+  if(getenv("XMP_GET_NB") != NULL){
+    _XMP_flag_get_nb = true;  // defalt false
+    if(_XMP_world_rank == 0)
+      printf("*** _XMP_coarray_contiguous_get() is Non-Blocking ***\n");
   }
 
 #if defined(_XMP_FJRDMA)
@@ -130,10 +137,10 @@ void _XMP_initialize_onesided_functions(int argc, char **argv)
   /* End Temporary */
 }
 
-void _XMP_finalize_onesided_functions(const int return_val)
+void _XMP_finalize_onesided_functions()
 {
 #ifdef _XMP_GASNET
-  _XMP_gasnet_finalize(return_val);
+  _XMP_gasnet_finalize();
 #elif _XMP_FJRDMA
   if(_XMP_world_size > _XMP_ONESIDED_MAX_PROCS) return;
   else _XMP_fjrdma_finalize();

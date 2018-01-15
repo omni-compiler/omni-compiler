@@ -178,8 +178,8 @@ void _XMP_gmove_larray_garray(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *
 
 
 /* From xmp_runtime.c */
-void _XMP_init(int argc, char** argv);
-void _XMP_finalize(int);
+void _XMP_init(int argc, char** argv, MPI_Comm comm);
+void _XMP_finalize(bool isFinalize);
 size_t _XMP_get_datatype_size(int datatype);
 
 /* From xmp_reflect.c */
@@ -192,33 +192,15 @@ extern _XMP_async_comm_t* _XMP_get_async(int);
 extern void xmpc_init_async(int);
 extern void xmpc_start_async();
 
-/* From xmpf_template.c */
-extern void xmpf_ref_dealloc__(_XMP_object_ref_t **r_desc);
+/* From xmp_reduce_shadow.c */
+void _XMP_set_reduce_shadow__(_XMP_array_t *a, int dim, int lwidth, int uwidth, int is_periodic);
+void _XMP_reduce_shadow__(_XMP_array_t *a);
 
 /* From xmpf_pack.c */
 void _XMPF_pack_array(void *buffer, void *src, int array_type, size_t array_type_size,
 		      int array_dim, int *l, int *u, int *s, unsigned long long *d);
 void _XMPF_unpack_array(void *dst, void *buffer, int array_type, size_t array_type_size,
 			int array_dim, int *l, int *u, int *s, unsigned long long *d);
-
-/* From xmp_coarray.c */
-extern void _XMP_gasnet_not_contiguous_put();
-extern void _XMP_gasnet_contiguous_put();
-extern void _XMP_gasnet_not_contiguous_get();
-extern void _XMP_gasnet_contiguous_get();
-extern void _XMP_coarray_malloc_info_1(const long, const size_t);
-extern void _XMP_coarray_malloc_image_info_1();
-extern void _XMP_coarray_malloc(void **, void *);
-extern void _XMP_coarray_regmem(void **, void *);
-extern void _XMP_coarray_rdma_coarray_set_1(const long, const long, const long);
-extern void _XMP_coarray_rdma_array_set_1(const long, const long, const long, const long, const size_t);
-extern void _XMP_coarray_rdma_image_set_1(const int);
-extern void _XMP_coarray_put(void*, void*, void *);
-//extern size_t get_offset(const void *, const int);
-
-/* libxmp/include/xmp_func_decl.h */
-extern void _XMP_coarray_contiguous_put(const int, void*, const void*, const long, const long, const long, const long);
-extern void _XMP_coarray_contiguous_get(const int, void*, const void*, const long, const long, const long, const long);
 
 /* xmpf_coarray.c */
 extern void _XMPF_coarray_init(void); 

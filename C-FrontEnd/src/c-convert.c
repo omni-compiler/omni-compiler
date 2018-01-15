@@ -1232,6 +1232,14 @@ convertSyntax0(CConvsModeEnum mode, CExpr *expr, CSymbolTable *symTab)
         break;
     }
 
+    if (EXPR_CODE(expr) == EC_COMP_STMT){
+        CExprOfList *body = (CExprOfList *)expr;
+        CExpr *pragma = (CExpr *)(body->e_aux_info);
+        if (pragma &&
+	    convertSyntax0(mode, pragma, symTab) == 0)
+	    return 0;
+    }
+
     if(EXPR_ISDELETING(expr)) {
         converted = CONVS_REPLACE;
         newExpr = exprNull();

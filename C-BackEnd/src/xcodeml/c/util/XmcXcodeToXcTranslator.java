@@ -1,9 +1,3 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package xcodeml.c.util;
 
 import xcodeml.c.decompile.*;
@@ -38,7 +32,7 @@ import xcodeml.c.util.XmcBindingUtil;
 import xcodeml.util.XmStringUtil;
 import xcodeml.util.XmDomUtil;
 import xcodeml.util.XmTranslationException;
-import xcodeml.XmException;
+import xcodeml.util.XmException;
 import static xcodeml.util.XmDomUtil.getElement;
 import static xcodeml.util.XmDomUtil.getAttr;
 import static xcodeml.util.XmDomUtil.getContent;
@@ -350,8 +344,7 @@ public class XmcXcodeToXcTranslator {
                             Node valueChildNode = getContent(valueNode);
                             String valueChildNodeName = valueChildNode.getNodeName();
                             if ("intConstant".equals(valueChildNodeName)) {
-                                i = XmStringUtil.getAsCInt(null,
-                                                           getContentText(valueChildNode));
+                                i = XmStringUtil.getAsCInt(getContentText(valueChildNode));
 
                                 ident.setValue(new XcConstObj.IntConst(i++, XcBaseTypeEnum.INT));
                             } else {
@@ -1876,7 +1869,7 @@ public class XmcXcodeToXcTranslator {
                 if (childNode.getNodeType() != Node.ELEMENT_NODE) {
                     continue;
                 }
-		enterNodes(tc, parent, childNode);
+		enterNodes(tc, obj, childNode);
             }
 
 	    //            writer.decrementIndentLevel();
@@ -1950,7 +1943,8 @@ public class XmcXcodeToXcTranslator {
 		    continue;
 		}
 
-		String clauseName = XmDomUtil.getContentText(childNode).toLowerCase();
+		Node clauseNameNode = childNode.getFirstChild();
+		String clauseName = XmDomUtil.getContentText(clauseNameNode).toLowerCase();
 		String operator = "";
 
 		if (clauseName.equals("dev_resident"))          clauseName = "device_resident";	  
@@ -1975,7 +1969,7 @@ public class XmcXcodeToXcTranslator {
 		    if (operator != "") obj.addToken(operator + " :");
 
 		    if (!arg.getNodeName().equals("list")){
-			enterIntExprNode(tc, obj, arg);
+			enterNodes(tc, obj, arg);
 		    }
 		    else {
 			NodeList varList = arg.getChildNodes();
@@ -1993,7 +1987,7 @@ public class XmcXcodeToXcTranslator {
 		if (childNode.getNodeType() != Node.ELEMENT_NODE) {
 		    continue;
 		}
-		enterNodes(tc, parent, childNode);
+		enterNodes(tc, obj, childNode);
 	    }
 	}
 
@@ -2348,29 +2342,27 @@ public class XmcXcodeToXcTranslator {
             addChild(parent, obj);
 
             enterNodes(tc, obj,
-                       getElement(n, "lowerBound"),
-                       getElement(n, "upperBound"),
+                       getElement(n, "base"),
+                       getElement(n, "length"),
                        getElement(n, "step"));
         }
     }
 
-    // lowerBound
-    class LowerBoundVisitor extends XcodeNodeVisitor {
+    // base
+    class BaseVisitor extends XcodeNodeVisitor {
         @Override
         public void enter(TranslationContext tc, Node n, XcNode parent) {
-            XcIndexRangeObj.LowerBound obj = new XcIndexRangeObj.LowerBound();
-            addChild(parent, obj);
-            transChildren(tc, n, obj);
+            enterNodesWithNull(tc, parent,
+                    getContent(n));
         }
     }
 
-    // upperBound
-    class UpperBoundVisitor extends XcodeNodeVisitor {
+    // length
+    class LengthVisitor extends XcodeNodeVisitor {
         @Override
         public void enter(TranslationContext tc, Node n, XcNode parent) {
-            XcIndexRangeObj.UpperBound obj = new XcIndexRangeObj.UpperBound();
-            addChild(parent, obj);
-            transChildren(tc, n, obj);
+            enterNodesWithNull(tc, parent,
+                    getContent(n));
         }
     }
 
@@ -2378,9 +2370,8 @@ public class XmcXcodeToXcTranslator {
     class StepBoundVisitor extends XcodeNodeVisitor {
         @Override
         public void enter(TranslationContext tc, Node n, XcNode parent) {
-            XcIndexRangeObj.Step obj = new XcIndexRangeObj.Step();
-            addChild(parent, obj);
-            transChildren(tc, n, obj);
+            enterNodesWithNull(tc, parent,
+                    getContent(n));
         }
     }
 
@@ -2493,7 +2484,7 @@ public class XmcXcodeToXcTranslator {
             type.setIsArraySize(true);
             type.setIsArraySizeExpr(false);
 
-            type.setArraySize(XmStringUtil.getAsCInt(null, arraySizeStr));
+            type.setArraySize(XmStringUtil.getAsCInt(arraySizeStr));
         }
 
         type.setTempRefTypeId(getAttr(arrayTypeNode, "element_type"));
@@ -2558,8 +2549,7 @@ public class XmcXcodeToXcTranslator {
                     } else {
                         ident.setIsBitField(true);
                         ident.setIsBitFieldExpr(false);
-                        ident.setBitField(XmStringUtil.getAsCInt(null,
-                                                                 bitFieldStr));
+                        ident.setBitField(XmStringUtil.getAsCInt(bitFieldStr));
                     }
                 }
 
@@ -2891,7 +2881,8 @@ public class XmcXcodeToXcTranslator {
                        XcNode arrayRefObj) {
         List<Node> childNodes = XmDomUtil.collectChildNodes(arrayRefNode);
         Node arrayAddrNode = childNodes.remove(0);
-        if (! arrayAddrNode.getNodeName().equals("arrayAddr")) {
+        String nodeName = arrayAddrNode.getNodeName();
+        if (! nodeName.equals("arrayAddr") && ! nodeName.equals("Var")) {
             throw new XmTranslationException(arrayRefNode, "Invalid arrayRef: arrayAddr not found.");
         }
 
@@ -3055,8 +3046,8 @@ public class XmcXcodeToXcTranslator {
         new Pair("coArrayType", new CoArrayTypeVisitor()),
         new Pair("subArrayRef", new SubArrayRefVisitor()),
         new Pair("indexRange", new IndexRangeVisitor()),
-        new Pair("lowerBound", new LowerBoundVisitor()),
-        new Pair("upperBound", new UpperBoundVisitor()),
+        new Pair("base", new BaseVisitor()),
+        new Pair("length", new LengthVisitor()),
         new Pair("step", new StepBoundVisitor()),
     };
 

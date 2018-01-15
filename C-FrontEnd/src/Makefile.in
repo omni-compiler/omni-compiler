@@ -12,7 +12,7 @@ LEX     = @LEX@
 OBJECTS = c-parser.o c-lexer.o c-expr.o c-token.o c-exprcode.o c-dump.o c-comp.o c-reduce.o \
 	  c-xcodeml.o c-const.o c-gcctype.o c-option.o c-type.o c-convert.o \
 	  ccol-list.o ccol-hash.o c-main.o c-pragma.o c-omp-pragma.o c-xmp-pragma.o \
-	  c-acc-pragma.o c-omp-xcodeml.o c-xmp-xcodeml.o c-acc-xcodeml.o c-ptree.o
+	  c-acc-pragma.o c-omp-xcodeml.o c-xmp-xcodeml.o c-acc-xcodeml.o c-acc-comp.o c-ptree.o
 HEADERS = c-acc.h c-cmn.h c-comp.h c-const.h c-error.h c-expr.h c-gcctype.h c-lexyacc.h \
 	  c-omp.h c-option.h c-pragma.h c-ptree.h c-xcodeml.h c-xmp.h ccol-cmn.h \
 	  ccol-hash.h ccol-list.h ccol.h ../../include/config.h c-exprcode.h c-parser.h c-token.h

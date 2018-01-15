@@ -41,6 +41,10 @@ extern int Addr2Uint(void *x);
 #endif
 #endif /* SIMPLE_TYPE */
 
+/*
+ * Safe for the case if iter(p) (i.e. ID_NEXT(ip), EXT_ID_NEXT(ep)) is
+ * overwritten in the for clause.
+ */
 #define SAFE_FOREACH(p, q, list, iter)     \
     for ((p) = (list), (q) = (p)?iter(p):NULL;\
          (p) != NULL;\
@@ -59,8 +63,10 @@ extern int lineno;
 extern int need_keyword;
 extern int enable_need_type_keyword;
 extern int need_type_keyword;
+extern int need_do_keyword;
 extern int need_type_len;
 extern int need_check_user_defined;
+
 extern int lookup_col2(void);
 
 extern BASIC_DATA_TYPE defaultSingleRealType;
@@ -133,6 +139,7 @@ enum prog_state {
     ININTR,      /* interface */
     IN_TYPE_PARAM_DECL, /* type parameter declarations */
     IN_TYPE_BOUND_PROCS, /* type bound procedure declarations */
+    INENUM,     /* ENUM */
 };
 
 /* procedure states */
@@ -144,7 +151,7 @@ extern enum procedure_state current_proc_state;
 #define INDCL_OVER      ((int)CURRENT_STATE >= (int)INDATA)
 
 /* module visible state */
-enum module_state { M_DEFAULT, M_PUBLIC, M_PRIVATE, M_PROTECTED };
+enum module_state { M_DEFAULT, M_PUBLIC, M_PRIVATE };
 extern enum module_state current_module_state;
 
 /* control stack codes */
@@ -157,13 +164,18 @@ enum control_type {
     CTL_ELSE_WHERE,
     CTL_SELECT,
     CTL_CASE,
+    CTL_SELECT_TYPE,
+    CTL_TYPE_GUARD,
     CTL_STRUCT,
     CTL_OMP,
     CTL_XMP,
     CTL_ACC,
     CTL_CRITICAL,
-    CTL_BLOCK,
+    CTL_BLK,
     CTL_INTERFACE,
+    CTL_FORALL,
+    CTL_ENUM,
+    CTL_ASSOCIATE,
 };
 
 #define CONTROL_TYPE_NAMES {\
@@ -180,8 +192,11 @@ enum control_type {
     "CTL_XMP",\
     "CTL_ACC",\
     "CTL_CRITICAL",\
-    "CTL_BLOCK",\
+    "CTL_BLK",\
     "CTL_INTERFACE",\
+    "CTL_FORALL",\
+    "CTL_ENUM",\
+    "CTL_ASSOCIATE",\
 }
 
 typedef struct environment {
@@ -205,6 +220,7 @@ typedef struct environment {
 #define ENV_INTERFACES(l)            ((l)->interfaces)
 #define ENV_BLOCKS(l)                ((l)->blocks)
 #define ENV_USE_DECLS(l)             ((l)->use_decls)
+#define ENV_PARENT(l)                ((l)->parent)
 
 extern ENV current_local_env;
 
@@ -231,6 +247,14 @@ typedef struct control
 #define CTL_SAVE(l)             ((l)->save)
 #define CTL_BLOCK(l)            ((l)->v1)
 #define CTL_CLIENT(l)           ((l)->v2)
+#define CTL_ENV(l)              (&((l)->local_env))
+#define CTL_SYMBOLS(l)          ((CTL_ENV(l))->symbols)
+#define CTL_STRUCT_DECLS(l)     ((CTL_ENV(l))->struct_decls)
+#define CTL_COMMON_SYMBOLS(l)   ((CTL_ENV(l))->common_symbols)
+#define CTL_LABELS(l)           ((CTL_ENV(l))->labels)
+#define CTL_EXTERNAL_SYMBOLS(l) ((CTL_ENV(l))->external_symbols)
+#define CTL_BLOCKS(l)           ((CTL_ENV(l))->blocks)
+
 
 #define CTL_IF_STATEMENT(l)     ((l)->v2)
 #define CTL_IF_THEN(l)          (EXPR_ARG2((l)->v2))
@@ -238,6 +262,12 @@ typedef struct control
 #define CTL_DO_BODY(l)          (EXPR_ARG5(EXPR_ARG2((l)->v1)))
 #define CTL_DO_LABEL(l)         ((l)->dolabel)
 #define CTL_DO_VAR(l)           ((l)->dovar)
+#define CTL_DO_LOCAL_ENV(l)     (&((l)->local_env))
+#define CTL_DO_CONST_NAME(l)    (EXPR_ARG1((l)->v1))
+
+#define CTL_DOWHILE_CONST_NAME(l)         (EXPR_ARG3((l)->v1))
+#define CTL_DOCONCURRENT_CONST_NAME(l)    (EXPR_ARG3((l)->v1))
+
 #define CTL_STRUCT_TYPEDESC(l)  (EXPV_TYPE((l)->v1))
 
 #define CTL_CRIT_STATEMENT(l)   ((l)->v2)
@@ -249,7 +279,13 @@ typedef struct control
 #define CTL_WHERE_ELSE(l)          (EXPR_ARG3((l)->v2))
 
 #define CTL_SELECT_STATEMENT_BODY(l)    (EXPR_ARG2((l)->v1))
-#define CTL_CASE_BLOCK(l)     (EXPR_ARG2((l)->v1))
+#define CTL_SELECT_CONST_NAME(l)        (EXPR_ARG3((l)->v1))
+#define CTL_SELECT_TYPE_SELECTOR(l)     (EXPR_ARG1((l)->v1))
+#define CTL_SELECT_TYPE_ASSICIATE(l)    (EXPR_ARG4((l)->v1))
+#define CTL_CASE_BLOCK(l)               (EXPR_ARG2((l)->v1))
+#define CTL_CASE_CONST_NAME(l)          (EXPR_ARG3((l)->v1))
+#define CTL_TYPE_GUARD_BLOCK(l)         (EXPR_ARG2((l)->v1))
+#define CTL_TYPE_GUARD_CONST_NAME(l)    (EXPR_ARG3((l)->v1))
 
 #define CTL_OMP_ARG(l)	((l)->v2)
 #define CTL_OMP_ARG_DIR(l) (EXPR_INT(EXPR_ARG1((l)->v2)))
@@ -267,13 +303,17 @@ typedef struct control
 #define CTL_BLOCK_STATEMENT(l)                   ((l)->v2)
 #define CTL_BLOCK_BODY(l)                        (EXPR_ARG1((l)->v2))
 #define CTL_BLOCK_CONST_NAME(l)                  (EXPR_ARG2((l)->v2))
-#define CTL_BLOCK_LOCAL_ENV(l)                   (&((l)->local_env))
-#define CTL_BLOCK_LOCAL_SYMBOLS(l)               ((CTL_BLOCK_LOCAL_ENV(l))->symbols)
-#define CTL_BLOCK_LOCAL_STRUCT_DECLS(l)          ((CTL_BLOCK_LOCAL_ENV(l))->struct_decls)
-#define CTL_BLOCK_LOCAL_COMMON_SYMBOLS(l)        ((CTL_BLOCK_LOCAL_ENV(l))->common_symbols)
-#define CTL_BLOCK_LOCAL_LABELS(l)                ((CTL_BLOCK_LOCAL_ENV(l))->labels)
-#define CTL_BLOCK_LOCAL_EXTERNAL_SYMBOLS(l)      ((CTL_BLOCK_LOCAL_ENV(l))->external_symbols)
-#define CTL_BLOCK_LOCAL_BLOCKS(l)                ((CTL_BLOCK_LOCAL_ENV(l))->blocks)
+
+#define CTL_FORALL_STATEMENT(l)                   ((l)->v2)
+#define CTL_FORALL_HEADER(l)                      (EXPR_ARG1((l)->v1))
+#define CTL_FORALL_INIT(l)                        (EXPR_ARG1(CTL_FORALL_HEADER(l)))
+#define CTL_FORALL_MASK(l)                        (EXPR_ARG2(CTL_FORALL_HEADER(l)))
+#define CTL_FORALL_BODY(l)                        (EXPR_ARG2((l)->v1))
+#define CTL_FORALL_CONST_NAME(l)                  (EXPR_ARG3((l)->v1))
+
+
+#define CTL_ASSOCIATE_BODY(l)                     (EXPR_ARG1((l)->v1))
+#define CTL_ASSOCIATE_CONST_NAME(l)               (EXPR_ARG2((l)->v1))
 
 
 #define CTL_NEXT(u)               ((u)->next)
@@ -413,7 +453,11 @@ extern int unit_ctl_level;
 #define PARENT_LOCAL_SYMBOLS        (current_local_env->parent->symbols)
 #define PARENT_LOCAL_STRUCT_DECLS   (current_local_env->parent->struct_decls)
 #define PARENT_LOCAL_COMMON_SYMBOLS (current_local_env->parent->common_symbols)
+#define PARENT_LOCAL_LABELS         (current_local_env->parent->labels)
 #define PARENT_EXTERNAL_SYMBOLS     (current_local_env->parent->external_symbols)
+#define PARENT_LOCAL_BLOCKS         (current_local_env->parent->blocks)
+#define PARENT_LOCAL_INTERFACES     (current_local_env->parent->interfaces)
+#define PARENT_LOCAL_USE_DECLS      (current_local_env->parent->use_decls)
 
 /*
  * Language specification level. Mainly used for intrinsic table
@@ -439,6 +483,23 @@ extern int unit_ctl_level;
 #define LANGSPEC_F2008_SET          (LANGSPEC_F2008_STRICT_SET | LANGSPEC_NONSTD)
 #define LANGSPEC_DEFAULT_SET        LANGSPEC_F2008_SET
 extern int langSpecSet;
+
+#define INTRINSIC_CLASS_NONE           0x0000
+#define INTRINSIC_CLASS_ATOMIC         0x0001
+#define INTRINSIC_CLASS_ELEMENTAL_FUN  0x0002
+#define INTRINSIC_CLASS_ELEMENTAL_SUB  0x0004
+#define INTRINSIC_CLASS_INQUIRY        0x0008
+#define INTRINSIC_CLASS_PURE_SUB       0x0010
+#define INTRINSIC_CLASS_SUB            0x0020
+#define INTRINSIC_CLASS_TRANS          0x0040
+
+#define INTR_CLASS_A       INTRINSIC_CLASS_ATOMIC
+#define INTR_CLASS_E       INTRINSIC_CLASS_ELEMENTAL_FUN
+#define INTR_CLASS_ES      INTRINSIC_CLASS_ELEMENTAL_SUB
+#define INTR_CLASS_I       INTRINSIC_CLASS_INQUIRY
+#define INTR_CLASS_PS      INTRINSIC_CLASS_PURE_SUB
+#define INTR_CLASS_S       INTRINSIC_CLASS_SUB
+#define INTR_CLASS_T       INTRINSIC_CLASS_TRANS
 
 extern ID this_label;
 
@@ -521,6 +582,7 @@ extern void     warning_at_id EXC_VARARGS(ID, x);
 extern void     debug EXC_VARARGS(char *, fmt);
 
 extern void     initialize_lex _ANSI_ARGS_((void));
+extern void     finalize_lex _ANSI_ARGS_((void));
 extern void     initialize_compile _ANSI_ARGS_((void));
 extern void     finalize_compile _ANSI_ARGS_((void));
 extern void     initialize_compile_procedure _ANSI_ARGS_((void));
@@ -543,6 +605,12 @@ extern void     check_INDATA _ANSI_ARGS_((void));
 extern void     check_INDCL _ANSI_ARGS_((void));
 extern void     check_INEXEC _ANSI_ARGS_((void));
 extern void     check_NOT_INBLOCK _ANSI_ARGS_((void));
+extern void     check_INENUM _ANSI_ARGS_((void));
+extern int      check_in_interface _ANSI_ARGS_((void));
+extern int      check_in_module_procedure _ANSI_ARGS_((void));
+extern int      in_interface _ANSI_ARGS_((void));
+extern int      in_module_procedure _ANSI_ARGS_((void));
+extern int      has_import_all _ANSI_ARGS_((void));
 extern void     include_file(char *name, int inside_use);
 extern void     push_unit_ctl _ANSI_ARGS_((enum prog_state));
 extern void     pop_unit_ctl _ANSI_ARGS_((void));
@@ -634,6 +702,8 @@ extern int      type_is_parent_type _ANSI_ARGS_((TYPE_DESC parent, TYPE_DESC chi
 extern int      type_is_unlimited_class _ANSI_ARGS_((TYPE_DESC tp));
 extern int      type_is_class_of _ANSI_ARGS_((TYPE_DESC class, TYPE_DESC derived_type));
 extern int      compare_derived_type_name _ANSI_ARGS_((TYPE_DESC tp1, TYPE_DESC tp2));
+extern int      type_is_nopolymorphic_abstract _ANSI_ARGS_((TYPE_DESC tp));
+
 
 extern ID       find_type _ANSI_ARGS_((TYPE_DESC struct_td, SYMBOL sym));
 extern ID       find_external_ident_head _ANSI_ARGS_((SYMBOL s));
@@ -646,6 +716,7 @@ extern TYPE_DESC  find_struct_decl_head _ANSI_ARGS_((SYMBOL s, TYPE_DESC head));
 extern TYPE_DESC  find_struct_decl _ANSI_ARGS_((SYMBOL s));
 extern TYPE_DESC  find_struct_decl_parent _ANSI_ARGS_((SYMBOL s));
 extern TYPE_DESC  find_struct_decl_sibling _ANSI_ARGS_((SYMBOL s));
+extern int      id_link_remove _ANSI_ARGS_((ID * head, ID tobeRemoved));
 
 extern void     initialize_intrinsic _ANSI_ARGS_((void));
 extern int      is_intrinsic_function _ANSI_ARGS_((ID id));
@@ -663,6 +734,10 @@ extern void     unset_save_attr_in_dummy_args(EXT_ID ep);
 
 extern void     declare_storage _ANSI_ARGS_((ID id, enum storage_class stg));
 
+extern void     id_multilize _ANSI_ARGS_((ID id));
+extern ID       multi_find_class  _ANSI_ARGS_((ID id, enum name_class class));
+
+
 extern TYPE_DESC        compile_type _ANSI_ARGS_((expr x, int allow_predecl));
 extern TYPE_DESC        compile_basic_type _ANSI_ARGS_((expr x));
 extern TYPE_DESC        compile_derived_type _ANSI_ARGS_((expr x, int allow_predecl));
@@ -671,17 +746,27 @@ extern expv     compile_int_constant _ANSI_ARGS_((expr x));
 extern void     compile_pragma_statement _ANSI_ARGS_((expr x));
 extern void     compile_VOLATILE_statement _ANSI_ARGS_((expr id_list));
 extern void     compile_VALUE_statement _ANSI_ARGS_((expr id_list));
+extern void     compile_ASYNCHRONOUS_statement _ANSI_ARGS_((expr id_list));
+extern void     compile_CONTIGUOUS_statement _ANSI_ARGS_((expr id_list));
+extern void     compile_BIND_statement _ANSI_ARGS_((expr bind_opt, expr id_list));
 
 extern void     compile_procedure_declaration _ANSI_ARGS_((expr x));
 extern void     compile_type_bound_procedure _ANSI_ARGS_((expr x));
-extern void     compile_type_generic_procedure _ANSI_ARGS_((expr x));
+extern void     compile_type_bound_generic_procedure _ANSI_ARGS_((expr x));
+extern void     compile_FINAL_statement _ANSI_ARGS_((expr x));
+#define FINALIZER_PROCEDURE "_final"
 extern void     update_type_bound_procedures_forall _ANSI_ARGS_((TYPE_DESC struct_decls, ID local_symbols));
 extern int      type_bound_procedure_type_match _ANSI_ARGS_((EXT_ID f1, EXT_ID f2, int has_pass_arg));
 extern int      is_procedure_acceptable _ANSI_ARGS_((EXT_ID proc, expv actual_args));
 
 extern int      type_is_soft_compatible _ANSI_ARGS_((TYPE_DESC tp, TYPE_DESC tq));
+extern int      type_is_strict_compatible _ANSI_ARGS_((TYPE_DESC tp, TYPE_DESC tq, int compare_rank, int issue_error));
 extern int      type_is_compatible_for_assignment
                     _ANSI_ARGS_((TYPE_DESC tp1, TYPE_DESC tp2));
+extern int      type_is_compatible_for_allocation
+                    _ANSI_ARGS_((TYPE_DESC left, TYPE_DESC right));
+extern int      type_is_pointer_assignable(TYPE_DESC vPtrTyp, TYPE_DESC vPteTyp);
+extern int      expv_is_pointer_assignable(expv x, expr vPointer, expr vPointee);
 extern int      struct_type_is_compatible_for_assignment
                     _ANSI_ARGS_((TYPE_DESC tp1, TYPE_DESC tp2, int is_pointer_set));
 extern int      type_is_specific_than
@@ -689,14 +774,13 @@ extern int      type_is_specific_than
 extern void     function_type_udpate
                     _ANSI_ARGS_((TYPE_DESC ftp, ID idList));
 extern int      function_type_is_appliable
-                    _ANSI_ARGS_((TYPE_DESC ftp, expv args));
+                    _ANSI_ARGS_((TYPE_DESC ftp, expv args, int issue_error));
 extern int      function_type_is_compatible
                     _ANSI_ARGS_((const TYPE_DESC ftp1, const TYPE_DESC ftp2));
 extern int      type_bound_procedure_types_are_compatible
                     _ANSI_ARGS_((const TYPE_DESC tbp1, const TYPE_DESC tbp2));
 
 extern int      check_tbp_pass_arg(TYPE_DESC stp, TYPE_DESC tbp, TYPE_DESC ftp);
-
 extern int      procedure_has_pass_arg
                     _ANSI_ARGS_((const TYPE_DESC ftp,
                                  const SYMBOL pass_arg,
@@ -708,7 +792,7 @@ extern void     replace_or_assign_type
                     _ANSI_ARGS_((TYPE_DESC *tp, const TYPE_DESC new_tp));
 
 extern int      are_dimension_and_shape_conformant_by_type _ANSI_ARGS_((
-    expr x, TYPE_DESC lt, TYPE_DESC rt, expv *shapePtr));
+    expr x, TYPE_DESC lt, TYPE_DESC rt, expv *shapePtr, int issue_error));
 
 extern TYPE_DESC
 	get_binary_numeric_intrinsic_operation_type(TYPE_DESC t0,
@@ -819,7 +903,7 @@ extern void     fix_type _ANSI_ARGS_((ID id));
 extern void     compile_FORMAT_decl _ANSI_ARGS_((int st_no, expr x));
 extern void     FinalizeFormat _ANSI_ARGS_((void));
 
-extern void     compile_DATA_decl _ANSI_ARGS_((expr x));
+extern void     compile_DATA_decl_or_statement _ANSI_ARGS_((expr x, int is_declaration));
 extern void     compile_EXTERNAL_decl _ANSI_ARGS_((expr x));
 
 extern void     compile_IO_statement _ANSI_ARGS_((expr x));
@@ -828,6 +912,8 @@ extern void     compile_CLOSE_statement _ANSI_ARGS_((expr x));
 extern void     compile_FPOS_statement _ANSI_ARGS_((expr x));
 extern void     compile_INQUIRE_statement _ANSI_ARGS_((expr x));
 extern void     compile_NAMELIST_decl _ANSI_ARGS_((expr x));
+extern void     compile_WAIT_statement _ANSI_ARGS_((expr x));
+extern void     compile_FLUSH_statement _ANSI_ARGS_((expr x));
 
 extern void     compile_INTRINSIC_decl _ANSI_ARGS_((expr id_list));
 extern void     compile_SAVE_decl _ANSI_ARGS_((expr id_list));
@@ -936,6 +1022,7 @@ extern void                    shrink_type(TYPE_DESC tp);
 extern TYPE_DESC               reduce_type(TYPE_DESC tp);
 
 extern int is_array_shape_assumed(TYPE_DESC tp);
+extern int is_array_implicit_shape(TYPE_DESC tp);
 //extern int is_descendant_coindexed(TYPE_DESC tp);
 extern int has_coarray_component(TYPE_DESC tp);
 

@@ -1,16 +1,9 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package xcodeml.c.type;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
-
-import xcodeml.XmException;
+import xcodeml.util.XmException;
 import xcodeml.c.util.XcLazyVisitor;
 
 /**

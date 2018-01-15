@@ -35,9 +35,10 @@ Process Options
 
 XcalableMP Options
 
-  -omp,--openmp        : enable OpenMP function.
-  -xacc,--xcalableacc  : enable XcalableACC function.
-  -max_assumed_shape=N : specifies the maximum number of assumed-shape array arguments (default: 16)
+  -omp,--openmp                    : enable OpenMP function.
+  -xacc[=pgi],--xcalableacc[=pgi]  : enable XcalableACC function. When adding "=pgi",
+                                     PGI compiler is used as a backend OpenACC compiler.
+  -max_assumed_shape=N             : specifies the maximum number of assumed-shape array arguments (default: 16)
 EOF
 }
 
@@ -198,7 +199,16 @@ function xmpf90_set_parameters()
 		fi
 		ENABLE_OPENACC=true
 		;;
-	    --xcalableacc|-xacc)
+            --xcalableacc|-xacc|--xcalableacc=*|-xacc=*)
+		local tmp=${1}
+		tmp=${tmp#*=}
+		if [ "pgi" = "$tmp" ]; then
+		    other_args+=("-acc")
+		elif [ "-xacc" = "$tmp" ]; then
+		    : #do nothing
+		else
+		    omni_error_exit "Unknown OpenACC compiler for XACC"
+		fi
 		ENABLE_XACC=true;;
 	    --noopenacc|-noacc)
 		ENABLE_OPENACC=false;;
@@ -210,6 +220,8 @@ function xmpf90_set_parameters()
 		ENABLE_TLOG_ALL=true;;
 	    --tlog)
 		ENABLE_TLOG=true;;
+	    -Mnolarge_arrays)
+		omni_error_exit "-Mnolarge_arrays option cannot be used.";;
 	    *)
 		other_args+=("$1");;
 	esac

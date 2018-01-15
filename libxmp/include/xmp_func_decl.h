@@ -88,7 +88,7 @@ extern void _XMP_coarray_malloc_image_info_6(const int, const int, const int, co
 extern void _XMP_coarray_malloc_image_info_7(const int, const int, const int, const int, const int, const int);
 
 extern void _XMP_coarray_malloc(void **, void *);
-extern void _XMP_coarray_regmem(void **, void *);   // for Coarray F Ver.4
+extern void _XMP_coarray_regmem(void **, void *);   // for Coarray Fortran CA-method
 extern void _XMP_coarray_attach(void **, void *, const size_t);
 extern void _XMP_coarray_detach(void **);
 extern void _XMP_coarray_lastly_deallocate();
@@ -293,10 +293,13 @@ extern void _XMP_reflect__(char *a);
 extern void _XMP_wait_async__(int async_id);
 extern void _XMP_reflect_async__(void *a, int async_id);
 
+// xmp_reduce_shadow.c
+extern void _XMP_set_reduce_shadow__(void *a, int dim, int lwidth, int uwidth, int is_periodic);
+extern void _XMP_reduce_shadow__(void *a);
+
 // xmp_runtime.c
-//extern void _XMP_init(void);
-extern void _XMP_init(int, char**); 
-extern void _XMP_finalize(int);
+//extern void _XMP_init(int, char**, MPI_Comm); 
+//extern void _XMP_finalize(bool);
 extern char *_XMP_desc_of(void *p);
 
 // xmp_shadow.c

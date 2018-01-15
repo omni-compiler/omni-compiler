@@ -1,41 +1,37 @@
 package xcodeml.c.decompile;
 
-import java.util.List;
-import java.util.ArrayList;
-
-import xcodeml.XmException;
+import xcodeml.util.XmException;
 import xcodeml.c.obj.XcNode;
-import xcodeml.c.type.XcIdent;
-import xcodeml.c.type.XcType;
 import xcodeml.c.util.XmcWriter;
 
 public class XcIndexRangeObj extends XcObj implements XcExprObj
 {
-    private XcExprObj _lowerBound;
-    private XcExprObj _upperBound;
+    private XcExprObj _base;
+    private XcExprObj _length;
     private XcExprObj _step;
 
     @Override
     public void appendCode(XmcWriter w) throws XmException
     {
-	w.add(_lowerBound).add(":")
-         .add(_upperBound).add(":").add(_step);
+        w.add(_base).add(":").add(_length).add(":").add(_step);
     }
 
     @Override
     public void addChild(XcNode child)
     {
-        if (child instanceof UpperBound){
-            _upperBound = ((UpperBound)child).getExpr();
-        }
-	else if(child instanceof LowerBound){
-            _lowerBound = ((LowerBound)child).getExpr();
-        }
-	else if(child instanceof Step){
-            _step = ((Step)child).getExpr();
-        }
-	else
+        if (child instanceof XcExprObj){
+            if(_base == null){
+                _base = (XcExprObj)child;
+            }else if(_length == null){
+                _length = (XcExprObj)child;
+            }else if(_step == null){
+                _step = (XcExprObj)child;
+            }else{
+                throw new IllegalArgumentException(child.getClass().getName());
+            }
+        }else {
             throw new IllegalArgumentException(child.getClass().getName());
+        }
     }
 
     @Override
@@ -46,70 +42,67 @@ public class XcIndexRangeObj extends XcObj implements XcExprObj
     @Override
     public XcNode[] getChild()
     {
-        return new XcNode[] {_lowerBound, _upperBound, _step};
+        return new XcNode[] {_base, _length, _step};
     }
 
     @Override
     public void setChild(int index, XcNode child)
     {
-        if ((child instanceof XcExprObj) == false)
-            throw new IllegalArgumentException(child.getClass().getName());
-
-        XcExprObj expr = (XcExprObj)child;
-
-        switch (index){
-        case 0:
-            _lowerBound = expr;
-            break;
-        case 1:
-            _upperBound = expr;
-            break;
-        case 2:
-            _step = expr;
-            break;
-        default:
-            throw new IllegalArgumentException(index + ":" + child.getClass().getName());
+        if(child instanceof XcExprObj) {
+            switch (index) {
+            case 0:
+                _base = (XcExprObj) child;
+                return;
+            case 1:
+                _length = (XcExprObj) child;
+                return;
+            case 2:
+                _step = (XcExprObj) child;
+                return;
+            default:
+            }
         }
+        throw new IllegalArgumentException(index + ":" + child.getClass().getName());
     }
 
     /**
-     * Sets a lowerBound of the operator.
+     * Sets a base of the operator.
      * 
-     * @param lowerBound a lowerBound of the operator.
+     * @param base a base of the operator.
      */
-    public void setLowerBound(XcExprObj lowerBound)
+    public void setBase(XcExprObj base)
     {
-        _lowerBound = lowerBound;
+        _base = base;
     }
 
     /**
-     * Gets a lowerBound of the operator.
+     * Gets a base of the operator.
      * 
-     * @return a lowerBound of the operator.
+     * @return a base of the operator.
      */
-    public XcExprObj getLowerBound()
+    public XcExprObj getBase()
     {
-        return _lowerBound;
+        return _base;
     }
 
     /**
-     * Sets an upperBound of the operator.
+     * Sets an length of the operator.
      * 
-     * @param upperBound an upperBound of the operator.
+     * @param length an length of the operator.
      */
-    public void setUpperBound(XcExprObj upperBound)
+    public void setLength(XcExprObj length)
     {
-        _upperBound = upperBound;
+        _length = length;
     }
 
     /**
-     * Gets an upperBound of the operator.
+     * Gets an length of the operator.
      * 
-     * @return an upperBound of the operator.
+     * @return an length of the operator.
      */
-    public XcExprObj getUpperBound()
+    public XcExprObj getLength()
     {
-        return _upperBound;
+        return _length;
     }
 
     /**
@@ -131,82 +124,4 @@ public class XcIndexRangeObj extends XcObj implements XcExprObj
     {
         return _step;
     }
-
-    /**
-     * Internal object represents upperBound,lowerBound,step.
-     */
-    private static class Index extends XcObj
-    {
-        private XcExprObj _expr;
-
-        /**
-         * get sub array index expression object.
-         */
-        public XcExprObj getExpr()
-        {
-            return _expr;
-        }
-
-        @Override
-        public void addChild(XcNode child)
-        {
-            if(child instanceof XcExprObj)
-                _expr = (XcExprObj)child;
-            else
-                throw new IllegalArgumentException(child.getClass().getName());
-        }
-
-        @Override
-        public void checkChild()
-        {
-            if(_expr == null)
-                throw new IllegalArgumentException();
-        }
-
-        @Override
-        public XcNode[] getChild()
-        {
-            return new XcNode[] {_expr};
-        }
-
-        @Override
-        public void setChild(int index, XcNode child)
-        {
-            if((child instanceof XcExprObj) == false)
-                throw new IllegalArgumentException(child.getClass().getName());
-
-            if(index != 0)
-                throw new IllegalArgumentException(index + ":" + child.getClass().getName());
-
-            _expr = (XcExprObj)child;
-        }
-
-        @Override
-        public void appendCode(XmcWriter w) throws XmException
-        {
-            w.add(_expr);
-        }
-    }
-
-    /**
-     * Internal object represents subArrayRef.upperBound.
-     */
-    public static class UpperBound extends Index
-    {
-    }
-
-    /**
-     * Internal object represents subArrayRef.lowerBound.
-     */
-    public static class LowerBound extends Index
-    {
-    }
-
-    /**
-     * Internal object represents subArrayRef.step.
-     */
-    public static class Step extends Index
-    {
-    }
-
 }

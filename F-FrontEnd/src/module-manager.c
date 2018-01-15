@@ -164,7 +164,7 @@ intermediate_file_name(char * filename,
     char tmp[FILE_NAME_LEN];
     extern char *modincludeDirv;
     if (modincludeDirv) {
-        snprintf(filename, strnlen(filename, FILE_NAME_LEN),
+        snprintf(filename, strnlen(modincludeDirv, FILE_NAME_LEN)+2,
                  "%s/", modincludeDirv);
     }
     if (MODULE_IS_MODULE(mod)) {
@@ -332,7 +332,7 @@ import_module(const SYMBOL name,
 }
 
 /**
- * import public identifiers from module-manager.
+ * import public identifiers from module-manager as submodule.
  */
 int
 import_submodule(const SYMBOL module_name,
@@ -340,4 +340,20 @@ import_submodule(const SYMBOL module_name,
                  struct module ** pmod)
 {
     return import_intermediate_file(module_name, submodule_name, pmod, TRUE);
+}
+
+void include_module_file(FILE *fp, SYMBOL mod_name)
+{
+    struct module *mod;
+    FILE *mod_fp;
+    int ch;
+
+    mod = find_module(mod_name, NULL, FALSE);
+    if(mod == NULL || mod->filepath == NULL) return;
+    if((mod_fp = fopen(mod->filepath,"r")) == NULL){
+        fatal("cannon open xmod file '%s'",mod->filepath);
+    }
+    while((ch = getc(mod_fp)) != EOF)
+        putc(ch,fp);
+    return;
 }

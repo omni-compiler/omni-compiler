@@ -1686,17 +1686,13 @@ void _XMP_gasnet_sync_images(const int num, int image_set[num], int *status)
     _XMP_fatal_nomsg();
   }
   
-  int rank_set[num];
-
-  for(int i=0;i<num;i++)
-    rank_set[i] = image_set[i] - 1;
-
-  _notify_sync_images(num, rank_set);
-  _wait_sync_images(num, rank_set);
+  _notify_sync_images(num, image_set);
+  _wait_sync_images(num, image_set);
 
   // Update table for post-processing
   gasnet_hsl_lock(&_hsl);
   for(int i=0;i<num;i++)
-    _sync_images_table[rank_set[i]]--;
+    _sync_images_table[image_set[i]]--;
+  
   gasnet_hsl_unlock(&_hsl);
 }

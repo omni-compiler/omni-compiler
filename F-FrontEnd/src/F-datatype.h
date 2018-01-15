@@ -37,6 +37,7 @@ typedef enum datatype {
                          * comforms to the type of the left hand
                          * expression. */
     TYPE_VOID,          /* 18 type of subroutine call */
+    TYPE_ENUM,          /* 19 type of enum */
     TYPE_END
 } BASIC_DATA_TYPE;
 
@@ -45,6 +46,11 @@ typedef enum array_assume_kind {
     ASSUMED_SIZE,
     ASSUMED_SHAPE
 } ARRAY_ASSUME_KIND;
+
+#define isValidType(tp)         \
+    (tp != NULL && get_basic_type(tp) != TYPE_UNKNOWN)
+
+#define isValidTypedExpv(v)     (v != NULL && isValidType(EXPV_TYPE(v)))
 
 #define N_BASIC_TYPES ((int)TYPE_END)
 
@@ -100,6 +106,8 @@ typedef struct type_descriptor
     int is_modified;           /* modified with VOLATILE or ASYNCHRONOUS */
     expv bind_name;            /* ISO BIND C name attribute */
 
+    int is_access_inferred;    /* boolean flag that tell if the access-spec is
+                                  inferred or clearly stated */
     struct type_attr {
 #define TYPE_ATTR_PARAMETER         0x00000001
 #define TYPE_ATTR_ALLOCATABLE       0x00000002
@@ -128,6 +136,10 @@ typedef struct type_descriptor
 #define TYPE_ATTR_VALUE             0x01000000
 #define TYPE_ATTR_MODULE            0x02000000 /* for module function/subroutine */
 #define TYPE_ATTR_PROCEDURE         0x04000000 /* for procedure variables */
+#define TYPE_ATTR_ASYNCHRONOUS      0x08000000
+#define TYPE_ATTR_ABSTRACT          0x10000000 /* for abstract derived-type or abstract interface */
+#define TYPE_ATTR_CONTIGUOUS        0x20000000
+#define TYPE_ATTR_IMPURE            0x40000000
         uint32_t type_attr_flags;
 #define TYPE_EXFLAGS_IMPLICIT       0x00000001 /* implicitly defined or not */
 #define TYPE_EXFLAGS_OVERRIDDEN     0x00000002 /* type is overridden by child */
@@ -136,6 +148,7 @@ typedef struct type_descriptor
                                                   contains undefined function. */
 #define TYPE_EXFLAGS_FOR_FUNC_SELF  0x00000010 /* type is for the function itself */
 #define TYPE_EXFLAGS_UNCHANGABLE    0x00000020 /* type is not able to change */
+#define TYPE_EXFLAGS_READONLY       0x00000040 /* type is for read only */
         uint32_t exflags;
     } attr; /* FbasicType */
     struct {
@@ -169,6 +182,7 @@ typedef struct type_descriptor
         int is_internal;                /* for internal subprograms (function/subroutine in the contain block)*/
         int is_module_procedure;        /* used as a module procedure */ /* may not be required */
         int is_visible_intrinsic;       /* TRUE if non standard intrinsic */
+        int is_interface;               /* TRUE if the function is a interface */
 
         int has_binding_arg;
         int has_pass_arg;                   /* for the function type of procedure variable OR type-bound procedure */
@@ -196,6 +210,7 @@ extern TYPE_DESC basic_type_desc[];
 #define TYPE_LINK(tp)           ((tp)->link)
 #define TYPE_SLINK(tp)          ((tp)->struct_link)
 #define TYPE_IS_DECLARED(tp)    ((tp)->is_declared)
+#define TYPE_ACCESS_IS_INFERRED(tp) ((tp)->is_access_inferred)
 #define TYPE_IS_COINDEXED(tp)   (tp != NULL && (tp)->codims)
 #define TYPE_BASIC_TYPE(tp)     ((tp)->basic_type)
 #define TYPE_REF(tp)            ((tp)->ref)
@@ -295,6 +310,18 @@ extern TYPE_DESC basic_type_desc[];
 #define TYPE_IS_VALUE(tp)           ((tp)->attr.type_attr_flags &   TYPE_ATTR_VALUE)
 #define TYPE_SET_VALUE(tp)          ((tp)->attr.type_attr_flags |=  TYPE_ATTR_VALUE)
 #define TYPE_UNSET_VALUE(tp)        ((tp)->attr.type_attr_flags &= ~TYPE_ATTR_VALUE)
+#define TYPE_IS_ASYNCHRONOUS(tp)    ((tp)->attr.type_attr_flags &   TYPE_ATTR_ASYNCHRONOUS)
+#define TYPE_SET_ASYNCHRONOUS(tp)   ((tp)->attr.type_attr_flags |=  TYPE_ATTR_ASYNCHRONOUS)
+#define TYPE_UNSET_ASYNCHRONOUS(tp) ((tp)->attr.type_attr_flags &= ~TYPE_ATTR_ASYNCHRONOUS)
+#define TYPE_IS_ABSTRACT(tp)        ((tp)->attr.type_attr_flags &   TYPE_ATTR_ABSTRACT)
+#define TYPE_SET_ABSTRACT(tp)       ((tp)->attr.type_attr_flags |=  TYPE_ATTR_ABSTRACT)
+#define TYPE_UNSET_ABSTRACT(tp)     ((tp)->attr.type_attr_flags &= ~TYPE_ATTR_ABSTRACT)
+#define TYPE_IS_CONTIGUOUS(tp)      ((tp)->attr.type_attr_flags &   TYPE_ATTR_CONTIGUOUS)
+#define TYPE_SET_CONTIGUOUS(tp)     ((tp)->attr.type_attr_flags |=  TYPE_ATTR_CONTIGUOUS)
+#define TYPE_UNSET_CONTIGUOUS(tp)   ((tp)->attr.type_attr_flags &= ~TYPE_ATTR_CONTIGUOUS)
+#define TYPE_IS_IMPURE(tp)          ((tp)->attr.type_attr_flags &   TYPE_ATTR_IMPURE)
+#define TYPE_SET_IMPURE(tp)         ((tp)->attr.type_attr_flags |=  TYPE_ATTR_IMPURE)
+#define TYPE_UNSET_IMPURE(tp)       ((tp)->attr.type_attr_flags &= ~TYPE_ATTR_IMPURE)
 
 #define TYPE_EXTATTR_FLAGS(tp)      ((tp)->attr.exflags)
 #define TYPE_IS_IMPLICIT(tp)        ((tp)->attr.exflags &   TYPE_EXFLAGS_IMPLICIT)
@@ -316,9 +343,13 @@ extern TYPE_DESC basic_type_desc[];
 #define TYPE_SET_FOR_FUNC_SELF(tp)  ((tp)->attr.exflags |=  TYPE_EXFLAGS_FOR_FUNC_SELF)
 #define TYPE_UNSET_FOR_FUNC_SELF(tp) ((tp)->attr.exflags &= ~TYPE_EXFLAGS_FOR_FUNC_SELF)
 
-#define TYPE_IS_UNCHANGABLE(tp)   ((tp)->attr.exflags &   TYPE_EXFLAGS_UNCHANGABLE)
-#define TYPE_SET_UNCHANGABLE(tp)  ((tp)->attr.exflags |=  TYPE_EXFLAGS_UNCHANGABLE)
-#define TYPE_UNSET_UNCHANGABLE(tp) ((tp)->attr.exflags &= ~TYPE_EXFLAGS_UNCHANGABLE)
+#define TYPE_IS_UNCHANGABLE(tp)     ((tp)->attr.exflags &   TYPE_EXFLAGS_UNCHANGABLE)
+#define TYPE_SET_UNCHANGABLE(tp)    ((tp)->attr.exflags |=  TYPE_EXFLAGS_UNCHANGABLE)
+#define TYPE_UNSET_UNCHANGABLE(tp)  ((tp)->attr.exflags &= ~TYPE_EXFLAGS_UNCHANGABLE)
+
+#define TYPE_IS_READONLY(tp)        ((tp)->attr.exflags &   TYPE_EXFLAGS_READONLY)
+#define TYPE_SET_READONLY(tp)       ((tp)->attr.exflags |=  TYPE_EXFLAGS_READONLY)
+#define TYPE_UNSET_READONLY(tp)     ((tp)->attr.exflags &= ~TYPE_EXFLAGS_READONLY)
 
 #define TYPE_ATTR_FOR_COMPARE \
     (TYPE_ATTR_PARAMETER |                      \
@@ -337,10 +368,35 @@ extern TYPE_DESC basic_type_desc[];
      TYPE_ATTR_BIND |                           \
      TYPE_ATTR_VALUE)
 
+#define TYPE_ATTRS_SUBOBJECT_PROPAGATE          \
+   (TYPE_ATTR_POINTER |                         \
+    TYPE_ATTR_TARGET |                          \
+    TYPE_ATTR_VOLATILE |                        \
+    TYPE_ATTR_ASYNCHRONOUS |                    \
+    TYPE_ATTR_PROTECTED)
+
+#define TYPE_HAS_SUBOBJECT_PROPAGATE_ATTRS(tp)  \
+    ((tp)->attr.type_attr_flags & TYPE_ATTRS_SUBOBJECT_PROPAGATE)
+
+#define TYPE_SET_SUBOBJECT_PROPAGATE_ATTRS(child, parent)               \
+    (TYPE_ATTR_FLAGS(child) |= TYPE_HAS_SUBOBJECT_PROPAGATE_ATTRS(parent))
+
+#define TYPE_EXTATTRS_SUBOBJECT_PROPAGATE    \
+   (TYPE_EXFLAGS_READONLY)
+
+#define TYPE_HAS_SUBOBJECT_PROPAGATE_EXTATTRS(tp)  \
+    ((tp)->attr.exflags & TYPE_EXTATTRS_SUBOBJECT_PROPAGATE)
+
+#define TYPE_SET_SUBOBJECT_PROPAGATE_EXTATTRS(child, parent)               \
+    (TYPE_EXTATTR_FLAGS(child) |= TYPE_HAS_SUBOBJECT_PROPAGATE_EXTATTRS(parent))
 
 #define TYPE_HAS_INTENT(tp)      (TYPE_IS_INTENT_IN(tp) || \
                 TYPE_IS_INTENT_OUT(tp) || TYPE_IS_INTENT_INOUT(tp))
-// TODO PROTECTED 
+
+/*
+ * Just PUBLIC or PRIVATE, no PROTECTED.
+ * (PROTECTED can be used with PUBLIC or PRIVATE)
+ */
 #define IS_TYPE_PUBLICORPRIVATE(tp)  \
                 ((TYPE_IS_PUBLIC(tp)) || (TYPE_IS_PRIVATE(tp)))
 
@@ -412,6 +468,9 @@ extern TYPE_DESC basic_type_desc[];
                 ((tp) != NULL && (TYPE_BASIC_TYPE(tp) == TYPE_VOID))
 #define IS_PROCEDURE_TYPE(tp) \
                 (IS_FUNCTION_TYPE(tp) || IS_SUBR(tp))
+#define IS_PROCEDURE_POINTER(tp) ((tp) != NULL && \
+                                  IS_PROCEDURE_TYPE(tp) && \
+                                  TYPE_REF(tp) != NULL)
 #define IS_GENERIC_PROCEDURE_TYPE(tp) \
                 (IS_PROCEDURE_TYPE(tp) && FUNCTION_TYPE_IS_GENERIC(tp))
 #define IS_COMPLEX(tp) \
@@ -468,6 +527,9 @@ extern TYPE_DESC basic_type_desc[];
 #define IS_REFFERENCE(tp) \
                 ((tp) != NULL && TYPE_N_DIM(tp) == 0 && TYPE_REF(tp) != NULL)
 
+#define IS_ENUM(tp) \
+                ((tp) != NULL && TYPE_BASIC_TYPE(tp) == TYPE_ENUM)
+
 #define TYPE_IS_MODIFIED(tp) \
                 ((tp) != NULL && (tp)->is_modified)
 
@@ -494,14 +556,20 @@ extern TYPE_DESC basic_type_desc[];
         FOREACH_ID(mp, TYPE_TYPE_PARAMS(tp))
 
 #define FOREACH_TYPE_BOUND_PROCEDURE(/* ID */ mp, /* TYPE_DESC */ tp) \
-    FOREACH_MEMBER(mp, tp) \
-    if (ID_CLASS(mp) == CL_TYPE_BOUND_PROC && \
-        !(TBP_BINDING_ATTRS(mp) & TYPE_BOUND_PROCEDURE_IS_GENERIC))
+    FOREACH_MEMBER(mp, tp)                                            \
+    if (ID_CLASS(mp) == CL_TYPE_BOUND_PROC &&                         \
+        !(TBP_BINDING_ATTRS(mp) &                                       \
+          (TYPE_BOUND_PROCEDURE_IS_GENERIC | TYPE_BOUND_PROCEDURE_IS_FINAL)))
 
 #define FOREACH_TYPE_BOUND_GENERIC(/* ID */ mp, /* TYPE_DESC */ tp) \
-    FOREACH_MEMBER(mp, tp) \
-    if (ID_CLASS(mp) == CL_TYPE_BOUND_PROC && \
+    FOREACH_MEMBER(mp, tp)                                          \
+    if (ID_CLASS(mp) == CL_TYPE_BOUND_PROC &&                       \
         (TBP_BINDING_ATTRS(mp) & TYPE_BOUND_PROCEDURE_IS_GENERIC))
+
+#define FOREACH_TYPE_BOUND_FINAL(/* ID */ mp, /* TYPE_DESC */ tp) \
+    FOREACH_MEMBER(mp, tp)                                        \
+    if (ID_CLASS(mp) == CL_TYPE_BOUND_PROC &&                     \
+        (TBP_BINDING_ATTRS(mp) & TYPE_BOUND_PROCEDURE_IS_FINAL))
 
 #define FUNCTION_TYPE_RETURN_TYPE(tp) ((tp)->proc_info.return_type)
 #define FUNCTION_TYPE_HAS_EXPLICIT_ARGS(tp) ((tp)->proc_info.has_explicit_arguments)
@@ -556,6 +624,10 @@ extern TYPE_DESC basic_type_desc[];
 #define FUNCTION_TYPE_HAS_PASS_ARG(tp) ((tp)->proc_info.has_pass_arg)
 #define FUNCTION_TYPE_PASS_ARG(tp) ((tp)->proc_info.pass_arg)
 #define FUNCTION_TYPE_PASS_ARG_TYPE(tp) ((tp)->proc_info.pass_arg_type)
+
+#define FUNCTION_TYPE_IS_INTERFACE(tp) ((tp)->proc_info.is_interface == TRUE)
+#define FUNCTION_TYPE_SET_INTERFACE(tp) ((tp)->proc_info.is_interface = TRUE)
+#define FUNCTION_TYPE_UNSET_INTERFACE(tp) ((tp)->proc_info.is_interface = FALSE)
 
 
 #endif /* _F_DATATYPE_H_ */

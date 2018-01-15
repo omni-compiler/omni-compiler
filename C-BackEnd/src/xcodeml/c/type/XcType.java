@@ -1,16 +1,10 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package xcodeml.c.type;
 
 import java.util.Stack;
 import java.util.List;
 import java.util.ArrayList;
 
-import xcodeml.XmException;
+import xcodeml.util.XmException;
 import xcodeml.c.decompile.XcObj;
 import xcodeml.c.util.XmcWriter;
 
@@ -235,6 +229,14 @@ public abstract class XcType extends XcObj implements Cloneable, XcGccAttributab
         appendDeclCode(w, null, true, false, _gccAttrs);
     }
 
+    private final boolean isGccAligned() throws XmException
+    {
+      if (_gccAttrs == null)
+        return false;
+      else
+        return _gccAttrs.isGccAligned();
+    }
+    
     public final void appendGccAtrribute(XmcWriter w) throws XmException
     {
         if (_gccAttrs != null)
@@ -250,11 +252,22 @@ public abstract class XcType extends XcObj implements Cloneable, XcGccAttributab
         appendDeclCode(w, symbol, withBaseType, isPreDecl, null);
     }
 
+  public final void appendDeclCode(XmcWriter w,
+                                   String symbol,
+                                   boolean withBaseType,
+                                   boolean isPreDecl,
+                                   XcGccAttributeList attr
+                                   ) throws XmException
+  {
+    appendDeclCode(w, symbol, withBaseType, isPreDecl, attr, false);
+  }
+  
     public final void appendDeclCode(XmcWriter w,
                                      String symbol,
                                      boolean withBaseType,
                                      boolean isPreDecl,
-                                     XcGccAttributeList attr
+                                     XcGccAttributeList attr,
+                                     boolean isFromFunc
                                      ) throws XmException
     {
         Stack<XcType> decls = new Stack<XcType>();
@@ -320,7 +333,7 @@ public abstract class XcType extends XcObj implements Cloneable, XcGccAttributab
             return;
 
         // XXX change attr to null: _appendCode(w, decls, symbol, isPreDecl, isAttrGuarded, attr, null);
-        _appendCode(w, decls, symbol, isPreDecl, isAttrGuarded, null, null);
+        _appendCode(w, decls, symbol, isPreDecl, isAttrGuarded, null, null, isFromFunc);
      }
 
      private static void _appendBasicType(XmcWriter w, Stack<XcType> decls, List<XcGccAttributeList> attrsList) throws XmException
@@ -421,13 +434,27 @@ public abstract class XcType extends XcObj implements Cloneable, XcGccAttributab
         return _recNeedAttrGuard(decls, needAttrGuard);
     }
 
+
+  private static final void _appendCode(XmcWriter w,
+                                        Stack<XcType> decls,
+                                        String symbol,
+                                        boolean isPreDecl,
+                                        boolean isAttrGuarded,
+                                        XcGccAttributeList attr,
+                                        List<XcGccAttributeList> attrOfArrayTypes
+                                        ) throws XmException
+  {
+    _appendCode(w, decls, symbol, isPreDecl, isAttrGuarded, attr, attrOfArrayTypes, false);
+  }
+  
     private static final void _appendCode(XmcWriter w,
                                           Stack<XcType> decls,
                                           String symbol,
                                           boolean isPreDecl,
                                           boolean isAttrGuarded,
                                           XcGccAttributeList attr,
-                                          List<XcGccAttributeList> attrOfArrayTypes
+                                          List<XcGccAttributeList> attrOfArrayTypes,
+                                          boolean isFromFunc
                                           ) throws XmException
     {
         if (decls.isEmpty()) {
@@ -473,7 +500,9 @@ public abstract class XcType extends XcObj implements Cloneable, XcGccAttributab
         switch (te) {
         case BASICTYPE:
             {
+              if(!isFromFunc || !t.isGccAligned())
                 t.appendGccAtrribute(w);
+              
                 t.appendTypeQualCode(w);
 
                 _appendCode(w, decls, symbol, isPreDecl, isAttrGuarded, attr, attrOfArrayTypes);

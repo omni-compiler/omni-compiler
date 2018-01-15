@@ -1,14 +1,6 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package exc.object;
 
 import java.util.Iterator;
-
-import xcodeml.IXobject;
 import exc.block.Block;
 
 /**
@@ -401,6 +393,7 @@ public class XobjList extends Xobject implements Iterable<Xobject>, XobjContaine
       case F_VAR_REF:
       case F_ARRAY_REF:
       case CO_ARRAY_REF:
+      case FUNCTION_CALL:
         return getArg(0).getName();
       }
       throw new UnsupportedOperationException(toString());

@@ -1,0 +1,26 @@
+How to use
+
+# create a execution file
+## On the K computer or FX10
+ $ make compiler=K
+
+## Use Intel Compiler
+ $ make compiler=intel
+
+## Other
+ $ make
+
+# run
+ $ mpirun -np 4 ./STREAM-dynamic 1024
+
+ The argument (1024) is a vector size.
+
+# MEMO
+## Performance on HPC Challenge Class 1
+ 3,857 TB/s on 82,944 nodes (46.5 GB/s/node, 72.7 % of Theoretical peak)
+ http://icl.cs.utk.edu/hpcc/hpcc_record.cgi?id=492
+
+
+ 
+ 
+ 

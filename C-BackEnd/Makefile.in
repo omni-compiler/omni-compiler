@@ -11,8 +11,8 @@ OM_C_BACK = build/om-c-back.jar
 SOURCE    = $(wildcard src/xcodeml/c/*/*.java)
 
 all: $(OM_C_BACK)
-$(OM_C_BACK): $(SOURCE) ../XcodeML-Common/build/om-common.jar
-	$(JAVAC) $(JAVAC_OPT) src/xcodeml/c/*/*.java -classpath ../XcodeML-Common/build/om-common.jar:./src
+$(OM_C_BACK): $(SOURCE) ../XcodeML-Exc-Tools/build/om-exc-tools.jar
+	$(JAVAC) $(JAVAC_OPT) src/xcodeml/c/*/*.java -classpath ../XcodeML-Exc-Tools/src:./src
 	$(MKDIR_P) build
 	cd src; $(JAR) $(JAR_OPT) cf ../$@ xcodeml/c/*/*.class
 
