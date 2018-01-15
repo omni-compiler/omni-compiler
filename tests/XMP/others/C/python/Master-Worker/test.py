@@ -1,6 +1,6 @@
-import XMP
+import xmp
 
-lib = XMP.Lib("test.so")
+lib = xmp.Lib("test.so")
 job = lib.spawn(4, "hello_2", ([1,2,3], [4,5,6]))
 
 #lib = XMP.Lib("test.so")
