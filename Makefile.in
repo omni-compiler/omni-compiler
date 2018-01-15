@@ -230,7 +230,8 @@ cleanlog-large-tests:
 PACKAGE_NAME = omnicompiler-$(VERSION)
 WORKDIR = /tmp/$(PACKAGE_NAME)
 release:
-	@if [ -e $(WORKDIR) ]; then \
+	@make clean; make clean-tests; \
+	if [ -e $(WORKDIR) ]; then \
 	  echo "Exist ! $(WORKDIR). Please delete it."; exit 1; \
 	fi; \
 	cp -a . $(WORKDIR); cd $(WORKDIR); sh autogen.sh; \
