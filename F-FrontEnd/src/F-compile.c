@@ -5262,7 +5262,7 @@ type_is_replica(const TYPE_DESC tp) {
 }
 
 /**
- * Creates the type thas is shallow copied for the module id.
+ * Creates the type which is shallow copied for the module id.
  */
 static TYPE_DESC
 shallow_copy_type_for_module_id(TYPE_DESC original) {
@@ -5290,6 +5290,8 @@ deep_copy_and_overwrite_for_module_id_type(TYPE_DESC * ptp);
  * Copy the reference types recursively
  *  until there is no reference type or
  *  the reference type is already replicated.
+ *
+ * Note: Require shallow copy before apply this function
  */
 static void
 deep_ref_copy_for_module_id_type(TYPE_DESC tp) {
@@ -5514,11 +5516,12 @@ import_module_id(ID mid,
         EXT_NEXT(ep) = NULL;
         EXT_PROC_INTR_DEF_EXT_IDS(ep) = NULL;
 
-        /* hmm, this code is really required? */
-        if(!type_is_replica(EXT_PROC_TYPE(mep))) {
+#if 0
+        if (type_has_replica(EXT_PROC_TYPE(mep), &EXT_PROC_TYPE(ep))) {
             EXT_PROC_TYPE(ep)
                     = shallow_copy_type_for_module_id(EXT_PROC_TYPE(mep));
         }
+#endif
 
         if (EXT_PROC_INTR_DEF_EXT_IDS(mep) != NULL) {
             EXT_ID head, p;
@@ -5542,16 +5545,19 @@ import_module_id(ID mid,
        (ID_STORAGE(id) == STG_TAGNAME && use_name) ||
        TYPE_IS_PROTECTED(ID_TYPE(id))) {
         // shallow copy type from module
-        ID_TYPE(id) = shallow_copy_type_for_module_id(ID_TYPE(id));
-        TYPE_UNSET_PUBLIC(id);
-        TYPE_UNSET_PRIVATE(id);
+        if (!type_has_replica(ID_TYPE(id), &ID_TYPE(id))) {
+            ID_TYPE(id) = shallow_copy_type_for_module_id(ID_TYPE(id));
 
-        /*
-         * If type is PROTECTED and id is not imported to SUBMODULE,
-         * id should be READ ONLY
-         */
-        if (TYPE_IS_PROTECTED(ID_TYPE(id)) && !fromParentModule) {
-            TYPE_SET_READONLY(ID_TYPE(id));
+            TYPE_UNSET_PUBLIC(id);
+            TYPE_UNSET_PRIVATE(id);
+
+            /*
+             * If type is PROTECTED and id is not imported to SUBMODULE,
+             * id should be READ ONLY
+             */
+            if (TYPE_IS_PROTECTED(ID_TYPE(id)) && !fromParentModule) {
+                TYPE_SET_READONLY(ID_TYPE(id));
+            }
         }
 
         ID_ADDR(id) = expv_sym_term(F_VAR, ID_TYPE(id), ID_SYM(id));
@@ -5574,7 +5580,6 @@ import_module_id(ID mid,
         ID_TYPE(id) = old;
         TYPE_SET_NOT_FIXED(ID_TYPE(id));
     }
-
 
     if(ID_STORAGE(id) == STG_TAGNAME) {
         TYPE_TAGNAME(ID_TYPE(id)) = id;
@@ -5644,6 +5649,11 @@ deep_copy_id_types(ID mids)
           expv v;
           list lp;
 
+          if (type_has_replica(EXT_PROC_TYPE(mep), &EXT_PROC_TYPE(mep))) {
+              continue;
+          }
+
+          EXT_PROC_TYPE(mep) = shallow_copy_type_for_module_id(EXT_PROC_TYPE(mep));
           deep_ref_copy_for_module_id_type(EXT_PROC_TYPE(mep));
 
           /*
