@@ -6389,6 +6389,7 @@ output_module_file(struct module * mod, const char * filename)
     return TRUE;
 }
 
+expv max_rank_from_arguments(expv args);
 
 /**
  * Fix type of forward-referenced function calls to actual type if possible.
@@ -6406,7 +6407,13 @@ fixup_function_call(expv v) {
                 if (EXPV_NEED_TYPE_FIXUP(v) == TRUE) {
                     ID_TYPE(fid) = tp;
                     EXPV_TYPE(EXPR_ARG1(v)) = tp;
-                    EXPV_TYPE(v) = FUNCTION_TYPE_RETURN_TYPE(tp);
+		    EXPV_TYPE(v) = FUNCTION_TYPE_RETURN_TYPE(tp);
+		    if (TYPE_IS_ELEMENTAL(tp)){
+		      expv maxRanked = max_rank_from_arguments(EXPR_ARG2(v));
+		      if (maxRanked != NULL && IS_ARRAY_TYPE(EXPV_TYPE(maxRanked))) {
+			EXPV_TYPE(v) = copy_dimension(EXPV_TYPE(maxRanked), EXPV_TYPE(v));
+		      }
+		    }
                 }
             } else {
                 if (!ID_IS_DUMMY_ARG(fid) &&

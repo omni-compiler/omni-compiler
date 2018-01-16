@@ -2273,7 +2273,7 @@ choose_module_procedure_by_args(EXT_ID mod_procedures, expv args)
 }
 
 
-static expv
+expv
 max_rank_from_arguments(expv args)
 {
     list lp;
