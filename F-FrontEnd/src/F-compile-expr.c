@@ -3287,7 +3287,8 @@ compile_array_constructor(expr x)
     BASIC_DATA_TYPE elem_type = TYPE_UNKNOWN;
 
     l = list0(LIST);
-    if ((base_type = compile_type(EXPR_ARG2(x), /*allow_predecl=*/FALSE)) != NULL) {
+    if (EXPR_HAS_ARG2(x) &&
+        (base_type = compile_type(EXPR_ARG2(x), /*allow_predecl=*/FALSE)) != NULL) {
         if (type_is_nopolymorphic_abstract(base_type)) {
             error("abstract type in an array constructor");
         }
