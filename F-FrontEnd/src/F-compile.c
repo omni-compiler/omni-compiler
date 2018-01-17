@@ -153,6 +153,10 @@ static EXT_ID unify_ext_id_list(EXT_ID parents, EXT_ID childs, int overshadow);
 
 static expr get_generic_spec_symbol(int expr_code);
 
+static int check_variable_definition_context(const expr x,
+                                             const TYPE_DESC tp,
+                                             const char target_errmsg[]);
+
 void init_for_OMP_pragma();
 void check_for_OMP_pragma(expr x);
 
@@ -1579,9 +1583,7 @@ compile_exec_statement(expr x)
                     break;
                 }
 
-                if (TYPE_IS_PROTECTED(EXPV_TYPE(v1)) && TYPE_IS_READONLY(EXPV_TYPE(v1))) {
-                    error_at_node(x, "assignment to a PROTECTED variable");
-                }
+                (void)check_variable_definition_context(x, EXPV_TYPE(v1), "lhs");
 
                 if (TYPE_BASIC_TYPE(EXPV_TYPE(v1)) == TYPE_FUNCTION) {
                     /*
@@ -4599,8 +4601,7 @@ compile_DO_statement(range_st_no, construct_name, var, init, limit, incr)
             error("bad type on do variable");
             return;
         }
-        if (TYPE_IS_PROTECTED(var_tp) && TYPE_IS_READONLY(var_tp)) {
-            error("do variable is PROTECTED");
+        if (!check_variable_definition_context(NULL, var_tp, "do variable")) {
             return;
         }
 
@@ -5550,7 +5551,8 @@ import_module_id(ID mid,
          * If type is PROTECTED and id is not imported to SUBMODULE,
          * id should be READ ONLY
          */
-        if (TYPE_IS_PROTECTED(ID_TYPE(id)) && !fromParentModule) {
+        if ((TYPE_IS_PROTECTED(ID_TYPE(id)) && !TYPE_IS_POINTER(ID_TYPE(id))) &&
+             !fromParentModule) {
             TYPE_SET_READONLY(ID_TYPE(id));
         }
 
@@ -6749,10 +6751,7 @@ compile_NULLIFY_statement (expr x)
             error("argument is not a pointer type");
             continue;
         }
-        if (TYPE_IS_PROTECTED(EXPV_TYPE(ev)) && TYPE_IS_READONLY(EXPV_TYPE(ev))) {
-            error("argument is a PROTECTED type");
-            continue;
-        }
+        (void)check_variable_definition_context(NULL, EXPV_TYPE(ev), "argument");
         args = list_put_last(args, ev);
     }
     v = expv_cons(F95_NULLIFY_STATEMENT, NULL, args, NULL);
@@ -6913,14 +6912,10 @@ compile_ALLOCATE_DEALLOCATE_statement(expr x)
     }
 
     if (vstat) {
-        if (TYPE_IS_PROTECTED(EXPV_TYPE(vstat)) && TYPE_IS_READONLY(EXPV_TYPE(vstat))) {
-            error("an argument for STAT is PROTECTED");
-        }
+        (void)check_variable_definition_context(NULL, EXPV_TYPE(vstat), "an argument for STAT");
     }
     if (verrmsg) {
-        if (TYPE_IS_PROTECTED(EXPV_TYPE(verrmsg)) && TYPE_IS_READONLY(EXPV_TYPE(verrmsg))) {
-            error("an argument for ERRMSG is PROTECTED");
-        }
+        (void)check_variable_definition_context(NULL, EXPV_TYPE(verrmsg), "an argument for ERRMSG");
     }
 
     /*
@@ -6935,8 +6930,8 @@ compile_ALLOCATE_DEALLOCATE_statement(expr x)
                 return;
             }
 
-            if (TYPE_IS_PROTECTED(tp) && TYPE_IS_READONLY(tp)) {
-                error("an argument for STAT is PROTECTED");
+            if (!check_variable_definition_context(NULL, tp, "an argument for STAT")) {
+                return;
             }
         }
 
@@ -7677,7 +7672,9 @@ pointer_assignable(expr x,
         return FALSE;
     }
 
-    if (TYPE_IS_PROTECTED(vPtrTyp) && TYPE_IS_READONLY(vPtrTyp)) {
+    if (TYPE_IS_READONLY(vPtrTyp) &&
+        (TYPE_IS_PROTECTED(vPtrTyp) && !TYPE_IS_POINTER(vPtrTyp))) {
+
         if (x) error_at_node(x, "'%s' is PROTECTED.",
                              SYM_NAME(EXPR_SYM(EXPR_ARG1(x))));
         return FALSE;
@@ -8562,11 +8559,9 @@ compile_stat_args(expv st, expr x, int expect_acquired_lock) {
                 return FALSE;
             }
 
-            if (TYPE_IS_PROTECTED(EXPV_TYPE(arg)) && TYPE_IS_READONLY(EXPV_TYPE(arg))) {
-                error("acquired_lock variable is PROTECTED");
+            if (!check_variable_definition_context(NULL, EXPV_TYPE(arg), "acquired_lock variable")) {
                 return FALSE;
             }
-
 
         } else {
             error("unexpected specifier '%s'", keyword);
@@ -8747,9 +8742,10 @@ compile_LOCK_statement(expr x) {
         error("The first argument of lock statement must be LOCK_TYPE");
         return;
     }
-    if (TYPE_IS_PROTECTED(EXPV_TYPE(lock_variable)) &&
-        TYPE_IS_READONLY(EXPV_TYPE(lock_variable))) {
-        error("an argument is PROTECTED");
+
+    if (!check_variable_definition_context(NULL, EXPV_TYPE(lock_variable),
+                                           "an argument")) {
+        return;
     }
 
     sync_stat_list = list0(LIST);
@@ -8791,9 +8787,10 @@ compile_UNLOCK_statement(expr x) {
         error("The first argument of unlock statement must be LOCK_TYPE");
         return;
     }
-    if (TYPE_IS_PROTECTED(EXPV_TYPE(lock_variable)) &&
-        TYPE_IS_READONLY(EXPV_TYPE(lock_variable))) {
-        error("an argument is PROTECTED");
+
+    if (!check_variable_definition_context(NULL, EXPV_TYPE(lock_variable),
+                                           "an argument")) {
+        return;
     }
 
     sync_stat_list = list0(LIST);
@@ -9910,3 +9907,31 @@ compile_ENDASSOCIATE_statement(expr x)
     pop_env();
     CURRENT_STATE = INEXEC;
 }
+
+int
+check_variable_definition_context(const expr x,
+                                  const TYPE_DESC tp,
+                                  const char target_errmsg[])
+{
+    if (TYPE_IS_READONLY(tp)) {
+        if (TYPE_IS_PROTECTED(tp) && !TYPE_IS_POINTER(tp)) {
+            if (x != NULL) {
+                error_at_node(x, "%s is a non-pointer PROTECTED", target_errmsg);
+                return FALSE;
+            } else {
+                error("%s is a non-pointer PROTECTED", target_errmsg);
+                return FALSE;
+            }
+        } else {
+            if (x != NULL) {
+                error_at_node(x, "%s is read only", target_errmsg);
+                return FALSE;
+            } else {
+                error("%s is read only", target_errmsg);
+                return FALSE;
+            }
+        }
+    }
+    return TRUE;
+}
+
