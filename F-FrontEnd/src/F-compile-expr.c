@@ -3307,13 +3307,23 @@ compile_array_constructor(expr x)
             elem_type = get_basic_type(tp);
             continue;
         }
-        if (get_basic_type(tp) != elem_type) {
-            error("Array constructor elements have different data types.");
-            return NULL;
+
+        if (elem_type == TYPE_STRUCT ||
+            elem_type == TYPE_COMPLEX) {
+            if (get_basic_type(tp) != elem_type) {
+                error("Array constructor elements have different data types.");
+                return NULL;
+            }
+        } else {
+            if (get_basic_type(tp) == TYPE_STRUCT ||
+                get_basic_type(tp) == TYPE_COMPLEX) {
+                error("Array constructor elements have different data types.");
+                return NULL;
+            }
         }
 
         if (base_type) {
-            if (!type_is_soft_compatible(base_type, tp)) {
+            if (!type_is_compatible_for_assignment(base_type, tp)) {
                 error("Unexpected element type");
                 return NULL;
             }
