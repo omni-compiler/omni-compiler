@@ -219,7 +219,7 @@ type_bound_procedure_type(void)
     TYPE_DESC ret; /* dummy return type */
     TYPE_DESC tp;
     ret = new_type_desc();
-    TYPE_BASIC_TYPE(ret) = TYPE_VOID;
+    TYPE_BASIC_TYPE(ret) = TYPE_GNUMERIC_ALL;
     tp = function_type(ret);
     FUNCTION_TYPE_SET_TYPE_BOUND(tp);
     return tp;
