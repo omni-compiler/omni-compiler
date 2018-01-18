@@ -96,6 +96,28 @@ function_type(TYPE_DESC tp)
             TYPE_SET_IMPURE(ftp);
             TYPE_UNSET_IMPURE(tp);
         }
+
+        if (TYPE_IS_INTENT_IN(tp)) {
+            TYPE_SET_INTENT_IN(ftp);
+            TYPE_UNSET_INTENT_IN(tp);
+        }
+        if (TYPE_IS_INTENT_OUT(tp)) {
+            TYPE_SET_INTENT_OUT(ftp);
+            TYPE_UNSET_INTENT_OUT(tp);
+        }
+        if (TYPE_IS_INTENT_INOUT(tp)) {
+            TYPE_SET_INTENT_INOUT(ftp);
+            TYPE_UNSET_INTENT_INOUT(tp);
+        }
+        if (TYPE_IS_OPTIONAL(tp)) {
+            TYPE_SET_OPTIONAL(ftp);
+            TYPE_UNSET_OPTIONAL(tp);
+        }
+        if (TYPE_IS_VALUE(tp)) {
+            TYPE_SET_VALUE(ftp);
+            TYPE_UNSET_VALUE(tp);
+        }
+
         TYPE_UNSET_SAVE(tp);
 
         if (FUNCTION_TYPE_IS_VISIBLE_INTRINSIC(tp)) {
@@ -1065,9 +1087,7 @@ type_is_compatible(TYPE_DESC left, TYPE_DESC right,
     TYPE_DESC left_basic, right_basic;
 
     if (left == NULL || right == NULL) {
-        if (debug_flag) {
-            fprintf(debug_fp, "# unexpected comparison\n");
-        }
+        debug("# unexpected comparison");
         return FALSE;
     }
 
@@ -1081,9 +1101,7 @@ type_is_compatible(TYPE_DESC left, TYPE_DESC right,
 
     /* type_comparison: */
 
-    if (debug_flag) {
-        fprintf(debug_fp, "# comparing basic types\n");
-    }
+    debug("# comparing basic types");
 
     if (TYPE_BASIC_TYPE(left_basic) == TYPE_BASIC_TYPE(right_basic)) {
         goto kind_compatibility;
@@ -1116,9 +1134,7 @@ type_is_compatible(TYPE_DESC left, TYPE_DESC right,
 
 kind_compatibility:
 
-    if (debug_flag) {
-        fprintf(debug_fp, "# comparing kind of types\n");
-    }
+    debug("# comparing kind of types");
 
     if (TYPE_BASIC_TYPE(left_basic) == TYPE_DREAL) {
         if (type_is_double(right_basic)) {
@@ -1139,9 +1155,7 @@ kind_compatibility:
 
 length_compatiblity:
 
-    if (debug_flag) {
-        fprintf(debug_fp, "# comparing length of types\n");
-    }
+    debug("# comparing length of types");
 
     if (TYPE_CHAR_LEN(left_basic) > 0 && TYPE_CHAR_LEN(right_basic) > 0) {
         int l1 = TYPE_CHAR_LEN(left_basic);
@@ -1158,9 +1172,7 @@ length_compatiblity:
 
 rank_compatibility:
 
-    if (debug_flag) {
-        fprintf(debug_fp, "# comparing rank of types\n");
-    }
+    debug("# comparing rank of types");
 
     if (TYPE_N_DIM(left) == 0 && TYPE_N_DIM(right) == 0) {
         goto attribute_compatibility;
@@ -1179,12 +1191,10 @@ attribute_compatibility:
         goto compatible;
     }
 
-    if (debug_flag) {
-        fprintf(debug_fp, "# comparing attribute of types\n");
-        fprintf(debug_fp, "#  left is '%x', right is '%x'\n",
-                TYPE_ATTR_FOR_COMPARE & TYPE_ATTR_FLAGS(left),
-                TYPE_ATTR_FOR_COMPARE & TYPE_ATTR_FLAGS(right));
-    }
+    debug("# comparing attribute of types");
+    debug("#  left is '%08x', right is '%08x'",
+            TYPE_ATTR_FOR_COMPARE & TYPE_ATTR_FLAGS(left),
+            TYPE_ATTR_FOR_COMPARE & TYPE_ATTR_FLAGS(right));
 
     if ((TYPE_ATTR_FOR_COMPARE & TYPE_ATTR_FLAGS(left)) !=
         (TYPE_ATTR_FOR_COMPARE & TYPE_ATTR_FLAGS(right))) {
@@ -1192,9 +1202,7 @@ attribute_compatibility:
     }
 
 compatible:
-    if (debug_flag) {
-        fprintf(debug_fp, "# compatible!\n");
-    }
+    debug("# compatible!");
 
     return TRUE;
 

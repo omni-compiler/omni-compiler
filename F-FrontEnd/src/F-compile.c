@@ -2651,10 +2651,24 @@ end_declaration()
              * never set to local symbol, so there is no need to filter out them.
              */
             TYPE_ATTR_FLAGS(FUNCTION_TYPE_RETURN_TYPE(tp))
-                    |= (TYPE_ATTR_FLAGS(ip) & ~(TYPE_ATTR_SAVE|TYPE_ATTR_BIND|TYPE_ATTR_PUBLIC|TYPE_ATTR_PRIVATE));
+                    |= (TYPE_ATTR_FLAGS(ip) &
+                        ~(TYPE_ATTR_SAVE|TYPE_ATTR_BIND|TYPE_ATTR_PUBLIC|TYPE_ATTR_PRIVATE|
+                          TYPE_ATTR_INTENT_INOUT|TYPE_ATTR_INTENT_IN|TYPE_ATTR_INTENT_OUT|
+                          TYPE_ATTR_OPTIONAL|TYPE_ATTR_VALUE|TYPE_ATTR_VOLATILE|TYPE_ATTR_ASYNCHRONOUS));
         }
-        if (TYPE_IS_EXTERNAL(tp) && !IS_PROCEDURE_TYPE(tp)) {
-            tp = function_type(tp);
+        if (TYPE_IS_EXTERNAL(tp)) {
+            if (!IS_PROCEDURE_TYPE(tp)) {
+                tp = function_type(tp);
+            }
+            TYPE_ATTR_FLAGS(FUNCTION_TYPE_RETURN_TYPE(tp))
+                    &= ~(TYPE_ATTR_SAVE|TYPE_ATTR_BIND|TYPE_ATTR_PUBLIC|TYPE_ATTR_PRIVATE|
+                         TYPE_ATTR_INTENT_INOUT|TYPE_ATTR_INTENT_IN|TYPE_ATTR_INTENT_OUT|
+                         TYPE_ATTR_OPTIONAL|TYPE_ATTR_VALUE|TYPE_ATTR_VOLATILE|TYPE_ATTR_ASYNCHRONOUS);
+
+            if (TYPE_IS_POINTER(FUNCTION_TYPE_RETURN_TYPE(tp))) {
+                TYPE_UNSET_POINTER(FUNCTION_TYPE_RETURN_TYPE(tp));
+                TYPE_SET_POINTER(tp);
+            }
             TYPE_UNSET_SAVE(tp);
             ID_TYPE(ip) = tp;
         }
@@ -7083,7 +7097,7 @@ compile_CALL_member_procedure_statement(expr x)
 }
 
 
-static void
+ void
 compile_CALL_subroutine_statement(expr x)
 {
     expr x1;
