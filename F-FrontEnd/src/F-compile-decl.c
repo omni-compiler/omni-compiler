@@ -233,7 +233,6 @@ link_parent_defined_by(ID id)
                     id_multilize(parent);
                     ID_NEXT(parent) = MULTI_ID_LIST(parent);
                     ID_NEXT(ID_NEXT(parent)) = next;
-                    /* TODO(shingo-s): if the parent exists */
                     return;
                 } else {
                     error("%s has an explicit interface before", ID_NAME(parent));
@@ -4681,9 +4680,16 @@ compile_EXTERNAL_decl(expr id_list)
         if (EXPR_CODE(ident) != IDENT) {
             fatal("compile_EXTERNAL_decl:not ident");
         }
-        if ((id = declare_ident(EXPR_SYM(ident), CL_PROC)) == NULL) {
+        /*
+         * Little bit dirty trick.
+         * EXTERAL id can have POINTER attribute, but
+         * POINTER statement declares id as variable.
+         * So if POINTER statement exists, declare(..., CL_RPOC) cause error.
+         */
+        if ((id = declare_ident(EXPR_SYM(ident), CL_VAR)) == NULL) {
             continue;
         }
+        ID_CLASS(id) = CL_PROC;
         if (PROC_CLASS(id) == P_UNKNOWN) {
             PROC_CLASS(id) = P_EXTERNAL;
             if (ID_TYPE(id) != NULL &&
