@@ -431,7 +431,8 @@ public class XcodeMLtools_F extends XcodeMLtools {
 
     case FUNCTION_DECL:
       return setCommonAttributes(n, Xcons.List(code, type, toXobject(getElement(n, "name")),
-					       null, null, toXobject(getElement(n, "declarations"))));
+					       toXobject(getElement(n, "symbols")),
+					       null, toXobject(getElement(n, "declarations"))));
 
     case STRING:
       return Xcons.String(getContentText(n));
