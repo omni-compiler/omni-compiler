@@ -787,6 +787,29 @@ public class XMPtranslateLocalPragma {
     XobjList loopDecl  = (XobjList)pb.getClauses();
     BlockList loopBody = pb.getBody();
 
+    Block newBlock = null;
+    XobjList expandOpt = (XobjList)loopDecl.getArg(5);
+
+    if (expandOpt == null || expandOpt.hasNullArg()){
+      ;
+    }
+    else if (expandOpt.getArg(0).getInt() == LOOP_MARGIN){
+      newBlock = divideMarginLoop(pb);
+    }
+    // else if (expandOpt.getArg(0).getInt() == XMP.LOOP_PEEL_AND_WAIT){
+    //   newBlock = peelLoop(pb);
+    // }
+      
+    if (newBlock != null){
+      pb.replace(newBlock);
+      Block next;
+      for (Block b = newBlock.getBody().getHead(); b != null; b = next){
+	next = b.getNext();
+	translateLoop((PragmaBlock)b, true);
+      }
+      return;
+    }
+    
     // get block to schedule
     CforBlock schedBaseBlock = getOutermostLoopBlock(loopBody);
 
@@ -1278,6 +1301,11 @@ public class XMPtranslateLocalPragma {
     }
   }
 
+  private final static int LOOP_EXPAND        = 410;
+  private final static int LOOP_MARGIN        = 411;
+  private final static int LOOP_PEEL_AND_WAIT = 412;
+  private final static int LOOP_NONE          = 413;
+
   private void insertScheduleIndexFunction(PragmaBlock pb, CforBlock forBlock, CforBlock schedBaseBlock, 
 					   ArrayList iteraterList) throws XMPexception {
     XobjList loopDecl = (XobjList)pb.getClauses();
@@ -1321,6 +1349,41 @@ public class XMPtranslateLocalPragma {
     }
     funcArgs.add(templateObj.getDescId().Ref());
     funcArgs.add(templateIndexArg);
+
+    //
+    // for EXPAND/MARGIN/PEEL_AND_WAIT
+    //
+    
+    Xobject expandDecl = loopDecl.getArg(5);
+    Xobject expandType;
+    Xobject asyncId;
+    Xobject expandList;
+    if (expandDecl != null && !expandDecl.isEmptyList()){
+
+      expandType = expandDecl.getArg(0);
+      funcArgs.add(expandType);
+
+      if (expandType.getInt() == LOOP_PEEL_AND_WAIT){
+	asyncId = expandDecl.getArg(1);
+	expandList = expandDecl.getArg(2);
+      }
+      else {
+	expandList = expandDecl.getArg(1);
+	int t_idx = templateIndexArg.getInt();
+	Xobject lwidth = expandList.getArg(t_idx).getArg(0);
+	Xobject uwidth = expandList.getArg(t_idx).getArg(1);;
+	Xobject unboundFlag = expandList.getArg(t_idx).getArg(2);
+	funcArgs.add(lwidth);
+	funcArgs.add(uwidth);
+	funcArgs.add(unboundFlag);
+      }
+    }
+    else {
+      funcArgs.add(Xcons.IntConstant(LOOP_NONE));
+      funcArgs.add(Xcons.IntConstant(0));
+      funcArgs.add(Xcons.IntConstant(0));
+      funcArgs.add(Xcons.IntConstant(0));
+    }
 
     Ident funcId = _globalDecl.declExternFunc("_XMP_sched_loop_template_" + distMannerString);
     int[] position = {iteraterList.size()};
@@ -1487,7 +1550,11 @@ public class XMPtranslateLocalPragma {
             throw new XMPexception("template '" + onRefObjName + "' is not distributed");
           }
 
-          return callLoopSchedFuncTemplate(onRefTemplate, (XobjList)onRef.getArg(1), forBlock, schedBaseBlock, iteraterList);
+	  Xobject expandDecl = loopDecl.getArg(5);
+	  boolean withExpand = (expandDecl != null && !expandDecl.isEmptyList());
+
+          return callLoopSchedFuncTemplate(onRefTemplate, (XobjList)onRef.getArg(1), forBlock, schedBaseBlock, iteraterList,
+					   withExpand);
         }
       case XMPobject.NODES:
         callLoopSchedFuncNodes((XMPnodes)onRefObj, (XobjList)onRef.getArg(1), forBlock, schedBaseBlock);
@@ -1623,7 +1690,8 @@ public class XMPtranslateLocalPragma {
   }
   
   private boolean callLoopSchedFuncTemplate(XMPtemplate templateObj, XobjList templateSubscriptList, CforBlock forBlock,
-                                            CforBlock schedBaseBlock, ArrayList<String> iteraterList) throws XMPexception {
+                                            CforBlock schedBaseBlock, ArrayList<String> iteraterList,
+					    boolean withExpand) throws XMPexception {
     Xobject loopIndex    = forBlock.getInductionVar();
     String loopIndexName = loopIndex.getSym();
     iteraterList.add(loopIndexName);
@@ -1665,7 +1733,7 @@ public class XMPtranslateLocalPragma {
 
     boolean isOmitSchedLoopFunc = true;
     Xobject parallelInit;
-    if(forBlock.getLowerBound().equals(Xcons.IntConstant(0)))
+    if(!withExpand && forBlock.getLowerBound().equals(Xcons.IntConstant(0)))
       parallelInit        = Xcons.IntConstant(0);
     else{
       parallelInit = declIdentWithBlock(schedBaseBlock,
@@ -1674,7 +1742,7 @@ public class XMPtranslateLocalPragma {
     }
     
     Xobject parallelCond;
-    if(is_parallelCondConstant(templateObj, forBlock, targetIndex, distManner))
+    if(!withExpand && is_parallelCondConstant(templateObj, forBlock, targetIndex, distManner))
       parallelCond = Xcons.IntConstant(calcParallelCond(templateObj, targetIndex, distManner));
     else{
       parallelCond = declIdentWithBlock(schedBaseBlock,
@@ -1683,9 +1751,9 @@ public class XMPtranslateLocalPragma {
     }
     
     Xobject parallelStep;
-    if(forBlock.getStep().equals(Xcons.IntConstant(1)))
+    if(!withExpand && forBlock.getStep().equals(Xcons.IntConstant(1)))
       parallelStep = Xcons.IntConstant(1);
-    else if(forBlock.getStep().equals(Xcons.IntConstant(-1)))
+    else if(!withExpand && forBlock.getStep().equals(Xcons.IntConstant(-1)))
       parallelStep = Xcons.IntConstant(-1);
     else{
       parallelStep = declIdentWithBlock(schedBaseBlock,
@@ -4140,8 +4208,10 @@ public class XMPtranslateLocalPragma {
     onRef.add(subscriptList);
     args.add(onRef);
 
-    args.add(null);
+    args.add(null); // reduction
     args.add(null); // multicore clause ?
+    args.add(null); // prof
+    args.add(null); // expand/margin/peel_and_wait
 
     return Bcons.PRAGMA(Xcode.XMP_PRAGMA, "LOOP", args, loop);
   }
@@ -4272,4 +4342,98 @@ public class XMPtranslateLocalPragma {
         funcCallList.add(Bcons.Statement(macroId.Call(funcArgs)));
         return Bcons.COMPOUND(funcCallList);
     }
+
+  private static Block divideMarginLoop(PragmaBlock pb){
+
+    // The type is XMP.LOOP_MARGIN
+
+    BlockList loops = Bcons.emptyBody();
+    boolean flag = false;
+    
+    XobjList expandOpt = (XobjList)pb.getClauses().getArg(5);
+
+    // System.out.println("("+expandOpt.getArg(1).getArg(0).getArg(0).getInt()+" : "+expandOpt.getArg(1).getArg(0).getArg(1).getInt()+" ,"
+    // 		       +expandOpt.getArg(1).getArg(1).getArg(0).getInt()+" : "+expandOpt.getArg(1).getArg(1).getArg(1).getInt()+")");
+
+    PragmaBlock pb1, pb2;
+    XobjList expandOpt1 = null, expandOpt2 = null;
+
+    for (int i = 0; i < expandOpt.getArg(1).Nargs(); i++){
+
+      Xobject expandWidth = expandOpt.getArg(1).getArg(i);
+      Xobject lower = expandWidth.getArg(0);
+      Xobject upper = expandWidth.getArg(1);
+
+      Xobject stride = expandWidth.getArg(2);
+      if (stride.isIntConstant() && stride.getInt() == -1) continue;
+
+      if (!lower.isZeroConstant() && !upper.isZeroConstant()){
+
+	flag = true;
+
+	// PragmaBlock pb1, pb2;
+	// XobjList expandOpt1, expandOpt2;
+	
+	// for lower margin
+	pb1 = (PragmaBlock)pb.copy();
+	expandOpt1 = (XobjList)pb1.getClauses().getArg(5);
+
+	for (int j = 0; j < expandOpt1.getArg(1).Nargs(); j++){
+	  Xobject expandWidth1 = expandOpt1.getArg(1).getArg(j);
+	  if (j == i){
+	    expandWidth1.setArg(0, lower);
+	    expandWidth1.setArg(1, Xcons.IntConstant(0));
+	  }
+	  else if (j > i){
+	    expandWidth1.setArg(2, Xcons.IntConstant(-1)); // edge of margin
+	  }
+	  else { // j < i
+	    expandWidth1.setArg(0, Xcons.IntConstant(0));
+	    expandWidth1.setArg(1, Xcons.IntConstant(0));
+	  }
+	}
+
+	// System.out.println(" ("+expandOpt1.getArg(1).getArg(0).getArg(0).getInt()+" : "+expandOpt1.getArg(1).getArg(0).getArg(1).getInt()+" ,"
+	// 		   +expandOpt1.getArg(1).getArg(1).getArg(0).getInt()+" : "+expandOpt1.getArg(1).getArg(1).getArg(1).getInt()+")");
+
+	loops.add(pb1);
+			     
+	// for upper margin
+	pb2 = (PragmaBlock)pb.copy();
+	expandOpt2 = (XobjList)pb2.getClauses().getArg(5);
+
+	for (int j = 0; j < expandOpt1.getArg(1).Nargs(); j++){
+	  Xobject expandWidth2 = expandOpt2.getArg(1).getArg(j);
+	  if (j == i){
+	    expandWidth2.setArg(0, Xcons.IntConstant(0));
+	    expandWidth2.setArg(1, upper);
+	  }
+	  else if (j > i){
+	    expandWidth2.setArg(2, Xcons.IntConstant(-1)); // edge of margin
+	  }
+	  else { // j < i
+	    expandWidth2.setArg(0, Xcons.IntConstant(0));
+	    expandWidth2.setArg(1, Xcons.IntConstant(0));
+	  }	    
+	}
+
+      // System.out.println(" ("+expandOpt2.getArg(1).getArg(0).getArg(0).getInt()+" : "+expandOpt2.getArg(1).getArg(0).getArg(1).getInt()+" ,"
+      // 			 +expandOpt2.getArg(1).getArg(1).getArg(0).getInt()+" : "+expandOpt2.getArg(1).getArg(1).getArg(1).getInt()+")");
+
+    
+	loops.add(pb2);
+
+      }
+
+    }
+
+    if (flag){
+      return Bcons.COMPOUND(loops);
+    }
+    else {
+      return null;
+    }
+
+  }
+
 }

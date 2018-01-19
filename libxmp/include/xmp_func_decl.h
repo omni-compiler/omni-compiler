@@ -222,7 +222,8 @@ extern void _XMP_sched_loop_template_DUPLICATION(int ser_init, int ser_cond, int
                                                  void *template, int template_index);
 extern void _XMP_sched_loop_template_BLOCK(int ser_init, int ser_cond, int ser_step,
                                            int *par_init, int *par_cond, int *par_step,
-                                           void *template, int template_index);
+                                           void *template, int template_index,
+					   int expand_type, int lwidth, int uwidth, int unbound_flag);
 extern void _XMP_sched_loop_template_CYCLIC(int ser_init, int ser_cond, int ser_step,
                                             int *par_init, int *par_cond, int *par_step,
                                             void *template, int template_index);

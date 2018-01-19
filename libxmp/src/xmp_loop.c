@@ -194,7 +194,8 @@ void _XMP_sched_loop_template_DUPLICATION(int ser_init, int ser_cond, int ser_st
 // block distribution ---------------------------------------------------------------------------------------------------------------
 void _XMP_sched_loop_template_BLOCK(int ser_init, int ser_cond, int ser_step,
                                     int *par_init, int *par_cond, int *par_step,
-                                    _XMP_template_t *template, int template_index) {
+                                    _XMP_template_t *template, int template_index,
+				    int expand_type, int lwidth, int uwidth, int unbound_flag) {
   _XMP_ASSERT(template->is_distributed);
 
   if (!template->is_owner) {
@@ -230,6 +231,68 @@ void _XMP_sched_loop_template_BLOCK(int ser_init, int ser_cond, int ser_step,
     *par_cond = 0;
     *par_step = 1;
   }
+
+  //
+  // for EXPAND/MARGIN
+  //
+  
+  if (expand_type == _XMP_LOOP_NONE){
+    //xmpf_dbg_printf("%d : %d\n", *lb, *ub);
+    return;
+  }
+  else if (expand_type == _XMP_LOOP_EXPAND){
+
+    if ((*par_init) <= (*par_cond)){ // iterates at least once
+      (*par_init) -= lwidth;
+      (*par_cond) += uwidth;
+    }
+
+  }
+  else if (expand_type == _XMP_LOOP_MARGIN){
+
+    if ((*par_init) <= (*par_cond)){ // iterates at least once
+
+      if (lwidth > 0){
+	(*par_init) -= lwidth;
+	(*par_cond) = (*par_init) + lwidth;
+      }
+      else if (lwidth < 0){
+	(*par_cond) = (*par_init) - lwidth;
+	// (*par_init)
+      }
+      else if (uwidth > 0){
+	(*par_cond) += uwidth;
+	(*par_init) = (*par_cond) - uwidth;
+      }
+      else if (uwidth < 0){
+	(*par_init) = (*par_cond) + uwidth;
+	// (*par_cond)
+      }
+
+    }
+
+  }
+
+  /* if (unbound_flag == 0){ */
+
+  /*   _XMP_template_t *t_desc = rp->t_desc; */
+  /*   int t_idx = rp->REF_INDEX[*r_idx]; */
+
+  /*   long long int glb; */
+  /*   _XMP_L2G(*par_init, &glb, t_desc, t_idx); */
+  /*   if (glb < glb_orig){ */
+  /*     (*par_init) += lwidth; */
+  /*   } */
+
+  /*   long long int gub; */
+  /*   _XMP_L2G(*par_cond, &gub, t_desc, t_idx); */
+  /*   if (gub > gub_orig){ */
+  /*     (*par_cond) -= uwidth; */
+  /*   } */
+  /* } */
+  
+  xmp_dbg_printf("(%d : %d)\n", *par_init, *par_cond);
+
 }
 
 // cyclic distribution ---------------------------------------------------------------------------------------------------------------

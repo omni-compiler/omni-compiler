@@ -1903,7 +1903,7 @@ static CExpr *parse_loop_opt()
     expand_type = XMP_LOOP_PEEL_AND_WAIT;
   }
   else {
-    goto err;;
+    return EMPTY_LIST;
   }
   
   pg_get_token();
@@ -1918,9 +1918,9 @@ static CExpr *parse_loop_opt()
     pg_get_token();
 
     expandList = parse_EXPAND_list();
-    pg_get_token();
 
     if (pg_tok != ')') goto err;
+    pg_get_token();
 
     return XMP_LIST3((CExpr*)allocExprOfNumberConst2(expand_type, BT_INT),
 		     async, expandList);
