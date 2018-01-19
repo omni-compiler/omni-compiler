@@ -251,6 +251,7 @@ initialize_compile()
 void finalize_compile()
 {
     isInFinalizer = TRUE;
+    finalize_lex();
     begin_procedure();
 }
 
@@ -1191,7 +1192,7 @@ compile_statement1(int st_no, expr x)
             }
 
             push_ctl(CTL_TYPE_GUARD);
-            push_env(CTL_TYPE_GUARD_LOCAL_ENV(ctl_top));
+            push_env(CTL_ENV(ctl_top));
 
             if (EXPR_ARG1(x) != NULL) { // NULL for CLASS DEFAULT
                 tp = compile_type(EXPR_ARG1(x), /* allow_predecl=*/ FALSE);
@@ -4734,7 +4735,7 @@ compile_DO_concurrent_end()
     CURRENT_STATE = INEXEC;
 
     /*
-     * Close the block construct which is genereted in compile_FORALL_statement().
+     * Close the block construct which is genereted in compile_DOCONCURRENT_statement()
      */
     if (CTL_TYPE(ctl_top) == CTL_BLK) {
         compile_ENDBLOCK_statement(list0(F2008_ENDBLOCK_STATEMENT));
@@ -5260,7 +5261,7 @@ type_is_replica(const TYPE_DESC tp) {
 }
 
 /**
- * Creates the type thas is shallow copied for the module id.
+ * Creates the type which is shallow copied for the module id.
  */
 static TYPE_DESC
 shallow_copy_type_for_module_id(TYPE_DESC original) {
@@ -5288,6 +5289,8 @@ deep_copy_and_overwrite_for_module_id_type(TYPE_DESC * ptp);
  * Copy the reference types recursively
  *  until there is no reference type or
  *  the reference type is already replicated.
+ *
+ * Note: Require shallow copy before apply this function
  */
 static void
 deep_ref_copy_for_module_id_type(TYPE_DESC tp) {
@@ -5512,11 +5515,12 @@ import_module_id(ID mid,
         EXT_NEXT(ep) = NULL;
         EXT_PROC_INTR_DEF_EXT_IDS(ep) = NULL;
 
-        /* hmm, this code is really required? */
-        if(!type_is_replica(EXT_PROC_TYPE(mep))) {
+#if 0
+        if (type_has_replica(EXT_PROC_TYPE(mep), &EXT_PROC_TYPE(ep))) {
             EXT_PROC_TYPE(ep)
                     = shallow_copy_type_for_module_id(EXT_PROC_TYPE(mep));
         }
+#endif
 
         if (EXT_PROC_INTR_DEF_EXT_IDS(mep) != NULL) {
             EXT_ID head, p;
@@ -5540,16 +5544,19 @@ import_module_id(ID mid,
        (ID_STORAGE(id) == STG_TAGNAME && use_name) ||
        TYPE_IS_PROTECTED(ID_TYPE(id))) {
         // shallow copy type from module
-        ID_TYPE(id) = shallow_copy_type_for_module_id(ID_TYPE(id));
-        TYPE_UNSET_PUBLIC(id);
-        TYPE_UNSET_PRIVATE(id);
+        if (!type_has_replica(ID_TYPE(id), &ID_TYPE(id))) {
+            ID_TYPE(id) = shallow_copy_type_for_module_id(ID_TYPE(id));
 
-        /*
-         * If type is PROTECTED and id is not imported to SUBMODULE,
-         * id should be READ ONLY
-         */
-        if (TYPE_IS_PROTECTED(ID_TYPE(id)) && !fromParentModule) {
-            TYPE_SET_READONLY(ID_TYPE(id));
+            TYPE_UNSET_PUBLIC(id);
+            TYPE_UNSET_PRIVATE(id);
+
+            /*
+             * If type is PROTECTED and id is not imported to SUBMODULE,
+             * id should be READ ONLY
+             */
+            if (TYPE_IS_PROTECTED(ID_TYPE(id)) && !fromParentModule) {
+                TYPE_SET_READONLY(ID_TYPE(id));
+            }
         }
 
         ID_ADDR(id) = expv_sym_term(F_VAR, ID_TYPE(id), ID_SYM(id));
@@ -5572,7 +5579,6 @@ import_module_id(ID mid,
         ID_TYPE(id) = old;
         TYPE_SET_NOT_FIXED(ID_TYPE(id));
     }
-
 
     if(ID_STORAGE(id) == STG_TAGNAME) {
         TYPE_TAGNAME(ID_TYPE(id)) = id;
@@ -5642,6 +5648,11 @@ deep_copy_id_types(ID mids)
           expv v;
           list lp;
 
+          if (type_has_replica(EXT_PROC_TYPE(mep), &EXT_PROC_TYPE(mep))) {
+              continue;
+          }
+
+          EXT_PROC_TYPE(mep) = shallow_copy_type_for_module_id(EXT_PROC_TYPE(mep));
           deep_ref_copy_for_module_id_type(EXT_PROC_TYPE(mep));
 
           /*
@@ -6037,7 +6048,7 @@ compile_INTERFACE_statement(expr x)
 
             name = SYM_NAME(EXPR_SYM(id));
 
-            if (strlen(name) - END_LENGTH > MAXLEN_USEROP) {
+            if (strlen(name) + END_LENGTH > MAXLEN_USEROP) {
                 error("a name of operator is too long");
                 return;
             }
@@ -7659,22 +7670,11 @@ type_is_contiguous(TYPE_DESC tp)
     return FALSE;
 }
 
-int
-pointer_assignable(expr x, expv vPointer, expv vPointee) {
-    TYPE_DESC vPtrTyp = NULL;
-    TYPE_DESC vPteTyp = NULL;
-
-    vPtrTyp = EXPV_TYPE(vPointer);
-    if (vPtrTyp == NULL || TYPE_BASIC_TYPE(vPtrTyp) == TYPE_UNKNOWN) {
-        fatal("%s: Undetermined type for a pointer.", __func__);
-        return FALSE;
-    }
-    vPteTyp = EXPV_TYPE(vPointee);
-    if (vPteTyp == NULL || TYPE_BASIC_TYPE(vPteTyp) == TYPE_UNKNOWN) {
-        fatal("%s: Undetermined type for a pointee.", __func__);
-        return FALSE;
-    }
-
+static int
+pointer_assignable(expr x,
+                   expv vPointer, expv vPointee,
+                   TYPE_DESC vPtrTyp, TYPE_DESC vPteTyp)
+{
     if (!TYPE_IS_POINTER(vPtrTyp)) {
         if (EXPR_CODE(EXPR_ARG1(x)) == IDENT) {
             if (x) error_at_node(x, "'%s' is not a pointer.",
@@ -7692,15 +7692,19 @@ pointer_assignable(expr x, expv vPointer, expv vPointee) {
         return FALSE;
     }
 
-    if (IS_PROCEDURE_TYPE(EXPV_TYPE(vPointer)) &&
+    if (vPointer != NULL && IS_PROCEDURE_TYPE(EXPV_TYPE(vPointer)) &&
         FUNCTION_TYPE_IS_TYPE_BOUND(EXPV_TYPE(vPointer))) {
             if (x) error("lhs expr is type bound procedure.");
             return FALSE;
     }
-    if (IS_PROCEDURE_TYPE(EXPV_TYPE(vPointee)) &&
+    if (vPointee != NULL && IS_PROCEDURE_TYPE(EXPV_TYPE(vPointee)) &&
         FUNCTION_TYPE_IS_TYPE_BOUND(EXPV_TYPE(vPointee))) {
             if (x) error("rhs expr is type bound procedure.");
             return FALSE;
+    }
+
+    if (TYPE_BASIC_TYPE(vPteTyp) == TYPE_LHS) {
+        return TRUE;
     }
 
     if (IS_PROCEDURE_TYPE(vPtrTyp)) {
@@ -7742,7 +7746,7 @@ pointer_assignable(expr x, expv vPointer, expv vPointee) {
         return FALSE;
     }
 
-    if (is_array_with_bounds_remapping_list(vPointer)) {
+    if (vPointer != NULL && is_array_with_bounds_remapping_list(vPointer)) {
         /* This statement is pointer remapping! */
         if (TYPE_N_DIM(IS_REFFERENCE(vPteTyp)?TYPE_REF(vPteTyp):vPteTyp) != 1 &&
             !type_is_contiguous(vPteTyp)) {
@@ -7775,6 +7779,35 @@ pointer_assignable(expr x, expv vPointer, expv vPointee) {
     return TRUE;
 }
 
+int
+type_is_pointer_assignable(TYPE_DESC vPtrTyp, TYPE_DESC vPteTyp)
+{
+    return pointer_assignable(NULL, NULL, NULL, vPtrTyp, vPteTyp);
+}
+
+
+int
+expv_is_pointer_assignable(expr x, expv vPointer, expv vPointee)
+{
+    TYPE_DESC vPtrTyp = NULL;
+    TYPE_DESC vPteTyp = NULL;
+
+    vPtrTyp = EXPV_TYPE(vPointer);
+    if (vPtrTyp == NULL || TYPE_BASIC_TYPE(vPtrTyp) == TYPE_UNKNOWN) {
+        fatal("%s: Undetermined type for a pointer.", __func__);
+        return FALSE;
+    }
+    vPteTyp = EXPV_TYPE(vPointee);
+    if (vPteTyp == NULL || TYPE_BASIC_TYPE(vPteTyp) == TYPE_UNKNOWN) {
+        fatal("%s: Undetermined type for a pointee.", __func__);
+        return FALSE;
+    }
+
+    return pointer_assignable(x, vPointer, vPointee, vPtrTyp, vPteTyp);
+}
+
+
+
 static void
 compile_POINTER_SET_statement(expr x) {
     list lp;
@@ -7802,7 +7835,7 @@ compile_POINTER_SET_statement(expr x) {
         return;
     }
 
-    if(EXPV_CODE(vPointee) == FUNCTION_CALL)
+    if (EXPV_CODE(vPointee) == FUNCTION_CALL)
         goto accept;
 
     vPtrTyp = EXPV_TYPE(vPointer);
@@ -7816,7 +7849,7 @@ compile_POINTER_SET_statement(expr x) {
         return;
     }
 
-    if (!pointer_assignable(x, vPointer, vPointee)) {
+    if (!expv_is_pointer_assignable(x, vPointer, vPointee)) {
         return;
     }
 
@@ -8444,7 +8477,7 @@ new_ctl() {
     if (ctl == NULL)
         fatal("memory allocation failed");
     cleanup_ctl(ctl);
-    CTL_BLOCK_LOCAL_EXTERNAL_SYMBOLS(ctl) = NULL;
+    CTL_EXTERNAL_SYMBOLS(ctl) = NULL;
     return ctl;
 }
 
@@ -8975,7 +9008,7 @@ compile_BLOCK_statement(expr x)
     expv st;
 
     push_ctl(CTL_BLK);
-    push_env(CTL_BLOCK_LOCAL_ENV(ctl_top));
+    push_env(CTL_ENV(ctl_top));
 
     st = list2(F2008_BLOCK_STATEMENT, NULL, NULL);
     output_statement(st);
@@ -9193,26 +9226,29 @@ compile_forall_header(expr x)
             id = declare_ident(sym, CL_VAR);
             ID_STORAGE(id) = STG_INDEX;
         } else {
-            TYPE_DESC tp;
             id = find_ident(sym);
             if (id) {
-                tp = ID_TYPE(id);
-                if (tp == NULL) {
+                if (ID_TYPE(id) == NULL) {
                     error("%s is not declared", SYM_NAME(sym));
-                } else if (!IS_INT(tp)) {
+                } else if (!IS_INT(ID_TYPE(id))) {
                     error("%s is not integer", SYM_NAME(sym));
                 }
+                tp = new_type_desc();
+                *tp = *ID_TYPE(id);
                 id = declare_ident(sym, CL_VAR);
-
             } else {
                 id = declare_ident(sym, CL_VAR);
                 implicit_declaration(id);
-
+                if (!IS_INT(ID_TYPE(id))) {
+                    error("%s is not integer", SYM_NAME(sym));
+                }
             }
 
             ID_STORAGE(id) = STG_AUTO;
         }
         declare_id_type(id, tp);
+        TYPE_UNSET_IMPLICIT(id);
+        TYPE_UNSET_IMPLICIT(ID_TYPE(id));
         declare_variable(id);
 
         for (;;) {
@@ -9319,7 +9355,7 @@ compile_FORALL_statement(int st_no, expr x)
     }
 
     push_ctl(CTL_FORALL);
-    push_env(CTL_FORALL_LOCAL_ENV(ctl_top));
+    push_env(CTL_ENV(ctl_top));
 
     assert(LOCAL_SYMBOLS == NULL);
 
@@ -9382,6 +9418,9 @@ compile_end_forall_header(expv init)
              */
             ID_SYM(ip) = EXPV_NAME(ID_ADDR(ip));
             EXPR_SYM(EXPR_ARG1(LIST_ITEM(lp))) = EXPV_NAME(ID_ADDR(ip));
+
+            ID_TYPE(ip) = wrap_type(ID_TYPE(ip));
+            TYPE_UNSET_IMPLICIT(ID_TYPE(ip));
         }
     }
 
@@ -9434,6 +9473,9 @@ compile_ENDFORALL_statement(expr x)
 
     CTL_FORALL_BODY(ctl_top) = CURRENT_STATEMENTS;
 
+    /*
+     * Check the statements inside FORALL
+     */
     FOR_ITEMS_IN_LIST(lp, CTL_FORALL_BODY(ctl_top)) {
         switch (EXPV_CODE(LIST_ITEM(lp))) {
             case F_FORALL_STATEMENT:
@@ -9716,7 +9758,7 @@ compile_DOCONCURRENT_statement(expr range_st_no,
     }
 
     push_ctl(CTL_DO);
-    push_env(CTL_DO_LOCAL_ENV(ctl_top));
+    push_env(CTL_ENV(ctl_top));
 
     if ((vforall_header = compile_forall_header(forall_header)) == NULL) {
         return;
@@ -9798,7 +9840,7 @@ compile_ASSOCIATE_statement(expr x)
     }
 
     push_ctl(CTL_ASSOCIATE);
-    push_env(CTL_LOCAL_ENV(ctl_top));
+    push_env(CTL_ENV(ctl_top));
     CTL_BLOCK(ctl_top) = st;
 
     FOR_ITEMS_IN_LIST(lp, association_list) {

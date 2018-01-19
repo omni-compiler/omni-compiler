@@ -1,7 +1,7 @@
 Omni Compiler Software RELEASE NOTES
 
 # ver. 1.2.3    2018/01/15
-* Add Python module for master-worker model.
+* Python module supports master-worker pattern
 * Improve performance of XMP/C on for-loop statement.
 * Fixed lots of bugs.
 

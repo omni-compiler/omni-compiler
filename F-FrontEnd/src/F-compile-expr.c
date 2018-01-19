@@ -773,8 +773,8 @@ compile_expression(expr x)
             if (left == NULL || right == NULL) {
                 goto err;
             }
-            lt = EXPV_TYPE(left);
-            rt = EXPV_TYPE(right);
+            lt = bottom_type(EXPV_TYPE(left));
+            rt = bottom_type(EXPV_TYPE(right));
             if ((!IS_CHAR(lt) && !IS_GNUMERIC(lt) && !IS_GNUMERIC_ALL(lt)) ||
                 (!IS_CHAR(rt) && !IS_GNUMERIC(rt) && !IS_GNUMERIC_ALL(rt))) {
                 error("concatenation of nonchar data");
@@ -2276,7 +2276,7 @@ choose_module_procedure_by_args(EXT_ID mod_procedures, expv args)
 }
 
 
-static expv
+expv
 max_rank_from_arguments(expv args)
 {
     list lp;
@@ -2837,10 +2837,18 @@ compile_struct_constructor_with_components(const ID struct_id,
             return NULL;
         }
 
-        if (!type_is_compatible_for_assignment(ID_TYPE(match),
-                                               EXPV_TYPE(v))) {
-            error("type is not applicable in struct constructor");
-            return NULL;
+        if (TYPE_IS_POINTER(ID_TYPE(match))) {
+            if (!type_is_pointer_assignable(ID_TYPE(match),
+                                            EXPV_TYPE(v))) {
+                error("type is not applicable in struct constructor");
+                return NULL;
+            }
+        } else {
+            if (!type_is_compatible_for_assignment(ID_TYPE(match),
+                                                   EXPV_TYPE(v))) {
+                error("type is not applicable in struct constructor");
+                return NULL;
+            }
         }
 
         if (!has_keyword) {

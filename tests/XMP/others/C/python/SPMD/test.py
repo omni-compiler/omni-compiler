@@ -1,7 +1,7 @@
 from mpi4py import MPI
-import XMP
+import xmp
 
-lib = XMP.Lib("test.so")
+lib = xmp.Lib("test.so")
 comm = MPI.COMM_WORLD
 
 job = lib.call(comm, "hello", ([1,2,3], [4,5,6]))

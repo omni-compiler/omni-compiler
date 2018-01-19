@@ -1037,7 +1037,7 @@ declare_function(ID id)
                         TYPE_SET_NOT_FIXED(FUNCTION_TYPE_RETURN_TYPE(tp));
                         TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) = TYPE_GNUMERIC_ALL;
                         ID_TYPE(id) = tp;
-                    } else if (!TYPE_IS_PROCEDURE(tp) || (TYPE_IS_PROCEDURE(tp) && TYPE_REF(tp) != NULL)) {
+                    } else if (!IS_PROCEDURE_TYPE(tp) || (TYPE_IS_PROCEDURE(tp) && TYPE_REF(tp) != NULL)) {
                         ID_TYPE(id) = function_type(tp);
                         /*
                          * For F_Front, There is no difference between an
@@ -1255,10 +1255,10 @@ declare_label(int st_no,LABEL_TYPE type,int def_flag)
             CTL_TYPE(cp) == CTL_FORALL ||
             CTL_TYPE(cp) == CTL_ASSOCIATE) {
             in_block = TRUE;
-            if (CTL_BLOCK_LOCAL_LABELS(cp) == LOCAL_LABELS) {
+            if (CTL_LABELS(cp) == LOCAL_LABELS) {
                 continue;
             }
-            FOREACH_ID(ip, CTL_LOCAL_LABELS(cp)) {
+            FOREACH_ID(ip, CTL_LABELS(cp)) {
                 if(LAB_ST_NO(ip) == st_no) {
                     goto found;
                 }
@@ -1659,10 +1659,10 @@ find_ident_block_parent(SYMBOL s)
             CTL_TYPE(cp) == CTL_DO || \
             CTL_TYPE(cp) == CTL_TYPE_GUARD) {
             in_block = TRUE;
-            if (CTL_BLOCK_LOCAL_SYMBOLS(cp) == LOCAL_SYMBOLS) {
+            if (CTL_SYMBOLS(cp) == LOCAL_SYMBOLS) {
                 continue;
             }
-            ip = find_ident_head(s, CTL_BLOCK_LOCAL_SYMBOLS(cp));
+            ip = find_ident_head(s, CTL_SYMBOLS(cp));
             if (ip != NULL) {
                 return ip;
             }
@@ -2400,19 +2400,6 @@ compile_derived_type(expr x, int allow_predecl)
     }
 
     id = find_ident_local(sym);
-
-    if(CTL_TYPE(ctl_top) == CTL_STRUCT) {
-        /*
-         * member of SEQUENCE struct must be SEQUENCE.
-         */
-        if (TYPE_IS_SEQUENCE(CTL_STRUCT_TYPEDESC(ctl_top)) &&
-            TYPE_IS_SEQUENCE(ID_TYPE(id)) == FALSE) {
-            error_at_node(x, "type %s does not have SEQUENCE attribute.",
-                          SYM_NAME(sym));
-            return NULL;
-        }
-    }
-
     if(id != NULL && ID_IS_AMBIGUOUS(id)) {
         error_at_node(x, "an ambiguous reference to symbol '%s'", ID_NAME(id));
         return NULL;
@@ -2435,6 +2422,18 @@ compile_derived_type(expr x, int allow_predecl)
         error_at_node(x, "struct type '%s' requires type parameter values",
                       SYM_NAME(sym));
         return NULL;
+    }
+
+    if(CTL_TYPE(ctl_top) == CTL_STRUCT) {
+        /*
+         * member of SEQUENCE struct must be SEQUENCE.
+         */
+        if (TYPE_IS_SEQUENCE(CTL_STRUCT_TYPEDESC(ctl_top)) &&
+            TYPE_IS_SEQUENCE(tp) == FALSE) {
+            error_at_node(x, "type %s does not have SEQUENCE attribute.",
+                          SYM_NAME(sym));
+            return NULL;
+        }
     }
 
     if (is_parameterized_type) {
@@ -3842,10 +3841,10 @@ find_struct_decl_block_parent(SYMBOL s)
             CTL_TYPE(cp) == CTL_DO || \
             CTL_TYPE(cp) == CTL_TYPE_GUARD) {
             in_block = TRUE;
-            if (CTL_BLOCK_LOCAL_STRUCT_DECLS(cp) == LOCAL_STRUCT_DECLS) {
+            if (CTL_STRUCT_DECLS(cp) == LOCAL_STRUCT_DECLS) {
                 continue;
             }
-            tp = find_struct_decl_head(s, CTL_BLOCK_LOCAL_STRUCT_DECLS(cp));
+            tp = find_struct_decl_head(s, CTL_STRUCT_DECLS(cp));
             if (tp != NULL) {
                 return tp;
             }

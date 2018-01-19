@@ -247,13 +247,13 @@ typedef struct control
 #define CTL_SAVE(l)             ((l)->save)
 #define CTL_BLOCK(l)            ((l)->v1)
 #define CTL_CLIENT(l)           ((l)->v2)
-#define CTL_LOCAL_ENV(l)        (&((l)->local_env))
-#define CTL_LOCAL_SYMBOLS(l)               ((CTL_LOCAL_ENV(l))->symbols)
-#define CTL_LOCAL_STRUCT_DECLS(l)          ((CTL_LOCAL_ENV(l))->struct_decls)
-#define CTL_LOCAL_COMMON_SYMBOLS(l)        ((CTL_LOCAL_ENV(l))->common_symbols)
-#define CTL_LOCAL_LABELS(l)                ((CTL_LOCAL_ENV(l))->labels)
-#define CTL_LOCAL_EXTERNAL_SYMBOLS(l)      ((CTL_LOCAL_ENV(l))->external_symbols)
-#define CTL_LOCAL_BLOCKS(l)                ((CTL_LOCAL_ENV(l))->blocks)
+#define CTL_ENV(l)              (&((l)->local_env))
+#define CTL_SYMBOLS(l)          ((CTL_ENV(l))->symbols)
+#define CTL_STRUCT_DECLS(l)     ((CTL_ENV(l))->struct_decls)
+#define CTL_COMMON_SYMBOLS(l)   ((CTL_ENV(l))->common_symbols)
+#define CTL_LABELS(l)           ((CTL_ENV(l))->labels)
+#define CTL_EXTERNAL_SYMBOLS(l) ((CTL_ENV(l))->external_symbols)
+#define CTL_BLOCKS(l)           ((CTL_ENV(l))->blocks)
 
 
 #define CTL_IF_STATEMENT(l)     ((l)->v2)
@@ -286,7 +286,6 @@ typedef struct control
 #define CTL_CASE_CONST_NAME(l)          (EXPR_ARG3((l)->v1))
 #define CTL_TYPE_GUARD_BLOCK(l)         (EXPR_ARG2((l)->v1))
 #define CTL_TYPE_GUARD_CONST_NAME(l)    (EXPR_ARG3((l)->v1))
-#define CTL_TYPE_GUARD_LOCAL_ENV(l)     (&((l)->local_env))
 
 #define CTL_OMP_ARG(l)	((l)->v2)
 #define CTL_OMP_ARG_DIR(l) (EXPR_INT(EXPR_ARG1((l)->v2)))
@@ -304,13 +303,6 @@ typedef struct control
 #define CTL_BLOCK_STATEMENT(l)                   ((l)->v2)
 #define CTL_BLOCK_BODY(l)                        (EXPR_ARG1((l)->v2))
 #define CTL_BLOCK_CONST_NAME(l)                  (EXPR_ARG2((l)->v2))
-#define CTL_BLOCK_LOCAL_ENV(l)                   (&((l)->local_env))
-#define CTL_BLOCK_LOCAL_SYMBOLS(l)               ((CTL_BLOCK_LOCAL_ENV(l))->symbols)
-#define CTL_BLOCK_LOCAL_STRUCT_DECLS(l)          ((CTL_BLOCK_LOCAL_ENV(l))->struct_decls)
-#define CTL_BLOCK_LOCAL_COMMON_SYMBOLS(l)        ((CTL_BLOCK_LOCAL_ENV(l))->common_symbols)
-#define CTL_BLOCK_LOCAL_LABELS(l)                ((CTL_BLOCK_LOCAL_ENV(l))->labels)
-#define CTL_BLOCK_LOCAL_EXTERNAL_SYMBOLS(l)      ((CTL_BLOCK_LOCAL_ENV(l))->external_symbols)
-#define CTL_BLOCK_LOCAL_BLOCKS(l)                ((CTL_BLOCK_LOCAL_ENV(l))->blocks)
 
 #define CTL_FORALL_STATEMENT(l)                   ((l)->v2)
 #define CTL_FORALL_HEADER(l)                      (EXPR_ARG1((l)->v1))
@@ -318,13 +310,6 @@ typedef struct control
 #define CTL_FORALL_MASK(l)                        (EXPR_ARG2(CTL_FORALL_HEADER(l)))
 #define CTL_FORALL_BODY(l)                        (EXPR_ARG2((l)->v1))
 #define CTL_FORALL_CONST_NAME(l)                  (EXPR_ARG3((l)->v1))
-#define CTL_FORALL_LOCAL_ENV(l)                   (&((l)->local_env))
-#define CTL_FORALL_LOCAL_SYMBOLS(l)               ((CTL_FORALL_LOCAL_ENV(l))->symbols)
-#define CTL_FORALL_LOCAL_STRUCT_DECLS(l)          ((CTL_FORALL_LOCAL_ENV(l))->struct_decls)
-#define CTL_FORALL_LOCAL_COMMON_SYMBOLS(l)        ((CTL_FORALL_LOCAL_ENV(l))->common_symbols)
-#define CTL_FORALL_LOCAL_LABELS(l)                ((CTL_FORALL_LOCAL_ENV(l))->labels)
-#define CTL_FORALL_LOCAL_EXTERNAL_SYMBOLS(l)      ((CTL_FORALL_LOCAL_ENV(l))->external_symbols)
-#define CTL_FORALL_LOCAL_BLOCKS(l)                ((CTL_FORALL_LOCAL_ENV(l))->blocks)
 
 
 #define CTL_ASSOCIATE_BODY(l)                     (EXPR_ARG1((l)->v1))
@@ -597,6 +582,7 @@ extern void     warning_at_id EXC_VARARGS(ID, x);
 extern void     debug EXC_VARARGS(char *, fmt);
 
 extern void     initialize_lex _ANSI_ARGS_((void));
+extern void     finalize_lex _ANSI_ARGS_((void));
 extern void     initialize_compile _ANSI_ARGS_((void));
 extern void     finalize_compile _ANSI_ARGS_((void));
 extern void     initialize_compile_procedure _ANSI_ARGS_((void));
@@ -779,7 +765,8 @@ extern int      type_is_compatible_for_assignment
                     _ANSI_ARGS_((TYPE_DESC tp1, TYPE_DESC tp2));
 extern int      type_is_compatible_for_allocation
                     _ANSI_ARGS_((TYPE_DESC left, TYPE_DESC right));
-extern int      pointer_assignable(expv x, expr vPointer, expr vPointee);
+extern int      type_is_pointer_assignable(TYPE_DESC vPtrTyp, TYPE_DESC vPteTyp);
+extern int      expv_is_pointer_assignable(expv x, expr vPointer, expr vPointee);
 extern int      struct_type_is_compatible_for_assignment
                     _ANSI_ARGS_((TYPE_DESC tp1, TYPE_DESC tp2, int is_pointer_set));
 extern int      type_is_specific_than

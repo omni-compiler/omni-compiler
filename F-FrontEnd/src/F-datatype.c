@@ -219,7 +219,7 @@ type_bound_procedure_type(void)
     TYPE_DESC ret; /* dummy return type */
     TYPE_DESC tp;
     ret = new_type_desc();
-    TYPE_BASIC_TYPE(ret) = TYPE_GENERIC;
+    TYPE_BASIC_TYPE(ret) = TYPE_GNUMERIC_ALL;
     tp = function_type(ret);
     FUNCTION_TYPE_SET_TYPE_BOUND(tp);
     return tp;
@@ -233,7 +233,10 @@ procedure_type(const TYPE_DESC ftp)
     if (IS_SUBR(ftp)) {
         tp = subroutine_type();
     } else {
-        tp = function_type(NULL);
+        TYPE_DESC ret; /* dummy return type */
+        ret = new_type_desc();
+        TYPE_BASIC_TYPE(ret) = TYPE_GNUMERIC_ALL;
+        tp = function_type(ret);
     }
     TYPE_BASIC_TYPE(tp) = TYPE_BASIC_TYPE(ftp);
     TYPE_REF(tp) = ftp;
@@ -396,7 +399,7 @@ type_is_omissible(TYPE_DESC tp, uint32_t attr, uint32_t ext)
     if (IS_ARRAY_TYPE(tp))
         return FALSE;
     // The function type is not omissible.
-    if (IS_PROCEDURE_TYPE(tp))
+    if (IS_PROCEDURE_TYPE(tp) && TYPE_REF(tp) != NULL)
         return FALSE;
     // Co-array is not omissible.
     if (tp->codims != NULL)
@@ -1718,7 +1721,6 @@ struct_type_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2, int is_po
     TYPE_DESC btp2;
 
     assert(tp1 != NULL && TYPE_BASIC_TYPE(tp1) == TYPE_STRUCT);
-    assert(tp2 == NULL || TYPE_BASIC_TYPE(tp2) == TYPE_STRUCT);
 
     if (debug_flag) {
         fprintf(debug_fp,"\ncomparing derived-type %p and %p\n", tp1, tp2);
@@ -1727,6 +1729,11 @@ struct_type_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2, int is_po
     if (tp2 == NULL) {
         if (debug_flag) fprintf(debug_fp,"* right side type is null, return false\n");
         return FALSE;
+    }
+
+    if (IS_GNUMERIC_ALL(tp2)) {
+        if (debug_flag) fprintf(debug_fp,"* right hand type is GNUMERIC ALL, return true");
+        return TRUE;
     }
 
     if (debug_flag) fprintf(debug_fp,"* compare addresses                   ... ");

@@ -6,7 +6,7 @@ INSTALL   = @INSTALL@
 
 all:
 
-install: XMP.py
+install: xmp.py
 	$(MKDIR_P) $(DESTDIR)$(LIBDIR)
 	$(INSTALL) $^ $(DESTDIR)$(LIBDIR)
 
