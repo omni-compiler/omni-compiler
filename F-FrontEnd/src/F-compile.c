@@ -4309,7 +4309,7 @@ end_procedure()
                 ID id_in_parent = NULL;
                 ID parent_id_list;
 
-                id_in_parent = find_ident_parent(ID_SYM(id));
+                id_in_parent = find_ident_head(ID_SYM(id), UNIT_CTL_LOCAL_SYMBOLS(PARENT_UNIT_CTL));
                 parent_id_list = UNIT_CTL_LOCAL_SYMBOLS(PARENT_UNIT_CTL);
 
                 if(id_in_parent == NULL) {
@@ -4389,7 +4389,6 @@ end_procedure()
                                           EXT_PROC_BLOCKS(ep),
                                           LOCAL_SYMBOLS, /* is_final = */ TRUE);
     }
-
 
 
     if (CTL_TYPE(ctl_top) == CTL_BLK) {
@@ -6898,9 +6897,9 @@ compile_ALLOCATE_DEALLOCATE_statement(expr x)
             case F95_MEMBER_REF:
             case F_VAR:
             case ARRAY_REF:
-	    case XMP_COARRAY_REF:
+            case XMP_COARRAY_REF:
                 if(isVarSetTypeAttr(ev,
-                    TYPE_ATTR_POINTER | TYPE_ATTR_ALLOCATABLE) == FALSE) {
+                                    TYPE_ATTR_POINTER | TYPE_ATTR_ALLOCATABLE) == FALSE) {
                     error("argument is not a pointer nor allocatable type");
                     continue;
                 }
@@ -6939,8 +6938,8 @@ compile_ALLOCATE_DEALLOCATE_statement(expr x)
 
     FOR_ITEMS_IN_LIST(lp, args) {
         if (tp) {
-            if (type_is_compatible_for_allocation(EXPV_TYPE(LIST_ITEM(lp)),
-                                                  tp)) {
+            if (!type_is_compatible_for_allocation(EXPV_TYPE(LIST_ITEM(lp)),
+                                                   tp)) {
                 error("type incompatible");
                 return;
             }
@@ -6951,14 +6950,14 @@ compile_ALLOCATE_DEALLOCATE_statement(expr x)
         }
 
         if (vsource) {
-            if (type_is_compatible_for_allocation(EXPV_TYPE(LIST_ITEM(lp)),
+            if (!type_is_compatible_for_allocation(EXPV_TYPE(LIST_ITEM(lp)),
                                                   EXPV_TYPE(vsource))) {
                 error("type incompatible");
                 return;
             }
         }
         if (vmold) {
-            if (type_is_compatible_for_allocation(EXPV_TYPE(LIST_ITEM(lp)),
+            if (!type_is_compatible_for_allocation(EXPV_TYPE(LIST_ITEM(lp)),
                                                   EXPV_TYPE(vmold))) {
                 return;
                 error("type incompatible");
