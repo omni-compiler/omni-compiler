@@ -1089,7 +1089,7 @@ type_is_compatible(TYPE_DESC left, TYPE_DESC right,
     }
 
     if (IS_ANY_CLASS(left) || IS_ANY_CLASS(right)) {
-        fprintf(debug_fp, "# CLASS(*) \n");
+        debug("# CLASS(*) \n");
         goto rank_compatibility;
     }
 
@@ -1195,7 +1195,7 @@ attribute_compatibility:
     }
 
     if (IS_ANY_CLASS(left) || IS_ANY_CLASS(right)) {
-        fprintf(debug_fp, "# CLASS(*) \n");
+        debug("# CLASS(*) \n");
         goto compatible;
     }
 
