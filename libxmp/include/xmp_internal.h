@@ -169,6 +169,12 @@ extern void _XMP_local_put(_XMP_coarray_t *, const void *, const int, const int,
 extern void _XMP_local_get(void *, const _XMP_coarray_t *, const int, const int, const int, const int, 
 			   const _XMP_array_section_t *, const _XMP_array_section_t *, const size_t, const size_t);
 
+// From xmp_index.c
+extern void _XMP_L2G(int local_idx, long long int *global_idx,
+		     _XMP_template_t *template, int template_index);
+extern void _XMP_G2L(long long int global_idx,int *local_idx,
+		     _XMP_template_t *template, int template_index);
+
 // xmp_intrinsic.c
 extern void xmpf_transpose(void *dst_p, void *src_p, int opt);
 extern void xmpf_matmul(void *x_p, void *a_p, void *b_p);

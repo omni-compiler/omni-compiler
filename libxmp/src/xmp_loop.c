@@ -273,23 +273,20 @@ void _XMP_sched_loop_template_BLOCK(int ser_init, int ser_cond, int ser_step,
 
   }
 
-  /* if (unbound_flag == 0){ */
+  if (unbound_flag == 0){
 
-  /*   _XMP_template_t *t_desc = rp->t_desc; */
-  /*   int t_idx = rp->REF_INDEX[*r_idx]; */
+    long long int ser_init2;
+    _XMP_L2G(*par_init, &ser_init2, template, template_index);
+    if (ser_init2 < ser_init){
+      (*par_init) += lwidth;
+    }
 
-  /*   long long int glb; */
-  /*   _XMP_L2G(*par_init, &glb, t_desc, t_idx); */
-  /*   if (glb < glb_orig){ */
-  /*     (*par_init) += lwidth; */
-  /*   } */
-
-  /*   long long int gub; */
-  /*   _XMP_L2G(*par_cond, &gub, t_desc, t_idx); */
-  /*   if (gub > gub_orig){ */
-  /*     (*par_cond) -= uwidth; */
-  /*   } */
-  /* } */
+    long long int ser_cond2;
+    _XMP_L2G(*par_cond, &ser_cond2, template, template_index);
+    if (ser_cond2 > ser_cond){
+      (*par_cond) -= uwidth;
+    }
+  }
   
   xmp_dbg_printf("(%d : %d)\n", *par_init, *par_cond);
 

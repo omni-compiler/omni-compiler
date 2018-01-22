@@ -796,16 +796,17 @@ public class XMPtranslateLocalPragma {
     else if (expandOpt.getArg(0).getInt() == LOOP_MARGIN){
       newBlock = divideMarginLoop(pb);
     }
-    // else if (expandOpt.getArg(0).getInt() == XMP.LOOP_PEEL_AND_WAIT){
-    //   newBlock = peelLoop(pb);
-    // }
+    else if (expandOpt.getArg(0).getInt() == LOOP_PEEL_AND_WAIT){
+      newBlock = peelLoop(pb);
+    }
       
     if (newBlock != null){
       pb.replace(newBlock);
       Block next;
       for (Block b = newBlock.getBody().getHead(); b != null; b = next){
 	next = b.getNext();
-	translateLoop((PragmaBlock)b, true);
+	if (b instanceof PragmaBlock)
+	  translatePragma((PragmaBlock)b);
       }
       return;
     }
@@ -4433,6 +4434,35 @@ public class XMPtranslateLocalPragma {
     else {
       return null;
     }
+
+  }
+
+  private static Block peelLoop(PragmaBlock pb){
+
+    // The type is XMP.LOOP_PEEL_AND_WAIT
+
+    BlockList bl = Bcons.emptyBody();
+
+    // First, create the kernel loop
+    PragmaBlock pb3 = (PragmaBlock)pb.copy();
+    pb3.getClauses().getArg(5).setArg(0, Xcons.IntConstant(LOOP_EXPAND));
+    pb3.getClauses().getArg(5).setArg(1, pb.getClauses().getArg(5).getArg(2));
+    bl.add(pb3);
+
+    // Second, create wait_async
+    XobjList clauses = Xcons.List();
+    clauses.add(Xcons.List(pb.getClauses().getArg(5).getArg(1)));
+    clauses.add(null);
+    PragmaBlock pb2 = new PragmaBlock(Xcode.XMP_PRAGMA, "WAIT_ASYNC", clauses, null);
+    bl.add(pb2);
+    
+    // Third, create the peeled Loop
+    PragmaBlock pb1 = (PragmaBlock)pb.copy();
+    pb1.getClauses().getArg(5).setArg(0, Xcons.IntConstant(LOOP_MARGIN));
+    pb1.getClauses().getArg(5).setArg(1, pb.getClauses().getArg(5).getArg(2));
+    bl.add(pb1);
+
+    return Bcons.COMPOUND(bl);
 
   }
 
