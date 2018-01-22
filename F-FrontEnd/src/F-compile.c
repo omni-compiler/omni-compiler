@@ -292,6 +292,36 @@ output_statement(v)
 }
 
 
+void compile_pragma_decl(expr x);
+void compile_pragma_outside(expr x);
+
+//
+// NOTE: It generates a wrong code if the first executable statement has a label
+//       and is preceded by a pragma, as the following code snippet.
+//
+//       subroutine sub
+//       integer k
+// !$acc xxxx
+// 1000  write(*,*)
+//
+static void
+output_pragma()
+{
+  list lp;
+  FOR_ITEMS_IN_LIST(lp, preceding_pragmas){
+    expv x = LIST_ITEM(lp);
+    if (CURRENT_STATE == INEXEC) compile_pragma_statement(x);
+    else compile_pragma_decl(x);
+    free(EXPR_STR(EXPR_ARG1(x)));
+    free(x);
+  }
+  if (preceding_pragmas){
+    delete_list(preceding_pragmas);
+    preceding_pragmas = NULL;
+  }
+}
+  
+
 /* enter control block */
 void
 push_ctl(ctl)
@@ -362,10 +392,6 @@ list_find_type_expr(const expr lst)
 }
 
 
-void compile_pragma_decl(expr x);
-void compile_pragma_outside(expr x);
-
-
 void
 compile_statement(st_no,x)
      int st_no;
@@ -386,7 +412,8 @@ compile_statement(st_no,x)
     if (st_no != 0 && doCont == 1) {
         this_label = declare_label(st_no, LAB_UNKNOWN, TRUE);
         if (LAB_TYPE(this_label) != LAB_FORMAT) {
-            output_statement(list1(STATEMENT_LABEL, ID_ADDR(this_label)));
+	  output_pragma();
+	  output_statement(list1(STATEMENT_LABEL, ID_ADDR(this_label)));
         }
     } else this_label = NULL;
 
@@ -1284,6 +1311,7 @@ compile_statement1(int st_no, expr x)
       else { // others should be issued at the next statemet.
 	char *str = strdup(EXPR_STR(EXPR_ARG1(x)));
 	expr new_pragma = list1(F_PRAGMA_STATEMENT, make_enode(STRING_CONSTANT, str));
+	EXPR_LINE(new_pragma) = current_line;
 	if (!preceding_pragmas) preceding_pragmas = list0(LIST);
 	preceding_pragmas = list_put_last(preceding_pragmas, new_pragma);
       }
@@ -1819,17 +1847,18 @@ check_INDCL()
         error("declaration among executables");
     }
 
-    list lp;
-    FOR_ITEMS_IN_LIST(lp, preceding_pragmas){
-      expv x = LIST_ITEM(lp);
-      compile_pragma_decl(x);
-      free(EXPR_STR(EXPR_ARG1(x)));
-      free(x);
-    }
-    if (preceding_pragmas){
-      delete_list(preceding_pragmas);
-      preceding_pragmas = NULL;
-    }
+    output_pragma();
+    /* list lp; */
+    /* FOR_ITEMS_IN_LIST(lp, preceding_pragmas){ */
+    /*   expv x = LIST_ITEM(lp); */
+    /*   compile_pragma_decl(x); */
+    /*   free(EXPR_STR(EXPR_ARG1(x))); */
+    /*   free(x); */
+    /* } */
+    /* if (preceding_pragmas){ */
+    /*   delete_list(preceding_pragmas); */
+    /*   preceding_pragmas = NULL; */
+    /* } */
     
 }
 
@@ -1853,17 +1882,18 @@ check_INEXEC()
     }
     if(NOT_INDATA_YET) end_declaration();
 
-    list lp;
-    FOR_ITEMS_IN_LIST(lp, preceding_pragmas){
-      expv x = LIST_ITEM(lp);
-      compile_pragma_statement(x);
-      free(EXPR_STR(EXPR_ARG1(x)));
-      free(x);
-    }
-    if (preceding_pragmas){
-      delete_list(preceding_pragmas);
-      preceding_pragmas = NULL;
-    }
+    output_pragma();
+    /* list lp; */
+    /* FOR_ITEMS_IN_LIST(lp, preceding_pragmas){ */
+    /*   expv x = LIST_ITEM(lp); */
+    /*   compile_pragma_statement(x); */
+    /*   free(EXPR_STR(EXPR_ARG1(x))); */
+    /*   free(x); */
+    /* } */
+    /* if (preceding_pragmas){ */
+    /*   delete_list(preceding_pragmas); */
+    /*   preceding_pragmas = NULL; */
+    /* } */
 
 }
 

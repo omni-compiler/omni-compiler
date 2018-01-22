@@ -4874,6 +4874,7 @@ compile_pragma_statement(expr x)
 	  v = expv_str_term(STRING_CONSTANT,
 			    NULL,
 			    strdup(EXPR_STR(EXPR_ARG1(x))));
+	  EXPV_LINE(v) = EXPR_LINE(x);
 	  break;
 	}
     default:
@@ -4882,7 +4883,9 @@ compile_pragma_statement(expr x)
         break;
       }
     }
-  output_statement(list1(F_PRAGMA_STATEMENT, v));
+  expv new_st = list1(F_PRAGMA_STATEMENT, v);
+  EXPV_LINE(new_st) = EXPR_LINE(x);
+  output_statement(new_st);
 }
 
 
@@ -4902,6 +4905,7 @@ compile_pragma_decl(expr x)
 	  v = expv_str_term(STRING_CONSTANT,
 			    NULL,
 			    strdup(EXPR_STR(EXPR_ARG1(x))));
+	  EXPV_LINE(v) = EXPR_LINE(x);
         break;
       }
     default:
@@ -4913,7 +4917,9 @@ compile_pragma_decl(expr x)
 
   SYMBOL sym = gen_temp_symbol("omni_dummy");
   ID id = declare_ident(sym, CL_DECL_PRAGMA);
-  id->info.decl_pragma_info.v = list1(F_PRAGMA_STATEMENT, v);
+  expv new_st = list1(F_PRAGMA_STATEMENT, v);
+  EXPV_LINE(new_st) = EXPR_LINE(x);
+  id->info.decl_pragma_info.v = new_st;
   ID_LINE(id) = EXPR_LINE(x);
 
 }
@@ -4935,6 +4941,7 @@ compile_pragma_outside(expr x)
 	  v = expv_str_term(STRING_CONSTANT,
 			    NULL,
 			    strdup(EXPR_STR(EXPR_ARG1(x))));
+	  EXPV_LINE(v) = EXPR_LINE(x);
         break;
       }
     default:
