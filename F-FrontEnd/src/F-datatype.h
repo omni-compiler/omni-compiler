@@ -373,6 +373,7 @@ extern TYPE_DESC basic_type_desc[];
     TYPE_ATTR_TARGET |                          \
     TYPE_ATTR_VOLATILE |                        \
     TYPE_ATTR_ASYNCHRONOUS |                    \
+    TYPE_ATTR_ALLOCATABLE |                     \
     TYPE_ATTR_PROTECTED)
 
 #define TYPE_HAS_SUBOBJECT_PROPAGATE_ATTRS(tp)  \
@@ -529,6 +530,10 @@ extern TYPE_DESC basic_type_desc[];
 
 #define IS_ENUM(tp) \
                 ((tp) != NULL && TYPE_BASIC_TYPE(tp) == TYPE_ENUM)
+
+/* represents CLASS(*) */
+#define IS_ANY_CLASS(tp) \
+    ((tp) != NULL && TYPE_IS_CLASS(tp) && TYPE_REF(tp) == NULL)
 
 #define TYPE_IS_MODIFIED(tp) \
                 ((tp) != NULL && (tp)->is_modified)

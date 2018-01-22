@@ -4311,7 +4311,7 @@ end_procedure()
                 ID id_in_parent = NULL;
                 ID parent_id_list;
 
-                id_in_parent = find_ident_parent(ID_SYM(id));
+                id_in_parent = find_ident_head(ID_SYM(id), UNIT_CTL_LOCAL_SYMBOLS(PARENT_UNIT_CTL));
                 parent_id_list = UNIT_CTL_LOCAL_SYMBOLS(PARENT_UNIT_CTL);
 
                 if(id_in_parent == NULL) {
@@ -4391,7 +4391,6 @@ end_procedure()
                                           EXT_PROC_BLOCKS(ep),
                                           LOCAL_SYMBOLS, /* is_final = */ TRUE);
     }
-
 
 
     if (CTL_TYPE(ctl_top) == CTL_BLK) {
@@ -5263,7 +5262,7 @@ type_is_replica(const TYPE_DESC tp) {
 }
 
 /**
- * Creates the type thas is shallow copied for the module id.
+ * Creates the type which is shallow copied for the module id.
  */
 static TYPE_DESC
 shallow_copy_type_for_module_id(TYPE_DESC original) {
@@ -5291,6 +5290,8 @@ deep_copy_and_overwrite_for_module_id_type(TYPE_DESC * ptp);
  * Copy the reference types recursively
  *  until there is no reference type or
  *  the reference type is already replicated.
+ *
+ * Note: Require shallow copy before apply this function
  */
 static void
 deep_ref_copy_for_module_id_type(TYPE_DESC tp) {
@@ -5515,11 +5516,12 @@ import_module_id(ID mid,
         EXT_NEXT(ep) = NULL;
         EXT_PROC_INTR_DEF_EXT_IDS(ep) = NULL;
 
-        /* hmm, this code is really required? */
-        if(!type_is_replica(EXT_PROC_TYPE(mep))) {
+#if 0
+        if (type_has_replica(EXT_PROC_TYPE(mep), &EXT_PROC_TYPE(ep))) {
             EXT_PROC_TYPE(ep)
                     = shallow_copy_type_for_module_id(EXT_PROC_TYPE(mep));
         }
+#endif
 
         if (EXT_PROC_INTR_DEF_EXT_IDS(mep) != NULL) {
             EXT_ID head, p;
@@ -5543,9 +5545,9 @@ import_module_id(ID mid,
        (ID_STORAGE(id) == STG_TAGNAME && use_name) ||
        TYPE_IS_PROTECTED(ID_TYPE(id))) {
         // shallow copy type from module
-        ID_TYPE(id) = shallow_copy_type_for_module_id(ID_TYPE(id));
-        TYPE_UNSET_PUBLIC(id);
-        TYPE_UNSET_PRIVATE(id);
+        if (!type_has_replica(ID_TYPE(id), &ID_TYPE(id))) {
+            ID_TYPE(id) = shallow_copy_type_for_module_id(ID_TYPE(id));
+        }
 
         /*
          * If type is PROTECTED and id is not imported to SUBMODULE,
@@ -5555,6 +5557,11 @@ import_module_id(ID mid,
              !fromParentModule) {
             TYPE_SET_READONLY(ID_TYPE(id));
         }
+
+        TYPE_UNSET_PUBLIC(id);
+        TYPE_UNSET_PRIVATE(id);
+        TYPE_UNSET_PUBLIC(ID_TYPE(id));
+        TYPE_UNSET_PRIVATE(ID_TYPE(id));
 
         ID_ADDR(id) = expv_sym_term(F_VAR, ID_TYPE(id), ID_SYM(id));
     }
@@ -5576,7 +5583,6 @@ import_module_id(ID mid,
         ID_TYPE(id) = old;
         TYPE_SET_NOT_FIXED(ID_TYPE(id));
     }
-
 
     if(ID_STORAGE(id) == STG_TAGNAME) {
         TYPE_TAGNAME(ID_TYPE(id)) = id;
@@ -5646,6 +5652,11 @@ deep_copy_id_types(ID mids)
           expv v;
           list lp;
 
+          if (type_has_replica(EXT_PROC_TYPE(mep), &EXT_PROC_TYPE(mep))) {
+              continue;
+          }
+
+          EXT_PROC_TYPE(mep) = shallow_copy_type_for_module_id(EXT_PROC_TYPE(mep));
           deep_ref_copy_for_module_id_type(EXT_PROC_TYPE(mep));
 
           /*
@@ -6887,9 +6898,9 @@ compile_ALLOCATE_DEALLOCATE_statement(expr x)
             case F95_MEMBER_REF:
             case F_VAR:
             case ARRAY_REF:
-	    case XMP_COARRAY_REF:
+            case XMP_COARRAY_REF:
                 if(isVarSetTypeAttr(ev,
-                    TYPE_ATTR_POINTER | TYPE_ATTR_ALLOCATABLE) == FALSE) {
+                                    TYPE_ATTR_POINTER | TYPE_ATTR_ALLOCATABLE) == FALSE) {
                     error("argument is not a pointer nor allocatable type");
                     continue;
                 }
@@ -6924,8 +6935,8 @@ compile_ALLOCATE_DEALLOCATE_statement(expr x)
 
     FOR_ITEMS_IN_LIST(lp, args) {
         if (tp) {
-            if (type_is_compatible_for_allocation(EXPV_TYPE(LIST_ITEM(lp)),
-                                                  tp)) {
+            if (!type_is_compatible_for_allocation(EXPV_TYPE(LIST_ITEM(lp)),
+                                                   tp)) {
                 error("type incompatible");
                 return;
             }
@@ -6936,14 +6947,14 @@ compile_ALLOCATE_DEALLOCATE_statement(expr x)
         }
 
         if (vsource) {
-            if (type_is_compatible_for_allocation(EXPV_TYPE(LIST_ITEM(lp)),
+            if (!type_is_compatible_for_allocation(EXPV_TYPE(LIST_ITEM(lp)),
                                                   EXPV_TYPE(vsource))) {
                 error("type incompatible");
                 return;
             }
         }
         if (vmold) {
-            if (type_is_compatible_for_allocation(EXPV_TYPE(LIST_ITEM(lp)),
+            if (!type_is_compatible_for_allocation(EXPV_TYPE(LIST_ITEM(lp)),
                                                   EXPV_TYPE(vmold))) {
                 return;
                 error("type incompatible");
