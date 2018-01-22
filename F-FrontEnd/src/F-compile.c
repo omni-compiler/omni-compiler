@@ -2107,7 +2107,9 @@ union_parent_type(ID id)
                TYPE_IS_EXTERNAL(ID_TYPE(parent_id))) {
         error("external function/subroutine %s in the contain block", ID_NAME(id));
 
-    } else if (TYPE_IS_EXPLICIT(parent_tp)) {
+    } else if (TYPE_IS_EXPLICIT(parent_tp) &&
+               (!IS_PROCEDURE_TYPE(parent_tp) || TYPE_IS_EXPLICIT(FUNCTION_TYPE_RETURN_TYPE(parent_tp)))) {
+
         if (TYPE_IS_EXPLICIT(my_tp) && ID_CLASS(parent_id) != CL_PROC) {
             error("%s is declared both parent and contains", ID_NAME(id));
         } else {
@@ -6412,6 +6414,7 @@ compile_interface_MODULEPROCEDURE_statement(expr x)
         if (id != NULL &&
             ID_TYPE(id) != NULL
             && IS_PROCEDURE_POINTER(ID_TYPE(id))) {
+            /* DO NOTHING */
         } else if (id == NULL) {
             id = declare_ident(EXPR_SYM(ident), CL_PROC);
         } else {
@@ -6436,6 +6439,12 @@ compile_interface_MODULEPROCEDURE_statement(expr x)
             tp = ID_TYPE(id);
         } else {
             tp = EXT_PROC_TYPE(ep);
+        }
+
+        if (tp != NULL && !IS_PROCEDURE_TYPE(tp)) {
+            tp = function_type(tp);
+            ID_TYPE(id) = tp;
+            EXT_PROC_TYPE(ep) = tp;
         }
 
         if (add_module_procedure(genProcName, SYM_NAME(EXPR_SYM(ident)),
