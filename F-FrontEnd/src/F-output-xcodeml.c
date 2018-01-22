@@ -4129,6 +4129,7 @@ outx_expv(int l, expv v)
 }
 
 static void mark_type_desc_in_structure(TYPE_DESC tp);
+static void mark_type_desc_in_structure_skip_tbp(TYPE_DESC tp, int skip_tbp);
 //static void check_type_desc(TYPE_DESC tp);
 
 static void mark_type_desc(TYPE_DESC tp);
@@ -4141,7 +4142,7 @@ mark_type_desc_skip_tbp(TYPE_DESC tp, int skip_tbp)
 
     if (skip_tbp && IS_PROCEDURE_TYPE(tp) && TYPE_REF(tp) != NULL) {
         /* procedure variable or type-bound procedure with a PASS argument
-         * may cause a circulation reference,
+         * may cause a circular reference,
          * so store them to a list and check them later.
          */
         TYPE_LINK(tp) = NULL;
@@ -4150,7 +4151,7 @@ mark_type_desc_skip_tbp(TYPE_DESC tp, int skip_tbp)
         return;
     }
 
-    if (TYPE_BOUND_GENERIC_TYPE_GENERICS(tp) != NULL) {
+    if (skip_tbp && TYPE_BOUND_GENERIC_TYPE_GENERICS(tp) != NULL) {
         /* the type for type-bound generic, skip it */
         return;
     }
@@ -4158,10 +4159,10 @@ mark_type_desc_skip_tbp(TYPE_DESC tp, int skip_tbp)
     if (TYPE_REF(tp) != NULL) {
         TYPE_DESC sTp = NULL;
         if (IS_ARRAY_TYPE(tp)){
-            mark_type_desc(array_element_type(tp));
+            mark_type_desc_skip_tbp(array_element_type(tp), skip_tbp);
         }
         sTp = reduce_type(TYPE_REF(tp));
-        mark_type_desc(sTp);
+        mark_type_desc_skip_tbp(sTp, skip_tbp);
         TYPE_REF(tp) = sTp;
     }
 
@@ -4177,15 +4178,15 @@ mark_type_desc_skip_tbp(TYPE_DESC tp, int skip_tbp)
 
     if (IS_PROCEDURE_TYPE(tp)) {
         ID ip;
-        mark_type_desc(TYPE_REF(tp));
-        mark_type_desc(FUNCTION_TYPE_RETURN_TYPE(tp));
+        mark_type_desc_skip_tbp(TYPE_REF(tp), skip_tbp);
+        mark_type_desc_skip_tbp(FUNCTION_TYPE_RETURN_TYPE(tp), skip_tbp);
         FOREACH_ID(ip, FUNCTION_TYPE_ARGS(tp)) {
-            mark_type_desc(ID_TYPE(ip));
+            mark_type_desc_skip_tbp(ID_TYPE(ip), skip_tbp);
         }
     }
 
     if (IS_STRUCT_TYPE(tp)) {
-        mark_type_desc_in_structure(tp);
+        mark_type_desc_in_structure_skip_tbp(tp, skip_tbp);
     }
 }
 
@@ -4234,27 +4235,34 @@ mark_type_desc(TYPE_DESC tp) {
 
 
 static void
-mark_type_desc_in_structure(TYPE_DESC tp)
+mark_type_desc_in_structure_skip_tbp(TYPE_DESC tp, int skip_tbp)
 {
     ID id;
     TYPE_DESC itp, siTp;
 
     if (TYPE_PARENT(tp)) {
-        mark_type_desc(TYPE_PARENT_TYPE(tp));
+        mark_type_desc_skip_tbp(TYPE_PARENT_TYPE(tp), skip_tbp);
     }
 
     FOREACH_MEMBER(id, tp) {
         itp = ID_TYPE(id);
         siTp = reduce_type(itp);
-        mark_type_desc(siTp);
+        mark_type_desc_skip_tbp(siTp, skip_tbp);
         ID_TYPE(id) = siTp;
         if (!IS_PROCEDURE_TYPE(ID_TYPE(id)) &&  VAR_INIT_VALUE(id) != NULL) {
             collect_type_desc(VAR_INIT_VALUE(id));
         }
         if (IS_STRUCT_TYPE(ID_TYPE(id))) {
-            mark_type_desc_in_structure(ID_TYPE(id));
+            mark_type_desc_in_structure_skip_tbp(ID_TYPE(id), skip_tbp);
         }
     }
+}
+
+
+static void
+mark_type_desc_in_structure(TYPE_DESC tp)
+{
+    mark_type_desc_in_structure_skip_tbp(tp, FALSE);
 }
 
 
@@ -5332,7 +5340,17 @@ outx_id_declarations(int l, ID id_list, int hasResultVar, const char * functionN
                         if (ID_IS_EMITTED(ids[j]) == TRUE) {
                             continue;
                         }
-                        if (is_id_used_in_struct_member(ids[j], tp) == TRUE) {
+
+			if (hasResultVar == TRUE && functionName != NULL &&
+			    strcasecmp(functionName, SYM_NAME(ID_SYM(ids[j]))) == 0) {
+			  continue;
+			}
+
+			if (TYPE_IS_MODIFIED(ID_TYPE(id)) == TRUE) {
+			  continue;
+			}
+			
+			if (is_id_used_in_struct_member(ids[j], tp) == TRUE) {
                             emit_decl(l, ids[j]);
                             ID_IS_EMITTED(ids[j]) = TRUE;
                         }
@@ -6389,6 +6407,7 @@ output_module_file(struct module * mod, const char * filename)
     return TRUE;
 }
 
+expv max_rank_from_arguments(expv args);
 
 /**
  * Fix type of forward-referenced function calls to actual type if possible.
@@ -6406,7 +6425,13 @@ fixup_function_call(expv v) {
                 if (EXPV_NEED_TYPE_FIXUP(v) == TRUE) {
                     ID_TYPE(fid) = tp;
                     EXPV_TYPE(EXPR_ARG1(v)) = tp;
-                    EXPV_TYPE(v) = FUNCTION_TYPE_RETURN_TYPE(tp);
+		    EXPV_TYPE(v) = FUNCTION_TYPE_RETURN_TYPE(tp);
+		    if (TYPE_IS_ELEMENTAL(tp)){
+		      expv maxRanked = max_rank_from_arguments(EXPR_ARG2(v));
+		      if (maxRanked != NULL && IS_ARRAY_TYPE(EXPV_TYPE(maxRanked))) {
+			EXPV_TYPE(v) = copy_dimension(EXPV_TYPE(maxRanked), EXPV_TYPE(v));
+		      }
+		    }
                 }
             } else {
                 if (!ID_IS_DUMMY_ARG(fid) &&

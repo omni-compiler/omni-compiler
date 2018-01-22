@@ -1037,7 +1037,7 @@ declare_function(ID id)
                         TYPE_SET_NOT_FIXED(FUNCTION_TYPE_RETURN_TYPE(tp));
                         TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) = TYPE_GNUMERIC_ALL;
                         ID_TYPE(id) = tp;
-                    } else if (!TYPE_IS_PROCEDURE(tp) || (TYPE_IS_PROCEDURE(tp) && TYPE_REF(tp) != NULL)) {
+                    } else if (!IS_PROCEDURE_TYPE(tp) || (TYPE_IS_PROCEDURE(tp) && TYPE_REF(tp) != NULL)) {
                         ID_TYPE(id) = function_type(tp);
                         /*
                          * For F_Front, There is no difference between an
@@ -2234,7 +2234,7 @@ declare_id_type(ID id, TYPE_DESC tp)
         if (ID_TYPE(id) == NULL) {
             if (!IS_PROCEDURE_TYPE(tp) || IS_PROCEDURE_POINTER(tp)) {
                 /* change the type into function type */
-                ID_TYPE(id) = function_type(tp);
+                *id_type = function_type(tp);
             } else {
                 ID_TYPE(id) = tp;
                 return;
@@ -2263,7 +2263,6 @@ declare_id_type(ID id, TYPE_DESC tp)
         /* override implicit declared type */
         TYPE_ATTR_FLAGS(tp) |= TYPE_ATTR_FLAGS(tq);
         replace_or_assign_type(id_type, tp);
-        TYPE_ATTR_FLAGS(ID_TYPE(id)) |= TYPE_ATTR_FLAGS(tp);
         return;
     }
 
@@ -2401,19 +2400,6 @@ compile_derived_type(expr x, int allow_predecl)
     }
 
     id = find_ident_local(sym);
-
-    if(CTL_TYPE(ctl_top) == CTL_STRUCT) {
-        /*
-         * member of SEQUENCE struct must be SEQUENCE.
-         */
-        if (TYPE_IS_SEQUENCE(CTL_STRUCT_TYPEDESC(ctl_top)) &&
-            TYPE_IS_SEQUENCE(ID_TYPE(id)) == FALSE) {
-            error_at_node(x, "type %s does not have SEQUENCE attribute.",
-                          SYM_NAME(sym));
-            return NULL;
-        }
-    }
-
     if(id != NULL && ID_IS_AMBIGUOUS(id)) {
         error_at_node(x, "an ambiguous reference to symbol '%s'", ID_NAME(id));
         return NULL;
@@ -2436,6 +2422,18 @@ compile_derived_type(expr x, int allow_predecl)
         error_at_node(x, "struct type '%s' requires type parameter values",
                       SYM_NAME(sym));
         return NULL;
+    }
+
+    if(CTL_TYPE(ctl_top) == CTL_STRUCT) {
+        /*
+         * member of SEQUENCE struct must be SEQUENCE.
+         */
+        if (TYPE_IS_SEQUENCE(CTL_STRUCT_TYPEDESC(ctl_top)) &&
+            TYPE_IS_SEQUENCE(tp) == FALSE) {
+            error_at_node(x, "type %s does not have SEQUENCE attribute.",
+                          SYM_NAME(sym));
+            return NULL;
+        }
     }
 
     if (is_parameterized_type) {

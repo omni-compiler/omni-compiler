@@ -1900,6 +1900,7 @@ compile_array_ref(ID id, expv vary, expr args, int isLeft) {
 
     if (id != NULL) {
         vary = expv_sym_term(F_VAR, ID_TYPE(id), ID_SYM(id));
+
         ID_ADDR(id) = vary;
 
         tp = ID_TYPE(id);
@@ -1910,6 +1911,8 @@ compile_array_ref(ID id, expv vary, expr args, int isLeft) {
         if (id != NULL && ID_CLASS(id) == CL_PROC && PROC_CLASS(id) == P_THISPROC) {
             tp = FUNCTION_TYPE_RETURN_TYPE(tp);
         }
+
+        EXPV_TYPE(vary) = tp;
 
         if (TYPE_N_DIM(tp) < n) {
             error_at_node(args, "too large dimension, %d.", n);
@@ -2273,7 +2276,7 @@ choose_module_procedure_by_args(EXT_ID mod_procedures, expv args)
 }
 
 
-static expv
+expv
 max_rank_from_arguments(expv args)
 {
     list lp;
