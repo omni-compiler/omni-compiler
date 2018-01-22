@@ -1,9 +1,3 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package xcodeml.util;
 
 import java.io.BufferedReader;
@@ -16,7 +10,6 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.w3c.dom.Document;
 import javax.xml.parsers.ParserConfigurationException;
 import org.xml.sax.SAXException;
@@ -27,11 +20,8 @@ import org.xml.sax.SAXException;
 public class XmBackEnd
 {
     private String _commandName;
-    
     private BufferedReader _reader;
-
     private String _inputFilePath;
-
     private XmToolFactory _toolFactory;
     
     public XmBackEnd(String langId, String commandName) throws XmException

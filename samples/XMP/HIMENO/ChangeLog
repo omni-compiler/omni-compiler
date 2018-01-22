@@ -1,0 +1,9 @@
+# 2015.06.16
+* Add local-view HIMENO benchmark.
+
+# 2014.06.20
+* Add include 'xmp_lib.h' in himeno.f90
+* Add Makefile-K which is makefile for the K computer
+
+# 2013.11.20
+* Release

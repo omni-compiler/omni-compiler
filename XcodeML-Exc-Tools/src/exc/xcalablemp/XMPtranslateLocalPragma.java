@@ -89,6 +89,8 @@ public class XMPtranslateLocalPragma {
         { translateLoop(pb,true);		break; }
       case REFLECT:
         { translateReflect(pb);			break; }
+      case REDUCE_SHADOW:
+        { translateReduceShadow(pb);		break; }
       case BARRIER:
         { translateBarrier(pb);			break; }
       case REDUCTION:
@@ -162,7 +164,7 @@ public class XMPtranslateLocalPragma {
   private void translateNodes(PragmaBlock pb) throws XMPexception {
     checkDeclPragmaLocation(pb);
 
-    XobjList nodesDecl = (XobjList)pb.getClauses();
+    XobjList nodesDecl     = (XobjList)pb.getClauses();
     XobjList nodesNameList = (XobjList)nodesDecl.getArg(0);
     XobjList nodesDeclCopy = (XobjList)nodesDecl.copy();
 
@@ -585,6 +587,15 @@ public class XMPtranslateLocalPragma {
     addProfileFunctions(profileClause, reflectFuncCallBlock, "reflect", pb);
   }
 
+  private void translateReduceShadow(PragmaBlock pb) throws XMPexception {
+    XobjList accOrHost = (XobjList)pb.getClauses().getArg(3);
+    boolean isACC = accOrHost.hasIdent("acc");
+    Block reflectFuncCallBlock = XMPshadow.translateReduceShadow(pb, _globalDecl, isACC);
+
+    Xobject profileClause = pb.getClauses().getArg(4);
+    addProfileFunctions(profileClause, reflectFuncCallBlock, "reflect", pb);
+  }
+
   static Block encloseWithAccHostDataDirective(Block block, XobjList useDeviceClauseArgs) throws XMPexception {
     if(useDeviceClauseArgs == null || useDeviceClauseArgs.isEmpty()){
       throw new XMPexception("empty argument for use_device clause");
@@ -773,7 +784,7 @@ public class XMPtranslateLocalPragma {
   }
 
   private void translateLoop(PragmaBlock pb, boolean isFromTranslateLoop) throws XMPexception {
-    XobjList loopDecl = (XobjList)pb.getClauses();
+    XobjList loopDecl  = (XobjList)pb.getClauses();
     BlockList loopBody = pb.getBody();
 
     // get block to schedule
@@ -813,7 +824,8 @@ public class XMPtranslateLocalPragma {
       }
 
       BlockList reductionBody = createReductionClauseBody(pb, reductionRefList, schedBaseBlock);
-      schedBaseBlock.add(createReductionClauseBlock(pb, reductionBody, schedVarList));
+      // schedBaseBlock.add(createReductionClauseBlock(pb, reductionBody, schedVarList)); #418
+      schedBaseBlock.getParentBlock().add(createReductionClauseBlock(pb, reductionBody, schedVarList));
     }
 
     // translate multicore clause
@@ -848,7 +860,7 @@ public class XMPtranslateLocalPragma {
     // rewrite array refs in loop
     topdownXobjectIterator iter = new topdownXobjectIterator(getLoopBody(schedBaseBlock).toXobject());
     for (iter.init(); !iter.end(); iter.next()) {
-      XMPrewriteExpr.rewriteArrayRefInLoop(iter.getXobject(), _globalDecl, schedBaseBlock);
+      XMPrewriteExpr.rewriteArrayRefInLoop(iter.getXobject(), _globalDecl, schedBaseBlock, loopBody);
     }
 
     // replace pragma
@@ -1169,13 +1181,12 @@ public class XMPtranslateLocalPragma {
   }
 
   private Block createReductionClauseBlock(PragmaBlock pb, BlockList reductionBody, XobjList schedVarList) throws XMPexception {
-    XobjList loopDecl = (XobjList)pb.getClauses();
-    XobjList onRef = (XobjList)loopDecl.getArg(1);
-    String onRefObjName = onRef.getArg(0).getString();
+    XobjList loopDecl      = (XobjList)pb.getClauses();
+    XobjList onRef         = (XobjList)loopDecl.getArg(1);
+    String onRefObjName    = onRef.getArg(0).getString();
     XobjList subscriptList = (XobjList)onRef.getArg(1);
 
     XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
-    //XMPobject onRefObj = _globalDecl.getXMPobject(onRefObjName, localXMPsymbolTable);
     XMPobject onRefObj = _globalDecl.getXMPobject(onRefObjName, pb);
     if (onRefObj == null) {
       throw new XMPexception("cannot find '" + onRefObjName + "' nodes/template");
@@ -1201,7 +1212,8 @@ public class XMPtranslateLocalPragma {
       String subscript = i.getArg().getString();
       if (XMPutil.hasElmt(schedVarList, subscript)) {
         initFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(0)));
-      } else {
+      }
+      else {
         initComm = true;
         initFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
       }
@@ -1216,44 +1228,53 @@ public class XMPtranslateLocalPragma {
       Ident initFuncId = _globalDecl.declExternFunc("_XMP_init_reduce_comm_" + initFuncSuffix, Xtype.intType);
 
       return Bcons.IF(BasicBlock.Cond(initFuncId.Call(initFuncArgs)), reductionBody, null);
-    } else {
+    }
+    else {
       return Bcons.COMPOUND(reductionBody);
     }
   }
 
   private void translateFollowingLoop(PragmaBlock pb, CforBlock schedBaseBlock) throws XMPexception {
-    XobjList loopDecl = (XobjList)pb.getClauses();
+    XobjList loopDecl              = (XobjList)pb.getClauses();
     ArrayList<String> iteraterList = new ArrayList<String>();  // Not used
-
-    scheduleLoop(pb, schedBaseBlock, schedBaseBlock, iteraterList);
-    insertScheduleIndexFunction(pb, schedBaseBlock, schedBaseBlock, iteraterList);
+    boolean[] isOmitSchedLoopFunc  = new boolean[1];    // Initialize false automatically
+    
+    isOmitSchedLoopFunc[0] = scheduleLoop(pb, schedBaseBlock, schedBaseBlock, iteraterList);
+    if(isOmitSchedLoopFunc[0] == false)
+      insertScheduleIndexFunction(pb, schedBaseBlock, schedBaseBlock, iteraterList);
   }
 
   private void translateMultipleLoop(PragmaBlock pb, CforBlock schedBaseBlock) throws XMPexception {
     // start translation
-    XobjList loopDecl = (XobjList)pb.getClauses();
+    XobjList loopDecl  = (XobjList)pb.getClauses();
     BlockList loopBody = pb.getBody();
 
     // iterate index variable list
     XobjList loopVarList = (XobjList)loopDecl.getArg(0);
 
     Vector<CforBlock> loopVector = new Vector<CforBlock>(XMPutil.countElmts(loopVarList));
+    int num = 0;
     for (XobjArgs i = loopVarList.getArgs(); i != null; i = i.nextArgs()) {
       loopVector.add(findLoopBlock(loopBody, i.getArg().getString()));
+      num++;
     }
 
     // schedule loop
-    Iterator<CforBlock> it = loopVector.iterator();
+    Iterator<CforBlock> it         = loopVector.iterator();
     ArrayList<String> iteraterList = new ArrayList<String>();
+    boolean[] isOmitSchedLoopFunc  = new boolean[num];
+    int i = 0;
     while (it.hasNext()) {
       CforBlock forBlock = it.next();
-      scheduleLoop(pb, forBlock, schedBaseBlock, iteraterList);
+      isOmitSchedLoopFunc[i++] = scheduleLoop(pb, forBlock, schedBaseBlock, iteraterList);
     }
 
     it = loopVector.iterator();
+    i = 0;
     while (it.hasNext()) {
       CforBlock forBlock = it.next();
-      insertScheduleIndexFunction(pb, forBlock, schedBaseBlock, iteraterList);
+      if(isOmitSchedLoopFunc[i++] == false)
+        insertScheduleIndexFunction(pb, forBlock, schedBaseBlock, iteraterList);
     }
   }
 
@@ -1438,20 +1459,22 @@ public class XMPtranslateLocalPragma {
     }
 
     if (reductionInitIfBlock.getThenBody() != null) {
-      schedBaseBlock.insert(reductionInitIfBlock);
+      // schedBaseBlock.insert(reductionInitIfBlock); # 418
+      schedBaseBlock.getParentBlock().insert(reductionInitIfBlock);
     }
 
     return reductionBody;
   }
 
-  private void scheduleLoop(PragmaBlock pb, CforBlock forBlock, CforBlock schedBaseBlock, ArrayList<String> iteraterList) throws XMPexception {
+  private boolean scheduleLoop(PragmaBlock pb, CforBlock forBlock, CforBlock schedBaseBlock,
+                               ArrayList<String> iteraterList) throws XMPexception {
     XobjList loopDecl = (XobjList)pb.getClauses();
     XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(schedBaseBlock);
 
     // analyze <on-ref>
-    Xobject onRef = loopDecl.getArg(1);
+    Xobject onRef       = loopDecl.getArg(1);
     String onRefObjName = onRef.getArg(0).getString();
-    XMPobject onRefObj = _globalDecl.getXMPobject(onRefObjName, schedBaseBlock);
+    XMPobject onRefObj  = _globalDecl.getXMPobject(onRefObjName, schedBaseBlock);
     if (onRefObj == null) {
       throw new XMPexception("cannot find '" + onRefObjName + "' nodes/template");
     }
@@ -1464,12 +1487,11 @@ public class XMPtranslateLocalPragma {
             throw new XMPexception("template '" + onRefObjName + "' is not distributed");
           }
 
-          callLoopSchedFuncTemplate(onRefTemplate, (XobjList)onRef.getArg(1), forBlock, schedBaseBlock, iteraterList);
+          return callLoopSchedFuncTemplate(onRefTemplate, (XobjList)onRef.getArg(1), forBlock, schedBaseBlock, iteraterList);
         }
-        break;
       case XMPobject.NODES:
         callLoopSchedFuncNodes((XMPnodes)onRefObj, (XobjList)onRef.getArg(1), forBlock, schedBaseBlock);
-        break;
+        return false;
       default:
         throw new XMPexception("unknown object type");
     }
@@ -1553,18 +1575,66 @@ public class XMPtranslateLocalPragma {
     throw new XMPexception("cannot find the loop statement");
   }
 
-  private void callLoopSchedFuncTemplate(XMPtemplate templateObj, XobjList templateSubscriptList, CforBlock forBlock,
-                                         CforBlock schedBaseBlock, ArrayList<String> iteraterList) throws XMPexception {
-    Xobject loopIndex = forBlock.getInductionVar();
+  private int calcParallelCond(XMPtemplate t, int i, int manner) throws XMPexception
+  {
+    XMPnodes n       = t.getOntoNodes();
+    int templateSize = XMPutil.foldIntConstant(t.getSizeAt(i)).getInt();
+    
+    if(manner == XMPtemplate.DUPLICATION)
+      return templateSize;
+
+    int nodeIndex    = t.getOntoNodesIndexAt(i).getInt();
+    int nodeSize     = XMPutil.foldIntConstant(n.getSizeAt(nodeIndex)).getInt();
+
+    return templateSize/nodeSize;
+  }
+  
+  private boolean is_parallelCondConstant(XMPtemplate t, CforBlock forBlock, int i, int manner) throws XMPexception
+  {
+    XMPnodes n = t.getOntoNodes();
+    
+    if(n.isInherit() == true)                                      return false;
+    if(manner == XMPtemplate.GBLOCK)                               return false;
+    if(! XMPutil.is_Constant(t.getSizeAt(i), i))                   return false;
+    if(! XMPutil.is_Constant(forBlock.getUpperBound(), i))         return false;
+    if(manner != XMPtemplate.DUPLICATION){
+      int nodeIndex = t.getOntoNodesIndexAt(i).getInt();
+      if(! XMPutil.is_Constant(n.getSizeAt(nodeIndex), nodeIndex)) return false;
+    }
+    if(manner == XMPtemplate.BLOCK_CYCLIC)
+      if(! XMPutil.is_Constant(t.getWidthAt(i), i))                return false;
+    
+    int templateSize = XMPutil.foldIntConstant(t.getSizeAt(i)).getInt();
+    int forUpperSize = XMPutil.foldIntConstant(forBlock.getUpperBound()).getInt();
+    if(templateSize != forUpperSize)
+      return false;
+
+    int blockSize = (manner == XMPtemplate.BLOCK_CYCLIC)? XMPutil.foldIntConstant(t.getWidthAt(i)).getInt() : 1;
+    if(manner == XMPtemplate.DUPLICATION){
+      return true;
+    }
+    else{
+      int nodeIndex = t.getOntoNodesIndexAt(i).getInt();
+      int nodeSize  = XMPutil.foldIntConstant(n.getSizeAt(nodeIndex)).getInt();
+      if(templateSize%(nodeSize*blockSize) != 0)
+        return false;
+    }
+    return true;
+  }
+  
+  private boolean callLoopSchedFuncTemplate(XMPtemplate templateObj, XobjList templateSubscriptList, CforBlock forBlock,
+                                            CforBlock schedBaseBlock, ArrayList<String> iteraterList) throws XMPexception {
+    Xobject loopIndex    = forBlock.getInductionVar();
     String loopIndexName = loopIndex.getSym();
     iteraterList.add(loopIndexName);
 
-    int templateIndex = 0;
-    int templateDim = templateObj.getDim();
+    int templateIndex        = 0;
+    int templateDim          = templateObj.getDim();
     XobjInt templateIndexArg = null;
-    int distManner = 0;
-    String distMannerString = null;
-
+    int distManner           = 0;
+    String distMannerString  = null;
+    int targetIndex          = 0;
+    
     for (XobjArgs i = templateSubscriptList.getArgs(); i != null; i = i.nextArgs()) {
       if (templateIndex >= templateDim) {
         throw new XMPexception("wrong template dimensions, too many");
@@ -1577,8 +1647,9 @@ public class XMPtranslateLocalPragma {
         }
 
         templateIndexArg = Xcons.IntConstant(templateIndex);
-        distManner = templateObj.getDistMannerAt(templateIndex);
+        distManner       = templateObj.getDistMannerAt(templateIndex);
         distMannerString = templateObj.getDistMannerStringAt(templateIndex);
+        targetIndex      = templateIndex;
       }
 
       templateIndex++;
@@ -1592,31 +1663,48 @@ public class XMPtranslateLocalPragma {
       throw new XMPexception("wrong template dimensions, too few");
     }
 
-    Ident parallelInitId = declIdentWithBlock(schedBaseBlock,
-                                              "_XMP_loop_init_" + loopIndexName, Xtype.intType);
-    Ident parallelCondId = declIdentWithBlock(schedBaseBlock,
-                                              "_XMP_loop_cond_" + loopIndexName, Xtype.intType);
-    Ident parallelStepId = declIdentWithBlock(schedBaseBlock,
-                                              "_XMP_loop_step_" + loopIndexName, Xtype.intType);
+    boolean isOmitSchedLoopFunc = true;
+    Xobject parallelInit;
+    if(forBlock.getLowerBound().equals(Xcons.IntConstant(0)))
+      parallelInit        = Xcons.IntConstant(0);
+    else{
+      parallelInit = declIdentWithBlock(schedBaseBlock,
+                                        "_XMP_loop_init_" + loopIndexName, Xtype.intType).Ref();
+      isOmitSchedLoopFunc = false;
+    }
+    
+    Xobject parallelCond;
+    if(is_parallelCondConstant(templateObj, forBlock, targetIndex, distManner))
+      parallelCond = Xcons.IntConstant(calcParallelCond(templateObj, targetIndex, distManner));
+    else{
+      parallelCond = declIdentWithBlock(schedBaseBlock,
+                                        "_XMP_loop_cond_" + loopIndexName, Xtype.intType).Ref();
+      isOmitSchedLoopFunc = false;
+    }
+    
+    Xobject parallelStep;
+    if(forBlock.getStep().equals(Xcons.IntConstant(1)))
+      parallelStep = Xcons.IntConstant(1);
+    else if(forBlock.getStep().equals(Xcons.IntConstant(-1)))
+      parallelStep = Xcons.IntConstant(-1);
+    else{
+      parallelStep = declIdentWithBlock(schedBaseBlock,
+                                        "_XMP_loop_step_" + loopIndexName, Xtype.intType).Ref();
+      isOmitSchedLoopFunc = false;
+    }
 
     XMPutil.putLoopIter(schedBaseBlock, loopIndexName,
-                        Xcons.List(parallelInitId, parallelCondId, parallelStepId));
-
+                        Xcons.List(parallelInit, parallelCond, parallelStep));
+    
     switch (distManner) {
       case XMPtemplate.DUPLICATION:
       case XMPtemplate.BLOCK:
       case XMPtemplate.CYCLIC:
       case XMPtemplate.BLOCK_CYCLIC:
       case XMPtemplate.GBLOCK:
-        forBlock.setLowerBound(parallelInitId.Ref());
-        forBlock.setUpperBound(parallelCondId.Ref());
-	if(forBlock.getStep().equals(Xcons.IntConstant(1)))
-          forBlock.setStep(Xcons.IntConstant(1));
-        else if(forBlock.getStep().equals(Xcons.IntConstant(-1)))
-          forBlock.setStep(Xcons.IntConstant(-1));
-	else
-          forBlock.setStep(parallelStepId.Ref());
-	
+        forBlock.setLowerBound(parallelInit);
+        forBlock.setUpperBound(parallelCond);
+        forBlock.setStep(parallelStep);
         break;
       default:
         throw new XMPexception("unknown distribute manner");
@@ -1652,6 +1740,7 @@ public class XMPtranslateLocalPragma {
       if(body == null) break;
       if(body.getHead() == null) break;
     }
+    return isOmitSchedLoopFunc;
   }
 
   private void callLoopSchedFuncNodes(XMPnodes nodesObj, XobjList nodesSubscriptList,
@@ -1710,12 +1799,10 @@ public class XMPtranslateLocalPragma {
     forBlock.getCondBBlock().setExpr(Xcons.binaryOp(Xcode.LOG_LT_EXPR, loopIndex, parallelCondId.Ref()));
   }
 
-  static Ident declIdentWithBlock(Block b, String identName, Xtype type) {
-
+  static Ident declIdentWithBlock(Block b, String identName, Xtype type)
+  {
     Block bb = getOuterSchedPoint(b);
-
     BlockList bl = bb.getParent();
-    //    BlockList bl = b.getParent();
 
     // FIXME consider variable scope
     return bl.declLocalIdent(identName, type);
@@ -2543,12 +2630,18 @@ public class XMPtranslateLocalPragma {
               count = Xcons.LongLongConstant(0, XMPutil.getArrayElmtCount(arrayVarType));
               returnVector.add(Xcons.List(varId.Ref(), count, Xcons.SizeOf(arrayVarType.getArrayElementType())));
             }
-            else{
-              // Number of elements is defined in arguments
+            else{  // Number of elements is defined in arguments
               // void hoge(int n, int a[n]){
               // #pragma xmp bcast (a)
-              returnVector.add(Xcons.List(varId.Ref(), arrayVarType.getArraySizeExpr(),
-                                          Xcons.SizeOf(arrayVarType.getArrayElementType())));
+              Xobject size = Xcons.SizeOf(arrayVarType.getArrayElementType());
+              Xobject len  = arrayVarType.getArraySizeExpr();
+              ArrayType tmpType = arrayVarType;
+              for(int j=1;j<arrayVarType.getNumDimensions();j++){
+                tmpType = (ArrayType)arrayVarType.getRef();
+                len = Xcons.binaryOp(Xcode.MUL_EXPR, len, tmpType.getArraySizeExpr());
+              }
+              
+              returnVector.add(Xcons.List(varId.Ref(), len, size));
             }
           } break;
         default:

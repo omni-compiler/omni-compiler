@@ -28,6 +28,7 @@ public class XMPalignedArray {
   private Ident			_arrayId;
   private Ident			_descId;
   private Ident			_addrId;
+  private Ident                 _multiAddrId = null;
   private boolean		_hasShadow;
   private boolean		_reallocChecked;
   private boolean		_realloc;
@@ -38,8 +39,28 @@ public class XMPalignedArray {
 
   private boolean               _isStaticDesc = false;
   private Ident                 _flagId = null;
-  public boolean                canBeOptimized = false;
+  private boolean               _canOptimized = false;
 
+  public void setMultiArrayId(Ident id)
+  {
+    _multiAddrId = id;
+  }
+
+  public Ident getMultiArrayId()
+  {
+    return _multiAddrId;
+  }
+  
+  public boolean canOptimized()
+  {
+    return _canOptimized;
+  }
+
+  public void setOptimized(boolean flag)
+  {
+    _canOptimized = flag;
+  }
+  
   public static int convertDistMannerToAlignManner(int distManner) throws XMPexception {
     switch (distManner) {
       case XMPtemplate.DUPLICATION:
@@ -342,43 +363,7 @@ public class XMPalignedArray {
     }
   }
 
-  private static Boolean is_template_constant_size(XMPtemplate t) throws XMPexception
-  {
-    for(int i=0;i<t.getDim();i++){
-      topdownXobjectIterator iter = t.getSizeAt(i).topdownIterator();
-      for(iter.init(); !iter.end(); iter.next()){
-        Xobject expr = iter.getXobject();
-        Xcode code   = expr.Opcode();
-        if(code == Xcode.PLUS_EXPR || code == Xcode.MINUS_EXPR ||
-           code == Xcode.MUL_EXPR  || code == Xcode.DIV_EXPR)
-          continue;
-        else if(! expr.isConstant())
-          return false;
-      }
-    }
-
-    return true;
-  }
-
-  private static Boolean is_node_constant_size(XMPnodes n) throws XMPexception
-  {
-    for(int i=0;i<n.getDim();i++){
-      topdownXobjectIterator iter = n.getSizeAt(i).topdownIterator();
-      for(iter.init(); !iter.end(); iter.next()){
-        Xobject expr = iter.getXobject();
-        Xcode code   = expr.Opcode();
-        if(code == Xcode.PLUS_EXPR || code == Xcode.MINUS_EXPR ||
-           code == Xcode.MUL_EXPR  || code == Xcode.DIV_EXPR)
-          continue;
-        else if(! expr.isConstant())
-          return false;
-      }
-    }
-
-    return true;
-  }
-
-  private static Boolean is_the_same_size_template_array(XMPalignedArray alignedArray) throws XMPexception
+  private static Boolean is_SameSizeTemplateArray(XMPalignedArray alignedArray) throws XMPexception
   {
     XMPtemplate t   = alignedArray.getAlignTemplate();
     int arrayDim    = alignedArray.getDim();
@@ -394,7 +379,8 @@ public class XMPalignedArray {
       case XMPalignedArray.CYCLIC:
       case XMPalignedArray.BLOCK_CYCLIC:
         Xobject x = arrayType.getArraySizeExpr();
-        if(x.getLongHigh() != 0) return false; // fix me
+        if(x.isConstant() == false) return false;
+        if(x.getLongHigh() != 0)    return false; // fix me
         int index = alignedArray.getAlignSubscriptIndexAt(i);
         int template_size = XMPutil.foldIntConstant(t.getSizeAt(index)).getInt();
         if((int)x.getLongLow() != template_size) return false;
@@ -409,9 +395,9 @@ public class XMPalignedArray {
   {
     XMPtemplate t = alignedArray.getAlignTemplate();
     XMPnodes    n = t.getOntoNodes();
-    if(! is_template_constant_size(t))                  return false;
-    if(! is_node_constant_size(n))                      return false;
-    if(! is_the_same_size_template_array(alignedArray)) return false;
+    if(! XMPutil.is_AllConstant(t))              return false;
+    if(! XMPutil.is_AllConstant(n))              return false;
+    if(! is_SameSizeTemplateArray(alignedArray)) return false;
 
     // Number of dimensions of template must be larger than that of node.
     for(int i=0;i<t.getDim();i++){
@@ -532,9 +518,13 @@ public class XMPalignedArray {
     Ident arrayAddrId = arrayId;
     Ident arrayDescId = null;
     if (isLocalPragma) {
-      if (!isPointer) arrayAddrId = XMPlocalDecl.addObjectId2(XMP.ADDR_PREFIX_ + arrayName,
-							      Xtype.Pointer(arrayElmtType), parentBlock);
-      else arrayAddrId.setType(Xtype.Pointer(arrayElmtType));
+      if (!isPointer){
+        arrayAddrId = XMPlocalDecl.addObjectId2(XMP.ADDR_PREFIX_ + arrayName,
+                                                Xtype.Pointer(arrayElmtType), parentBlock);
+      }
+      else{
+        arrayAddrId.setType(Xtype.Pointer(arrayElmtType));
+      }
       arrayDescId = XMPlocalDecl.addObjectId2(XMP.DESC_PREFIX_ + arrayName, parentBlock);
     }
     else {
@@ -800,8 +790,10 @@ public class XMPalignedArray {
     if (isLocalPragma && !isParameter)
       XMPlocalDecl.removeLocalIdent(pb, arrayName);
 
-    if(arrayDim > 1)
-      alignedArray.canBeOptimized = is_divisible_size(alignedArray);
+    if(arrayDim > 1 && is_divisible_size(alignedArray))
+      alignedArray.setOptimized(true);
+    else
+      alignedArray.setOptimized(false);
   }
 
   private static void declNotAlignFunc(XMPalignedArray alignedArray, int alignSourceIndex,

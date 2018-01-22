@@ -47,6 +47,11 @@ typedef enum array_assume_kind {
     ASSUMED_SHAPE
 } ARRAY_ASSUME_KIND;
 
+#define isValidType(tp)         \
+    (tp != NULL && get_basic_type(tp) != TYPE_UNKNOWN)
+
+#define isValidTypedExpv(v)     (v != NULL && isValidType(EXPV_TYPE(v)))
+
 #define N_BASIC_TYPES ((int)TYPE_END)
 
 #define KIND_PARAM_DOUBLE   8
@@ -101,6 +106,8 @@ typedef struct type_descriptor
     int is_modified;           /* modified with VOLATILE or ASYNCHRONOUS */
     expv bind_name;            /* ISO BIND C name attribute */
 
+    int is_access_inferred;    /* boolean flag that tell if the access-spec is
+                                  inferred or clearly stated */
     struct type_attr {
 #define TYPE_ATTR_PARAMETER         0x00000001
 #define TYPE_ATTR_ALLOCATABLE       0x00000002
@@ -175,6 +182,7 @@ typedef struct type_descriptor
         int is_internal;                /* for internal subprograms (function/subroutine in the contain block)*/
         int is_module_procedure;        /* used as a module procedure */ /* may not be required */
         int is_visible_intrinsic;       /* TRUE if non standard intrinsic */
+        int is_interface;               /* TRUE if the function is a interface */
 
         int has_binding_arg;
         int has_pass_arg;                   /* for the function type of procedure variable OR type-bound procedure */
@@ -202,6 +210,7 @@ extern TYPE_DESC basic_type_desc[];
 #define TYPE_LINK(tp)           ((tp)->link)
 #define TYPE_SLINK(tp)          ((tp)->struct_link)
 #define TYPE_IS_DECLARED(tp)    ((tp)->is_declared)
+#define TYPE_ACCESS_IS_INFERRED(tp) ((tp)->is_access_inferred)
 #define TYPE_IS_COINDEXED(tp)   (tp != NULL && (tp)->codims)
 #define TYPE_BASIC_TYPE(tp)     ((tp)->basic_type)
 #define TYPE_REF(tp)            ((tp)->ref)
@@ -364,6 +373,7 @@ extern TYPE_DESC basic_type_desc[];
     TYPE_ATTR_TARGET |                          \
     TYPE_ATTR_VOLATILE |                        \
     TYPE_ATTR_ASYNCHRONOUS |                    \
+    TYPE_ATTR_ALLOCATABLE |                     \
     TYPE_ATTR_PROTECTED)
 
 #define TYPE_HAS_SUBOBJECT_PROPAGATE_ATTRS(tp)  \
@@ -459,6 +469,9 @@ extern TYPE_DESC basic_type_desc[];
                 ((tp) != NULL && (TYPE_BASIC_TYPE(tp) == TYPE_VOID))
 #define IS_PROCEDURE_TYPE(tp) \
                 (IS_FUNCTION_TYPE(tp) || IS_SUBR(tp))
+#define IS_PROCEDURE_POINTER(tp) ((tp) != NULL && \
+                                  IS_PROCEDURE_TYPE(tp) && \
+                                  TYPE_REF(tp) != NULL)
 #define IS_GENERIC_PROCEDURE_TYPE(tp) \
                 (IS_PROCEDURE_TYPE(tp) && FUNCTION_TYPE_IS_GENERIC(tp))
 #define IS_COMPLEX(tp) \
@@ -517,6 +530,10 @@ extern TYPE_DESC basic_type_desc[];
 
 #define IS_ENUM(tp) \
                 ((tp) != NULL && TYPE_BASIC_TYPE(tp) == TYPE_ENUM)
+
+/* represents CLASS(*) */
+#define IS_ANY_CLASS(tp) \
+    ((tp) != NULL && TYPE_IS_CLASS(tp) && TYPE_REF(tp) == NULL)
 
 #define TYPE_IS_MODIFIED(tp) \
                 ((tp) != NULL && (tp)->is_modified)
@@ -612,6 +629,10 @@ extern TYPE_DESC basic_type_desc[];
 #define FUNCTION_TYPE_HAS_PASS_ARG(tp) ((tp)->proc_info.has_pass_arg)
 #define FUNCTION_TYPE_PASS_ARG(tp) ((tp)->proc_info.pass_arg)
 #define FUNCTION_TYPE_PASS_ARG_TYPE(tp) ((tp)->proc_info.pass_arg_type)
+
+#define FUNCTION_TYPE_IS_INTERFACE(tp) ((tp)->proc_info.is_interface == TRUE)
+#define FUNCTION_TYPE_SET_INTERFACE(tp) ((tp)->proc_info.is_interface = TRUE)
+#define FUNCTION_TYPE_UNSET_INTERFACE(tp) ((tp)->proc_info.is_interface = FALSE)
 
 
 #endif /* _F_DATATYPE_H_ */

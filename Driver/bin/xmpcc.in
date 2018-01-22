@@ -30,7 +30,6 @@ ENABLE_XACC=false
 ENABLE_SCALASCA=false
 ENABLE_SCALASCA_ALL=false
 ENABLE_SCALASCA_SELECTIVE=false
-ENABLE_TLOG=false
 ENABLE_TLOG_ALL=false
 ENABLE_TLOG_SELECTIVE=false
 DISABLE_LDG=false
@@ -214,7 +213,7 @@ OMNI_TRAVERSE_OPT="--C --nm ${NM}"
 OMNI_TRAVERSE_OPT="${OMNI_TRAVERSE_OPT} --prefix xmpc"
 omni_exec $OMNI_TRAVERSE $OMNI_TRAVERSE_OPT -o $TRAVERSE_FILE_C "${obj_files[@]}" "${archive_files[@]}" ${OMNI_HOME}/lib/libxmp.a
 
-omni_exec $OMNI_MPICC_CMD -c $TRAVERSE_FILE_C -o $TRAVERSE_FILE_O
+omni_exec $OMNI_MPICC_CMD $OMNI_MPICC_OPT "${native_add_opt[@]}" "${other_args[@]}" -c $TRAVERSE_FILE_C -o $TRAVERSE_FILE_O
 
 # omni_traverse for ACC
 if [ $ENABLE_OPENACC = true ]; then
@@ -226,7 +225,7 @@ fi
 
 # link
 [ $ENABLE_SCALASCA = true ] && OMNI_LINKER_CMD="scalasca -instrument -user $OMNI_LINKER_CMD"
-[ $ENABLE_TLOG     = true ] && OMNI_LINKER_OPT="$OMNI_LINKER_OPT -ltlog_mpi"
+OMNI_LINKER_OPT="$OMNI_LINKER_OPT -ltlog_mpi"
 
 if [ "$target" != "sxace-nec-superux" -a "${output_file}" != "" ]; then
     other_args+=("-o" "${output_file[@]}")

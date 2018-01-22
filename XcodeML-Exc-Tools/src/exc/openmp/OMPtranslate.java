@@ -1,13 +1,6 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package exc.openmp;
 
 import java.util.List;
-
 import xcodeml.util.XmOption;
 import exc.object.*;
 import exc.xcodeml.XcodeMLtools;

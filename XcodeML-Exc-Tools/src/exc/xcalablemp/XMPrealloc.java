@@ -1,9 +1,3 @@
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
-
 package exc.xcalablemp;
 
 import exc.object.*;
@@ -38,42 +32,40 @@ public class XMPrealloc implements XobjectDefVisitor {
   }
 
   private void alignArrayRealloc(XobjectDef def) throws XMPexception {
-    if (def.isVarDecl()) {
-      String varName = def.getName();
-      XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(varName);
-      if (alignedArray != null && !alignedArray.isPointer()) {
-        if (alignedArray.realloc()) {
-          XobjList allocFuncArgs = Xcons.List(alignedArray.getAddrIdVoidAddr(), alignedArray.getDescId().Ref());
-
-	  if (alignedArray.getAddrId().getStorageClass() != StorageClass.EXTERN)
-	    allocFuncArgs.add(Xcons.IntConstant(1));
-
-          for (int i = alignedArray.getDim() - 1; i >= 0; i--) {
-            allocFuncArgs.add(Xcons.Cast(Xtype.Pointer(Xtype.unsignedlonglongType),
-                                         alignedArray.getAccIdAt(i).getAddr()));
-          }
-
-          if (alignedArray.getAddrId().getStorageClass() == StorageClass.EXTERN) {
-            _globalDecl.addGlobalInitFuncCall("_XMP_alloc_array_EXTERN", allocFuncArgs);
-          }
-          else {
-            _globalDecl.addGlobalInitFuncCall("_XMP_alloc_array", allocFuncArgs);
-          }
-
-	  def.setDef(Xcons.List(Xcode.TEXT,
-				Xcons.String("/* array '" + varName + "' is removed by XcalableMP align directive */")));
-        } else {
-          XobjList allocFuncArgs = Xcons.List(alignedArray.getAddrIdVoidAddr(),
-                                              alignedArray.getArrayId().Ref(),
-                                              alignedArray.getDescId().Ref());
-          for (int i = alignedArray.getDim() - 1; i >= 0; i--) {
-            allocFuncArgs.add(Xcons.Cast(Xtype.Pointer(Xtype.unsignedlonglongType),
-                                         alignedArray.getAccIdAt(i).getAddr()));
-          }
-
-          _globalDecl.addGlobalInitFuncCall("_XMP_init_array_addr", allocFuncArgs);
-        }
-      }
+    if(def.isVarDecl() == false) return;
+      
+    String varName = def.getName();
+    XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(varName);
+    if(alignedArray == null)     return;
+    if(alignedArray.isPointer()) return;
+    
+    if(alignedArray.realloc()){
+      XobjList allocFuncArgs = Xcons.List(alignedArray.getAddrIdVoidAddr(), alignedArray.getDescId().Ref());
+      if(alignedArray.getAddrId().getStorageClass() != StorageClass.EXTERN)
+        allocFuncArgs.add(Xcons.IntConstant(1));
+      
+      for(int i = alignedArray.getDim() - 1; i >= 0; i--)
+        allocFuncArgs.add(Xcons.Cast(Xtype.Pointer(Xtype.unsignedlonglongType),
+                                     alignedArray.getAccIdAt(i).getAddr()));
+      
+      if(alignedArray.getAddrId().getStorageClass() == StorageClass.EXTERN)
+        _globalDecl.addGlobalInitFuncCall("_XMP_alloc_array_EXTERN", allocFuncArgs);
+      else
+        _globalDecl.addGlobalInitFuncCall("_XMP_alloc_array", allocFuncArgs);
+      
+      def.setDef(Xcons.List(Xcode.TEXT, Xcons.String("/* array '" + varName + "' is removed by XMP align directive */")));
+    }
+    else{
+      Xobject addrIdVoidAddr = alignedArray.getAddrIdVoidAddr();
+      Xobject arrayIdRef     = alignedArray.getArrayId().Ref();
+      Xobject arrayDescRef   = alignedArray.getDescId().Ref();
+      XobjList allocFuncArgs = Xcons.List(addrIdVoidAddr, arrayIdRef, arrayDescRef);
+      
+      for(int i=alignedArray.getDim()-1; i>=0; i--)
+        allocFuncArgs.add(Xcons.Cast(Xtype.Pointer(Xtype.unsignedlonglongType),
+                                     alignedArray.getAccIdAt(i).getAddr()));
+      
+      _globalDecl.addGlobalInitFuncCall("_XMP_init_array_addr", allocFuncArgs);
     }
   }
 }

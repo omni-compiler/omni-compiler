@@ -171,10 +171,11 @@ enum control_type {
     CTL_XMP,
     CTL_ACC,
     CTL_CRITICAL,
-    CTL_BLOCK,
+    CTL_BLK,
     CTL_INTERFACE,
     CTL_FORALL,
     CTL_ENUM,
+    CTL_ASSOCIATE,
 };
 
 #define CONTROL_TYPE_NAMES {\
@@ -191,10 +192,11 @@ enum control_type {
     "CTL_XMP",\
     "CTL_ACC",\
     "CTL_CRITICAL",\
-    "CTL_BLOCK",\
+    "CTL_BLK",\
     "CTL_INTERFACE",\
     "CTL_FORALL",\
     "CTL_ENUM",\
+    "CTL_ASSOCIATE",\
 }
 
 typedef struct environment {
@@ -245,6 +247,14 @@ typedef struct control
 #define CTL_SAVE(l)             ((l)->save)
 #define CTL_BLOCK(l)            ((l)->v1)
 #define CTL_CLIENT(l)           ((l)->v2)
+#define CTL_ENV(l)              (&((l)->local_env))
+#define CTL_SYMBOLS(l)          ((CTL_ENV(l))->symbols)
+#define CTL_STRUCT_DECLS(l)     ((CTL_ENV(l))->struct_decls)
+#define CTL_COMMON_SYMBOLS(l)   ((CTL_ENV(l))->common_symbols)
+#define CTL_LABELS(l)           ((CTL_ENV(l))->labels)
+#define CTL_EXTERNAL_SYMBOLS(l) ((CTL_ENV(l))->external_symbols)
+#define CTL_BLOCKS(l)           ((CTL_ENV(l))->blocks)
+
 
 #define CTL_IF_STATEMENT(l)     ((l)->v2)
 #define CTL_IF_THEN(l)          (EXPR_ARG2((l)->v2))
@@ -253,6 +263,10 @@ typedef struct control
 #define CTL_DO_LABEL(l)         ((l)->dolabel)
 #define CTL_DO_VAR(l)           ((l)->dovar)
 #define CTL_DO_LOCAL_ENV(l)     (&((l)->local_env))
+#define CTL_DO_CONST_NAME(l)    (EXPR_ARG1((l)->v1))
+
+#define CTL_DOWHILE_CONST_NAME(l)         (EXPR_ARG3((l)->v1))
+#define CTL_DOCONCURRENT_CONST_NAME(l)    (EXPR_ARG3((l)->v1))
 
 #define CTL_STRUCT_TYPEDESC(l)  (EXPV_TYPE((l)->v1))
 
@@ -272,7 +286,6 @@ typedef struct control
 #define CTL_CASE_CONST_NAME(l)          (EXPR_ARG3((l)->v1))
 #define CTL_TYPE_GUARD_BLOCK(l)         (EXPR_ARG2((l)->v1))
 #define CTL_TYPE_GUARD_CONST_NAME(l)    (EXPR_ARG3((l)->v1))
-#define CTL_TYPE_GUARD_LOCAL_ENV(l)     (&((l)->local_env))
 
 #define CTL_OMP_ARG(l)	((l)->v2)
 #define CTL_OMP_ARG_DIR(l) (EXPR_INT(EXPR_ARG1((l)->v2)))
@@ -290,13 +303,6 @@ typedef struct control
 #define CTL_BLOCK_STATEMENT(l)                   ((l)->v2)
 #define CTL_BLOCK_BODY(l)                        (EXPR_ARG1((l)->v2))
 #define CTL_BLOCK_CONST_NAME(l)                  (EXPR_ARG2((l)->v2))
-#define CTL_BLOCK_LOCAL_ENV(l)                   (&((l)->local_env))
-#define CTL_BLOCK_LOCAL_SYMBOLS(l)               ((CTL_BLOCK_LOCAL_ENV(l))->symbols)
-#define CTL_BLOCK_LOCAL_STRUCT_DECLS(l)          ((CTL_BLOCK_LOCAL_ENV(l))->struct_decls)
-#define CTL_BLOCK_LOCAL_COMMON_SYMBOLS(l)        ((CTL_BLOCK_LOCAL_ENV(l))->common_symbols)
-#define CTL_BLOCK_LOCAL_LABELS(l)                ((CTL_BLOCK_LOCAL_ENV(l))->labels)
-#define CTL_BLOCK_LOCAL_EXTERNAL_SYMBOLS(l)      ((CTL_BLOCK_LOCAL_ENV(l))->external_symbols)
-#define CTL_BLOCK_LOCAL_BLOCKS(l)                ((CTL_BLOCK_LOCAL_ENV(l))->blocks)
 
 #define CTL_FORALL_STATEMENT(l)                   ((l)->v2)
 #define CTL_FORALL_HEADER(l)                      (EXPR_ARG1((l)->v1))
@@ -304,14 +310,10 @@ typedef struct control
 #define CTL_FORALL_MASK(l)                        (EXPR_ARG2(CTL_FORALL_HEADER(l)))
 #define CTL_FORALL_BODY(l)                        (EXPR_ARG2((l)->v1))
 #define CTL_FORALL_CONST_NAME(l)                  (EXPR_ARG3((l)->v1))
-#define CTL_FORALL_LOCAL_ENV(l)                   (&((l)->local_env))
-#define CTL_FORALL_LOCAL_SYMBOLS(l)               ((CTL_FORALL_LOCAL_ENV(l))->symbols)
-#define CTL_FORALL_LOCAL_STRUCT_DECLS(l)          ((CTL_FORALL_LOCAL_ENV(l))->struct_decls)
-#define CTL_FORALL_LOCAL_COMMON_SYMBOLS(l)        ((CTL_FORALL_LOCAL_ENV(l))->common_symbols)
-#define CTL_FORALL_LOCAL_LABELS(l)                ((CTL_FORALL_LOCAL_ENV(l))->labels)
-#define CTL_FORALL_LOCAL_EXTERNAL_SYMBOLS(l)      ((CTL_FORALL_LOCAL_ENV(l))->external_symbols)
-#define CTL_FORALL_LOCAL_BLOCKS(l)                ((CTL_FORALL_LOCAL_ENV(l))->blocks)
 
+
+#define CTL_ASSOCIATE_BODY(l)                     (EXPR_ARG1((l)->v1))
+#define CTL_ASSOCIATE_CONST_NAME(l)               (EXPR_ARG2((l)->v1))
 
 
 #define CTL_NEXT(u)               ((u)->next)
@@ -580,6 +582,7 @@ extern void     warning_at_id EXC_VARARGS(ID, x);
 extern void     debug EXC_VARARGS(char *, fmt);
 
 extern void     initialize_lex _ANSI_ARGS_((void));
+extern void     finalize_lex _ANSI_ARGS_((void));
 extern void     initialize_compile _ANSI_ARGS_((void));
 extern void     finalize_compile _ANSI_ARGS_((void));
 extern void     initialize_compile_procedure _ANSI_ARGS_((void));
@@ -603,6 +606,11 @@ extern void     check_INDCL _ANSI_ARGS_((void));
 extern void     check_INEXEC _ANSI_ARGS_((void));
 extern void     check_NOT_INBLOCK _ANSI_ARGS_((void));
 extern void     check_INENUM _ANSI_ARGS_((void));
+extern int      check_in_interface _ANSI_ARGS_((void));
+extern int      check_in_module_procedure _ANSI_ARGS_((void));
+extern int      in_interface _ANSI_ARGS_((void));
+extern int      in_module_procedure _ANSI_ARGS_((void));
+extern int      has_import_all _ANSI_ARGS_((void));
 extern void     include_file(char *name, int inside_use);
 extern void     push_unit_ctl _ANSI_ARGS_((enum prog_state));
 extern void     pop_unit_ctl _ANSI_ARGS_((void));
@@ -740,6 +748,7 @@ extern void     compile_VOLATILE_statement _ANSI_ARGS_((expr id_list));
 extern void     compile_VALUE_statement _ANSI_ARGS_((expr id_list));
 extern void     compile_ASYNCHRONOUS_statement _ANSI_ARGS_((expr id_list));
 extern void     compile_CONTIGUOUS_statement _ANSI_ARGS_((expr id_list));
+extern void     compile_BIND_statement _ANSI_ARGS_((expr bind_opt, expr id_list));
 
 extern void     compile_procedure_declaration _ANSI_ARGS_((expr x));
 extern void     compile_type_bound_procedure _ANSI_ARGS_((expr x));
@@ -751,11 +760,13 @@ extern int      type_bound_procedure_type_match _ANSI_ARGS_((EXT_ID f1, EXT_ID f
 extern int      is_procedure_acceptable _ANSI_ARGS_((EXT_ID proc, expv actual_args));
 
 extern int      type_is_soft_compatible _ANSI_ARGS_((TYPE_DESC tp, TYPE_DESC tq));
-extern int      type_is_strict_compatible _ANSI_ARGS_((TYPE_DESC tp, TYPE_DESC tq, int issue_error));
+extern int      type_is_strict_compatible _ANSI_ARGS_((TYPE_DESC tp, TYPE_DESC tq, int compare_rank, int issue_error));
 extern int      type_is_compatible_for_assignment
                     _ANSI_ARGS_((TYPE_DESC tp1, TYPE_DESC tp2));
 extern int      type_is_compatible_for_allocation
                     _ANSI_ARGS_((TYPE_DESC left, TYPE_DESC right));
+extern int      type_is_pointer_assignable(TYPE_DESC vPtrTyp, TYPE_DESC vPteTyp);
+extern int      expv_is_pointer_assignable(expv x, expr vPointer, expr vPointee);
 extern int      struct_type_is_compatible_for_assignment
                     _ANSI_ARGS_((TYPE_DESC tp1, TYPE_DESC tp2, int is_pointer_set));
 extern int      type_is_specific_than
@@ -770,7 +781,6 @@ extern int      type_bound_procedure_types_are_compatible
                     _ANSI_ARGS_((const TYPE_DESC tbp1, const TYPE_DESC tbp2));
 
 extern int      check_tbp_pass_arg(TYPE_DESC stp, TYPE_DESC tbp, TYPE_DESC ftp);
-
 extern int      procedure_has_pass_arg
                     _ANSI_ARGS_((const TYPE_DESC ftp,
                                  const SYMBOL pass_arg,
@@ -1012,6 +1022,7 @@ extern void                    shrink_type(TYPE_DESC tp);
 extern TYPE_DESC               reduce_type(TYPE_DESC tp);
 
 extern int is_array_shape_assumed(TYPE_DESC tp);
+extern int is_array_implicit_shape(TYPE_DESC tp);
 //extern int is_descendant_coindexed(TYPE_DESC tp);
 extern int has_coarray_component(TYPE_DESC tp);
 

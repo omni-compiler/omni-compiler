@@ -1,9 +1,3 @@
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
-
 package exc.xmpF;
 
 import exc.object.Xobject;
@@ -25,6 +19,7 @@ public enum XMPpragma {
     TASKS,
     LOOP,
     REFLECT,
+    REDUCE_SHADOW,
     GMOVE,
     BARRIER,
     REDUCTION,
