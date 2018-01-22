@@ -7463,7 +7463,11 @@ XfDecompileDomVisitor {
             } else {
                 NodeList list = n.getChildNodes();
                 for (int i = 0; i < list.getLength(); i++) {
-                    this.enter(list.item(i));
+                    Node child = list.item(i);
+                    if ("FinterfaceDecl".equals(child.getNodeName())) {
+                        continue;
+                    }
+                    this.enter(child);
                 }
             }
         }
