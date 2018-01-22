@@ -140,6 +140,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             // (CODE name () () declarations)
             e = addChildNodes(createElement(name),
                               transName(xobj.getArg(0)),
+			      transSymbols(xobj.getArg(1)),
                               transDeclarations(xobj.getArgOrNull(3)));
         }
             break;
