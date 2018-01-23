@@ -408,11 +408,25 @@ compile_expression(expr x)
 
             if (!ID_LINE(id)) ID_LINE(id) = EXPR_LINE(x); // set line number if not set
 
-            if (ID_CLASS(id) == CL_PROC ||
-                ID_CLASS(id) == CL_ENTRY ||
-                ID_CLASS(id) == CL_MULTI ||
-                ID_CLASS(id) == CL_UNKNOWN) {
-                expv vRet = NULL;
+            if ((ID_CLASS(id) == CL_PROC ||
+		 ID_CLASS(id) == CL_ENTRY ||
+		 ID_CLASS(id) == CL_MULTI ||
+		 ID_CLASS(id) == CL_UNKNOWN))
+	      {
+
+		// In the following code snippet, although f is a name of the function, the
+		// reference to it in line 3 isn't a recursive call to it but an reference
+		// to its array-valued result value.
+		//
+		// function f()
+		// real f(8)
+		// a = f(1)
+		// end function f
+		//
+		if (IS_FUNCTION_TYPE(tp) && IS_ARRAY_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) &&
+		    TYPE_IS_FOR_FUNC_SELF(tp) && !TYPE_IS_RECURSIVE(tp)) goto not_func_call;
+
+		expv vRet = NULL;
                 if (ID_CLASS(id) == CL_PROC && IS_SUBR(ID_TYPE(id))) {
                     if (PROC_CLASS(id) == P_EXTERNAL &&
                         PROC_IS_FUNC_SUBR_AMBIGUOUS(id) == TRUE) {
@@ -459,6 +473,8 @@ compile_expression(expr x)
                 return vRet;
             }
 
+	    not_func_call:
+	      
             if (ID_CLASS(id) == CL_TAGNAME) {
                 return compile_struct_constructor(id, NULL, EXPR_ARG2(x));
             }
