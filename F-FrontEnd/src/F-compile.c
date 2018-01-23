@@ -6865,7 +6865,7 @@ compile_ALLOCATE_DEALLOCATE_statement(expr x)
                     error("duplicate stat keyword");
                 }
 
-                vstat = compile_expression(v);
+                vstat = v;
 
                 if (vstat == NULL || (EXPR_CODE(vstat) != F_VAR &&
                                       EXPR_CODE(vstat) != ARRAY_REF &&
@@ -6882,7 +6882,7 @@ compile_ALLOCATE_DEALLOCATE_statement(expr x)
                     error("duplicate mold keyword");
                 }
 
-                vmold = compile_expression(v);
+                vmold = v;
 
             } else if (strcmp(SYM_NAME(EXPR_SYM(kwd)), "source") == 0) {
                 if (code == F95_DEALLOCATE_STATEMENT) {
@@ -6893,14 +6893,14 @@ compile_ALLOCATE_DEALLOCATE_statement(expr x)
                     error("duplicate source keyword");
                 }
 
-                vsource = compile_expression(v);
+                vsource = v;
 
             } else if (strcmp(SYM_NAME(EXPR_SYM(kwd)), "errmsg") == 0) {
                 if (verrmsg != NULL) {
                     error("duplicate errmsg keyword");
                 }
 
-                verrmsg = compile_expression(v);
+                verrmsg = v;
 
                 if (verrmsg == NULL || (EXPR_CODE(verrmsg) != F_VAR &&
                                         EXPR_CODE(verrmsg) != ARRAY_REF &&
@@ -6908,11 +6908,10 @@ compile_ALLOCATE_DEALLOCATE_statement(expr x)
                     error("invalid errmsg variable");
 
                 }
-                
+
                 if(IS_CHAR(EXPV_TYPE(verrmsg)) == FALSE) {
                     error("errmsg variable is not a scala character type");
                 }
-
 
             }
         } else {
