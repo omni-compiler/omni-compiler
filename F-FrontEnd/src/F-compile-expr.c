@@ -393,7 +393,8 @@ compile_expression(expr x)
                 EXPR_ARG1(EXPR_ARG2(x)) != NULL &&
                 EXPR_CODE(EXPR_ARG1(EXPR_ARG2(x))) == F95_TRIPLET_EXPR)) {
 
-                if (IS_ARRAY_TYPE(tp)) {
+                if (IS_ARRAY_TYPE(tp) ||
+		    (IS_FUNCTION_TYPE(tp) && IS_ARRAY_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)))) {
                     return compile_array_ref(id, v, EXPR_ARG2(x), FALSE);
                 } else if (IS_CHAR(tp)) {
                     return compile_substr_ref(x);
