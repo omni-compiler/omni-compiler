@@ -634,5 +634,4 @@ extern TYPE_DESC basic_type_desc[];
 #define FUNCTION_TYPE_SET_INTERFACE(tp) ((tp)->proc_info.is_interface = TRUE)
 #define FUNCTION_TYPE_UNSET_INTERFACE(tp) ((tp)->proc_info.is_interface = FALSE)
 
-
 #endif /* _F_DATATYPE_H_ */
