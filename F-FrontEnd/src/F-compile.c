@@ -7518,6 +7518,7 @@ static int markAsPublic(ID id)
     TYPE_UNSET_PRIVATE(id);
     if(tp != NULL) {
         TYPE_ACCESS_IS_INFERRED(tp) = FALSE;
+        TYPE_UNSET_PRIVATE(tp);
     }
     
     return TRUE;
@@ -7534,6 +7535,7 @@ static int markAsPrivate(ID id)
     TYPE_SET_PRIVATE(id);
     if(tp != NULL) {
         TYPE_ACCESS_IS_INFERRED(tp) = FALSE;
+        TYPE_UNSET_PUBLIC(tp);
     }
 
     return TRUE;
