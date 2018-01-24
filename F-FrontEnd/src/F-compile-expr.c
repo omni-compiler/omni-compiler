@@ -199,6 +199,14 @@ are_dimension_and_shape_conformant_by_type(expr x,
         return FALSE;
     }
 
+    if (TYPE_IS_RESHAPED(lt) || TYPE_IS_RESHAPED(rt)) {
+        /*
+         * The type of RESHAPE-d array isn't determind
+         * So always accepts it.
+         */
+        return TRUE;
+    }
+
     generate_shape_expr(lt, lShape);
     generate_shape_expr(rt, rShape);
 
