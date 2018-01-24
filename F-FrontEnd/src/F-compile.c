@@ -2455,11 +2455,16 @@ end_declaration()
                 tp = ID_TYPE(resId);
             }
 
-            if (IS_FUNCTION_TYPE(tp)) {
+            if (IS_PROCEDURE_POINTER(tp)) {
+                ID_TYPE(myId) = NULL;
+                declare_id_type(myId, function_type(tp));
+
+            } else if (IS_FUNCTION_TYPE(tp)) {
                 ID_TYPE(myId) = NULL;
                 declare_id_type(myId, tp);
                 replace_or_assign_type(&FUNCTION_TYPE_RETURN_TYPE(tp), ID_TYPE(resId));
                 declare_id_type(resId, FUNCTION_TYPE_RETURN_TYPE(tp));
+
             } else {
                 // declare_id_type(myId, function_type(tp));
 
