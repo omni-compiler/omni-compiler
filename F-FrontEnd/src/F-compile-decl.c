@@ -4704,8 +4704,19 @@ compile_EXTERNAL_decl(expr id_list)
         }
 
         if(ID_IS_DUMMY_ARG(id)){
-            // Force void dummy args
-            ID_TYPE(id) = type_VOID;
+            // Force set GNUMERIC_ALL to dummy args
+            if (ID_TYPE(id)) {
+                if (IS_PROCEDURE_TYPE(ID_TYPE(id))) {
+                    TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id))) = TYPE_GNUMERIC_ALL;
+                    TYPE_SET_IMPLICIT(ID_TYPE(id));
+                } else {
+                    TYPE_BASIC_TYPE(ID_TYPE(id)) = TYPE_GNUMERIC_ALL;
+                    TYPE_SET_IMPLICIT(ID_TYPE(id));
+                }
+            } else {
+                ID_TYPE(id) = wrap_type(type_GNUMERIC_ALL);
+                TYPE_SET_IMPLICIT(ID_TYPE(id));
+            }
         }
 
         if(!(ID_IS_DUMMY_ARG(id)))
