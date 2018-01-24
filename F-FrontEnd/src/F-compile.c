@@ -2456,8 +2456,7 @@ end_declaration()
             }
 
             if (IS_PROCEDURE_POINTER(tp)) {
-                ID_TYPE(myId) = NULL;
-                declare_id_type(myId, function_type(tp));
+                declare_id_type(myId, tp);
 
             } else if (IS_FUNCTION_TYPE(tp)) {
                 ID_TYPE(myId) = NULL;
