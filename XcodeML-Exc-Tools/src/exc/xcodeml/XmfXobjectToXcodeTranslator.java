@@ -375,20 +375,20 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
                               transValue(xobj.getArg(1)));
 
             Xobject caseList = xobj.getArg(2);
-
-            if (caseList.Opcode() == Xcode.F_STATEMENT_LIST){
-                for (Xobject a : (XobjList)caseList) {
-                    if (a.Opcode() == Xcode.F_STATEMENT_LIST){
-                        for (Xobject b : (XobjList)a){
-                            addChildNode(e, trans(b));
-                        }
-                    } else {
-                        addChildNode(e, trans(a));
-                    }
-                }
-            } else {
-                addChildNode(e, trans(caseList));
-            }
+	    addToBody(e, caseList);
+            // if (caseList.Opcode() == Xcode.F_STATEMENT_LIST){
+            //     for (Xobject a : (XobjList)caseList) {
+            //         if (a.Opcode() == Xcode.F_STATEMENT_LIST){
+            //             for (Xobject b : (XobjList)a){
+            //                 addChildNode(e, trans(b));
+            //             }
+            //         } else {
+            //             addChildNode(e, trans(a));
+            //         }
+            //     }
+            // } else {
+            //     addChildNode(e, trans(caseList));
+            // }
             break;
 
         case F_CASE_LABEL:
@@ -946,28 +946,29 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
 	    Element f2 = createElement("list");
 	    body = xobj.getArg(2);
 	    if (body != null){
-		if (body.Opcode() == Xcode.F_STATEMENT_LIST){
-		    for (Xobject a : (XobjList)body){
-			if (a.Opcode() == Xcode.F_STATEMENT_LIST){
-			    for (Xobject b : (XobjList)a){
-				if (b.Opcode() == Xcode.F_STATEMENT_LIST){
-				    for (Xobject c : (XobjList)b){
-					addChildNode(f2, trans(c));
-				    }
-				}
-				else {
-				    addChildNode(f2, trans(b));
-				}
-			    }
-			}
-			else {
-			    addChildNode(f2, trans(a));
-			}
-		    }
-		}
-		else {
-		    addChildNode(f2, trans(body));
-		}
+		addToBody(f2, body);
+		// if (body.Opcode() == Xcode.F_STATEMENT_LIST){
+		//     for (Xobject a : (XobjList)body){
+		// 	if (a.Opcode() == Xcode.F_STATEMENT_LIST){
+		// 	    for (Xobject b : (XobjList)a){
+		// 		if (b.Opcode() == Xcode.F_STATEMENT_LIST){
+		// 		    for (Xobject c : (XobjList)b){
+		// 			addChildNode(f2, trans(c));
+		// 		    }
+		// 		}
+		// 		else {
+		// 		    addChildNode(f2, trans(b));
+		// 		}
+		// 	    }
+		// 	}
+		// 	else {
+		// 	    addChildNode(f2, trans(a));
+		// 	}
+		//     }
+		// }
+		// else {
+		//     addChildNode(f2, trans(body));
+		// }
             }
 	    addChildNode(e, f2);
 
