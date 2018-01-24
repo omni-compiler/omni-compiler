@@ -354,6 +354,7 @@ extern TYPE_DESC basic_type_desc[];
 #define TYPE_ATTR_FOR_COMPARE \
     (TYPE_ATTR_PARAMETER |                      \
      TYPE_ATTR_ALLOCATABLE |                    \
+     TYPE_ATTR_EXTERNAL |                       \
      TYPE_ATTR_INTRINSIC |                      \
      TYPE_ATTR_OPTIONAL |                       \
      TYPE_ATTR_POINTER |                        \
