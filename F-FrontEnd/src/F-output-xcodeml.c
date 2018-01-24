@@ -4640,6 +4640,8 @@ outx_functionType(int l, TYPE_DESC tp)
               !FUNCTION_TYPE_IS_INTERNAL(tp) &&
               !FUNCTION_TYPE_IS_MOUDLE_PROCEDURE(tp)))) {
             outx_true(TRUE, "is_external");
+            outx_true(TYPE_IS_POINTER(tp), "is_pointer");
+
         }
 
         outx_true(TYPE_IS_PUBLIC(tp), "is_public");
