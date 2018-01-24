@@ -1,5 +1,5 @@
+      REAL, POINTER :: f, g
       EXTERNAL :: f, g
-      POINTER :: f
       f => g
       END
 

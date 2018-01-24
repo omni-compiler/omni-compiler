@@ -2700,7 +2700,6 @@ end_declaration()
                          TYPE_ATTR_OPTIONAL|TYPE_ATTR_VALUE|TYPE_ATTR_VOLATILE|TYPE_ATTR_ASYNCHRONOUS);
 
             if (TYPE_IS_POINTER(FUNCTION_TYPE_RETURN_TYPE(tp))) {
-                TYPE_UNSET_POINTER(FUNCTION_TYPE_RETURN_TYPE(tp));
                 TYPE_SET_POINTER(tp);
             }
             TYPE_UNSET_SAVE(tp);
