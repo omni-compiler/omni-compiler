@@ -77,8 +77,9 @@ extern int doImplicitUndef;
 extern int nerrors;
 
 /* max nam length */
-#define MAX_NAME_LEN_F77          31    /* limitation of fortran 77, 90 */
-#define MAX_NAME_LEN_F03          63    /* limitation of fortran 2003 */
+/* #define MAX_NAME_LEN_F77          31    /\* limitation of fortran 77, 90 *\/ */
+/* #define MAX_NAME_LEN_F03          63    /\* limitation of fortran 2003 *\/ */
+#define MAX_NAME_LEN              63   /* limitation of fortran 2003 */
 #define MAX_NAME_LEN_UPPER_LIMIT 256   /* upper bound */
 #define MAX_DIM  15
 
