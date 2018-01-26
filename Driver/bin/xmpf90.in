@@ -82,6 +82,7 @@ omni_set_trap
 ### Preprocessor ###
 [ $ONLY_PP = true -a -f "${output_file}" ] && omni_exec rm "${output_file}"
 [ $ENABLE_OPENMP = true ] && OMNI_FPP_OPT="$OPENMP_OPT_F $OMNI_FPP_OPT"
+[ $ENABLE_XACC = true ]   && OMNI_FPP_OPT="-D_XCALABLEACC $OMNI_FPP_OPT"
 for file in "${f_files[@]}"; do
     FILE=("${file}")
     FILE_NAME=`omni_f_norm_file_name "${FILE}"`     # ./hoge/fuga.F -> hoge_2f_fuga_2f_a
