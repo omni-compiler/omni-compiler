@@ -2205,7 +2205,6 @@ update_procedure_variable(ID id, const ID target, int is_final)
         return;
     }
 
-
     if (ID_TYPE(target) == NULL || !IS_PROCEDURE_TYPE(ID_TYPE(target))) {
         if (is_final) {
             error_at_id(VAR_REF_PROC(id), "not procedure");
@@ -2238,6 +2237,7 @@ update_procedure_variable(ID id, const ID target, int is_final)
         TYPE_BASIC_TYPE(ID_TYPE(VAR_REF_PROC(id))) = TYPE_SUBR;
         TYPE_BASIC_TYPE(ID_TYPE(id)) = TYPE_SUBR;
     }
+
     TYPE_REF(ID_TYPE(id)) = ID_TYPE(target);
     ID_DEFINED_BY(VAR_REF_PROC(id)) = target;
     PROC_CLASS(VAR_REF_PROC(id)) = P_DEFINEDPROC;
@@ -2256,7 +2256,7 @@ update_procedure_variable(ID id, const ID target, int is_final)
  */
 static void
 update_procedure_variables_forall(ID ids, TYPE_DESC struct_decls, BLOCK_ENV block,
-                                  const ID targets, int is_final)
+                                  const ID targets, int forall_target, int is_final)
 {
     ID id;
     ID target;
@@ -2273,7 +2273,17 @@ update_procedure_variables_forall(ID ids, TYPE_DESC struct_decls, BLOCK_ENV bloc
             if (VAR_REF_PROC(id) == NULL)
                 continue;
 
-            target = find_ident_head(ID_SYM(VAR_REF_PROC(id)), targets);
+            if (ID_IS_DECLARED(VAR_REF_PROC(id)))
+                continue;
+
+            if (forall_target) {
+                target = find_ident_head(ID_SYM(VAR_REF_PROC(id)), targets);
+            } else {
+                target = targets;
+                if (ID_SYM(target) != ID_SYM(VAR_REF_PROC(id))) {
+                    continue;
+                }
+            }
             update_procedure_variable(id, target, is_final);
         }
     }
@@ -2286,7 +2296,7 @@ update_procedure_variables_forall(ID ids, TYPE_DESC struct_decls, BLOCK_ENV bloc
         }
 
         update_procedure_variables_forall(TYPE_MEMBER_LIST(stp), NULL, NULL,
-                                          targets, is_final);
+                                          targets, forall_target, is_final);
     }
 
 
@@ -2294,7 +2304,7 @@ update_procedure_variables_forall(ID ids, TYPE_DESC struct_decls, BLOCK_ENV bloc
         update_procedure_variables_forall(BLOCK_LOCAL_SYMBOLS(bp),
                                           BLOCK_LOCAL_STRUCT_DECLS(bp),
                                           BLOCK_CHILDREN(bp),
-                                          targets, is_final);
+                                          targets, forall_target, is_final);
     }
 }
 
@@ -2456,8 +2466,7 @@ end_declaration()
             }
 
             if (IS_PROCEDURE_POINTER(tp)) {
-                ID_TYPE(myId) = NULL;
-                declare_id_type(myId, function_type(tp));
+                declare_id_type(myId, tp);
 
             } else if (IS_FUNCTION_TYPE(tp)) {
                 ID_TYPE(myId) = NULL;
@@ -3026,13 +3035,15 @@ end_declaration()
                                               PARENT_LOCAL_STRUCT_DECLS,
                                               UNIT_CTL_LOCAL_BLOCKS(PARENT_UNIT_CTL),
                                               myId,
-                                              /*is_final = */ FALSE);
+                                              /* forall target =*/ FALSE,
+                                              /* is_final = */ FALSE);
 
             FOREACH_EXT_ID(ep, LOCAL_EXTERNAL_SYMBOLS) {
                 update_procedure_variables_forall(EXT_PROC_ID_LIST(ep),
                                                   EXT_PROC_STRUCT_DECLS(ep),
                                                   EXT_PROC_BLOCKS(ep),
                                                   myId,
+                                                  /* forall target =*/ FALSE,
                                                   /*is_final = */ FALSE);
             }
         }
@@ -4426,7 +4437,9 @@ end_procedure()
         update_procedure_variables_forall(EXT_PROC_ID_LIST(ep),
                                           EXT_PROC_STRUCT_DECLS(ep),
                                           EXT_PROC_BLOCKS(ep),
-                                          LOCAL_SYMBOLS, /* is_final = */ TRUE);
+                                          LOCAL_SYMBOLS,
+                                          /* forall target =*/ TRUE,
+                                          /* is_final = */ TRUE);
     }
 
 
@@ -7505,6 +7518,7 @@ static int markAsPublic(ID id)
     TYPE_UNSET_PRIVATE(id);
     if(tp != NULL) {
         TYPE_ACCESS_IS_INFERRED(tp) = FALSE;
+        TYPE_UNSET_PRIVATE(tp);
     }
     
     return TRUE;
@@ -7521,6 +7535,7 @@ static int markAsPrivate(ID id)
     TYPE_SET_PRIVATE(id);
     if(tp != NULL) {
         TYPE_ACCESS_IS_INFERRED(tp) = FALSE;
+        TYPE_UNSET_PUBLIC(tp);
     }
 
     return TRUE;

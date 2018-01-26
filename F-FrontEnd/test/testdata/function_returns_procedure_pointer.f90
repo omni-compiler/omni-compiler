@@ -1,3 +1,4 @@
+      CONTAINS
       FUNCTION f(arg) RESULT(r)
         INTERFACE
           FUNCTION g(i)
@@ -6,3 +7,4 @@
         END INTERFACE
         PROCEDURE (g), POINTER :: r, arg
       END FUNCTION
+      END
