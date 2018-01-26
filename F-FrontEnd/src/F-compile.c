@@ -6990,6 +6990,8 @@ compile_ALLOCATE_DEALLOCATE_statement(expr x)
      */
 
     FOR_ITEMS_IN_LIST(lp, args) {
+        TYPE_DESC ltp = NULL;
+
         if (tp) {
             if (!type_is_compatible_for_allocation(EXPV_TYPE(LIST_ITEM(lp)),
                                                    tp)) {
@@ -7002,18 +7004,29 @@ compile_ALLOCATE_DEALLOCATE_statement(expr x)
             }
         }
 
+        ltp = EXPV_TYPE(LIST_ITEM(lp));
+        if (EXPR_CODE(LIST_ITEM(lp)) == ARRAY_REF) {
+            /*
+             * arg seems F_ARRAY_REF (ex. a(10, 10)),
+             * but it have the array type in the ALLOCATE statement.
+             * So change its type.
+             */
+            ltp = compile_dimensions(bottom_type(ltp), EXPR_ARG2(LIST_ITEM(lp)));
+            fix_array_dimensions(ltp);
+            EXPV_TYPE(LIST_ITEM(lp)) = ltp;
+        }
+
         if (vsource) {
-            if (!type_is_compatible_for_allocation(EXPV_TYPE(LIST_ITEM(lp)),
-                                                  EXPV_TYPE(vsource))) {
+            if (!type_is_compatible_for_allocation(ltp, EXPV_TYPE(vsource))) {
                 error("type incompatible");
                 return;
             }
         }
+
         if (vmold) {
-            if (!type_is_compatible_for_allocation(EXPV_TYPE(LIST_ITEM(lp)),
-                                                  EXPV_TYPE(vmold))) {
-                return;
+            if (!type_is_compatible_for_allocation(ltp, EXPV_TYPE(vmold))) {
                 error("type incompatible");
+                return;
             }
         }
     }
