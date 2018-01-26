@@ -150,8 +150,14 @@ public class XmfWriter
             _out.print("&");
             setupNewLine();
             _writeIndent();
-	    if (_mode == StatementMode.OMP) _out.print("!$OMP");
-	    else if (_mode == StatementMode.ACC) _out.print("!$ACC");
+	    if (_mode == StatementMode.OMP){
+	      _out.print("!$OMP");
+	      _columnNumber += 5;
+	    }
+	    else if (_mode == StatementMode.ACC){
+	      _out.print("!$ACC");
+	      _columnNumber += 5;
+	    }
         }
     }
 
