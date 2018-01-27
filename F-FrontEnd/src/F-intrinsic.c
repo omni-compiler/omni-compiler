@@ -201,6 +201,15 @@ compile_intrinsic_call0(ID id, expv args, int ignoreTypeMismatch) {
                 //return NULL;    /* error recovery */
                 continue;
             }
+
+            if (i == 1 &&
+                INTR_ARG_TYPE(ep)[i] == INTR_TYPE_PASSIGNABLE) {
+
+                if (expv_is_pointer_assignable(NULL, expr_list_get_n(args, 0), a)) {
+                    break;
+                }
+            }
+
             if (compare_intrinsic_arg_type(a, tp,
                                            ((isVarArgs == 0) ?
                                             INTR_ARG_TYPE(ep)[i] :
@@ -252,22 +261,32 @@ compile_intrinsic_call0(ID id, expv args, int ignoreTypeMismatch) {
         }
 
         if (IS_VOID(tp)) {
-            ftp = intrinsic_subroutine_type();
+            TYPE_DESC ret = new_type_desc();
+            *ret = *tp;
+            tp = intrinsic_subroutine_type();
         } else {
-            ftp = intrinsic_function_type(tp);
+            TYPE_DESC ret = new_type_desc();
+            *ret = *tp;
+            tp = intrinsic_function_type(ret);
+        }
+
+        if (ID_TYPE(id)) {
+            *ID_TYPE(id) = *tp;
+        } else {
+            ID_TYPE(id) = tp;
         }
 
         /* set external id for functionType's type ID.
          * dont call declare_external_id() */
-        extid = new_external_id_for_external_decl(ID_SYM(id), ftp);
-        ID_TYPE(id) = ftp;
+        extid = new_external_id_for_external_decl(ID_SYM(id), tp);
+
         PROC_EXT_ID(id) = extid;
-        if(TYPE_IS_EXTERNAL(ftp)){
+        if(TYPE_IS_EXTERNAL(tp)){
            ID_STORAGE(id) = STG_EXT;
         }else{
            EXT_PROC_CLASS(extid) = EP_INTRINSIC;
         }
-        ret = expv_cons(FUNCTION_CALL, tp, symV, args);
+        ret = expv_cons(FUNCTION_CALL, FUNCTION_TYPE_RETURN_TYPE(tp), symV, args);
     }
 
     if (ret == NULL && !ignoreTypeMismatch) {

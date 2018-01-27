@@ -1,0 +1,28 @@
+XMPF = xmpf90
+FC = frtpx
+
+XMPFLAGS = -Kfast,ocl,ilfunc,preex,openmp -Qt --openmp
+FFLAGS = -Kfast,ocl,ilfunc,preex,threadsafe -Qt
+LDFLAGS = $(XMPFLAGS)
+
+AOBJS = factor.o fft235.o  kernel.o  zfft1d.o pfactor.o
+OBJS = main.o xmp-fft.o xmp-zfft1d.o random.o 
+MOBJS = common.o
+
+%.o: %.f90
+	$(XMPF) $(XMPFLAGS) -c $< -o $@
+%.o: %.f param.h
+	$(FC) $(FFLAGS) -c $< -o $@
+
+all: FFTo
+
+FFTo: $(MOBJS) $(OBJS) $(AOBJS)
+	$(XMPF) $(LDFLAGS) -o $@ $(OBJS) $(MOBJS) $(AOBJS)
+	@echo "<><><><><><><><><><><><><><><><><><><><><><><><>"
+	@echo "usage:  mpirun -n <Npe> FFTo <Datasize>"
+	@echo "<><><><><><><><><><><><><><><><><><><><><><><><>"
+
+clean:
+	rm -f *.o *~ *.a *.mod *.xmod *.lst
+	rm -rf __omni_tmp__/
+	rm -f FFTo

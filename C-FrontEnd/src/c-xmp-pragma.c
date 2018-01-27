@@ -191,6 +191,11 @@ int parse_XMP_pragma()
     pg_get_token();
     pg_XMP_list = parse_REFLECT_clause();
   }
+  else if (PG_IS_IDENT("reduce_shadow")) {
+    pg_XMP_pragma = XMP_REDUCE_SHADOW;
+    pg_get_token();
+    pg_XMP_list = parse_REFLECT_clause();
+  }
   else if (PG_IS_IDENT("barrier")) {
     pg_XMP_pragma = XMP_BARRIER;
     pg_get_token();
@@ -2242,7 +2247,7 @@ static CExpr* parse_ASYNC_clause()
   }
 
  err:
-    XMP_Error0("syntax error in the REFLECT directive");
+    XMP_Error0("syntax error in an ASYNC clause");
     XMP_has_err = 1;
     return NULL;
 }

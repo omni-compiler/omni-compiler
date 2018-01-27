@@ -1,0 +1,3 @@
+CHARACTER*6 FUNCTION f(a)
+END FUNCTION f
+      

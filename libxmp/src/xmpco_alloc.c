@@ -55,7 +55,7 @@ static void _freeCoarrayInfo(CoarrayInfo_t *cinfo);
 static char *_dispCoarrayInfo(CoarrayInfo_t *cinfo);
 
 // allocation and deallocation
-static size_t _roundUpElementSize(int count, size_t element, char *name, int namelen);
+//static size_t _roundUpElementSize(int count, size_t element, char *name, int namelen);
 static MemoryChunk_t *_mallocMemoryChunk(int count, size_t element);
 static MemoryChunk_t *_mallocMemoryChunk_core(unsigned nbytes);
 static MemoryChunk_t *_regmemMemoryChunk_core(void *baseAddr, unsigned nbytes);
@@ -1329,28 +1329,28 @@ char* _xmp_strndup(char *name, const int namelen)
 /*  The size of the scalar variable will be rounded up to the size
  *  that the communication library can handle.
  */
-size_t _roundUpElementSize(int count, size_t element, char *name, int namelen)
-{
-  size_t elementRU;
-
-  // boundary check and recovery
-  if (element % COMM_UNIT == 0) {
-    elementRU = element;
-  } else if (count == 1) {              // scalar or one-element array
-    /* round up */
-    elementRU = ROUND_UP_COMM(element);
-    _XMPCO_debugPrint("round-up size of scalar variable "
-                            "%d to %u (name=\"%.*s\")\n",
-                            element, elementRU, namelen, name);
-  } else {
-    /* restriction */
-    _XMPCO_fatal("boundary violation detected in coarray allocation\n"
-                 "  element size %d (name=\"%.*s\")\n",
-                 element, namelen, name);
-  }
-
-  return elementRU;
-}
+//size_t _roundUpElementSize(int count, size_t element, char *name, int namelen)
+//{
+//  size_t elementRU;
+//
+//  // boundary check and recovery
+//  if (element % COMM_UNIT == 0) {
+//    elementRU = element;
+//  } else if (count == 1) {              // scalar or one-element array
+//    /* round up */
+//    elementRU = ROUND_UP_COMM(element);
+//    _XMPCO_debugPrint("round-up size of scalar variable "
+//                            "%d to %u (name=\"%.*s\")\n",
+//                            element, elementRU, namelen, name);
+//  } else {
+//    /* restriction */
+//    _XMPCO_fatal("boundary violation detected in coarray allocation\n"
+//                 "  element size %d (name=\"%.*s\")\n",
+//                 element, namelen, name);
+//  }
+//
+//  return elementRU;
+//}
 
 
 /***********************************************\

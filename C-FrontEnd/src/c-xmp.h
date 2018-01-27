@@ -28,6 +28,7 @@ enum XMP_pragma {
     XMP_REFLECT_INIT    = 124,
     XMP_REFLECT_DO      = 125,
     XMP_STATIC_DESC     = 126,
+    XMP_REDUCE_SHADOW   = 127,
 
     XMP_MASTER_IO	= 130,
     XMP_MASTER_IO_BEGIN	= 131,
