@@ -1876,85 +1876,6 @@ public class XMPrewriteExpr {
       return retObj;
   }
   
-  public static Xobject createRewriteAlignedArrayFunc2(XMPalignedArray alignedArray, int arrayDimCount,
-                                                      XobjList getAddrFuncArgs) throws XMPexception {
-    int arrayDim = alignedArray.getDim();
-    Ident getAddrFuncId = null;
-    XobjList args = Xcons.List();
-    Boolean is_optimize_trasform = false;
-
-    if(alignedArray.canOptimized()){
-      XMPtemplate t     = alignedArray.getAlignTemplate();
-      XMPnodes n        = t.getOntoNodes();
-      XobjList tmp_args = Xcons.List();
-      Xtype arrayType   = alignedArray.getArrayType();
-      for (int i=0; i<arrayDim; i++, arrayType=arrayType.getRef()){
-	int manner = alignedArray.getAlignMannerAt(i);
-	switch (manner) {
-	case XMPalignedArray.BLOCK:
-	case XMPalignedArray.CYCLIC:
-	case XMPalignedArray.BLOCK_CYCLIC:
-	  Xobject x = arrayType.getArraySizeExpr();
-	  int index = alignedArray.getAlignSubscriptIndexAt(i);
-          int node_rank = t.getOntoNodesIndexAt(index).getInt();
-          x = Xcons.binaryOp(Xcode.DIV_EXPR, x, n.getSizeAt(node_rank));
-          
-	  if(alignedArray.hasShadow()){
-	    XMPshadow s = alignedArray.getShadowAt(i);
-	    if(s.getHi() != null && s.getLo() != null){
-	      Xobject h_plus_l = Xcons.binaryOp(Xcode.PLUS_EXPR, s.getHi(), s.getLo());
-	      x = Xcons.binaryOp(Xcode.PLUS_EXPR, x, h_plus_l);
-	    }
-	  }
-	  tmp_args.add(x);
-	  break;
-	case XMPalignedArray.DUPLICATION:
-	  tmp_args.add(arrayType.getArraySizeExpr());
-	  break;
-	case XMPalignedArray.NOT_ALIGNED:
-	  int dimSize = (int)arrayType.getArraySize();
-	  tmp_args.add(Xcons.IntConstant(dimSize));
-	  break;
-	}
-      }
-
-      for (int i=1; i<arrayDim; i++){
-	Xobject x = tmp_args.getArg(i);
-	for (int j=i+1; j<arrayDim; j++){
-	  x = Xcons.binaryOp(Xcode.MUL_EXPR, x, tmp_args.getArg(j));
-	}
-	args.add(x);
-      }
-    }
-
-    if (arrayDim < arrayDimCount) {
-      throw new XMPexception("wrong array ref");
-    }
-    else if (arrayDim == arrayDimCount) {
-      getAddrFuncId = XMP.getMacroId("_XMP_M_GET_ADDR_E_" + arrayDim, Xtype.Pointer(alignedArray.getType()));
-      for (int i=0; i<arrayDim-1; i++)
-        if(alignedArray.canOptimized()){
-          getAddrFuncArgs.add(args.getArg(i));
-        }
-        else{
-          getAddrFuncArgs.add(alignedArray.getAccIdAt(i).Ref());
-	}
-    }
-    else {
-      getAddrFuncId = XMP.getMacroId("_XMP_M_GET_ADDR_" + arrayDimCount, Xtype.Pointer(alignedArray.getType()));
-      for (int i = 0; i < arrayDimCount; i++)
-        getAddrFuncArgs.add(alignedArray.getAccIdAt(i).Ref());
-    }
-
-    Xobject retObj = getAddrFuncId.Call(getAddrFuncArgs);
-    if (arrayDim == arrayDimCount) {
-      return Xcons.PointerRef(retObj);
-    }
-    else {
-      return retObj;
-    }
-  }
-
   private Xobject getCalcIndexFuncRef(XMPalignedArray alignedArray, int index, Xobject indexRef) throws XMPexception {
     switch (alignedArray.getAlignMannerAt(index)) {
       case XMPalignedArray.NOT_ALIGNED:
@@ -2206,6 +2127,19 @@ public class XMPrewriteExpr {
       if (myExpr == null) {
         continue;
       }
+      else if(myExpr.Opcode() == Xcode.ARRAY_REF){
+        String arrayName = myExpr.getArg(0).getSym();
+        if(arrayName.startsWith(XMP.MULTI_ADDR_PREFIX_))
+          arrayName = arrayName.substring(XMP.MULTI_ADDR_PREFIX_.length());
+
+        XMPalignedArray alignedArray = globalDecl.getXMPalignedArray(arrayName, block);
+        if (alignedArray == null)
+          rewriteLoopIndexVar(templateObj, templateIndex, loopIndexName, myExpr);
+        else
+          myExpr.setArg(1, rewriteLoopIndexArrayRefList(templateObj, templateIndex, alignedArray,
+                                                        loopIndexName, (XobjList)myExpr.getArg(1)));
+        continue;
+      }
       else if (myExpr.isRewrittedByXmp()) {
         continue;
       }
@@ -2215,18 +2149,6 @@ public class XMPrewriteExpr {
 	{
 	  if (loopIndexName.equals(myExpr.getSym())) {
 	    iter.setXobject(calcLtoG(templateObj, templateIndex, myExpr));
-	  }
-	}
-        break;
-      case ARRAY_REF:
-	{
-	  XMPalignedArray alignedArray = globalDecl.getXMPalignedArray(myExpr.getArg(0).getSym(), block);
-	  if (alignedArray == null) {
-	    rewriteLoopIndexVar(templateObj, templateIndex, loopIndexName, myExpr);
-	  }
-          else {
-	    myExpr.setArg(1, rewriteLoopIndexArrayRefList(templateObj, templateIndex, alignedArray,
-							  loopIndexName, (XobjList)myExpr.getArg(1)));
 	  }
 	}
         break;
