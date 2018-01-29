@@ -9,7 +9,7 @@ XRUN    = mpiexec
 ### PMPI_Comm_split(477).................: 
 ### MPIR_Comm_split_impl(249)............: 
 ### MPIR_Get_contextid_sparse_group(1193): Too many communicators (0/2048 free on this process; ignore_id=0)
-EXES    = 117.x 119.x 293-hyphen.x 343_dynamicnode.x 344_include.x 355.x 377.x dnodes.x macro_in_pragma.x openmp.x  419.x ident.x tlog.x issue_034-1.x issue_034-2.x 38.x issue_046.x 163.o 171.x combineDirective.o 418.x
+EXES    = 117.x 119.x 293-hyphen.x 343_dynamicnode.x 344_include.x 355.x 377.x dnodes.x macro_in_pragma.x openmp.x  419.x ident.x tlog.x issue_034-1.x issue_034-2.x 38.x issue_046.x 163.o 171.x combineDirective.o 418.x nodes_brancket.x
 
 .PHONY: clean all default run submit showlog cleanlog
 
@@ -21,6 +21,9 @@ all default: $(EXES) 278\ spacefile.x
 	$(XCC) -omp 418.c -o $@
 
 163.o: 163.c
+	$(XCC) $^ -c
+
+nodes_brancket.o: nodes_brancket.x
 	$(XCC) $^ -c
 
 combineDirective.o: combineDirective.c
