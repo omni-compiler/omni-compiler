@@ -314,13 +314,22 @@ XfDecompileDomVisitor {
         boolean isPublicEmit = false;
         boolean isProtectedEmit = false;
 
+        if (XmDomUtil.getAttrBool(funcTypeNode, "is_external") &&
+            _isUnderModuleDef() == false &&
+            _isNameDefinedWithUseStmt(symbol.getSymbolName()) == false) {
+            // do not output since the name is defined in module xmpf_coarray_decl
+            writer.writeToken("EXTERNAL");
+            writer.writeToken("::");
+            writer.writeToken(symbol.getSymbolName());
+            writer.setupNewLine();
+        }
+
         /* - always type declaration for SUBROUTINE must not be output.
          * - type declaration for FUNCTION under MODULE must not be output.
          */
         String returnTypeName = XmDomUtil.getAttr(funcTypeNode, "return_type");
         if (typeManager.isDecompilableType(returnTypeName) &&
-                (_isUnderModuleDef() == false ||
-                 XmDomUtil.getAttrBool(funcTypeNode, "is_external"))) {
+                (_isUnderModuleDef() == false)) {
             isFirstToken = false;
             XfType type = XfType.getTypeIdFromXcodemlTypeName(returnTypeName);
             if (type.isPrimitive()) {
@@ -387,40 +396,8 @@ XfDecompileDomVisitor {
                 }
             }
         }
-
-        if (XmDomUtil.getAttrBool(funcTypeNode, "is_external")) {
-            if (_isNameDefinedWithUseStmt(symbol.getSymbolName())) {
-                // do not output since the name is defined in module xmpf_coarray_decl
-            } else {
-                if (isFirstToken == false) {
-                    writer.setupNewLine();
-                }
-                writer.writeToken("EXTERNAL");
-                writer.writeToken("::");
-                writer.writeToken(symbol.getSymbolName());
-                try {
-                    String typeName = XmDomUtil.getAttr(funcTypeNode, "type");
-                    XfTypeManagerForDom.TypeList typeList = typeManager.getTypeReferenceList(typeName);
-                    XfTypeManagerForDom.TypeList returnTypeList = typeManager.getTypeReferenceList(returnTypeName);
-                    if (isFirstToken) {
-                        if (typeList == null || typeList.isEmpty()) {
-                            typeList = returnTypeList;
-                        } else {
-                            for (Node type : returnTypeList) {
-                                typeList.addLast(type);
-                            }
-                        }
-                    }
-
-                    if (typeList != null && !typeList.isEmpty()) {
-                        _writeBasicTypeAttrStatements(symbol.getSymbolName(), typeList.getLast(), typeList.getFirst());
-                    }
-                } catch (XmException e) {
-                    // do nothing
-                }
-          }
-        }
     }
+
 
     private void _writeBasicType(Node basicTypeNode,
                                  XfTypeManagerForDom.TypeList typeList) {
@@ -634,6 +611,7 @@ XfDecompileDomVisitor {
 
         boolean isClass = XmDomUtil.getAttrBool(lowTypeChoice, "is_class");
         boolean isProcedure = XmDomUtil.getAttrBool(lowTypeChoice, "is_procedure");
+        boolean isExternal = XmDomUtil.getAttrBool(topTypeChoice, "is_external");
 
         // ================
         // Top type element
@@ -641,7 +619,15 @@ XfDecompileDomVisitor {
         String topTypeName = topTypeChoice.getNodeName();
         if (!isProcedure && "FfunctionType".equals(topTypeName)) {
             _writeFunctionSymbol(symbol, topTypeChoice);
-            _writeDeclAttr(topTypeChoice, lowTypeChoice);
+            if (isExternal) {
+                if (typeList != null && !typeList.isEmpty()) {
+                    _writeBasicTypeAttrStatements(symbol.getSymbolName(), typeList.getLast(), typeList.getFirst());
+                }
+
+                return true;
+            } else {
+                _writeDeclAttr(topTypeChoice, lowTypeChoice);
+            }
         } else {
             if (!_writeTopType(typeList, true)) {
                 throw new XmTranslationException(node, "Unexpected type");
@@ -5453,7 +5439,7 @@ XfDecompileDomVisitor {
                                         XmDomUtil.getAttr(functionNameNode, "type")));
                         fail(n);
                     } else if ("FfunctionType".equals(typeChoice.getNodeName()) == false &&
-                            XmDomUtil.getAttrBool(typeChoice, "is_procedure") == false) {
+                            XmDomUtil.getAttrBool(typeChoice, "is_pointer") == false) {
                         _context.setLastErrorMessage(
                                 XfUtilForDom.formatError(n,
                                         XfError.XCODEML_TYPE_MISMATCH,

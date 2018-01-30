@@ -2679,6 +2679,32 @@ end_declaration()
         if (TYPE_HAS_BIND(ip)) {
             TYPE_BIND_NAME(tp) = ID_BIND(ip);
         }
+        if (TYPE_IS_EXTERNAL(tp)) {
+            uint32_t type_attr_flags;
+            TYPE_DESC ftp;
+
+            if (!IS_PROCEDURE_TYPE(tp)) {
+                tp = function_type(tp);
+            }
+            type_attr_flags = TYPE_ATTR_FLAGS(ip);
+            ftp = tp;
+            if (TYPE_REF(ftp)) {
+                ftp = TYPE_REF(ftp);
+            }
+
+            ftp = copy_type_partially(ftp, /*doCopyAttr=*/TRUE);
+
+            type_attr_flags = TYPE_ATTR_FLAGS(ftp);
+
+            if ((type_attr_flags & ~TYPE_ATTR_EXTERNAL)  != 0 && TYPE_REF(tp) == NULL) {
+                tp = wrap_type(ftp);
+                TYPE_ATTR_FLAGS(tp) |= type_attr_flags;
+                TYPE_ATTR_FLAGS(ftp) &= TYPE_ATTR_EXTERNAL;
+            }
+            TYPE_UNSET_SAVE(tp);
+            ID_TYPE(ip) = tp;
+        }
+
         if (IS_FUNCTION_TYPE(tp) && TYPE_REF(tp) == NULL) {
             /*
              * The type attributes for the function (PURE, ELEMENETAL, etc) are
@@ -2689,21 +2715,6 @@ end_declaration()
                         ~(TYPE_ATTR_SAVE|TYPE_ATTR_BIND|TYPE_ATTR_PUBLIC|TYPE_ATTR_PRIVATE|
                           TYPE_ATTR_INTENT_INOUT|TYPE_ATTR_INTENT_IN|TYPE_ATTR_INTENT_OUT|
                           TYPE_ATTR_OPTIONAL|TYPE_ATTR_VALUE|TYPE_ATTR_VOLATILE|TYPE_ATTR_ASYNCHRONOUS));
-        }
-        if (TYPE_IS_EXTERNAL(tp)) {
-            if (!IS_PROCEDURE_TYPE(tp)) {
-                tp = function_type(tp);
-            }
-            TYPE_ATTR_FLAGS(FUNCTION_TYPE_RETURN_TYPE(tp))
-                    &= ~(TYPE_ATTR_SAVE|TYPE_ATTR_BIND|TYPE_ATTR_PUBLIC|TYPE_ATTR_PRIVATE|
-                         TYPE_ATTR_INTENT_INOUT|TYPE_ATTR_INTENT_IN|TYPE_ATTR_INTENT_OUT|
-                         TYPE_ATTR_OPTIONAL|TYPE_ATTR_VALUE|TYPE_ATTR_VOLATILE|TYPE_ATTR_ASYNCHRONOUS);
-
-            if (TYPE_IS_POINTER(FUNCTION_TYPE_RETURN_TYPE(tp))) {
-                TYPE_SET_POINTER(tp);
-            }
-            TYPE_UNSET_SAVE(tp);
-            ID_TYPE(ip) = tp;
         }
 
         if (FUNCTION_TYPE_IS_VISIBLE_INTRINSIC(tp)) {
@@ -7963,10 +7974,11 @@ accept:
 
             } else {
                 if (get_bottom_ref_type(vPtrTyp) == get_bottom_ref_type(vPteTyp)) {
-                    /* DO NOTHING */
-                } else if ((IS_FUNCTION_TYPE(vPteTyp) &&
-                     TYPE_IS_IMPLICIT(FUNCTION_TYPE_RETURN_TYPE(vPteTyp)))
-                    && TYPE_REF(vPtrTyp)) {
+                    /* DO NOTHING, procedures are the same type */
+                } else if (IS_FUNCTION_TYPE(vPteTyp) &&
+                           TYPE_IS_IMPLICIT(FUNCTION_TYPE_RETURN_TYPE(vPteTyp)) &&
+                           !TYPE_IS_EXTERNAL(vPteTyp) &&
+                           TYPE_REF(vPtrTyp)) {
                     /*
                      * ex)
                      *  i = g()
@@ -7981,7 +7993,8 @@ accept:
 
                     TYPE_REF(vPteTyp) = ftp;
                     TYPE_REF(FUNCTION_TYPE_RETURN_TYPE(vPteTyp)) = FUNCTION_TYPE_RETURN_TYPE(ftp);
-                    TYPE_ATTR_FLAGS(vPteTyp) = 0;
+                    /* maybe, g is a procedure pointer */
+                    TYPE_ATTR_FLAGS(vPteTyp) &= TYPE_ATTR_POINTER;
                     TYPE_EXTATTR_FLAGS(vPteTyp) = 0;
                     TYPE_ATTR_FLAGS(FUNCTION_TYPE_RETURN_TYPE(vPteTyp)) = 0;
                     TYPE_EXTATTR_FLAGS(FUNCTION_TYPE_RETURN_TYPE(vPteTyp)) = 0;

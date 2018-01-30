@@ -1,5 +1,5 @@
 /**
- * \file F-compile-decl.c
+file F-compile-decl.c
  */
 
 #include "F-front.h"
@@ -2082,6 +2082,9 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
         case F95_EXTERNAL_SPEC:
             /* see compile_EXTERNAL_decl() */
             TYPE_SET_EXTERNAL(tp);
+            if (TYPE_REF(tp)) {
+                TYPE_SET_EXTERNAL(TYPE_REF(tp));
+            }
             break;
         case F95_INTENT_SPEC:
             switch(EXPR_CODE(EXPR_ARG1(v))) {
@@ -4688,14 +4691,11 @@ compile_EXTERNAL_decl(expr id_list)
         if ((id = declare_ident(EXPR_SYM(ident), CL_VAR)) == NULL) {
             continue;
         }
-        ID_CLASS(id) = CL_PROC;
+        if (ID_CLASS(id) == CL_VAR) {
+            ID_CLASS(id) = CL_PROC;
+        }
         if (PROC_CLASS(id) == P_UNKNOWN) {
             PROC_CLASS(id) = P_EXTERNAL;
-            if (ID_TYPE(id) != NULL &&
-                (!IS_PROCEDURE_TYPE(ID_TYPE(id)) ||
-                 IS_PROCEDURE_POINTER(ID_TYPE(id)))) {
-                ID_TYPE(id) = function_type(ID_TYPE(id));
-            }
             TYPE_SET_EXTERNAL(id);
         } else if (PROC_CLASS(id) != P_EXTERNAL) {
             error_at_node(id_list,
@@ -4721,6 +4721,16 @@ compile_EXTERNAL_decl(expr id_list)
 
         if(!(ID_IS_DUMMY_ARG(id)))
             ID_STORAGE(id) = STG_EXT;
+
+        /* if (ID_TYPE(id) != NULL && */
+        /*     (!IS_PROCEDURE_TYPE(ID_TYPE(id))) || IS_PROCEDURE_POINTER(ID_TYPE(id)) ) { */
+        /*     uint32_t type_attr_flags = TYPE_ATTR_FLAGS(ID_TYPE(id)); */
+        /*     if (type_attr_flags != 0) { */
+        /*         TYPE_ATTR_FLAGS(ID_TYPE(id)) = 0; */
+        /*         ID_TYPE(id) = wrap_type(function_type(ID_TYPE(id))); */
+        /*         TYPE_ATTR_FLAGS(ID_TYPE(id)) = type_attr_flags; */
+        /*     } */
+        /* } */
     }
 }
 

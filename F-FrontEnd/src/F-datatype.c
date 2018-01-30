@@ -50,8 +50,21 @@ function_type(TYPE_DESC tp)
 
     if (tp != NULL) {
         if (TYPE_IS_EXTERNAL(tp)) {
-            TYPE_SET_EXTERNAL(ftp);
-            TYPE_UNSET_EXTERNAL(tp);
+            TYPE_DESC tq;
+            /*
+             * EXTERNAL :: f
+             * REAL, POINTER :: f
+             *
+             * f is a pointer to the function which returns REAL.
+             */
+            tp = copy_type_partially(tp, /*doCopyAttr=*/TRUE);
+            FUNCTION_TYPE_RETURN_TYPE(ftp) = tp;
+            TYPE_ATTR_FLAGS(ftp) |= TYPE_ATTR_FLAGS(tp);
+            TYPE_ATTR_FLAGS(tp) = 0;
+            tq = tp;
+            for (tq = tp; tq != NULL; tq = TYPE_REF(tq)) {
+                TYPE_ATTR_FLAGS(tq) = 0;
+            }
         }
 
         if (TYPE_IS_USED_EXPLICIT(tp)) {
