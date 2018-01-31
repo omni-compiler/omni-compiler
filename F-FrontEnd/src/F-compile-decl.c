@@ -1,5 +1,5 @@
 /**
-file F-compile-decl.c
+ * file F-compile-decl.c
  */
 
 #include "F-front.h"

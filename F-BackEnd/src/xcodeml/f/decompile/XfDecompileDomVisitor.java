@@ -389,6 +389,20 @@ XfDecompileDomVisitor {
     }
     private void _writeExternalDecl(XfSymbol symbol,
                                     XfTypeManagerForDom.TypeList typeList) {
+        /*
+         * Outputs the declaration of an external symbol.
+         *
+         * If external symbol refers SUBROUTINE, or the type which is not able to be determined,
+         * output will be:
+         *
+         *   POINTER :: f
+         *   EXTERNAL :: f
+         *
+         * otherwise:
+         *
+         *   REAL, POINTER, EXTERNAL :: f
+         */
+
 
         if (_isNameDefinedWithUseStmt(symbol.getSymbolName())) {
             // do not output since the name is defined in module xmpf_coarray_decl
