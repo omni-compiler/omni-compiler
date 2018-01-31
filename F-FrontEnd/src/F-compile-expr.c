@@ -870,7 +870,14 @@ compile_expression(expr x)
                 return NULL;
             assert(EXPV_TYPE(v1));
             v2 = compile_expression(EXPR_ARG2(x)); /* kind */
-        calc_kind:
+
+	    if (EXPV_CODE(v2) == STRING_CONSTANT){
+	      // for a case like 4_"hello"
+	      expv tmp = v1;
+	      v1 = v2; v2 = tmp;
+	    }
+
+	calc_kind:
             if (v2 != NULL) {
                 v2 = expv_reduce_kind(v2);
                 if (v2 == NULL) {

@@ -2874,7 +2874,8 @@ expv_reduce_kind(expv v)
 
         if (name == NULL) return NULL;
         if (strncasecmp("kind", name, 4) == 0 ||
-            strncasecmp("selected_int_kind", name, 17) == 0) {
+            strncasecmp("selected_int_kind", name, 17) == 0 ||
+	    strncasecmp("selected_char_kind", name, 18) == 0) {
             expv arg = expr_list_get_n(EXPR_ARG2(ret), 0);
             arg = expv_reduce_kind(arg);
             if(arg == NULL) return NULL;
@@ -2898,7 +2899,7 @@ expv_reduce_kind(expv v)
                 return expv_cons(FUNCTION_CALL, type_INT, 
                                  EXPR_ARG1(ret), list2(LIST,arg1,arg2));
             } 
-        }
+	}
         break;
     }
     default: 
@@ -2906,7 +2907,8 @@ expv_reduce_kind(expv v)
     }
 
     if (EXPV_CODE(ret) != INT_CONSTANT &&
-        EXPV_CODE(ret) != FLOAT_CONSTANT) {
+        EXPV_CODE(ret) != FLOAT_CONSTANT &&
+	EXPV_CODE(ret) != STRING_CONSTANT) {
         ret = NULL;  // error
     }
 

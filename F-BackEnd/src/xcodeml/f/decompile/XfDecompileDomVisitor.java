@@ -2388,6 +2388,7 @@ XfDecompileDomVisitor {
                 writer.writeToken(kind + "_");
             }
 
+	    writer.skipSeparator();
             writer.writeLiteralString(XmDomUtil.getContentText(n));
         }
     }
