@@ -389,6 +389,12 @@ XfDecompileDomVisitor {
     }
     private void _writeExternalDecl(XfSymbol symbol,
                                     XfTypeManagerForDom.TypeList typeList) {
+
+        if (_isNameDefinedWithUseStmt(symbol.getSymbolName())) {
+            // do not output since the name is defined in module xmpf_coarray_decl
+            return;
+        }
+
         XmfWriter writer = _context.getWriter();
 
         List<Node> attrList = new ArrayList<>();
@@ -398,40 +404,38 @@ XfDecompileDomVisitor {
 
         assert (XmDomUtil.getAttrBool(funcTypeNode, "is_external"));
 
-        if (_isNameDefinedWithUseStmt(symbol.getSymbolName()) == false) {
-            // do not output since the name is defined in module xmpf_coarray_decl
-            writer.writeToken("EXTERNAL");
-            writer.writeToken("::");
-            writer.writeToken(symbol.getSymbolName());
-            writer.setupNewLine();
-        }
-
         boolean hasTypeSpecifier = false;
 
         String returnTypeName = XmDomUtil.getAttr(funcTypeNode, "return_type");
         XfType type = XfType.getTypeIdFromXcodemlTypeName(returnTypeName);
-        if (type.hasXcodemlName()) {
+        if (type.isPrimitive()) {
             if (type.hasFortranName()) {
                 writer.writeToken(type.fortranName());
                 hasTypeSpecifier = true;
             }
-        } else {
+        } else if (!type.hasXcodemlName()) {
             XfTypeManagerForDom.TypeList returnTypeList = getTypeList(returnTypeName);
-            while (returnTypeList.size() > 1) {
-                attrList.add(returnTypeList.removeFirst());
+            attrList.addAll(returnTypeList);
+            hasTypeSpecifier = _writeTopType(returnTypeList, true, false);
+        }
+
+        if (!attrList.isEmpty()) {
+            if (hasTypeSpecifier) {
+                _writeBasicTypeAttr(attrList.toArray(new Node[0]));
+            } else {
+                _writeBasicTypeAttrStatements(symbol.getSymbolName(), attrList.toArray(new Node[0]));
             }
-            hasTypeSpecifier = _writeTopType(returnTypeList, true);
         }
 
         if (hasTypeSpecifier) {
-            if (!attrList.isEmpty()) {
-                _writeBasicTypeAttr(attrList.toArray(new Node[0]));
-            }
-            writer.writeToken("::");
-            writer.writeToken(symbol.getSymbolName());
-        } else if (!attrList.isEmpty()) {
-            _writeBasicTypeAttrStatements(symbol.getSymbolName(), attrList.toArray(new Node[0]));
+            writer.writeToken(",");
+        } else {
+            writer.setupNewLine();
         }
+
+        writer.writeToken("EXTERNAL");
+        writer.writeToken("::");
+        writer.writeToken(symbol.getSymbolName());
     }
 
 
@@ -505,6 +509,10 @@ XfDecompileDomVisitor {
     }
 
     private boolean _writeTopType(XfTypeManagerForDom.TypeList typeList, Boolean isDeclaration) {
+        return _writeTopType(typeList, isDeclaration, true);
+    }
+
+    private boolean _writeTopType(XfTypeManagerForDom.TypeList typeList, Boolean isDeclaration, Boolean withAttrs) {
         Node topTypeChoice = typeList.getFirst();
         Node lowTypeChoice = typeList.getLast();
 
@@ -590,7 +598,9 @@ XfDecompileDomVisitor {
             return false;
         }
 
-        _writeDeclAttr(topTypeChoice, lowTypeChoice);
+        if (withAttrs) {
+            _writeDeclAttr(topTypeChoice, lowTypeChoice);
+        }
 
         return true;
     }
@@ -5471,8 +5481,7 @@ XfDecompileDomVisitor {
                                         XfError.XCODEML_TYPE_NOT_FOUND,
                                         XmDomUtil.getAttr(functionNameNode, "type")));
                         fail(n);
-                    } else if ("FfunctionType".equals(typeChoice.getNodeName()) == false &&
-                            XmDomUtil.getAttrBool(typeChoice, "is_pointer") == false) {
+                    } else if (!_isFunctionType(typeChoice)) {
                         _context.setLastErrorMessage(
                                 XfUtilForDom.formatError(n,
                                         XfError.XCODEML_TYPE_MISMATCH,
@@ -5522,6 +5531,23 @@ XfDecompileDomVisitor {
 
             writer.writeToken(")");
         }
+
+        public boolean _isFunctionType(Node type) {
+            if ("FfunctionType".equals(type.getNodeName()) ||
+                    XmDomUtil.getAttrBool(type, "is_procedure")) {
+                return true;
+            }
+            XfTypeManagerForDom.TypeList typeList = getTypeList(XmDomUtil.getAttr(type, "type"));
+
+            for (Node ref: typeList) {
+                if ("FfunctionType".equals(ref.getNodeName())) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
     }
 
     // FuseDecl
