@@ -314,16 +314,6 @@ XfDecompileDomVisitor {
         boolean isPublicEmit = false;
         boolean isProtectedEmit = false;
 
-        if (XmDomUtil.getAttrBool(funcTypeNode, "is_external") &&
-            _isUnderModuleDef() == false &&
-            _isNameDefinedWithUseStmt(symbol.getSymbolName()) == false) {
-            // do not output since the name is defined in module xmpf_coarray_decl
-            writer.writeToken("EXTERNAL");
-            writer.writeToken("::");
-            writer.writeToken(symbol.getSymbolName());
-            writer.setupNewLine();
-        }
-
         /* - always type declaration for SUBROUTINE must not be output.
          * - type declaration for FUNCTION under MODULE must not be output.
          */
@@ -387,14 +377,60 @@ XfDecompileDomVisitor {
             writer.writeToken(symbol.getSymbolName());
 
             if (lowType != null &&
-                ("FbasicType".equals(lowType.getNodeName()))) {
+                    ("FbasicType".equals(lowType.getNodeName()))) {
                 ArrayList<Node> contentNodes =
-                    XmDomUtil.collectElementsExclude(lowType,
-                                                     "kind", "len", "coShape", "typeParamValues");
+                        XmDomUtil.collectElementsExclude(lowType,
+                                "kind", "len", "coShape", "typeParamValues");
                 if (!contentNodes.isEmpty()) {
                     _writeIndexRangeArray(contentNodes);
                 }
             }
+        }
+    }
+    private void _writeExternalDecl(XfSymbol symbol,
+                                    XfTypeManagerForDom.TypeList typeList) {
+        XmfWriter writer = _context.getWriter();
+
+        List<Node> attrList = new ArrayList<>();
+        attrList.addAll(typeList);
+
+        Node funcTypeNode = typeList.getFirst();
+
+        assert (XmDomUtil.getAttrBool(funcTypeNode, "is_external"));
+
+        if (_isNameDefinedWithUseStmt(symbol.getSymbolName()) == false) {
+            // do not output since the name is defined in module xmpf_coarray_decl
+            writer.writeToken("EXTERNAL");
+            writer.writeToken("::");
+            writer.writeToken(symbol.getSymbolName());
+            writer.setupNewLine();
+        }
+
+        boolean hasTypeSpecifier = false;
+
+        String returnTypeName = XmDomUtil.getAttr(funcTypeNode, "return_type");
+        XfType type = XfType.getTypeIdFromXcodemlTypeName(returnTypeName);
+        if (type.hasXcodemlName()) {
+            if (type.hasFortranName()) {
+                writer.writeToken(type.fortranName());
+                hasTypeSpecifier = true;
+            }
+        } else {
+            XfTypeManagerForDom.TypeList returnTypeList = getTypeList(returnTypeName);
+            while (returnTypeList.size() > 1) {
+                attrList.add(returnTypeList.removeFirst());
+            }
+            hasTypeSpecifier = _writeTopType(returnTypeList, true);
+        }
+
+        if (hasTypeSpecifier) {
+            if (!attrList.isEmpty()) {
+                _writeBasicTypeAttr(attrList.toArray(new Node[0]));
+            }
+            writer.writeToken("::");
+            writer.writeToken(symbol.getSymbolName());
+        } else if (!attrList.isEmpty()) {
+            _writeBasicTypeAttrStatements(symbol.getSymbolName(), attrList.toArray(new Node[0]));
         }
     }
 
@@ -618,15 +654,12 @@ XfDecompileDomVisitor {
         // ================
         String topTypeName = topTypeChoice.getNodeName();
         if (!isProcedure && "FfunctionType".equals(topTypeName)) {
-            _writeFunctionSymbol(symbol, topTypeChoice);
-            if (isExternal) {
-                if (typeList != null && !typeList.isEmpty()) {
-                    _writeBasicTypeAttrStatements(symbol.getSymbolName(), typeList.getLast(), typeList.getFirst());
-                }
-
-                return true;
-            } else {
+            if (!isExternal) {
+                _writeFunctionSymbol(symbol, topTypeChoice);
                 _writeDeclAttr(topTypeChoice, lowTypeChoice);
+            } else {
+                _writeExternalDecl(symbol, typeList);
+                return true;
             }
         } else {
             if (!_writeTopType(typeList, true)) {
