@@ -2556,8 +2556,13 @@ compile_basic_type(expr x)
     }
 
     if(rcharLen) {
-        if((vcharLen = compile_expression(rcharLen)) == NULL)
+        /*
+         * gfortran accepts a variable as `rchaLen`.
+         * So don't check rcharLen is a constant or not.
+         */
+        if ((vcharLen = compile_expression(rcharLen)) == NULL)
             return NULL;
+
         if (EXPV_CODE(vcharLen) == F_ASTERISK) {
             charLen = CHAR_LEN_UNFIXED;
         } else if (EXPV_CODE(vcharLen) == F08_LEN_SPEC_COLON) {
@@ -2567,12 +2572,16 @@ compile_basic_type(expr x)
             if (vcharLen1 != NULL && EXPV_CODE(vcharLen1) == INT_CONSTANT) {
                 vcharLen = vcharLen1;
                 charLen = EXPV_INT_VALUE(vcharLen1);
-            } else if (vcharLen1 != NULL && expv_is_specification(vcharLen1)) {
+            } else {
+                TYPE_DESC tp = EXPV_TYPE(vcharLen1);
+                if (tp != NULL &&
+                    (TYPE_BASIC_TYPE(tp) != TYPE_INT &&
+                     TYPE_BASIC_TYPE(tp) != TYPE_GNUMERIC &&
+                     TYPE_BASIC_TYPE(tp) != TYPE_GNUMERIC_ALL)) {
+                    error("unexpected type of length in the characater ");
+                }
                 vcharLen = vcharLen1;
                 charLen = 0;
-            } else {
-                vcharLen = vcharLen1;
-                charLen = CHAR_LEN_UNFIXED;
             }
         }
     } else if(charLen == 0) {
