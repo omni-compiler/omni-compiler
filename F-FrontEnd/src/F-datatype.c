@@ -839,7 +839,11 @@ type_parameter_expv_equals(expv v1, expv v2, int is_strict, int for_argument, in
          */
 
         if (v1 == NULL || v2 == NULL) {
-            return FALSE;
+            /*
+             * if v1 or v2 is NULL, the kind specifies the default value of its type.
+             * Maybe the default value is 4, but don't consider it.
+             */
+            return TRUE;
         }
 
         if (EXPR_CODE(v1) != INT_CONSTANT) {
