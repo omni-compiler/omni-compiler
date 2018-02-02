@@ -1,5 +1,5 @@
 /**
- * \file F-compile-decl.c
+ * file F-compile-decl.c
  */
 
 #include "F-front.h"
@@ -2082,6 +2082,9 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
         case F95_EXTERNAL_SPEC:
             /* see compile_EXTERNAL_decl() */
             TYPE_SET_EXTERNAL(tp);
+            if (TYPE_REF(tp)) {
+                TYPE_SET_EXTERNAL(TYPE_REF(tp));
+            }
             break;
         case F95_INTENT_SPEC:
             switch(EXPR_CODE(EXPR_ARG1(v))) {
@@ -2556,8 +2559,13 @@ compile_basic_type(expr x)
     }
 
     if(rcharLen) {
-        if((vcharLen = compile_expression(rcharLen)) == NULL)
+        /*
+         * gfortran accepts a variable as `rchaLen`.
+         * So don't check rcharLen is a constant or not.
+         */
+        if ((vcharLen = compile_expression(rcharLen)) == NULL)
             return NULL;
+
         if (EXPV_CODE(vcharLen) == F_ASTERISK) {
             charLen = CHAR_LEN_UNFIXED;
         } else if (EXPV_CODE(vcharLen) == F08_LEN_SPEC_COLON) {
@@ -2567,12 +2575,16 @@ compile_basic_type(expr x)
             if (vcharLen1 != NULL && EXPV_CODE(vcharLen1) == INT_CONSTANT) {
                 vcharLen = vcharLen1;
                 charLen = EXPV_INT_VALUE(vcharLen1);
-            } else if (vcharLen1 != NULL && expv_is_specification(vcharLen1)) {
+            } else {
+                TYPE_DESC tp = EXPV_TYPE(vcharLen1);
+                if (tp != NULL &&
+                    (TYPE_BASIC_TYPE(tp) != TYPE_INT &&
+                     TYPE_BASIC_TYPE(tp) != TYPE_GNUMERIC &&
+                     TYPE_BASIC_TYPE(tp) != TYPE_GNUMERIC_ALL)) {
+                    error("unexpected type of length in the characater ");
+                }
                 vcharLen = vcharLen1;
                 charLen = 0;
-            } else {
-                vcharLen = vcharLen1;
-                charLen = CHAR_LEN_UNFIXED;
             }
         }
     } else if(charLen == 0) {
@@ -4690,14 +4702,11 @@ compile_EXTERNAL_decl(expr id_list)
         if ((id = declare_ident(EXPR_SYM(ident), CL_VAR)) == NULL) {
             continue;
         }
-        ID_CLASS(id) = CL_PROC;
+        if (ID_CLASS(id) == CL_VAR) {
+            ID_CLASS(id) = CL_PROC;
+        }
         if (PROC_CLASS(id) == P_UNKNOWN) {
             PROC_CLASS(id) = P_EXTERNAL;
-            if (ID_TYPE(id) != NULL &&
-                (!IS_PROCEDURE_TYPE(ID_TYPE(id)) ||
-                 IS_PROCEDURE_POINTER(ID_TYPE(id)))) {
-                ID_TYPE(id) = function_type(ID_TYPE(id));
-            }
             TYPE_SET_EXTERNAL(id);
         } else if (PROC_CLASS(id) != P_EXTERNAL) {
             error_at_node(id_list,
@@ -4706,12 +4715,33 @@ compile_EXTERNAL_decl(expr id_list)
         }
 
         if(ID_IS_DUMMY_ARG(id)){
-            // Force void dummy args
-            ID_TYPE(id) = type_VOID;
+            // Force set GNUMERIC_ALL to dummy args
+            if (ID_TYPE(id)) {
+                if (IS_PROCEDURE_TYPE(ID_TYPE(id))) {
+                    TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id))) = TYPE_GNUMERIC_ALL;
+                    TYPE_SET_IMPLICIT(ID_TYPE(id));
+                } else {
+                    TYPE_BASIC_TYPE(ID_TYPE(id)) = TYPE_GNUMERIC_ALL;
+                    TYPE_SET_IMPLICIT(ID_TYPE(id));
+                }
+            } else {
+                ID_TYPE(id) = wrap_type(type_GNUMERIC_ALL);
+                TYPE_SET_IMPLICIT(ID_TYPE(id));
+            }
         }
 
         if(!(ID_IS_DUMMY_ARG(id)))
             ID_STORAGE(id) = STG_EXT;
+
+        /* if (ID_TYPE(id) != NULL && */
+        /*     (!IS_PROCEDURE_TYPE(ID_TYPE(id))) || IS_PROCEDURE_POINTER(ID_TYPE(id)) ) { */
+        /*     uint32_t type_attr_flags = TYPE_ATTR_FLAGS(ID_TYPE(id)); */
+        /*     if (type_attr_flags != 0) { */
+        /*         TYPE_ATTR_FLAGS(ID_TYPE(id)) = 0; */
+        /*         ID_TYPE(id) = wrap_type(function_type(ID_TYPE(id))); */
+        /*         TYPE_ATTR_FLAGS(ID_TYPE(id)) = type_attr_flags; */
+        /*     } */
+        /* } */
     }
 }
 
