@@ -20,8 +20,9 @@ int main(int argc, char** argv)
       a[i][j] = j*2+i; 
 	
   int myid = xmpc_node_num();
-  int b[3];
+  int b[3], flag = 0;
 
+#ifdef _MPI3
 #pragma xmp barrier
   for(int i=0;i<3;i++){
 #pragma xmp task on p[i][0]
@@ -31,7 +32,6 @@ int main(int argc, char** argv)
     }
   }
 
-  int flag = 0;
   for(int i=0;i<3;i++)
     if(b[i] != xmpc_node_num()*2 + i)
       flag = 1;
@@ -39,6 +39,6 @@ int main(int argc, char** argv)
 #pragma xmp reduction (+:flag)
   if(flag != 0)
     return 1;
-    
+#endif
   return 0;
 }
