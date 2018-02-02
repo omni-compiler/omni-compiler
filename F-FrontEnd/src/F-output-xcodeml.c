@@ -2679,7 +2679,7 @@ outx_constants(int l, expv v)
 
     print_constant:
         outx_printi(l, "<%s type=\"%s\"", tag, tid);
-        if(EXPV_CODE(v) != STRING_CONSTANT &&
+        if(//EXPV_CODE(v) != STRING_CONSTANT &&
             (kind = getKindParameter(tp)) != NULL)
             outx_print(" kind=\"%s\"", kind);
         outx_print(">%s</%s>\n", buf, tag);
@@ -4404,7 +4404,8 @@ outx_coShape(int l, TYPE_DESC tp)
 /**
  * output basicType of character
  */
-static void
+//static void
+void
 outx_characterType(int l, TYPE_DESC tp)
 {
     const int l1 = l + 1, l2 = l1 + 1;

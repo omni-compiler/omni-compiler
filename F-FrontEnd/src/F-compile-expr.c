@@ -870,7 +870,14 @@ compile_expression(expr x)
                 return NULL;
             assert(EXPV_TYPE(v1));
             v2 = compile_expression(EXPR_ARG2(x)); /* kind */
-        calc_kind:
+
+	    if (EXPV_CODE(v2) == STRING_CONSTANT){
+	      // for a case like 4_"hello"
+	      expv tmp = v1;
+	      v1 = v2; v2 = tmp;
+	    }
+
+	calc_kind:
             if (v2 != NULL) {
                 v2 = expv_reduce_kind(v2);
                 if (v2 == NULL) {
@@ -2423,11 +2430,14 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
             }
             tp = ID_TYPE(f_id);
 
-            if (!IS_PROCEDURE_TYPE(tp) || IS_PROCEDURE_POINTER(tp)) {
+            if (!IS_PROCEDURE_TYPE(tp) ||
+                (IS_PROCEDURE_POINTER(tp) && !TYPE_IS_EXTERNAL(tp))) {
                 tp = function_type(tp);
                 ID_TYPE(f_id) = tp;
                 EXPV_TYPE(ID_ADDR(f_id)) = ID_TYPE(f_id);
             }
+
+            tp = get_bottom_ref_type(tp);
 
             if (TYPE_IS_ABSTRACT(ID_TYPE(f_id))) {
                 error("'%s' is abstract", ID_NAME(f_id));

@@ -421,6 +421,16 @@ public class XmfWriter
         setupNewLine();
     }
 
+    public void skipSeparator()
+    {
+      _needSeparator = false;
+    }
+
+    public void needSeparator()
+    {
+      _needSeparator = true;
+    }
+
     /**
      * Flush writer.
      */
