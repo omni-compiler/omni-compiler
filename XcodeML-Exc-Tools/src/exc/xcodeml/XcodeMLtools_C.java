@@ -744,8 +744,11 @@ public class XcodeMLtools_C extends XcodeMLtools {
       childNodes = collectElementsExclude(subArrayRefNode, "arrayAddr");
     }
     else { // pointer
-      arrayAddrNode = getElement(subArrayRefNode, "Var");
-      childNodes = collectElementsExclude(subArrayRefNode, "Var");
+      //arrayAddrNode = getElement(subArrayRefNode, "Var");
+      //childNodes = collectElementsExclude(subArrayRefNode, "Var");
+      childNodes = collectChildNodes(subArrayRefNode);
+      arrayAddrNode = childNodes.get(0);
+      childNodes.remove(0);
     }
 
     XobjList objList = enterAsXobjList(subArrayRefNode,
