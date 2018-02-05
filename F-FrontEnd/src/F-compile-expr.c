@@ -1842,23 +1842,23 @@ compile_array_ref(ID id, expv vary, expr args, int isLeft) {
         if (argASpec != NULL) {
             idASpec = expr_list_get_n(idShape, i);
 
-            /* expv lower = expr_list_get_n(argASpec, 0); */
-            /* //if (lower == NULL) expr_list_set_n(argASpec, 0, expr_list_get_n(idASpec, 0), FALSE); */
-	    /* if (lower == NULL){ */
-	    /*   expv lower0 = expr_list_get_n(idASpec, 0); */
-	    /*   if (!lower0 || EXPR_CODE_IS_CONSTANT(lower0) || TYPE_IS_PARAMETER(EXPV_TYPE(lower0))){ */
-	    /* 	expr_list_set_n(argASpec, 0, lower0, FALSE); */
-	    /*   } */
-	    /* } */
+            expv lower = expr_list_get_n(argASpec, 0);
+            //if (lower == NULL) expr_list_set_n(argASpec, 0, expr_list_get_n(idASpec, 0), FALSE);
+	    if (lower == NULL){
+	      expv lower0 = expr_list_get_n(idASpec, 0);
+	      if (!lower0 || EXPR_CODE_IS_CONSTANT(lower0) || TYPE_IS_PARAMETER(EXPV_TYPE(lower0))){
+		expr_list_set_n(argASpec, 0, lower0, FALSE);
+	      }
+	    }
 
-	    /* expv upper = expr_list_get_n(argASpec, 1); */
-            /* //if (upper == NULL) expr_list_set_n(argASpec, 1, expr_list_get_n(idASpec, 1), FALSE); */
-	    /* if (upper == NULL){ */
-	    /*   expv upper0 = expr_list_get_n(idASpec, 1); */
-	    /*   if (!upper0 || EXPR_CODE_IS_CONSTANT(upper0) || TYPE_IS_PARAMETER(EXPV_TYPE(upper0))){ */
-	    /* 	expr_list_set_n(argASpec, 1, upper0, FALSE); */
-	    /*   } */
-	    /* } */
+	    expv upper = expr_list_get_n(argASpec, 1);
+            //if (upper == NULL) expr_list_set_n(argASpec, 1, expr_list_get_n(idASpec, 1), FALSE);
+	    if (upper == NULL){
+	      expv upper0 = expr_list_get_n(idASpec, 1);
+	      if (!upper0 || EXPR_CODE_IS_CONSTANT(upper0) || TYPE_IS_PARAMETER(EXPV_TYPE(upper0))){
+		expr_list_set_n(argASpec, 1, upper0, FALSE);
+	      }
+	    }
 
             /*
              * Now we have two array-spec. Determine which one to be used.
