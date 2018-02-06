@@ -790,7 +790,7 @@ public class XMPtranslateLocalPragma {
     Block newBlock = null;
     XobjList expandOpt = (XobjList)loopDecl.getArg(5);
 
-    if (expandOpt == null || expandOpt.hasNullArg()){
+    if (expandOpt == null || expandOpt.hasNullArg() || expandOpt.isEmptyList()){
       ;
     }
     else if (expandOpt.getArg(0).getInt() == LOOP_MARGIN){
@@ -1354,36 +1354,40 @@ public class XMPtranslateLocalPragma {
     //
     // for EXPAND/MARGIN/PEEL_AND_WAIT
     //
+
+    if (distManner == XMPtemplate.BLOCK){
     
-    Xobject expandDecl = loopDecl.getArg(5);
-    Xobject expandType;
-    Xobject asyncId;
-    Xobject expandList;
-    if (expandDecl != null && !expandDecl.isEmptyList()){
+      Xobject expandDecl = loopDecl.getArg(5);
+      Xobject expandType;
+      Xobject asyncId;
+      Xobject expandList;
+      if (expandDecl != null && !expandDecl.isEmptyList()){
 
-      expandType = expandDecl.getArg(0);
-      funcArgs.add(expandType);
+	expandType = expandDecl.getArg(0);
+	funcArgs.add(expandType);
 
-      if (expandType.getInt() == LOOP_PEEL_AND_WAIT){
-	asyncId = expandDecl.getArg(1);
-	expandList = expandDecl.getArg(2);
+	if (expandType.getInt() == LOOP_PEEL_AND_WAIT){
+	  asyncId = expandDecl.getArg(1);
+	  expandList = expandDecl.getArg(2);
+	}
+	else {
+	  expandList = expandDecl.getArg(1);
+	  int t_idx = templateIndexArg.getInt();
+	  Xobject lwidth = expandList.getArg(t_idx).getArg(0);
+	  Xobject uwidth = expandList.getArg(t_idx).getArg(1);;
+	  Xobject unboundFlag = expandList.getArg(t_idx).getArg(2);
+	  funcArgs.add(lwidth);
+	  funcArgs.add(uwidth);
+	  funcArgs.add(unboundFlag);
+	}
       }
       else {
-	expandList = expandDecl.getArg(1);
-	int t_idx = templateIndexArg.getInt();
-	Xobject lwidth = expandList.getArg(t_idx).getArg(0);
-	Xobject uwidth = expandList.getArg(t_idx).getArg(1);;
-	Xobject unboundFlag = expandList.getArg(t_idx).getArg(2);
-	funcArgs.add(lwidth);
-	funcArgs.add(uwidth);
-	funcArgs.add(unboundFlag);
+	funcArgs.add(Xcons.IntConstant(LOOP_NONE));
+	funcArgs.add(Xcons.IntConstant(0));
+	funcArgs.add(Xcons.IntConstant(0));
+	funcArgs.add(Xcons.IntConstant(0));
       }
-    }
-    else {
-      funcArgs.add(Xcons.IntConstant(LOOP_NONE));
-      funcArgs.add(Xcons.IntConstant(0));
-      funcArgs.add(Xcons.IntConstant(0));
-      funcArgs.add(Xcons.IntConstant(0));
+
     }
 
     Ident funcId = _globalDecl.declExternFunc("_XMP_sched_loop_template_" + distMannerString);
