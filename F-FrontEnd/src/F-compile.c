@@ -2647,11 +2647,6 @@ end_declaration()
 
         tp = ID_TYPE(ip);
 
-        if (tp == NULL) {
-            implicit_declaration(ip);
-            tp = ID_TYPE(ip);
-        }
-
         /* fix external identifier whose type is not fixed */
         if (tp == NULL &&
             ID_CLASS(ip) == CL_PROC &&
@@ -2664,6 +2659,11 @@ end_declaration()
                 PROC_IS_FUNC_SUBR_AMBIGUOUS(ip) = TRUE;
             }
             declare_id_type(ip, tp);
+        }
+
+        if (tp == NULL) {
+            implicit_declaration(ip);
+            tp = ID_TYPE(ip);
         }
 
         if(tp == NULL)
