@@ -2,6 +2,7 @@
 #define _GNU_SOURCE
 #include <dlfcn.h>
 #include "xmp_internal.h"
+#include <stdlib.h>
 
 xmpt_callback_t xmpt_callback[XMPT_EVENT_ALL+1] = { 0 };
 int xmpt_support_level[XMPT_EVENT_ALL+1] = {
@@ -53,6 +54,32 @@ int __attribute__((weak)) xmpt_initialize(){
   int (*next_tool)() = (int(*)()) dlsym(RTLD_NEXT, "xmpt_initialize");
   if (next_tool)
     ret = next_tool();
+  if (ret)
+    return ret;
+  const char *tool_libs = getenv("XMP_TOOL_LIBRARIES");
+  if (tool_libs) {
+    char* tool_libs_buffer = strdup(tool_libs);
+    if(!tool_libs_buffer)
+    {
+      printf("malloc Error\n");
+      return(0);
+    }
+    char *fname = strtok(tool_libs_buffer,":");
+    while (fname) {
+      void *h = dlopen(fname, RTLD_LAZY);
+      if (h) {
+        next_tool = (int(*)()) dlsym(h, "xmpt_initialize");
+        if (next_tool && (ret = next_tool())) {
+          break;
+        }
+      }
+      else{
+        printf("Loading %s from %s failed with: %s\n" ,fname, "XMP_TOOL_LIBRARIES", dlerror());
+      }
+      fname = strtok(NULL,":");
+    }
+    free(tool_libs_buffer);
+  }
   return ret;
 }
 
