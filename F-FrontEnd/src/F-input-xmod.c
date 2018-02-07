@@ -1638,6 +1638,8 @@ static int
 input_FbasicType(xmlTextReaderPtr reader, HashTable * ht)
 {
     TYPE_DESC tp = NULL;
+    TYPE_ENTRY baseTep;
+    TYPE_ENTRY refTep;
     char * typeId = NULL;
     char * ref;
     int isEmpty;
@@ -1653,6 +1655,15 @@ input_FbasicType(xmlTextReaderPtr reader, HashTable * ht)
     ref = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "ref");
     if (ref != NULL) {
         TYPE_REF(tp) = getTypeDesc(ht, ref);
+        baseTep = getTypeEntry(ht, typeId);
+        refTep = getTypeEntry(ht, ref);
+        if(refTep != NULL && baseTep != NULL 
+            && !baseTep->hasExtID && refTep->hasExtID) 
+        {
+            baseTep->hasExtID = TRUE;
+            baseTep->ep = refTep->ep;
+        }
+
         TYPE_BASIC_TYPE(tp) = TYPE_BASIC_TYPE(TYPE_REF(tp));
         shrink_type(tp);
 
