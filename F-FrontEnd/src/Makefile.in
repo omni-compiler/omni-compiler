@@ -50,6 +50,8 @@ all: $(F_FRONT) $(INTRMOD)
 $(F_FRONT): $(OBJECTS) $(HEADERS)
 	$(CC) $(CFLAGS) -o $@ $(OBJECTS) $(LDFLAGS)
 
+F95-parser.o : F95-parser.y F95-lex.c
+
 $(OBJECTS): $(HEADERS)
 
 .c.o:

@@ -1,3 +1,4 @@
+/* -*- Mode: java; c-basic-offset:2 ; indent-tabs-mode:nil ; -*- */
 package exc.util;
 
 import java.io.*;
@@ -243,7 +244,8 @@ public class omompx
       }
     }
         
-    doScalasca = (all_profile == true || selective_profile == true) && (doScalasca == false && doTlog == false);
+    doScalasca = (all_profile == true || selective_profile == true) 
+      && (doScalasca == false && doTlog == false);
 
     Reader reader = null;
     File dir      = null;
@@ -277,7 +279,9 @@ public class omompx
     XmOption.setIsXcalableACC(xcalableACC);
     
     // read XcodeML
-    XcodeMLtools tools = (XmOption.getLanguage() == XmLanguage.F)? new XcodeMLtools_F() : new XcodeMLtools_C();
+    XcodeMLtools tools = 
+      (XmOption.getLanguage() == XmLanguage.F)? 
+      new XcodeMLtools_F() : new XcodeMLtools_C();
     XobjectFile xobjFile = tools.read(reader);
     
     if (inXmlFile != null) reader.close();

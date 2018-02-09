@@ -359,10 +359,10 @@ char *argv[];
                 cmd_error_exit("invalid value after -save.");
         } else if (strncmp(argv[0], "-max-name-len=", 14) == 0) {
             max_name_len = atoi(argv[0]+14);
-            if (max_name_len < MAX_NAME_LEN_F77){
-                max_name_len = MAX_NAME_LEN_F77;
+            if (max_name_len < MAX_NAME_LEN){
+                max_name_len = MAX_NAME_LEN;
                 sprintf(message_str, "attempt to set too small value for max_name_len. use %d.", 
-                       MAX_NAME_LEN_F77);
+                       MAX_NAME_LEN);
                 cmd_warning(message_str);
             }
             if (max_name_len > MAX_NAME_LEN_UPPER_LIMIT){
@@ -428,7 +428,8 @@ char *argv[];
     }
 
     if( max_name_len < 0 ){ /* unset */
-        max_name_len = fixed_format_flag?MAX_NAME_LEN_F77:MAX_NAME_LEN_F03;
+      //max_name_len = fixed_format_flag?MAX_NAME_LEN_F77:MAX_NAME_LEN_F03;
+      max_name_len = MAX_NAME_LEN;
     }
 
     /* DEBUG */

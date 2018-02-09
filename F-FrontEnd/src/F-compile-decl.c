@@ -1,5 +1,5 @@
 /**
- * \file F-compile-decl.c
+ * file F-compile-decl.c
  */
 
 #include "F-front.h"
@@ -233,7 +233,6 @@ link_parent_defined_by(ID id)
                     id_multilize(parent);
                     ID_NEXT(parent) = MULTI_ID_LIST(parent);
                     ID_NEXT(ID_NEXT(parent)) = next;
-                    /* TODO(shingo-s): if the parent exists */
                     return;
                 } else {
                     error("%s has an explicit interface before", ID_NAME(parent));
@@ -1037,7 +1036,7 @@ declare_function(ID id)
                         TYPE_SET_NOT_FIXED(FUNCTION_TYPE_RETURN_TYPE(tp));
                         TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) = TYPE_GNUMERIC_ALL;
                         ID_TYPE(id) = tp;
-                    } else if (!TYPE_IS_PROCEDURE(tp) || (TYPE_IS_PROCEDURE(tp) && TYPE_REF(tp) != NULL)) {
+                    } else if (!IS_PROCEDURE_TYPE(tp) || (TYPE_IS_PROCEDURE(tp) && TYPE_REF(tp) != NULL)) {
                         ID_TYPE(id) = function_type(tp);
                         /*
                          * For F_Front, There is no difference between an
@@ -2083,6 +2082,9 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
         case F95_EXTERNAL_SPEC:
             /* see compile_EXTERNAL_decl() */
             TYPE_SET_EXTERNAL(tp);
+            if (TYPE_REF(tp)) {
+                TYPE_SET_EXTERNAL(TYPE_REF(tp));
+            }
             break;
         case F95_INTENT_SPEC:
             switch(EXPR_CODE(EXPR_ARG1(v))) {
@@ -2234,7 +2236,7 @@ declare_id_type(ID id, TYPE_DESC tp)
         if (ID_TYPE(id) == NULL) {
             if (!IS_PROCEDURE_TYPE(tp) || IS_PROCEDURE_POINTER(tp)) {
                 /* change the type into function type */
-                ID_TYPE(id) = function_type(tp);
+                *id_type = function_type(tp);
             } else {
                 ID_TYPE(id) = tp;
                 return;
@@ -2263,7 +2265,6 @@ declare_id_type(ID id, TYPE_DESC tp)
         /* override implicit declared type */
         TYPE_ATTR_FLAGS(tp) |= TYPE_ATTR_FLAGS(tq);
         replace_or_assign_type(id_type, tp);
-        TYPE_ATTR_FLAGS(ID_TYPE(id)) |= TYPE_ATTR_FLAGS(tp);
         return;
     }
 
@@ -2401,19 +2402,6 @@ compile_derived_type(expr x, int allow_predecl)
     }
 
     id = find_ident_local(sym);
-
-    if(CTL_TYPE(ctl_top) == CTL_STRUCT) {
-        /*
-         * member of SEQUENCE struct must be SEQUENCE.
-         */
-        if (TYPE_IS_SEQUENCE(CTL_STRUCT_TYPEDESC(ctl_top)) &&
-            TYPE_IS_SEQUENCE(ID_TYPE(id)) == FALSE) {
-            error_at_node(x, "type %s does not have SEQUENCE attribute.",
-                          SYM_NAME(sym));
-            return NULL;
-        }
-    }
-
     if(id != NULL && ID_IS_AMBIGUOUS(id)) {
         error_at_node(x, "an ambiguous reference to symbol '%s'", ID_NAME(id));
         return NULL;
@@ -2436,6 +2424,18 @@ compile_derived_type(expr x, int allow_predecl)
         error_at_node(x, "struct type '%s' requires type parameter values",
                       SYM_NAME(sym));
         return NULL;
+    }
+
+    if(CTL_TYPE(ctl_top) == CTL_STRUCT) {
+        /*
+         * member of SEQUENCE struct must be SEQUENCE.
+         */
+        if (TYPE_IS_SEQUENCE(CTL_STRUCT_TYPEDESC(ctl_top)) &&
+            TYPE_IS_SEQUENCE(tp) == FALSE) {
+            error_at_node(x, "type %s does not have SEQUENCE attribute.",
+                          SYM_NAME(sym));
+            return NULL;
+        }
     }
 
     if (is_parameterized_type) {
@@ -2559,8 +2559,13 @@ compile_basic_type(expr x)
     }
 
     if(rcharLen) {
-        if((vcharLen = compile_expression(rcharLen)) == NULL)
+        /*
+         * gfortran accepts a variable as `rchaLen`.
+         * So don't check rcharLen is a constant or not.
+         */
+        if ((vcharLen = compile_expression(rcharLen)) == NULL)
             return NULL;
+
         if (EXPV_CODE(vcharLen) == F_ASTERISK) {
             charLen = CHAR_LEN_UNFIXED;
         } else if (EXPV_CODE(vcharLen) == F08_LEN_SPEC_COLON) {
@@ -2570,12 +2575,16 @@ compile_basic_type(expr x)
             if (vcharLen1 != NULL && EXPV_CODE(vcharLen1) == INT_CONSTANT) {
                 vcharLen = vcharLen1;
                 charLen = EXPV_INT_VALUE(vcharLen1);
-            } else if (vcharLen1 != NULL && expv_is_specification(vcharLen1)) {
+            } else {
+                TYPE_DESC tp = EXPV_TYPE(vcharLen1);
+                if (tp != NULL &&
+                    (TYPE_BASIC_TYPE(tp) != TYPE_INT &&
+                     TYPE_BASIC_TYPE(tp) != TYPE_GNUMERIC &&
+                     TYPE_BASIC_TYPE(tp) != TYPE_GNUMERIC_ALL)) {
+                    error("unexpected type of length in the characater ");
+                }
                 vcharLen = vcharLen1;
                 charLen = 0;
-            } else {
-                vcharLen = vcharLen1;
-                charLen = CHAR_LEN_UNFIXED;
             }
         }
     } else if(charLen == 0) {
@@ -2877,7 +2886,8 @@ expv_reduce_kind(expv v)
 
         if (name == NULL) return NULL;
         if (strncasecmp("kind", name, 4) == 0 ||
-            strncasecmp("selected_int_kind", name, 17) == 0) {
+            strncasecmp("selected_int_kind", name, 17) == 0 ||
+	    strncasecmp("selected_char_kind", name, 18) == 0) {
             expv arg = expr_list_get_n(EXPR_ARG2(ret), 0);
             arg = expv_reduce_kind(arg);
             if(arg == NULL) return NULL;
@@ -2901,7 +2911,7 @@ expv_reduce_kind(expv v)
                 return expv_cons(FUNCTION_CALL, type_INT, 
                                  EXPR_ARG1(ret), list2(LIST,arg1,arg2));
             } 
-        }
+	}
         break;
     }
     default: 
@@ -2909,7 +2919,8 @@ expv_reduce_kind(expv v)
     }
 
     if (EXPV_CODE(ret) != INT_CONSTANT &&
-        EXPV_CODE(ret) != FLOAT_CONSTANT) {
+        EXPV_CODE(ret) != FLOAT_CONSTANT &&
+	EXPV_CODE(ret) != STRING_CONSTANT) {
         ret = NULL;  // error
     }
 
@@ -4682,16 +4693,20 @@ compile_EXTERNAL_decl(expr id_list)
         if (EXPR_CODE(ident) != IDENT) {
             fatal("compile_EXTERNAL_decl:not ident");
         }
-        if ((id = declare_ident(EXPR_SYM(ident), CL_PROC)) == NULL) {
+        /*
+         * Little bit dirty trick.
+         * EXTERAL id can have POINTER attribute, but
+         * POINTER statement declares id as variable.
+         * So if POINTER statement exists, declare(..., CL_RPOC) cause error.
+         */
+        if ((id = declare_ident(EXPR_SYM(ident), CL_VAR)) == NULL) {
             continue;
+        }
+        if (ID_CLASS(id) == CL_VAR) {
+            ID_CLASS(id) = CL_PROC;
         }
         if (PROC_CLASS(id) == P_UNKNOWN) {
             PROC_CLASS(id) = P_EXTERNAL;
-            if (ID_TYPE(id) != NULL &&
-                (!IS_PROCEDURE_TYPE(ID_TYPE(id)) ||
-                 IS_PROCEDURE_POINTER(ID_TYPE(id)))) {
-                ID_TYPE(id) = function_type(ID_TYPE(id));
-            }
             TYPE_SET_EXTERNAL(id);
         } else if (PROC_CLASS(id) != P_EXTERNAL) {
             error_at_node(id_list,
@@ -4700,12 +4715,33 @@ compile_EXTERNAL_decl(expr id_list)
         }
 
         if(ID_IS_DUMMY_ARG(id)){
-            // Force void dummy args
-            ID_TYPE(id) = type_VOID;
+            // Force set GNUMERIC_ALL to dummy args
+            if (ID_TYPE(id)) {
+                if (IS_PROCEDURE_TYPE(ID_TYPE(id))) {
+                    TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id))) = TYPE_GNUMERIC_ALL;
+                    TYPE_SET_IMPLICIT(ID_TYPE(id));
+                } else {
+                    TYPE_BASIC_TYPE(ID_TYPE(id)) = TYPE_GNUMERIC_ALL;
+                    TYPE_SET_IMPLICIT(ID_TYPE(id));
+                }
+            } else {
+                ID_TYPE(id) = wrap_type(type_GNUMERIC_ALL);
+                TYPE_SET_IMPLICIT(ID_TYPE(id));
+            }
         }
 
         if(!(ID_IS_DUMMY_ARG(id)))
             ID_STORAGE(id) = STG_EXT;
+
+        /* if (ID_TYPE(id) != NULL && */
+        /*     (!IS_PROCEDURE_TYPE(ID_TYPE(id))) || IS_PROCEDURE_POINTER(ID_TYPE(id)) ) { */
+        /*     uint32_t type_attr_flags = TYPE_ATTR_FLAGS(ID_TYPE(id)); */
+        /*     if (type_attr_flags != 0) { */
+        /*         TYPE_ATTR_FLAGS(ID_TYPE(id)) = 0; */
+        /*         ID_TYPE(id) = wrap_type(function_type(ID_TYPE(id))); */
+        /*         TYPE_ATTR_FLAGS(ID_TYPE(id)) = type_attr_flags; */
+        /*     } */
+        /* } */
     }
 }
 
@@ -4876,6 +4912,7 @@ compile_pragma_statement(expr x)
 	  v = expv_str_term(STRING_CONSTANT,
 			    NULL,
 			    strdup(EXPR_STR(EXPR_ARG1(x))));
+	  EXPV_LINE(v) = EXPR_LINE(x);
 	  break;
 	}
     default:
@@ -4884,7 +4921,9 @@ compile_pragma_statement(expr x)
         break;
       }
     }
-  output_statement(list1(F_PRAGMA_STATEMENT, v));
+  expv new_st = list1(F_PRAGMA_STATEMENT, v);
+  EXPV_LINE(new_st) = EXPR_LINE(x);
+  output_statement(new_st);
 }
 
 
@@ -4904,6 +4943,7 @@ compile_pragma_decl(expr x)
 	  v = expv_str_term(STRING_CONSTANT,
 			    NULL,
 			    strdup(EXPR_STR(EXPR_ARG1(x))));
+	  EXPV_LINE(v) = EXPR_LINE(x);
         break;
       }
     default:
@@ -4915,7 +4955,9 @@ compile_pragma_decl(expr x)
 
   SYMBOL sym = gen_temp_symbol("omni_dummy");
   ID id = declare_ident(sym, CL_DECL_PRAGMA);
-  id->info.decl_pragma_info.v = list1(F_PRAGMA_STATEMENT, v);
+  expv new_st = list1(F_PRAGMA_STATEMENT, v);
+  EXPV_LINE(new_st) = EXPR_LINE(x);
+  id->info.decl_pragma_info.v = new_st;
   ID_LINE(id) = EXPR_LINE(x);
 
 }
@@ -4937,6 +4979,7 @@ compile_pragma_outside(expr x)
 	  v = expv_str_term(STRING_CONSTANT,
 			    NULL,
 			    strdup(EXPR_STR(EXPR_ARG1(x))));
+	  EXPV_LINE(v) = EXPR_LINE(x);
         break;
       }
     default:

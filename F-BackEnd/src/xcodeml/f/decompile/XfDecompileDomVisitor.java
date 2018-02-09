@@ -1,4 +1,5 @@
 package xcodeml.f.decompile;
+import java.util.List;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -125,35 +126,32 @@ XfDecompileDomVisitor {
         }
     }
 
-    private void _writeBasicTypeAttr(Node ... basicTypeNodeArray) {
-        if (basicTypeNodeArray == null) {
-            return;
-        }
+    private List<String> _collectBasicTypeAttr(Node ... basicTypeNodeArray) {
+        List<String> basicTypeAttrs = new ArrayList<>();
 
-        XmfWriter writer = _context.getWriter();
+        if (basicTypeNodeArray == null) {
+            return basicTypeAttrs;
+        }
 
         /* public, private are allowed only in module definition OR in derived-type definition */
         if (_isUnderModuleDef() || _isUnderFstructType()) {
             for (Node basicTypeNode : basicTypeNodeArray) {
                 if (XmDomUtil.getAttrBool(basicTypeNode, "is_public")) {
-                    writer.writeToken(", ");
-                    writer.writeToken("PUBLIC");
+                    basicTypeAttrs.add("PUBLIC");
                     break;
                 }
             }
 
             for (Node basicTypeNode : basicTypeNodeArray) {
                 if (XmDomUtil.getAttrBool(basicTypeNode, "is_private")) {
-                    writer.writeToken(", ");
-                    writer.writeToken("PRIVATE");
+                    basicTypeAttrs.add("PRIVATE");
                     break;
                 }
             }
 
             for (Node basicTypeNode : basicTypeNodeArray) {
                 if (XmDomUtil.getAttrBool(basicTypeNode, "is_protected")) {
-                    writer.writeToken(", ");
-                    writer.writeToken("PROTECTED");
+                    basicTypeAttrs.add("PROTECTED");
                     break;
                 }
             }
@@ -161,56 +159,49 @@ XfDecompileDomVisitor {
 
         for (Node basicTypeNode : basicTypeNodeArray) {
             if (XmDomUtil.getAttrBool(basicTypeNode, "is_pointer")) {
-                writer.writeToken(", ");
-                writer.writeToken("POINTER");
+                basicTypeAttrs.add("POINTER");
                 break;
             }
         }
 
         for (Node basicTypeNode : basicTypeNodeArray) {
             if (XmDomUtil.getAttrBool(basicTypeNode, "is_target")) {
-                writer.writeToken(", ");
-                writer.writeToken("TARGET");
+                basicTypeAttrs.add("TARGET");
                 break;
             }
         }
 
         for (Node basicTypeNode : basicTypeNodeArray) {
             if (XmDomUtil.getAttrBool(basicTypeNode, "is_optional")) {
-                writer.writeToken(", ");
-                writer.writeToken("OPTIONAL");
+                basicTypeAttrs.add("OPTIONAL");
                 break;
             }
         }
 
         for (Node basicTypeNode : basicTypeNodeArray) {
             if (XmDomUtil.getAttrBool(basicTypeNode, "is_save")) {
-                writer.writeToken(", ");
-                writer.writeToken("SAVE");
+                basicTypeAttrs.add("SAVE");
                 break;
             }
         }
 
         for (Node basicTypeNode : basicTypeNodeArray) {
             if (XmDomUtil.getAttrBool(basicTypeNode, "is_parameter")) {
-                writer.writeToken(", ");
-                writer.writeToken("PARAMETER");
+                basicTypeAttrs.add("PARAMETER");
                 break;
             }
         }
 
         for (Node basicTypeNode : basicTypeNodeArray) {
             if (XmDomUtil.getAttrBool(basicTypeNode, "is_allocatable")) {
-                writer.writeToken(", ");
-                writer.writeToken("ALLOCATABLE");
+                basicTypeAttrs.add("ALLOCATABLE");
                 break;
             }
         }
 
         for (Node basicTypeNode : basicTypeNodeArray) {
             if (XmDomUtil.getAttrBool(basicTypeNode, "is_cray_pointer")) {
-                writer.writeToken(", ");
-                writer.writeToken("$$Error (Cray Pointer #2)$$");
+                basicTypeAttrs.add("$$Error (Cray Pointer #2)$$");
                 break;
             }
         }
@@ -218,16 +209,14 @@ XfDecompileDomVisitor {
         for (Node basicTypeNode : basicTypeNodeArray) {
             String intent = XmDomUtil.getAttr(basicTypeNode, "intent");
             if (XfUtilForDom.isNullOrEmpty(intent) == false) {
-                writer.writeToken(", ");
-                writer.writeToken("INTENT(" + intent.toUpperCase() + ")");
+                basicTypeAttrs.add("INTENT(" + intent.toUpperCase() + ")");
                 break;
             }
         }
 
         for (Node basicTypeNode : basicTypeNodeArray) {
             if (XmDomUtil.getAttrBool(basicTypeNode, "is_volatile")) {
-                writer.writeToken(",");
-                writer.writeToken("VOLATILE");
+                basicTypeAttrs.add("VOLATILE");
                 break;
             }
         }
@@ -238,36 +227,31 @@ XfDecompileDomVisitor {
             if (XfUtilForDom.isNullOrEmpty(bind) == false 
                 && XfUtilForDom.isNullOrEmpty(bind_name) == false) 
             {
-                writer.writeToken(",");
-                writer.writeToken("BIND( " + bind.toUpperCase() + ", NAME='" + bind_name + "' )");
+                basicTypeAttrs.add("BIND( " + bind.toUpperCase() + ", NAME='" + bind_name + "' )");
                 break;
             } else if(XfUtilForDom.isNullOrEmpty(bind) == false) {
-                writer.writeToken(",");
-                writer.writeToken("BIND( " + bind.toUpperCase() + " )");
+                basicTypeAttrs.add("BIND( " + bind.toUpperCase() + " )");
                 break;
             }
         }
 
         for (Node basicTypeNode : basicTypeNodeArray) {
             if (XmDomUtil.getAttrBool(basicTypeNode, "is_value")) {
-                writer.writeToken(",");
-                writer.writeToken("VALUE");
+                basicTypeAttrs.add("VALUE");
                 break;
             }
         }
 
         for (Node basicTypeNode : basicTypeNodeArray) {
             if (XmDomUtil.getAttrBool(basicTypeNode, "is_asynchronous")) {
-                writer.writeToken(",");
-                writer.writeToken("ASYNCHRONOUS");
+                basicTypeAttrs.add("ASYNCHRONOUS");
                 break;
             }
         }
 
         for (Node basicTypeNode : basicTypeNodeArray) {
             if (XmDomUtil.getAttrBool(basicTypeNode, "is_contiguous")) {
-                writer.writeToken(",");
-                writer.writeToken("CONTIGUOUS");
+                basicTypeAttrs.add("CONTIGUOUS");
                 break;
             }
         }
@@ -276,19 +260,46 @@ XfDecompileDomVisitor {
             String pass = XmDomUtil.getAttr(basicTypeNode, "pass");
             if (!XfUtilForDom.isNullOrEmpty(pass)) {
                 if (pass.equals("pass")) {
-                    writer.writeToken(",");
-                    writer.writeToken("PASS");
+                    String basicTypeAttr = "PASS";
                     String passArg = XmDomUtil.getAttr(basicTypeNode, "pass_arg_name");
                     if (!XfUtilForDom.isNullOrEmpty(passArg)) {
-                        writer.writeToken("(");
-                        writer.writeToken(passArg);
-                        writer.writeToken(")");
+                        basicTypeAttr = basicTypeAttr + "(" + passArg + ")";
                     }
+                    basicTypeAttrs.add(basicTypeAttr);
                 } else if (pass.equals("nopass")) {
-                    writer.writeToken(",");
-                    writer.writeToken("NOPASS");
+                    basicTypeAttrs.add("NOPASS");
                 }
             }
+        }
+
+        return basicTypeAttrs;
+    }
+
+    private void _writeBasicTypeAttr(Node ... basicTypeNodeArray) {
+        List<String> basicTypeAttrs = _collectBasicTypeAttr(basicTypeNodeArray);
+        if (basicTypeNodeArray == null) {
+            return;
+        }
+
+        XmfWriter writer = _context.getWriter();
+        for (String basicTypeAttr: basicTypeAttrs) {
+            writer.writeToken(",");
+            writer.writeToken(basicTypeAttr);
+        }
+    }
+
+    private void _writeBasicTypeAttrStatements(String symbol, Node ... basicTypeNodeArray) {
+        List<String> basicTypeAttrs = _collectBasicTypeAttr(basicTypeNodeArray);
+        if (basicTypeNodeArray == null) {
+            return;
+        }
+
+        XmfWriter writer = _context.getWriter();
+        for (String basicTypeAttr: basicTypeAttrs) {
+            writer.setupNewLine();
+            writer.writeToken(basicTypeAttr);
+            writer.writeToken("::");
+            writer.writeToken(symbol);
         }
     }
 
@@ -308,8 +319,7 @@ XfDecompileDomVisitor {
          */
         String returnTypeName = XmDomUtil.getAttr(funcTypeNode, "return_type");
         if (typeManager.isDecompilableType(returnTypeName) &&
-                (_isUnderModuleDef() == false ||
-                 XmDomUtil.getAttrBool(funcTypeNode, "is_external"))) {
+                (_isUnderModuleDef() == false)) {
             isFirstToken = false;
             XfType type = XfType.getTypeIdFromXcodemlTypeName(returnTypeName);
             if (type.isPrimitive()) {
@@ -363,31 +373,85 @@ XfDecompileDomVisitor {
         }
 
         if (isFirstToken == false) {
-            writer.writeToken(" :: ");
+            writer.writeToken("::");
             writer.writeToken(symbol.getSymbolName());
 
             if (lowType != null &&
-                ("FbasicType".equals(lowType.getNodeName()))) {
+                    ("FbasicType".equals(lowType.getNodeName()))) {
                 ArrayList<Node> contentNodes =
-                    XmDomUtil.collectElementsExclude(lowType,
-                                                     "kind", "len", "coShape", "typeParamValues");
+                        XmDomUtil.collectElementsExclude(lowType,
+                                "kind", "len", "coShape", "typeParamValues");
                 if (!contentNodes.isEmpty()) {
                     _writeIndexRangeArray(contentNodes);
                 }
             }
         }
-
-        if (XmDomUtil.getAttrBool(funcTypeNode, "is_external")) {
-          if (_isNameDefinedWithUseStmt(symbol.getSymbolName())) {
-            // do not output since the name is defined in module xmpf_coarray_decl
-          } else {
-            if (isFirstToken == false)
-                writer.setupNewLine();
-            writer.writeToken("EXTERNAL ");
-            writer.writeToken(symbol.getSymbolName());
-          }
-        }
     }
+    private void _writeExternalDecl(XfSymbol symbol,
+                                    XfTypeManagerForDom.TypeList typeList) {
+        /*
+         * Outputs the declaration of an external symbol.
+         *
+         * If external symbol refers SUBROUTINE, or the type which is not able to be determined,
+         * output will be:
+         *
+         *   POINTER :: f
+         *   EXTERNAL :: f
+         *
+         * otherwise:
+         *
+         *   REAL, POINTER, EXTERNAL :: f
+         */
+
+
+        if (_isNameDefinedWithUseStmt(symbol.getSymbolName())) {
+            // do not output since the name is defined in module xmpf_coarray_decl
+            return;
+        }
+
+        XmfWriter writer = _context.getWriter();
+
+        List<Node> attrList = new ArrayList<>();
+        attrList.addAll(typeList);
+
+        Node funcTypeNode = typeList.getFirst();
+
+        assert (XmDomUtil.getAttrBool(funcTypeNode, "is_external"));
+
+        boolean hasTypeSpecifier = false;
+
+        String returnTypeName = XmDomUtil.getAttr(funcTypeNode, "return_type");
+        XfType type = XfType.getTypeIdFromXcodemlTypeName(returnTypeName);
+        if (type.isPrimitive()) {
+            if (type.hasFortranName()) {
+                writer.writeToken(type.fortranName());
+                hasTypeSpecifier = true;
+            }
+        } else if (!type.hasXcodemlName()) {
+            XfTypeManagerForDom.TypeList returnTypeList = getTypeList(returnTypeName);
+            attrList.addAll(returnTypeList);
+            hasTypeSpecifier = _writeTopType(returnTypeList, true, false);
+        }
+
+        if (!attrList.isEmpty()) {
+            if (hasTypeSpecifier) {
+                _writeBasicTypeAttr(attrList.toArray(new Node[0]));
+            } else {
+                _writeBasicTypeAttrStatements(symbol.getSymbolName(), attrList.toArray(new Node[0]));
+            }
+        }
+
+        if (hasTypeSpecifier) {
+            writer.writeToken(",");
+        } else {
+            writer.setupNewLine();
+        }
+
+        writer.writeToken("EXTERNAL");
+        writer.writeToken("::");
+        writer.writeToken(symbol.getSymbolName());
+    }
+
 
     private void _writeBasicType(Node basicTypeNode,
                                  XfTypeManagerForDom.TypeList typeList) {
@@ -459,6 +523,10 @@ XfDecompileDomVisitor {
     }
 
     private boolean _writeTopType(XfTypeManagerForDom.TypeList typeList, Boolean isDeclaration) {
+        return _writeTopType(typeList, isDeclaration, true);
+    }
+
+    private boolean _writeTopType(XfTypeManagerForDom.TypeList typeList, Boolean isDeclaration, Boolean withAttrs) {
         Node topTypeChoice = typeList.getFirst();
         Node lowTypeChoice = typeList.getLast();
 
@@ -544,7 +612,9 @@ XfDecompileDomVisitor {
             return false;
         }
 
-        _writeDeclAttr(topTypeChoice, lowTypeChoice);
+        if (withAttrs) {
+            _writeDeclAttr(topTypeChoice, lowTypeChoice);
+        }
 
         return true;
     }
@@ -601,14 +671,20 @@ XfDecompileDomVisitor {
 
         boolean isClass = XmDomUtil.getAttrBool(lowTypeChoice, "is_class");
         boolean isProcedure = XmDomUtil.getAttrBool(lowTypeChoice, "is_procedure");
+        boolean isExternal = XmDomUtil.getAttrBool(topTypeChoice, "is_external");
 
         // ================
         // Top type element
         // ================
         String topTypeName = topTypeChoice.getNodeName();
         if (!isProcedure && "FfunctionType".equals(topTypeName)) {
-            _writeFunctionSymbol(symbol, topTypeChoice);
-            _writeDeclAttr(topTypeChoice, lowTypeChoice);
+            if (!isExternal) {
+                _writeFunctionSymbol(symbol, topTypeChoice);
+                _writeDeclAttr(topTypeChoice, lowTypeChoice);
+            } else {
+                _writeExternalDecl(symbol, typeList);
+                return true;
+            }
         } else {
             if (!_writeTopType(typeList, true)) {
                 throw new XmTranslationException(node, "Unexpected type");
@@ -2388,6 +2464,7 @@ XfDecompileDomVisitor {
                 writer.writeToken(kind + "_");
             }
 
+	    writer.skipSeparator();
             writer.writeLiteralString(XmDomUtil.getContentText(n));
         }
     }
@@ -5419,8 +5496,7 @@ XfDecompileDomVisitor {
                                         XfError.XCODEML_TYPE_NOT_FOUND,
                                         XmDomUtil.getAttr(functionNameNode, "type")));
                         fail(n);
-                    } else if ("FfunctionType".equals(typeChoice.getNodeName()) == false &&
-                            XmDomUtil.getAttrBool(typeChoice, "is_procedure") == false) {
+                    } else if (!_isFunctionType(typeChoice)) {
                         _context.setLastErrorMessage(
                                 XfUtilForDom.formatError(n,
                                         XfError.XCODEML_TYPE_MISMATCH,
@@ -5470,6 +5546,23 @@ XfDecompileDomVisitor {
 
             writer.writeToken(")");
         }
+
+        public boolean _isFunctionType(Node type) {
+            if ("FfunctionType".equals(type.getNodeName()) ||
+                    XmDomUtil.getAttrBool(type, "is_procedure")) {
+                return true;
+            }
+            XfTypeManagerForDom.TypeList typeList = getTypeList(XmDomUtil.getAttr(type, "type"));
+
+            for (Node ref: typeList) {
+                if ("FfunctionType".equals(ref.getNodeName())) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
     }
 
     // FuseDecl
@@ -7463,7 +7556,11 @@ XfDecompileDomVisitor {
             } else {
                 NodeList list = n.getChildNodes();
                 for (int i = 0; i < list.getLength(); i++) {
-                    this.enter(list.item(i));
+                    Node child = list.item(i);
+                    if ("FinterfaceDecl".equals(child.getNodeName())) {
+                        continue;
+                    }
+                    this.enter(child);
                 }
             }
         }

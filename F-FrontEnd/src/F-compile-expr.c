@@ -199,6 +199,14 @@ are_dimension_and_shape_conformant_by_type(expr x,
         return FALSE;
     }
 
+    if (TYPE_IS_RESHAPED(lt) || TYPE_IS_RESHAPED(rt)) {
+        /*
+         * The type of RESHAPE-d array isn't determind
+         * So always accepts it.
+         */
+        return TRUE;
+    }
+
     generate_shape_expr(lt, lShape);
     generate_shape_expr(rt, rShape);
 
@@ -393,7 +401,8 @@ compile_expression(expr x)
                 EXPR_ARG1(EXPR_ARG2(x)) != NULL &&
                 EXPR_CODE(EXPR_ARG1(EXPR_ARG2(x))) == F95_TRIPLET_EXPR)) {
 
-                if (IS_ARRAY_TYPE(tp)) {
+                if (IS_ARRAY_TYPE(tp) ||
+		    (IS_FUNCTION_TYPE(tp) && IS_ARRAY_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)))) {
                     return compile_array_ref(id, v, EXPR_ARG2(x), FALSE);
                 } else if (IS_CHAR(tp)) {
                     return compile_substr_ref(x);
@@ -408,11 +417,25 @@ compile_expression(expr x)
 
             if (!ID_LINE(id)) ID_LINE(id) = EXPR_LINE(x); // set line number if not set
 
-            if (ID_CLASS(id) == CL_PROC ||
-                ID_CLASS(id) == CL_ENTRY ||
-                ID_CLASS(id) == CL_MULTI ||
-                ID_CLASS(id) == CL_UNKNOWN) {
-                expv vRet = NULL;
+            if ((ID_CLASS(id) == CL_PROC ||
+		 ID_CLASS(id) == CL_ENTRY ||
+		 ID_CLASS(id) == CL_MULTI ||
+		 ID_CLASS(id) == CL_UNKNOWN))
+	      {
+
+		// In the following code snippet, although f is a name of the function, the
+		// reference to it in line 3 isn't a recursive call to it but an reference
+		// to its array-valued result value.
+		//
+		// function f()
+		// real f(8)
+		// a = f(1)
+		// end function f
+		//
+		if (IS_FUNCTION_TYPE(tp) && IS_ARRAY_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) &&
+		    TYPE_IS_FOR_FUNC_SELF(tp) && !TYPE_IS_RECURSIVE(tp)) goto not_func_call;
+
+		expv vRet = NULL;
                 if (ID_CLASS(id) == CL_PROC && IS_SUBR(ID_TYPE(id))) {
                     if (PROC_CLASS(id) == P_EXTERNAL &&
                         PROC_IS_FUNC_SUBR_AMBIGUOUS(id) == TRUE) {
@@ -459,6 +482,8 @@ compile_expression(expr x)
                 return vRet;
             }
 
+	    not_func_call:
+	      
             if (ID_CLASS(id) == CL_TAGNAME) {
                 return compile_struct_constructor(id, NULL, EXPR_ARG2(x));
             }
@@ -845,7 +870,14 @@ compile_expression(expr x)
                 return NULL;
             assert(EXPV_TYPE(v1));
             v2 = compile_expression(EXPR_ARG2(x)); /* kind */
-        calc_kind:
+
+	    if (EXPV_CODE(v2) == STRING_CONSTANT){
+	      // for a case like 4_"hello"
+	      expv tmp = v1;
+	      v1 = v2; v2 = tmp;
+	    }
+
+	calc_kind:
             if (v2 != NULL) {
                 v2 = expv_reduce_kind(v2);
                 if (v2 == NULL) {
@@ -1810,23 +1842,23 @@ compile_array_ref(ID id, expv vary, expr args, int isLeft) {
         if (argASpec != NULL) {
             idASpec = expr_list_get_n(idShape, i);
 
-            expv lower = expr_list_get_n(argASpec, 0);
-            //if (lower == NULL) expr_list_set_n(argASpec, 0, expr_list_get_n(idASpec, 0), FALSE);
-	    if (lower == NULL){
-	      expv lower0 = expr_list_get_n(idASpec, 0);
-	      if (!lower0 || EXPR_CODE_IS_CONSTANT(lower0) || TYPE_IS_PARAMETER(EXPV_TYPE(lower0))){
-		expr_list_set_n(argASpec, 0, lower0, FALSE);
-	      }
-	    }
+            /* expv lower = expr_list_get_n(argASpec, 0); */
+            /* //if (lower == NULL) expr_list_set_n(argASpec, 0, expr_list_get_n(idASpec, 0), FALSE); */
+	    /* if (lower == NULL){ */
+	    /*   expv lower0 = expr_list_get_n(idASpec, 0); */
+	    /*   if (!lower0 || EXPR_CODE_IS_CONSTANT(lower0) || TYPE_IS_PARAMETER(EXPV_TYPE(lower0))){ */
+	    /* 	expr_list_set_n(argASpec, 0, lower0, FALSE); */
+	    /*   } */
+	    /* } */
 
-	    expv upper = expr_list_get_n(argASpec, 1);
-            //if (upper == NULL) expr_list_set_n(argASpec, 1, expr_list_get_n(idASpec, 1), FALSE);
-	    if (upper == NULL){
-	      expv upper0 = expr_list_get_n(idASpec, 1);
-	      if (!upper0 || EXPR_CODE_IS_CONSTANT(upper0) || TYPE_IS_PARAMETER(EXPV_TYPE(upper0))){
-		expr_list_set_n(argASpec, 1, upper0, FALSE);
-	      }
-	    }
+	    /* expv upper = expr_list_get_n(argASpec, 1); */
+            /* //if (upper == NULL) expr_list_set_n(argASpec, 1, expr_list_get_n(idASpec, 1), FALSE); */
+	    /* if (upper == NULL){ */
+	    /*   expv upper0 = expr_list_get_n(idASpec, 1); */
+	    /*   if (!upper0 || EXPR_CODE_IS_CONSTANT(upper0) || TYPE_IS_PARAMETER(EXPV_TYPE(upper0))){ */
+	    /* 	expr_list_set_n(argASpec, 1, upper0, FALSE); */
+	    /*   } */
+	    /* } */
 
             /*
              * Now we have two array-spec. Determine which one to be used.
@@ -1900,6 +1932,7 @@ compile_array_ref(ID id, expv vary, expr args, int isLeft) {
 
     if (id != NULL) {
         vary = expv_sym_term(F_VAR, ID_TYPE(id), ID_SYM(id));
+
         ID_ADDR(id) = vary;
 
         tp = ID_TYPE(id);
@@ -1910,6 +1943,8 @@ compile_array_ref(ID id, expv vary, expr args, int isLeft) {
         if (id != NULL && ID_CLASS(id) == CL_PROC && PROC_CLASS(id) == P_THISPROC) {
             tp = FUNCTION_TYPE_RETURN_TYPE(tp);
         }
+
+        EXPV_TYPE(vary) = tp;
 
         if (TYPE_N_DIM(tp) < n) {
             error_at_node(args, "too large dimension, %d.", n);
@@ -2273,7 +2308,7 @@ choose_module_procedure_by_args(EXT_ID mod_procedures, expv args)
 }
 
 
-static expv
+expv
 max_rank_from_arguments(expv args)
 {
     list lp;
@@ -2395,11 +2430,14 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
             }
             tp = ID_TYPE(f_id);
 
-            if (!IS_PROCEDURE_TYPE(tp) || IS_PROCEDURE_POINTER(tp)) {
+            if (!IS_PROCEDURE_TYPE(tp) ||
+                (IS_PROCEDURE_POINTER(tp) && !TYPE_IS_EXTERNAL(tp))) {
                 tp = function_type(tp);
                 ID_TYPE(f_id) = tp;
                 EXPV_TYPE(ID_ADDR(f_id)) = ID_TYPE(f_id);
             }
+
+            tp = get_bottom_ref_type(tp);
 
             if (TYPE_IS_ABSTRACT(ID_TYPE(f_id))) {
                 error("'%s' is abstract", ID_NAME(f_id));
@@ -3287,7 +3325,8 @@ compile_array_constructor(expr x)
     BASIC_DATA_TYPE elem_type = TYPE_UNKNOWN;
 
     l = list0(LIST);
-    if ((base_type = compile_type(EXPR_ARG2(x), /*allow_predecl=*/FALSE)) != NULL) {
+    if (EXPR_HAS_ARG2(x) &&
+        (base_type = compile_type(EXPR_ARG2(x), /*allow_predecl=*/FALSE)) != NULL) {
         if (type_is_nopolymorphic_abstract(base_type)) {
             error("abstract type in an array constructor");
         }
@@ -3307,13 +3346,23 @@ compile_array_constructor(expr x)
             elem_type = get_basic_type(tp);
             continue;
         }
-        if (get_basic_type(tp) != elem_type) {
-            error("Array constructor elements have different data types.");
-            return NULL;
+
+        if (elem_type == TYPE_STRUCT ||
+            elem_type == TYPE_COMPLEX) {
+            if (get_basic_type(tp) != elem_type) {
+                error("Array constructor elements have different data types.");
+                return NULL;
+            }
+        } else {
+            if (get_basic_type(tp) == TYPE_STRUCT ||
+                get_basic_type(tp) == TYPE_COMPLEX) {
+                error("Array constructor elements have different data types.");
+                return NULL;
+            }
         }
 
         if (base_type) {
-            if (!type_is_soft_compatible(base_type, tp)) {
+            if (!type_is_compatible_for_assignment(base_type, tp)) {
                 error("Unexpected element type");
                 return NULL;
             }
