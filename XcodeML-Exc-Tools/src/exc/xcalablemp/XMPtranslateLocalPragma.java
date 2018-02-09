@@ -1355,31 +1355,40 @@ public class XMPtranslateLocalPragma {
     // for EXPAND/MARGIN/PEEL_AND_WAIT
     //
 
-    if (distManner == XMPtemplate.BLOCK){
+    //if (distManner == XMPtemplate.BLOCK){
     
       Xobject expandDecl = loopDecl.getArg(5);
-      Xobject expandType;
+      int origLoopType, loopType;
       Xobject asyncId;
       Xobject expandList;
       if (expandDecl != null && !expandDecl.isEmptyList()){
 
-	expandType = expandDecl.getArg(0);
-	funcArgs.add(expandType);
+	origLoopType = expandDecl.getArg(0).getInt();
 
-	if (expandType.getInt() == LOOP_PEEL_AND_WAIT){
+	if (origLoopType == LOOP_PEEL_AND_WAIT){
 	  asyncId = expandDecl.getArg(1);
 	  expandList = expandDecl.getArg(2);
 	}
 	else {
 	  expandList = expandDecl.getArg(1);
-	  int t_idx = templateIndexArg.getInt();
-	  Xobject lwidth = expandList.getArg(t_idx).getArg(0);
-	  Xobject uwidth = expandList.getArg(t_idx).getArg(1);;
-	  Xobject unboundFlag = expandList.getArg(t_idx).getArg(2);
-	  funcArgs.add(lwidth);
-	  funcArgs.add(uwidth);
-	  funcArgs.add(unboundFlag);
 	}
+	
+	int t_idx = templateIndexArg.getInt();
+	Xobject lwidth = expandList.getArg(t_idx).getArg(0);
+	Xobject uwidth = expandList.getArg(t_idx).getArg(1);;
+	Xobject unboundFlag = expandList.getArg(t_idx).getArg(2);
+
+	if (origLoopType == LOOP_MARGIN && unboundFlag.getInt() == -1){
+	  loopType = LOOP_EXPAND;
+	}
+	else {
+	  loopType = origLoopType;
+	}
+
+	funcArgs.add(Xcons.IntConstant(loopType));
+	funcArgs.add(lwidth);
+	funcArgs.add(uwidth);
+	funcArgs.add(unboundFlag);
       }
       else {
 	funcArgs.add(Xcons.IntConstant(LOOP_NONE));
@@ -1388,9 +1397,10 @@ public class XMPtranslateLocalPragma {
 	funcArgs.add(Xcons.IntConstant(0));
       }
 
-    }
+      //    }
 
-    Ident funcId = _globalDecl.declExternFunc("_XMP_sched_loop_template_" + distMannerString);
+    //Ident funcId = _globalDecl.declExternFunc("_XMP_sched_loop_template_" + distMannerString);
+    Ident funcId = _globalDecl.declExternFunc("xmpc_loop_sched");
     int[] position = {iteraterList.size()};
     boolean[] flag = {false, false, false};
     String[] insertedIteraterList = new String[3];

@@ -100,8 +100,7 @@ void _XMP_sched_loop_template_DUPLICATION(int ser_init, int ser_cond, int ser_st
 
 void _XMP_sched_loop_template_BLOCK(int ser_init, int ser_cond, int ser_step,
                                     int *par_init, int *par_cond, int *par_step,
-                                    _XMP_template_t *template, int template_index,
-				    int expand_type, int lwidth, int uwidth, int unbound_flag);
+                                    _XMP_template_t *template, int template_index);
 
 void _XMP_sched_loop_template_CYCLIC(int ser_init, int ser_cond, int ser_step,
                                      int *par_init, int *par_cond, int *par_step,

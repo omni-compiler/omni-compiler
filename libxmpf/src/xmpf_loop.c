@@ -32,8 +32,7 @@ void xmpf_loop_sched__(int *lb, int *ub, int *st, int *r_idx, _XMP_object_ref_t 
     case _XMP_N_DIST_BLOCK:
       _XMP_sched_loop_template_BLOCK(*lb + off, global_ub_C + off, *st,
 				     lb, ub, st,
-				     t_desc, t_idx,
-				     _XMP_LOOP_NONE, 0, 0, 0);
+				     t_desc, t_idx);
       break;
 
     case _XMP_N_DIST_CYCLIC:

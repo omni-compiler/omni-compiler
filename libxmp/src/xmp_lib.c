@@ -522,8 +522,7 @@ void xmp_sched_template_index(int* local_start_index, int* local_end_index,
   switch(chunk->dist_manner){
   case _XMP_N_DIST_BLOCK:
     _XMP_sched_loop_template_BLOCK(global_start_index, global_end_index, step, 
-				   local_start_index, local_end_index, &tmp, template, template_dim,
-				   _XMP_LOOP_NONE, 0, 0, 0);
+				   local_start_index, local_end_index, &tmp, template, template_dim);
     break;
   case _XMP_N_DIST_CYCLIC:
     _XMP_sched_loop_template_CYCLIC(global_start_index, global_end_index, step, 

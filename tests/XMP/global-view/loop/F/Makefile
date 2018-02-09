@@ -35,6 +35,10 @@ run: $(EXES)
 	$(XRUN) -n 16 ./gblock2.x
 	$(XRUN) -n 2 ./different_template.x
 	$(XRUN) -n 1 ./387_l2g.x
+	$(XRUN) -n 4 ./expand.x
+	$(XRUN) -n 4 ./margin.x
+	$(XRUN) -n 4 ./expand_margin.x
+	$(XRUN) -n 4 ./peel_and_wait.x
 
 RUN:
 	mkdir RUN
