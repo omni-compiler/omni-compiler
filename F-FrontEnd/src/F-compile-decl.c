@@ -506,11 +506,9 @@ declare_procedure(enum name_class class,
 
         if (bind_opt) {
             PROC_HAS_BIND(id) = TRUE;
-            TYPE_SET_BIND(id);
-            if (type != NULL) {
-               TYPE_SET_BIND(type);
-            }
+            TYPE_SET_BIND(ID_TYPE(id));
             expr bind_name = EXPR_ARG1(bind_opt);
+
             if(bind_name){
                 PROC_BIND(id) = bind_name;
                 if(ID_TYPE(id) != NULL) {
