@@ -5776,15 +5776,23 @@ import_module_ids(struct module *mod, struct use_argument * args,
 
     FOREACH_ID(mid, MODULE_ID_LIST(mod)) {
         if (args != NULL) {
+            int found = FALSE;
             FOREACH_USE_ARG(arg, args) {
                 wrap_type = TRUE;
                 if (arg->local != ID_SYM(mid))
                     continue;
+                found = TRUE;
                 import_module_id(mid,
                                  &LOCAL_SYMBOLS, &last_id,
                                  &LOCAL_STRUCT_DECLS, &sttail,
                                  arg->use, wrap_type, fromParentModule);
                 arg->used = TRUE;
+            }
+            if (!found && !isOnly) {
+                import_module_id(mid,
+                                 &LOCAL_SYMBOLS, &last_id,
+                                 &LOCAL_STRUCT_DECLS, &sttail,
+                                 NULL, wrap_type, fromParentModule);
             }
         } else {
             if (!isOnly) {
