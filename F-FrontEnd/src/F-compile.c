@@ -5590,13 +5590,6 @@ import_module_id(ID mid,
         EXT_NEXT(ep) = NULL;
         EXT_PROC_INTR_DEF_EXT_IDS(ep) = NULL;
 
-#if 0
-        if (type_has_replica(EXT_PROC_TYPE(mep), &EXT_PROC_TYPE(ep))) {
-            EXT_PROC_TYPE(ep)
-                    = shallow_copy_type_for_module_id(EXT_PROC_TYPE(mep));
-        }
-#endif
-
         if (EXT_PROC_INTR_DEF_EXT_IDS(mep) != NULL) {
             EXT_ID head, p;
             head = shallow_copy_ext_id(EXT_PROC_INTR_DEF_EXT_IDS(mep));
@@ -6479,6 +6472,8 @@ compile_interface_MODULEPROCEDURE_statement(expr x)
 
         if (EXT_PROC_TYPE(ep) != NULL) {
             FUNCTION_TYPE_SET_MOUDLE_PROCEDURE(EXT_PROC_TYPE(ep));
+        } else {
+            EXT_PROC_TYPE(ep) = ID_TYPE(id);
         }
 
         if (ID_TYPE(id) != NULL) {
