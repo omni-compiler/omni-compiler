@@ -3364,6 +3364,9 @@ compile_array_constructor(expr x)
                 tp = TYPE_REF(tp);
             }
 
+        } else if (IS_GNUMERIC_ALL(tp)) {
+            nElemsIsFixed = FALSE;
+
         } else {
             nElems++;
         }
@@ -3374,12 +3377,12 @@ compile_array_constructor(expr x)
         }
 
         if (elem_type == TYPE_STRUCT) {
-            if (get_basic_type(tp) != elem_type) {
+            if (TYPE_BASIC_TYPE(tp) != elem_type && !IS_GNUMERIC_ALL(tp)) {
                 error("Array constructor elements have different data types.");
                 return NULL;
             }
         } else {
-            if (get_basic_type(tp) == TYPE_STRUCT) {
+            if (TYPE_BASIC_TYPE(tp) == TYPE_STRUCT) {
                 error("Array constructor elements have different data types.");
                 return NULL;
             }
