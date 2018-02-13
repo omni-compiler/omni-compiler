@@ -2819,13 +2819,13 @@ compile_struct_constructor_with_components(const ID struct_id,
                         }
                     }
                 }
+                list_put_last(components, v);
+                cur = members;
+                is_first_arg = FALSE;
+                if (EXPV_CODE(arg) == F_SET_EXPR)
+                    has_keyword = TRUE;
+                continue;
             }
-            list_put_last(components, v);
-            cur = members;
-            is_first_arg = FALSE;
-            if (EXPV_CODE(arg) == F_SET_EXPR)
-                has_keyword = TRUE;
-            continue;
         }
 
         if (EXPV_CODE(arg) == F_SET_EXPR) {
