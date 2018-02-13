@@ -464,7 +464,7 @@ declare_procedure(enum name_class class,
                 PROC_CLASS(id) = P_THISPROC;
             }
             TYPE_SET_RECURSIVE(id);
-            if (type != NULL) {
+            if (ID_TYPE(id) != NULL) {
                 TYPE_SET_RECURSIVE(ID_TYPE(id));
             }
         } else {
@@ -485,7 +485,7 @@ declare_procedure(enum name_class class,
         if (elemental == TRUE) {
             PROC_IS_ELEMENTAL(id) = elemental;
             TYPE_SET_ELEMENTAL(id);
-            if (type != NULL) {
+            if (ID_TYPE(id) != NULL) {
                 TYPE_SET_ELEMENTAL(ID_TYPE(id));
             }
         }
@@ -499,7 +499,7 @@ declare_procedure(enum name_class class,
         if (module == TRUE) {
             PROC_IS_MODULE(id) = module;
             TYPE_SET_MODULE(id);
-            if (type != NULL) {
+            if (ID_TYPE(id) != NULL) {
                 TYPE_SET_MODULE(ID_TYPE(id));
             }
         }

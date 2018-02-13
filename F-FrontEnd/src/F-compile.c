@@ -6853,6 +6853,17 @@ compile_NULLIFY_statement (expr x)
 
 
 static int
+isSetTypeAttrRecursive(TYPE_DESC tp, uint32_t typeAttrFlags)
+{
+  if (!tp) return 0;
+  else if ((TYPE_ATTR_FLAGS(tp) & typeAttrFlags) > 0) return 1;
+
+  if (TYPE_REF(tp)) return isSetTypeAttrRecursive(TYPE_REF(tp), typeAttrFlags);
+  else return 0;
+}
+  
+
+static int
 isVarSetTypeAttr(expv v, uint32_t typeAttrFlags)
 {
     TYPE_DESC tp;
@@ -6861,7 +6872,8 @@ isVarSetTypeAttr(expv v, uint32_t typeAttrFlags)
     case F_VAR:
     case F95_MEMBER_REF:
         tp = EXPV_TYPE(v);
-        return tp && ((TYPE_ATTR_FLAGS(tp) & typeAttrFlags) > 0);
+        //return tp && ((TYPE_ATTR_FLAGS(tp) & typeAttrFlags) > 0);
+	return isSetTypeAttrRecursive(tp, typeAttrFlags);
     case ARRAY_REF:
     case XMP_COARRAY_REF:
         return isVarSetTypeAttr(EXPR_ARG1(v), typeAttrFlags);
