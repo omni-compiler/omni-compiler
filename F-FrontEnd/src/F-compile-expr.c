@@ -3329,6 +3329,7 @@ compile_dup_decl(expv x)
 static expv
 compile_array_constructor(expr x)
 {
+    int nElemsIsFixed = TRUE;
     int nElems = 0;
     list lp;
     expv v, res, l;
@@ -3350,13 +3351,21 @@ compile_array_constructor(expr x)
 
 
     FOR_ITEMS_IN_LIST(lp, EXPR_ARG1(x)) {
-        nElems++;
         v = compile_expression(LIST_ITEM(lp));
         list_put_last(l, v);
         tp = EXPV_TYPE(v);
 
         if (IS_ARRAY_TYPE(tp)) {
-            tp = get_bottom_ref_type(tp);
+            if (TYPE_IS_ARRAY_ADJUSTABLE(tp)) {
+                nElemsIsFixed = FALSE;
+            }
+            while (IS_ARRAY_TYPE(tp)) {
+                nElems += TYPE_DIM_SIZE(tp);
+                tp = TYPE_REF(tp);
+            }
+
+        } else {
+            nElems++;
         }
 
         if (elem_type == TYPE_UNKNOWN) {
@@ -3403,6 +3412,10 @@ compile_array_constructor(expr x)
                                         expv_constant_1,
                                         expv_int_term(INT_CONSTANT,
                                                       type_INT, nElems)))));
+
+    if (!nElemsIsFixed) {
+        TYPE_ARRAY_ASSUME_KIND(EXPV_TYPE(res)) = ASSUMED_SIZE;
+    }
 
     return res;
 }
