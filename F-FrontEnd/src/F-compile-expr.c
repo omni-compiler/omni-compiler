@@ -3349,15 +3349,13 @@ compile_array_constructor(expr x)
             continue;
         }
 
-        if (elem_type == TYPE_STRUCT ||
-            elem_type == TYPE_COMPLEX) {
+        if (elem_type == TYPE_STRUCT) {
             if (get_basic_type(tp) != elem_type) {
                 error("Array constructor elements have different data types.");
                 return NULL;
             }
         } else {
-            if (get_basic_type(tp) == TYPE_STRUCT ||
-                get_basic_type(tp) == TYPE_COMPLEX) {
+            if (get_basic_type(tp) == TYPE_STRUCT) {
                 error("Array constructor elements have different data types.");
                 return NULL;
             }
