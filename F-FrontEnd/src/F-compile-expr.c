@@ -3344,6 +3344,11 @@ compile_array_constructor(expr x)
         v = compile_expression(LIST_ITEM(lp));
         list_put_last(l, v);
         tp = EXPV_TYPE(v);
+
+        if (IS_ARRAY_TYPE(tp)) {
+            tp = get_bottom_ref_type(tp);
+        }
+
         if (elem_type == TYPE_UNKNOWN) {
             elem_type = get_basic_type(tp);
             continue;
