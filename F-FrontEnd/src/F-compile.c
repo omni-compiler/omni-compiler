@@ -7029,7 +7029,12 @@ compile_ALLOCATE_DEALLOCATE_statement(expr x)
         TYPE_DESC ltp = NULL;
 
         if (tp) {
-            if (!type_is_compatible_for_allocation(EXPV_TYPE(LIST_ITEM(lp)),
+            TYPE_DESC tq = EXPV_TYPE(LIST_ITEM(lp));
+            if (IS_ARRAY_TYPE(tq)) {
+                tq = get_bottom_ref_type(tq);
+            }
+
+            if (!type_is_compatible_for_allocation(tq,
                                                    tp)) {
                 error("type incompatible");
                 return;
