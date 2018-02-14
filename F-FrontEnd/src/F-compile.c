@@ -3982,6 +3982,11 @@ check_type_bound_procedures()
         FOREACH_TYPE_BOUND_GENERIC(mem, tp) {
             FOREACH_ID(binding, TBP_BINDING(mem)) {
                 bindto = find_struct_member(tp, ID_SYM(binding));
+                if (bindto == NULL) {
+                    error("TYPE BOUND PROCEDURE '%s' does not exist", ID_NAME(binding));
+                    break;
+                }
+
                 TBP_BINDING_ATTRS(bindto) |= TBP_BINDING_ATTRS(mem) & (
                         TYPE_BOUND_PROCEDURE_IS_OPERATOR |
                         TYPE_BOUND_PROCEDURE_IS_UNARY_OPERATOR |
