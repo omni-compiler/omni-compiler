@@ -5388,11 +5388,12 @@ XfDecompileDomVisitor {
                 } else if (XmDomUtil.getAttrBool(structTypeNode, "is_protected")) {
                     writer.writeToken(", PROTECTED");
                 }
-                String bind = XmDomUtil.getAttr(structTypeNode, "bind");
-                if (XfUtilForDom.isNullOrEmpty(bind) == false) {
-                    writer.writeToken(", ");
-                    writer.writeToken("BIND( " + bind.toUpperCase() + " )");
-                }
+            }
+
+            String bind = XmDomUtil.getAttr(structTypeNode, "bind");
+            if (XfUtilForDom.isNullOrEmpty(bind) == false) {
+                writer.writeToken(", ");
+                writer.writeToken("BIND( " + bind.toUpperCase() + " )");
             }
 
             writer.writeToken(" :: ");

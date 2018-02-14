@@ -2431,7 +2431,9 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
             tp = ID_TYPE(f_id);
 
             if (!IS_PROCEDURE_TYPE(tp) ||
-                (IS_PROCEDURE_POINTER(tp) && !TYPE_IS_EXTERNAL(tp))) {
+                (IS_PROCEDURE_POINTER(tp) 
+                && !(has_attr_in_types(tp, TYPE_ATTR_EXTERNAL)))) 
+            {
                 tp = function_type(tp);
                 ID_TYPE(f_id) = tp;
                 EXPV_TYPE(ID_ADDR(f_id)) = ID_TYPE(f_id);

@@ -49,6 +49,17 @@ get_bottom_ref_type(TYPE_DESC tp)
     return get_bottom_ref_type(TYPE_REF(tp));
 }
 
+int
+has_attr_in_types(TYPE_DESC tp, uint32_t type_attr) {
+    assert(tp);
+    if(((tp)->attr.type_attr_flags & type_attr)) {
+        return TRUE;
+    }
+    if(TYPE_REF(tp) != NULL) {
+        return has_attr_in_types(TYPE_REF(tp), type_attr);
+    }
+    return FALSE;
+}
 
 static int
 expr_is_param_typeof(expr x, BASIC_DATA_TYPE bt)

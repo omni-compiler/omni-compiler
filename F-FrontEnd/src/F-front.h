@@ -1007,6 +1007,7 @@ extern TYPE_DESC               bottom_type(TYPE_DESC tp); /* bottom
                                                            * array
                                                            * type. */
 extern TYPE_DESC               get_bottom_ref_type(TYPE_DESC tp);
+extern int                     has_attr_in_types(TYPE_DESC tp, uint32_t type_attr);
 extern int                     type_is_assumed_size_array(TYPE_DESC tp);
 
 extern TYPE_DESC               wrap_type(TYPE_DESC tp);
