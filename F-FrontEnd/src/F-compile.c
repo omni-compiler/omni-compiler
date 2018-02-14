@@ -3319,9 +3319,9 @@ redefine_procedures(EXT_ID proc, EXT_ID unit_ctl_procs[], int redefine_unit_ctl_
     if(debug_flag) {
         for(i = redefine_unit_ctl_level; i >= 0; i--) fprintf(debug_fp,"  ");
         if (EXT_SYM(proc)) {
-            fprintf(debug_fp,"redefine '%s'\n", SYM_NAME(EXT_SYM(proc)));
+            fprintf(debug_fp,"running redefine_procedures at '%s'\n", SYM_NAME(EXT_SYM(proc)));
         } else {
-            fprintf(debug_fp,"redefine (anonymous)\n");
+            fprintf(debug_fp,"running redefine_procedures at (anonymous)\n");
         }
 
         for(i = redefine_unit_ctl_level; i >= 0; i--) fprintf(debug_fp,"  ");
@@ -3352,7 +3352,13 @@ redefine_procedures(EXT_ID proc, EXT_ID unit_ctl_procs[], int redefine_unit_ctl_
            PROC_CLASS(id) != P_UNDEFINEDPROC)
             continue;
 
+        if(debug_flag) {
+            for(i = redefine_unit_ctl_level; i >= 0; i--) fprintf(debug_fp,"  ");
+            fprintf(debug_fp, "checking %s\n", ID_NAME(id));
+        }
+
         contained_proc = procedure_defined(id, unit_ctl_procs, redefine_unit_ctl_level);
+
         if (contained_proc == NULL) {
             EXT_ID external_proc = NULL;
 
@@ -3384,9 +3390,31 @@ redefine_procedures(EXT_ID proc, EXT_ID unit_ctl_procs[], int redefine_unit_ctl_
             PROC_EXT_ID(id) = external_proc;
 
         } else {
+            if(debug_flag) {
+                for(i = redefine_unit_ctl_level; i >= 0; i--) fprintf(debug_fp,"  ");
+                fprintf(debug_fp, "found %s in CONTAINS block\n", ID_NAME(id));
+            }
+
             /* undefine procedure is defined in contains statement. */
             PROC_CLASS(id)  = P_DEFINEDPROC;
             PROC_EXT_ID(id) = contained_proc;
+
+            if (IS_SUBR(EXT_PROC_TYPE(contained_proc))) {
+                TYPE_DESC ret = NULL;
+                TYPE_DESC tp = ID_TYPE(id);
+                if (tp) {
+                    TYPE_BASIC_TYPE(tp) = TYPE_SUBR;
+                    if ((ret = FUNCTION_TYPE_RETURN_TYPE(tp))) {
+                        while (ret != NULL) {
+                            TYPE_BASIC_TYPE(ret) = TYPE_VOID;
+                            ret = TYPE_REF(ret);
+                        }
+                    }
+                } else {
+                    ID_TYPE(id) = EXT_PROC_TYPE(contained_proc);
+                }
+            }
+
         }
 
     }
@@ -7167,7 +7195,27 @@ compile_CALL_member_procedure_statement(expr x)
         TYPE_BASIC_TYPE(tp) = TYPE_SUBR;
     }
 
-    if (!IS_SUBR(tp) && !TYPE_BOUND_GENERIC_TYPE_GENERICS(tp)) {
+    if (IS_PROCEDURE_POINTER(tp)) {
+        tp = TYPE_REF(tp);
+    }
+
+    if (FUNCTION_TYPE_RETURN_TYPE(tp) != NULL &&
+        (FUNCTION_TYPE_HAS_UNKNOWN_RETURN_TYPE(tp) ||
+         FUNCTION_TYPE_HAS_IMPLICIT_RETURN_TYPE(tp))) {
+        TYPE_BASIC_TYPE(ID_TYPE(mem)) = TYPE_SUBR;
+        TYPE_SET_USED_EXPLICIT(tp);
+        TYPE_BASIC_TYPE(tp) = TYPE_SUBR;
+        TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) = TYPE_VOID;
+        TYPE_ATTR_FLAGS(FUNCTION_TYPE_RETURN_TYPE(tp)) = 0;
+        TYPE_REF(FUNCTION_TYPE_RETURN_TYPE(tp)) = NULL;
+    }
+
+    if (!TYPE_IS_IMPLICIT(tp) &&
+        !FUNCTION_TYPE_IS_GENERIC(tp) &&
+        !IS_SUBR(tp) &&
+        !(FUNCTION_TYPE_RETURN_TYPE(tp) != NULL &&
+          (IS_VOID(FUNCTION_TYPE_RETURN_TYPE(tp)) ||
+           IS_GENERIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp))))) {
         error("'%s' is not a subroutine", SYM_NAME(EXPR_SYM(x2)));
         return;
     }
