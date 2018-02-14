@@ -161,7 +161,7 @@ compile_terminal_node(x)
 
 TYPE_DESC
 bottom_type(type)
-    TYPE_DESC type;
+    const TYPE_DESC type;
 {
     TYPE_DESC tp = type;
 
@@ -1895,10 +1895,6 @@ compile_array_ref(ID id, expv vary, expr args, int isLeft) {
         }
     }
 
-    if (nIdxRanges == 0) {
-        shape = NULL;
-    }
-
     if (nIdxRanges > 0) {
         tq = compile_dimensions(bottom_type(tp), shape);
         if (tq == NULL) {
@@ -1909,6 +1905,7 @@ compile_array_ref(ID id, expv vary, expr args, int isLeft) {
         /*
          * Otherwise the type should be basic type of the array.
          */
+        shape = NULL;
         tq = bottom_type(tp);
     }
 

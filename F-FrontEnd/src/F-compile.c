@@ -1225,25 +1225,29 @@ compile_statement1(int st_no, expr x)
             push_ctl(CTL_TYPE_GUARD);
             push_env(CTL_ENV(ctl_top));
 
-            if (EXPR_ARG1(x) != NULL) { // NULL for CLASS DEFAULT
+            if (EXPR_ARG1(x) != NULL) {
                 tp = compile_type(EXPR_ARG1(x), /* allow_predecl=*/ FALSE);
                 type = expv_sym_term(IDENT, tp, EXPR_SYM(EXPR_ARG1(x)));
-            }
-            if (EXPR_CODE(x) == F03_CLASSIS_STATEMENT) {
-                if (tp != NULL && !IS_STRUCT_TYPE(tp)) {
-                    error("'class is' accepts only derived-type");
-                    break;
+                
+                if (EXPR_CODE(x) == F03_CLASSIS_STATEMENT) {
+                    if (tp != NULL && !IS_STRUCT_TYPE(tp)) {
+                        error("'class is' accepts only derived-type");
+                        break;
+                    }
                 }
-            }
 
-            tp = compile_dimensions(tp, shape);
-            fix_array_dimensions(tp);
+                tp = compile_dimensions(tp, shape);
+                fix_array_dimensions(tp);
+
+                selector = CTL_SELECT_TYPE_ASSICIATE(CTL_PREV(ctl_top))?:CTL_SELECT_TYPE_SELECTOR(CTL_PREV(ctl_top));
+                id = declare_ident(EXPR_SYM(selector), CL_VAR);
+                declare_id_type(id, tp);
+
+            } else { // NULL for CLASS DEFAULT
+                tp = NULL;
+            }
 
             check_select_types(x, tp);
-
-            selector = CTL_SELECT_TYPE_ASSICIATE(CTL_PREV(ctl_top))?:CTL_SELECT_TYPE_SELECTOR(CTL_PREV(ctl_top));
-            id = declare_ident(EXPR_SYM(selector), CL_VAR);
-            declare_id_type(id, tp);
 
             st = list3(EXPR_CODE(x), type, NULL, const_name);
             CTL_BLOCK(ctl_top) = st;
