@@ -1723,16 +1723,18 @@ public class XMPtranslateLocalPragma {
         throw new XMPexception("wrong template dimensions, too many");
       }
 
-      String s = i.getArg().getString();
-      if (s.equals(loopIndexName)) {
-        if (templateIndexArg != null) {
-          throw new XMPexception("loop index '" + loopIndexName + "' is already described");
-        }
+      if (i.getArg() != null){
+	String s = i.getArg().getString();
+	if (s.equals(loopIndexName)) {
+	  if (templateIndexArg != null) {
+	    throw new XMPexception("loop index '" + loopIndexName + "' is already described");
+	  }
 
-        templateIndexArg = Xcons.IntConstant(templateIndex);
-        distManner       = templateObj.getDistMannerAt(templateIndex);
-        distMannerString = templateObj.getDistMannerStringAt(templateIndex);
-        targetIndex      = templateIndex;
+	  templateIndexArg = Xcons.IntConstant(templateIndex);
+	  distManner       = templateObj.getDistMannerAt(templateIndex);
+	  distMannerString = templateObj.getDistMannerStringAt(templateIndex);
+	  targetIndex      = templateIndex;
+	}
       }
 
       templateIndex++;
@@ -4148,7 +4150,6 @@ public class XMPtranslateLocalPragma {
     Xobject onSubscripts = pb.getClauses().getArg(0).getArg(1);
 
     if (onSubscripts != null){
-      int k = 0;
       for (int i = 0; i < onSubscripts.Nargs(); i++){
     	Xobject sub = onSubscripts.getArg(i);
     	if (sub.Opcode() == Xcode.LIST){ // triplet
@@ -4179,14 +4180,15 @@ public class XMPtranslateLocalPragma {
 	  }
 	  else st = Xcons.IntConstant(1);
 
-	  Xobject expr;
-	  //expr = Xcons.binaryOp(Xcode.MUL_EXPR, varList.get(k).Ref(), st);
 	  Ident loopVar = varListTemplate.get(i);
-	  if (loopVar == null) XMP.fatal("template-ref does not conform to that on lhs.");
-	  expr = Xcons.binaryOp(Xcode.MUL_EXPR, varListTemplate.get(i).Ref(), st);
-	  expr = Xcons.binaryOp(Xcode.PLUS_EXPR, expr, lb);
-    	  subscriptList.add(expr);
-	  k++;
+	  if (loopVar != null){
+	    Xobject expr = Xcons.binaryOp(Xcode.MUL_EXPR, loopVar.Ref(), st);
+	    expr = Xcons.binaryOp(Xcode.PLUS_EXPR, expr, lb);
+	    subscriptList.add(expr);
+	  }
+	  else {
+	    subscriptList.add(null);
+	  }
     	}
 	else { // scalar
     	  subscriptList.add(sub);
@@ -4212,11 +4214,14 @@ public class XMPtranslateLocalPragma {
 	  lb = tlb.Ref();
 	}
 
-	//Xobject expr = Xcons.binaryOp(Xcode.PLUS_EXPR, varList.get(i).Ref(), lb);
 	Ident loopVar = varListTemplate.get(i);
-	if (loopVar == null) XMP.fatal("template-ref does not conform to the array on lhs.");
-	Xobject expr = Xcons.binaryOp(Xcode.PLUS_EXPR, loopVar.Ref(), lb);
-    	subscriptList.add(expr);
+	if (loopVar != null){
+	  Xobject expr = Xcons.binaryOp(Xcode.PLUS_EXPR, loopVar.Ref(), lb);
+	  subscriptList.add(expr);
+	}
+	else {
+	  subscriptList.add(null);
+	}
       }
     }
 

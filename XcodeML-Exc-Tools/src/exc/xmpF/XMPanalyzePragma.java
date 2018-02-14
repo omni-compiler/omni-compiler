@@ -1399,7 +1399,6 @@ public class XMPanalyzePragma
     Xobject onSubscripts = pb.getClauses().getArg(0).getArg(1);
 
     if (onSubscripts != null && !onSubscripts.isEmptyList()){
-      int k = 0;
       for (int i = 0; i < onSubscripts.Nargs(); i++){
     	Xobject sub = onSubscripts.getArg(i);
     	if (sub.Opcode() == Xcode.LIST){ // triplet
@@ -1447,14 +1446,16 @@ public class XMPanalyzePragma
 	    }
 	  }
 	  else st = Xcons.IntConstant(1);
-	  Xobject expr;
-	  //expr = Xcons.binaryOp(Xcode.MUL_EXPR, varList.get(k).Ref(), st);
+
 	  Ident loopVar = varListTemplate.get(i);
-	  if (loopVar == null) XMP.fatal("template-ref does not conform to the array on lhs.");
-	  expr = Xcons.binaryOp(Xcode.MUL_EXPR, loopVar.Ref(), st);
-	  expr = Xcons.binaryOp(Xcode.PLUS_EXPR, expr, lb);
-    	  subscriptList.add(expr);
-	  k++;
+	  if (loopVar != null){
+	    Xobject expr = Xcons.binaryOp(Xcode.MUL_EXPR, loopVar.Ref(), st);
+	    expr = Xcons.binaryOp(Xcode.PLUS_EXPR, expr, lb);
+	    subscriptList.add(expr);
+	  }
+	  else {
+	    subscriptList.add(null);
+	  }
     	}
 	else { // scalar
     	  subscriptList.add(sub);
@@ -1479,11 +1480,14 @@ public class XMPanalyzePragma
 	  lb = tlb.Ref();
 	}
 
-	//Xobject expr = Xcons.binaryOp(Xcode.PLUS_EXPR, varList.get(i).Ref(), lb);
 	Ident loopVar = varListTemplate.get(i);
-	if (loopVar == null) XMP.fatal("template-ref does not conform to the array on lhs.");
-	Xobject expr = Xcons.binaryOp(Xcode.PLUS_EXPR, loopVar.Ref(), lb);
-    	subscriptList.add(expr);
+	if (loopVar != null){
+	  Xobject expr = Xcons.binaryOp(Xcode.PLUS_EXPR, loopVar.Ref(), lb);
+	  subscriptList.add(expr);
+	}
+	else {
+	  subscriptList.add(null);
+	}
       }
     }
 
