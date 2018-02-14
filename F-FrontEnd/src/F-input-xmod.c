@@ -12,6 +12,7 @@ typedef struct type_entry {
     EXT_ID ep;
     TYPE_DESC tp;
     char * parent_type_id;
+    char * type_ref;
 } * TYPE_ENTRY;
 
 static int input_FfunctionDecl(xmlTextReaderPtr, HashTable *, EXT_ID, ID);
@@ -1631,6 +1632,19 @@ input_FdoLoop(xmlTextReaderPtr reader, HashTable * ht, expv * v)
     return TRUE;
 }
 
+static TYPE_ENTRY
+has_ext_id_in_types(HashTable* ht, TYPE_ENTRY base) {
+    if(base->type_ref) {
+        TYPE_ENTRY ref = getTypeEntry(ht, base->type_ref);
+        if(!base->hasExtID && ref->hasExtID) {
+            return ref;
+        } else if(ref->type_ref) {
+            return has_ext_id_in_types(ht, ref);
+        }
+    }
+    return NULL;
+}
+
 /**
  * input <FbasicType> node
  */
@@ -1638,6 +1652,8 @@ static int
 input_FbasicType(xmlTextReaderPtr reader, HashTable * ht)
 {
     TYPE_DESC tp = NULL;
+    TYPE_ENTRY baseTep;
+    TYPE_ENTRY refTep;
     char * typeId = NULL;
     char * ref;
     int isEmpty;
@@ -1653,6 +1669,15 @@ input_FbasicType(xmlTextReaderPtr reader, HashTable * ht)
     ref = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "ref");
     if (ref != NULL) {
         TYPE_REF(tp) = getTypeDesc(ht, ref);
+        baseTep = getTypeEntry(ht, typeId);
+        baseTep->type_ref = ref;
+
+        refTep = has_ext_id_in_types(ht, baseTep);
+        if(refTep) {
+            baseTep->hasExtID = TRUE;
+            baseTep->ep = refTep->ep;
+        }
+
         TYPE_BASIC_TYPE(tp) = TYPE_BASIC_TYPE(TYPE_REF(tp));
         shrink_type(tp);
 

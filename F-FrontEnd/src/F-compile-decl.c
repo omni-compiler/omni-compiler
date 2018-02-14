@@ -1,5 +1,5 @@
 /**
- * \file F-compile-decl.c
+ * file F-compile-decl.c
  */
 
 #include "F-front.h"
@@ -464,7 +464,7 @@ declare_procedure(enum name_class class,
                 PROC_CLASS(id) = P_THISPROC;
             }
             TYPE_SET_RECURSIVE(id);
-            if (type != NULL) {
+            if (ID_TYPE(id) != NULL) {
                 TYPE_SET_RECURSIVE(ID_TYPE(id));
             }
         } else {
@@ -485,7 +485,7 @@ declare_procedure(enum name_class class,
         if (elemental == TRUE) {
             PROC_IS_ELEMENTAL(id) = elemental;
             TYPE_SET_ELEMENTAL(id);
-            if (type != NULL) {
+            if (ID_TYPE(id) != NULL) {
                 TYPE_SET_ELEMENTAL(ID_TYPE(id));
             }
         }
@@ -499,18 +499,16 @@ declare_procedure(enum name_class class,
         if (module == TRUE) {
             PROC_IS_MODULE(id) = module;
             TYPE_SET_MODULE(id);
-            if (type != NULL) {
+            if (ID_TYPE(id) != NULL) {
                 TYPE_SET_MODULE(ID_TYPE(id));
             }
         }
 
         if (bind_opt) {
             PROC_HAS_BIND(id) = TRUE;
-            TYPE_SET_BIND(id);
-            if (type != NULL) {
-               TYPE_SET_BIND(type);
-            }
+            TYPE_SET_BIND(ID_TYPE(id));
             expr bind_name = EXPR_ARG1(bind_opt);
+
             if(bind_name){
                 PROC_BIND(id) = bind_name;
                 if(ID_TYPE(id) != NULL) {
@@ -2082,6 +2080,9 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
         case F95_EXTERNAL_SPEC:
             /* see compile_EXTERNAL_decl() */
             TYPE_SET_EXTERNAL(tp);
+            if (TYPE_REF(tp)) {
+                TYPE_SET_EXTERNAL(TYPE_REF(tp));
+            }
             break;
         case F95_INTENT_SPEC:
             switch(EXPR_CODE(EXPR_ARG1(v))) {
@@ -2577,7 +2578,7 @@ compile_basic_type(expr x)
             } else if (vcharLen1 != NULL && expv_is_specification(vcharLen1)) {
                 vcharLen = vcharLen1;
                 charLen = 0;
-            } else if (isInsideExpression) {
+            } else if (vcharLen1 != NULL && isInsideExpression) {
                 /* NOTE:
                  *  If the type specifier is used inside an expression,
                  *  LENGHT can be a variable.
@@ -2598,6 +2599,8 @@ compile_basic_type(expr x)
                 vcharLen = vcharLen1;
                 charLen = 0;
             } else {
+                /* unexpected expression, but ignore it */
+                vcharLen = vcharLen1;
                 charLen = CHAR_LEN_UNFIXED;
             }
         }
@@ -2900,7 +2903,8 @@ expv_reduce_kind(expv v)
 
         if (name == NULL) return NULL;
         if (strncasecmp("kind", name, 4) == 0 ||
-            strncasecmp("selected_int_kind", name, 17) == 0) {
+            strncasecmp("selected_int_kind", name, 17) == 0 ||
+	    strncasecmp("selected_char_kind", name, 18) == 0) {
             expv arg = expr_list_get_n(EXPR_ARG2(ret), 0);
             arg = expv_reduce_kind(arg);
             if(arg == NULL) return NULL;
@@ -2924,7 +2928,7 @@ expv_reduce_kind(expv v)
                 return expv_cons(FUNCTION_CALL, type_INT, 
                                  EXPR_ARG1(ret), list2(LIST,arg1,arg2));
             } 
-        }
+	}
         break;
     }
     default: 
@@ -2932,7 +2936,8 @@ expv_reduce_kind(expv v)
     }
 
     if (EXPV_CODE(ret) != INT_CONSTANT &&
-        EXPV_CODE(ret) != FLOAT_CONSTANT) {
+        EXPV_CODE(ret) != FLOAT_CONSTANT &&
+	EXPV_CODE(ret) != STRING_CONSTANT) {
         ret = NULL;  // error
     }
 
@@ -4714,14 +4719,11 @@ compile_EXTERNAL_decl(expr id_list)
         if ((id = declare_ident(EXPR_SYM(ident), CL_VAR)) == NULL) {
             continue;
         }
-        ID_CLASS(id) = CL_PROC;
+        if (ID_CLASS(id) == CL_VAR) {
+            ID_CLASS(id) = CL_PROC;
+        }
         if (PROC_CLASS(id) == P_UNKNOWN) {
             PROC_CLASS(id) = P_EXTERNAL;
-            if (ID_TYPE(id) != NULL &&
-                (!IS_PROCEDURE_TYPE(ID_TYPE(id)) ||
-                 IS_PROCEDURE_POINTER(ID_TYPE(id)))) {
-                ID_TYPE(id) = function_type(ID_TYPE(id));
-            }
             TYPE_SET_EXTERNAL(id);
         } else if (PROC_CLASS(id) != P_EXTERNAL) {
             error_at_node(id_list,
@@ -4730,12 +4732,33 @@ compile_EXTERNAL_decl(expr id_list)
         }
 
         if(ID_IS_DUMMY_ARG(id)){
-            // Force void dummy args
-            ID_TYPE(id) = type_VOID;
+            // Force set GNUMERIC_ALL to dummy args
+            if (ID_TYPE(id)) {
+                if (IS_PROCEDURE_TYPE(ID_TYPE(id))) {
+                    TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id))) = TYPE_GNUMERIC_ALL;
+                    TYPE_SET_IMPLICIT(ID_TYPE(id));
+                } else {
+                    TYPE_BASIC_TYPE(ID_TYPE(id)) = TYPE_GNUMERIC_ALL;
+                    TYPE_SET_IMPLICIT(ID_TYPE(id));
+                }
+            } else {
+                ID_TYPE(id) = wrap_type(type_GNUMERIC_ALL);
+                TYPE_SET_IMPLICIT(ID_TYPE(id));
+            }
         }
 
         if(!(ID_IS_DUMMY_ARG(id)))
             ID_STORAGE(id) = STG_EXT;
+
+        /* if (ID_TYPE(id) != NULL && */
+        /*     (!IS_PROCEDURE_TYPE(ID_TYPE(id))) || IS_PROCEDURE_POINTER(ID_TYPE(id)) ) { */
+        /*     uint32_t type_attr_flags = TYPE_ATTR_FLAGS(ID_TYPE(id)); */
+        /*     if (type_attr_flags != 0) { */
+        /*         TYPE_ATTR_FLAGS(ID_TYPE(id)) = 0; */
+        /*         ID_TYPE(id) = wrap_type(function_type(ID_TYPE(id))); */
+        /*         TYPE_ATTR_FLAGS(ID_TYPE(id)) = type_attr_flags; */
+        /*     } */
+        /* } */
     }
 }
 

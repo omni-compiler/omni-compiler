@@ -2679,7 +2679,7 @@ outx_constants(int l, expv v)
 
     print_constant:
         outx_printi(l, "<%s type=\"%s\"", tag, tid);
-        if(EXPV_CODE(v) != STRING_CONSTANT &&
+        if(//EXPV_CODE(v) != STRING_CONSTANT &&
             (kind = getKindParameter(tp)) != NULL)
             outx_print(" kind=\"%s\"", kind);
         outx_print(">%s</%s>\n", buf, tag);

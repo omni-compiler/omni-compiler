@@ -870,7 +870,14 @@ compile_expression(expr x)
                 return NULL;
             assert(EXPV_TYPE(v1));
             v2 = compile_expression(EXPR_ARG2(x)); /* kind */
-        calc_kind:
+
+	    if (EXPV_CODE(v2) == STRING_CONSTANT){
+	      // for a case like 4_"hello"
+	      expv tmp = v1;
+	      v1 = v2; v2 = tmp;
+	    }
+
+	calc_kind:
             if (v2 != NULL) {
                 v2 = expv_reduce_kind(v2);
                 if (v2 == NULL) {
@@ -1835,23 +1842,23 @@ compile_array_ref(ID id, expv vary, expr args, int isLeft) {
         if (argASpec != NULL) {
             idASpec = expr_list_get_n(idShape, i);
 
-            expv lower = expr_list_get_n(argASpec, 0);
-            //if (lower == NULL) expr_list_set_n(argASpec, 0, expr_list_get_n(idASpec, 0), FALSE);
-	    if (lower == NULL){
-	      expv lower0 = expr_list_get_n(idASpec, 0);
-	      if (!lower0 || EXPR_CODE_IS_CONSTANT(lower0) || TYPE_IS_PARAMETER(EXPV_TYPE(lower0))){
-		expr_list_set_n(argASpec, 0, lower0, FALSE);
-	      }
-	    }
+            /* expv lower = expr_list_get_n(argASpec, 0); */
+            /* //if (lower == NULL) expr_list_set_n(argASpec, 0, expr_list_get_n(idASpec, 0), FALSE); */
+	    /* if (lower == NULL){ */
+	    /*   expv lower0 = expr_list_get_n(idASpec, 0); */
+	    /*   if (!lower0 || EXPR_CODE_IS_CONSTANT(lower0) || TYPE_IS_PARAMETER(EXPV_TYPE(lower0))){ */
+	    /* 	expr_list_set_n(argASpec, 0, lower0, FALSE); */
+	    /*   } */
+	    /* } */
 
-	    expv upper = expr_list_get_n(argASpec, 1);
-            //if (upper == NULL) expr_list_set_n(argASpec, 1, expr_list_get_n(idASpec, 1), FALSE);
-	    if (upper == NULL){
-	      expv upper0 = expr_list_get_n(idASpec, 1);
-	      if (!upper0 || EXPR_CODE_IS_CONSTANT(upper0) || TYPE_IS_PARAMETER(EXPV_TYPE(upper0))){
-		expr_list_set_n(argASpec, 1, upper0, FALSE);
-	      }
-	    }
+	    /* expv upper = expr_list_get_n(argASpec, 1); */
+            /* //if (upper == NULL) expr_list_set_n(argASpec, 1, expr_list_get_n(idASpec, 1), FALSE); */
+	    /* if (upper == NULL){ */
+	    /*   expv upper0 = expr_list_get_n(idASpec, 1); */
+	    /*   if (!upper0 || EXPR_CODE_IS_CONSTANT(upper0) || TYPE_IS_PARAMETER(EXPV_TYPE(upper0))){ */
+	    /* 	expr_list_set_n(argASpec, 1, upper0, FALSE); */
+	    /*   } */
+	    /* } */
 
             /*
              * Now we have two array-spec. Determine which one to be used.
@@ -2423,11 +2430,16 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
             }
             tp = ID_TYPE(f_id);
 
-            if (!IS_PROCEDURE_TYPE(tp) || IS_PROCEDURE_POINTER(tp)) {
+            if (!IS_PROCEDURE_TYPE(tp) ||
+                (IS_PROCEDURE_POINTER(tp) 
+                && !(has_attr_in_types(tp, TYPE_ATTR_EXTERNAL)))) 
+            {
                 tp = function_type(tp);
                 ID_TYPE(f_id) = tp;
                 EXPV_TYPE(ID_ADDR(f_id)) = ID_TYPE(f_id);
             }
+
+            tp = get_bottom_ref_type(tp);
 
             if (TYPE_IS_ABSTRACT(ID_TYPE(f_id))) {
                 error("'%s' is abstract", ID_NAME(f_id));

@@ -1,3 +1,4 @@
+ONESIDED_LIB=$(shell xmpf90 --show-env | sed -n '/ONESIDED_LIB=/p' | sed 's/ONESIDED_LIB=//' | sed "s/\"//g")
 XCC     = xmpcc
 XRUN    = mpiexec
 TESTS = $(wildcard *.c)
@@ -10,14 +11,20 @@ all default: $(EXES)
 
 .SUFFIXES: .x .c
 
+CFLAG =
+ifeq ($(ONESIDED_LIB),MPI3)
+ CFLAG = -D_MPI3
+endif
+
 .c.x:
-	$(XCC) -o $@ $<
+	$(XCC) $(CFLAG) -o $@ $<
 
 run: $(EXES)
 	$(XRUN) -n 4 ./barrier.x
 	$(XRUN) -n 4 ./reduction.x
 	$(XRUN) -n 8 ./tasks.x
 	$(XRUN) -n 16 ./nocomm.x
+	$(XRUN) -n 3 ./gmove_in.x
 
 RUN:
 	mkdir RUN

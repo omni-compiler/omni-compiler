@@ -1,0 +1,3 @@
+MODULE mod1
+  USE issue513
+END MODULE mod1

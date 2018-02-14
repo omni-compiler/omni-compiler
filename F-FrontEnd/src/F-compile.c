@@ -2647,11 +2647,6 @@ end_declaration()
 
         tp = ID_TYPE(ip);
 
-        if (tp == NULL) {
-            implicit_declaration(ip);
-            tp = ID_TYPE(ip);
-        }
-
         /* fix external identifier whose type is not fixed */
         if (tp == NULL &&
             ID_CLASS(ip) == CL_PROC &&
@@ -2664,6 +2659,11 @@ end_declaration()
                 PROC_IS_FUNC_SUBR_AMBIGUOUS(ip) = TRUE;
             }
             declare_id_type(ip, tp);
+        }
+
+        if (tp == NULL) {
+            implicit_declaration(ip);
+            tp = ID_TYPE(ip);
         }
 
         if(tp == NULL)
@@ -2693,18 +2693,42 @@ end_declaration()
         if (TYPE_HAS_BIND(ip)) {
             TYPE_BIND_NAME(tp) = ID_BIND(ip);
         }
+        if (TYPE_IS_EXTERNAL(tp)) {
+            uint32_t type_attr_flags;
+            TYPE_DESC ftp;
+
+            if (!IS_PROCEDURE_TYPE(tp)) {
+                tp = function_type(tp);
+            }
+            type_attr_flags = TYPE_ATTR_FLAGS(ip);
+            ftp = tp;
+            if (TYPE_REF(ftp)) {
+                ftp = TYPE_REF(ftp);
+            }
+
+            ftp = copy_type_partially(ftp, /*doCopyAttr=*/TRUE);
+
+            type_attr_flags = TYPE_ATTR_FLAGS(ftp);
+
+            if ((type_attr_flags & ~TYPE_ATTR_EXTERNAL)  != 0 && TYPE_REF(tp) == NULL) {
+                tp = wrap_type(ftp);
+                TYPE_ATTR_FLAGS(tp) |= type_attr_flags;
+                TYPE_ATTR_FLAGS(ftp) &= TYPE_ATTR_EXTERNAL;
+            }
+            TYPE_UNSET_SAVE(tp);
+            ID_TYPE(ip) = tp;
+        }
+
         if (IS_FUNCTION_TYPE(tp) && TYPE_REF(tp) == NULL) {
             /*
              * The type attributes for the function (PURE, ELEMENETAL, etc) are
              * never set to local symbol, so there is no need to filter out them.
              */
             TYPE_ATTR_FLAGS(FUNCTION_TYPE_RETURN_TYPE(tp))
-                    |= (TYPE_ATTR_FLAGS(ip) & ~(TYPE_ATTR_SAVE|TYPE_ATTR_BIND|TYPE_ATTR_PUBLIC|TYPE_ATTR_PRIVATE));
-        }
-        if (TYPE_IS_EXTERNAL(tp) && !IS_PROCEDURE_TYPE(tp)) {
-            tp = function_type(tp);
-            TYPE_UNSET_SAVE(tp);
-            ID_TYPE(ip) = tp;
+                    |= (TYPE_ATTR_FLAGS(ip) &
+                        ~(TYPE_ATTR_SAVE|TYPE_ATTR_BIND|TYPE_ATTR_PUBLIC|TYPE_ATTR_PRIVATE|
+                          TYPE_ATTR_INTENT_INOUT|TYPE_ATTR_INTENT_IN|TYPE_ATTR_INTENT_OUT|
+                          TYPE_ATTR_OPTIONAL|TYPE_ATTR_VALUE|TYPE_ATTR_VOLATILE|TYPE_ATTR_ASYNCHRONOUS));
         }
 
         if (FUNCTION_TYPE_IS_VISIBLE_INTRINSIC(tp)) {
@@ -6829,6 +6853,17 @@ compile_NULLIFY_statement (expr x)
 
 
 static int
+isSetTypeAttrRecursive(TYPE_DESC tp, uint32_t typeAttrFlags)
+{
+  if (!tp) return 0;
+  else if ((TYPE_ATTR_FLAGS(tp) & typeAttrFlags) > 0) return 1;
+
+  if (TYPE_REF(tp)) return isSetTypeAttrRecursive(TYPE_REF(tp), typeAttrFlags);
+  else return 0;
+}
+  
+
+static int
 isVarSetTypeAttr(expv v, uint32_t typeAttrFlags)
 {
     TYPE_DESC tp;
@@ -6837,7 +6872,8 @@ isVarSetTypeAttr(expv v, uint32_t typeAttrFlags)
     case F_VAR:
     case F95_MEMBER_REF:
         tp = EXPV_TYPE(v);
-        return tp && ((TYPE_ATTR_FLAGS(tp) & typeAttrFlags) > 0);
+        //return tp && ((TYPE_ATTR_FLAGS(tp) & typeAttrFlags) > 0);
+	return isSetTypeAttrRecursive(tp, typeAttrFlags);
     case ARRAY_REF:
     case XMP_COARRAY_REF:
         return isVarSetTypeAttr(EXPR_ARG1(v), typeAttrFlags);
@@ -7158,7 +7194,7 @@ compile_CALL_member_procedure_statement(expr x)
 }
 
 
-static void
+ void
 compile_CALL_subroutine_statement(expr x)
 {
     expr x1;
@@ -7983,10 +8019,11 @@ accept:
 
             } else {
                 if (get_bottom_ref_type(vPtrTyp) == get_bottom_ref_type(vPteTyp)) {
-                    /* DO NOTHING */
-                } else if ((IS_FUNCTION_TYPE(vPteTyp) &&
-                     TYPE_IS_IMPLICIT(FUNCTION_TYPE_RETURN_TYPE(vPteTyp)))
-                    && TYPE_REF(vPtrTyp)) {
+                    /* DO NOTHING, procedures are the same type */
+                } else if (IS_FUNCTION_TYPE(vPteTyp) &&
+                           TYPE_IS_IMPLICIT(FUNCTION_TYPE_RETURN_TYPE(vPteTyp)) &&
+                           !TYPE_IS_EXTERNAL(vPteTyp) &&
+                           TYPE_REF(vPtrTyp)) {
                     /*
                      * ex)
                      *  i = g()
@@ -8001,7 +8038,8 @@ accept:
 
                     TYPE_REF(vPteTyp) = ftp;
                     TYPE_REF(FUNCTION_TYPE_RETURN_TYPE(vPteTyp)) = FUNCTION_TYPE_RETURN_TYPE(ftp);
-                    TYPE_ATTR_FLAGS(vPteTyp) = 0;
+                    /* maybe, g is a procedure pointer */
+                    TYPE_ATTR_FLAGS(vPteTyp) &= TYPE_ATTR_POINTER;
                     TYPE_EXTATTR_FLAGS(vPteTyp) = 0;
                     TYPE_ATTR_FLAGS(FUNCTION_TYPE_RETURN_TYPE(vPteTyp)) = 0;
                     TYPE_EXTATTR_FLAGS(FUNCTION_TYPE_RETURN_TYPE(vPteTyp)) = 0;

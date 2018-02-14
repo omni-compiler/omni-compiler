@@ -1155,6 +1155,14 @@ read_identifier()
             excess_name_length++;
         }
     }
+
+    if (*(p-1) == '_' && *bufptr == QUOTE){
+      // literal constant like ascii_"xxxxx"
+      p--;
+      bufptr--;
+      tkn_len--;
+    }
+    
     if(excess_name_length>0){
       error( "name is too long. " );
     }
