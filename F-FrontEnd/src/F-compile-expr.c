@@ -607,8 +607,16 @@ compile_expression(expr x)
                     }
                 }
 
-                if(error_msg == NULL) {
-                    bType = type_basic(TYPE_LOGICAL);
+                if (error_msg == NULL) {
+                    if (IS_GNUMERIC_ALL(bLType) || IS_GNUMERIC_ALL(bRType)) {
+                        /*
+                         * GNUMERIC_ALL can be an array.
+                         * So the type of this expression also can be determined.
+                         */
+                        tp = BASIC_TYPE_DESC(TYPE_GNUMERIC_ALL);
+                    } else {
+                        bType = type_basic(TYPE_LOGICAL);
+                    }
                 } else if(is_userdefined) {
                     tp = BASIC_TYPE_DESC(TYPE_GNUMERIC_ALL);
                 } else {
