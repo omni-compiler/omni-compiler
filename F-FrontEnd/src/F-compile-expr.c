@@ -518,7 +518,11 @@ compile_expression(expr x)
                     tp = EXPV_TYPE(v);
                 }
             } else {
-                tp = EXPV_TYPE(v);
+                if (!IS_NUMERIC(tp) && is_userdefined) {
+                    tp = BASIC_TYPE_DESC(TYPE_GNUMERIC_ALL);
+                } else {
+                    tp = EXPV_TYPE(v);
+                }
             }
             return expv_cons(UNARY_MINUS_EXPR,tp,v,NULL);
         }
@@ -810,11 +814,13 @@ compile_expression(expr x)
             rt = bottom_type(EXPV_TYPE(right));
             if ((!IS_CHAR(lt) && !IS_GNUMERIC(lt) && !IS_GNUMERIC_ALL(lt)) ||
                 (!IS_CHAR(rt) && !IS_GNUMERIC(rt) && !IS_GNUMERIC_ALL(rt))) {
-                error("concatenation of nonchar data");
-                goto err;
-            }
-
-            {
+                if (is_userdefined) {
+                    tp = BASIC_TYPE_DESC(TYPE_GNUMERIC_ALL);
+                } else {
+                    error("concatenation of nonchar data");
+                    goto err;
+                }
+            } else  {
                 int l1 = TYPE_CHAR_LEN(lt);
                 int l2 = TYPE_CHAR_LEN(rt);
                 tp = type_char((l1 <= 0 || l2 <=0) ? 0 : l1 + l2);
