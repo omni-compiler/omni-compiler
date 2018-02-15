@@ -7156,6 +7156,7 @@ compile_CALL_member_procedure_statement(expr x)
     ID mem;
     expv structRef;
     expr x1, x2, args;
+    TYPE_DESC atp = NULL;
     TYPE_DESC stp;
     TYPE_DESC tp;
     expv v = NULL;
@@ -7169,12 +7170,17 @@ compile_CALL_member_procedure_statement(expr x)
 
     structRef = compile_lhs_expression(x1);
 
-    if (!IS_STRUCT_TYPE(EXPV_TYPE(structRef))) {
+    stp = EXPV_TYPE(structRef);
+
+    if (IS_ARRAY_TYPE(stp)) {
+        atp = stp;
+        stp = bottom_type(atp);
+    }
+
+    if (!IS_STRUCT_TYPE(stp)) {
         error("invalid calling member procedure of non derived-type");
         return;
     }
-
-    stp = EXPV_TYPE(structRef);
 
     mem = find_struct_member(stp, EXPR_SYM(x2));
 
