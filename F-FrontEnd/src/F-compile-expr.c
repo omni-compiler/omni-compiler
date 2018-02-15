@@ -2759,6 +2759,9 @@ get_struct_members0(TYPE_DESC struct_tp, ID * head, ID * tail)
         get_struct_members0(TYPE_PARENT_TYPE(struct_tp), head, tail);
 
     FOREACH_ID(ip, TYPE_MEMBER_LIST(struct_tp)) {
+        if (ID_CLASS(ip) == CL_TYPE_BOUND_PROC)
+            continue;
+
         id = XMALLOC(ID,sizeof(*id));
         *id = *ip;
         ID_LINK_ADD(id, *head, *tail);
