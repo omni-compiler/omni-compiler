@@ -437,14 +437,8 @@ compile_expression(expr x)
 
 		expv vRet = NULL;
                 if (ID_CLASS(id) == CL_PROC && IS_SUBR(ID_TYPE(id))) {
-                    if (PROC_CLASS(id) == P_EXTERNAL &&
-                        PROC_IS_FUNC_SUBR_AMBIGUOUS(id) == TRUE) {
-                        error("'%s' is not yet determined as a function or "
-                              "a subroutine.", ID_NAME(id));
-                    } else {
-                        error("'%s' is a subroutine, not a function.",
-                              ID_NAME(id));
-                    }
+                    error("'%s' is a subroutine, not a function.",
+                          ID_NAME(id));
                     goto err;
                 }
 

@@ -4712,34 +4712,8 @@ compile_EXTERNAL_decl(expr id_list)
             continue;
         }
 
-        if(ID_IS_DUMMY_ARG(id)){
-            // Force set GNUMERIC_ALL to dummy args
-            if (ID_TYPE(id)) {
-                if (IS_PROCEDURE_TYPE(ID_TYPE(id))) {
-                    TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id))) = TYPE_GNUMERIC_ALL;
-                    TYPE_SET_IMPLICIT(ID_TYPE(id));
-                } else {
-                    TYPE_BASIC_TYPE(ID_TYPE(id)) = TYPE_GNUMERIC_ALL;
-                    TYPE_SET_IMPLICIT(ID_TYPE(id));
-                }
-            } else {
-                ID_TYPE(id) = wrap_type(type_GNUMERIC_ALL);
-                TYPE_SET_IMPLICIT(ID_TYPE(id));
-            }
-        }
-
         if(!(ID_IS_DUMMY_ARG(id)))
             ID_STORAGE(id) = STG_EXT;
-
-        /* if (ID_TYPE(id) != NULL && */
-        /*     (!IS_PROCEDURE_TYPE(ID_TYPE(id))) || IS_PROCEDURE_POINTER(ID_TYPE(id)) ) { */
-        /*     uint32_t type_attr_flags = TYPE_ATTR_FLAGS(ID_TYPE(id)); */
-        /*     if (type_attr_flags != 0) { */
-        /*         TYPE_ATTR_FLAGS(ID_TYPE(id)) = 0; */
-        /*         ID_TYPE(id) = wrap_type(function_type(ID_TYPE(id))); */
-        /*         TYPE_ATTR_FLAGS(ID_TYPE(id)) = type_attr_flags; */
-        /*     } */
-        /* } */
     }
 }
 
