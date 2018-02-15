@@ -2655,8 +2655,8 @@ end_declaration()
             if (ep != NULL && EXT_PROC_TYPE(ep) != NULL) {
                 tp = EXT_PROC_TYPE(ep);
             } else {
-                tp = subroutine_type();
-                PROC_IS_FUNC_SUBR_AMBIGUOUS(ip) = TRUE;
+                tp = wrap_type(type_GNUMERIC_ALL);
+                TYPE_SET_IMPLICIT(tp);
             }
             declare_id_type(ip, tp);
         }
@@ -2696,27 +2696,35 @@ end_declaration()
         if (TYPE_IS_EXTERNAL(tp)) {
             uint32_t type_attr_flags;
             TYPE_DESC ftp;
+            TYPE_DESC ret;
 
             if (!IS_PROCEDURE_TYPE(tp)) {
                 tp = function_type(tp);
             }
             type_attr_flags = TYPE_ATTR_FLAGS(ip);
             ftp = tp;
-            if (TYPE_REF(ftp)) {
-                ftp = TYPE_REF(ftp);
-            }
 
             ftp = copy_type_partially(ftp, /*doCopyAttr=*/TRUE);
 
             type_attr_flags = TYPE_ATTR_FLAGS(ftp);
 
-            if ((type_attr_flags & ~TYPE_ATTR_EXTERNAL)  != 0 && TYPE_REF(tp) == NULL) {
+            if ((type_attr_flags & ~TYPE_ATTR_EXTERNAL) != 0 && TYPE_REF(tp) == NULL) {
                 tp = wrap_type(ftp);
                 TYPE_ATTR_FLAGS(tp) |= type_attr_flags;
                 TYPE_ATTR_FLAGS(ftp) &= TYPE_ATTR_EXTERNAL;
             }
             TYPE_UNSET_SAVE(tp);
             ID_TYPE(ip) = tp;
+
+            ret = FUNCTION_TYPE_RETURN_TYPE(ftp);
+            if (TYPE_IS_IMPLICIT(ret)) {
+                /*
+                 * If the return type of EXTERNAL procedure is implicit,
+                 * its type should be determind.
+                 */
+                TYPE_BASIC_TYPE(ret) = TYPE_GNUMERIC_ALL;
+                TYPE_SET_IMPLICIT(tp);
+            }
         }
 
         if (IS_FUNCTION_TYPE(tp) && TYPE_REF(tp) == NULL) {
@@ -7254,7 +7262,7 @@ compile_CALL_subroutine_statement(expr x)
                 !(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)) != NULL &&
                   (IS_VOID(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id))) ||
                    TYPE_IS_IMPLICIT(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id))) ||
-                   IS_GENERIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)))))) {
+                   IS_GNUMERIC_ALL(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)))))) {
                 error("called '%s' which doesn't have a type like a subroutine", ID_NAME(id));
                 return;
             }

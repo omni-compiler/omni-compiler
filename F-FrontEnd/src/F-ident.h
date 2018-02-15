@@ -193,11 +193,6 @@ typedef struct ident_descriptor
             int is_module;            /* like above. */
             int is_dummy;             /* if TRUE, declared as dummy
                                        * arg in the parent scope. */
-            int is_func_subr_ambiguous;
-                                      /* if TRUE, the id is still
-                                       * ambiguous function or
-                                       * subroutine when pclass ==
-                                       * P_EXTERNAL. */
             int has_bind;             /* if TRUE, proc uses BIND feature */
             expr bind;                /* temporary storage for bind
                                        * information */
@@ -364,8 +359,6 @@ struct use_assoc_info {
 #define PROC_IS_ELEMENTAL(id) ((id)->info.proc_info.is_elemental)
 #define PROC_IS_MODULE(id) ((id)->info.proc_info.is_module)
 #define PROC_IS_DUMMY_ARG(id) ((id)->info.proc_info.is_dummy)
-#define PROC_IS_FUNC_SUBR_AMBIGUOUS(id) \
-    ((id)->info.proc_info.is_func_subr_ambiguous)
 #define PROC_HAS_BIND(id) ((id)->info.proc_info.has_bind)
 #define PROC_BIND(id)   ((id)->info.proc_info.bind)
 #define PROC_HAS_IMPORT_ALL(id) ((id)->info.proc_info.has_import_all)

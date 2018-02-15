@@ -4404,8 +4404,7 @@ outx_coShape(int l, TYPE_DESC tp)
 /**
  * output basicType of character
  */
-//static void
-void
+static void
 outx_characterType(int l, TYPE_DESC tp)
 {
     const int l1 = l + 1, l2 = l1 + 1;
