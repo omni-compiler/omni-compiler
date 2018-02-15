@@ -7221,6 +7221,7 @@ compile_CALL_member_procedure_statement(expr x)
         !IS_SUBR(tp) &&
         !(FUNCTION_TYPE_RETURN_TYPE(tp) != NULL &&
           (IS_VOID(FUNCTION_TYPE_RETURN_TYPE(tp)) ||
+           IS_GNUMERIC_ALL(FUNCTION_TYPE_RETURN_TYPE(tp)) ||
            IS_GENERIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp))))) {
         error("'%s' is not a subroutine", SYM_NAME(EXPR_SYM(x2)));
         return;
