@@ -1203,7 +1203,7 @@ rank_compatibility:
         goto attribute_compatibility;
 
     } else if (TYPE_N_DIM(left) > 0 && TYPE_N_DIM(right) > 0 &&
-               are_dimension_and_shape_conformant_by_type(NULL, left, right, NULL, for_argunemt, issue_error))
+         are_dimension_and_shape_conformant_by_type(NULL, left, right, NULL, issue_error)) 
     {
         goto attribute_compatibility;
     } else {
@@ -1714,8 +1714,8 @@ function_type_is_appliable(TYPE_DESC ftp, expv actual_args, int issue_error)
             return FALSE;
         }
 
-        if (!type_is_match_for_argument(ID_TYPE(dummy_arg),
-                                        EXPV_TYPE(actual_arg), compare_rank, issue_error))
+        if (!type_is_match_for_argument(EXPV_TYPE(actual_arg),
+                                       ID_TYPE(dummy_arg), compare_rank, issue_error))
         {
             return FALSE;
         }

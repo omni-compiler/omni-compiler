@@ -186,11 +186,8 @@ force_to_logical_type(expv v)
 
 int
 are_dimension_and_shape_conformant_by_type(expr x,
-                                           TYPE_DESC lt,
-                                           TYPE_DESC rt,
-                                           expv *shapePtr,
-                                           int for_argument,
-                                           int issue_error)
+                                           TYPE_DESC lt, TYPE_DESC rt,
+                                           expv *shapePtr, int issue_error) 
 {
     int ret = FALSE;
     expv lShape = list0(LIST);
@@ -242,14 +239,9 @@ are_dimension_and_shape_conformant_by_type(expr x,
             laSz = array_spec_size(laSpec, NULL, NULL);
             raSz = array_spec_size(raSpec, NULL, NULL);
             if (laSz > 0 && raSz > 0) {
-                if (!for_argument && laSz == raSz) {
+                if (laSz == raSz) {
                     /*
                      * Both the array-specs are identical. Use left.
-                     */
-                    aSpec = laSpec;
-                } else if (for_argument && laSz <= raSz) {
-                    /*
-                     * The actual argument can be longer then the dummy argument. Use left.
                      */
                     aSpec = laSpec;
                 } else {
@@ -321,14 +313,12 @@ are_dimension_and_shape_conformant_by_type(expr x,
 
 
 static int
-are_dimension_and_shape_conformant(expr x,
-                                   expv left,
-                                   expv right,
-                                   expv *shapePtr,
-                                   int for_argument) {
+are_dimension_and_shape_conformant(expr x, 
+                                   expv left, expv right,
+                                   expv *shapePtr) {
     TYPE_DESC lt = EXPV_TYPE(left);
     TYPE_DESC rt = EXPV_TYPE(right);
-    return are_dimension_and_shape_conformant_by_type(x, lt, rt, shapePtr, for_argument, TRUE);
+    return are_dimension_and_shape_conformant_by_type(x, lt, rt, shapePtr, TRUE);
 }
 
 
@@ -738,7 +728,7 @@ compile_expression(expr x)
                  */
                 if (TYPE_N_DIM(lt) > 0 && TYPE_N_DIM(rt) > 0 &&
                     are_dimension_and_shape_conformant(x, left, right, 
-                                                       &shape, /*for_argument=*/FALSE) == TRUE) {
+                                                       &shape) == TRUE) {
                     tp = compile_dimensions(bType, shape);
                     fix_array_dimensions(tp);
                     goto doEmit;
@@ -1613,7 +1603,7 @@ expv_assignment(expv v1, expv v2)
         EXPR_CODE(v2) != F03_TYPED_ARRAY_CONSTRUCTOR &&
         ((TYPE_N_DIM(tp1) > 0 && TYPE_N_DIM(tp2) > 0) &&
          (are_dimension_and_shape_conformant(NULL, v1, v2,
-                                             NULL, /*for_argument*/FALSE) == FALSE))) {
+                                             NULL) == FALSE))) {
         return NULL;
     }
 
@@ -3329,7 +3319,6 @@ compile_dup_decl(expv x)
 static expv
 compile_array_constructor(expr x)
 {
-    int nElemsIsFixed = TRUE;
     int nElems = 0;
     list lp;
     expv v, res, l;
@@ -3351,38 +3340,24 @@ compile_array_constructor(expr x)
 
 
     FOR_ITEMS_IN_LIST(lp, EXPR_ARG1(x)) {
+        nElems++;
         v = compile_expression(LIST_ITEM(lp));
         list_put_last(l, v);
         tp = EXPV_TYPE(v);
-
-        if (IS_ARRAY_TYPE(tp)) {
-            if (TYPE_IS_ARRAY_ADJUSTABLE(tp)) {
-                nElemsIsFixed = FALSE;
-            }
-            while (IS_ARRAY_TYPE(tp)) {
-                nElems += TYPE_DIM_SIZE(tp);
-                tp = TYPE_REF(tp);
-            }
-
-        } else if (IS_GNUMERIC_ALL(tp)) {
-            nElemsIsFixed = FALSE;
-
-        } else {
-            nElems++;
-        }
-
         if (elem_type == TYPE_UNKNOWN) {
             elem_type = get_basic_type(tp);
             continue;
         }
 
-        if (elem_type == TYPE_STRUCT) {
-            if (TYPE_BASIC_TYPE(tp) != elem_type && !IS_GNUMERIC_ALL(tp)) {
+        if (elem_type == TYPE_STRUCT ||
+            elem_type == TYPE_COMPLEX) {
+            if (get_basic_type(tp) != elem_type) {
                 error("Array constructor elements have different data types.");
                 return NULL;
             }
         } else {
-            if (TYPE_BASIC_TYPE(tp) == TYPE_STRUCT) {
+            if (get_basic_type(tp) == TYPE_STRUCT ||
+                get_basic_type(tp) == TYPE_COMPLEX) {
                 error("Array constructor elements have different data types.");
                 return NULL;
             }
@@ -3415,10 +3390,6 @@ compile_array_constructor(expr x)
                                         expv_constant_1,
                                         expv_int_term(INT_CONSTANT,
                                                       type_INT, nElems)))));
-
-    if (!nElemsIsFixed) {
-        TYPE_ARRAY_ASSUME_KIND(EXPV_TYPE(res)) = ASSUMED_SIZE;
-    }
 
     return res;
 }
