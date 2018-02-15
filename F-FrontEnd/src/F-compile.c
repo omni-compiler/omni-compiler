@@ -7171,7 +7171,11 @@ compile_CALL_member_procedure_statement(expr x)
         TYPE_BASIC_TYPE(tp) = TYPE_SUBR;
     }
 
-    if (!IS_SUBR(tp) && !TYPE_BOUND_GENERIC_TYPE_GENERICS(tp)) {
+    printf("%s %d\n",SYM_NAME(EXPR_SYM(x2)), TYPE_BASIC_TYPE(tp));
+
+    if (!IS_SUBR(tp) && !IS_FUNCTION_TYPE(tp) 
+        && !TYPE_BOUND_GENERIC_TYPE_GENERICS(tp)) 
+    {
         error("'%s' is not a subroutine", SYM_NAME(EXPR_SYM(x2)));
         return;
     }
