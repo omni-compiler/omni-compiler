@@ -3336,6 +3336,7 @@ compile_array_constructor(expr x)
     TYPE_DESC tp = NULL;
     TYPE_DESC base_type = NULL;
     BASIC_DATA_TYPE elem_type = TYPE_UNKNOWN;
+    expv shape;
 
     l = list0(LIST);
     if (EXPR_HAS_ARG2(x) &&
@@ -3356,13 +3357,28 @@ compile_array_constructor(expr x)
         tp = EXPV_TYPE(v);
 
         if (IS_ARRAY_TYPE(tp)) {
-            if (TYPE_IS_ARRAY_ADJUSTABLE(tp)) {
-                nElemsIsFixed = FALSE;
+            expv d;
+
+            if (!TYPE_IS_RESHAPED(tp) && !TYPE_IS_ARRAY_ADJUSTABLE(tp) && TYPE_N_DIM(tp) != 1) {
+                error("2+ dimensions in the array constructor");
             }
-            while (IS_ARRAY_TYPE(tp)) {
-                nElems += TYPE_DIM_SIZE(tp);
-                tp = TYPE_REF(tp);
+
+            if (nElemsIsFixed) {
+                if (TYPE_IS_RESHAPED(tp) || TYPE_IS_ARRAY_ADJUSTABLE(tp)) {
+                    nElemsIsFixed = FALSE;
+                } else {
+                    d = expv_reduce(TYPE_DIM_SIZE(tp), TRUE);
+                    if (d != NULL &&
+                        EXPV_CODE(d) == INT_CONSTANT &&
+                        EXPV_INT_VALUE(d) >= 0) {
+                        nElems += EXPV_INT_VALUE(d);
+                    } else {
+                        nElemsIsFixed = FALSE;
+                    }
+                }
             }
+
+            tp = bottom_type(tp);
 
         } else if (IS_GNUMERIC_ALL(tp)) {
             nElemsIsFixed = FALSE;
@@ -3408,15 +3424,24 @@ compile_array_constructor(expr x)
          */
     }
 
-    EXPV_TYPE(res) =
-        compile_dimensions(tp,
-                           list1(LIST,
-                                 (list2(LIST,
-                                        expv_constant_1,
-                                        expv_int_term(INT_CONSTANT,
-                                                      type_INT, nElems)))));
+    shape = list0(LIST);
 
-    if (!nElemsIsFixed) {
+    if (nElemsIsFixed) {
+        list_put_last(shape,
+                      (list2(LIST,
+                             expv_constant_1,
+                             expv_int_term(INT_CONSTANT,
+                                           type_INT, nElems))));
+    } else {
+        generate_assumed_shape_expr(shape, 2);
+
+    }
+
+    EXPV_TYPE(res) = compile_dimensions(tp, shape);
+
+    if (nElemsIsFixed) {
+        fix_array_dimensions(EXPV_TYPE(res));
+    } else {
         TYPE_ARRAY_ASSUME_KIND(EXPV_TYPE(res)) = ASSUMED_SIZE;
     }
 

@@ -587,7 +587,7 @@ generate_shape_expr(TYPE_DESC tp, expr dimSpec) {
 }
 
 
-static void
+void
 generate_assumed_shape_expr(expr dimSpec, int dim) {
     expv dimElm;
 

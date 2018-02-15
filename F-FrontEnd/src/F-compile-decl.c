@@ -4264,7 +4264,7 @@ compile_dimensions(TYPE_DESC tp, expr dims)
         if (tp != NULL) {
             TYPE_ATTR_FLAGS(tq) |= TYPE_IS_POINTER(tp);
             TYPE_ATTR_FLAGS(tq) |= TYPE_IS_TARGET(tp);
-	    TYPE_ATTR_FLAGS(tq) |= TYPE_IS_ALLOCATABLE(tp);
+            TYPE_ATTR_FLAGS(tq) |= TYPE_IS_ALLOCATABLE(tp);
         }
 
         reduce_subscript(&lower);

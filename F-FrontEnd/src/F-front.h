@@ -724,6 +724,7 @@ extern int      is_intrinsic_function _ANSI_ARGS_((ID id));
 extern expv     compile_intrinsic_call _ANSI_ARGS_((ID id,expv args));
 extern expv     compile_intrinsic_call0 _ANSI_ARGS_((ID, expv, int));
 extern void     generate_shape_expr _ANSI_ARGS_((TYPE_DESC tp, expv dimSpec));
+extern void     generate_assumed_shape_expr _ANSI_ARGS_((expr dimSpec, int dim));
 
 extern EXT_ID   declare_external_proc_id _ANSI_ARGS_((SYMBOL s, TYPE_DESC tp,
                                                       int def_flag));
