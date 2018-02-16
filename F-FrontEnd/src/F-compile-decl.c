@@ -2598,6 +2598,8 @@ compile_basic_type(expr x)
                 }
                 vcharLen = vcharLen1;
                 charLen = 0;
+            } else if (!expv_is_specification(vcharLen1)) {
+                error("unexpected type of length in the characater ");
             } else {
                 /* unexpected expression, but ignore it */
                 vcharLen = vcharLen1;
