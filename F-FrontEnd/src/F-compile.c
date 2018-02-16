@@ -7171,9 +7171,19 @@ compile_CALL_member_procedure_statement(expr x)
         TYPE_BASIC_TYPE(tp) = TYPE_SUBR;
     }
 
-    if (!IS_SUBR(tp) && !IS_FUNCTION_TYPE(tp) 
-        && !TYPE_BOUND_GENERIC_TYPE_GENERICS(tp)) 
-    {
+    /**
+     * Fix for issue#531
+     * Check if binded procedure has been declared already. 
+     * If not, we have to switch the type has it is set to TYPE_FUNCTION 
+     * by default and we want to deal with SUBROUTINE for a CALL xx%yy
+     */
+    if(TBP_BINDING(mem) && !find_ident(ID_SYM(TBP_BINDING(mem))) 
+        && TYPE_BASIC_TYPE(tp) == TYPE_FUNCTION) 
+    {   
+        TYPE_BASIC_TYPE(tp) = TYPE_SUBR;
+    }
+    
+    if (!IS_SUBR(tp) && !TYPE_BOUND_GENERIC_TYPE_GENERICS(tp)) {
         error("'%s' is not a subroutine", SYM_NAME(EXPR_SYM(x2)));
         return;
     }
