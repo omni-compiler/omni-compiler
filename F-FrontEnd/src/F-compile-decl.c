@@ -2470,7 +2470,7 @@ compile_basic_type(expr x)
 
     r1 = EXPR_ARG1(x);
     r2 = EXPR_ARG2(x);
-    isInsideExpression = EXPR_HAS_ARG3(x)?EXPR_ARG3(x):FALSE;
+    isInsideExpression = EXPR_HAS_ARG3(x)?TRUE:FALSE;
 
     if(r1 == NULL && r2) {
         if(r2) {
