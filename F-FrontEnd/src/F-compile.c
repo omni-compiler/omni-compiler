@@ -6332,6 +6332,7 @@ end_interface()
             PROC_EXT_ID(fid) = ep;
             EXT_PROC_CLASS(ep) = EP_INTERFACE_DEF;
             ID_ORDER(fid) = ID_ORDER(EXT_PROC_ID_LIST(ep));
+            ID_LINE(fid) = EXT_LINE(EXT_PROC_ID_LIST(ep));
         }
 
         if (INTF_IS_ABSTRACT(EXT_PROC_INTERFACE_INFO(intr))) {
