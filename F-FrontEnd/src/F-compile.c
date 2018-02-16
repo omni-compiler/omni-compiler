@@ -7181,6 +7181,12 @@ compile_CALL_member_procedure_statement(expr x)
         && TYPE_BASIC_TYPE(tp) == TYPE_FUNCTION) 
     {   
         TYPE_BASIC_TYPE(tp) = TYPE_SUBR;
+    } else if(TBP_BINDING(mem) && find_ident(ID_SYM(TBP_BINDING(mem)))) {
+        // id has been declared but no type yet
+        ID tbp = find_ident(ID_SYM(TBP_BINDING(mem)));
+        if(ID_TYPE(tbp) == NULL) {
+            TYPE_BASIC_TYPE(tp) = TYPE_SUBR;
+        }
     }
     
     if (!IS_SUBR(tp) && !TYPE_BOUND_GENERIC_TYPE_GENERICS(tp)) {
