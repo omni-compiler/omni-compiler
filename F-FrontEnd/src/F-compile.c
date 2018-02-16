@@ -8034,7 +8034,7 @@ accept:
                 if (get_bottom_ref_type(vPtrTyp) == get_bottom_ref_type(vPteTyp)) {
                     /* DO NOTHING, procedures are the same type */
                 } else if (IS_FUNCTION_TYPE(vPteTyp) &&
-                           TYPE_IS_IMPLICIT(FUNCTION_TYPE_RETURN_TYPE(vPteTyp)) &&
+                           TYPE_IS_IMPLICIT(vPteTyp) &&
                            !TYPE_IS_EXTERNAL(vPteTyp) &&
                            TYPE_REF(vPtrTyp)) {
                     /*
