@@ -1429,6 +1429,7 @@ declare_ident(SYMBOL s, enum name_class class)
     ID* symbols;
     int isInUseDecl = checkInsideUse();
     int isPreDecl = FALSE;
+    int inTypeDecl = FALSE;
     int isInternalPrivate = FALSE; // For struct type
     char msg[2048];
     const char *fmt = "%s '%s' is already declared.";
@@ -1462,6 +1463,7 @@ declare_ident(SYMBOL s, enum name_class class)
                     isInternalPrivate = TYPE_IS_INTERNAL_PRIVATE(struct_tp);
                     symbols = &TYPE_MEMBER_LIST(struct_tp);
                     class = CL_ELEMENT;
+                    inTypeDecl = TRUE;
                 }
             }
         }
@@ -1542,9 +1544,12 @@ declare_ident(SYMBOL s, enum name_class class)
     if(predecl_ip != NULL) {
         ip = predecl_ip;
         ID_ORDER(ip) = order_sequence++;
-    } else {
+    } else {    
         ip = new_ident_desc(s);
-        ID_LINK_ADD(ip, *symbols, last_ip);
+        // Do not add intrinsic id to the type member list
+        if(!(SYM_TYPE(s) == S_INTR && inTypeDecl)) {
+            ID_LINK_ADD(ip, *symbols, last_ip);      
+        }
         ID_SYM(ip) = s;
         ID_CLASS(ip) = class;
         if(isPreDecl == FALSE)
@@ -1552,6 +1557,8 @@ declare_ident(SYMBOL s, enum name_class class)
         if(isInternalPrivate) {
             TYPE_SET_INTERNAL_PRIVATE(ip);
         }
+        
+        
     }
 
     switch (class) {
@@ -3609,7 +3616,6 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
                     continue;
                 }
             }
-
 
             id = declare_ident(EXPR_SYM(ident), CL_UNKNOWN);
             if (id == NULL) {
