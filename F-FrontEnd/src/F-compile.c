@@ -2653,7 +2653,13 @@ end_declaration()
             PROC_CLASS(ip) == P_EXTERNAL) {
             ep = find_ext_id(ID_SYM(ip));
             if (ep != NULL && EXT_PROC_TYPE(ep) != NULL) {
-                tp = EXT_PROC_TYPE(ep);
+                /* Copy type to avoid modifying TYPE_ATTR_FLAGS */
+                if (TYPE_IS_EXTERNAL(ip)) {
+                    tp = new_type_desc();
+                    *tp = *EXT_PROC_TYPE(ep);
+                } else {
+                    tp = EXT_PROC_TYPE(ep);
+                }
             } else {
                 tp = subroutine_type();
                 PROC_IS_FUNC_SUBR_AMBIGUOUS(ip) = TRUE;
