@@ -968,16 +968,7 @@ compile_expression(expr x)
                 }
                 EXPV_TYPE(v) = ID_TYPE(id);
             }
-/* FEAST change start */
-            /* if(!expv_is_specification(v)) { */
-            /*     error_at_node(EXPR_ARG1(x), */
-            /*         "character string length must be integer."); */
-            /* } */
-            if(!expv_is_specification(v)){
-                EXPV_TYPE(v) = NULL;
-                sp_link_expr((expr)v, SP_ERR_CHAR_LEN, current_line);
-            }
-/* FEAST change  end  */
+            /* TYPE will be checked in compile_basic_type() */
             return v;
         }
         case PLUS_EXPR:
