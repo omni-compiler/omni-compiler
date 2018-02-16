@@ -3354,8 +3354,16 @@ redefine_procedures(EXT_ID proc, EXT_ID unit_ctl_procs[], int redefine_unit_ctl_
            PROC_CLASS(id) != P_UNDEFINEDPROC)
             continue;
 
+        if (ID_TYPE(id) && ID_STORAGE(id) == STG_ARG) {
+            if (!IS_PROCEDURE_TYPE(ID_TYPE(id))) {
+                ID_TYPE(id) = function_type(ID_TYPE(id));
+            }
+            continue;
+        }
+
         contained_proc = procedure_defined(id, unit_ctl_procs, redefine_unit_ctl_level);
         if (contained_proc == NULL) {
+
             EXT_ID external_proc = NULL;
 
             EXT_ID ep;

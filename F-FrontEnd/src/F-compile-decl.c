@@ -1077,11 +1077,17 @@ declare_function(ID id)
                 }
             }
         } else if (ID_STORAGE(id) == STG_ARG) {
+#if 0
+            /* This seems wrong, just used as an argument */
             if (VAR_IS_USED_AS_FUNCTION(id) == FALSE) {
                 warning("Dummy procedure not declared EXTERNAL. "
                         "Code may be wrong.");
             }
-            PROC_CLASS(id) = P_EXTERNAL;
+#endif
+            if (ID_TYPE(id) && !IS_PROCEDURE_TYPE(ID_TYPE(id))) {
+                ID_TYPE(id) = function_type(ID_TYPE(id));
+            }
+            PROC_CLASS(id) = P_UNDEFINEDPROC;
         } else if (ID_STORAGE(id) != STG_EXT /* maybe interface */) {
             fatal("%s: bad storage '%s'", __func__, ID_NAME(id));
         }
