@@ -5341,16 +5341,16 @@ outx_id_declarations(int l, ID id_list, int hasResultVar, const char * functionN
                             continue;
                         }
 
-			if (hasResultVar == TRUE && functionName != NULL &&
-			    strcasecmp(functionName, SYM_NAME(ID_SYM(ids[j]))) == 0) {
-			  continue;
-			}
+                        if (hasResultVar == TRUE && functionName != NULL &&
+                            strcasecmp(functionName, SYM_NAME(ID_SYM(ids[j]))) == 0) {
+                            continue;
+                        }
 
-			if (TYPE_IS_MODIFIED(ID_TYPE(id)) == TRUE) {
-			  continue;
-			}
-			
-			if (is_id_used_in_struct_member(ids[j], tp) == TRUE) {
+                        if (TYPE_IS_MODIFIED(ID_TYPE(id)) == TRUE) {
+                            continue;
+                        }
+
+                        if (is_id_used_in_struct_member(ids[j], tp) == TRUE) {
                             emit_decl(l, ids[j]);
                             ID_IS_EMITTED(ids[j]) = TRUE;
                         }

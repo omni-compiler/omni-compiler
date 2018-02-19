@@ -2653,7 +2653,13 @@ end_declaration()
             PROC_CLASS(ip) == P_EXTERNAL) {
             ep = find_ext_id(ID_SYM(ip));
             if (ep != NULL && EXT_PROC_TYPE(ep) != NULL) {
-                tp = EXT_PROC_TYPE(ep);
+                /* Copy type to avoid modifying TYPE_ATTR_FLAGS */
+                if (TYPE_IS_EXTERNAL(ip)) {
+                    tp = new_type_desc();
+                    *tp = *EXT_PROC_TYPE(ep);
+                } else {
+                    tp = EXT_PROC_TYPE(ep);
+                }
             } else {
                 tp = wrap_type(type_GNUMERIC_ALL);
                 TYPE_SET_IMPLICIT(tp);
@@ -3356,8 +3362,16 @@ redefine_procedures(EXT_ID proc, EXT_ID unit_ctl_procs[], int redefine_unit_ctl_
            PROC_CLASS(id) != P_UNDEFINEDPROC)
             continue;
 
+        if (ID_TYPE(id) && ID_STORAGE(id) == STG_ARG) {
+            if (!IS_PROCEDURE_TYPE(ID_TYPE(id))) {
+                ID_TYPE(id) = function_type(ID_TYPE(id));
+            }
+            continue;
+        }
+
         contained_proc = procedure_defined(id, unit_ctl_procs, redefine_unit_ctl_level);
         if (contained_proc == NULL) {
+
             EXT_ID external_proc = NULL;
 
             EXT_ID ep;
@@ -6335,6 +6349,7 @@ end_interface()
             PROC_EXT_ID(fid) = ep;
             EXT_PROC_CLASS(ep) = EP_INTERFACE_DEF;
             ID_ORDER(fid) = ID_ORDER(EXT_PROC_ID_LIST(ep));
+            ID_LINE(fid) = EXT_LINE(EXT_PROC_ID_LIST(ep));
         }
 
         if (INTF_IS_ABSTRACT(EXT_PROC_INTERFACE_INFO(intr))) {

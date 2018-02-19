@@ -1077,11 +1077,17 @@ declare_function(ID id)
                 }
             }
         } else if (ID_STORAGE(id) == STG_ARG) {
+#if 0
+            /* This seems wrong, just used as an argument */
             if (VAR_IS_USED_AS_FUNCTION(id) == FALSE) {
                 warning("Dummy procedure not declared EXTERNAL. "
                         "Code may be wrong.");
             }
-            PROC_CLASS(id) = P_EXTERNAL;
+#endif
+            if (ID_TYPE(id) && !IS_PROCEDURE_TYPE(ID_TYPE(id))) {
+                ID_TYPE(id) = function_type(ID_TYPE(id));
+            }
+            PROC_CLASS(id) = P_UNDEFINEDPROC;
         } else if (ID_STORAGE(id) != STG_EXT /* maybe interface */) {
             fatal("%s: bad storage '%s'", __func__, ID_NAME(id));
         }
@@ -2269,6 +2275,7 @@ declare_id_type(ID id, TYPE_DESC tp)
     if (tq != NULL && (TYPE_IS_IMPLICIT(tq) || TYPE_IS_NOT_FIXED(tq))) {
         /* override implicit declared type */
         TYPE_ATTR_FLAGS(tp) |= TYPE_ATTR_FLAGS(tq);
+        TYPE_EXTATTR_FLAGS(tp) |= TYPE_EXTATTR_FLAGS(tq);
         replace_or_assign_type(id_type, tp);
         return;
     }
@@ -5665,25 +5672,28 @@ compile_procedure_declaration(expr x)
              * an interface function/subroutine
              */
 
+            TYPE_DESC ret = new_type_desc();
+            TYPE_SET_IMPLICIT(ret);
+            TYPE_BASIC_TYPE(ret) = TYPE_GNUMERIC_ALL;
+            TYPE_SET_NOT_FIXED(ret);
+
             if (CTL_TYPE(ctl_top) == CTL_STRUCT) {
                 /*
                  * don't call delcare_id here,
                  * declare_id make a member of struct
                  */
-                tp = function_type(new_type_desc());
+                tp = function_type(ret);
                 interface = new_ident_desc(sym);
                 ID_LINE(interface) = EXPR_LINE(x);
                 ID_TYPE(interface) = tp;
-                TYPE_SET_IMPLICIT(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(interface)));
 
             } else {
                 interface = declare_ident(sym, CL_PROC);
                 PROC_CLASS(interface) = P_UNDEFINEDPROC;
-                declare_id_type(interface, function_type(new_type_desc()));
+                declare_id_type(interface, function_type(ret));
                 ID_CLASS(interface) = CL_PROC;
                 declare_function(interface);
-                TYPE_SET_IMPLICIT(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(interface)));
-                TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(interface))) = TYPE_GENERIC;
+
             }
         }
 
