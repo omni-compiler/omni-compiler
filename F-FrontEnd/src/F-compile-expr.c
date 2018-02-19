@@ -2795,30 +2795,32 @@ compile_struct_constructor_with_components(const ID struct_id,
             TYPE_DESC stp = get_bottom_ref_type(EXPV_TYPE(v));
             if ((EXPV_CODE(arg) != F_SET_EXPR && is_first_arg) ||
                 (EXPV_CODE(arg) == F_SET_EXPR && ID_SYM(TYPE_TAGNAME(stp)) == EXPR_SYM(EXPR_ARG1(arg)))) {
-                ID pmem;
-                FOREACH_MEMBER(pmem, stp) {
-                    if (find_ident_head(ID_SYM(pmem), used) != NULL) {
-                        error("member'%s' is already specified", ID_NAME(pmem));
-                        return NULL;
-                    }
-                    if ((match = find_ident_head(ID_SYM(pmem), members)) == NULL) {
-                        error_at_node(args,
-                                      "'%s' is specified as a parent type, "
-                                      "but member '%s' is already in the constructor",
-                                      ID_NAME(TYPE_TAGNAME(stp)), ID_NAME(pmem));
-                        return NULL;
-                    } else {
-                        id_link_remove(&members, match);
-                        ID_LINK_ADD(match, used, used_last);
+                for (;stp != NULL; stp = TYPE_PARENT(stp)?TYPE_PARENT_TYPE(stp):NULL) {
+                    ID pmem;
+                    FOREACH_MEMBER(pmem, stp) {
+                        if (find_ident_head(ID_SYM(pmem), used) != NULL) {
+                            error("member'%s' is already specified", ID_NAME(pmem));
+                            return NULL;
+                        }
+                        if ((match = find_ident_head(ID_SYM(pmem), members)) == NULL) {
+                            error_at_node(args,
+                                          "'%s' is specified as a parent type, "
+                                          "but member '%s' is already in the constructor",
+                                          ID_NAME(TYPE_TAGNAME(stp)), ID_NAME(pmem));
+                            return NULL;
+                        } else {
+                            id_link_remove(&members, match);
+                            ID_LINK_ADD(match, used, used_last);
+                        }
                     }
                 }
+                list_put_last(components, v);
+                cur = members;
+                is_first_arg = FALSE;
+                if (EXPV_CODE(arg) == F_SET_EXPR)
+                    has_keyword = TRUE;
+                continue;
             }
-            list_put_last(components, v);
-            cur = members;
-            is_first_arg = FALSE;
-            if (EXPV_CODE(arg) == F_SET_EXPR)
-                has_keyword = TRUE;
-            continue;
         }
 
         if (EXPV_CODE(arg) == F_SET_EXPR) {

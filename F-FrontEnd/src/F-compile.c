@@ -5598,13 +5598,6 @@ import_module_id(ID mid,
         EXT_NEXT(ep) = NULL;
         EXT_PROC_INTR_DEF_EXT_IDS(ep) = NULL;
 
-#if 0
-        if (type_has_replica(EXT_PROC_TYPE(mep), &EXT_PROC_TYPE(ep))) {
-            EXT_PROC_TYPE(ep)
-                    = shallow_copy_type_for_module_id(EXT_PROC_TYPE(mep));
-        }
-#endif
-
         if (EXT_PROC_INTR_DEF_EXT_IDS(mep) != NULL) {
             EXT_ID head, p;
             head = shallow_copy_ext_id(EXT_PROC_INTR_DEF_EXT_IDS(mep));
@@ -5791,15 +5784,23 @@ import_module_ids(struct module *mod, struct use_argument * args,
 
     FOREACH_ID(mid, MODULE_ID_LIST(mod)) {
         if (args != NULL) {
+            int found = FALSE;
             FOREACH_USE_ARG(arg, args) {
                 wrap_type = TRUE;
                 if (arg->local != ID_SYM(mid))
                     continue;
+                found = TRUE;
                 import_module_id(mid,
                                  &LOCAL_SYMBOLS, &last_id,
                                  &LOCAL_STRUCT_DECLS, &sttail,
                                  arg->use, wrap_type, fromParentModule);
                 arg->used = TRUE;
+            }
+            if (!found && !isOnly) {
+                import_module_id(mid,
+                                 &LOCAL_SYMBOLS, &last_id,
+                                 &LOCAL_STRUCT_DECLS, &sttail,
+                                 NULL, wrap_type, fromParentModule);
             }
         } else {
             if (!isOnly) {
@@ -6487,6 +6488,8 @@ compile_interface_MODULEPROCEDURE_statement(expr x)
 
         if (EXT_PROC_TYPE(ep) != NULL) {
             FUNCTION_TYPE_SET_MOUDLE_PROCEDURE(EXT_PROC_TYPE(ep));
+        } else {
+            EXT_PROC_TYPE(ep) = ID_TYPE(id);
         }
 
         if (ID_TYPE(id) != NULL) {
