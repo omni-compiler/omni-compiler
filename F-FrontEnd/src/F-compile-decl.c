@@ -2471,11 +2471,13 @@ compile_basic_type(expr x)
     expr rkind = NULL, rcharLen = NULL;
     expv vkind = NULL, vkind2 = NULL, vcharLen = NULL, vcharLen1 = NULL;
     // expv org_vkind = NULL;
+    int isInsideExpression = FALSE;
 
     if(x == NULL) return NULL;
 
     r1 = EXPR_ARG1(x);
     r2 = EXPR_ARG2(x);
+    isInsideExpression = EXPR_HAS_ARG3(x)?TRUE:FALSE;
 
     if(r1 == NULL && r2) {
         if(r2) {
@@ -2580,7 +2582,20 @@ compile_basic_type(expr x)
             if (vcharLen1 != NULL && EXPV_CODE(vcharLen1) == INT_CONSTANT) {
                 vcharLen = vcharLen1;
                 charLen = EXPV_INT_VALUE(vcharLen1);
-            } else {
+            } else if (vcharLen1 != NULL && expv_is_specification(vcharLen1)) {
+                vcharLen = vcharLen1;
+                charLen = 0;
+            } else if (vcharLen1 != NULL && isInsideExpression) {
+                /* NOTE:
+                 *  If the type specifier is used inside an expression,
+                 *  LENGHT can be a variable.
+                 *
+                 * ex)
+                 *    INTEGER :: k = 8
+                 *    CHARACTER(8), DIMENSION(1:3) c = (/CHARACTER(k) :: 'a', 'b', 'c'
+                 *    !                                  ^^^^^^^^^^^^
+                 *    ! `k` is not a parameter, but the above code works.
+                 */
                 TYPE_DESC tp = EXPV_TYPE(vcharLen1);
                 if (tp != NULL &&
                     (TYPE_BASIC_TYPE(tp) != TYPE_INT &&
@@ -2590,6 +2605,12 @@ compile_basic_type(expr x)
                 }
                 vcharLen = vcharLen1;
                 charLen = 0;
+            } else if (!expv_is_specification(vcharLen1)) {
+                error("unexpected type of length in the characater ");
+            } else {
+                /* unexpected expression, but ignore it */
+                vcharLen = vcharLen1;
+                charLen = CHAR_LEN_UNFIXED;
             }
         }
     } else if(charLen == 0) {
