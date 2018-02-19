@@ -1077,11 +1077,17 @@ declare_function(ID id)
                 }
             }
         } else if (ID_STORAGE(id) == STG_ARG) {
+#if 0
+            /* This seems wrong, just used as an argument */
             if (VAR_IS_USED_AS_FUNCTION(id) == FALSE) {
                 warning("Dummy procedure not declared EXTERNAL. "
                         "Code may be wrong.");
             }
-            PROC_CLASS(id) = P_EXTERNAL;
+#endif
+            if (ID_TYPE(id) && !IS_PROCEDURE_TYPE(ID_TYPE(id))) {
+                ID_TYPE(id) = function_type(ID_TYPE(id));
+            }
+            PROC_CLASS(id) = P_UNDEFINEDPROC;
         } else if (ID_STORAGE(id) != STG_EXT /* maybe interface */) {
             fatal("%s: bad storage '%s'", __func__, ID_NAME(id));
         }
@@ -1429,6 +1435,7 @@ declare_ident(SYMBOL s, enum name_class class)
     ID* symbols;
     int isInUseDecl = checkInsideUse();
     int isPreDecl = FALSE;
+    int inTypeDecl = FALSE;
     int isInternalPrivate = FALSE; // For struct type
     char msg[2048];
     const char *fmt = "%s '%s' is already declared.";
@@ -1462,6 +1469,7 @@ declare_ident(SYMBOL s, enum name_class class)
                     isInternalPrivate = TYPE_IS_INTERNAL_PRIVATE(struct_tp);
                     symbols = &TYPE_MEMBER_LIST(struct_tp);
                     class = CL_ELEMENT;
+                    inTypeDecl = TRUE;
                 }
             }
         }
@@ -1542,9 +1550,12 @@ declare_ident(SYMBOL s, enum name_class class)
     if(predecl_ip != NULL) {
         ip = predecl_ip;
         ID_ORDER(ip) = order_sequence++;
-    } else {
+    } else {    
         ip = new_ident_desc(s);
-        ID_LINK_ADD(ip, *symbols, last_ip);
+        // Do not add intrinsic id to the type member list
+        if(!(SYM_TYPE(s) == S_INTR && inTypeDecl)) {
+            ID_LINK_ADD(ip, *symbols, last_ip);      
+        }
         ID_SYM(ip) = s;
         ID_CLASS(ip) = class;
         if(isPreDecl == FALSE)
@@ -1552,6 +1563,8 @@ declare_ident(SYMBOL s, enum name_class class)
         if(isInternalPrivate) {
             TYPE_SET_INTERNAL_PRIVATE(ip);
         }
+        
+        
     }
 
     switch (class) {
@@ -2262,6 +2275,7 @@ declare_id_type(ID id, TYPE_DESC tp)
     if (tq != NULL && (TYPE_IS_IMPLICIT(tq) || TYPE_IS_NOT_FIXED(tq))) {
         /* override implicit declared type */
         TYPE_ATTR_FLAGS(tp) |= TYPE_ATTR_FLAGS(tq);
+        TYPE_EXTATTR_FLAGS(tp) |= TYPE_EXTATTR_FLAGS(tq);
         replace_or_assign_type(id_type, tp);
         return;
     }
@@ -2464,11 +2478,13 @@ compile_basic_type(expr x)
     expr rkind = NULL, rcharLen = NULL;
     expv vkind = NULL, vkind2 = NULL, vcharLen = NULL, vcharLen1 = NULL;
     // expv org_vkind = NULL;
+    int isInsideExpression = FALSE;
 
     if(x == NULL) return NULL;
 
     r1 = EXPR_ARG1(x);
     r2 = EXPR_ARG2(x);
+    isInsideExpression = EXPR_HAS_ARG3(x)?TRUE:FALSE;
 
     if(r1 == NULL && r2) {
         if(r2) {
@@ -2573,7 +2589,20 @@ compile_basic_type(expr x)
             if (vcharLen1 != NULL && EXPV_CODE(vcharLen1) == INT_CONSTANT) {
                 vcharLen = vcharLen1;
                 charLen = EXPV_INT_VALUE(vcharLen1);
-            } else {
+            } else if (vcharLen1 != NULL && expv_is_specification(vcharLen1)) {
+                vcharLen = vcharLen1;
+                charLen = 0;
+            } else if (vcharLen1 != NULL && isInsideExpression) {
+                /* NOTE:
+                 *  If the type specifier is used inside an expression,
+                 *  LENGHT can be a variable.
+                 *
+                 * ex)
+                 *    INTEGER :: k = 8
+                 *    CHARACTER(8), DIMENSION(1:3) c = (/CHARACTER(k) :: 'a', 'b', 'c'
+                 *    !                                  ^^^^^^^^^^^^
+                 *    ! `k` is not a parameter, but the above code works.
+                 */
                 TYPE_DESC tp = EXPV_TYPE(vcharLen1);
                 if (tp != NULL &&
                     (TYPE_BASIC_TYPE(tp) != TYPE_INT &&
@@ -2583,6 +2612,12 @@ compile_basic_type(expr x)
                 }
                 vcharLen = vcharLen1;
                 charLen = 0;
+            } else if (!expv_is_specification(vcharLen1)) {
+                error("unexpected type of length in the characater ");
+            } else {
+                /* unexpected expression, but ignore it */
+                vcharLen = vcharLen1;
+                charLen = CHAR_LEN_UNFIXED;
             }
         }
     } else if(charLen == 0) {
@@ -3610,7 +3645,6 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
                 }
             }
 
-
             id = declare_ident(EXPR_SYM(ident), CL_UNKNOWN);
             if (id == NULL) {
                 id = find_ident_head(EXPR_SYM(ident), TYPE_MEMBER_LIST(struct_tp));
@@ -4264,7 +4298,7 @@ compile_dimensions(TYPE_DESC tp, expr dims)
         if (tp != NULL) {
             TYPE_ATTR_FLAGS(tq) |= TYPE_IS_POINTER(tp);
             TYPE_ATTR_FLAGS(tq) |= TYPE_IS_TARGET(tp);
-	    TYPE_ATTR_FLAGS(tq) |= TYPE_IS_ALLOCATABLE(tp);
+            TYPE_ATTR_FLAGS(tq) |= TYPE_IS_ALLOCATABLE(tp);
         }
 
         reduce_subscript(&lower);
@@ -4712,34 +4746,8 @@ compile_EXTERNAL_decl(expr id_list)
             continue;
         }
 
-        if(ID_IS_DUMMY_ARG(id)){
-            // Force set GNUMERIC_ALL to dummy args
-            if (ID_TYPE(id)) {
-                if (IS_PROCEDURE_TYPE(ID_TYPE(id))) {
-                    TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id))) = TYPE_GNUMERIC_ALL;
-                    TYPE_SET_IMPLICIT(ID_TYPE(id));
-                } else {
-                    TYPE_BASIC_TYPE(ID_TYPE(id)) = TYPE_GNUMERIC_ALL;
-                    TYPE_SET_IMPLICIT(ID_TYPE(id));
-                }
-            } else {
-                ID_TYPE(id) = wrap_type(type_GNUMERIC_ALL);
-                TYPE_SET_IMPLICIT(ID_TYPE(id));
-            }
-        }
-
         if(!(ID_IS_DUMMY_ARG(id)))
             ID_STORAGE(id) = STG_EXT;
-
-        /* if (ID_TYPE(id) != NULL && */
-        /*     (!IS_PROCEDURE_TYPE(ID_TYPE(id))) || IS_PROCEDURE_POINTER(ID_TYPE(id)) ) { */
-        /*     uint32_t type_attr_flags = TYPE_ATTR_FLAGS(ID_TYPE(id)); */
-        /*     if (type_attr_flags != 0) { */
-        /*         TYPE_ATTR_FLAGS(ID_TYPE(id)) = 0; */
-        /*         ID_TYPE(id) = wrap_type(function_type(ID_TYPE(id))); */
-        /*         TYPE_ATTR_FLAGS(ID_TYPE(id)) = type_attr_flags; */
-        /*     } */
-        /* } */
     }
 }
 
@@ -5664,25 +5672,28 @@ compile_procedure_declaration(expr x)
              * an interface function/subroutine
              */
 
+            TYPE_DESC ret = new_type_desc();
+            TYPE_SET_IMPLICIT(ret);
+            TYPE_BASIC_TYPE(ret) = TYPE_GNUMERIC_ALL;
+            TYPE_SET_NOT_FIXED(ret);
+
             if (CTL_TYPE(ctl_top) == CTL_STRUCT) {
                 /*
                  * don't call delcare_id here,
                  * declare_id make a member of struct
                  */
-                tp = function_type(new_type_desc());
+                tp = function_type(ret);
                 interface = new_ident_desc(sym);
                 ID_LINE(interface) = EXPR_LINE(x);
                 ID_TYPE(interface) = tp;
-                TYPE_SET_IMPLICIT(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(interface)));
 
             } else {
                 interface = declare_ident(sym, CL_PROC);
                 PROC_CLASS(interface) = P_UNDEFINEDPROC;
-                declare_id_type(interface, function_type(new_type_desc()));
+                declare_id_type(interface, function_type(ret));
                 ID_CLASS(interface) = CL_PROC;
                 declare_function(interface);
-                TYPE_SET_IMPLICIT(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(interface)));
-                TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(interface))) = TYPE_GENERIC;
+
             }
         }
 

@@ -1333,6 +1333,9 @@ type_spec1:
  *  A. Because this rule is expected to use inside expression (and avoid conflicts).
  *     `parenthesis_arg_list_or_null` accept '*' ':' 'XXX=*' 'XXX=:'.
  *     On the other hand, this rule don't for the argument ('*' may be used) and the declaration (':' may be used).
+ *
+ * NOTE:
+ *  To distiguish `type_spec`, Add `GEN_NODE(INT_CONSTANT, TRUE)` as a 3rd element
  */
 // in fortran specification, `type-spec`
 expr_type_spec:
@@ -1341,23 +1344,25 @@ expr_type_spec:
             if ($2 == NULL) {
                 $$ = $1;
             } else {
-                $$ = list2(F03_PARAMETERIZED_TYPE,$1,$2);
+                $$ = list3(F03_PARAMETERIZED_TYPE,$1,$2,GEN_NODE(INT_CONSTANT, TRUE));
             }
         }
         | type_keyword kind_selector
-        { $$ = list2(LIST,$1,$2); }
+        { $$ = list3(LIST,$1,$2,GEN_NODE(INT_CONSTANT, TRUE)); }
         | type_keyword length_spec  /* compatibility */
-        { $$ = list2(LIST, $1, $2);}
+        { $$ = list3(LIST,$1,$2,GEN_NODE(INT_CONSTANT, TRUE));}
         | KW_CHARACTER char_selector
-        { $$ = list2(LIST,GEN_NODE(F_TYPE_NODE,TYPE_CHAR),$2); }
+        { $$ = list3(LIST,GEN_NODE(F_TYPE_NODE,TYPE_CHAR),
+                          $2,
+                          GEN_NODE(INT_CONSTANT, TRUE)); }
         | KW_DOUBLE
-        { $$ = list2 (LIST, GEN_NODE(F_TYPE_NODE, TYPE_REAL),
-                            GEN_NODE(INT_CONSTANT, 8)); }
-        //                    gen_default_real_kind()); }
+        { $$ = list3(LIST,GEN_NODE(F_TYPE_NODE,TYPE_REAL),
+                          GEN_NODE(INT_CONSTANT,8),
+                          GEN_NODE(INT_CONSTANT, TRUE)); }
         | KW_DCOMPLEX
-        { $$ = list2 (LIST, GEN_NODE(F_TYPE_NODE, TYPE_COMPLEX),
-                            GEN_NODE(INT_CONSTANT, 8)); }
-        //                    gen_default_real_kind()); }
+        { $$ = list3(LIST,GEN_NODE(F_TYPE_NODE, TYPE_COMPLEX),
+                          GEN_NODE(INT_CONSTANT, 8),
+                          GEN_NODE(INT_CONSTANT, TRUE)); }
         ;
 
 

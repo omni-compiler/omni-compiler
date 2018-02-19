@@ -186,8 +186,11 @@ force_to_logical_type(expv v)
 
 int
 are_dimension_and_shape_conformant_by_type(expr x,
-                                           TYPE_DESC lt, TYPE_DESC rt,
-                                           expv *shapePtr, int issue_error) 
+                                           TYPE_DESC lt,
+                                           TYPE_DESC rt,
+                                           expv *shapePtr,
+                                           int for_argument,
+                                           int issue_error)
 {
     int ret = FALSE;
     expv lShape = list0(LIST);
@@ -239,9 +242,14 @@ are_dimension_and_shape_conformant_by_type(expr x,
             laSz = array_spec_size(laSpec, NULL, NULL);
             raSz = array_spec_size(raSpec, NULL, NULL);
             if (laSz > 0 && raSz > 0) {
-                if (laSz == raSz) {
+                if (!for_argument && laSz == raSz) {
                     /*
                      * Both the array-specs are identical. Use left.
+                     */
+                    aSpec = laSpec;
+                } else if (for_argument && laSz <= raSz) {
+                    /*
+                     * The actual argument can be longer then the dummy argument. Use left.
                      */
                     aSpec = laSpec;
                 } else {
@@ -313,12 +321,14 @@ are_dimension_and_shape_conformant_by_type(expr x,
 
 
 static int
-are_dimension_and_shape_conformant(expr x, 
-                                   expv left, expv right,
-                                   expv *shapePtr) {
+are_dimension_and_shape_conformant(expr x,
+                                   expv left,
+                                   expv right,
+                                   expv *shapePtr,
+                                   int for_argument) {
     TYPE_DESC lt = EXPV_TYPE(left);
     TYPE_DESC rt = EXPV_TYPE(right);
-    return are_dimension_and_shape_conformant_by_type(x, lt, rt, shapePtr, TRUE);
+    return are_dimension_and_shape_conformant_by_type(x, lt, rt, shapePtr, for_argument, TRUE);
 }
 
 
@@ -437,14 +447,8 @@ compile_expression(expr x)
 
 		expv vRet = NULL;
                 if (ID_CLASS(id) == CL_PROC && IS_SUBR(ID_TYPE(id))) {
-                    if (PROC_CLASS(id) == P_EXTERNAL &&
-                        PROC_IS_FUNC_SUBR_AMBIGUOUS(id) == TRUE) {
-                        error("'%s' is not yet determined as a function or "
-                              "a subroutine.", ID_NAME(id));
-                    } else {
-                        error("'%s' is a subroutine, not a function.",
-                              ID_NAME(id));
-                    }
+                    error("'%s' is a subroutine, not a function.",
+                          ID_NAME(id));
                     goto err;
                 }
 
@@ -728,7 +732,7 @@ compile_expression(expr x)
                  */
                 if (TYPE_N_DIM(lt) > 0 && TYPE_N_DIM(rt) > 0 &&
                     are_dimension_and_shape_conformant(x, left, right, 
-                                                       &shape) == TRUE) {
+                                                       &shape, /*for_argument=*/FALSE) == TRUE) {
                     tp = compile_dimensions(bType, shape);
                     fix_array_dimensions(tp);
                     goto doEmit;
@@ -964,16 +968,7 @@ compile_expression(expr x)
                 }
                 EXPV_TYPE(v) = ID_TYPE(id);
             }
-/* FEAST change start */
-            /* if(!expv_is_specification(v)) { */
-            /*     error_at_node(EXPR_ARG1(x), */
-            /*         "character string length must be integer."); */
-            /* } */
-            if(!expv_is_specification(v)){
-                EXPV_TYPE(v) = NULL;
-                sp_link_expr((expr)v, SP_ERR_CHAR_LEN, current_line);
-            }
-/* FEAST change  end  */
+            /* TYPE will be checked in compile_basic_type() */
             return v;
         }
         case PLUS_EXPR:
@@ -1603,7 +1598,7 @@ expv_assignment(expv v1, expv v2)
         EXPR_CODE(v2) != F03_TYPED_ARRAY_CONSTRUCTOR &&
         ((TYPE_N_DIM(tp1) > 0 && TYPE_N_DIM(tp2) > 0) &&
          (are_dimension_and_shape_conformant(NULL, v1, v2,
-                                             NULL) == FALSE))) {
+                                             NULL, /*for_argument*/FALSE) == FALSE))) {
         return NULL;
     }
 
@@ -2800,30 +2795,32 @@ compile_struct_constructor_with_components(const ID struct_id,
             TYPE_DESC stp = get_bottom_ref_type(EXPV_TYPE(v));
             if ((EXPV_CODE(arg) != F_SET_EXPR && is_first_arg) ||
                 (EXPV_CODE(arg) == F_SET_EXPR && ID_SYM(TYPE_TAGNAME(stp)) == EXPR_SYM(EXPR_ARG1(arg)))) {
-                ID pmem;
-                FOREACH_MEMBER(pmem, stp) {
-                    if (find_ident_head(ID_SYM(pmem), used) != NULL) {
-                        error("member'%s' is already specified", ID_NAME(pmem));
-                        return NULL;
-                    }
-                    if ((match = find_ident_head(ID_SYM(pmem), members)) == NULL) {
-                        error_at_node(args,
-                                      "'%s' is specified as a parent type, "
-                                      "but member '%s' is already in the constructor",
-                                      ID_NAME(TYPE_TAGNAME(stp)), ID_NAME(pmem));
-                        return NULL;
-                    } else {
-                        id_link_remove(&members, match);
-                        ID_LINK_ADD(match, used, used_last);
+                for (;stp != NULL; stp = TYPE_PARENT(stp)?TYPE_PARENT_TYPE(stp):NULL) {
+                    ID pmem;
+                    FOREACH_MEMBER(pmem, stp) {
+                        if (find_ident_head(ID_SYM(pmem), used) != NULL) {
+                            error("member'%s' is already specified", ID_NAME(pmem));
+                            return NULL;
+                        }
+                        if ((match = find_ident_head(ID_SYM(pmem), members)) == NULL) {
+                            error_at_node(args,
+                                          "'%s' is specified as a parent type, "
+                                          "but member '%s' is already in the constructor",
+                                          ID_NAME(TYPE_TAGNAME(stp)), ID_NAME(pmem));
+                            return NULL;
+                        } else {
+                            id_link_remove(&members, match);
+                            ID_LINK_ADD(match, used, used_last);
+                        }
                     }
                 }
+                list_put_last(components, v);
+                cur = members;
+                is_first_arg = FALSE;
+                if (EXPV_CODE(arg) == F_SET_EXPR)
+                    has_keyword = TRUE;
+                continue;
             }
-            list_put_last(components, v);
-            cur = members;
-            is_first_arg = FALSE;
-            if (EXPV_CODE(arg) == F_SET_EXPR)
-                has_keyword = TRUE;
-            continue;
         }
 
         if (EXPV_CODE(arg) == F_SET_EXPR) {
@@ -3319,12 +3316,14 @@ compile_dup_decl(expv x)
 static expv
 compile_array_constructor(expr x)
 {
+    int nElemsIsFixed = TRUE;
     int nElems = 0;
     list lp;
     expv v, res, l;
     TYPE_DESC tp = NULL;
     TYPE_DESC base_type = NULL;
     BASIC_DATA_TYPE elem_type = TYPE_UNKNOWN;
+    expv shape;
 
     l = list0(LIST);
     if (EXPR_HAS_ARG2(x) &&
@@ -3340,24 +3339,53 @@ compile_array_constructor(expr x)
 
 
     FOR_ITEMS_IN_LIST(lp, EXPR_ARG1(x)) {
-        nElems++;
         v = compile_expression(LIST_ITEM(lp));
         list_put_last(l, v);
         tp = EXPV_TYPE(v);
+
+        if (IS_ARRAY_TYPE(tp)) {
+            expv d;
+
+            if (!TYPE_IS_RESHAPED(tp) && !TYPE_IS_ARRAY_ADJUSTABLE(tp) && TYPE_N_DIM(tp) != 1) {
+                error("2+ dimensions in the array constructor");
+            }
+
+            if (nElemsIsFixed) {
+                if (TYPE_IS_RESHAPED(tp) || TYPE_IS_ARRAY_ADJUSTABLE(tp)) {
+                    nElemsIsFixed = FALSE;
+                } else {
+                    d = expv_reduce(TYPE_DIM_SIZE(tp), TRUE);
+                    if (d != NULL &&
+                        EXPV_CODE(d) == INT_CONSTANT &&
+                        EXPV_INT_VALUE(d) >= 0) {
+                        nElems += EXPV_INT_VALUE(d);
+                    } else {
+                        nElemsIsFixed = FALSE;
+                    }
+                }
+            }
+
+            tp = bottom_type(tp);
+
+        } else if (IS_GNUMERIC_ALL(tp)) {
+            nElemsIsFixed = FALSE;
+
+        } else {
+            nElems++;
+        }
+
         if (elem_type == TYPE_UNKNOWN) {
             elem_type = get_basic_type(tp);
             continue;
         }
 
-        if (elem_type == TYPE_STRUCT ||
-            elem_type == TYPE_COMPLEX) {
-            if (get_basic_type(tp) != elem_type) {
+        if (elem_type == TYPE_STRUCT) {
+            if (TYPE_BASIC_TYPE(tp) != elem_type && !IS_GNUMERIC_ALL(tp)) {
                 error("Array constructor elements have different data types.");
                 return NULL;
             }
         } else {
-            if (get_basic_type(tp) == TYPE_STRUCT ||
-                get_basic_type(tp) == TYPE_COMPLEX) {
+            if (TYPE_BASIC_TYPE(tp) == TYPE_STRUCT) {
                 error("Array constructor elements have different data types.");
                 return NULL;
             }
@@ -3383,13 +3411,26 @@ compile_array_constructor(expr x)
          */
     }
 
-    EXPV_TYPE(res) =
-        compile_dimensions(tp,
-                           list1(LIST,
-                                 (list2(LIST,
-                                        expv_constant_1,
-                                        expv_int_term(INT_CONSTANT,
-                                                      type_INT, nElems)))));
+    shape = list0(LIST);
+
+    if (nElemsIsFixed) {
+        list_put_last(shape,
+                      (list2(LIST,
+                             expv_constant_1,
+                             expv_int_term(INT_CONSTANT,
+                                           type_INT, nElems))));
+    } else {
+        generate_assumed_shape_expr(shape, 2);
+
+    }
+
+    EXPV_TYPE(res) = compile_dimensions(tp, shape);
+
+    if (nElemsIsFixed) {
+        fix_array_dimensions(EXPV_TYPE(res));
+    } else {
+        TYPE_ARRAY_ASSUME_KIND(EXPV_TYPE(res)) = ASSUMED_SIZE;
+    }
 
     return res;
 }

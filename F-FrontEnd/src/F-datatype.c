@@ -1203,7 +1203,7 @@ rank_compatibility:
         goto attribute_compatibility;
 
     } else if (TYPE_N_DIM(left) > 0 && TYPE_N_DIM(right) > 0 &&
-         are_dimension_and_shape_conformant_by_type(NULL, left, right, NULL, issue_error)) 
+               are_dimension_and_shape_conformant_by_type(NULL, left, right, NULL, for_argunemt, issue_error))
     {
         goto attribute_compatibility;
     } else {
@@ -1671,7 +1671,8 @@ function_type_is_appliable(TYPE_DESC ftp, expv actual_args, int issue_error)
         compare_rank = FALSE;
     }
 
-    if (TYPE_REF(ftp) != NULL && FUNCTION_TYPE_IS_TYPE_BOUND(ftp)) {
+    if (TYPE_REF(ftp) != NULL && (
+            FUNCTION_TYPE_IS_TYPE_BOUND(ftp) || FUNCTION_TYPE_HAS_PASS_ARG(ftp))) {
         /* ftp is the type of type-bound procedure */
         tbp_tp = ftp;
         ftp = TYPE_REF(tbp_tp);
@@ -1688,11 +1689,14 @@ function_type_is_appliable(TYPE_DESC ftp, expv actual_args, int issue_error)
 
     FOREACH_ID(dummy_arg, dummy_args) {
 
-        if (debug_flag)
-            fprintf(debug_fp, "dummy args is '%s'\n", SYM_NAME(ID_SYM(dummy_arg)));
+        debug("dummy args is '%s'\n", SYM_NAME(ID_SYM(dummy_arg)));
+
+        if (actual_arg != NULL && EXPV_KWOPT_NAME(actual_arg) != NULL) {
+            break;
+        }
 
         /* skip type check for PASS argument */
-        if (tbp_tp != NULL && TYPE_BOUND_PROCEDURE_TYPE_HAS_PASS_ARG(tbp_tp)) {
+        if (tbp_tp != NULL) {
             if (TYPE_BOUND_PROCEDURE_TYPE_PASS_ARG(tbp_tp)) {
                 if (ID_SYM(dummy_arg) == ID_SYM(TYPE_BOUND_PROCEDURE_TYPE_PASS_ARG(tbp_tp))) {
                     continue;
@@ -1710,12 +1714,16 @@ function_type_is_appliable(TYPE_DESC ftp, expv actual_args, int issue_error)
             return FALSE;
         }
 
+        if (EXPV_KWOPT_NAME(actual_arg) != NULL) {
+            break;
+        }
+
         if (!isValidType(EXPV_TYPE(actual_arg))) {
             return FALSE;
         }
 
-        if (!type_is_match_for_argument(EXPV_TYPE(actual_arg),
-                                       ID_TYPE(dummy_arg), compare_rank, issue_error))
+        if (!type_is_match_for_argument(ID_TYPE(dummy_arg),
+                                        EXPV_TYPE(actual_arg), compare_rank, issue_error))
         {
             return FALSE;
         }
@@ -1726,6 +1734,45 @@ function_type_is_appliable(TYPE_DESC ftp, expv actual_args, int issue_error)
         } else {
             actual_lp = NULL;
             actual_arg = NULL;
+        }
+    }
+
+    if (actual_arg != NULL && EXPV_KWOPT_NAME(actual_arg) != NULL) {
+
+        dummy_args = dummy_arg;
+
+        for(; actual_lp != NULL; actual_lp = LIST_NEXT(actual_lp)) {
+
+            SYMBOL sym;
+
+            if ((actual_arg = LIST_ITEM(actual_lp)) == NULL) {
+                break;
+            }
+
+            if (EXPV_KWOPT_NAME(actual_arg) == NULL) {
+                /* invalid argument */
+                return FALSE;
+            }
+
+            sym = find_symbol(EXPV_KWOPT_NAME(actual_arg));
+
+            if (tbp_tp != NULL) {
+                if (TYPE_BOUND_PROCEDURE_TYPE_PASS_ARG(tbp_tp)) {
+                    if (sym == ID_SYM(TYPE_BOUND_PROCEDURE_TYPE_PASS_ARG(tbp_tp))) {
+                        continue;
+                    }
+                }
+            }
+
+            dummy_arg = find_ident_head(sym, dummy_args);
+            if (dummy_arg == NULL) {
+                return FALSE;
+            }
+
+            if (!type_is_match_for_argument(EXPV_TYPE(actual_arg),
+                                            ID_TYPE(dummy_arg), compare_rank, issue_error)) {
+                return FALSE;
+            }
         }
     }
 
