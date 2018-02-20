@@ -1368,7 +1368,7 @@ public class XMPtranslateLocalPragma {
 	loop_depth = i;
       }
     }
-    v = XMPrewriteExpr.calcLtoG(templateObj, loop_depth, v); 
+    v = XMPrewriteExpr.calcLtoG(templateObj, loop_depth, v, _globalDecl);
     funcArgs.setArg(num, v);
 
     // Insert Function
@@ -1674,7 +1674,7 @@ public class XMPtranslateLocalPragma {
     }
     
     Xobject parallelCond;
-    if(is_parallelCondConstant(templateObj, forBlock, targetIndex, distManner))
+    if(templateObj.isFixed() && is_parallelCondConstant(templateObj, forBlock, targetIndex, distManner))
       parallelCond = Xcons.IntConstant(calcParallelCond(templateObj, targetIndex, distManner));
     else{
       parallelCond = declIdentWithBlock(schedBaseBlock,

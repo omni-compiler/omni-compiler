@@ -2134,10 +2134,10 @@ public class XMPrewriteExpr {
 
         XMPalignedArray alignedArray = globalDecl.getXMPalignedArray(arrayName, block);
         if (alignedArray == null)
-          rewriteLoopIndexVar(templateObj, templateIndex, loopIndexName, myExpr);
+          rewriteLoopIndexVar(templateObj, templateIndex, loopIndexName, myExpr, globalDecl);
         else
           myExpr.setArg(1, rewriteLoopIndexArrayRefList(templateObj, templateIndex, alignedArray,
-                                                        loopIndexName, (XobjList)myExpr.getArg(1)));
+                                                        loopIndexName, (XobjList)myExpr.getArg(1), globalDecl));
         continue;
       }
       else if (myExpr.isRewrittedByXmp()) {
@@ -2148,7 +2148,7 @@ public class XMPrewriteExpr {
       case VAR:
 	{
 	  if (loopIndexName.equals(myExpr.getSym())) {
-	    iter.setXobject(calcLtoG(templateObj, templateIndex, myExpr));
+	    iter.setXobject(calcLtoG(templateObj, templateIndex, myExpr, globalDecl));
 	  }
 	}
         break;
@@ -2175,7 +2175,7 @@ public class XMPrewriteExpr {
 	  if (alignedArray != null){
 	    Xobject newExpr = Xcons.arrayRef(alignedArray.getType(), alignedArray.getAddrId().Ref(),
 					     rewriteLoopIndexArrayRefList(templateObj, templateIndex, alignedArray,
-									  loopIndexName, indexList));
+									  loopIndexName, indexList, globalDecl));
 	    iter.setXobject(newExpr);
 	  }
 
@@ -2187,7 +2187,7 @@ public class XMPrewriteExpr {
   }
 
   private static void rewriteLoopIndexVar(XMPtemplate templateObj, int templateIndex,
-                                          String loopIndexName, Xobject expr) throws XMPexception
+                                          String loopIndexName, Xobject expr, XMPglobalDecl globalDecl) throws XMPexception
   {
     topdownXobjectIterator iter = new topdownXobjectIterator(expr);
     for (iter.init(); !iter.end(); iter.next()) {
@@ -2201,7 +2201,7 @@ public class XMPrewriteExpr {
       case VAR:
 	{
 	  if (loopIndexName.equals(myExpr.getString())) {
-	    Xobject newExpr = calcLtoG(templateObj, templateIndex, myExpr);
+	    Xobject newExpr = calcLtoG(templateObj, templateIndex, myExpr, globalDecl);
 	    iter.setXobject(newExpr);
 	  }
 	} break;
@@ -2211,7 +2211,8 @@ public class XMPrewriteExpr {
   }
 
   private static XobjList rewriteLoopIndexArrayRefList(XMPtemplate t, int ti, XMPalignedArray a,
-                                                       String loopIndexName, XobjList arrayRefList) throws XMPexception
+                                                       String loopIndexName, XobjList arrayRefList,
+						       XMPglobalDecl globalDecl) throws XMPexception
   {
     if (arrayRefList == null) {
       return null;
@@ -2221,7 +2222,7 @@ public class XMPrewriteExpr {
     int arrayDimIdx = 0;
 
     for (Xobject x : arrayRefList) {
-      newArrayRefList.add(rewriteLoopIndexArrayRef(t, ti, a, arrayDimIdx, loopIndexName, x));
+      newArrayRefList.add(rewriteLoopIndexArrayRef(t, ti, a, arrayDimIdx, loopIndexName, x, globalDecl));
       arrayDimIdx++;
       x.setIsRewrittedByXmp(true);
     }
@@ -2230,12 +2231,12 @@ public class XMPrewriteExpr {
   }
 
   private static Xobject rewriteLoopIndexArrayRef(XMPtemplate t, int ti, XMPalignedArray a, int ai,
-                                                  String loopIndexName, Xobject arrayRef) throws XMPexception
+                                                  String loopIndexName, Xobject arrayRef, XMPglobalDecl globalDecl) throws XMPexception
   {
     if (arrayRef.Opcode() == Xcode.VAR) {
       if (a.getShadowAt(ai).getType() != XMPshadow.SHADOW_FULL ||
 	  loopIndexName.equals(arrayRef.getString())) {
-	return calcShadow(t, ti, a, ai, arrayRef);
+	return calcShadow(t, ti, a, ai, arrayRef, globalDecl);
       }
     }
 
@@ -2252,7 +2253,7 @@ public class XMPrewriteExpr {
         case VAR:
           {
             if (loopIndexName.equals(myExpr.getString())) {
-              iter.setXobject(calcShadow(t, ti, a, ai, myExpr));
+              iter.setXobject(calcShadow(t, ti, a, ai, myExpr, globalDecl));
             }
           } break;
         default:
@@ -2262,7 +2263,7 @@ public class XMPrewriteExpr {
   }
 
   private static Xobject calcShadow(XMPtemplate t, int ti, XMPalignedArray a, int ai,
-                                    Xobject expr) throws XMPexception {
+                                    Xobject expr, XMPglobalDecl globalDecl) throws XMPexception {
     expr.setIsRewrittedByXmp(true);
     if(a.getAlignSubscriptIndexAt(ai) != null){  // null is an asterisk
       if (ti != a.getAlignSubscriptIndexAt(ai).intValue()) {
@@ -2277,13 +2278,13 @@ public class XMPrewriteExpr {
       case XMPshadow.SHADOW_NORMAL:
         return Xcons.binaryOp(Xcode.PLUS_EXPR, expr, shadow.getLo());
       case XMPshadow.SHADOW_FULL:
-        return calcLtoG(t, ti, expr);
+        return calcLtoG(t, ti, expr, globalDecl);
       default:
         throw new XMPexception("unknown shadow type");
     }
   }
 
-  public static Xobject calcLtoG(XMPtemplate t, int ti, Xobject expr) throws XMPexception {
+  public static Xobject calcLtoG(XMPtemplate t, int ti, Xobject expr, XMPglobalDecl globalDecl) throws XMPexception {
     expr.setIsRewrittedByXmp(true);
 
     if (!t.isDistributed()) {
@@ -2296,6 +2297,14 @@ public class XMPrewriteExpr {
       ni = t.getOntoNodesIndexAt(ti).getInt();
 
     XobjList args = null;
+
+    if (!t.isFixed()){
+      // now offset should be 0 in XMP/C.
+      args = Xcons.List(expr, t.getDescId().Ref(), Xcons.IntConstant(ti), Xcons.IntConstant(0));
+      Ident f = globalDecl.declExternFunc("xmpc_ltog", Xtype.intType); // should be longlong?
+      return f.Call(args);
+    }
+
     switch (t.getDistMannerAt(ti)) {
       case XMPtemplate.DUPLICATION:
         return expr;

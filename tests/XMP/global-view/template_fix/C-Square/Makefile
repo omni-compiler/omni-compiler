@@ -19,6 +19,7 @@ run: $(EXES)
 	$(XRUN) -n 4 ./block.x
 	$(XRUN) -n 4 ./block_cyclic.x
 	$(XRUN) -n 4 ./gblock.x
+	$(XRUN) -n 2 ./arg.x
 
 RUN:
 	mkdir RUN

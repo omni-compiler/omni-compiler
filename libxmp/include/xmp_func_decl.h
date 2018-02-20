@@ -329,7 +329,7 @@ extern void _XMP_dist_template_GBLOCK(void *template, int template_index, int no
 
 extern int _XMP_exec_task_TEMPLATE_PART(void **task_desc, void *ref_template, ...);
 extern int _XMP_exec_task_TEMPLATE_PART_nocomm(void **task_desc, void *ref_template, ...);
-extern long long int _XMP_L2G_GBLOCK(int local_idx, void *template, int template_index);
+extern /*long long*/ int xmpc_ltog(int local_idx, void *template, int template_index, int offset);
 
 // xmp_util.c
 extern void *_XMP_alloc(size_t size);
