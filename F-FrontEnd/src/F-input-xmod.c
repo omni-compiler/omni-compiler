@@ -1093,7 +1093,7 @@ input_functionCall(xmlTextReaderPtr reader, HashTable * ht, expv * v)
     PROC_EXT_ID(id) = new_external_id_for_external_decl(s, tp);
 
     if (TYPE_IS_INTRINSIC(tp)) {
-        *v = compile_intrinsic_call(id, args);
+        *v = compile_intrinsic_call0(id, args, TRUE);
     } else {
         ID_ADDR(id) = expv_sym_term(IDENT, NULL, s);
         *v = list3(FUNCTION_CALL, ID_ADDR(id), args, expv_any_term(F_EXTFUNC, id));
