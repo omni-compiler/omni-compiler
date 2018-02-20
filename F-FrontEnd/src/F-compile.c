@@ -2657,10 +2657,16 @@ end_declaration()
             PROC_CLASS(ip) == P_EXTERNAL) {
             ep = find_ext_id(ID_SYM(ip));
             if (ep != NULL && EXT_PROC_TYPE(ep) != NULL) {
-                tp = EXT_PROC_TYPE(ep);
+                /* Copy type to avoid modifying TYPE_ATTR_FLAGS */
+                if (TYPE_IS_EXTERNAL(ip)) {
+                    tp = new_type_desc();
+                    *tp = *EXT_PROC_TYPE(ep);
+                } else {
+                    tp = EXT_PROC_TYPE(ep);
+                }
             } else {
-                tp = subroutine_type();
-                PROC_IS_FUNC_SUBR_AMBIGUOUS(ip) = TRUE;
+                tp = wrap_type(type_GNUMERIC_ALL);
+                TYPE_SET_IMPLICIT(tp);
             }
             declare_id_type(ip, tp);
         }
@@ -2700,27 +2706,35 @@ end_declaration()
         if (TYPE_IS_EXTERNAL(tp)) {
             uint32_t type_attr_flags;
             TYPE_DESC ftp;
+            TYPE_DESC ret;
 
             if (!IS_PROCEDURE_TYPE(tp)) {
                 tp = function_type(tp);
             }
             type_attr_flags = TYPE_ATTR_FLAGS(ip);
             ftp = tp;
-            if (TYPE_REF(ftp)) {
-                ftp = TYPE_REF(ftp);
-            }
 
             ftp = copy_type_partially(ftp, /*doCopyAttr=*/TRUE);
 
             type_attr_flags = TYPE_ATTR_FLAGS(ftp);
 
-            if ((type_attr_flags & ~TYPE_ATTR_EXTERNAL)  != 0 && TYPE_REF(tp) == NULL) {
+            if ((type_attr_flags & ~TYPE_ATTR_EXTERNAL) != 0 && TYPE_REF(tp) == NULL) {
                 tp = wrap_type(ftp);
                 TYPE_ATTR_FLAGS(tp) |= type_attr_flags;
                 TYPE_ATTR_FLAGS(ftp) &= TYPE_ATTR_EXTERNAL;
             }
             TYPE_UNSET_SAVE(tp);
             ID_TYPE(ip) = tp;
+
+            ret = FUNCTION_TYPE_RETURN_TYPE(ftp);
+            if (TYPE_IS_IMPLICIT(ret)) {
+                /*
+                 * If the return type of EXTERNAL procedure is implicit,
+                 * its type should be determind.
+                 */
+                TYPE_BASIC_TYPE(ret) = TYPE_GNUMERIC_ALL;
+                TYPE_SET_IMPLICIT(tp);
+            }
         }
 
         if (IS_FUNCTION_TYPE(tp) && TYPE_REF(tp) == NULL) {
@@ -3357,9 +3371,17 @@ redefine_procedures(EXT_ID proc, EXT_ID unit_ctl_procs[], int redefine_unit_ctl_
             fprintf(debug_fp, "checking %s\n", ID_NAME(id));
         }
 
+        if (ID_TYPE(id) && ID_STORAGE(id) == STG_ARG) {
+            if (!IS_PROCEDURE_TYPE(ID_TYPE(id))) {
+                ID_TYPE(id) = function_type(ID_TYPE(id));
+            }
+            continue;
+        }
+
         contained_proc = procedure_defined(id, unit_ctl_procs, redefine_unit_ctl_level);
 
         if (contained_proc == NULL) {
+
             EXT_ID external_proc = NULL;
 
             EXT_ID ep;
@@ -5627,13 +5649,6 @@ import_module_id(ID mid,
         EXT_NEXT(ep) = NULL;
         EXT_PROC_INTR_DEF_EXT_IDS(ep) = NULL;
 
-#if 0
-        if (type_has_replica(EXT_PROC_TYPE(mep), &EXT_PROC_TYPE(ep))) {
-            EXT_PROC_TYPE(ep)
-                    = shallow_copy_type_for_module_id(EXT_PROC_TYPE(mep));
-        }
-#endif
-
         if (EXT_PROC_INTR_DEF_EXT_IDS(mep) != NULL) {
             EXT_ID head, p;
             head = shallow_copy_ext_id(EXT_PROC_INTR_DEF_EXT_IDS(mep));
@@ -5820,15 +5835,23 @@ import_module_ids(struct module *mod, struct use_argument * args,
 
     FOREACH_ID(mid, MODULE_ID_LIST(mod)) {
         if (args != NULL) {
+            int found = FALSE;
             FOREACH_USE_ARG(arg, args) {
                 wrap_type = TRUE;
                 if (arg->local != ID_SYM(mid))
                     continue;
+                found = TRUE;
                 import_module_id(mid,
                                  &LOCAL_SYMBOLS, &last_id,
                                  &LOCAL_STRUCT_DECLS, &sttail,
                                  arg->use, wrap_type, fromParentModule);
                 arg->used = TRUE;
+            }
+            if (!found && !isOnly) {
+                import_module_id(mid,
+                                 &LOCAL_SYMBOLS, &last_id,
+                                 &LOCAL_STRUCT_DECLS, &sttail,
+                                 NULL, wrap_type, fromParentModule);
             }
         } else {
             if (!isOnly) {
@@ -6363,6 +6386,7 @@ end_interface()
             PROC_EXT_ID(fid) = ep;
             EXT_PROC_CLASS(ep) = EP_INTERFACE_DEF;
             ID_ORDER(fid) = ID_ORDER(EXT_PROC_ID_LIST(ep));
+            ID_LINE(fid) = EXT_LINE(EXT_PROC_ID_LIST(ep));
         }
 
         if (INTF_IS_ABSTRACT(EXT_PROC_INTERFACE_INFO(intr))) {
@@ -6516,6 +6540,8 @@ compile_interface_MODULEPROCEDURE_statement(expr x)
 
         if (EXT_PROC_TYPE(ep) != NULL) {
             FUNCTION_TYPE_SET_MOUDLE_PROCEDURE(EXT_PROC_TYPE(ep));
+        } else {
+            EXT_PROC_TYPE(ep) = ID_TYPE(id);
         }
 
         if (ID_TYPE(id) != NULL) {
@@ -7066,7 +7092,12 @@ compile_ALLOCATE_DEALLOCATE_statement(expr x)
         TYPE_DESC ltp = NULL;
 
         if (tp) {
-            if (!type_is_compatible_for_allocation(EXPV_TYPE(LIST_ITEM(lp)),
+            TYPE_DESC tq = EXPV_TYPE(LIST_ITEM(lp));
+            if (IS_ARRAY_TYPE(tq)) {
+                tq = get_bottom_ref_type(tq);
+            }
+
+            if (!type_is_compatible_for_allocation(tq,
                                                    tp)) {
                 error("type incompatible");
                 return;
@@ -7216,6 +7247,26 @@ compile_CALL_member_procedure_statement(expr x)
         TYPE_REF(FUNCTION_TYPE_RETURN_TYPE(tp)) = NULL;
     }
 
+    /**
+     * Fix for issue#531
+     * Check if binded procedure has been declared already. 
+     * If not, we have to switch the type has it is set to TYPE_FUNCTION 
+     * by default and we want to deal with SUBROUTINE for a CALL xx%yy
+     */
+    if(TBP_BINDING(mem) && !find_ident(ID_SYM(TBP_BINDING(mem)))
+        && TYPE_BASIC_TYPE(tp) == TYPE_FUNCTION)
+    {
+        TYPE_BASIC_TYPE(tp) = TYPE_SUBR;
+        TYPE_SET_USED_EXPLICIT(tp);
+    } else if(TBP_BINDING(mem) && find_ident(ID_SYM(TBP_BINDING(mem)))) {
+        // id has been declared but no type yet
+        ID tbp = find_ident(ID_SYM(TBP_BINDING(mem)));
+        if(ID_TYPE(tbp) == NULL) {
+            TYPE_BASIC_TYPE(tp) = TYPE_SUBR;
+            TYPE_SET_USED_EXPLICIT(tp);
+        }
+    }
+
     if (!TYPE_IS_IMPLICIT(tp) &&
         !FUNCTION_TYPE_IS_GENERIC(tp) &&
         !IS_SUBR(tp) &&
@@ -7313,7 +7364,7 @@ compile_CALL_subroutine_statement(expr x)
                 !(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)) != NULL &&
                   (IS_VOID(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id))) ||
                    TYPE_IS_IMPLICIT(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id))) ||
-                   IS_GENERIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)))))) {
+                   IS_GNUMERIC_ALL(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)))))) {
                 error("called '%s' which doesn't have a type like a subroutine", ID_NAME(id));
                 return;
             }
@@ -8085,7 +8136,7 @@ accept:
                 if (get_bottom_ref_type(vPtrTyp) == get_bottom_ref_type(vPteTyp)) {
                     /* DO NOTHING, procedures are the same type */
                 } else if (IS_FUNCTION_TYPE(vPteTyp) &&
-                           TYPE_IS_IMPLICIT(FUNCTION_TYPE_RETURN_TYPE(vPteTyp)) &&
+                           TYPE_IS_IMPLICIT(vPteTyp) &&
                            !TYPE_IS_EXTERNAL(vPteTyp) &&
                            TYPE_REF(vPtrTyp)) {
                     /*

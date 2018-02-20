@@ -1090,7 +1090,7 @@ int _XMP_calc_linear_rank_on_target_nodes(_XMP_nodes_t *n, int *rank_array, _XMP
 _Bool _XMP_calc_coord_on_target_nodes2(_XMP_nodes_t *n, int *ncoord, 
 				       _XMP_nodes_t *target_n, int *target_ncoord)
 {
-  if(n == target_n){
+  if (n == target_n){
     //printf("%d, %d\n", n->dim, target_n->dim);
     memcpy(target_ncoord, ncoord, sizeof(int) * n->dim);
     return true;
@@ -1103,7 +1103,7 @@ _Bool _XMP_calc_coord_on_target_nodes2(_XMP_nodes_t *n, int *ncoord,
   }
 
   _XMP_nodes_t *target_p = target_n->inherit_nodes;
-  if(target_p){
+  if (target_p){
     int target_pcoord[_XMP_N_MAX_DIM];
     if (_XMP_calc_coord_on_target_nodes2(n, ncoord, target_p, target_pcoord)){
       //int target_prank = _XMP_calc_linear_rank(target_p, target_pcoord);
@@ -1115,14 +1115,22 @@ _Bool _XMP_calc_coord_on_target_nodes2(_XMP_nodes_t *n, int *ncoord,
       int target_rank = 0;
       int multiplier  = 1;
 
-      for(int i=0;i<target_p->dim;i++){
-      	if(inherit_info[i].shrink){
+      for (int i = 0; i < target_p->dim; i++){
+
+	if (inherit_info[i].shrink){
 	  ;
       	}
-      	else{
+	else if (target_pcoord[i] < inherit_info[i].lower || target_pcoord[i] > inherit_info[i].upper){
+	  for (int i = 0; i < target_n->dim; i++){
+	    target_ncoord[i] = -1;
+	  }
+	  return true;
+	}
+      	else {
       	  int target_rank_dim = (target_pcoord[i] - inherit_info[i].lower) / inherit_info[i].stride;
 	  target_rank += multiplier * target_rank_dim;
-	  multiplier *= inherit_info[i].size;
+	  //multiplier *= inherit_info[i].size;
+	  multiplier *= _XMP_M_COUNT_TRIPLETi(inherit_info[i].lower, inherit_info[i].upper, inherit_info[i].stride);
       	}
       }
 
@@ -1131,6 +1139,7 @@ _Bool _XMP_calc_coord_on_target_nodes2(_XMP_nodes_t *n, int *ncoord,
       return true;
     }
   }
+  
   return false;
 }
     
@@ -1145,7 +1154,7 @@ _Bool _XMP_calc_coord_on_target_nodes(_XMP_nodes_t *n, int *ncoord,
     return true;
 
   _XMP_nodes_t *p = n->inherit_nodes;
-  if(p){
+  if (p){
     int pcoord[_XMP_N_MAX_DIM];
     int rank = _XMP_calc_linear_rank(n, ncoord);
     //_XMP_calc_rank_array(p, pcoord, rank);

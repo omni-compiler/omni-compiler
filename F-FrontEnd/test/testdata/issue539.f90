@@ -1,0 +1,6 @@
+MODULE mod1
+  CHARACTER(len=5), PARAMETER :: VINTP_TYPE_LIST(3) = (/ "Z", "P", "I" /)
+  TYPE type1
+    LOGICAL :: v2(SIZE(VINTP_TYPE_LIST))
+  END TYPE type1
+END MODULE mod1
