@@ -1435,7 +1435,6 @@ declare_ident(SYMBOL s, enum name_class class)
     ID* symbols;
     int isInUseDecl = checkInsideUse();
     int isPreDecl = FALSE;
-    int inTypeDecl = FALSE;
     int isInternalPrivate = FALSE; // For struct type
     char msg[2048];
     const char *fmt = "%s '%s' is already declared.";
@@ -1469,7 +1468,6 @@ declare_ident(SYMBOL s, enum name_class class)
                     isInternalPrivate = TYPE_IS_INTERNAL_PRIVATE(struct_tp);
                     symbols = &TYPE_MEMBER_LIST(struct_tp);
                     class = CL_ELEMENT;
-                    inTypeDecl = TRUE;
                 }
             }
         }
@@ -1550,12 +1548,9 @@ declare_ident(SYMBOL s, enum name_class class)
     if(predecl_ip != NULL) {
         ip = predecl_ip;
         ID_ORDER(ip) = order_sequence++;
-    } else {    
+    } else {
         ip = new_ident_desc(s);
-        // Do not add intrinsic id to the type member list
-        if(!(SYM_TYPE(s) == S_INTR && inTypeDecl)) {
-            ID_LINK_ADD(ip, *symbols, last_ip);      
-        }
+        ID_LINK_ADD(ip, *symbols, last_ip);
         ID_SYM(ip) = s;
         ID_CLASS(ip) = class;
         if(isPreDecl == FALSE)
@@ -1563,8 +1558,6 @@ declare_ident(SYMBOL s, enum name_class class)
         if(isInternalPrivate) {
             TYPE_SET_INTERNAL_PRIVATE(ip);
         }
-        
-        
     }
 
     switch (class) {
@@ -3602,6 +3595,12 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
 
     FOR_ITEMS_IN_LIST(lp, decl_list) {
 
+        /*
+         * FIXME:
+         *	SUPER BOGUS FLAG ALERT !
+         */
+        is_in_struct_member_initializer_compilation_flag_for_declare_ident = FALSE;
+
         x = LIST_ITEM(lp);
         ident  = EXPR_ARG1(x);
         dims   = EXPR_ARG2(x);
@@ -3661,9 +3660,9 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
                 continue;
             } else if (id != NULL && ID_IS_AMBIGUOUS(id)) {
                 error_at_node(decl_list, "an ambiguous reference to symbol '%s'", ID_NAME(id));
-                return;
-	    } else if(id != NULL && ID_TYPE(id) && TYPE_IS_FOR_FUNC_SELF(ID_TYPE(id))) {
-	      ;
+                goto finalize;
+            } else if(id != NULL && ID_TYPE(id) && TYPE_IS_FOR_FUNC_SELF(ID_TYPE(id))) {
+                ;
             } else if(id == NULL || !(ID_IS_DUMMY_ARG(id))) {
                 id = declare_ident(EXPR_SYM(ident), CL_UNKNOWN);
             } else if (id != NULL && ID_IS_DUMMY_ARG(id)) {
@@ -3678,6 +3677,8 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
             if (t && TYPE_LENG(t) && IS_INT_CONST_V(TYPE_LENG(t)) == FALSE)
                 ID_ORDER(id) = order_sequence++;
         }
+
+        is_in_struct_member_initializer_compilation_flag_for_declare_ident = TRUE;
 
         if (tp0 == NULL) {
             tp = ID_TYPE(id);
@@ -3768,8 +3769,7 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
                                          ignoreDimsInAttr,
                                          ignoreCodimsInAttr);
 
-            if (!tp) return;
-
+            if (!tp) goto finalize;
         }
 
         if (dims != NULL) {
@@ -3784,7 +3784,7 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
         if (codims) {
             if (CTL_TYPE(ctl_top) == CTL_STRUCT && !TYPE_IS_ALLOCATABLE(tp)){
                 error_at_node(codims, "A coarray component must be allocatable.");
-                return;
+                goto finalize;
             }
 
             /* if (is_descendant_coindexed(tp)){ */
@@ -3798,21 +3798,21 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
                 tp->codims = codesc;
             } else {
                 error_at_node(codims, "Wrong codimension declaration.");
-                return;
+                goto finalize;
             }
         }
 
-	TYPE_DESC tp1 = IS_ARRAY_TYPE(tp) ? bottom_type(tp) : tp;
-	if (has_coarray_component(tp1)){
-	  if (TYPE_IS_POINTER(tp1) || TYPE_IS_ALLOCATABLE(tp1) || IS_ARRAY_TYPE(tp) ||
-	      TYPE_IS_COINDEXED(tp1)){
-	    error_at_node(decl_list, "An entity or data component whose type has a coarray"
-			  " ultimate component shall be a nonpointer nonallocatable scalar"
-			  " and shall not be a coarray.");
-	    return;
-	  }
-	}
-	
+        TYPE_DESC tp1 = IS_ARRAY_TYPE(tp) ? bottom_type(tp) : tp;
+        if (has_coarray_component(tp1)){
+            if (TYPE_IS_POINTER(tp1) || TYPE_IS_ALLOCATABLE(tp1) || IS_ARRAY_TYPE(tp) ||
+                TYPE_IS_COINDEXED(tp1)){
+                error_at_node(decl_list, "An entity or data component whose type has a coarray"
+                              " ultimate component shall be a nonpointer nonallocatable scalar"
+                              " and shall not be a coarray.");
+                goto finalize;
+            }
+        }
+
         if (id != NULL) {
              declare_id_type(id, tp);
              if (!ID_LINE(id) || PROC_CLASS(id) == P_THISPROC) ID_LINE(id) = EXPR_LINE(decl_list);
@@ -3842,19 +3842,11 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
                 TYPE_IS_ALLOCATABLE(tp) ||
                 TYPE_IS_EXTERNAL(tp) || TYPE_IS_INTRINSIC(tp) || ID_SYM(id) == resS) {
                 error_at_node(decl_list, "%s cannot have an initializer.", ID_NAME(id));
-                return;
+                goto finalize;
             }
 
-            /*
-             * FIXME:
-             *	SUPER BOGUS FLAG ALERT !
-             */
-            is_in_struct_member_initializer_compilation_flag_for_declare_ident
-                = TRUE;
             VAR_INIT_VALUE(id) = compile_expression(value);
             ID_ORDER(id) = order_sequence++;
-            is_in_struct_member_initializer_compilation_flag_for_declare_ident
-                = FALSE;
         }
 
         if (TYPE_IS_PARAMETER(tp)) {
@@ -3870,6 +3862,9 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
         }
 
     } /* end FOR_ITEMS_IN_LIST */
+
+finalize:
+    is_in_struct_member_initializer_compilation_flag_for_declare_ident = FALSE;
 }
 
 TYPE_DESC
