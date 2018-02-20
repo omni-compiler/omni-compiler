@@ -504,9 +504,9 @@ public class XMPalignedArray {
       throw new XMPexception("template '" + templateName + "' is not declared");
     }
 
-    if (!templateObj.isFixed() && !isPointer) {
-      throw new XMPexception("An array cannot aligned with a non-fixed template '" + templateName +"'");
-    }
+    // if (!templateObj.isFixed() && !isPointer) {
+    //   throw new XMPexception("An array cannot aligned with a non-fixed template '" + templateName +"'");
+    // }
 
     if (!(templateObj.isDistributed())) {
       throw new XMPexception("template '" + templateName + "' is not distributed");
