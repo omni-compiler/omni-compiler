@@ -2365,6 +2365,7 @@ outx_POINTS_AT(FILE *fp, int indent, CExprOfBinaryNode *pointsAt)
 /* } */
 
 extern unsigned int s_arrayToPointer;
+extern unsigned int s_useXMP;
 
 void
 outx_ARRAY_REF(FILE *fp, int indent, CExprOfBinaryNode *aryRef)
@@ -2385,41 +2386,41 @@ outx_ARRAY_REF(FILE *fp, int indent, CExprOfBinaryNode *aryRef)
     CExprOfTypeDesc *aryTd = EXPRS_TYPE(aryExpr);
     CExprOfTypeDesc *aryTdo = getRefType(aryTd);
 
-    /* CExpr *dim = aryRef->e_nodes[1]; */
-    /* CExpr *dimLwr = exprListHeadData(dim); */
+    CExpr *dim = aryRef->e_nodes[1];
+    CExpr *dimLwr = exprListHeadData(dim);
 
     CExpr *parent = EXPR_PARENT(aryRef);
     CExprCodeEnum pec = EXPR_CODE(parent);
 
-    /* CExprOfBinaryNode *tmp_aryRef = EXPR_B(aryRef->e_nodes[0]); */
-    /* while (EXPR_CODE(tmp_aryRef) == EC_ARRAY_REF){ */
-    /*   tmp_aryRef = EXPR_B(tmp_aryRef->e_nodes[0]); */
-    /* } */
+    CExprOfBinaryNode *tmp_aryRef = EXPR_B(aryRef->e_nodes[0]);
+    while (EXPR_CODE(tmp_aryRef) == EC_ARRAY_REF){
+      tmp_aryRef = EXPR_B(tmp_aryRef->e_nodes[0]);
+    }
 
-    /* if (s_arrayToPointer || EXPR_CODE(tmp_aryRef) != EC_IDENT || */
-    /* 	EXPRS_TYPE(EXPR_SYMBOL(tmp_aryRef))->e_tdKind != TD_ARRAY){ */
+    if (!s_useXMP && (s_arrayToPointer || EXPR_CODE(tmp_aryRef) != EC_IDENT ||
+		      EXPRS_TYPE(EXPR_SYMBOL(tmp_aryRef))->e_tdKind != TD_ARRAY)){
 
-    /*   int pref = (pec != EC_ADDR_OF); */
-    /*   int indent1 = pref ? indent: indent - 1; */
-    /*   const char *pointerRefTag = "pointerRef"; */
-    /*   const char *plusExprTag = "plusExpr"; */
+      int pref = (pec != EC_ADDR_OF);
+      int indent1 = pref ? indent: indent - 1;
+      const char *pointerRefTag = "pointerRef";
+      const char *plusExprTag = "plusExpr";
     
-    /*   if (pref) */
-    /* 	outxTag1(fp, indent, (CExpr*)aryRef, pointerRefTag, XATTR_TYPE); */
+      if (pref)
+	outxTag1(fp, indent, (CExpr*)aryRef, pointerRefTag, XATTR_TYPE);
 
-    /*   CExprOfTypeDesc *plusExprTd = ETYP_IS_ARRAY(aryTdo) ? */
-    /* 	EXPR_T(aryTdo->e_paramExpr) : aryTd; */
+      CExprOfTypeDesc *plusExprTd = ETYP_IS_ARRAY(aryTdo) ?
+	EXPR_T(aryTdo->e_paramExpr) : aryTd;
 
-    /*   outxTag(fp, indent1 + 1, (CExpr*)aryRef, plusExprTag, XATTR_COMMON, */
-    /* 	      " type=\"%s\"", plusExprTd->e_typeId); */
-    /*   outxContext(fp, indent1 + 2, aryExpr); */
-    /*   outxContext(fp, indent1 + 2, dimLwr); */
-    /*   outxTagClose(fp, indent1 + 1, plusExprTag); */
+      outxTag(fp, indent1 + 1, (CExpr*)aryRef, plusExprTag, XATTR_COMMON,
+	      " type=\"%s\"", plusExprTd->e_typeId);
+      outxContext(fp, indent1 + 2, aryExpr);
+      outxContext(fp, indent1 + 2, dimLwr);
+      outxTagClose(fp, indent1 + 1, plusExprTag);
     
-    /*   if (pref) */
-    /* 	outxTagClose(fp, indent, pointerRefTag); */
-    /* } */
-    /* else { */
+      if (pref)
+	outxTagClose(fp, indent, pointerRefTag);
+    }
+    else {
       int pref = (pec == EC_ADDR_OF);
 
       if (pref){
@@ -2434,7 +2435,7 @@ outx_ARRAY_REF(FILE *fp, int indent, CExprOfBinaryNode *aryRef)
 
       if (pref)
 	outxPrint(fp, --indent, "</addrOfExpr>\n");
-    /* } */
+    }
   }
 }
 
