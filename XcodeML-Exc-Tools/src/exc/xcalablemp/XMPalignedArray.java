@@ -645,7 +645,11 @@ public class XMPalignedArray {
       String alignSource = i.getArg().getString();
 
       if (alignSource.equals(XMP.ASTERISK)) {
-        declNotAlignFunc(alignedArray, alignSourceIndex, globalDecl, isLocalPragma, pb);
+	if (!isPointer)
+	  declNotAlignFunc(alignedArray, alignSourceIndex, globalDecl, isLocalPragma, pb);
+	else
+	  declAlignFunc_pointer(alignedArray, alignSourceIndex, null, -1,
+				Xcons.IntConstant(0), globalDecl, isLocalPragma, pb);
       }
       else if (alignSource.equals(XMP.COLON)) {
         if (!XMPutil.hasElmt(alignSubscriptVarList, XMP.COLON)) {
@@ -917,11 +921,16 @@ public class XMPalignedArray {
 
     alignFuncArgs.add(alignSubscriptExpr);
 
-    int distManner = templateObj.getDistMannerAt(alignSubscriptIndex);
-    alignedArray.setAlignMannerAt(XMPalignedArray.convertDistMannerToAlignManner(distManner), alignSourceIndex);
+    if (templateObj != null){
+      int distManner = templateObj.getDistMannerAt(alignSubscriptIndex);
+      alignedArray.setAlignMannerAt(XMPalignedArray.convertDistMannerToAlignManner(distManner), alignSourceIndex);
 
-    alignedArray.setAlignSubscriptIndexAt(alignSubscriptIndex, alignSourceIndex);
-    alignedArray.setAlignSubscriptExprAt(alignSubscriptExpr, alignSourceIndex);
+      alignedArray.setAlignSubscriptIndexAt(alignSubscriptIndex, alignSourceIndex);
+      alignedArray.setAlignSubscriptExprAt(alignSubscriptExpr, alignSourceIndex);
+    }
+    else {
+      alignedArray.setAlignMannerAt(XMPalignedArray.NOT_ALIGNED, alignSourceIndex);
+    }
 
     Ident gtolTemp0Id = null;
     if (isLocalPragma) {
