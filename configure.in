@@ -995,7 +995,7 @@ else
 
     chk=`${MPI_CC} --version | head -n1`
     case $chk in
-       gcc* | Apple* | cc*)
+       gcc* | Apple* | cc* | *mpc-gcc_620* )
 	    # OpenMP
 	    OPENMP_OPT_C="-fopenmp"
 
