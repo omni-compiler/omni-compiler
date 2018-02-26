@@ -1769,8 +1769,8 @@ function_type_is_appliable(TYPE_DESC ftp, expv actual_args, int issue_error)
                 return FALSE;
             }
 
-            if (!type_is_match_for_argument(EXPV_TYPE(actual_arg),
-                                            ID_TYPE(dummy_arg), compare_rank, issue_error)) {
+            if (!type_is_match_for_argument(ID_TYPE(dummy_arg),
+                                            EXPV_TYPE(actual_arg), compare_rank, issue_error)) {
                 return FALSE;
             }
         }

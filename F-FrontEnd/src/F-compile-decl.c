@@ -5952,7 +5952,7 @@ compile_type_bound_generic_procedure(expr x)
 
     switch (EXPR_CODE(generics_spec)) {
         case IDENT:
-            id = find_struct_member(struct_tp, EXPR_SYM(generics_spec));
+            id = find_ident_head(EXPR_SYM(generics_spec), TYPE_MEMBER_LIST(struct_tp));
             if (id != NULL) {
                 // Multiple GENERIC statement for the same id. Have to add to 
                 // the binding list. 
@@ -5969,7 +5969,7 @@ compile_type_bound_generic_procedure(expr x)
             expr arg;
             arg = EXPR_ARG1(generics_spec);
             SYMBOL sym = find_symbol(EXPR_CODE_SYMBOL(EXPR_CODE(arg)));
-            if ((id = find_struct_member(struct_tp, sym)) == NULL) {
+            if ((id = find_ident_head(sym, TYPE_MEMBER_LIST(struct_tp))) == NULL) {
                 id = declare_ident(sym, CL_TYPE_BOUND_PROC);
             }
             switch (EXPR_CODE(arg)) {
@@ -6007,7 +6007,7 @@ compile_type_bound_generic_procedure(expr x)
         case F95_USER_DEFINED:{
             expr arg;
             arg = EXPR_ARG1(generics_spec);
-            if ((id = find_struct_member(struct_tp, EXPR_SYM(arg))) == NULL) {
+            if ((id = find_ident_head(EXPR_SYM(arg), TYPE_MEMBER_LIST(struct_tp))) == NULL) {
                 id = declare_ident(EXPR_SYM(arg), CL_TYPE_BOUND_PROC);
                 binding_attr_flags |= TYPE_BOUND_PROCEDURE_IS_OPERATOR;
             }

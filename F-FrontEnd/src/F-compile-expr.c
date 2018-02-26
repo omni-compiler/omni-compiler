@@ -161,7 +161,7 @@ compile_terminal_node(x)
 
 TYPE_DESC
 bottom_type(type)
-    TYPE_DESC type;
+    const TYPE_DESC type;
 {
     TYPE_DESC tp = type;
 
@@ -522,7 +522,11 @@ compile_expression(expr x)
                     tp = EXPV_TYPE(v);
                 }
             } else {
-                tp = EXPV_TYPE(v);
+                if (!IS_NUMERIC(tp) && is_userdefined) {
+                    tp = BASIC_TYPE_DESC(TYPE_GNUMERIC_ALL);
+                } else {
+                    tp = EXPV_TYPE(v);
+                }
             }
             return expv_cons(UNARY_MINUS_EXPR,tp,v,NULL);
         }
@@ -611,8 +615,16 @@ compile_expression(expr x)
                     }
                 }
 
-                if(error_msg == NULL) {
-                    bType = type_basic(TYPE_LOGICAL);
+                if (error_msg == NULL) {
+                    if (IS_GNUMERIC_ALL(bLType) || IS_GNUMERIC_ALL(bRType)) {
+                        /*
+                         * GNUMERIC_ALL can be an array.
+                         * So the type of this expression also can be determined.
+                         */
+                        tp = BASIC_TYPE_DESC(TYPE_GNUMERIC_ALL);
+                    } else {
+                        bType = type_basic(TYPE_LOGICAL);
+                    }
                 } else if(is_userdefined) {
                     tp = BASIC_TYPE_DESC(TYPE_GNUMERIC_ALL);
                 } else {
@@ -806,11 +818,13 @@ compile_expression(expr x)
             rt = bottom_type(EXPV_TYPE(right));
             if ((!IS_CHAR(lt) && !IS_GNUMERIC(lt) && !IS_GNUMERIC_ALL(lt)) ||
                 (!IS_CHAR(rt) && !IS_GNUMERIC(rt) && !IS_GNUMERIC_ALL(rt))) {
-                error("concatenation of nonchar data");
-                goto err;
-            }
-
-            {
+                if (is_userdefined) {
+                    tp = BASIC_TYPE_DESC(TYPE_GNUMERIC_ALL);
+                } else {
+                    error("concatenation of nonchar data");
+                    goto err;
+                }
+            } else  {
                 int l1 = TYPE_CHAR_LEN(lt);
                 int l2 = TYPE_CHAR_LEN(rt);
                 tp = type_char((l1 <= 0 || l2 <=0) ? 0 : l1 + l2);
@@ -1890,10 +1904,6 @@ compile_array_ref(ID id, expv vary, expr args, int isLeft) {
         }
     }
 
-    if (nIdxRanges == 0) {
-        shape = NULL;
-    }
-
     if (nIdxRanges > 0) {
         tq = compile_dimensions(bottom_type(tp), shape);
         if (tq == NULL) {
@@ -1904,6 +1914,7 @@ compile_array_ref(ID id, expv vary, expr args, int isLeft) {
         /*
          * Otherwise the type should be basic type of the array.
          */
+        shape = NULL;
         tq = bottom_type(tp);
     }
 
@@ -2743,6 +2754,9 @@ get_struct_members0(TYPE_DESC struct_tp, ID * head, ID * tail)
         get_struct_members0(TYPE_PARENT_TYPE(struct_tp), head, tail);
 
     FOREACH_ID(ip, TYPE_MEMBER_LIST(struct_tp)) {
+        if (ID_CLASS(ip) == CL_TYPE_BOUND_PROC)
+            continue;
+
         id = XMALLOC(ID,sizeof(*id));
         *id = *ip;
         ID_LINK_ADD(id, *head, *tail);
