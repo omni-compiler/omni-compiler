@@ -522,8 +522,10 @@ public class XMPalignedArray {
         arrayAddrId = XMPlocalDecl.addObjectId2(XMP.ADDR_PREFIX_ + arrayName,
                                                 Xtype.Pointer(arrayElmtType), parentBlock);
       }
-      else{
-        arrayAddrId.setType(Xtype.Pointer(arrayElmtType));
+      else {
+        Xtype newArrayAddrType = Xtype.Pointer(arrayElmtType);
+        arrayAddrId.setType(newArrayAddrType);
+        arrayAddrId.setValue(Xcons.Symbol(Xcode.VAR_ADDR, Xtype.Pointer(newArrayAddrType), arrayAddrId.getSym(), VarScope.LOCAL));
       }
       arrayDescId = XMPlocalDecl.addObjectId2(XMP.DESC_PREFIX_ + arrayName, parentBlock);
     }
@@ -542,7 +544,11 @@ public class XMPalignedArray {
 	  throw new XMPexception("cannot align array '" + arrayName + "', wrong storage class");
 	}
       }
-      else arrayAddrId.setType(Xtype.Pointer(arrayElmtType));
+      else {
+        Xtype newArrayAddrType = Xtype.Pointer(arrayElmtType);
+        arrayAddrId.setType(newArrayAddrType);
+        arrayAddrId.setValue(Xcons.Symbol(Xcode.VAR_ADDR, Xtype.Pointer(newArrayAddrType), arrayAddrId.getSym(), VarScope.GLOBAL));
+      }
       arrayDescId = globalDecl.declStaticIdent(XMP.DESC_PREFIX_ + arrayName, Xtype.voidPtrType);
     }
 
