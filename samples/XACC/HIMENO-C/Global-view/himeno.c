@@ -38,10 +38,10 @@
 
 #include <stdio.h>
 #include <sys/time.h>
-#include "param.h"
 #ifdef _XCALABLEMP
 #include <xmp.h>
 #endif
+#include "param.h"
 
 float jacobi(int);
 int initmax(int,int,int);

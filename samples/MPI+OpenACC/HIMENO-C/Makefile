@@ -5,14 +5,25 @@ SIZE ?= S
 NDX  ?= 1
 NDY  ?= 1
 
-PROG = himeno_$(SIZE)_$(NDX)x$(NDY)
+PROG_P2P = himeno_p2p_$(SIZE)_$(NDX)x$(NDY)
+PROG_PUT = himeno_put_$(SIZE)_$(NDX)x$(NDY)
+PROG_GET = himeno_get_$(SIZE)_$(NDX)x$(NDY)
+
+PROG = $(PROG_P2P) $(PROG_PUT) $(PROG_GET)
 
 all: $(PROG)
 
-$(PROG): himeno.c
+$(PROG_P2P): himeno_p2p.c
 	./paramset.sh $(SIZE) $(NDX) $(NDY) 1
-	${CC} ${CFLAGS} -o $@ himeno.c
-#	${CC} ${CFLAGS} -o $(SIZE) himeno.c
+	${CC} ${CFLAGS} -o $@ $^
+
+$(PROG_PUT): himeno_rma.c
+	./paramset.sh $(SIZE) $(NDX) $(NDY) 1
+	${CC} ${CFLAGS} -o $@ $^ -DUSE_PUT
+
+$(PROG_GET): himeno_rma.c
+	./paramset.sh $(SIZE) $(NDX) $(NDY) 1
+	${CC} ${CFLAGS} -o $@ $^ -DUSE_GET
 
 clean:
-	rm -f a.out *.o
+	rm -f a.out *.o param.h
