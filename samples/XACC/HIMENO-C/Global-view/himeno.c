@@ -53,7 +53,7 @@ void sendp3(void);
 
 double fflop(int,int,int);
 double mflops(int,double,double);
-double time(void);
+double gettime(void);
 
 static float  p[MIMAX][MJMAX][MKMAX];
 static float  a[4][MIMAX][MJMAX][MKMAX],
@@ -68,7 +68,7 @@ static int ndx,ndy,ndz;
 static int imax,jmax,kmax;
 
 #pragma xmp template t(0:MKMAX-1, 0:MJMAX-1, 0:MIMAX-1)
-#pragma xmp nodes n(1, NDY, NDX)
+#pragma xmp nodes n(NDZ, NDY, NDX)
 #pragma xmp distribute t(block, block, block) onto n
 #pragma xmp align p[k][j][i] with t(i, j, k)
 #pragma xmp align bnd[k][j][i] with t(i, j, k)
@@ -88,7 +88,7 @@ double reflect_time = 0, reflect_time0, ave_reflect_time, max_reflect_time;
 #define LOOP_TIMES 100
 
 int
-main(int argc,char **argv)
+main(int argc,char *argv[])
 {
 #ifdef _XCALABLEMP
   int    namelen;
@@ -102,14 +102,14 @@ main(int argc,char **argv)
   float  gosa;
   double cpu,cpu0,cpu1,flop,target;
 
-  target= 10.0;
+  target= 60.0;
   omega= 0.8;
   mx= MX0-1;
   my= MY0-1;
   mz= MZ0-1;
   ndx= NDX;
   ndy= NDY;
-  ndz= 1; //NDZ;
+  ndz= NDZ;
 
   imax= mx;
   jmax= my;
@@ -131,7 +131,7 @@ main(int argc,char **argv)
   }
 
   nn= 3;
-  
+
 #pragma xmp task on t(0,0,0)
   {
   printf(" Start rehearsal measurement process.\n");
@@ -143,9 +143,9 @@ main(int argc,char **argv)
 #pragma xmp reflect_init (p) width(1,1,0) acc
 #pragma xmp reflect_do (p) acc
 #pragma xmp barrier
-  cpu0= time();
+  cpu0= gettime();
   gosa= jacobi(nn);
-  cpu1= time();
+  cpu1= gettime();
   cpu = cpu1 - cpu0;
 #pragma xmp reduction(max: cpu)
 
@@ -156,7 +156,7 @@ main(int argc,char **argv)
 	 mflops(nn,cpu,flop),cpu,gosa);
 
   nn= (int)(target/(cpu/3.0));
-  nn = LOOP_TIMES;
+  nn= LOOP_TIMES;
   reflect_time = 0.0;
 #pragma xmp task on t(0,0,0)
   {
@@ -171,9 +171,9 @@ main(int argc,char **argv)
    */
 
 #pragma xmp barrier
-  cpu0= time();
+  cpu0= gettime();
   gosa= jacobi(nn);
-  cpu1= time();
+  cpu1= gettime();
   cpu = cpu1 - cpu0;
 #pragma xmp reduction(max:cpu)
   max_reflect_time = reflect_time;
@@ -263,14 +263,13 @@ jacobi(int nn)
   float gosa,s0,ss;
 
 #pragma acc data present(p, bnd, wrk1, wrk2, a, b, c) create(gosa)
-  {
   for(n=0 ; n<nn ; ++n){
     gosa = 0.0;
 #pragma acc update device(gosa)
 
 #pragma xmp loop (k,j,i) on t(k,j,i)
 #pragma acc parallel loop firstprivate(omega) reduction(+:gosa) collapse(2) gang vector_length(64) async
-    for(i=1 ; i<imax-1 ; ++i)
+    for(i=1 ; i<imax-1 ; ++i){
       for(j=1 ; j<jmax-1 ; ++j){
 #pragma acc loop vector reduction(+:gosa) private(s0, ss)
         for(k=1 ; k<kmax-1 ; ++k){
@@ -293,34 +292,36 @@ jacobi(int nn)
           wrk2[i][j][k] = p[i][j][k] + omega * ss;
         }
       }
+    }
 
 #pragma xmp loop (k,j,i) on t(k,j,i)
 #pragma acc parallel loop collapse(2) gang vector_length(64) async
-    for(i=1 ; i<imax-1 ; ++i)
+    for(i=1 ; i<imax-1 ; ++i){
       for(j=1 ; j<jmax-1 ; ++j){
 #pragma acc loop vector
-        for(k=1 ; k<kmax-1 ; ++k)
+        for(k=1 ; k<kmax-1 ; ++k){
           p[i][j][k] = wrk2[i][j][k];
+        }
       }
+    }
 
 #pragma acc wait
 #ifdef _XCALABLEMP
-    reflect_time0 = time();
+    reflect_time0 = gettime();
 #endif
 #pragma xmp reflect_do (p) acc
 #ifdef _XCALABLEMP
-    reflect_time += time() - reflect_time0;
+    reflect_time += gettime() - reflect_time0;
 #endif
 
-#pragma acc update host (gosa)
+#pragma acc update host(gosa)
 #pragma xmp reduction(+:gosa)
   } /* end n loop */
-  } //end of acc data
 
   return(gosa);
 }
 
-double time()
+double gettime()
 {
 #ifdef _XCALABLEMP
   return xmp_wtime();
