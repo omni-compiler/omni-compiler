@@ -2818,9 +2818,34 @@ public class XMPtranslateLocalPragma {
   private final static int GMOVE_COLL  = 400;
   private final static int GMOVE_IN    = 401;
   private final static int GMOVE_OUT   = 402;
+
+  private boolean istheSameShape(Xobject leftExpr, Xobject rightExpr)
+  {
+    if(rightExpr.Opcode() == Xcode.ARRAY_REF || rightExpr.Opcode() == Xcode.VAR)
+      return true;
+
+    if(rightExpr.Opcode() != leftExpr.Opcode())
+      return false;
+
+    int leftDims = leftExpr.getArg(1).Nargs();
+    int leftNumTriplets = 0;
+    for(int i=0;i<leftDims;i++)
+      if(leftExpr.getArg(1).getArg(i).Opcode() == Xcode.INDEX_RANGE)
+        leftNumTriplets++;
+
+    int rightDims = rightExpr.getArg(1).Nargs();
+    int rightNumTriplets = 0;
+    for(int i=0;i<rightDims;i++)
+      if(rightExpr.getArg(1).getArg(i).Opcode() == Xcode.INDEX_RANGE)
+        rightNumTriplets++;
+
+    if(leftNumTriplets == rightNumTriplets)
+      return true;
+    else
+      return false;
+  }
   
   private void translateGmove(PragmaBlock pb) throws XMPexception {
-
     // start translation
     XobjList gmoveDecl = (XobjList)pb.getClauses();
     XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
@@ -2882,7 +2907,6 @@ public class XMPtranslateLocalPragma {
     if (rightExprInfo != null) rightAlignedArray = rightExprInfo.getFirst();
 
     // check LHS and RHS
-
     if (rightAlignedArray == null && leftAlignedArray == null){
       pb.replace(pb.getBody().getHead()); // ignore the gmove directive
       return;
@@ -2902,9 +2926,10 @@ public class XMPtranslateLocalPragma {
         throw new XMPexception("Current limitation: Only a variable declared in global region can be the target of gmove in/out.");
     }
 
-    if(assignStmt.right().Opcode() != Xcode.ARRAY_REF && assignStmt.right().Opcode() != Xcode.VAR && assignStmt.right().Opcode() != leftExpr.Opcode())
+    if(! istheSameShape(leftExpr, assignStmt.right())){
       throw new XMPexception("The shape of the right side and the shape of the left side are different.");
-
+    }
+    
     if (rightAlignedArray == null && gmoveClause.getInt() == XMPcollective.GMOVE_IN){
       throw new XMPexception("gmove in cannot be applied to a local rhs.");
     }
