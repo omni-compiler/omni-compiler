@@ -117,7 +117,10 @@ static int second_pass_clean()
     case SP_ERR_UNDEF_TYPE_FUNC: /* 4 */
       current_line = list->line;
       TYPE_DESC tp = list->info.id->type;
-      if (tp && !TYPE_IS_NOT_FIXED(tp)) break;
+      if (tp &&
+          !TYPE_IS_NOT_FIXED(tp) &&
+          FUNCTION_TYPE_RETURN_TYPE(tp) &&
+          !TYPE_IS_NOT_FIXED(FUNCTION_TYPE_RETURN_TYPE(tp))) break;
       error("attempt to use undefined type function, %s", ID_NAME(list->info.id));
       err_num++;
       break;
@@ -631,11 +634,23 @@ int second_pass()
         ID id, prev=NULL;
         FOREACH_ID(id, EXT_PROC_ID_LIST(sp_list->nest_ext_id[sp_list->nest_level])){
           if(id == sp_list->info.id){
+            if (ID_TYPE(id) && IS_FUNCTION_TYPE(ID_TYPE(id))) {
+              /*
+               * Removing function identifier causes error.
+               *
+               * If removing it,
+               * the expression of the function call losts the type id from
+               * <typeTable/>, then F-BackEnd fails.
+               */
+              remove_sp_list(sp_list);
+              break;
+            }
             if(prev){
               prev->next = id->next;
             } else {
               EXT_PROC_ID_LIST(sp_list->nest_ext_id[sp_list->nest_level]) = id->next;
             }
+
             free(id);
             remove_sp_list(sp_list);
             break;
