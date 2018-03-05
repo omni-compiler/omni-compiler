@@ -1011,7 +1011,7 @@ static void _add_sync_images_table(const int rank, const int value)
    * @param[in]  num        number of nodes
    * @param[in]  *rank_set  rank set
    */
-static void _notify_sync_images(const int num, int *rank_set)
+static void _notify_sync_images(const int num, const int *rank_set)
 {
   for(int i=0;i<num;i++){
     if(rank_set[i] == _XMP_world_rank){
@@ -1037,22 +1037,27 @@ static void _notify_sync_images(const int num, int *rank_set)
    * @param[in]  num                       number of nodes
    * @param[in]  *rank_set                 rank set
 */
-static void _wait_sync_images(const int num, int *rank_set)
+static void _wait_sync_images(const int num, const int *rank_set)
 {
-  while(1){
-    bool flag = true;
+  int unrecieved_rank_set[num];
+  int num_unrecieved_ranks = num;
 
-    for(int i=0;i<num;i++){
-      if(rank_set[i] < 0) continue;
-      if(_sync_images_table[rank_set[i]] > 0){
-	_add_sync_images_table(rank_set[i], -1);
-	rank_set[i] = -1;
-      }else{
-	flag = false;
+  for(int i = 0; i < num; i++){
+    unrecieved_rank_set[i] = rank_set[i];
+  }
+
+  while(1){
+    for(int i = 0; i < num_unrecieved_ranks; i++){
+      int rank = unrecieved_rank_set[i];
+      if(_sync_images_table[rank] > 0){
+	_add_sync_images_table(rank, -1);
+
+	// decrement num_unrecieved_ranks and overwrite the current element with the tail element
+	unrecieved_rank_set[i] = unrecieved_rank_set[--num_unrecieved_ranks];
       }
     }
 
-    if(flag) break;
+    if(num_unrecieved_ranks == 0) break;
 
 #ifdef _SYNCIMAGE_SENDRECV
     MPI_Status status;
@@ -1072,7 +1077,7 @@ static void _wait_sync_images(const int num, int *rank_set)
    * @param[in]  *image_set  image set
    * @param[out] status      status
 */
-void _XMP_mpi_sync_images(const int num, int* image_set, int* status)
+void _XMP_mpi_sync_images(const int num, const int* image_set, int* status)
 {
   _XMP_mpi_sync_memory();
 
@@ -1086,7 +1091,7 @@ void _XMP_mpi_sync_images(const int num, int* image_set, int* status)
 
   _notify_sync_images(num, image_set);
   _wait_sync_images(num, image_set);
-  
+
   _XMP_mpi_sync_memory();
 }
 

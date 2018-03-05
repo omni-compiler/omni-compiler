@@ -629,7 +629,7 @@ void _xmp_mpi_post(const int node, int tag);
 void _xmp_mpi_wait(const int node, const int tag);
 void _xmp_mpi_wait_node(const int node);
 void _xmp_mpi_wait_noargs();
-void _XMP_mpi_sync_images(const int num, int *image_set, int *status);
+void _XMP_mpi_sync_images(const int num, const int *image_set, int *status);
 void _XMP_sync_images_EXEC(int* status);
 void _XMP_sync_images_COMM(MPI_Comm *comm, int* status);
 void _XMP_mpi_build_sync_images_table();
