@@ -2902,7 +2902,7 @@ public class XMPtranslateLocalPragma {
         throw new XMPexception("Current limitation: Only a variable declared in global region can be the target of gmove in/out.");
     }
 
-    if(assignStmt.right().Opcode() != Xcode.ARRAY_REF && assignStmt.right().Opcode() != leftExpr.Opcode())
+    if(assignStmt.right().Opcode() != Xcode.ARRAY_REF && assignStmt.right().Opcode() != Xcode.VAR && assignStmt.right().Opcode() != leftExpr.Opcode())
       throw new XMPexception("The shape of the right side and the shape of the left side are different.");
 
     if (rightAlignedArray == null && gmoveClause.getInt() == XMPcollective.GMOVE_IN){
