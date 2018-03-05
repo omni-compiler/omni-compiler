@@ -579,6 +579,14 @@ compile_expression(expr x)
             }
 /* FEAST change end */
 
+            /* The type of implicit declared function call is also not fixed */
+            if (EXPR_CODE(left) == FUNCTION_CALL && TYPE_IS_IMPLICIT(lt)) {
+                type_is_not_fixed = TRUE;
+            }
+            if (EXPR_CODE(right) == FUNCTION_CALL && TYPE_IS_IMPLICIT(rt)) {
+                type_is_not_fixed = TRUE;
+            }
+
             switch (biop) {
             case ARITB:
                 if (!type_is_not_fixed) {
@@ -789,13 +797,34 @@ compile_expression(expr x)
             /* if (type_is_not_fixed) */
             if(type_is_not_fixed) {
 /* FEAST CHANGE end */
+                /*
+                 * Apply the attribute NOT FIXED on the result type if one
+                 * operand type is NOT FIXED.
+                 *
+                 * And the type should be copied to protect the original type
+                 * because it may be already fixed.
+                 */
                 if (tp == NULL) {
                     tp = new_type_desc();
+                    TYPE_SET_NOT_FIXED(tp);
+                } else if (IS_ARRAY_TYPE(tp)) {
+                    TYPE_DESC tq;
+                    TYPE_DESC new_tp = new_type_desc();
+                    *new_tp = *bottom_type(tp);
+                    tq = tp;
+                    while (IS_ARRAY_TYPE(tq)) {
+                        if (!IS_ARRAY_TYPE(TYPE_REF(tq)))
+                            break;
+                        tq = TYPE_REF(tq);
+                    }
+                    TYPE_REF(tq) = new_tp;
+                    TYPE_SET_NOT_FIXED(new_tp);
+                } else {
+                    TYPE_DESC new_tp = new_type_desc();
+                    *new_tp = *tp;
+                    tp = new_tp;
+                    TYPE_SET_NOT_FIXED(tp);
                 }
-
-                // Apply the attribute NOT FIXED on the result type if one 
-                // operand type is NOT FIXED.
-                TYPE_SET_NOT_FIXED(bottom_type(tp));
             }
             return expv_cons(op, tp, left, right);
         }
