@@ -2421,7 +2421,8 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
 
             TYPE_SET_USED_EXPLICIT(tp);
 /* FEAST add start */
-            if (TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) == TYPE_UNKNOWN){
+            if (TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) == TYPE_UNKNOWN ||
+                TYPE_IS_NOT_FIXED(FUNCTION_TYPE_RETURN_TYPE(tp))) {
                 /* ID_TYPE(f_id) = NULL; */
                 sp_link_id(f_id, SP_ERR_UNDEF_TYPE_FUNC, current_line);
             }

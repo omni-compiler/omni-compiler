@@ -2269,6 +2269,7 @@ declare_id_type(ID id, TYPE_DESC tp)
         /* override implicit declared type */
         TYPE_ATTR_FLAGS(tp) |= TYPE_ATTR_FLAGS(tq);
         TYPE_EXTATTR_FLAGS(tp) |= TYPE_EXTATTR_FLAGS(tq);
+        TYPE_UNSET_NOT_FIXED(tp);
         replace_or_assign_type(id_type, tp);
         return;
     }
