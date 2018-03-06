@@ -222,7 +222,7 @@ public class XMPtranslate implements XobjectDefVisitor {
 
 	  for (int i = 0; i < n; i++, arrayType = arrayType.getRef()){
             if(subscripts.Nargs() == i){
-              XMP.fatal(block.getLineNo(), "Invalid access of coarray");
+              XMP.fatal(block.getLineNo(), "Invalid access of array");
             }
             else{
               long dimSize = arrayType.getArraySize();

@@ -238,10 +238,15 @@ public class XMPtranslateLocalPragma {
       }
     }
 
-    if(isHost)
-      throw new XMPexception("reflect_init for host has been not developed yet.");
+    if(isHost){
+      XMP.fatal("reflect_init for host has been not developed yet.");
+    }
 
     Ident funcIdAcc = _globalDecl.declExternFunc("_XMP_reflect_init_acc");
+
+    // if(widthList.Nargs() != 0){
+    //   XMP.fatal("width clause in reflect_init has been not developed yet.");
+    // }
 
     XobjList args = Xcons.List();
     args.add(Xcons.String("USE_DEVICE"));
@@ -253,10 +258,10 @@ public class XMPtranslateLocalPragma {
 
       XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, pb);
       if(alignedArray == null){
-        throw new XMPexception(arrayName + " is not aligned.");
+        XMP.fatal(arrayName + " is not aligned.");
       }
       if(!alignedArray.hasShadow()){
-        throw new XMPexception(arrayName + " is not shadowed.");
+        XMP.fatal(arrayName + " is not shadowed.");
       }
 
       for (int j = 0; j < widthList.Nargs(); j++){
@@ -314,7 +319,7 @@ public class XMPtranslateLocalPragma {
     }
 
     if(isHost){
-      throw new XMPexception("reflect_do for host has been not developed yet.");
+      XMP.fatal("reflect_do for host has been not developed yet.");
     }
 
     Ident funcIdAcc = _globalDecl.declExternFunc("_XMP_reflect_do_acc");
@@ -326,10 +331,10 @@ public class XMPtranslateLocalPragma {
 
       XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, pb);
       if(alignedArray == null){
-        throw new XMPexception(arrayName + " is not aligned.");
+        XMP.fatal(arrayName + " is not aligned.");
       }
       if(!alignedArray.hasShadow()){
-        throw new XMPexception(arrayName + " is not shadowed.");
+        XMP.fatal(arrayName + " is not shadowed.");
       }
       Ident arrayDesc = _globalDecl.findVarIdent(XMP.DESC_PREFIX_ + arrayName);
       funcBody.add(funcIdAcc.Call(Xcons.List(arrayDesc.Ref())));
@@ -2846,6 +2851,7 @@ public class XMPtranslateLocalPragma {
   }
   
   private void translateGmove(PragmaBlock pb) throws XMPexception {
+
     // start translation
     XobjList gmoveDecl = (XobjList)pb.getClauses();
     XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
@@ -2907,6 +2913,7 @@ public class XMPtranslateLocalPragma {
     if (rightExprInfo != null) rightAlignedArray = rightExprInfo.getFirst();
 
     // check LHS and RHS
+
     if (rightAlignedArray == null && leftAlignedArray == null){
       pb.replace(pb.getBody().getHead()); // ignore the gmove directive
       return;
@@ -2916,14 +2923,14 @@ public class XMPtranslateLocalPragma {
       StorageClass sclass = rightAlignedArray.getArrayId().getStorageClass();
       if (gmoveClause.getInt() == XMPcollective.GMOVE_IN &&
   	  sclass != StorageClass.EXTDEF && sclass != StorageClass.EXTERN)
-      throw new XMPexception("Current limitation: Only a variable declared in global region can be the target of gmove in/out.");
+      XMP.fatal("Current limitation: Only a SAVE or MODULE variable can be the target of gmove in/out.");
     }
 
     if (leftAlignedArray != null){
       StorageClass sclass = leftAlignedArray.getArrayId().getStorageClass();
       if (gmoveClause.getInt() == XMPcollective.GMOVE_OUT &&
   	  sclass != StorageClass.EXTDEF && sclass != StorageClass.EXTERN)
-        throw new XMPexception("Current limitation: Only a variable declared in global region can be the target of gmove in/out.");
+  	XMP.fatal("Current limitation: Only a SAVE or MODULE variable can be the target of gmove in/out.");
     }
 
     if(! istheSameShape(leftExpr, assignStmt.right())){
@@ -2931,11 +2938,11 @@ public class XMPtranslateLocalPragma {
     }
     
     if (rightAlignedArray == null && gmoveClause.getInt() == XMPcollective.GMOVE_IN){
-      throw new XMPexception("gmove in cannot be applied to a local rhs.");
+      XMP.fatal("gmove in cannot be applied to a local rhs.");
     }
 
     if (leftAlignedArray == null && gmoveClause.getInt() == XMPcollective.GMOVE_OUT){
-      throw new XMPexception("gmove out cannot be applied to a local lhs.");
+      XMP.fatal("gmove out cannot be applied to a local lhs.");
     }
 
     // convert gmove to array
@@ -3056,6 +3063,11 @@ public class XMPtranslateLocalPragma {
 	f = _globalDecl.declExternFunc("xmpc_gmv_l_alloc", Xtype.FsubroutineType);
 	type = a.Type();
 
+	// if (!type.isArray())
+	//   XMP.fatal("buildGmoveDesc: SUB_ARRAY_REF for non-array");
+	// args = Xcons.List(descId.getAddr(), a,
+	// 		  Xcons.IntConstant(type.getNumDimensions()));
+
 	if (type.isArray()){
 	  ;
 	}
@@ -3064,7 +3076,7 @@ public class XMPtranslateLocalPragma {
 	  n = 1;
 	}
 	else {
-          throw new XMPexception("buildGmoveDesc: SUB_ARRAY_REF for non-array");
+	  XMP.fatal("buildGmoveDesc: SUB_ARRAY_REF for non-array");
 	}
 	    
 	args = Xcons.List(descId.getAddr(), a, Xcons.IntConstant(n));
@@ -3160,7 +3172,7 @@ public class XMPtranslateLocalPragma {
       break;
 
     default:
-      throw new XMPexception("gmove must be followed by a simple assignment.");
+      XMP.fatal("gmove must be followed by a simple assignment");
     }
     
     return descId;
@@ -4117,9 +4129,7 @@ public class XMPtranslateLocalPragma {
 	  Xobject expr;
 	  //expr = Xcons.binaryOp(Xcode.MUL_EXPR, varList.get(k).Ref(), st);
 	  Ident loopVar = varListTemplate.get(i);
-	  if (loopVar == null) 
-            throw new XMPexception("template-ref does not conform to that on lhs.");
-
+	  if (loopVar == null) XMP.fatal("template-ref does not conform to that on lhs.");
 	  expr = Xcons.binaryOp(Xcode.MUL_EXPR, varListTemplate.get(i).Ref(), st);
 	  expr = Xcons.binaryOp(Xcode.PLUS_EXPR, expr, lb);
     	  subscriptList.add(expr);
@@ -4151,8 +4161,7 @@ public class XMPtranslateLocalPragma {
 
 	//Xobject expr = Xcons.binaryOp(Xcode.PLUS_EXPR, varList.get(i).Ref(), lb);
 	Ident loopVar = varListTemplate.get(i);
-	if (loopVar == null)
-          throw new XMPexception("template-ref does not conform to the array on lhs.");
+	if (loopVar == null) XMP.fatal("template-ref does not conform to the array on lhs.");
 	Xobject expr = Xcons.binaryOp(Xcode.PLUS_EXPR, loopVar.Ref(), lb);
     	subscriptList.add(expr);
       }
