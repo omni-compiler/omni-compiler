@@ -4417,7 +4417,6 @@ end_procedure()
                 ID_NEXT(id) = ip;
                 ID_NEXT(ip) = next;
             }
-            MULTI_ID_LIST(id) = NULL;
         }
     }
 
@@ -9166,7 +9165,6 @@ static void
 import_ident(ID id)
 {
     ID ip;
-    ID id_struct;
     ID last_ip = NULL;
     ID imported = new_ident_desc(ID_SYM(id));
     *imported = *id;
@@ -9175,33 +9173,23 @@ import_ident(ID id)
     FOREACH_ID(ip, LOCAL_SYMBOLS) {
         last_ip = ip;
     }
-    ID_LINK_ADD(imported, LOCAL_SYMBOLS, last_ip);
-    
-    if (ID_CLASS(id) == CL_TAGNAME || ID_CLASS(id) == CL_MULTI) {
-        id_struct = id;
-
-        // Find the id for the struct
-        if(ID_CLASS(id) == CL_MULTI) {
-            id_struct = NULL;
-            FOREACH_ID(ip, MULTI_ID_LIST(id)) {
-                if (ID_CLASS(ip) == CL_TAGNAME) {
-                    id_struct = ip;
-                }
-            }
-            if(id_struct == NULL) {
-                // No struct found in multi id
-                return;
-            }
+    if (ID_CLASS(id) == CL_MULTI) {
+        FOREACH_ID(ip, MULTI_ID_LIST(id)) {
+            import_ident(ip);
         }
-        
+        return;
+    }
+
+    ID_LINK_ADD(imported, LOCAL_SYMBOLS, last_ip);
+    if (ID_CLASS(id) == CL_TAGNAME) {
         TYPE_DESC stp;
         TYPE_DESC tp;
         TYPE_DESC last_tp = NULL;
         for (tp = LOCAL_STRUCT_DECLS; tp != NULL; tp = TYPE_SLINK(tp)) {
             last_tp = tp;
         }
-        stp = wrap_type(ID_TYPE(id_struct));
-        TYPE_TAGNAME(stp) = TYPE_TAGNAME(ID_TYPE(id_struct));
+        stp = wrap_type(ID_TYPE(id));
+        TYPE_TAGNAME(stp) = TYPE_TAGNAME(ID_TYPE(id));
         TYPE_SLINK_ADD(stp, LOCAL_STRUCT_DECLS, last_tp);
     }
 }
