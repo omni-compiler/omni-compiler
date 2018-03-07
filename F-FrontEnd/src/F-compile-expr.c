@@ -1774,6 +1774,9 @@ compile_array_ref_dimension(expr args, expv subs, expv aSpecs) {
 }
 
 
+TYPE_DESC
+get_rightmost_id_type(expv ref);
+
 expv
 compile_array_ref(ID id, expv vary, expr args, int isLeft) {
     int nDims;
@@ -1795,7 +1798,8 @@ compile_array_ref(ID id, expv vary, expr args, int isLeft) {
 
     assert((id && vary == NULL) || (id == NULL && vary));
 
-    tp = (id ? ID_TYPE(id) : EXPV_TYPE(vary));
+    //tp = (id ? ID_TYPE(id) : EXPV_TYPE(vary));
+    tp = (id ? ID_TYPE(id) : get_rightmost_id_type(vary));
 
     if (TYPE_IS_MODIFIED(tp)) {
         tp = TYPE_REF(tp);
