@@ -3302,6 +3302,7 @@ compile_implied_do_expression(expr x)
     if (incr != NULL) do_incr = expv_reduce(compile_expression(incr), FALSE);
     else do_incr = expv_constant_1;
     expv x1 = list4(LIST, do_var, do_init, do_limit, do_incr);
+    expr dims = list1(LIST, list3(F_INDEX_RANGE, do_init, do_limit, do_incr));
 
     list lp;
     expv v = EXPR_ARG2(x);
@@ -3315,6 +3316,7 @@ compile_implied_do_expression(expr x)
     if (nItems > 0) {
         retTyp = EXPV_TYPE(EXPR_ARG1(x2));
     }
+    retTyp = compile_dimensions(retTyp, dims);
 
     retv = expv_cons(F_IMPLIED_DO, retTyp, x1, x2);
     EXPR_LINE(retv) = EXPR_LINE(x);
