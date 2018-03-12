@@ -754,6 +754,7 @@ FX100
 FX10
 KCOMPUTER
 FJRDMA
+EXTENSION_FLAGS
 ACC_DEFAULT_DEVICE
 ACC_DEFAULT_PLATFORM
 OMP_LOCK_TYPE
@@ -873,6 +874,7 @@ enable_xacc
 enable_mod2xmod
 enable_shared
 enable_fjrdma
+enable_gnu_extension
 with_libblas
 enable_SSL2BLAMP
 enable_intelmkl
@@ -1521,6 +1523,7 @@ Optional Features:
   --enable-shared         enable to generate shared library (false default)
   --enable-fjrdma         enable FJRDMA for one-sided communication. If "--disable-fjrdma" is attatched,
                           MPI3 is used instead of FJRDMA. This disable option works on only FX100 (true default)
+  --enable-gnu-extension  enable Fortran GNU intrinsic extension (false default).
   --enable-SSL2BLAMP      enable Fujitsu Math Library (true on only the K computer, false on Fx10 & FX100)
   --enable-intelmkl       enable Intel Math Kernel Library (false default)
   --enable-mreal          enable multiple precision real (and real*16) support of Fortran 77 (false default)
@@ -8556,6 +8559,14 @@ else
 fi
 
 
+# Check whether --enable-gnu-extension was given.
+if test "${enable_gnu_extension+set}" = set; then :
+  enableval=$enable_gnu_extension; dognuext=yes
+else
+  dognuext=no
+fi
+
+
 # check --disable-fjrdma is used with --target=FX100-linux-gnu
 if test x${dofjrdma} = xno -a x${target} != xFX100-linux-gnu; then
     echo "Error!! --disable-fjrdma works on only FX100. Please attach --target=FX100-linux-gnu"
@@ -8571,6 +8582,16 @@ elif test "x${use_opencl}" = "xyes"; then
     ACC_DEFAULT_DEVICE=Fermi
 elif test "x${doOpenAcc}" = "xyes"; then
     as_fn_error $? "CUDA or OpenCL not found. Please attach --with-cuda or --with-opencl." "$LINENO" 5
+fi
+
+
+
+#--------------------------------------------------------------------
+# Fortran GNU Extension
+#--------------------------------------------------------------------
+EXTENSION_FLAGS=""
+if test "x${dognuext}" = "xyes"; then
+  EXTENSION_FLAGS="-DGNU_INTRINSIC_EXTENSION"
 fi
 
 
@@ -14784,6 +14805,7 @@ cat << EOF
         please rerun ./configure MPI_CC=...
 
   Options:
+    GNU Intrinsic extension      : $dognuext
     BLAS Library                 : $output_libblas
     OpenACC                      : $doOpenAcc
     Onesided                     : $isOnesided
