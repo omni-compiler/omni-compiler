@@ -30,6 +30,22 @@ AC_PROG_LN_S
 AC_PROG_MAKE_SET
 #AC_PROG_RANLIB
 
+# Check for target
+if test "x${target}" != "xx86_64-unknown-linux-gnu" -a \
+        "x${target}" != "xKcomputer-linux-gnu"     -a \
+        "x${target}" != "xFX10-linux-gnu"          -a \
+        "x${target}" != "xFX100-linux-gnu"         -a \
+        "x${target}" != "xKNL-linux-gnu"           -a \
+        "x${target}" != "xKNC-linux-gnu"           -a \
+        "x${target}" != "xpowerpc-ibm-cnk"         -a \
+        "x${target}" != "xpowerpc-hitachi-aix"     -a \
+        "x${target}" != "xCray-linux-gnu"          -a \
+        "x${target}" != "xsxace-nec-superux"       -a \
+        "x${target}" != "xsx9-nec-superux";        then
+  AC_MSG_ERROR(--target=${target} is not supported)
+fi
+
+
 # Checks for libraries.
 # Need this to get around rpc_malloc error in AIX
 # see https://www.mail-archive.com/gsoap@yahoogroups.com/msg00385.html
@@ -2061,7 +2077,10 @@ AC_SUBST(omniQRealFillGap)
 #--------------------------------------------------------------------
 # Export Omni Config Variable
 
-if test "${prefix}" = "NONE" -o "${prefix}" = ""; then
+PWD=`pwd`
+if test "${prefix}" = ${PWD}; then
+    AC_MSG_ERROR("${PWD}" is not specified in --prefix=)
+elif test "${prefix}" = "NONE" -o "${prefix}" = ""; then
     OMNI_HOME=/usr/local
 else
     OMNI_HOME=${prefix}
