@@ -2,30 +2,24 @@
 #include "xmp.h"
 
 int a[10], b[10];
-#pragma xmp nodes p(2)
-#pragma xmp template t(0:9)
-#pragma xmp distribute t(cyclic) onto p
-#pragma xmp align a[i] with t(i)
+#pragma xmp nodes p[2]
+#pragma xmp template t[10]
+#pragma xmp distribute t[cyclic] onto p
+#pragma xmp align a[i] with t[i]
 
 int main(){
-
-#pragma xmp loop (i) on t(i)
-  for (int i = 0; i < 10; i++){
+#pragma xmp loop on t(i)
+  for(int i=0; i<10; i++){
     a[i] = 1;
-  }
-
-  for (int i = 0; i < 10; i++){
     b[i] = 0;
   }
-
+  
 #pragma xmp gmove
   b[0] = a[0];
 
-  //  printf("rank=%d, B[0]=%d\n", xmp_node_num(), B[0]);
-
   int result = 0;
   
-  if (b[0] != 1) result = 1;
+  if(b[0] != 1) result = 1;
 
 #pragma xmp reduction (+:result)
   
