@@ -5476,6 +5476,9 @@ outx_declarations1(int l, EXT_ID parent_ep, int outputPragmaInBody)
 	    case XMP_PRAGMA:
 		outx_XMP_pragma(l1, v);
 		break;
+	    case OMP_PRAGMA:
+		outx_OMP_pragma(l1, v);
+		break;
 	    case ACC_PRAGMA:
 		outx_ACC_pragma(l1, v);
 		break;
