@@ -85,13 +85,14 @@ void xmpc_wait_async(int async_id, _XMP_object_ref_t *on_desc)
     _XMP_nodes_t *n;
     _XMP_create_task_nodes(&n, on_desc);
     if (_XMP_test_task_on_nodes(n)){
-      _XMP_wait_async__(async_id);
+      _XMP_wait_async__(async_id, on_desc);
       _XMP_end_task();
     }
     _XMP_finalize_nodes(n);
   }
   else {
-    _XMP_wait_async__(async_id);
+    
+    _XMP_wait_async__(async_id, on_desc);
   }
   
   xmpc_end_async(async_id);
@@ -102,13 +103,24 @@ void xmpc_wait_async(int async_id, _XMP_object_ref_t *on_desc)
 /* DESCRIPTION : Wait until completing asynchronous communication. */
 /* ARGUMENT    : [IN] async_id : ID of async                       */
 /*******************************************************************/
-void _XMP_wait_async__(int async_id)
+void _XMP_wait_async__(int async_id, _XMP_object_ref_t *r_desc)
 {
   _XMP_async_comm_t *async;
 
 #ifdef _XMPT
+
   xmpt_tool_data_t data = NULL;
   if (xmpt_enabled && xmpt_callback[xmpt_event_wait_async_begin]){
+    xmp_desc_t on_desc;
+    if (r_desc){
+      on_desc = r_desc->ref_kind == XMP_OBJ_REF_NODES ?
+        (xmp_desc_t)r_desc->n_desc : (xmp_desc_t)r_desc->t_desc;
+    }
+    else {
+      on_desc = (xmp_desc_t)_XMP_get_execution_nodes();
+    }
+    struct _xmpt_subscript_t on_subsc;
+    _XMPT_set_subsc(&on_subsc, r_desc);
     //    xmp_desc_t on_desc;
     //    struct _xmpt_subscript_t on_subsc;
     (*(xmpt_event_wait_async_begin_t)xmpt_callback[xmpt_event_wait_async_begin])(

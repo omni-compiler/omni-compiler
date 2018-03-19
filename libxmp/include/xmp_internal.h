@@ -307,7 +307,7 @@ extern void xmp_reduce_initialize();
 extern void _XMP_set_reflect__(_XMP_array_t *a, int dim, int lwidth, int uwidth,
 			       int is_periodic);
 extern void _XMP_reflect__(_XMP_array_t *a);
-extern void _XMP_wait_async__(int async_id);
+extern void _XMP_wait_async__(int async_id, void* on_desc);
 extern void _XMP_reflect_async__(_XMP_array_t *a, int async_id);
 
 // xmp_runtime.c

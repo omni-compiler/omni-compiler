@@ -300,7 +300,7 @@ extern void _XMP_reduction_acc(void *data_addr, int count, int datatype, int op,
 // xmp_reflect.c
 extern void _XMP_set_reflect__(void *a, int dim, int lwidth, int uwidth, int is_periodic);
 extern void _XMP_reflect__(char *a);
-extern void _XMP_wait_async__(int async_id);
+extern void _XMP_wait_async__(int async_id, void *r_desc);
 extern void _XMP_reflect_async__(void *a, int async_id);
 
 // xmp_runtime.c
