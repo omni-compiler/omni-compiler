@@ -83,10 +83,10 @@ int __attribute__((weak)) xmpt_initialize(){
   return ret;
 }
 
-xmp_desc_t on_desc;
+/*xmp_desc_t on_desc;
 struct _xmpt_subscript_t on_subsc;
 xmp_desc_t from_desc;
-struct _xmpt_subscript_t from_subsc;
+struct _xmpt_subscript_t from_subsc;*/
 
 int xmpt_set_callback(xmpt_event_t event, xmpt_callback_t callback){
 

@@ -292,10 +292,10 @@ int xmpt_desc_get_data(xmp_desc_t d, xmpt_tool_data_t* data);
 extern xmpt_callback_t xmpt_callback[XMPT_EVENT_ALL+1];
 extern int xmpt_enabled;
 
-extern xmp_desc_t on_desc;
+/*extern xmp_desc_t on_desc;
 extern struct _xmpt_subscript_t on_subsc;
 extern xmp_desc_t from_desc;
-extern struct _xmpt_subscript_t from_subsc;
+extern struct _xmpt_subscript_t from_subsc;*/
 
 #endif // _XMP_TOOLAPI
 
