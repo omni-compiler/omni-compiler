@@ -125,7 +125,7 @@ void _XMP_wait_async__(int async_id, _XMP_object_ref_t *r_desc)
     //    struct _xmpt_subscript_t on_subsc;
     (*(xmpt_event_wait_async_begin_t)xmpt_callback[xmpt_event_wait_async_begin])(
       (xmpt_async_id_t)async_id,
-      &on_desc,
+      on_desc,
       &on_subsc,
       &data);
   }

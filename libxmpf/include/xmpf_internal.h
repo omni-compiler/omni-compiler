@@ -205,7 +205,7 @@ extern void _XMP_reflect__(_XMP_array_t *a_desc);
 extern void _XMP_reflect_async__(_XMP_array_t *a_desc, int async_id);
 
 /* From xmp_async.c */
-extern void _XMP_wait_async__(int async_id, void* on_desc);
+extern void _XMP_wait_async__(int async_id, _XMP_object_ref_t* on_desc);
 extern _XMP_async_comm_t* _XMP_get_async(int);
 extern _XMP_async_comm_t* _XMP_get_current_async();
 extern void xmpc_init_async(int);
