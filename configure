@@ -5287,22 +5287,6 @@ fi
 
 #AC_PROG_RANLIB
 
-# Check for target
-if test "x${target}" != "xx86_64-unknown-linux-gnu" -a \
-        "x${target}" != "xKcomputer-linux-gnu"     -a \
-        "x${target}" != "xFX10-linux-gnu"          -a \
-        "x${target}" != "xFX100-linux-gnu"         -a \
-        "x${target}" != "xKNL-linux-gnu"           -a \
-        "x${target}" != "xKNC-linux-gnu"           -a \
-        "x${target}" != "xpowerpc-ibm-cnk"         -a \
-        "x${target}" != "xpowerpc-hitachi-aix"     -a \
-        "x${target}" != "xCray-linux-gnu"          -a \
-        "x${target}" != "xsxace-nec-superux"       -a \
-        "x${target}" != "xsx9-nec-superux";        then
-  as_fn_error $? "--target=${target} is not supported" "$LINENO" 5
-fi
-
-
 # Checks for libraries.
 # Need this to get around rpc_malloc error in AIX
 # see https://www.mail-archive.com/gsoap@yahoogroups.com/msg00385.html
@@ -8573,7 +8557,7 @@ fi
 
 
 # check --disable-fjrdma is used with --target=FX100-linux-gnu
-if test x${dofjrdma} = xno -a x${target} != xFX100-linux-gnu; then
+if test "x${dofjrdma}" = "xno" -a "x${target}" != "xFX100-linux-gnu"; then
     echo "Error!! --disable-fjrdma works on only FX100. Please attach --target=FX100-linux-gnu"
     exit 1
 fi
@@ -11302,7 +11286,7 @@ if test "x${doMPI3_ASYNC}" = "xyes"; then
 fi
 
 if test x${use_tca} = xyes; then
-    if test x${doMPI3_ASYNC} = xno -a x${use_gasnet} = xno; then
+    if test "x${doMPI3_ASYNC}" = xno -a "x${use_gasnet}" = xno; then
 	echo "Error!! TCA must use MPI version 3 or GASNet"
 	exit 1
     fi
@@ -11311,7 +11295,7 @@ fi
 use_mpi3_onesided=no
 if test "x${doMPI3_ASYNC}" = "xyes" -a "x${use_gasnet}" = "xno" -a "x${target}" != "xKcomputer-linux-gnu" -a "x${target}" != "xFX10-linux-gnu" -a "x${target}" != "xFX100-linux-gnu" ; then
     use_mpi3_onesided=yes
-elif test x${dofjrdma} = xno; then
+elif test "x${dofjrdma}" = "xno"; then
     use_mpi3_onesided=yes
 fi
 
@@ -11324,12 +11308,12 @@ if test "x${use_mpi3_onesided}" = "xyes"; then
     MPI3_ONESIDED=$TRUE
 fi
 
-if test x${use_gasnet} = xyes; then
+if test "x${use_gasnet}" = "xyes"; then
     ONESIDED_CPPFLAGS="-D_XMP_GASNET"
-elif test x${use_mpi3_onesided} = xyes; then
+elif test "x${use_mpi3_onesided}" = "xyes"; then
     ONESIDED_CPPFLAGS="-D_XMP_MPI3_ONESIDED"
-elif test x${target} = xKcomputer-linux-gnu -o x${target} = xFX10-linux-gnu -o x${target} = xFX100-linux-gnu; then
-    if x${dofjrdma} = xyes; then
+elif test "x${target}" = "xKcomputer-linux-gnu" -o "x${target}" = "xFX10-linux-gnu" -o "x${target}" = "xFX100-linux-gnu"; then
+    if test "x${dofjrdma}" = "xyes"; then
         ONESIDED_CPPFLAGS="-D_XMP_FJRDMA"
     fi
 fi
