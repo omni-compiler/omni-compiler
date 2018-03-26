@@ -5269,8 +5269,9 @@ emit_decl(int l, ID id)
                 break;
 
             case STG_EXT:
-                if (id_is_visibleVar(id) &&
-                    IS_NO_PROC_OR_DECLARED_PROC(id)) {
+                if (id_is_visibleVar(id) && IS_NO_PROC_OR_DECLARED_PROC(id) 
+                    && !TBP_BINDING_ATTRS(id)) 
+                {
                     outx_varDecl(l, id);
                 }
                 break;
