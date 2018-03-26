@@ -2362,8 +2362,7 @@ input_finalProcedure(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC stp)
     ID id = NULL;
     SYMBOL sym = find_symbol(FINALIZER_PROCEDURE);
 
-    if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT,
-                       "finalProcedure"))
+    if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "finalProcedure"))
         return FALSE;
 
     if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "name"))
@@ -2380,19 +2379,9 @@ input_finalProcedure(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC stp)
     id = find_struct_member(stp, sym);
     if (id == NULL) {
         ID last = NULL;
-        id = new_ident_desc(sym);
+        id = declare_ident(find_symbol(FINALIZER_PROCEDURE), CL_TYPE_BOUND_PROC);
         ID_LINK_ADD(id, TYPE_MEMBER_LIST(stp), last);
-    }
-
-    if (xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "name")) {
-        name = (char *)xmlTextReaderConstValue(reader);
-        if (!xmlSkipWhiteSpace(reader)) {
-            return FALSE;
-        }
-    }
-
-    if (name != NULL) {
-        name = strdup(name);
+        ID_TYPE(id) = type_bound_procedure_type();
     }
 
     binding = new_ident_desc(find_symbol(name));
@@ -2400,11 +2389,12 @@ input_finalProcedure(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC stp)
         last_ip = mem;
     }
     ID_LINK_ADD(binding, TBP_BINDING(id), last_ip);
+    TBP_BINDING_ATTRS(binding) = TYPE_BOUND_PROCEDURE_IS_FINAL;
 
     if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "name"))
         return FALSE;
 
-    if (!xmlMatchNode(reader, XML_READER_TYPE_END_ELEMENT, "finalProcedure"))
+    if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "finalProcedure"))
         return FALSE;
 
     return TRUE;
@@ -2442,8 +2432,9 @@ input_typeBoundProcedures(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC str
             if (!input_finalProcedure(reader, ht, struct_tp))
                 return FALSE;
         }
-
-        ID_LINK_ADD(mem, TYPE_MEMBER_LIST(struct_tp), last_ip);
+        if(mem) {
+            ID_LINK_ADD(mem, TYPE_MEMBER_LIST(struct_tp), last_ip);
+        }
     }
 
 
