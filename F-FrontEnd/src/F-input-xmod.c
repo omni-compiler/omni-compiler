@@ -2353,14 +2353,13 @@ input_typeBoundGenericProcedure(xmlTextReaderPtr reader, HashTable * ht, ID *id)
 
 
 static int
-input_finalProcedure(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC stp)
+input_finalProcedure(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC stp, 
+                     ID *id)
 {
     char * name = NULL;
     ID binding;
     ID mem;
     ID last_ip = NULL;
-    ID id = NULL;
-    SYMBOL sym = find_symbol(FINALIZER_PROCEDURE);
 
     if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "finalProcedure"))
         return FALSE;
@@ -2376,20 +2375,11 @@ input_finalProcedure(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC stp)
         return FALSE;
     }
 
-    id = find_struct_member(stp, sym);
-    if (id == NULL) {
-        ID last = NULL;
-        id = declare_ident(find_symbol(FINALIZER_PROCEDURE), CL_TYPE_BOUND_PROC);
-        ID_LINK_ADD(id, TYPE_MEMBER_LIST(stp), last);
-        ID_TYPE(id) = type_bound_procedure_type();
-    }
-
     binding = new_ident_desc(find_symbol(name));
-    FOREACH_ID(mem, TBP_BINDING(id)) {
+    FOREACH_ID(mem, TBP_BINDING(*id)) {
         last_ip = mem;
     }
-    ID_LINK_ADD(binding, TBP_BINDING(id), last_ip);
-    TBP_BINDING_ATTRS(binding) = TYPE_BOUND_PROCEDURE_IS_FINAL;
+    ID_LINK_ADD(binding, TBP_BINDING(*id), last_ip);
 
     if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "name"))
         return FALSE;
@@ -2428,8 +2418,19 @@ input_typeBoundProcedures(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC str
             if (!input_typeBoundGenericProcedure(reader, ht, &mem))
                 return FALSE;
         } else if (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT,
-                                "finalProcedure")) {
-            if (!input_finalProcedure(reader, ht, struct_tp))
+                                "finalProcedure")) 
+        {
+            // Init special member _final if not already there
+            mem = find_struct_member(struct_tp, 
+                find_symbol(FINALIZER_PROCEDURE));
+            if (mem == NULL) {
+                mem = new_ident_desc(find_symbol(FINALIZER_PROCEDURE));
+                ID_CLASS(mem) = CL_TYPE_BOUND_PROC;
+                ID_TYPE(mem) = type_bound_procedure_type();
+                TBP_BINDING_ATTRS(mem) = TYPE_BOUND_PROCEDURE_IS_FINAL;
+            }
+
+            if (!input_finalProcedure(reader, ht, struct_tp, &mem))
                 return FALSE;
         }
         if(mem) {
