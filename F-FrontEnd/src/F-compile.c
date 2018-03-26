@@ -4239,7 +4239,6 @@ check_final_subroutines()
                     return;
                 }
                 TBP_BINDING_ATTRS(fin) |= TYPE_BOUND_PROCEDURE_IS_FINAL;
-                VAR_INIT_VALUE(fin) = NULL; // Fix for #559
                 ID_TYPE(binding) = ID_TYPE(fin);
             }
 
