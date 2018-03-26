@@ -9,6 +9,7 @@ MODULE issue561_mod
   TYPE, EXTENDS(t_var) :: t_real2d
     REAL, POINTER :: ptr(:,:) => NULL()
   CONTAINS
+    PROCEDURE, PASS :: test => test1
     FINAL :: finalize_real2d
   END TYPE t_real2d
 
@@ -19,6 +20,10 @@ MODULE issue561_mod
   END TYPE t_real3d
 
 CONTAINS
+
+  SUBROUTINE test1(this)
+    CLASS(t_real2d) :: this
+  END SUBROUTINE test1
 
   SUBROUTINE finalize_real2d(this)
     TYPE(t_real2d) :: this
