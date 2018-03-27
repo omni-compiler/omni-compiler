@@ -28,8 +28,8 @@ public class XMPtranslate implements XobjectDefVisitor {
     _selective_profile = false;
   }
 
-  public void finalize() {
-    _globalDecl.finalize();
+  public void finish() {
+    _globalDecl.finalizeGlobalDecl();
   }
 
   public void doDef(XobjectDef def) {

@@ -44,7 +44,7 @@ public class XMPrewriteExpr {
     // add a barrier at the end of the original main
     if (fb.getName() == "main") addBarrier(fb);
 
-    def.Finalize();
+    def.finalizeBlock();
   }
 
   private void rewriteParams(FunctionBlock funcBlock, XMPsymbolTable localXMPsymbolTable) {

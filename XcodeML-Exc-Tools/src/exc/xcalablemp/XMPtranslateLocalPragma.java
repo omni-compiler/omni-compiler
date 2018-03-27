@@ -62,7 +62,7 @@ public class XMPtranslateLocalPragma {
       }
     }
 
-    def.Finalize();
+    def.finalizeBlock();
   }
 
   private void translatePragma(PragmaBlock pb) throws XMPexception {

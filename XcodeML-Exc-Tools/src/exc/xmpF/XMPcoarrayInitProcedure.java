@@ -195,7 +195,7 @@ public class XMPcoarrayInitProcedure {
       coarray.addStmts_setCoshapeAndName(blist2, env);
     }
 
-    funcDef2.Finalize();
+    funcDef2.finalizeBlock();
 
     env.setCurrentDef(funcDef1);
   }
