@@ -1240,9 +1240,19 @@ compile_statement1(int st_no, expr x)
                 fix_array_dimensions(tp);
 
                 selector = CTL_SELECT_TYPE_ASSICIATE(CTL_PREV(ctl_top))?:CTL_SELECT_TYPE_SELECTOR(CTL_PREV(ctl_top));
+                // Get selector infor before declaring new ident.
+                ID selector_id = find_ident(EXPR_SYM(selector));
+
                 id = declare_ident(EXPR_SYM(selector), CL_VAR);
                 declare_id_type(id, tp);
 
+                // Copy back some of the saved vital selector information
+                // Fix issue #550 - Maybe all attributes should be copied
+                if(selector_id != NULL) {
+                    if(TYPE_IS_POINTER(ID_TYPE(selector_id))) {
+                        TYPE_SET_POINTER(tp);
+                    }
+                }
             } else { // NULL for CLASS DEFAULT
                 tp = NULL;
             }
