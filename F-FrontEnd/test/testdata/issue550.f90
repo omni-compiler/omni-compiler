@@ -14,6 +14,7 @@ CONTAINS
     CLASS(t_state), INTENT(inout), TARGET :: this
     CLASS(t_state), POINTER, OPTIONAL :: that 
 
+    this%parent => that
 
     SELECT TYPE(that)
       CLASS IS (t_state)
