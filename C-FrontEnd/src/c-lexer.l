@@ -340,7 +340,15 @@ L\"(\\.|[^\\"])*\"      { count(); yylval.expr = lexAllocStringConst(CT_WIDE);  
                                             yylval.expr = lexParsePragma(converted_yytext, &token); count();
                                             free(converted_yytext);
                                             return token; }
-^[ \t]*"#"[ \t]*[0-9]+([ \t]+[^\r\n]*)?\r?\n  { lexParseLineDirective(0); }
+
+^[ \t]*"#"[ \t]*[0-9]+([ \t]+[^\r\n]*)?\r?\n  { CExpr *ret;
+                                                lexParseLineDirective(0);
+                                                ret = lexAllocDirective("", DT_LINEMARKER);
+                                                if (ret){
+                                                  yylval.expr = ret;
+                                                  return DIRECTIVE;
+                                                } }
+
 ^[ \t]*"#"[ \t]*"line"[ \t]+[0-9]+([ \t]+[^\r\n]*)?\r?\n  { lexParseLineDirective(1); }
 
                         /* ------ ignoring character ------ */

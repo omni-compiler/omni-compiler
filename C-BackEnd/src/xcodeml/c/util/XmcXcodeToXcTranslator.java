@@ -1743,6 +1743,20 @@ public class XmcXcodeToXcTranslator {
         }
     }
 
+    // linemarker
+    class LinemarkerVisitor extends XcodeNodeVisitor {
+        @Override
+        public void enter(TranslationContext tc, Node n, XcNode parent) {
+            XcDirectiveObj obj = new XcDirectiveObj(true);
+	    String lineno = getAttr(n, "lineno");
+	    String file = getAttr(n, "file");
+	    String flag = getAttr(n, "flag");
+            obj.setLine("# " + lineno + " \"" + file + "\" " + flag);
+            setSourcePos(obj, n);
+            addChild(parent, obj);
+        }
+    }
+
     // OMPPragma
     class OMPPragmaVisitor extends XcodeNodeVisitor {
         /**
@@ -3028,6 +3042,7 @@ public class XmcXcodeToXcTranslator {
         new Pair("gccLabelAddr", new GccLabelAddrVisitor()),
         new Pair("gccAsmDefinition", new GccAsmDefinitionVisitor()),
         new Pair("pragma", new PragmaVisitor()),
+	new Pair("linemarker", new LinemarkerVisitor()),
         new Pair("OMPPragma", new OMPPragmaVisitor()),
         new Pair("ACCPragma", new ACCPragmaVisitor()),
         new Pair("text", new TextVisitor()),

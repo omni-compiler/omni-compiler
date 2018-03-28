@@ -989,6 +989,11 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             e = addChildNodes(createElement(name),
                               trans(xobj.getArg(0).getString()));
             break;
+	case LINEMARKER:
+            e = addChildNodes(createElement(name));
+	    addAttributes(e,
+			  "flag", xobj.getArg(0).getString());
+            break;
         case OMP_PRAGMA: {
             e = createElement(name);
 

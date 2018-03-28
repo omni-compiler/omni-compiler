@@ -1202,8 +1202,12 @@ lexAllocDirective(const char *name, CDirectiveTypeEnum type)
       p = conv_p = lexConvertUnderscorePragma(p);
     }
     while(isspace(*p)) ++p;
-    while(isspace(*p) == 0) ++p;
+    while(isspace(*p) == 0) ++p; // directive or line number
     while(isspace(*p)) ++p;
+    if (type == DT_LINEMARKER){
+      while(isspace(*p) == 0) ++p; // file name
+      while(isspace(*p)) ++p;
+    }
 
     int len = strlen(p);
     char *str = XALLOCSZ(char, len + 1);
@@ -1216,6 +1220,8 @@ lexAllocDirective(const char *name, CDirectiveTypeEnum type)
         str[len - 2] = 0;
 
     if(conv_p != NULL) free(conv_p);
+
+    if (strlen(str) == 0) return NULL;
     
     return (CExpr*)allocExprOfDirective(
         type, ccol_strdup(name, MAX_NAME_SIZ), str);

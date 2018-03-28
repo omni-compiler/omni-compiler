@@ -9,16 +9,26 @@ import xcodeml.c.util.XmcWriter;
  * Internal object represents following elements:
  *   pragma, text, statement
  */
-public class XcDirectiveObj extends XcStmtObj implements XcDecAndDefObj
+public class XcDirectiveObj extends XcStmtObj implements XcDecAndDefObj, XcExprObj
 {
     private String _line;
     private XcStmtObj _stmt = null;
 
+    private boolean _noLineMarker = false;
+    
     /**
      * Creates XcDirectiveObj.
      */
     public XcDirectiveObj()
     {
+    }
+
+    /**
+     * Creates XcDirectiveObj.
+     */
+    public XcDirectiveObj(boolean noLineMarker)
+    {
+      _noLineMarker = noLineMarker;
     }
 
     /**
@@ -88,7 +98,7 @@ public class XcDirectiveObj extends XcStmtObj implements XcDecAndDefObj
     @Override
     public void appendCode(XmcWriter w) throws XmException
     {
-        super.appendCode(w);
+        if (!_noLineMarker) super.appendCode(w);
         w.noLfOrLf();
         w.add(_line).lf();
         w.add(_stmt);

@@ -110,6 +110,7 @@ L   ARRAY_REF                  XbcArrayRef
 # -----------------
 # C: Directive
 L   PRAGMA_LINE                XbcPragma                    XbfFpragmaStatement
+L   LINEMARKER
 L   TEXT                       XbcText
 
 # -----------------

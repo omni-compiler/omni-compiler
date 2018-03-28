@@ -435,6 +435,7 @@ typedef enum {
     DT_IDENT,
     DT_WARNING,
     DT_ERROR,
+    DT_LINEMARKER,
     DT_END
 } CDirectiveTypeEnum;
 
