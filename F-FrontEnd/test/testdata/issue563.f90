@@ -1,6 +1,7 @@
 MODULE mod1
 
-  USE issue563_mod, ONLY: t_msg
+  USE issue563_mod
+!  USE issue563_mod, ONLY: t_msg
 
   IMPLICIT NONE
   PRIVATE
