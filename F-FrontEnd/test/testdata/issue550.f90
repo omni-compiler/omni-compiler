@@ -19,6 +19,8 @@ CONTAINS
     SELECT TYPE(that)
       CLASS IS (t_state)
         this%parent => that
+      CLASS DEFAULT
+        this%parent => that
     END SELECT
 
   END SUBROUTINE init_state
