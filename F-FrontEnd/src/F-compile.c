@@ -5312,6 +5312,7 @@ shallow_copy_ext_id(EXT_ID original) {
 
 #define ID_SEEM_GENERIC_PROCEDURE(id)                                          \
     (ID_TYPE((id)) != NULL &&                                                  \
+     FUNCTION_TYPE_RETURN_TYPE(ID_TYPE((id))) != NULL &&                       \
      ((ID_CLASS((id)) == CL_PROC &&                                            \
        TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE((id))))               \
          == TYPE_GENERIC) ||                                                   \
