@@ -2735,7 +2735,8 @@ input_id(xmlTextReaderPtr reader, HashTable * ht, struct module * mod)
     char * sclass;
     TYPE_ENTRY tep;
     SYMBOL name;
-    ID id;
+    ID id; 
+    ID cid = NULL, pid = NULL;
 
     if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "id"))
        return FALSE;
@@ -2809,13 +2810,36 @@ input_id(xmlTextReaderPtr reader, HashTable * ht, struct module * mod)
 
     set_sclass(id, sclass);
 
-    if (mod->last == NULL) {
-        mod->last = id;
-        mod->head = id;
-    } else {
-        ID_NEXT(mod->last) = id;
-        mod->last = id;
+
+    // Look for previously defined identifier
+    FOREACH_ID(cid, mod->head) {
+        if(strcmp(ID_NAME(cid), ID_NAME(id)) == 0) {
+            pid = cid;
+            break;
+        }
     }
+
+    if(pid != NULL) {
+        // If id was declared before, multize it
+        if(ID_CLASS(pid) != CL_MULTI) {
+            id_multilize(pid);
+        } else {
+            while(MULTI_ID_LIST(pid)) {
+                pid = MULTI_ID_LIST(pid);
+            }
+        }
+        MULTI_ID_LIST(pid) = id;
+    } else {
+        if (mod->last == NULL) {
+            mod->last = id;
+            mod->head = id;
+        } else {
+            ID_NEXT(mod->last) = id;
+            mod->last = id;
+        }
+    }
+
+    
 
     if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "id"))
         return FALSE;
