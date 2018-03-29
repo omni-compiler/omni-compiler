@@ -2503,6 +2503,14 @@ input_FstructType(xmlTextReaderPtr reader, HashTable * ht)
     if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "FstructType"))
         return FALSE;
 
+    // Add newly read TYPE in the local structure declaration
+    TYPE_DESC ttail = NULL;
+    TYPE_DESC tp0;
+    for (tp0 = LOCAL_STRUCT_DECLS; tp0 != NULL; tp0 = TYPE_SLINK(tp0)) {
+        ttail = tp0;
+    }
+    TYPE_SLINK_ADD(tp, LOCAL_STRUCT_DECLS, ttail);
+
     return TRUE;
 }
 
@@ -2735,7 +2743,7 @@ input_id(xmlTextReaderPtr reader, HashTable * ht, struct module * mod)
     char * sclass;
     TYPE_ENTRY tep;
     SYMBOL name;
-    ID id; 
+    ID id, last;
     ID cid = NULL, pid = NULL;
 
     if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "id"))
@@ -2823,12 +2831,13 @@ input_id(xmlTextReaderPtr reader, HashTable * ht, struct module * mod)
         // If id was declared before, multize it
         if(ID_CLASS(pid) != CL_MULTI) {
             id_multilize(pid);
+            MULTI_ID_LIST(pid) = id;
         } else {
-            while(MULTI_ID_LIST(pid)) {
-                pid = MULTI_ID_LIST(pid);
+            FOREACH_ID(pid, MULTI_ID_LIST(pid)) {
+                last = pid;
             }
+            ID_NEXT(last) = id;
         }
-        MULTI_ID_LIST(pid) = id;
     } else {
         if (mod->last == NULL) {
             mod->last = id;
