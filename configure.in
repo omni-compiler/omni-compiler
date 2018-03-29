@@ -1,5 +1,5 @@
 AC_PREREQ([2.69])
-AC_INIT([Omni Compiler], [1.2.3], [omni-compiler@googlegroups.com], [omni])
+AC_INIT([Omni Compiler], [1.3.0], [omni-compiler@googlegroups.com], [omni])
 AC_CONFIG_AUX_DIR([./buildutils])
 AC_CONFIG_MACRO_DIR([./buildutils])
 AC_CANONICAL_TARGET
@@ -670,7 +670,7 @@ if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$t
     # ranlib & ar & nm
     AC_CHECK_PROG([RANLIB], [ranlibpx], [ranlibpx], [ranlib])
     AC_CHECK_PROG([AR], [arpx], [arpx], [ar])
-    ARFLAGS="cru"
+    ARFLAGS="cr"
     AC_CHECK_PROG([NM], [nmpx], [nmpx], [nm])
 
 elif test "$target" = "KNL-linux-gnu"; then
@@ -712,7 +712,7 @@ elif test "$target" = "KNL-linux-gnu"; then
     # ranlib & ar & nm
     AC_CHECK_PROG([RANLIB], [ranlib], [ranlib])
     AC_CHECK_PROG([AR], [ar], [ar])
-    ARFLAGS="cru"
+    ARFLAGS="cr"
     AC_CHECK_PROG([NM], [nm], [nm])
 
 elif test "$target" = "KNC-linux-gnu"; then
@@ -754,7 +754,7 @@ elif test "$target" = "KNC-linux-gnu"; then
     # ranlib & ar & nm
     AC_CHECK_PROG([RANLIB], [ranlib], [ranlib])
     AC_CHECK_PROG([AR], [ar], [ar])
-    ARFLAGS="cru"
+    ARFLAGS="cr"
     AC_CHECK_PROG([NM], [nm], [nm])
 
 elif test "$target" = "Cray-linux-gnu"; then
@@ -796,7 +796,7 @@ elif test "$target" = "Cray-linux-gnu"; then
     # ranlib & ar & nm
     AC_CHECK_PROG([RANLIB], [ranlib], [ranlib])
     AC_CHECK_PROG([AR], [ar], [ar])
-    ARFLAGS="cru"
+    ARFLAGS="cr"
     AC_CHECK_PROG([NM], [nm], [nm])
 
 elif test "$target" = "sxace-nec-superux"; then
@@ -840,7 +840,7 @@ elif test "$target" = "sxace-nec-superux"; then
     # ranlib & ar & nm
     RANLIB="sxar -sq"
     AC_CHECK_PROG([AR], [sxar], [sxar], [sxar])
-    ARFLAGS="cru"
+    ARFLAGS="cr"
     NM="sxnm"
     NM_OPT="-px"
     #  AC_CHECK_PROG([NM], [sxnm], [sxnm], [sxnm])
@@ -884,7 +884,7 @@ elif test "$target" = "sx9-nec-superux"; then
     # ranlib & ar & nm
     RANLIB="sxar -sq"
     AC_CHECK_PROG([AR], [sxar], [sxar], [sxar])
-    ARFLAGS="cru"
+    ARFLAGS="cr"
     NM="sxnm"
     NM_OPT="-px"
     #  AC_CHECK_PROG([NM], [sxnm], [sxnm], [sxnm])
@@ -951,7 +951,7 @@ elif test "$target" = "powerpc-ibm-cnk"; then
     # ranlib & ar & nm
     AC_CHECK_PROG([RANLIB], [ranlib], [ranlib])
     AC_CHECK_PROG([AR], [ar], [ar])
-    ARFLAGS="cru"
+    ARFLAGS="cr"
     AC_CHECK_PROG([NM], [nm], [nm])
 
 elif test "$target" = "powerpc-hitachi-aix"; then
@@ -993,14 +993,14 @@ elif test "$target" = "powerpc-hitachi-aix"; then
     # ranlib & ar & nm
     AC_CHECK_PROG([RANLIB], [ranlib], [ranlib])
     AC_CHECK_PROG([AR], [ar], [ar])
-    ARFLAGS="-X32_64 cru"
+    ARFLAGS="-X32_64 cr"
     AC_CHECK_PROG([NM], [nm], [nm])
 
 else
     # ranlib & ar & nm
     AC_CHECK_PROG([RANLIB], [ranlib], [ranlib])
     AC_CHECK_PROG([AR], [ar], [ar])
-    ARFLAGS="cru"
+    ARFLAGS="cr"
     AC_CHECK_PROG([NM], [nm], [nm])
 
     # C
