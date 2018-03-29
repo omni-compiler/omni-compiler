@@ -14,4 +14,12 @@ MODULE mod1
       CLASS(t_msg), POINTER       :: return_ptr
     END FUNCTION handler
   END INTERFACE
+
+  TYPE t_state
+  END TYPE t_state
+
+  TYPE, ABSTRACT, EXTENDS(t_state) :: t_upstate
+    TYPE(t_msg), ALLOCATABLE :: ts(:)
+  END TYPE t_upstate
+
 END MODULE mod1
