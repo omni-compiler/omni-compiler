@@ -595,8 +595,8 @@ void _XMP_sendrecv_ARRAY(int type, int type_size, MPI_Datatype *mpi_datatype,
     _XMP_free(recv_alloc);
   }
 
-  _XMP_free(dst_ref);
-  _XMP_free(src_ref);
+  _XMP_finalize_nodes_ref(dst_ref);
+  _XMP_finalize_nodes_ref(src_ref);
 }
 
 /* // ----- gmove scalar to scalar -------------------------------------------------------------------------------------------------- */
