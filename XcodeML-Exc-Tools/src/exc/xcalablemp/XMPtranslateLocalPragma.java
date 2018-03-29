@@ -2958,10 +2958,10 @@ public class XMPtranslateLocalPragma {
 
     // generate gmove funcs.
     
-    Ident left_desc = buildGmoveDesc(leftExpr, bb, pb);
-    Ident right_desc = buildGmoveDesc(rightExpr, bb, pb);
+    Ident left_desc = buildGmoveDesc(leftExpr, bb, pb, isACC);
+    Ident right_desc = buildGmoveDesc(rightExpr, bb, pb, isACC);
     
-    Ident f = _globalDecl.declExternFunc("xmpc_gmv_do", Xtype.FsubroutineType);
+    Ident f = _globalDecl.declExternFunc(isACC? "xmpc_gmv_do_acc" : "xmpc_gmv_do", Xtype.FsubroutineType);
     Xobject args = Xcons.List(left_desc.Ref(), right_desc.Ref(), gmoveClause);
     bb.add(f.callSubroutine(args));
 
@@ -2998,7 +2998,7 @@ public class XMPtranslateLocalPragma {
   }
 
   
-  private Ident buildGmoveDesc(Xobject x, BasicBlock bb, PragmaBlock pb) throws XMPexception {
+  private Ident buildGmoveDesc(Xobject x, BasicBlock bb, PragmaBlock pb, boolean isACC) throws XMPexception {
 
     Ident descId = pb.getParentBlock().getBody().declLocalIdent(tmpSym.getStr("gmv"), Xtype.voidPtrType);
 
@@ -3023,8 +3023,9 @@ public class XMPtranslateLocalPragma {
       
       if (array != null){ // global
 	
-	f = _globalDecl.declExternFunc("xmpc_gmv_g_alloc", Xtype.FsubroutineType);
+	f = _globalDecl.declExternFunc(isACC? "xmpc_gmv_g_alloc_acc" : "xmpc_gmv_g_alloc", Xtype.FsubroutineType);
 	args = Xcons.List(descId.getAddr(), array.getDescId().Ref());
+	if(isACC) args.add(array.getAddrId().Ref());
 	bb.add(f.callSubroutine(args));
 
 	XobjList subscripts = (XobjList)x.getArg(1);
@@ -3164,7 +3165,7 @@ public class XMPtranslateLocalPragma {
     	}
       }
       else { // scalar or name of a local array
-    	f = _globalDecl.declExternFunc("xmpc_gmv_l_alloc", Xtype.FsubroutineType);
+	f = _globalDecl.declExternFunc(isACC? "xmpc_gmv_l_alloc_acc" : "xmpc_gmv_l_alloc", Xtype.FsubroutineType);
     	args = Xcons.List(descId.Ref(), Xcons.AddrOf(x), Xcons.IntConstant(0));
     	bb.add(f.callSubroutine(args));
       }
