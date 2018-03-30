@@ -3,6 +3,7 @@ Omni Compiler Software RELEASE NOTES
 # ver. 1.3.0    2018/03/30
 * XcalableACC official release.
 * Remove round brackets tests in XMP/C.
+* Support the reduce_shadow directive.
 * Add benchmarks in ./samples directory.
 * Fixed lots of bugs.
 
