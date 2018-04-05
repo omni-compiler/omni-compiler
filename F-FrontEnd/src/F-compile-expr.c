@@ -348,6 +348,7 @@ compile_expression(expr x)
     TYPE_DESC lt,rt,tp = NULL;
     TYPE_DESC bLType,bRType,bType = NULL;
     ID id = NULL;
+    ID ip = NULL;
     enum expr_code op;
     enum binary_expr_type biop;
     expv v1, v2;
@@ -390,6 +391,18 @@ compile_expression(expr x)
                     return NULL;
                 }
                 v = NULL;
+                
+                // Fix #566
+                if(ID_CLASS(id) == CL_MULTI) {
+                    // Looks for the correct type to return
+                    FOREACH_ID(ip, MULTI_ID_LIST(id)) {
+                        if(ID_CLASS(ip) == CL_PROC) {
+                            id = ip; 
+                            break;
+                        }
+                    }
+                }
+
                 tp = ID_TYPE(id);
                 if (TYPE_IS_MODIFIED(tp)) {
                     tp = TYPE_REF(tp);
