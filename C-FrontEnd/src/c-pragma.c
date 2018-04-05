@@ -33,6 +33,9 @@ CExpr*  pg_tok_val = NULL;
 //! pragma kind
 CPragmaKind pg_pk = PK_NOT_PARSABLE;
 
+//! flag of linemarker
+PRIVATE_STATIC char   s_linemarkerFlag[MAXPATHLEN] = "000000000"; // dummy
+
 PRIVATE_STATIC CExpr* pg_parse_number(void);
 PRIVATE_STATIC CExpr* pg_parse_string_constant(void);
 PRIVATE_STATIC CExpr* pg_parse_char_constant(void);
@@ -1204,6 +1207,42 @@ lexAllocDirective(const char *name, CDirectiveTypeEnum type)
     while(isspace(*p)) ++p;
     while(isspace(*p) == 0) ++p; // directive or line number
     while(isspace(*p)) ++p;
+
+    int len = strlen(p);
+    char *str = XALLOCSZ(char, len + 1);
+    strncpy(str, p, len);
+    /* remove tailing lf */
+    str[len] = 0;
+    if(len > 0 && (str[len - 1] == '\n' || str[len - 1] == '\r'))
+        str[len - 1] = 0;
+    if(len > 1 && (str[len - 2] == '\n' || str[len - 2] == '\r'))
+        str[len - 2] = 0;
+
+    if(conv_p != NULL) free(conv_p);
+
+    /* if (!strcmp(s_linemarkerFlag, str)) return NULL; */
+    /* strcpy(s_linemarkerFlag, str); */
+    
+    return (CExpr*)allocExprOfDirective(
+        type, ccol_strdup(name, MAX_NAME_SIZ), str);
+}
+
+
+CExpr*
+lexLinemarker(const char *name, CDirectiveTypeEnum type, int *flag)
+{
+    char *p = yytext;
+    char *conv_p = NULL;
+    /* after '#directive[space]' */
+    while(isspace(*p)) ++p;
+    if (*p == '#'){
+      ++p;
+    }else if(*p == '_'){
+      p = conv_p = lexConvertUnderscorePragma(p);
+    }
+    while(isspace(*p)) ++p;
+    while(isspace(*p) == 0) ++p; // directive or line number
+    while(isspace(*p)) ++p;
     if (type == DT_LINEMARKER){
       while(isspace(*p) == 0) ++p; // file name
       while(isspace(*p)) ++p;
@@ -1221,7 +1260,8 @@ lexAllocDirective(const char *name, CDirectiveTypeEnum type)
 
     if(conv_p != NULL) free(conv_p);
 
-    if (strlen(str) == 0) return NULL;
+    if (strcmp(s_linemarkerFlag, str)) *flag = 1;
+    strcpy(s_linemarkerFlag, str);
     
     return (CExpr*)allocExprOfDirective(
         type, ccol_strdup(name, MAX_NAME_SIZ), str);

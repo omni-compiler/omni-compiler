@@ -55,6 +55,7 @@ extern CExpr*  pg_tok_val;
 
 extern CExpr*           lexParsePragma(char *p, int *token);
 extern CExpr*           lexAllocDirective(const char *name, CDirectiveTypeEnum type);
+extern CExpr*           lexLinemarker(const char *name, CDirectiveTypeEnum type, int *flag);
 
 extern void lexPragmaInfo(CExpr *,CExpr *);
 
