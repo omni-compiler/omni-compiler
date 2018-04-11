@@ -530,6 +530,9 @@ compare_intrinsic_arg_type(expv arg,
                         if(iType != INTR_TYPE_ANY_OPTIONAL)
                             argtp = EXPV_TYPE(arg);
                     } break;
+		    case(FUNCTION_CALL):
+		      argtp = tp;
+		      break;
                     default: {
                         break;
                     }
