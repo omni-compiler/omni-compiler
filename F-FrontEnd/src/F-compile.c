@@ -4444,7 +4444,9 @@ end_procedure()
         }
 
         if ((ID_CLASS(id) == CL_PROC && PROC_CLASS(id) == P_THISPROC) ||
-            ID_CLASS(id) == CL_ENTRY) {
+            ID_CLASS(id) == CL_ENTRY ||
+	    (ID_CLASS(id) == CL_PROC && PROC_CLASS(id) == P_DEFINEDPROC &&
+	     PROC_IS_RECURSIVE(id) && PROC_RESULTVAR(id))) {
             PROC_CLASS(id) = P_DEFINEDPROC;
             if(unit_ctl_level != 0) {
                 TYPE_DESC tp;
