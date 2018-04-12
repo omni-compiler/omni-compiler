@@ -1513,6 +1513,12 @@ classify_statement()
         }
         while(isspace(*p)) p++; /* skip space */
         if(*p == '=') goto ret_LET;
+	else if (*p == '%'){
+	  while (*p != '\0'){
+	    if (*p == '=') goto ret_LET;
+	    p++;
+	  }
+	}
     }
 
     p = bufptr;
