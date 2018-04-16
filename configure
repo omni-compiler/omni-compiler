@@ -13357,12 +13357,9 @@ ac_config_files="$ac_config_files F-FrontEnd/gnu_module/Makefile"
 
 ac_config_files="$ac_config_files F-BackEnd/Makefile"
 
-ac_config_files="$ac_config_files F-BackEnd/bin/F_Back"
-
-ac_config_files="$ac_config_files F-BackEnd/bin/F_Decomp"
-
-ac_config_files="$ac_config_files F-BackEnd/bin/F_Trans"
-
+#AC_CONFIG_FILES(F-BackEnd/bin/F_Back)
+#AC_CONFIG_FILES(F-BackEnd/bin/F_Decomp)
+#AC_CONFIG_FILES(F-BackEnd/bin/F_Trans)
 ac_config_files="$ac_config_files XcodeML-Exc-Tools/Makefile"
 
 ac_config_files="$ac_config_files XcodeML-Exc-Tools/src/exc/util/MachineDepConst.java"
@@ -13388,6 +13385,10 @@ ac_config_files="$ac_config_files Driver/bin/ompf90"
 ac_config_files="$ac_config_files Driver/bin/xmpcc"
 
 ac_config_files="$ac_config_files Driver/bin/xmpf90"
+
+ac_config_files="$ac_config_files Driver/bin/C_Back"
+
+ac_config_files="$ac_config_files Driver/bin/F_Back"
 
 ac_config_files="$ac_config_files libxmp/include/Makefile"
 
@@ -14153,9 +14154,6 @@ do
     "F-FrontEnd/src/fincludes/iso_c_binding.f90") CONFIG_FILES="$CONFIG_FILES F-FrontEnd/src/fincludes/iso_c_binding.f90" ;;
     "F-FrontEnd/gnu_module/Makefile") CONFIG_FILES="$CONFIG_FILES F-FrontEnd/gnu_module/Makefile" ;;
     "F-BackEnd/Makefile") CONFIG_FILES="$CONFIG_FILES F-BackEnd/Makefile" ;;
-    "F-BackEnd/bin/F_Back") CONFIG_FILES="$CONFIG_FILES F-BackEnd/bin/F_Back" ;;
-    "F-BackEnd/bin/F_Decomp") CONFIG_FILES="$CONFIG_FILES F-BackEnd/bin/F_Decomp" ;;
-    "F-BackEnd/bin/F_Trans") CONFIG_FILES="$CONFIG_FILES F-BackEnd/bin/F_Trans" ;;
     "XcodeML-Exc-Tools/Makefile") CONFIG_FILES="$CONFIG_FILES XcodeML-Exc-Tools/Makefile" ;;
     "XcodeML-Exc-Tools/src/exc/util/MachineDepConst.java") CONFIG_FILES="$CONFIG_FILES XcodeML-Exc-Tools/src/exc/util/MachineDepConst.java" ;;
     "Driver/src/Makefile") CONFIG_FILES="$CONFIG_FILES Driver/src/Makefile" ;;
@@ -14169,6 +14167,8 @@ do
     "Driver/bin/ompf90") CONFIG_FILES="$CONFIG_FILES Driver/bin/ompf90" ;;
     "Driver/bin/xmpcc") CONFIG_FILES="$CONFIG_FILES Driver/bin/xmpcc" ;;
     "Driver/bin/xmpf90") CONFIG_FILES="$CONFIG_FILES Driver/bin/xmpf90" ;;
+    "Driver/bin/C_Back") CONFIG_FILES="$CONFIG_FILES Driver/bin/C_Back" ;;
+    "Driver/bin/F_Back") CONFIG_FILES="$CONFIG_FILES Driver/bin/F_Back" ;;
     "libxmp/include/Makefile") CONFIG_FILES="$CONFIG_FILES libxmp/include/Makefile" ;;
     "libxmp/src/Makefile") CONFIG_FILES="$CONFIG_FILES libxmp/src/Makefile" ;;
     "libxmp/src_threads/Makefile") CONFIG_FILES="$CONFIG_FILES libxmp/src_threads/Makefile" ;;

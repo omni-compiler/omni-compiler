@@ -8,9 +8,9 @@ ETCDIR      = @OMNI_HOME@/etc/
 BINDIR      = @OMNI_HOME@/bin/
 LIBEXECDIR  = @OMNI_HOME@/libexec/
 
-bin_SCRIPTS  = ../bin/ompcc ../bin/ompf90 ../bin/xmpf90 ../bin/xmpcc
+bin_SCRIPTS  = ../bin/ompcc ../bin/ompf90 ../bin/xmpf90 ../bin/xmpcc ../bin/F_Back ../bin/C_Back
 etc_DATA     = ../etc/version ../etc/xmpcc.conf ../etc/xmpf90.conf \
-	       ../etc/ompcc.conf ../etc/ompf90.conf
+	       ../etc/ompcc.conf ../etc/ompf90.conf ../etc/setup.conf
 libexec_SCRIPTS = ../libexec/omni_common_lib.sh ../libexec/xmpf90_lib.sh \
 	          ../libexec/xmpcc_lib.sh ../libexec/ompcc_lib.sh ../libexec/ompf90_lib.sh \
 	          ../libexec/omni_traverse.sh ../libexec/omni_acc_lib.sh om_replace_pragma
