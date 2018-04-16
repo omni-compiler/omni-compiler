@@ -1,7 +1,7 @@
 package xcodeml.util;
 
 import xcodeml.util.ILineNo;
-import exc.object.IXobject;
+import xcodeml.util.IXobject;
 
 public class XmLog
 {

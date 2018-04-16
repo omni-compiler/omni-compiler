@@ -13341,7 +13341,8 @@ if test x$isOnesided = xyes; then
 fi
 
 #--------------------------------------------------------------------
-# AC_CONFIG_FILES(XcodeML-Common/Makefile)
+ac_config_files="$ac_config_files XcodeML-Common/Makefile"
+
 ac_config_files="$ac_config_files C-FrontEnd/src/Makefile"
 
 ac_config_files="$ac_config_files C-BackEnd/Makefile"
@@ -14144,6 +14145,7 @@ do
     "modify-config") CONFIG_COMMANDS="$CONFIG_COMMANDS modify-config" ;;
     "includes") CONFIG_COMMANDS="$CONFIG_COMMANDS includes" ;;
     "depend") CONFIG_COMMANDS="$CONFIG_COMMANDS depend" ;;
+    "XcodeML-Common/Makefile") CONFIG_FILES="$CONFIG_FILES XcodeML-Common/Makefile" ;;
     "C-FrontEnd/src/Makefile") CONFIG_FILES="$CONFIG_FILES C-FrontEnd/src/Makefile" ;;
     "C-BackEnd/Makefile") CONFIG_FILES="$CONFIG_FILES C-BackEnd/Makefile" ;;
     "F-FrontEnd/src/Makefile") CONFIG_FILES="$CONFIG_FILES F-FrontEnd/src/Makefile" ;;

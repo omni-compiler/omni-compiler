@@ -1,4 +1,4 @@
-package exc.object;
+package xcodeml.util;
 
 import xcodeml.util.ILineNo;
 

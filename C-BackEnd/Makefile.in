@@ -12,7 +12,7 @@ SOURCE    = $(wildcard src/xcodeml/c/*/*.java)
 
 all: $(OM_C_BACK)
 $(OM_C_BACK): $(SOURCE) ../XcodeML-Exc-Tools/build/om-exc-tools.jar
-	$(JAVAC) $(JAVAC_OPT) src/xcodeml/c/*/*.java -classpath ../XcodeML-Exc-Tools/src:./src
+	$(JAVAC) $(JAVAC_OPT) src/xcodeml/c/*/*.java -classpath ../XcodeML-Common/build/om-common.jar:../XcodeML-Exc-Tools/src:./src
 	$(MKDIR_P) build
 	cd src; $(JAR) $(JAR_OPT) cf ../$@ xcodeml/c/*/*.class
 

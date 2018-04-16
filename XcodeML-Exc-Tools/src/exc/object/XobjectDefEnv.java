@@ -8,6 +8,7 @@ import exc.util.XobjectVisitable;
 import exc.util.XobjectVisitor;
 
 import xcodeml.util.ILineNo;
+import xcodeml.util.IXobject;
 
 public class XobjectDefEnv extends PropObject
     implements Iterable<XobjectDef>, IXobject, XobjectVisitable, XobjContainer

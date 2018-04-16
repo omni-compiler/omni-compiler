@@ -2371,7 +2371,7 @@ if test x$isOnesided = xyes; then
 fi
 AC_SUBST(OMNI_X2X_FONESIDED_OPT)
 #--------------------------------------------------------------------
-# AC_CONFIG_FILES(XcodeML-Common/Makefile)
+AC_CONFIG_FILES(XcodeML-Common/Makefile)
 AC_CONFIG_FILES(C-FrontEnd/src/Makefile)
 AC_CONFIG_FILES(C-BackEnd/Makefile)
 AC_CONFIG_FILES(F-FrontEnd/src/Makefile)

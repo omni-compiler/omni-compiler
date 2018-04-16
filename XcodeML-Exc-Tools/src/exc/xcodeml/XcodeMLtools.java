@@ -9,6 +9,8 @@ import javax.xml.parsers.*;
 import javax.xml.transform.dom.*;
 import exc.object.*;
 
+import xcodeml.util.IXobject;
+
 import static xcodeml.util.XmDomUtil.getElement;
 import static xcodeml.util.XmDomUtil.getAttr;
 

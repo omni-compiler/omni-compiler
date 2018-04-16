@@ -8,6 +8,7 @@ import java.io.File;
 import java.util.*;
 import xcodeml.util.XmLog;
 import xcodeml.util.XmOption;
+import xcodeml.util.IXobject;
 
 /**
  * AST transformation by OpenMP directives.

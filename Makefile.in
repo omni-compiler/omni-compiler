@@ -8,7 +8,7 @@ T_FJMODULE_LOCAL=T_FJModule
 
 SUBDIRS=libxmp/include libxmp/src libxmpf/include libxmpf/src libxmp/src_threads \
 	C-FrontEnd/src F-FrontEnd/src Driver/src libtlog/src_threads libtlog/src_mpi \
-	XcodeML-Exc-Tools C-BackEnd F-BackEnd interfaces
+	XcodeML-Common XcodeML-Exc-Tools C-BackEnd F-BackEnd interfaces
 
 FALSE=1
 TRUE=0
