@@ -6,7 +6,7 @@
 #  $
 
 OM_DRIVER_CONF_DIR=@OM_DRIVER_CONF_DIR@
-defSetupConf=${OM_DRIVER_CONF_DIR}/setup.conf"
+defSetupConf="${OM_DRIVER_CONF_DIR}/setup.conf"
 if test ! -z "${OMNI_HOME}"; then
     setupConf="${OMNI_HOME}/etc/setup.conf"
 else

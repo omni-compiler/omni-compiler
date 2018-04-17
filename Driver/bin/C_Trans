@@ -5,8 +5,17 @@
 #  PLEASE DESCRIBE LICENSE AGREEMENT HERE
 #  $
 
-OM_DRIVER_CONF_DIR=/home/murai/opt/omni/etc
-defSetupConf="${OM_DRIVER_CONF_DIR}/setup.conf"
+hasLangId() {
+    hasOption '\-x[cf]'
+    return $?
+}
+
+hasDecomp() {
+    hasOption '\-decomp'
+    return $?
+}
+
+defSetupConf="/home/murai/opt/omni/etc/setup.conf"
 if test ! -z "${OMNI_HOME}"; then
     setupConf="${OMNI_HOME}/etc/setup.conf"
 else
@@ -28,10 +37,19 @@ fi
 
 . "${setupConf}"
 
-jars="om-f-back.jar om-common.jar"
-omniSetup ${jars}
+omniSetup
 if test $? -ne 0; then
     exit 1
 fi
 
-exec ${OMNI_JAVA} ${OMNI_JAVA_OPT} xcodeml.f.util.omx2f -fcoarray-no-use-statement ${1+"$@"}
+defOpts=''
+hasLangId $@
+if test $? -eq 0; then
+    defOpts="${defOpts} -xc"
+fi
+hasDecomp $@
+if test $? -eq 0; then
+    defOpts="${defOpts} -decomp"
+fi
+
+exec ${_omtranslate} ${defOpts} ${1+"$@"}
