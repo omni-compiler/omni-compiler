@@ -13388,7 +13388,11 @@ ac_config_files="$ac_config_files Driver/bin/xmpf90"
 
 ac_config_files="$ac_config_files Driver/bin/C_Back"
 
+ac_config_files="$ac_config_files Driver/bin/C_Trans"
+
 ac_config_files="$ac_config_files Driver/bin/F_Back"
+
+ac_config_files="$ac_config_files Driver/bin/F_Trans"
 
 ac_config_files="$ac_config_files libxmp/include/Makefile"
 
@@ -14168,7 +14172,9 @@ do
     "Driver/bin/xmpcc") CONFIG_FILES="$CONFIG_FILES Driver/bin/xmpcc" ;;
     "Driver/bin/xmpf90") CONFIG_FILES="$CONFIG_FILES Driver/bin/xmpf90" ;;
     "Driver/bin/C_Back") CONFIG_FILES="$CONFIG_FILES Driver/bin/C_Back" ;;
+    "Driver/bin/C_Trans") CONFIG_FILES="$CONFIG_FILES Driver/bin/C_Trans" ;;
     "Driver/bin/F_Back") CONFIG_FILES="$CONFIG_FILES Driver/bin/F_Back" ;;
+    "Driver/bin/F_Trans") CONFIG_FILES="$CONFIG_FILES Driver/bin/F_Trans" ;;
     "libxmp/include/Makefile") CONFIG_FILES="$CONFIG_FILES libxmp/include/Makefile" ;;
     "libxmp/src/Makefile") CONFIG_FILES="$CONFIG_FILES libxmp/src/Makefile" ;;
     "libxmp/src_threads/Makefile") CONFIG_FILES="$CONFIG_FILES libxmp/src_threads/Makefile" ;;
