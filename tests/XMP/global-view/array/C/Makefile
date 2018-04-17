@@ -24,6 +24,7 @@ run: $(EXES)
 	$(XRUN) -n 4 ./417_array1.x
 	$(XRUN) -n 4 ./417_array2.x
 	$(XRUN) -n 1 ./516.x
+	$(XRUN) -n 4 ./array3.x
 
 RUN:
 	mkdir RUN

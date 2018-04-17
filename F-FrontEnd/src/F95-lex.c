@@ -956,6 +956,16 @@ token()
 		}
 	      }
 	    }
+	    else if (strncmp(bufptr, "unbound", 7) == 0) {
+	      bufptr += 7;
+	      if (*bufptr++ == '/'){
+		while (isspace(*bufptr)) bufptr++;
+		if (*bufptr != ')') {
+		  bufptr = save - 1;
+		  return '(';
+		}
+	      }
+	    }
 	    else if (st_OMP_flag || st_ACC_flag){
 	      bufptr = save - 1;
 	      return '(';
@@ -1045,6 +1055,17 @@ token()
 	    while (isspace(*bufptr)) bufptr++;
 	    if (*bufptr != ')') {
 	      return XMPKW_PERIODIC;
+	    }
+	  }
+	  bufptr = save + 1;
+	}
+	if (strncmp(bufptr, "unbound", 7) == 0) {
+	  char *save = bufptr;
+	  bufptr += 7;
+	  if (*bufptr++ == '/'){
+	    while (isspace(*bufptr)) bufptr++;
+	    if (*bufptr != ')') {
+	      return XMPKW_UNBOUND;
 	    }
 	  }
 	  bufptr = save + 1;
@@ -4472,6 +4493,9 @@ struct keyword_token XMP_keywords[ ] =
     {"gmove",	XMPKW_GMOVE },
     {"barrier",	XMPKW_BARRIER},
     {"reduction",	XMPKW_REDUCTION },
+    {"expand",	XMPKW_EXPAND },
+    {"margin",	XMPKW_MARGIN },
+    {"peel_and_wait", XMPKW_PEEL_AND_WAIT },
     {"bcast",	XMPKW_BCAST },
     {"wait_async",	XMPKW_WAIT_ASYNC },
     {"array",	XMPKW_ARRAY },
