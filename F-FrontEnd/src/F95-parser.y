@@ -2440,7 +2440,7 @@ expr_or_null: /* empty */
 const:    CONSTANT
         | CONSTANT '_' kind_parm
         { $$ = list2(F95_CONSTANT_WITH, $1, $3);  }
-        | kind_parm '_' CONSTANT
+        | IDENTIFIER '_' CONSTANT
         { $$ = list2(F95_CONSTANT_WITH, $3, $1);  }
         | TRUE_CONSTANT
         { $$ = list0(F_TRUE_CONSTANT); }
