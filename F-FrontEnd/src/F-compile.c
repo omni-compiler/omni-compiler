@@ -1335,6 +1335,18 @@ compile_statement1(int st_no, expr x)
       }
       break;
 
+    case F_COMMENT_LINE:
+      if (CURRENT_STATE == OUTSIDE)
+      	compile_pragma_outside(x);
+      else { // others should be issued at the next statemet.
+      	char *str = strdup(EXPR_STR(EXPR_ARG1(x)));
+      	expr new_pragma = list1(F_COMMENT_LINE, make_enode(STRING_CONSTANT, str));
+      	EXPR_LINE(new_pragma) = current_line;
+      	if (!preceding_pragmas) preceding_pragmas = list0(LIST);
+      	preceding_pragmas = list_put_last(preceding_pragmas, new_pragma);
+      }
+      break;
+
     case F95_TYPEDECL_STATEMENT:
         check_INDCL();
         /* (F95_TYPEDECL_STATEMENT (LIST <I> <NULL> <NULL> <NULL>) */

@@ -4923,7 +4923,8 @@ compile_pragma_statement(expr x)
         break;
       }
     }
-  expv new_st = list1(F_PRAGMA_STATEMENT, v);
+  //expv new_st = list1(F_PRAGMA_STATEMENT, v);
+  expv new_st = list1(EXPR_CODE(x), v);
   EXPV_LINE(new_st) = EXPR_LINE(x);
   output_statement(new_st);
 }
@@ -4957,7 +4958,8 @@ compile_pragma_decl(expr x)
 
   SYMBOL sym = gen_temp_symbol("omni_dummy");
   ID id = declare_ident(sym, CL_DECL_PRAGMA);
-  expv new_st = list1(F_PRAGMA_STATEMENT, v);
+  //expv new_st = list1(F_PRAGMA_STATEMENT, v);
+  expv new_st = list1(EXPR_CODE(x), v);
   EXPV_LINE(new_st) = EXPR_LINE(x);
   id->info.decl_pragma_info.v = new_st;
   ID_LINE(id) = EXPR_LINE(x);
@@ -4993,7 +4995,8 @@ compile_pragma_outside(expr x)
 
   SYMBOL sym = gen_temp_symbol("omni_dummy");
   EXT_ID ep = declare_external_id(sym, STG_PRAGMA , 0);
-  ep->info.pragma_info.v = list1(F_PRAGMA_STATEMENT, v);
+  //ep->info.pragma_info.v = list1(F_PRAGMA_STATEMENT, v);
+  ep->info.pragma_info.v = list1(EXPR_CODE(x), v);
   EXT_LINE(ep) = EXPR_LINE(x);
   
 }

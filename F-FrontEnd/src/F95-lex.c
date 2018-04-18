@@ -137,6 +137,7 @@ enum lex_state
     LEX_OMP_TOKEN,
     LEX_XMP_TOKEN,
     LEX_ACC_TOKEN,
+    LEX_COMMENT_TOKEN,
     LEX_RET_EOS
 };
 
@@ -146,6 +147,7 @@ int st_OCL_flag;
 int st_OMP_flag;
 int st_XMP_flag;
 int st_ACC_flag;
+int st_comment_line_flag;
 
 enum lex_state lexstate;
 
@@ -679,6 +681,10 @@ yylex0()
             lexstate = LEX_PRAGMA_TOKEN;
             return PRAGMA_HEAD;
         }
+	if (st_comment_line_flag){
+	  lexstate = LEX_COMMENT_TOKEN;
+	  return COMMENT_HEAD;
+	}
         tkn_cnt = 0;
         lexstate = LEX_FIRST_TOKEN;
         return(STATEMENT_LABEL_NO);
@@ -750,6 +756,10 @@ yylex0()
     case LEX_PRAGMA_TOKEN:
         lexstate = LEX_RET_EOS;
         return PRAGMA_SLINE;
+
+    case LEX_COMMENT_TOKEN:
+        lexstate = LEX_RET_EOS;
+        return COMMENT_SLINE;
 
     default:
         fatal("lexstate");
@@ -2387,6 +2397,7 @@ again:
     st_PRAGMA_flag = FALSE;    /* flag for "!$+" */
     st_OCL_flag = FALSE;       /* flag for "!OCL" */
     st_CONDCOMPL_flag = FALSE; /* flag for "!$" */
+    st_comment_line_flag = FALSE;
 
     if (flag_force_c_comment) {
         if ((p[0] == 'c') || (p[0] == 'C') || (p[0] == '*')) {
@@ -2443,6 +2454,10 @@ again:
                 }
             }
         }
+	else if (leave_comment_flag){
+	  set_pragma_str(p);
+	  st_comment_line_flag = TRUE;
+	}
         else goto again;  /* comment line */
     }
 
@@ -2772,6 +2787,7 @@ read_fixed_format()
     st_ACC_flag = FALSE;       /* flag for "!$ACC" */
     st_PRAGMA_flag = FALSE;    /* flag for "!$+" */
     st_CONDCOMPL_flag = FALSE; /* flag for "!$" */
+    st_comment_line_flag = FALSE;
 
 top:
     if (!pre_read) {

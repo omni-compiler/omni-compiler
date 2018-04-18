@@ -271,6 +271,8 @@ state 2058
 
 %token PRAGMA_SLINE /* do not parse omp token.  */
 %token PRAGMA_HEAD /*  pragma leading char like !$ etc.  */
+%token COMMENT_SLINE
+%token COMMENT_HEAD
 
 /* OpenMP directives */
 %token OMPKW_LINE
@@ -577,6 +579,15 @@ one_statement:
 		compile_statement(
 		    st_no,
 		    list1(F_PRAGMA_STATEMENT,
+			  GEN_NODE(STRING_CONSTANT,
+				   pragmaString)));
+	}
+        | COMMENT_HEAD COMMENT_SLINE
+	{
+	    if (pragmaString != NULL)
+		compile_statement(
+		    st_no,
+		    list1(F_COMMENT_LINE,
 			  GEN_NODE(STRING_CONSTANT,
 				   pragmaString)));
 	}
