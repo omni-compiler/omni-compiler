@@ -500,6 +500,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             break;
 
         case PRAGMA_LINE:
+	case COMMENT_LINE:
         case TEXT:
             e = addChildNode(createElement(name),
                              trans(xobj.getArg(0).getString()));
@@ -944,7 +945,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
 	    addChildNode(e, f1);
 
 	    Element f2 = createElement("list");
-	    body = xobj.getArg(2);
+	    body = xobj.getArgOrNull(2);
 	    if (body != null){
 		addToBody(f2, body);
 		// if (body.Opcode() == Xcode.F_STATEMENT_LIST){

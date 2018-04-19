@@ -1225,25 +1225,39 @@ compile_statement1(int st_no, expr x)
             push_ctl(CTL_TYPE_GUARD);
             push_env(CTL_ENV(ctl_top));
 
-            if (EXPR_ARG1(x) != NULL) { // NULL for CLASS DEFAULT
+            if (EXPR_ARG1(x) != NULL) {
                 tp = compile_type(EXPR_ARG1(x), /* allow_predecl=*/ FALSE);
                 type = expv_sym_term(IDENT, tp, EXPR_SYM(EXPR_ARG1(x)));
-            }
-            if (EXPR_CODE(x) == F03_CLASSIS_STATEMENT) {
-                if (tp != NULL && !IS_STRUCT_TYPE(tp)) {
-                    error("'class is' accepts only derived-type");
-                    break;
+                
+                if (EXPR_CODE(x) == F03_CLASSIS_STATEMENT) {
+                    if (tp != NULL && !IS_STRUCT_TYPE(tp)) {
+                        error("'class is' accepts only derived-type");
+                        break;
+                    }
                 }
-            }
 
-            tp = compile_dimensions(tp, shape);
-            fix_array_dimensions(tp);
+                tp = compile_dimensions(tp, shape);
+                fix_array_dimensions(tp);
+
+                selector = CTL_SELECT_TYPE_ASSICIATE(CTL_PREV(ctl_top))?:CTL_SELECT_TYPE_SELECTOR(CTL_PREV(ctl_top));
+                // Get selector infor before declaring new ident.
+                ID selector_id = find_ident(EXPR_SYM(selector));
+
+                id = declare_ident(EXPR_SYM(selector), CL_VAR);
+                declare_id_type(id, tp);
+
+                // Copy back some of the saved vital selector information
+                // Fix issue #550 - Maybe all attributes should be copied
+                if(selector_id != NULL) {
+                    if(TYPE_IS_POINTER(ID_TYPE(selector_id))) {
+                        TYPE_SET_POINTER(tp);
+                    }
+                }
+            } else { // NULL for CLASS DEFAULT
+                tp = NULL;
+            }
 
             check_select_types(x, tp);
-
-            selector = CTL_SELECT_TYPE_ASSICIATE(CTL_PREV(ctl_top))?:CTL_SELECT_TYPE_SELECTOR(CTL_PREV(ctl_top));
-            id = declare_ident(EXPR_SYM(selector), CL_VAR);
-            declare_id_type(id, tp);
 
             st = list3(EXPR_CODE(x), type, NULL, const_name);
             CTL_BLOCK(ctl_top) = st;
@@ -1318,6 +1332,18 @@ compile_statement1(int st_no, expr x)
 	EXPR_LINE(new_pragma) = current_line;
 	if (!preceding_pragmas) preceding_pragmas = list0(LIST);
 	preceding_pragmas = list_put_last(preceding_pragmas, new_pragma);
+      }
+      break;
+
+    case F_COMMENT_LINE:
+      if (CURRENT_STATE == OUTSIDE)
+      	compile_pragma_outside(x);
+      else { // others should be issued at the next statemet.
+      	char *str = strdup(EXPR_STR(EXPR_ARG1(x)));
+      	expr new_pragma = list1(F_COMMENT_LINE, make_enode(STRING_CONSTANT, str));
+      	EXPR_LINE(new_pragma) = current_line;
+      	if (!preceding_pragmas) preceding_pragmas = list0(LIST);
+      	preceding_pragmas = list_put_last(preceding_pragmas, new_pragma);
       }
       break;
 
@@ -3329,9 +3355,9 @@ redefine_procedures(EXT_ID proc, EXT_ID unit_ctl_procs[], int redefine_unit_ctl_
     if(debug_flag) {
         for(i = redefine_unit_ctl_level; i >= 0; i--) fprintf(debug_fp,"  ");
         if (EXT_SYM(proc)) {
-            fprintf(debug_fp,"redefine '%s'\n", SYM_NAME(EXT_SYM(proc)));
+            fprintf(debug_fp,"running redefine_procedures at '%s'\n", SYM_NAME(EXT_SYM(proc)));
         } else {
-            fprintf(debug_fp,"redefine (anonymous)\n");
+            fprintf(debug_fp,"running redefine_procedures at (anonymous)\n");
         }
 
         for(i = redefine_unit_ctl_level; i >= 0; i--) fprintf(debug_fp,"  ");
@@ -3362,6 +3388,11 @@ redefine_procedures(EXT_ID proc, EXT_ID unit_ctl_procs[], int redefine_unit_ctl_
            PROC_CLASS(id) != P_UNDEFINEDPROC)
             continue;
 
+        if(debug_flag) {
+            for(i = redefine_unit_ctl_level; i >= 0; i--) fprintf(debug_fp,"  ");
+            fprintf(debug_fp, "checking %s\n", ID_NAME(id));
+        }
+
         if (ID_TYPE(id) && ID_STORAGE(id) == STG_ARG) {
             if (!IS_PROCEDURE_TYPE(ID_TYPE(id))) {
                 ID_TYPE(id) = function_type(ID_TYPE(id));
@@ -3370,6 +3401,7 @@ redefine_procedures(EXT_ID proc, EXT_ID unit_ctl_procs[], int redefine_unit_ctl_
         }
 
         contained_proc = procedure_defined(id, unit_ctl_procs, redefine_unit_ctl_level);
+
         if (contained_proc == NULL) {
 
             EXT_ID external_proc = NULL;
@@ -3402,9 +3434,31 @@ redefine_procedures(EXT_ID proc, EXT_ID unit_ctl_procs[], int redefine_unit_ctl_
             PROC_EXT_ID(id) = external_proc;
 
         } else {
+            if(debug_flag) {
+                for(i = redefine_unit_ctl_level; i >= 0; i--) fprintf(debug_fp,"  ");
+                fprintf(debug_fp, "found %s in CONTAINS block\n", ID_NAME(id));
+            }
+
             /* undefine procedure is defined in contains statement. */
             PROC_CLASS(id)  = P_DEFINEDPROC;
             PROC_EXT_ID(id) = contained_proc;
+
+            if (IS_SUBR(EXT_PROC_TYPE(contained_proc))) {
+                TYPE_DESC ret = NULL;
+                TYPE_DESC tp = ID_TYPE(id);
+                if (tp) {
+                    TYPE_BASIC_TYPE(tp) = TYPE_SUBR;
+                    if ((ret = FUNCTION_TYPE_RETURN_TYPE(tp))) {
+                        while (ret != NULL) {
+                            TYPE_BASIC_TYPE(ret) = TYPE_VOID;
+                            ret = TYPE_REF(ret);
+                        }
+                    }
+                } else {
+                    ID_TYPE(id) = EXT_PROC_TYPE(contained_proc);
+                }
+            }
+
         }
 
     }
@@ -4000,6 +4054,11 @@ check_type_bound_procedures()
         FOREACH_TYPE_BOUND_GENERIC(mem, tp) {
             FOREACH_ID(binding, TBP_BINDING(mem)) {
                 bindto = find_struct_member(tp, ID_SYM(binding));
+                if (bindto == NULL) {
+                    error("TYPE BOUND PROCEDURE '%s' does not exist", ID_NAME(binding));
+                    break;
+                }
+
                 TBP_BINDING_ATTRS(bindto) |= TBP_BINDING_ATTRS(mem) & (
                         TYPE_BOUND_PROCEDURE_IS_OPERATOR |
                         TYPE_BOUND_PROCEDURE_IS_UNARY_OPERATOR |
@@ -4380,7 +4439,6 @@ end_procedure()
                 ID_NEXT(id) = ip;
                 ID_NEXT(ip) = next;
             }
-            MULTI_ID_LIST(id) = NULL;
         }
     }
 
@@ -4398,7 +4456,9 @@ end_procedure()
         }
 
         if ((ID_CLASS(id) == CL_PROC && PROC_CLASS(id) == P_THISPROC) ||
-            ID_CLASS(id) == CL_ENTRY) {
+            ID_CLASS(id) == CL_ENTRY ||
+	    (ID_CLASS(id) == CL_PROC && PROC_CLASS(id) == P_DEFINEDPROC &&
+	     PROC_IS_RECURSIVE(id) && PROC_RESULTVAR(id))) {
             PROC_CLASS(id) = P_DEFINEDPROC;
             if(unit_ctl_level != 0) {
                 TYPE_DESC tp;
@@ -5276,6 +5336,7 @@ shallow_copy_ext_id(EXT_ID original) {
 
 #define ID_SEEM_GENERIC_PROCEDURE(id)                                          \
     (ID_TYPE((id)) != NULL &&                                                  \
+     FUNCTION_TYPE_RETURN_TYPE(ID_TYPE((id))) != NULL &&                       \
      ((ID_CLASS((id)) == CL_PROC &&                                            \
        TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE((id))))               \
          == TYPE_GENERIC) ||                                                   \
@@ -7150,6 +7211,7 @@ compile_CALL_member_procedure_statement(expr x)
     ID mem;
     expv structRef;
     expr x1, x2, args;
+    TYPE_DESC atp = NULL;
     TYPE_DESC stp;
     TYPE_DESC tp;
     expv v = NULL;
@@ -7163,12 +7225,17 @@ compile_CALL_member_procedure_statement(expr x)
 
     structRef = compile_lhs_expression(x1);
 
-    if (!IS_STRUCT_TYPE(EXPV_TYPE(structRef))) {
+    stp = EXPV_TYPE(structRef);
+
+    if (IS_ARRAY_TYPE(stp)) {
+        atp = stp;
+        stp = bottom_type(atp);
+    }
+
+    if (!IS_STRUCT_TYPE(stp)) {
         error("invalid calling member procedure of non derived-type");
         return;
     }
-
-    stp = EXPV_TYPE(structRef);
 
     mem = find_struct_member(stp, EXPR_SYM(x2));
 
@@ -7189,25 +7256,48 @@ compile_CALL_member_procedure_statement(expr x)
         TYPE_BASIC_TYPE(tp) = TYPE_SUBR;
     }
 
+    if (IS_PROCEDURE_POINTER(tp)) {
+        tp = TYPE_REF(tp);
+    }
+
+    if (FUNCTION_TYPE_RETURN_TYPE(tp) != NULL &&
+        (FUNCTION_TYPE_HAS_UNKNOWN_RETURN_TYPE(tp) ||
+         FUNCTION_TYPE_HAS_IMPLICIT_RETURN_TYPE(tp))) {
+        TYPE_BASIC_TYPE(ID_TYPE(mem)) = TYPE_SUBR;
+        TYPE_SET_USED_EXPLICIT(tp);
+        TYPE_BASIC_TYPE(tp) = TYPE_SUBR;
+        TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) = TYPE_VOID;
+        TYPE_ATTR_FLAGS(FUNCTION_TYPE_RETURN_TYPE(tp)) = 0;
+        TYPE_REF(FUNCTION_TYPE_RETURN_TYPE(tp)) = NULL;
+    }
+
     /**
      * Fix for issue#531
      * Check if binded procedure has been declared already. 
      * If not, we have to switch the type has it is set to TYPE_FUNCTION 
      * by default and we want to deal with SUBROUTINE for a CALL xx%yy
      */
-    if(TBP_BINDING(mem) && !find_ident(ID_SYM(TBP_BINDING(mem))) 
-        && TYPE_BASIC_TYPE(tp) == TYPE_FUNCTION) 
-    {   
+    if(TBP_BINDING(mem) && !find_ident(ID_SYM(TBP_BINDING(mem)))
+        && TYPE_BASIC_TYPE(tp) == TYPE_FUNCTION)
+    {
         TYPE_BASIC_TYPE(tp) = TYPE_SUBR;
+        TYPE_SET_USED_EXPLICIT(tp);
     } else if(TBP_BINDING(mem) && find_ident(ID_SYM(TBP_BINDING(mem)))) {
         // id has been declared but no type yet
         ID tbp = find_ident(ID_SYM(TBP_BINDING(mem)));
         if(ID_TYPE(tbp) == NULL) {
             TYPE_BASIC_TYPE(tp) = TYPE_SUBR;
+            TYPE_SET_USED_EXPLICIT(tp);
         }
     }
-    
-    if (!IS_SUBR(tp) && !TYPE_BOUND_GENERIC_TYPE_GENERICS(tp)) {
+
+    if (!TYPE_IS_IMPLICIT(tp) &&
+        !FUNCTION_TYPE_IS_GENERIC(tp) &&
+        !IS_SUBR(tp) &&
+        !(FUNCTION_TYPE_RETURN_TYPE(tp) != NULL &&
+          (IS_VOID(FUNCTION_TYPE_RETURN_TYPE(tp)) ||
+           IS_GNUMERIC_ALL(FUNCTION_TYPE_RETURN_TYPE(tp)) ||
+           IS_GENERIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp))))) {
         error("'%s' is not a subroutine", SYM_NAME(EXPR_SYM(x2)));
         return;
     }
@@ -9108,13 +9198,18 @@ import_ident(ID id)
     FOREACH_ID(ip, LOCAL_SYMBOLS) {
         last_ip = ip;
     }
-    ID_LINK_ADD(imported, LOCAL_SYMBOLS, last_ip);
+    if (ID_CLASS(id) == CL_MULTI) {
+        FOREACH_ID(ip, MULTI_ID_LIST(id)) {
+            import_ident(ip);
+        }
+        return;
+    }
 
+    ID_LINK_ADD(imported, LOCAL_SYMBOLS, last_ip);
     if (ID_CLASS(id) == CL_TAGNAME) {
         TYPE_DESC stp;
         TYPE_DESC tp;
         TYPE_DESC last_tp = NULL;
-
         for (tp = LOCAL_STRUCT_DECLS; tp != NULL; tp = TYPE_SLINK(tp)) {
             last_tp = tp;
         }
@@ -9149,7 +9244,7 @@ compile_IMPORT_statement(expr x)
     } else if (EXPR_LIST(ident_list)) {
         FOR_ITEMS_IN_LIST(lp, ident_list) {
             arg = LIST_ITEM(lp);
-            if ((ident = find_ident_parent(EXPR_SYM(arg))) == NULL){
+            if ((ident = find_ident_parent(EXPR_SYM(arg))) == NULL) {
                 error("%s part of the IMPORT statement has not been declared yet.",
                       SYM_NAME(EXPR_SYM(arg)));
             }

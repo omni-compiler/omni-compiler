@@ -161,7 +161,7 @@ compile_terminal_node(x)
 
 TYPE_DESC
 bottom_type(type)
-    TYPE_DESC type;
+    const TYPE_DESC type;
 {
     TYPE_DESC tp = type;
 
@@ -348,6 +348,7 @@ compile_expression(expr x)
     TYPE_DESC lt,rt,tp = NULL;
     TYPE_DESC bLType,bRType,bType = NULL;
     ID id = NULL;
+    ID ip = NULL;
     enum expr_code op;
     enum binary_expr_type biop;
     expv v1, v2;
@@ -390,6 +391,18 @@ compile_expression(expr x)
                     return NULL;
                 }
                 v = NULL;
+                
+                // Fix #566
+                if(ID_CLASS(id) == CL_MULTI) {
+                    // Looks for the correct type to return
+                    FOREACH_ID(ip, MULTI_ID_LIST(id)) {
+                        if(ID_CLASS(ip) == CL_PROC) {
+                            id = ip; 
+                            break;
+                        }
+                    }
+                }
+
                 tp = ID_TYPE(id);
                 if (TYPE_IS_MODIFIED(tp)) {
                     tp = TYPE_REF(tp);
@@ -522,7 +535,11 @@ compile_expression(expr x)
                     tp = EXPV_TYPE(v);
                 }
             } else {
-                tp = EXPV_TYPE(v);
+                if (!IS_NUMERIC(tp) && is_userdefined) {
+                    tp = BASIC_TYPE_DESC(TYPE_GNUMERIC_ALL);
+                } else {
+                    tp = EXPV_TYPE(v);
+                }
             }
             return expv_cons(UNARY_MINUS_EXPR,tp,v,NULL);
         }
@@ -575,6 +592,14 @@ compile_expression(expr x)
             }
 /* FEAST change end */
 
+            /* The type of implicit declared function call is also not fixed */
+            if (EXPR_CODE(left) == FUNCTION_CALL && TYPE_IS_IMPLICIT(lt)) {
+                type_is_not_fixed = TRUE;
+            }
+            if (EXPR_CODE(right) == FUNCTION_CALL && TYPE_IS_IMPLICIT(rt)) {
+                type_is_not_fixed = TRUE;
+            }
+
             switch (biop) {
             case ARITB:
                 if (!type_is_not_fixed) {
@@ -611,8 +636,16 @@ compile_expression(expr x)
                     }
                 }
 
-                if(error_msg == NULL) {
-                    bType = type_basic(TYPE_LOGICAL);
+                if (error_msg == NULL) {
+                    if (IS_GNUMERIC_ALL(bLType) || IS_GNUMERIC_ALL(bRType)) {
+                        /*
+                         * GNUMERIC_ALL can be an array.
+                         * So the type of this expression also can be determined.
+                         */
+                        tp = BASIC_TYPE_DESC(TYPE_GNUMERIC_ALL);
+                    } else {
+                        bType = type_basic(TYPE_LOGICAL);
+                    }
                 } else if(is_userdefined) {
                     tp = BASIC_TYPE_DESC(TYPE_GNUMERIC_ALL);
                 } else {
@@ -777,13 +810,34 @@ compile_expression(expr x)
             /* if (type_is_not_fixed) */
             if(type_is_not_fixed) {
 /* FEAST CHANGE end */
+                /*
+                 * Apply the attribute NOT FIXED on the result type if one
+                 * operand type is NOT FIXED.
+                 *
+                 * And the type should be copied to protect the original type
+                 * because it may be already fixed.
+                 */
                 if (tp == NULL) {
                     tp = new_type_desc();
+                    TYPE_SET_NOT_FIXED(tp);
+                } else if (IS_ARRAY_TYPE(tp)) {
+                    TYPE_DESC tq;
+                    TYPE_DESC new_tp = new_type_desc();
+                    *new_tp = *bottom_type(tp);
+                    tq = tp;
+                    while (IS_ARRAY_TYPE(tq)) {
+                        if (!IS_ARRAY_TYPE(TYPE_REF(tq)))
+                            break;
+                        tq = TYPE_REF(tq);
+                    }
+                    TYPE_REF(tq) = new_tp;
+                    TYPE_SET_NOT_FIXED(new_tp);
+                } else {
+                    TYPE_DESC new_tp = new_type_desc();
+                    *new_tp = *tp;
+                    tp = new_tp;
+                    TYPE_SET_NOT_FIXED(tp);
                 }
-
-                // Apply the attribute NOT FIXED on the result type if one 
-                // operand type is NOT FIXED.
-                TYPE_SET_NOT_FIXED(bottom_type(tp));
             }
             return expv_cons(op, tp, left, right);
         }
@@ -806,11 +860,13 @@ compile_expression(expr x)
             rt = bottom_type(EXPV_TYPE(right));
             if ((!IS_CHAR(lt) && !IS_GNUMERIC(lt) && !IS_GNUMERIC_ALL(lt)) ||
                 (!IS_CHAR(rt) && !IS_GNUMERIC(rt) && !IS_GNUMERIC_ALL(rt))) {
-                error("concatenation of nonchar data");
-                goto err;
-            }
-
-            {
+                if (is_userdefined) {
+                    tp = BASIC_TYPE_DESC(TYPE_GNUMERIC_ALL);
+                } else {
+                    error("concatenation of nonchar data");
+                    goto err;
+                }
+            } else  {
                 int l1 = TYPE_CHAR_LEN(lt);
                 int l2 = TYPE_CHAR_LEN(rt);
                 tp = type_char((l1 <= 0 || l2 <=0) ? 0 : l1 + l2);
@@ -1731,6 +1787,9 @@ compile_array_ref_dimension(expr args, expv subs, expv aSpecs) {
 }
 
 
+TYPE_DESC
+get_rightmost_id_type(expv ref);
+
 expv
 compile_array_ref(ID id, expv vary, expr args, int isLeft) {
     int nDims;
@@ -1752,7 +1811,8 @@ compile_array_ref(ID id, expv vary, expr args, int isLeft) {
 
     assert((id && vary == NULL) || (id == NULL && vary));
 
-    tp = (id ? ID_TYPE(id) : EXPV_TYPE(vary));
+    //tp = (id ? ID_TYPE(id) : EXPV_TYPE(vary));
+    tp = (id ? ID_TYPE(id) : get_rightmost_id_type(vary));
 
     if (TYPE_IS_MODIFIED(tp)) {
         tp = TYPE_REF(tp);
@@ -1890,10 +1950,6 @@ compile_array_ref(ID id, expv vary, expr args, int isLeft) {
         }
     }
 
-    if (nIdxRanges == 0) {
-        shape = NULL;
-    }
-
     if (nIdxRanges > 0) {
         tq = compile_dimensions(bottom_type(tp), shape);
         if (tq == NULL) {
@@ -1904,6 +1960,7 @@ compile_array_ref(ID id, expv vary, expr args, int isLeft) {
         /*
          * Otherwise the type should be basic type of the array.
          */
+        shape = NULL;
         tq = bottom_type(tp);
     }
 
@@ -2381,7 +2438,8 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
 
             TYPE_SET_USED_EXPLICIT(tp);
 /* FEAST add start */
-            if (TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) == TYPE_UNKNOWN){
+            if (TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) == TYPE_UNKNOWN ||
+                TYPE_IS_NOT_FIXED(FUNCTION_TYPE_RETURN_TYPE(tp))) {
                 /* ID_TYPE(f_id) = NULL; */
                 sp_link_id(f_id, SP_ERR_UNDEF_TYPE_FUNC, current_line);
             }
@@ -2743,6 +2801,9 @@ get_struct_members0(TYPE_DESC struct_tp, ID * head, ID * tail)
         get_struct_members0(TYPE_PARENT_TYPE(struct_tp), head, tail);
 
     FOREACH_ID(ip, TYPE_MEMBER_LIST(struct_tp)) {
+        if (ID_CLASS(ip) == CL_TYPE_BOUND_PROC)
+            continue;
+
         id = XMALLOC(ID,sizeof(*id));
         *id = *ip;
         ID_LINK_ADD(id, *head, *tail);
@@ -3254,6 +3315,7 @@ compile_implied_do_expression(expr x)
     if (incr != NULL) do_incr = expv_reduce(compile_expression(incr), FALSE);
     else do_incr = expv_constant_1;
     expv x1 = list4(LIST, do_var, do_init, do_limit, do_incr);
+    expr dims = list1(LIST, list3(F_INDEX_RANGE, do_init, do_limit, do_incr));
 
     list lp;
     expv v = EXPR_ARG2(x);
@@ -3267,6 +3329,7 @@ compile_implied_do_expression(expr x)
     if (nItems > 0) {
         retTyp = EXPV_TYPE(EXPR_ARG1(x2));
     }
+    retTyp = compile_dimensions(retTyp, dims);
 
     retv = expv_cons(F_IMPLIED_DO, retTyp, x1, x2);
     EXPR_LINE(retv) = EXPR_LINE(x);

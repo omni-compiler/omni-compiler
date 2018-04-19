@@ -57,23 +57,16 @@ clean:
 	done
 
 BASE_TESTDIR = "tests/XMP/"
-TESTDIRS1    = "global-view/array/C-Square"     "global-view/array/C-Round" "global-view/array/F" \
-               "global-view/bcast/C-Square"     "global-view/bcast/C-Round" "global-view/bcast/F" \
-	       "global-view/loop/C-Square"      "global-view/loop/C-Round"  "global-view/loop/F" \
-               "global-view/reduction/C-Square" "global-view/reduction/C-Round" "global-view/reduction/F" \
-	       "global-view/shadow-reflect/C-Square" "global-view/shadow-reflect/C-Round" "global-view/shadow-reflect/F" \
-               "global-view/task/C-Square"           "global-view/task/C-Round"           "global-view/task/F"
-TESTDIRS2    = "global-view/template_fix/C-Square"   "global-view/template_fix/C-Round"   "global-view/template_fix/F" \
-               "global-view/gmove/C-Square"     "global-view/gmove/C-Round"     "global-view/gmove/F" \
-	       "global-view/inquiry/C-Square"   "global-view/inquiry/C-Round"   "global-view/inquiry/F" \
-               "global-view/gblock/C-Square"    "global-view/gblock/C-Round"    "global-view/gblock/F"
-TESTDIRS3  =   "global-view/align/C-Square"     "global-view/align/C-Round"     "global-view/align/F" \
-               "global-view/intrinsic/F" \
-	       "global-view/util/C-Square"      "global-view/util/C-Round"      "global-view/util/F/" \
-               "others/C" "others/F"
+TESTDIRS1    = "global-view/array/C" "global-view/array/F" "global-view/bcast/C" "global-view/bcast/F" \
+	       "global-view/loop/C"  "global-view/loop/F"  "global-view/reduction/C" "global-view/reduction/F" \
+	       "global-view/shadow-reflect/C" "global-view/shadow-reflect/F" "global-view/task/C"  "global-view/task/F"
+TESTDIRS2    = "global-view/template_fix/C"   "global-view/template_fix/F"   "global-view/gmove/C" "global-view/gmove/F" \
+	       "global-view/inquiry/C"   "global-view/inquiry/F" "global-view/gblock/C"    "global-view/gblock/F"
+TESTDIRS3  =   "global-view/align/C"     "global-view/align/F" "global-view/intrinsic/F" \
+	       "global-view/util/C"      "global-view/util/F/" "others/C" "others/F"
 IS_MPI3_ASYNC=@MPI3_ASYNC@
 ifeq ($(IS_MPI3_ASYNC), $(TRUE))
-   TESTDIRS3 += "global-view/async/C-Square" "global-view/async/C-Round" "global-view/async/F"
+   TESTDIRS3 += "global-view/async/C" "global-view/async/F"
 endif
 BASE_LARGE_TESTDIR = "tests/XMP/LARGE-SIZE-TESTS"
 LARGE_TESTDIRS = "others/C"
@@ -82,7 +75,7 @@ LARGE_TESTDIRS = "others/C"
 # But SUPERUX and POWERPC cannot deal with imaginary numbers.
 IS_SUPERUX_OR_POWERPC=@SUPERUX_OR_POWERPC@
 ifeq ($(IS_SUPERUX_OR_POWERPC), $(FALSE))
-   TESTDIRS3 += "global-view/intrinsic/C-Square" "global-view/intrinsic/C-Round"
+   TESTDIRS3 += "global-view/intrinsic/C"
 endif
 
 TESTDIRS4 = "local-view/coarray/C" "local-view/other/C" "local-view/other/F" \

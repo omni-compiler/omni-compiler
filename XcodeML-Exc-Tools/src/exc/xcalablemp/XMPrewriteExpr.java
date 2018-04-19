@@ -44,7 +44,7 @@ public class XMPrewriteExpr {
     // add a barrier at the end of the original main
     if (fb.getName() == "main") addBarrier(fb);
 
-    def.Finalize();
+    def.finalizeBlock();
   }
 
   private void rewriteParams(FunctionBlock funcBlock, XMPsymbolTable localXMPsymbolTable) {
@@ -347,11 +347,10 @@ public class XMPrewriteExpr {
     }
     remoteImageDistance[imageDims-1] = 1;
 
-    //    Xobject targetImage = Xcons.binaryOp(Xcode.MINUS_EXPR, imageList.getArg(0), Xcons.IntConstant(1));
     Xobject targetImage = imageList.getArg(0);
     for(int i=1;i<imageDims;i++){
       Xobject tmp = Xcons.binaryOp(Xcode.MUL_EXPR, 
-                                   Xcons.binaryOp(Xcode.MINUS_EXPR, imageList.getArg(i), Xcons.IntConstant(1)),
+                                   imageList.getArg(i),
                                    Xcons.IntConstant(remoteImageDistance[imageDims-1-i]));
       targetImage = Xcons.binaryOp(Xcode.PLUS_EXPR, tmp, targetImage);
     }

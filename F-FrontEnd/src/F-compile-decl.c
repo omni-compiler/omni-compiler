@@ -2269,6 +2269,7 @@ declare_id_type(ID id, TYPE_DESC tp)
         /* override implicit declared type */
         TYPE_ATTR_FLAGS(tp) |= TYPE_ATTR_FLAGS(tq);
         TYPE_EXTATTR_FLAGS(tp) |= TYPE_EXTATTR_FLAGS(tq);
+        TYPE_UNSET_NOT_FIXED(tp);
         replace_or_assign_type(id_type, tp);
         return;
     }
@@ -4922,7 +4923,8 @@ compile_pragma_statement(expr x)
         break;
       }
     }
-  expv new_st = list1(F_PRAGMA_STATEMENT, v);
+  //expv new_st = list1(F_PRAGMA_STATEMENT, v);
+  expv new_st = list1(EXPR_CODE(x), v);
   EXPV_LINE(new_st) = EXPR_LINE(x);
   output_statement(new_st);
 }
@@ -4956,7 +4958,8 @@ compile_pragma_decl(expr x)
 
   SYMBOL sym = gen_temp_symbol("omni_dummy");
   ID id = declare_ident(sym, CL_DECL_PRAGMA);
-  expv new_st = list1(F_PRAGMA_STATEMENT, v);
+  //expv new_st = list1(F_PRAGMA_STATEMENT, v);
+  expv new_st = list1(EXPR_CODE(x), v);
   EXPV_LINE(new_st) = EXPR_LINE(x);
   id->info.decl_pragma_info.v = new_st;
   ID_LINE(id) = EXPR_LINE(x);
@@ -4992,7 +4995,8 @@ compile_pragma_outside(expr x)
 
   SYMBOL sym = gen_temp_symbol("omni_dummy");
   EXT_ID ep = declare_external_id(sym, STG_PRAGMA , 0);
-  ep->info.pragma_info.v = list1(F_PRAGMA_STATEMENT, v);
+  //ep->info.pragma_info.v = list1(F_PRAGMA_STATEMENT, v);
+  ep->info.pragma_info.v = list1(EXPR_CODE(x), v);
   EXT_LINE(ep) = EXPR_LINE(x);
   
 }
@@ -5952,7 +5956,7 @@ compile_type_bound_generic_procedure(expr x)
 
     switch (EXPR_CODE(generics_spec)) {
         case IDENT:
-            id = find_struct_member(struct_tp, EXPR_SYM(generics_spec));
+            id = find_ident_head(EXPR_SYM(generics_spec), TYPE_MEMBER_LIST(struct_tp));
             if (id != NULL) {
                 // Multiple GENERIC statement for the same id. Have to add to 
                 // the binding list. 
@@ -5969,7 +5973,7 @@ compile_type_bound_generic_procedure(expr x)
             expr arg;
             arg = EXPR_ARG1(generics_spec);
             SYMBOL sym = find_symbol(EXPR_CODE_SYMBOL(EXPR_CODE(arg)));
-            if ((id = find_struct_member(struct_tp, sym)) == NULL) {
+            if ((id = find_ident_head(sym, TYPE_MEMBER_LIST(struct_tp))) == NULL) {
                 id = declare_ident(sym, CL_TYPE_BOUND_PROC);
             }
             switch (EXPR_CODE(arg)) {
@@ -6007,7 +6011,7 @@ compile_type_bound_generic_procedure(expr x)
         case F95_USER_DEFINED:{
             expr arg;
             arg = EXPR_ARG1(generics_spec);
-            if ((id = find_struct_member(struct_tp, EXPR_SYM(arg))) == NULL) {
+            if ((id = find_ident_head(EXPR_SYM(arg), TYPE_MEMBER_LIST(struct_tp))) == NULL) {
                 id = declare_ident(EXPR_SYM(arg), CL_TYPE_BOUND_PROC);
                 binding_attr_flags |= TYPE_BOUND_PROCEDURE_IS_OPERATOR;
             }

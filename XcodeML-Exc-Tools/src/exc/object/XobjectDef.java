@@ -130,7 +130,8 @@ public class XobjectDef extends PropObject implements IXobject, XobjectVisitable
   }
 
   public boolean isPragma(){
-    return def != null && def.Opcode() == Xcode.PRAGMA_LINE;
+    return def != null && (def.Opcode() == Xcode.PRAGMA_LINE ||
+			   def.Opcode() == Xcode.COMMENT_LINE);
   }
   
   public boolean isFuncDef()

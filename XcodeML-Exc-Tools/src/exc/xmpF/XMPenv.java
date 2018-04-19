@@ -263,7 +263,7 @@ public class XMPenv {
   /**
    * Finalize this XMPenv. 
    */
-  public void finalize() {
+  public void finalizeEnv() {
     env.collectAllTypes();
     env.fixupTypeRef();
   }

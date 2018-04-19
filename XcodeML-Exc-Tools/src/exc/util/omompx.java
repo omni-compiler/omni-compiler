@@ -71,6 +71,8 @@ public class omompx
       "  -max_assumed_shape=N  set max number of assumed-shape arrays of a proedure (for Fortran).",
       "  -decomp      output decompiled source code.",
       "  -silent      no output.",
+      "  -rename_main=NAME",
+      "               rename the main function NAME.",
       "",
       " Debug Options:",
       "  -d           enable output debug message.",
@@ -178,6 +180,9 @@ public class omompx
         outputDecomp = true;
       } else if(arg.equals("-silent")){
         silent = true;
+      } else if(arg.startsWith("-rename_main=")) {
+        String main_name = arg.substring(arg.indexOf("=") + 1);
+        XmOption.setMainName(main_name);
       } else if(arg.equals("-dump")) {
         dump = true;
         outputXcode = true;
@@ -349,7 +354,7 @@ public class omompx
           xobjFile.addHeaderLine("# include \"openacc.h\"");
         }
       }
-      xmpTranslator.finalize();
+      xmpTranslator.finish();
 
       if(xcodeWriter != null) {
         xobjFile.Output(xcodeWriter);

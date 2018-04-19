@@ -53,7 +53,7 @@ public class XMPtranslate implements XobjectDefVisitor
    * Finialize the env, that is, reflect all changes on block to Xobject.
    */
   public void finish() {
-    env.finalize();
+    env.finalizeEnv();
   }
     
   private void replace_main(XobjectDef d) {
@@ -317,7 +317,7 @@ public class XMPtranslate implements XobjectDefVisitor
     if(XMP.hasError()) return;
 
     // finally, replace body
-    fd.Finalize();
+    fd.finalizeBlock();
 
     if(XMP.debugFlag) {
       System.out.println("**** final **** "+fd.getDef());
