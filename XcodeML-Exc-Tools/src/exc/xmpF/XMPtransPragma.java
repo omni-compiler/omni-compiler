@@ -350,7 +350,7 @@ public class XMPtransPragma
           case XMPtemplate.BLOCK:
           case XMPtemplate.GBLOCK:
           {
-            Ident l2g_off_var = env.declIdent(XMP.genSym("l2g_off"), Xtype.FintType, pb);
+            Ident l2g_off_var = env.declIdent(XMP.genSym("loop_l2goff"), Xtype.FintType, pb);
             Ident l2g_f =
                     env.declInternIdent(XMP.l2g_f, Xtype.FsubroutineType);
             args = Xcons.List(l2g_off_var.Ref(),
@@ -367,11 +367,29 @@ public class XMPtransPragma
         }else {
           Ident l2g_f =
                   env.declInternIdent(XMP.l2g_f, Xtype.FsubroutineType);
-          args = Xcons.List(org_loop_ind_var,
-                  local_loop_var.Ref(),
-                  Xcons.IntConstant(k),
-                  on_ref.getDescId().Ref());
-          for_block.getBody().insert(l2g_f.callSubroutine(args));
+
+          switch (t.getDistMannerAt(t_idx)){
+          case XMPtemplate.BLOCK:
+          case XMPtemplate.GBLOCK:
+            {
+              Ident l2g_off_var = env.declIdent(XMP.genSym("loop_l2goff"), Xtype.FintType, pb);
+              args = Xcons.List(l2g_off_var.Ref(),
+                                Xcons.IntConstant(0),
+                                Xcons.IntConstant(k),
+                                on_ref.getDescId().Ref());
+              entry_bb.add(l2g_f.callSubroutine(args));
+              for_block.getBody().insert(Xcons.Set(org_loop_ind_var, Xcons.binaryOp(Xcode.PLUS_EXPR, l2g_off_var.Ref(), local_loop_var.Ref())));
+              break;
+            }
+          default:
+            {
+              args = Xcons.List(org_loop_ind_var,
+                                local_loop_var.Ref(),
+                                Xcons.IntConstant(k),
+                                on_ref.getDescId().Ref());
+              for_block.getBody().insert(l2g_f.callSubroutine(args));
+            }
+          }
         }
       }
     }
