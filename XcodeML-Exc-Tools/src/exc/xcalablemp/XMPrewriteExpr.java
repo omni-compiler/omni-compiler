@@ -1612,7 +1612,12 @@ public class XMPrewriteExpr {
   
   private Xobject rewriteArrayRef(Xobject myExpr, Block block) throws XMPexception {
     Xobject arrayAddr = myExpr.getArg(0);
+
+    // for this moment, structure members shouldn't be aligned.
+    if (arrayAddr.Opcode() != Xcode.ARRAY_ADDR) return myExpr;
+
     String arrayName = arrayAddr.getSym();
+
     XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, block);
     XMPcoarray      coarray      = _globalDecl.getXMPcoarray(arrayName, block);
 

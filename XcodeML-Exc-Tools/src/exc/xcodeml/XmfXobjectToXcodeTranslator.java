@@ -501,6 +501,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             break;
 
         case PRAGMA_LINE:
+	case COMMENT_LINE:
         case TEXT:
             e = addChildNode(createElement(name),
                              trans(xobj.getArg(0).getString()));

@@ -49,6 +49,7 @@
   } \
 }
 
+
 int _XMP_sched_loop_template_width_1(int ser_init, int ser_cond, int ser_step,
                                      int *par_init, int *par_cond, int *par_step,
                                      int template_lower, int template_upper, int template_stride) {
@@ -230,6 +231,63 @@ void _XMP_sched_loop_template_BLOCK(int ser_init, int ser_cond, int ser_step,
     *par_cond = 0;
     *par_step = 1;
   }
+
+  /* // */
+  /* // for EXPAND/MARGIN */
+  /* // */
+  
+  /* if (expand_type == _XMP_LOOP_NONE){ */
+  /*   return; */
+  /* } */
+  /* else if (expand_type == _XMP_LOOP_EXPAND){ */
+
+  /*   if ((*par_init) <= (*par_cond)){ // iterates at least once */
+  /*     (*par_init) -= lwidth; */
+  /*     (*par_cond) += uwidth; */
+  /*   } */
+
+  /* } */
+  /* else if (expand_type == _XMP_LOOP_MARGIN){ */
+
+  /*   if ((*par_init) <= (*par_cond)){ // iterates at least once */
+
+  /*     if (lwidth > 0){ */
+  /* 	(*par_init) -= lwidth; */
+  /* 	(*par_cond) = (*par_init) + lwidth; */
+  /*     } */
+  /*     else if (lwidth < 0){ */
+  /* 	(*par_cond) = (*par_init) - lwidth; */
+  /* 	// (*par_init) */
+  /*     } */
+  /*     else if (uwidth > 0){ */
+  /* 	(*par_cond) += uwidth; */
+  /* 	(*par_init) = (*par_cond) - uwidth; */
+  /*     } */
+  /*     else if (uwidth < 0){ */
+  /* 	(*par_init) = (*par_cond) + uwidth; */
+  /* 	// (*par_cond) */
+  /*     } */
+
+  /*   } */
+
+  /* } */
+
+  /* if (unbound_flag == 0){ */
+
+  /*   long long int ser_init2; */
+  /*   _XMP_L2G(*par_init, &ser_init2, template, template_index); */
+  /*   if (ser_init2 < ser_init){ */
+  /*     (*par_init) += lwidth; */
+  /*   } */
+
+  /*   long long int ser_cond2; */
+  /*   _XMP_L2G(*par_cond-1, &ser_cond2, template, template_index); */
+  /*   // because (*par_cond) is (upper_bound + 1). */
+  /*   if (ser_cond2 > ser_cond){ */
+  /*     (*par_cond) -= uwidth; */
+  /*   } */
+  /* } */
+
 }
 
 // cyclic distribution ---------------------------------------------------------------------------------------------------------------
@@ -356,6 +414,119 @@ void _XMP_sched_loop_template_GBLOCK(int ser_init, int ser_cond, int ser_step,
     *par_cond = 0;
     *par_step = 1;
   }
+}
+
+void xmpc_loop_sched(int ser_init, int ser_cond, int ser_step,
+		     int *par_init, int *par_cond, int *par_step,
+		     _XMP_template_t *t_desc, int t_idx,
+		     int expand_type, int lwidth, int uwidth, int unbound_flag)
+{
+  _XMP_ASSERT(*expand_type != _XMP_LOOP_MARGIN || *lwidth == 0 || *uwidth == 0);
+  _XMP_ASSERT(ser_step != 0);
+
+  // offset is not supported yet in XMP/C>
+  int off = 0;
+  //int off = rp->REF_OFFSET[*r_idx];
+
+  switch (t_desc->chunk[t_idx].dist_manner){
+
+  case _XMP_N_DIST_DUPLICATION:
+    _XMP_sched_loop_template_DUPLICATION(ser_init + off, ser_cond + off, ser_step,
+					 par_init, par_cond, par_step,
+					 t_desc, t_idx);
+    break;
+
+  case _XMP_N_DIST_BLOCK:
+    _XMP_sched_loop_template_BLOCK(ser_init + off, ser_cond + off, ser_step,
+				   par_init, par_cond, par_step,
+				   t_desc, t_idx);
+    break;
+
+  case _XMP_N_DIST_CYCLIC:
+    _XMP_sched_loop_template_CYCLIC(ser_init + off, ser_cond + off, ser_step,
+				    par_init, par_cond, par_step,
+				    t_desc, t_idx);
+    break;
+
+  case _XMP_N_DIST_BLOCK_CYCLIC:
+    _XMP_sched_loop_template_BLOCK_CYCLIC(ser_init + off, ser_cond + off, ser_step,
+					  par_init, par_cond, par_step,
+					  t_desc, t_idx);
+    break;
+
+  case _XMP_N_DIST_GBLOCK:
+    _XMP_sched_loop_template_GBLOCK(ser_init + off, ser_cond + off, ser_step,
+				    par_init, par_cond, par_step,
+				    t_desc, t_idx);
+    break;
+
+  default:
+    _XMP_fatal("xmpc_sched_loop_template: unknown chunk dist_manner");
+
+  }
+
+  //
+  // for EXPAND/MARGIN
+  //
+
+  //xmp_dbg_printf("before %d : %d\n", *par_init, *par_cond);
+
+  if (expand_type == _XMP_LOOP_NONE){
+    return;
+  }
+  else if (expand_type == _XMP_LOOP_EXPAND){
+
+    if ((*par_init) < (*par_cond)){ // iterates at least once
+      (*par_init) -= lwidth;
+      (*par_cond) += uwidth;
+    }
+
+  }
+  else if (expand_type == _XMP_LOOP_MARGIN){
+
+    if ((*par_init) < (*par_cond)){ // iterates at least once
+
+      if (lwidth > 0){
+	(*par_init) -= lwidth;
+	(*par_cond) = (*par_init) + lwidth;
+      }
+      else if (lwidth < 0){
+	(*par_cond) = (*par_init) - lwidth;
+	// (*par_init)
+      }
+      else if (uwidth > 0){
+	(*par_cond) += uwidth;
+	(*par_init) = (*par_cond) - uwidth;
+      }
+      else if (uwidth < 0){
+	(*par_init) = (*par_cond) + uwidth;
+	// (*par_cond)
+      }
+
+    }
+
+  }
+
+  if (unbound_flag == 0){
+
+    long long int glb;
+    _XMP_L2G(*par_init, &glb, t_desc, t_idx);
+    if (glb < ser_init){
+      (*par_init) += lwidth;
+    }
+
+    long long int gub;
+    _XMP_L2G(*par_cond, &gub, t_desc, t_idx);
+    if (gub > ser_cond){
+      (*par_cond) -= uwidth;
+    }
+    
+  }
+
+  //xmp_dbg_printf("after  %d : %d\n", *par_init, *par_cond);
+  
+  return;
+
 }
 
 // schedule by nodes ----------------------------------------------------------------------------------------------------------------

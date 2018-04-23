@@ -343,6 +343,7 @@ public class XcodeMLtools_F extends XcodeMLtools {
     case F_MODULE_DEFINITION:
     case F_BLOCK_DATA_DEFINITION:
     case PRAGMA_LINE:
+    case COMMENT_LINE:
       xobjFile.add(xobj);
       break;
     default:
@@ -443,8 +444,9 @@ public class XcodeMLtools_F extends XcodeMLtools {
       return getChildList(n, xlist);
 
     case PRAGMA_LINE:
-      String contentText = getContentText(n);
-      x = Xcons.List(Xcode.PRAGMA_LINE,
+    case COMMENT_LINE:
+	String contentText = getContentText(n);
+      x = Xcons.List(code,
 		     new XobjString(Xcode.STRING, contentText));
       setCommonAttributes(n, x);
       return x;

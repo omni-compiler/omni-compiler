@@ -43,6 +43,10 @@ run: $(EXES)
 	$(XRUN) -n 2 ./different_template.x
 	$(XRUN) -n 2 ./158_idx.x
 	$(XRUN) -n 2 ./105_loop.x
+	$(XRUN) -n 4 ./expand.x
+	$(XRUN) -n 4 ./margin.x
+	$(XRUN) -n 4 ./expand_margin.x
+	$(XRUN) -n 4 ./peel_and_wait.x
 
 RUN:
 	mkdir RUN

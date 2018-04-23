@@ -18,6 +18,7 @@ run: $(EXES)
 #	$(XRUN) -n 4 ./array.x
 	$(XRUN) -n 4 ./offset.x
 	$(XRUN) -n 4 ./361_array.x
+	$(XRUN) -n 4 ./array3.x
 
 RUN:
 	mkdir RUN
