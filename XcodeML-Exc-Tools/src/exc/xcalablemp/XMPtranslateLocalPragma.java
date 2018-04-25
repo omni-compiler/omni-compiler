@@ -511,7 +511,7 @@ public class XMPtranslateLocalPragma {
     Xobject on_ref_arg;
     if (on_ref != null){
       ret_body.add(on_ref.buildConstructor(_globalDecl));
-      on_ref_arg = Xcons.Cnull();
+      on_ref_arg = on_ref.getDescId().Ref();
     }
     else on_ref_arg = Xcons.Cnull();
 
@@ -1875,7 +1875,7 @@ public class XMPtranslateLocalPragma {
       ret_body.add(on_ref.buildConstructor(_globalDecl));
       on_ref_arg = on_ref.getDescId().Ref();
     }
-    else on_ref_arg = Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0));
+    else on_ref_arg = Xcons.Cnull();
 
     Ident f = _globalDecl.declExternFunc("_XMP_barrier", Xtype.voidType);
     ret_body.add(f.Call(Xcons.List(on_ref_arg)));
