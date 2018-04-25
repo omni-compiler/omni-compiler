@@ -1,4 +1,8 @@
+/* needed when searching for other linked versions of xmpt_initialize */
+#define _GNU_SOURCE
+#include <dlfcn.h>
 #include "xmp_internal.h"
+#include <stdlib.h>
 
 xmpt_callback_t xmpt_callback[XMPT_EVENT_ALL+1] = { 0 };
 int xmpt_support_level[XMPT_EVENT_ALL+1] = {
@@ -45,13 +49,44 @@ int xmpt_support_level[XMPT_EVENT_ALL+1] = {
 };
 
 int __attribute__((weak)) xmpt_initialize(){
-  return 0;
+  
+  int ret = 0;
+  int (*next_tool)() = (int(*)()) dlsym(RTLD_NEXT, "xmpt_initialize");
+  if (next_tool)
+    ret = next_tool();
+  if (ret)
+    return ret;
+  const char *tool_libs = getenv("XMP_TOOL_LIBRARIES");
+  if (tool_libs) {
+    char* tool_libs_buffer = strdup(tool_libs);
+    if(!tool_libs_buffer)
+    {
+      printf("malloc Error\n");
+      return(0);
+    }
+    char *fname = strtok(tool_libs_buffer,":");
+    while (fname) {
+      void *h = dlopen(fname, RTLD_LAZY);
+      if (h) {
+        next_tool = (int(*)()) dlsym(h, "xmpt_initialize");
+        if (next_tool && (ret = next_tool())) {
+          break;
+        }
+      }
+      else{
+        printf("Loading %s from %s failed with: %s\n" ,fname, "XMP_TOOL_LIBRARIES", dlerror());
+      }
+      fname = strtok(NULL,":");
+    }
+    free(tool_libs_buffer);
+  }
+  return ret;
 }
 
-xmp_desc_t on_desc;
+/*xmp_desc_t on_desc;
 struct _xmpt_subscript_t on_subsc;
 xmp_desc_t from_desc;
-struct _xmpt_subscript_t from_subsc;
+struct _xmpt_subscript_t from_subsc;*/
 
 int xmpt_set_callback(xmpt_event_t event, xmpt_callback_t callback){
 
@@ -193,3 +228,26 @@ void _XMPT_set_subsc(xmpt_subscript_t subsc, _XMP_object_ref_t *desc){
     subsc->omit = 1;
   }
 }
+
+int xmpt_desc_set_data(xmp_desc_t d, void * data)
+{
+  switch(*(int*)d){
+    case _XMP_DESC_NODES: ((_XMP_nodes_t*)d)->xmpt_nodes_data = data ; break;
+    case _XMP_DESC_ARRAY: ((_XMP_array_t*)d)->xmpt_array_data = data ; break;
+    case _XMP_DESC_TEMPLATE: ((_XMP_template_t*)d)->xmpt_template_data = data ; break;
+    default: return -1;
+  }
+  return 0;
+}
+
+int xmpt_desc_get_data(xmp_desc_t d, void ** data)
+{
+  switch(*(int*)d){
+    case _XMP_DESC_NODES: *data = ((_XMP_nodes_t*)d)->xmpt_nodes_data ; break;
+    case _XMP_DESC_ARRAY: *data = ((_XMP_array_t*)d)->xmpt_array_data ; break;
+    case _XMP_DESC_TEMPLATE: *data = ((_XMP_template_t*)d)->xmpt_template_data ; break;
+    default: return -1;
+  }
+  return 0;
+}
+

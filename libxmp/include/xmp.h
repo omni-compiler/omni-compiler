@@ -31,6 +31,10 @@ typedef void* xmp_desc_t;
 #include "xmp_lock.h"
 #endif
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
 // ----- libxmp
 extern MPI_Comm	xmp_get_mpi_comm(void);
 extern void	xmp_init_mpi(int *argc, char ***argv);
@@ -91,7 +95,7 @@ extern int      xmp_nodes_comm(xmp_desc_t d, void **comm);
 extern int      xmp_nodes_equiv(xmp_desc_t d, xmp_desc_t *dn, int lb[], int ub[], int st[]);
 extern void     xmp_sched_template_index(int* local_start_index, int* local_end_index,
 					 const int global_start_index, const int global_end_index, const int step,
-					 const xmp_desc_t template, const int template_dim);
+					 const xmp_desc_t template_arg, const int template_dim);
 extern void     xmp_sync_memory(const int* status);
 extern void     xmp_sync_all(const int* status);
 extern void     xmp_sync_image(const int image, int* status);
@@ -108,6 +112,10 @@ extern void     xmp_atomic_ref(int*, int);
 // ----- libxmp_gpu
 #ifdef _XMP_ENABLE_GPU
 extern int	xmp_get_gpu_count(void);
+#endif
+
+#ifdef  __cplusplus
+}
 #endif
 
 #endif // _XMP_USERAPI

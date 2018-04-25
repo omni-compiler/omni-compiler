@@ -1,3 +1,6 @@
+#ifndef _XMP_TOOLAPI
+#define _XMP_TOOLAPI
+
 #include <limits.h>
 #include <stdint.h>
 #include "xmp_constant.h"
@@ -274,13 +277,25 @@ typedef void (*xmpt_event_sync_images_begin_t)(
 
 typedef void (*xmpt_callback_t);
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
 int xmpt_set_callback(xmpt_event_t, xmpt_callback_t);
+int xmpt_desc_set_data(xmp_desc_t d, xmpt_tool_data_t data);
+int xmpt_desc_get_data(xmp_desc_t d, xmpt_tool_data_t* data);
+
+#ifdef  __cplusplus
+}
+#endif
 
 extern xmpt_callback_t xmpt_callback[XMPT_EVENT_ALL+1];
 extern int xmpt_enabled;
 
-extern xmp_desc_t on_desc;
+/*extern xmp_desc_t on_desc;
 extern struct _xmpt_subscript_t on_subsc;
 extern xmp_desc_t from_desc;
-extern struct _xmpt_subscript_t from_subsc;
+extern struct _xmpt_subscript_t from_subsc;*/
+
+#endif // _XMP_TOOLAPI
 

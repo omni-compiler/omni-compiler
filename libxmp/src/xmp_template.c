@@ -24,6 +24,10 @@ _XMP_template_t *_XMP_create_template_desc(int dim, _Bool is_fixed)
   t->onto_nodes     = NULL;
   t->chunk          = NULL;
 
+#ifdef _XMPT
+  t->xmpt_template_data = NULL;
+#endif
+
   return t;
 }
 

@@ -13,13 +13,13 @@ void xmpf_wait_async__(int *async_id, _XMP_object_ref_t **on_desc)
     xmpf_create_task_nodes__(&n, on_desc);
     if(xmpf_test_task_on_nodes__(&n)){
       //      _XMP_barrier_EXEC();
-      _XMP_wait_async__(*async_id);
+      _XMP_wait_async__(*async_id, *on_desc);
       xmpf_end_task__();
     }
     xmpf_nodes_dealloc__(&n);
   }
   else{
-    _XMP_wait_async__(*async_id);
+    _XMP_wait_async__(*async_id, *on_desc);
   }
   
   xmpc_end_async(*async_id);
