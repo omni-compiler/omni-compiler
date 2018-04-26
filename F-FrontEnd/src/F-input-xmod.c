@@ -2503,14 +2503,6 @@ input_FstructType(xmlTextReaderPtr reader, HashTable * ht)
     if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "FstructType"))
         return FALSE;
 
-    // Add newly read TYPE in the local structure declaration
-    TYPE_DESC ttail = NULL;
-    TYPE_DESC tp0;
-    for (tp0 = LOCAL_STRUCT_DECLS; tp0 != NULL; tp0 = TYPE_SLINK(tp0)) {
-        ttail = tp0;
-    }
-    TYPE_SLINK_ADD(tp, LOCAL_STRUCT_DECLS, ttail);
-
     return TRUE;
 }
 
