@@ -295,7 +295,7 @@ public class XMPglobalDecl {
     return null;
   }
 
-  public void finalize() {
+  public void finalizeGlobalDecl() {
     _env.collectAllTypes();
     _env.fixupTypeRef();
   }

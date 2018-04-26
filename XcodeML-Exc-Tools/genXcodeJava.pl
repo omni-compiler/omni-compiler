@@ -174,7 +174,8 @@ print OUT<<_EOL_;
         case F_STOP_STATEMENT:              case F_ERROR_STOP_STATEMENT:
         case F_ENTRY_DECL:                  case F_FORMAT_DECL:
         case F_DATA_DECL:
-        case PRAGMA_LINE:                   case TEXT:
+        case PRAGMA_LINE:                   case COMMENT_LINE:
+        case TEXT:
         case F_SYNCALL_STATEMENT:           case F_SYNCIMAGE_STATEMENT:
         case F_SYNCMEMORY_STATEMENT:        case F_CRITICAL_STATEMENT:
         case F_LOCK_STATEMENT:              case F_UNLOCK_STATEMENT:

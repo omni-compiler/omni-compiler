@@ -41,8 +41,6 @@ typedef struct _XMP_object_ref_type {
   _XMP_nodes_t *n_desc;
     
   int ndims;
-/*   int *offset; */
-/*   int *index; */
   int *arg0;
   int *arg1;
   int *arg2;
@@ -50,19 +48,7 @@ typedef struct _XMP_object_ref_type {
 } _XMP_object_ref_t;
 
 
-/* typedef struct _XMP_object_ref_type2 { */
-/*   int ref_kind;  */
-/*   _XMP_template_t *t_desc; */
-/*   _XMP_nodes_t *n_desc; */
-    
-/*   int ndims; */
-/*   int *lb; */
-/*   int *ub; */
-/*   int *st; */
-/* } _XMP_object_ref_t2; */
-
-
-/* From xmpf_index.c */
+/* From xmp_index.c */
 void _XMP_L2G(int local_idx, long long int *global_idx,
 	      _XMP_template_t *template, int template_index);
 void _XMP_G2L(long long int global_idx,int *local_idx,

@@ -1240,9 +1240,19 @@ compile_statement1(int st_no, expr x)
                 fix_array_dimensions(tp);
 
                 selector = CTL_SELECT_TYPE_ASSICIATE(CTL_PREV(ctl_top))?:CTL_SELECT_TYPE_SELECTOR(CTL_PREV(ctl_top));
+                // Get selector infor before declaring new ident.
+                ID selector_id = find_ident(EXPR_SYM(selector));
+
                 id = declare_ident(EXPR_SYM(selector), CL_VAR);
                 declare_id_type(id, tp);
 
+                // Copy back some of the saved vital selector information
+                // Fix issue #550 - Maybe all attributes should be copied
+                if(selector_id != NULL) {
+                    if(TYPE_IS_POINTER(ID_TYPE(selector_id))) {
+                        TYPE_SET_POINTER(tp);
+                    }
+                }
             } else { // NULL for CLASS DEFAULT
                 tp = NULL;
             }
@@ -1322,6 +1332,18 @@ compile_statement1(int st_no, expr x)
 	EXPR_LINE(new_pragma) = current_line;
 	if (!preceding_pragmas) preceding_pragmas = list0(LIST);
 	preceding_pragmas = list_put_last(preceding_pragmas, new_pragma);
+      }
+      break;
+
+    case F_COMMENT_LINE:
+      if (CURRENT_STATE == OUTSIDE)
+      	compile_pragma_outside(x);
+      else { // others should be issued at the next statemet.
+      	char *str = strdup(EXPR_STR(EXPR_ARG1(x)));
+      	expr new_pragma = list1(F_COMMENT_LINE, make_enode(STRING_CONSTANT, str));
+      	EXPR_LINE(new_pragma) = current_line;
+      	if (!preceding_pragmas) preceding_pragmas = list0(LIST);
+      	preceding_pragmas = list_put_last(preceding_pragmas, new_pragma);
       }
       break;
 
@@ -4434,7 +4456,9 @@ end_procedure()
         }
 
         if ((ID_CLASS(id) == CL_PROC && PROC_CLASS(id) == P_THISPROC) ||
-            ID_CLASS(id) == CL_ENTRY) {
+            ID_CLASS(id) == CL_ENTRY ||
+	    (ID_CLASS(id) == CL_PROC && PROC_CLASS(id) == P_DEFINEDPROC &&
+	     PROC_IS_RECURSIVE(id) && PROC_RESULTVAR(id))) {
             PROC_CLASS(id) = P_DEFINEDPROC;
             if(unit_ctl_level != 0) {
                 TYPE_DESC tp;
@@ -5312,6 +5336,7 @@ shallow_copy_ext_id(EXT_ID original) {
 
 #define ID_SEEM_GENERIC_PROCEDURE(id)                                          \
     (ID_TYPE((id)) != NULL &&                                                  \
+     FUNCTION_TYPE_RETURN_TYPE(ID_TYPE((id))) != NULL &&                       \
      ((ID_CLASS((id)) == CL_PROC &&                                            \
        TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE((id))))               \
          == TYPE_GENERIC) ||                                                   \

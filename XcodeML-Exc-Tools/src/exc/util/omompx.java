@@ -354,7 +354,7 @@ public class omompx
           xobjFile.addHeaderLine("# include \"openacc.h\"");
         }
       }
-      xmpTranslator.finalize();
+      xmpTranslator.finish();
 
       if(xcodeWriter != null) {
         xobjFile.Output(xcodeWriter);

@@ -137,6 +137,7 @@ enum lex_state
     LEX_OMP_TOKEN,
     LEX_XMP_TOKEN,
     LEX_ACC_TOKEN,
+    LEX_COMMENT_TOKEN,
     LEX_RET_EOS
 };
 
@@ -146,6 +147,7 @@ int st_OCL_flag;
 int st_OMP_flag;
 int st_XMP_flag;
 int st_ACC_flag;
+int st_comment_line_flag;
 
 enum lex_state lexstate;
 
@@ -679,6 +681,10 @@ yylex0()
             lexstate = LEX_PRAGMA_TOKEN;
             return PRAGMA_HEAD;
         }
+	if (st_comment_line_flag){
+	  lexstate = LEX_COMMENT_TOKEN;
+	  return COMMENT_HEAD;
+	}
         tkn_cnt = 0;
         lexstate = LEX_FIRST_TOKEN;
         return(STATEMENT_LABEL_NO);
@@ -750,6 +756,10 @@ yylex0()
     case LEX_PRAGMA_TOKEN:
         lexstate = LEX_RET_EOS;
         return PRAGMA_SLINE;
+
+    case LEX_COMMENT_TOKEN:
+        lexstate = LEX_RET_EOS;
+        return COMMENT_SLINE;
 
     default:
         fatal("lexstate");
@@ -956,6 +966,16 @@ token()
 		}
 	      }
 	    }
+	    else if (strncmp(bufptr, "unbound", 7) == 0) {
+	      bufptr += 7;
+	      if (*bufptr++ == '/'){
+		while (isspace(*bufptr)) bufptr++;
+		if (*bufptr != ')') {
+		  bufptr = save - 1;
+		  return '(';
+		}
+	      }
+	    }
 	    else if (st_OMP_flag || st_ACC_flag){
 	      bufptr = save - 1;
 	      return '(';
@@ -1045,6 +1065,17 @@ token()
 	    while (isspace(*bufptr)) bufptr++;
 	    if (*bufptr != ')') {
 	      return XMPKW_PERIODIC;
+	    }
+	  }
+	  bufptr = save + 1;
+	}
+	if (strncmp(bufptr, "unbound", 7) == 0) {
+	  char *save = bufptr;
+	  bufptr += 7;
+	  if (*bufptr++ == '/'){
+	    while (isspace(*bufptr)) bufptr++;
+	    if (*bufptr != ')') {
+	      return XMPKW_UNBOUND;
 	    }
 	  }
 	  bufptr = save + 1;
@@ -1513,6 +1544,12 @@ classify_statement()
         }
         while(isspace(*p)) p++; /* skip space */
         if(*p == '=') goto ret_LET;
+	else if (*p == '%'){
+	  while (*p != '\0'){
+	    if (*p == '=') goto ret_LET;
+	    p++;
+	  }
+	}
     }
 
     p = bufptr;
@@ -2360,6 +2397,7 @@ again:
     st_PRAGMA_flag = FALSE;    /* flag for "!$+" */
     st_OCL_flag = FALSE;       /* flag for "!OCL" */
     st_CONDCOMPL_flag = FALSE; /* flag for "!$" */
+    st_comment_line_flag = FALSE;
 
     if (flag_force_c_comment) {
         if ((p[0] == 'c') || (p[0] == 'C') || (p[0] == '*')) {
@@ -2416,6 +2454,10 @@ again:
                 }
             }
         }
+	else if (leave_comment_flag){
+	  set_pragma_str(p);
+	  st_comment_line_flag = TRUE;
+	}
         else goto again;  /* comment line */
     }
 
@@ -2745,6 +2787,7 @@ read_fixed_format()
     st_ACC_flag = FALSE;       /* flag for "!$ACC" */
     st_PRAGMA_flag = FALSE;    /* flag for "!$+" */
     st_CONDCOMPL_flag = FALSE; /* flag for "!$" */
+    st_comment_line_flag = FALSE;
 
 top:
     if (!pre_read) {
@@ -4466,6 +4509,9 @@ struct keyword_token XMP_keywords[ ] =
     {"gmove",	XMPKW_GMOVE },
     {"barrier",	XMPKW_BARRIER},
     {"reduction",	XMPKW_REDUCTION },
+    {"expand",	XMPKW_EXPAND },
+    {"margin",	XMPKW_MARGIN },
+    {"peel_and_wait", XMPKW_PEEL_AND_WAIT },
     {"bcast",	XMPKW_BCAST },
     {"wait_async",	XMPKW_WAIT_ASYNC },
     {"array",	XMPKW_ARRAY },

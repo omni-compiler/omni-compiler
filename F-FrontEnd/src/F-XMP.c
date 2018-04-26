@@ -233,20 +233,28 @@ void compile_XMP_directive(expr x)
       } else  error("XMP TASKS block is not closed");
       break;
 
-    case XMP_LOOP:
+    case XMP_LOOP: {
       check_INEXEC();
       /* check arg: (index_list on_ref reduction_opt opt)  */
       x1 = XMP_compile_subscript_list(EXPR_ARG1(c),XMP_LIST_ID_LIST);
       x2 = XMP_compile_ON_ref(EXPR_ARG2(c));
       x3 = EXPR_ARG3(c);
+      if (x3){
+	if (EXPR_INT(EXPR_ARG1(x3)) == XMP_LOOP_PEEL_AND_WAIT)
+	  x3 = list3(LIST, EXPR_ARG1(x3), EXPR_ARG2(x3), XMP_compile_subscript_list(EXPR_ARG3(x3), XMP_LIST_WIDTH));
+	else
+	  x3 = list2(LIST, EXPR_ARG1(x3), XMP_compile_subscript_list(EXPR_ARG2(x3), XMP_LIST_WIDTH));
+      }
       x4 = EXPR_ARG4(c);
-      c = list4(LIST,x1,x2,x3,x4);
+      x5 = EXPR_ARG5(c);
+      c = list5(LIST,x1,x2,x3,x4,x5);
       push_ctl(CTL_XMP);
       CTL_XMP_ARG(ctl_top) = XMP_pragma_list(XMP_LOOP,c,NULL);;
       EXPR_LINE(CTL_OMP_ARG(ctl_top)) = current_line;
       XMP_do_required = TRUE;
       break;
-
+    }
+      
     case XMP_GMOVE:
       check_INEXEC();
       XMP_st_required = XMP_ST_GMOVE;

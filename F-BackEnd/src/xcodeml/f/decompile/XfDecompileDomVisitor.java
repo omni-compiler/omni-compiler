@@ -4488,6 +4488,16 @@ XfDecompileDomVisitor {
         }
     }
 
+        // FpragmaStatement
+    class FcommentLineVisitor extends XcodeNodeVisitor {
+        @Override public void enter(Node n) {
+            _writeLineDirective(n);
+            String content = XmDomUtil.getContentText(n);
+            XmfWriter writer = _context.getWriter();
+            writer.writeIsolatedLine(content);
+        }
+    }
+
     // OMPPragma
     class OMPPragmaVisitor extends XcodeNodeVisitor {
         /**
@@ -7753,6 +7763,7 @@ XfDecompileDomVisitor {
         new Pair("FpointerAssignStatement", new FpointerAssignStatementVisitor()),
         new Pair("FpowerExpr", new FpowerExprVisitor()),
         new Pair("FpragmaStatement", new FpragmaStatementVisitor()),
+	new Pair("FcommentLine", new FcommentLineVisitor()),
         new Pair("OMPPragma", new OMPPragmaVisitor()),
         new Pair("ACCPragma", new ACCPragmaVisitor()),
         new Pair("FprintStatement", new FprintStatementVisitor()),

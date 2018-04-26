@@ -522,8 +522,10 @@ public class XMPalignedArray {
         arrayAddrId = XMPlocalDecl.addObjectId2(XMP.ADDR_PREFIX_ + arrayName,
                                                 Xtype.Pointer(arrayElmtType), parentBlock);
       }
-      else{
-        arrayAddrId.setType(Xtype.Pointer(arrayElmtType));
+      else {
+        Xtype newArrayAddrType = Xtype.Pointer(arrayElmtType);
+        arrayAddrId.setType(newArrayAddrType);
+        arrayAddrId.setValue(Xcons.Symbol(Xcode.VAR_ADDR, Xtype.Pointer(newArrayAddrType), arrayAddrId.getSym(), VarScope.LOCAL));
       }
       arrayDescId = XMPlocalDecl.addObjectId2(XMP.DESC_PREFIX_ + arrayName, parentBlock);
     }
@@ -542,7 +544,11 @@ public class XMPalignedArray {
 	  throw new XMPexception("cannot align array '" + arrayName + "', wrong storage class");
 	}
       }
-      else arrayAddrId.setType(Xtype.Pointer(arrayElmtType));
+      else {
+        Xtype newArrayAddrType = Xtype.Pointer(arrayElmtType);
+        arrayAddrId.setType(newArrayAddrType);
+        arrayAddrId.setValue(Xcons.Symbol(Xcode.VAR_ADDR, Xtype.Pointer(newArrayAddrType), arrayAddrId.getSym(), VarScope.GLOBAL));
+      }
       arrayDescId = globalDecl.declStaticIdent(XMP.DESC_PREFIX_ + arrayName, Xtype.voidPtrType);
     }
 
@@ -645,7 +651,11 @@ public class XMPalignedArray {
       String alignSource = i.getArg().getString();
 
       if (alignSource.equals(XMP.ASTERISK)) {
-        declNotAlignFunc(alignedArray, alignSourceIndex, globalDecl, isLocalPragma, pb);
+	if (!isPointer)
+	  declNotAlignFunc(alignedArray, alignSourceIndex, globalDecl, isLocalPragma, pb);
+	else
+	  declAlignFunc_pointer(alignedArray, alignSourceIndex, null, -1,
+				Xcons.IntConstant(0), globalDecl, isLocalPragma, pb);
       }
       else if (alignSource.equals(XMP.COLON)) {
         if (!XMPutil.hasElmt(alignSubscriptVarList, XMP.COLON)) {
@@ -917,11 +927,16 @@ public class XMPalignedArray {
 
     alignFuncArgs.add(alignSubscriptExpr);
 
-    int distManner = templateObj.getDistMannerAt(alignSubscriptIndex);
-    alignedArray.setAlignMannerAt(XMPalignedArray.convertDistMannerToAlignManner(distManner), alignSourceIndex);
+    if (templateObj != null){
+      int distManner = templateObj.getDistMannerAt(alignSubscriptIndex);
+      alignedArray.setAlignMannerAt(XMPalignedArray.convertDistMannerToAlignManner(distManner), alignSourceIndex);
 
-    alignedArray.setAlignSubscriptIndexAt(alignSubscriptIndex, alignSourceIndex);
-    alignedArray.setAlignSubscriptExprAt(alignSubscriptExpr, alignSourceIndex);
+      alignedArray.setAlignSubscriptIndexAt(alignSubscriptIndex, alignSourceIndex);
+      alignedArray.setAlignSubscriptExprAt(alignSubscriptExpr, alignSourceIndex);
+    }
+    else {
+      alignedArray.setAlignMannerAt(XMPalignedArray.NOT_ALIGNED, alignSourceIndex);
+    }
 
     Ident gtolTemp0Id = null;
     if (isLocalPragma) {
