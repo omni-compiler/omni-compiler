@@ -5758,6 +5758,10 @@ import_module_id(ID mid,
                 SYM_NAME(use_name));
     }
 
+    if(current_module_state != M_PRIVATE) {
+        TYPE_SET_PUBLIC(ID_TYPE(id)); // Imported id should be flagged public
+    }
+
     return;
 }
 
