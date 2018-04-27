@@ -2815,7 +2815,7 @@ input_id(xmlTextReaderPtr reader, HashTable * ht, struct module * mod)
         // If id was declared before, multize it
         if(ID_CLASS(pid) != CL_MULTI) {
             id_multilize(pid);
-            MULTI_ID_LIST(pid) = id;
+            MULTI_ID_LIST(MULTI_ID_LIST(pid)) = id;
         } else {
             FOREACH_ID(pid, MULTI_ID_LIST(pid)) {
                 last = pid;
