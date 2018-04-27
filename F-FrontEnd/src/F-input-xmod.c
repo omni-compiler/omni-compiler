@@ -2816,14 +2816,15 @@ input_id(xmlTextReaderPtr reader, HashTable * ht, struct module * mod)
         // If id was declared before, multize it
         if(ID_CLASS(pid) != CL_MULTI) {
             id_multilize(pid);
-            MULTI_ID_LIST(MULTI_ID_LIST(pid)) = id;
+            ID_NEXT(MULTI_ID_LIST(pid)) = id;
         } else {
             FOREACH_ID(pid, MULTI_ID_LIST(pid)) {
                 last = pid;
             }
-            MULTI_ID_LIST(last) = id;
+            ID_NEXT(last) = id;
         }
     } else {
+        // New id, so put it in the list
         if (mod->last == NULL) {
             mod->last = id;
             mod->head = id;
