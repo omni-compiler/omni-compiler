@@ -2820,7 +2820,7 @@ input_id(xmlTextReaderPtr reader, HashTable * ht, struct module * mod)
             FOREACH_ID(pid, MULTI_ID_LIST(pid)) {
                 last = pid;
             }
-            ID_NEXT(last) = id;
+            MULTI_ID_LIST(last) = id;
         }
     } else {
         if (mod->last == NULL) {
