@@ -48,12 +48,13 @@ xmlSkipUntil(xmlTextReaderPtr reader, int type, const char * name, int depth)
     const char * current_name;
 
     do {
-        if (!xmlTextReaderRead(reader))
+        if (!xmlTextReaderRead(reader)){
             return FALSE;
+        }
 
-            current_type = xmlTextReaderNodeType(reader);
-            current_name = (const char *) xmlTextReaderConstName(reader);
-            current_depth = xmlTextReaderDepth(reader);
+        current_type = xmlTextReaderNodeType(reader);
+        current_name = (const char *) xmlTextReaderConstName(reader);
+        current_depth = xmlTextReaderDepth(reader);
     } while (current_type != type ||
              strcmp(current_name, name) != 0 ||
              current_depth != depth);
@@ -3351,7 +3352,11 @@ input_FinterfaceDecl(xmlTextReaderPtr reader, HashTable * ht, ID id_list)
         id = find_ident_head(find_symbol(name), id_list);
         if (ID_CLASS(id) == CL_TAGNAME) { /* for multi class */
             id = find_ident_head(ID_SYM(id), ID_NEXT(id));
+        } else if(ID_CLASS(id) == CL_MULTI) {
+            id = multi_find_class(id, CL_PROC);
+            PROC_CLASS(id) = P_UNDEFINEDPROC;
         }
+
         interface_class = INTF_OPERATOR;
         free(is_operator);
         free(name);
