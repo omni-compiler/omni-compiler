@@ -1,4 +1,0 @@
-MODULE char_kind_module
-  INTEGER, PARAMETER :: R1 = SELECTED_REAL_KIND(13)
-  INTEGER, PARAMETER :: C1 = SELECTED_CHAR_KIND('ascii')
-END MODULE char_kind_module
