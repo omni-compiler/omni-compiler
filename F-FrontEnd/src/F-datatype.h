@@ -98,6 +98,7 @@ typedef struct type_descriptor
     struct type_descriptor *ref;         /* reference to other */
     struct ident_descriptor *tagname;    /* derived type tagname */
     char is_referenced;
+    char* imported_id;         /* original imported id, if imported */
     expv kind;                 /* kind parameter */
     expv leng;                 /* len parameter */
     int size;                  /* for TYPE_CHAR char length */

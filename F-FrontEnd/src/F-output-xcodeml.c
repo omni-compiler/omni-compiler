@@ -802,6 +802,9 @@ outx_typeAttrs(int l, TYPE_DESC tp, const char *tag, int options)
     } else {
         outx_printi(l,"<%s type=\"%s\"", tag, getTypeID(tp));
     }
+    if(IS_STRUCT_TYPE(tp) && tp->imported_id) {
+        outx_print(" imported_id=\"%s\"", tp->imported_id);
+    }
 
     if((options & TOPT_TYPEONLY) == 0) {
 
