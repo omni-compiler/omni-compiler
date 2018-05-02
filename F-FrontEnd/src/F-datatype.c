@@ -1839,7 +1839,9 @@ struct_type_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2, int is_po
             && strcmp(btp1->imported_id, btp2->imported_id) == 0) 
         {
             return TRUE;
-        } else if (TYPE_IS_CLASS(tp1) && TYPE_PARENT(btp2) && is_pointer_set) {
+        } else if ((TYPE_IS_CLASS(tp1) || TYPE_IS_POINTER(tp1)) 
+            && TYPE_PARENT(btp2) && is_pointer_set) 
+        {
             if (debug_flag) fprintf(debug_fp,"* compare PARENT type\n");
             return struct_type_is_compatible_for_assignment(tp1, TYPE_PARENT_TYPE(btp2), is_pointer_set);
         } else {
