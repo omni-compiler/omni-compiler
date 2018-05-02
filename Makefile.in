@@ -2,21 +2,12 @@
 
 INSTALL=@INSTALL@
 BINDIR=@OMNI_HOME@/bin
-T_FJMODULE=@T_FJMODULE@
-T_FJMODULE_REMOTE=http://omni-compiler.org/T_FJModule/20170523
-T_FJMODULE_LOCAL=T_FJModule
-
-SUBDIRS=libxmp/include libxmp/src libxmpf/include libxmpf/src libxmp/src_threads \
-	C-FrontEnd/src F-FrontEnd/src Driver/src libtlog/src_threads libtlog/src_mpi \
-	XcodeML-Exc-Tools C-BackEnd F-BackEnd interfaces
+SUBDIRS=xcodeml-tools libxmp/include libxmp/src libxmpf/include libxmpf/src libxmp/src_threads \
+	libtlog/src_threads libtlog/src_mpi XcodeML-Exc-Tools interfaces Driver/src
 
 FALSE=1
 TRUE=0
-NEED_MAKE_MOD2XMOD=@NEED_MAKE_MOD2XMOD@
 USER=$(shell whoami)
-ifeq ($(NEED_MAKE_MOD2XMOD), $(TRUE))
-    SUBDIRS+=F-FrontEnd/gnu_module
-endif
 
 IS_SUPERUX=@SUPERUX@
 ifeq ($(IS_SUPERUX), $(FALSE))
@@ -26,11 +17,6 @@ endif
 IS_ACC=@ACC@
 ifeq ($(IS_ACC), $(TRUE))
     SUBDIRS+=libacc/src libacc/include
-endif
-
-IS_ATOOL=@ATOOL@
-ifeq ($(IS_ATOOL), $(TRUE))
-    SUBDIRS+=Driver/atool
 endif
 
 all:
@@ -44,11 +30,6 @@ install:
 	  $(MAKE) -C $$subdir install ; \
 	  if test $$? -ne 0; then exit 1; fi ; \
 	done; \
-	if test $(T_FJMODULE) -eq $(TRUE); then \
-	  wget $(T_FJMODULE_REMOTE) -O $(DESTDIR)$(BINDIR)/$(T_FJMODULE_LOCAL) || \
-	  echo "Please download $(T_FJMODULE_REMOTE) and copy it at $(DESTDIR)$(BINDIR)/$(T_FJMODULE_LOCAL)"; \
-	  chmod +x $(DESTDIR)$(BINDIR)/$(T_FJMODULE_LOCAL); \
-	fi
 
 clean:
 	@for subdir in $(SUBDIRS) ; do \

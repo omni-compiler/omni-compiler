@@ -3,16 +3,16 @@
 JAVAC        = @JAVAC@
 JAVAC_OPT    = @JAVAC_OPT@
 JAR          = @JAR@
-JAR_OPT   = @JAR_OPT@
+JAR_OPT      = @JAR_OPT@
 JAVADIR      = @OMNI_HOME@/share/xcalablemp
 MKDIR_P      = @MKDIR_P@
 INSTALL      = @INSTALL@
 OM_EXC_TOOLS = build/om-exc-tools.jar
 SOURCE       = $(wildcard src/exc/*/*.java)
 
-XCODE_JAVA	=	src/exc/object/Xcode.java
-XCODE_DEF	=	./Xcode.def
-XCODE_GEN	=	./genXcodeJava.pl
+XCODE_JAVA   = src/exc/object/Xcode.java
+XCODE_DEF    = ./Xcode.def
+XCODE_GEN    = ./genXcodeJava.pl
 
 all: $(OM_EXC_TOOLS)
 
@@ -21,9 +21,9 @@ $(XCODE_JAVA):	$(XCODE_DEF) $(XCODE_GEN)
 	perl $(XCODE_GEN)
 
 $(OM_EXC_TOOLS): $(SOURCE) $(XCODE_JAVA)
-	$(JAVAC) $(JAVAC_OPT) src/exc/*/*.java src/xcodeml/*/*.java -classpath ./src
+	$(JAVAC) $(JAVAC_OPT) src/exc/*/*.java -classpath src:../xcodeml-tools/XcodeML-Common/build/om-common.jar
 	$(MKDIR_P) build
-	cd src; $(JAR) $(JAR_OPT) cf ../$@ ./exc/*/*.class ./xcodeml/*/*.class
+	cd src; $(JAR) $(JAR_OPT) cf ../$@ ./exc/*/*.class
 
 clean:
 	rm -f $(OM_EXC_TOOLS) src/exc/*/*.class src/xcodeml/util/*.class

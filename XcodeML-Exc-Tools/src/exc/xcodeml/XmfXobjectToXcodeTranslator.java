@@ -4,7 +4,7 @@ import static xcodeml.util.XmLog.fatal;
 import static xcodeml.util.XmLog.fatal_dump;
 import xcodeml.util.XmDomUtil;
 import xcodeml.util.ILineNo;
-
+import xcodeml.util.IXobject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -20,7 +20,6 @@ import org.w3c.dom.Node;
 
 import exc.object.*;
 import exc.openmp.OMPpragma;
-
 
 /**
  * convert Xobject/F to XcodeML(DOM)/F

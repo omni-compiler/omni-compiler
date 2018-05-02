@@ -7,6 +7,7 @@ import exc.xcodeml.XcodeMLtools;
 import java.io.File;
 import java.util.*;
 import xcodeml.util.XmLog;
+import xcodeml.util.IXobject;
 import xcodeml.util.XmOption;
 
 /**

@@ -683,19 +683,11 @@ JAVA_OPT
 JAR
 JAVAC
 JAVA
-PERL5
 ONESIDED_CPPFLAGS
 MPI_SUBVERSION
 MPI_VERSION
 MPI3_ONESIDED
 MPI3_ASYNC
-MPFR_LIB_DIR
-MPFR_INCLUDE_DIR
-GMP_LIB_DIR
-GMP_INCLUDE_DIR
-NEED_MAKE_MOD2XMOD
-KIND_MPI_FORTRAN
-MOD2XMOD
 NM_OPT
 OMNI_X2X_FLAGS
 OMNI_LNK_FCFLAGS
@@ -718,13 +710,8 @@ XMPF_DEF
 XMPC_DEF
 OPENMP_OPT_F
 OPENMP_OPT_C
-UCHARDET_LIB_DIR
-UCHARDET_INCLUDE_DIR
-ENABLE_UCHARDET
 GASNET_LIBS
 GASNET
-TCA_PREFIX
-TCA
 INTELMKL
 SSL2BLAMP
 LIBBLAS
@@ -741,12 +728,10 @@ RANLIB
 MPI_FC
 MPI_CC
 SHARED
-ATOOL
 XACC
 ACC
 TARGET
 SUPERUX_OR_POWERPC
-T_FJMODULE
 SUPERUX
 CRAY
 POWERPC
@@ -754,7 +739,6 @@ FX100
 FX10
 KCOMPUTER
 FJRDMA
-EXTENSION_FLAGS
 ACC_DEFAULT_DEVICE
 ACC_DEFAULT_PLATFORM
 OMP_LOCK_TYPE
@@ -826,6 +810,7 @@ infodir
 docdir
 oldincludedir
 includedir
+runstatedir
 localstatedir
 sharedstatedir
 sysconfdir
@@ -878,7 +863,6 @@ enable_gnu_extension
 with_libblas
 enable_SSL2BLAMP
 enable_intelmkl
-with_TCA
 with_gasnet
 with_gasnet_conduit
 enable_mreal
@@ -938,6 +922,7 @@ datadir='${datarootdir}'
 sysconfdir='${prefix}/etc'
 sharedstatedir='${prefix}/com'
 localstatedir='${prefix}/var'
+runstatedir='${localstatedir}/run'
 includedir='${prefix}/include'
 oldincludedir='/usr/include'
 docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
@@ -1190,6 +1175,15 @@ do
   | -silent | --silent | --silen | --sile | --sil)
     silent=yes ;;
 
+  -runstatedir | --runstatedir | --runstatedi | --runstated \
+  | --runstate | --runstat | --runsta | --runst | --runs \
+  | --run | --ru | --r)
+    ac_prev=runstatedir ;;
+  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
+  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
+  | --run=* | --ru=* | --r=*)
+    runstatedir=$ac_optarg ;;
+
   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
     ac_prev=sbindir ;;
   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
@@ -1327,7 +1321,7 @@ fi
 for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
 		datadir sysconfdir sharedstatedir localstatedir includedir \
 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
-		libdir localedir mandir
+		libdir localedir mandir runstatedir
 do
   eval ac_val=\$$ac_var
   # Remove trailing slashes.
@@ -1480,6 +1474,7 @@ Fine tuning of the installation directories:
   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
+  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
   --libdir=DIR            object code libraries [EPREFIX/lib]
   --includedir=DIR        C header files [PREFIX/include]
   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
@@ -1551,10 +1546,9 @@ Optional Packages:
   --with-gmp-lib=DIR          specify directory for installed gmp library
   --with-uchardet=DIR         specify prefix directory for installed uchardet package (default: /usr)
                               Equivalent to --with-uchardet-include=PATH/include plus --with-uchardet-lib=PATH/lib64
-  --with-uchardet-include=DIR  specify directory for installed uchardet include files
-  --with-uchardet-lib=DIR      specify directory for installed uchardet library
+  --with-uchardet-include=DIR specify directory for installed uchardet include files
+  --with-uchardet-lib=DIR     specify directory for installed uchardet library
   --with-libblas=DIR          BLAS Library (e.g. /foo/blas_LINUX.a)
-  --with-TCA=DIR              TCA installation path
   --with-gasnet=DIR           GASNet installation path
   --with-gasnet-conduit=NAME  GASNet conduit
   --with-precision=NUM        the default precision of real*16 in bits (128)
@@ -3052,7 +3046,7 @@ test -n "$target_alias" &&
     NONENONEs,x,x, &&
   program_prefix=${target_alias}-
 
-ac_config_headers="$ac_config_headers include/config.h Driver/atool/src/include/nata/nata_config.h"
+ac_config_headers="$ac_config_headers include/config.h"
 
 
 #--------------------------------------------------------------------
@@ -8206,38 +8200,6 @@ else
 fi
 
 
-# check dirs
-if ! test -d "$LIBXML2_INCLUDE_DIR"; then
-    as_fn_error $? "$LIBXML2_INCLUDE_DIR not found.  Please attach --with-libxml2=<DIR> or --with-libxml2-include=<DIR>." "$LINENO" 5
-fi
-
-if ! test -d "$LIBXML2_LIB_DIR"; then
-    LIBXML2_LIB_DIR=${LIBXML2_PREFIX}/lib
-fi
-
-if ! test -d "$LIBXML2_LIB_DIR"; then
-    as_fn_error $? "$LIBXML2_LIB_DIR not found.  Please attach --with-libxml2=<DIR> or --with-libxml2-lib=<DIR>." "$LINENO" 5
-fi
-
-# check libxml/parser.h
-tmp_file=/tmp/_omni_$$
-tmp_file_c=/tmp/_omni_$$.c
-echo "#include <libxml/parser.h>" > $tmp_file_c
-${CC} -E -I$LIBXML2_INCLUDE_DIR/libxml2 $tmp_file_c 2> /dev/null > /dev/null
-if test $? -ne 0; then
-    rm -f $tmp_file_c
-    as_fn_error $? "parser.h not found. Please attach --with-libxml2=<DIR> or --with-libxml2-include=<DIR>." "$LINENO" 5
-fi
-
-# check -lxml2
-echo "int main(){return 0;}" > $tmp_file_c
-${CC} -L$LIBXML2_LIB_DIR -lxml2 $tmp_file_c -o $tmp_file
-if test $? -ne 0; then
-    rm -f $tmp_file $tmp_file_c
-    as_fn_error $? "-lxml2 not found. Please attach --with-libxml2=<DIR> or --with-libxml2-lib=<DIR>." "$LINENO" 5
-fi
-rm -f $tmp_file $tmp_file_c
-
 # specify mpfr path
 
 # Check whether --with-mpfr was given.
@@ -8248,14 +8210,12 @@ else
 fi
 
 
-
 # Check whether --with-mpfr-include was given.
 if test "${with_mpfr_include+set}" = set; then :
   withval=$with_mpfr_include; MPFR_INCLUDE_DIR="${withval}"
 else
   MPFR_INCLUDE_DIR="${MPFR_PREFIX}/include"
 fi
-
 
 
 # Check whether --with-mpfr-lib was given.
@@ -8276,14 +8236,12 @@ else
 fi
 
 
-
 # Check whether --with-gmp-include was given.
 if test "${with_gmp_include+set}" = set; then :
   withval=$with_gmp_include; GMP_INCLUDE_DIR="${withval}"
 else
   GMP_INCLUDE_DIR="${GMP_PREFIX}/include"
 fi
-
 
 
 # Check whether --with-gmp-lib was given.
@@ -8297,7 +8255,6 @@ fi
 if ! test -d "$GMP_LIB_DIR"; then
   GMP_LIB_DIR=${GMP_PREFIX}/lib
 fi
-
 
 #--------------------------------------------------------------------
 # For OpenMP
@@ -8339,7 +8296,6 @@ esac
 
 
 
-ENABLE_UCHARDET=no
 # Check whether --enable-uchardet was given.
 if test "${enable_uchardet+set}" = set; then :
   enableval=$enable_uchardet; ENABLE_UCHARDET=yes
@@ -8358,7 +8314,6 @@ else
 fi
 
 
-
 # Check whether --with-uchardet-include was given.
 if test "${with_uchardet_include+set}" = set; then :
   withval=$with_uchardet_include; UCHARDET_INCLUDE_DIR="${withval}"
@@ -8367,14 +8322,12 @@ else
 fi
 
 
-
 # Check whether --with-uchardet-lib was given.
 if test "${with_uchardet_lib+set}" = set; then :
   withval=$with_uchardet_lib; UCHARDET_LIB_DIR="${withval}"
 else
   UCHARDET_LIB_DIR="${UCHARDET_PREFIX}/lib64"
 fi
-
 
 #--------------------------------------------------------------------
 # OpenMP runtime checking
@@ -8587,16 +8540,6 @@ fi
 
 
 #--------------------------------------------------------------------
-# Fortran GNU Extension
-#--------------------------------------------------------------------
-EXTENSION_FLAGS=""
-if test "x${dognuext}" = "xyes"; then
-  EXTENSION_FLAGS="-DGNU_INTRINSIC_EXTENSION"
-fi
-
-
-
-#--------------------------------------------------------------------
 #  General
 #--------------------------------------------------------------------
 # Trget machine
@@ -8604,19 +8547,13 @@ FJRDMA=$FALSE
 KCOMPUTER=$FALSE
 FX10=$FALSE
 FX100=$FALSE
-T_FJMODULE=$FALSE
 POWERPC=$FALSE
 CRAY=$FALSE
 SUPERUX=$FALSE
 if test "x${target}" = "xKcomputer-linux-gnu" -o "x${target}" = "xFX10-linux-gnu" -o "x${target}" = "xFX100-linux-gnu"; then
-    if test "x${domod2xmod}" = "xyes"; then
-        T_FJMODULE=$TRUE
-    fi
-
     if test "x${dofjrdma}" = "xyes"; then
         FJRDMA=$TRUE
     fi
-
     if test "x${target}" = "xKcomputer-linux-gnu"; then
         KCOMPUTER=$TRUE
     elif test "x${target}" = "xFX10-linux-gnu"; then
@@ -8631,7 +8568,6 @@ elif test "x${target}" = "xCray-linux-gnu"; then
 elif test "x${target}" = "xsxace-nec-superux" -o "x${target}" = "xsx9-nec-superux"; then
     SUPERUX=$TRUE
 fi
-
 
 
 
@@ -8694,14 +8630,6 @@ fi
 XACC=$FALSE
 if test "x${doXACC}" = "xyes"; then
     XACC=$TRUE
-fi
-
-
-#--------------------------------------------------------------------
-# set ATOOLS
-ATOOL=$FALSE
-if test "x${doatool}" = "xyes"; then
-    ATOOL=$TRUE
 fi
 
 
@@ -8835,7 +8763,6 @@ fi
     MPI_FCFLAGS="-Kfast,openmp"
     MPI_MODINC="-M"
     MPI_FCLIBS=""
-    KIND_MPI_FORTRAN=frtpx
 
     # Omni C
     OMNI_C2X_FLAGS=""
@@ -9060,7 +8987,6 @@ fi
     MPI_FCFLAGS="-O2 -fp-model fast=2 -ipo -no-prec-div -xMIC-AVX512 $OPENMP_OPT_F"
     MPI_MODINC="-module"
     MPI_FCLIBS=""
-    KIND_MPI_FORTRAN=other
 
     # Omni C
     OMNI_C2X_FLAGS=""
@@ -9282,7 +9208,6 @@ fi
     MPI_FCFLAGS="-fast $OPENMP_OPT_F"
     MPI_MODINC="-module"
     MPI_FCLIBS=""
-    KIND_MPI_FORTRAN=other
 
     # Omni C
     OMNI_C2X_FLAGS=""
@@ -9504,7 +9429,6 @@ fi
     MPI_FCFLAGS="-O2 $OPENMP_OPT_F"
     MPI_MODINC="-J"
     MPI_FCLIBS=""
-    KIND_MPI_FORTRAN=other
 
     # Omni C
     OMNI_C2X_FLAGS=""
@@ -9728,7 +9652,6 @@ fi
     MPI_FCFLAGS="-Chopt -f2003 -Wf,-ptr,byte -dW"  # Fix: [xmp-bts:0475]
     MPI_MODINC="-to"
     MPI_FCLIBS=""
-    KIND_MPI_FORTRAN=other
 
     # Omni C
     OMNI_C2X_FLAGS=""
@@ -9881,7 +9804,6 @@ fi
     MPI_FCFLAGS="-Chopt -f2003 $OPENMP_OPT_F -Wf,-ptr,byte"
     MPI_MODINC="-to"
     MPI_FCLIBS=""
-    KIND_MPI_FORTRAN=other
 
     # Omni C
     OMNI_C2X_FLAGS=""
@@ -10057,7 +9979,6 @@ fi
     fi
 
     MPI_FCLIBS=$MPI_CLIBS
-    KIND_MPI_FORTRAN=other
 
     # Omni C
     OMNI_C2X_FLAGS=""
@@ -10279,7 +10200,6 @@ fi
     MPI_FCFLAGS="-q64 -qhot -qsimd=auto -O5 -qextname $OPENMP_OPT_F"
     MPI_MODINC="-I"
     MPI_FCLIBS=""
-    KIND_MPI_FORTRAN=other
 
     # Omni C
     OMNI_C2X_FLAGS=""
@@ -10781,7 +10701,6 @@ fi
 	    MPI_FCFLAGS="-O2 $OPENMP_OPT_F"
 	    MPI_MODINC="-J"
 	    MPI_FCLIBS=""
-	    KIND_MPI_FORTRAN=gfortran
 
 	    # Omni F
 	    OMNI_F2X_FLAGS=""
@@ -10800,7 +10719,6 @@ fi
 	    MPI_FCFLAGS="-O2 $OPENMP_OPT_F"
 	    MPI_MODINC="-module"
 	    MPI_FCLIBS=""
-	    KIND_MPI_FORTRAN=other
 
 	    # Omni F
 	    OMNI_F2X_FLAGS=""
@@ -10822,7 +10740,6 @@ fi
 		    MPI_FCFLAGS="-fast $OPENMP_OPT_F"
 		    MPI_MODINC="-module"
 		    MPI_FCLIBS=""
-		    KIND_MPI_FORTRAN=other
 
 		    # Omni F
 		    OMNI_F2X_FLAGS=""
@@ -10916,32 +10833,6 @@ if test x${use_intelmkl} = xyes; then
     INTELMKL=$TRUE
 fi
 
-# set TCA
-
-# Check whether --with-TCA was given.
-if test "${with_TCA+set}" = set; then :
-  withval=$with_TCA; TCA_PREFIX="${withval}"; use_tca=yes
-else
-  use_tca=no
-fi
-
-
-if test x$use_tca = xyes; then
-    if ! test -f $TCA_PREFIX/include/tca-api.h; then
-            as_fn_error $? "$TCA_PREFIX/include/tca-api.h not found. Please check --with-TCA=<DIR>" "$LINENO" 5
-    fi
-
-    MPI_CPPFLAGS="${MPI_CPPFLAGS} -I${TCA_PREFIX}/include"
-    MPI_CFLAGS="${MPI_CFLAGS} -I${TCA_PREFIX}/include"
-    MPI_CLIBS="${MPI_CLIBS} -L${TCA_PREFIX}/lib -ltca"
-    OMNI_LNK_CFLAGS="$OMNI_LNK_CFLAGS ${MPI_CLIBS}"
-fi
-
-TCA=$FALSE
-if test x${use_tca} = xyes; then
-    TCA=$TRUE
-fi
-
 # specify GASNet path
 
 # Check whether --with-gasnet was given.
@@ -11018,13 +10909,7 @@ if test x${use_gasnet} = xyes; then
     MPI_CLIBS="${MPI_CLIBS} ${GASNET_LDFLAGS} ${GASNET_LIBS}"
     OMNI_LNK_CFLAGS="${OMNI_LNK_CFLAGS} ${GASNET_LIBS}"
     OMNI_LNK_FCFLAGS="${OMNI_LNK_FCFLAGS} ${GASNET_LIBS}"
-    TCA_PREFIX="${TCA_PREFIX}"
 fi
-
-
-
-
-
 
 
 
@@ -11174,98 +11059,6 @@ OMNI_F_PP="$MPI_FPP $MPI_FPPFLAGS"
 
 
 #--------------------------------------------------------------------
-# check --enable-mod2xmod
-if test "$domod2xmod" = "yes" -a "$KIND_MPI_FORTRAN" = "other"; then
-    as_fn_error $? "\"--enable-mod2xmod option can be used when Backend compiler is gfortran.\"" "$LINENO" 5
-fi
-
-IS_MOD2XMOD=no
-if test "$domod2xmod" = "yes" -a \( "$KIND_MPI_FORTRAN" = "gfortran" -o "$KIND_MPI_FORTRAN" = "frtpx" \); then
-    IS_MOD2XMOD=yes
-fi
-
-MOD2XMOD=$FALSE
-if test "$IS_MOD2XMOD" = "yes"; then
-    MOD2XMOD=$TRUE
-fi
-
-NEED_MAKE_MOD2XMOD=$FALSE
-if test "$IS_MOD2XMOD" = "yes" -a "$KIND_MPI_FORTRAN" = "gfortran"; then
-    NEED_MAKE_MOD2XMOD=$TRUE
-fi
-
-
-
-
-
-if test "$NEED_MAKE_MOD2XMOD" = $TRUE; then
-    #### GMP ####
-    # check dirs
-    if ! test -d "$GMP_INCLUDE_DIR"; then
-	as_fn_error $? "$GMP_INCLUDE_DIR not found.  Please attach --with-gmp=<DIR> or --with-gmp-include=<DIR>." "$LINENO" 5
-    fi
-
-    if ! test -d "$GMP_LIB_DIR"; then
-      as_fn_error $? "$GMP_LIB_DIR not found.  Please attach --with-gmp=<DIR> or --with-gmp-lib=<DIR>." "$LINENO" 5
-    fi
-
-    # check gmp.h
-    tmp_file=/tmp/_omni_$$
-    tmp_file_c=/tmp/_omni_$$.c
-    echo "#include <gmp.h>" > $tmp_file_c
-    ${CC} -E -I$GMP_INCLUDE_DIR $tmp_file_c 2> /dev/null > /dev/null
-    if test $? -ne 0; then
-	rm -f $tmp_file_c
-	as_fn_error $? "gmp.h not found. Please attach --with-gmp=<DIR> or --with-gmp-include=<DIR>." "$LINENO" 5
-    fi
-
-    # check -lgmp
-    echo "int main(){return 0;}" > $tmp_file_c
-    ${CC} -L$GMP_LIB_DIR -lgmp $tmp_file_c -o $tmp_file
-    if test $? -ne 0; then
-	rm -f $tmp_file $tmp_file_c
-	as_fn_error $? "-lgmp not found. Please attach --with-gmp=<DIR> or --with-gmp-lib=<DIR>." "$LINENO" 5
-    fi
-    rm -f $tmp_file $tmp_file_c
-
-
-
-
-    #### MPFR ####
-    # check dirs
-    if ! test -d "$MPFR_INCLUDE_DIR"; then
-	as_fn_error $? "$MPFR_INCLUDE_DIR not found.  Please attach --with-mpfr=<DIR> or --with-mpfr-include=<DIR>." "$LINENO" 5
-    fi
-
-    if ! test -d "$MPFR_LIB_DIR"; then
-	MPFR_LIB_DIR=${MPFR_PREFIX}/lib
-	if ! test -d "$MPFR_LIB_DIR"; then
-	    as_fn_error $? "$MPFR_LIB_DIR not found.  Please attach --with-mpfr=<DIR> or --with-mpfr-lib=<DIR>." "$LINENO" 5
-	fi
-    fi
-
-    # check mpfr.h
-    echo "#include <mpfr.h>" > $tmp_file_c
-    ${CC} -E -I$MPFR_INCLUDE_DIR -I$GMP_INCLUDE_DIR $tmp_file_c 2> /dev/null > /dev/null
-    if test $? -ne 0; then
-	rm -f $tmp_file_c
-	as_fn_error $? "mpfr.h not found. Please attach --with-mpfr=<DIR> or --with-mpfr-include=<DIR>." "$LINENO" 5
-    fi
-
-    # check -lmpfr
-    echo "int main(){return 0;}" > $tmp_file_c
-    ${CC} -L$MPFR_LIB_DIR -lmpfr $tmp_file_c -o $tmp_file
-    if test $? -ne 0; then
-	rm -f $tmp_file tmp_file_c
-	as_fn_error $? "-lmpfr not found. Please attach --with-mpfr=<DIR> or --with-mpfr-lib=<DIR>." "$LINENO" 5
-    fi
-    rm -f $tmp_file tmp_file_c
-
-
-
-fi
-
-#--------------------------------------------------------------------
 # check -lstdc++
 if test "$target" != "powerpc-hitachi-aix" -a "$target" != "sxace-nec-superux" -a "$target" != "sx9-nec-superux"; then
     tmp_file_c=/tmp/_xmp.$$.c
@@ -11306,13 +11099,6 @@ if test "x${doMPI3_ASYNC}" = "xyes"; then
     OMNI_X2X_FLAGS="${OMNI_X2X_FLAGS} -fasync"
 fi
 
-if test x${use_tca} = xyes; then
-    if test "x${doMPI3_ASYNC}" = xno -a "x${use_gasnet}" = xno; then
-	echo "Error!! TCA must use MPI version 3 or GASNet"
-	exit 1
-    fi
-fi
-
 use_mpi3_onesided=no
 if test "x${doMPI3_ASYNC}" = "xyes" -a "x${use_gasnet}" = "xno" -a "x${target}" != "xKcomputer-linux-gnu" -a "x${target}" != "xFX10-linux-gnu" -a "x${target}" != "xFX100-linux-gnu" ; then
     use_mpi3_onesided=yes
@@ -11343,77 +11129,6 @@ fi
 
 
 
-
-
-#--------------------------------------------------------------------
-# check Perl versoin is 5
-PERL5=""
-for ac_prog in perl
-do
-  # Extract the first word of "$ac_prog", so it can be a program name with args.
-set dummy $ac_prog; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_path_PERL5+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  case $PERL5 in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_PERL5="$PERL5" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_PERL5="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  ;;
-esac
-fi
-PERL5=$ac_cv_path_PERL5
-if test -n "$PERL5"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PERL5" >&5
-$as_echo "$PERL5" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-  test -n "$PERL5" && break
-done
-
-
-if test "$PERL5" = ""; then
-    as_fn_error $? "perl is not found." "$LINENO" 5
-else
-    isPerlVersion5=no
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking Perl version is 5" >&5
-$as_echo_n "checking Perl version is 5... " >&6; }
-    pTmp=/tmp/.btoolPerlChk.$$
-    ${PERL5} -e 'require 5;' > ${pTmp} 2>&1
-    if test "$?" = "0"; then
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-	isPerlVersion5=yes
-    else
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-	isPerlVersion5=no
-    fi
-    rm -f ${pTmp}
-    unset chk pTmp
-fi
 
 
 #--------------------------------------------------------------------
@@ -13271,21 +12986,6 @@ MKRULESDIR=${TOPDIR}/Driver/atool/mk
 
 
 
-ac_config_files="$ac_config_files Driver/atool/mk/vars.mk Driver/atool/Makefile Driver/atool/src/lib/Makefile Driver/atool/src/include/nata/Makefile Driver/atool/src/include/nata/nata_platform.h Driver/atool/src/cmd/Makefile Driver/atool/src/cmd/paths.h"
-
-
-ac_config_commands="$ac_config_commands modify-config"
-
-
-ac_config_commands="$ac_config_commands includes"
-
-
-ac_config_commands="$ac_config_commands depend"
-
-
-#AC_CONFIG_COMMANDS([config-clean],
-#       [rm -rf ./config.log ./config.status.* autom4te.cache])
-
 unset program_transform_name
 
 #--------------------------------------------------------------------
@@ -13330,10 +13030,6 @@ elif test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "
     isLockUnlock=no
 fi
 
-if test x${use_tca} = xyes; then
-  ONESIDED_LIB="$ONESIDED_LIB + TCA"
-fi
-
 
 OMNI_X2X_FONESIDED_OPT=""
 if test x$isOnesided = xyes; then
@@ -13341,31 +13037,21 @@ if test x$isOnesided = xyes; then
 fi
 
 #--------------------------------------------------------------------
-# AC_CONFIG_FILES(XcodeML-Common/Makefile)
-ac_config_files="$ac_config_files C-FrontEnd/src/Makefile"
-
-ac_config_files="$ac_config_files C-BackEnd/Makefile"
-
-ac_config_files="$ac_config_files F-FrontEnd/src/Makefile"
-
-ac_config_files="$ac_config_files F-FrontEnd/src/F-input-xmod.h"
-
-ac_config_files="$ac_config_files F-FrontEnd/src/fincludes/iso_c_binding.f90"
-
-ac_config_files="$ac_config_files F-FrontEnd/gnu_module/Makefile"
-
-ac_config_files="$ac_config_files F-BackEnd/Makefile"
-
-ac_config_files="$ac_config_files F-BackEnd/bin/F_Back"
-
-ac_config_files="$ac_config_files F-BackEnd/bin/F_Decomp"
-
-ac_config_files="$ac_config_files F-BackEnd/bin/F_Trans"
-
 ac_config_files="$ac_config_files XcodeML-Exc-Tools/Makefile"
 
 ac_config_files="$ac_config_files XcodeML-Exc-Tools/src/exc/util/MachineDepConst.java"
 
+ac_config_files="$ac_config_files libxmp/include/Makefile"
+
+ac_config_files="$ac_config_files libxmp/src/Makefile"
+
+ac_config_files="$ac_config_files libxmp/src_threads/Makefile"
+
+ac_config_files="$ac_config_files libxmpf/include/Makefile"
+
+ac_config_files="$ac_config_files libxmpf/src/Makefile"
+
+#--------------------------------------------------------------------
 ac_config_files="$ac_config_files Driver/src/Makefile"
 
 ac_config_files="$ac_config_files Driver/etc/setup.conf"
@@ -13387,17 +13073,6 @@ ac_config_files="$ac_config_files Driver/bin/ompf90"
 ac_config_files="$ac_config_files Driver/bin/xmpcc"
 
 ac_config_files="$ac_config_files Driver/bin/xmpf90"
-
-ac_config_files="$ac_config_files libxmp/include/Makefile"
-
-ac_config_files="$ac_config_files libxmp/src/Makefile"
-
-ac_config_files="$ac_config_files libxmp/src_threads/Makefile"
-
-ac_config_files="$ac_config_files libxmpf/include/Makefile"
-
-ac_config_files="$ac_config_files libxmpf/src/Makefile"
-
 
 #--------------------------------------------------------------------
 genLibTargetTmpl () {
@@ -13965,7 +13640,6 @@ cat >>$CONFIG_STATUS <<_ACEOF || ac_write_fail=1
 # Files that config.status was made for.
 config_files="$ac_config_files"
 config_headers="$ac_config_headers"
-config_commands="$ac_config_commands"
 
 _ACEOF
 
@@ -13994,9 +13668,6 @@ $config_files
 
 Configuration headers:
 $config_headers
-
-Configuration commands:
-$config_commands
 
 Report bugs to <omni-compiler@googlegroups.com>."
 
@@ -14118,12 +13789,6 @@ _ASBOX
 
 _ACEOF
 cat >>$CONFIG_STATUS <<_ACEOF || ac_write_fail=1
-#
-# INIT-COMMANDS
-#
-OS_CPPFLAGS="${OS_CPPFLAGS}"
-MAKE=${MAKE}
-
 _ACEOF
 
 cat >>$CONFIG_STATUS <<\_ACEOF || ac_write_fail=1
@@ -14133,29 +13798,13 @@ for ac_config_target in $ac_config_targets
 do
   case $ac_config_target in
     "include/config.h") CONFIG_HEADERS="$CONFIG_HEADERS include/config.h" ;;
-    "Driver/atool/src/include/nata/nata_config.h") CONFIG_HEADERS="$CONFIG_HEADERS Driver/atool/src/include/nata/nata_config.h" ;;
-    "Driver/atool/mk/vars.mk") CONFIG_FILES="$CONFIG_FILES Driver/atool/mk/vars.mk" ;;
-    "Driver/atool/Makefile") CONFIG_FILES="$CONFIG_FILES Driver/atool/Makefile" ;;
-    "Driver/atool/src/lib/Makefile") CONFIG_FILES="$CONFIG_FILES Driver/atool/src/lib/Makefile" ;;
-    "Driver/atool/src/include/nata/Makefile") CONFIG_FILES="$CONFIG_FILES Driver/atool/src/include/nata/Makefile" ;;
-    "Driver/atool/src/include/nata/nata_platform.h") CONFIG_FILES="$CONFIG_FILES Driver/atool/src/include/nata/nata_platform.h" ;;
-    "Driver/atool/src/cmd/Makefile") CONFIG_FILES="$CONFIG_FILES Driver/atool/src/cmd/Makefile" ;;
-    "Driver/atool/src/cmd/paths.h") CONFIG_FILES="$CONFIG_FILES Driver/atool/src/cmd/paths.h" ;;
-    "modify-config") CONFIG_COMMANDS="$CONFIG_COMMANDS modify-config" ;;
-    "includes") CONFIG_COMMANDS="$CONFIG_COMMANDS includes" ;;
-    "depend") CONFIG_COMMANDS="$CONFIG_COMMANDS depend" ;;
-    "C-FrontEnd/src/Makefile") CONFIG_FILES="$CONFIG_FILES C-FrontEnd/src/Makefile" ;;
-    "C-BackEnd/Makefile") CONFIG_FILES="$CONFIG_FILES C-BackEnd/Makefile" ;;
-    "F-FrontEnd/src/Makefile") CONFIG_FILES="$CONFIG_FILES F-FrontEnd/src/Makefile" ;;
-    "F-FrontEnd/src/F-input-xmod.h") CONFIG_FILES="$CONFIG_FILES F-FrontEnd/src/F-input-xmod.h" ;;
-    "F-FrontEnd/src/fincludes/iso_c_binding.f90") CONFIG_FILES="$CONFIG_FILES F-FrontEnd/src/fincludes/iso_c_binding.f90" ;;
-    "F-FrontEnd/gnu_module/Makefile") CONFIG_FILES="$CONFIG_FILES F-FrontEnd/gnu_module/Makefile" ;;
-    "F-BackEnd/Makefile") CONFIG_FILES="$CONFIG_FILES F-BackEnd/Makefile" ;;
-    "F-BackEnd/bin/F_Back") CONFIG_FILES="$CONFIG_FILES F-BackEnd/bin/F_Back" ;;
-    "F-BackEnd/bin/F_Decomp") CONFIG_FILES="$CONFIG_FILES F-BackEnd/bin/F_Decomp" ;;
-    "F-BackEnd/bin/F_Trans") CONFIG_FILES="$CONFIG_FILES F-BackEnd/bin/F_Trans" ;;
     "XcodeML-Exc-Tools/Makefile") CONFIG_FILES="$CONFIG_FILES XcodeML-Exc-Tools/Makefile" ;;
     "XcodeML-Exc-Tools/src/exc/util/MachineDepConst.java") CONFIG_FILES="$CONFIG_FILES XcodeML-Exc-Tools/src/exc/util/MachineDepConst.java" ;;
+    "libxmp/include/Makefile") CONFIG_FILES="$CONFIG_FILES libxmp/include/Makefile" ;;
+    "libxmp/src/Makefile") CONFIG_FILES="$CONFIG_FILES libxmp/src/Makefile" ;;
+    "libxmp/src_threads/Makefile") CONFIG_FILES="$CONFIG_FILES libxmp/src_threads/Makefile" ;;
+    "libxmpf/include/Makefile") CONFIG_FILES="$CONFIG_FILES libxmpf/include/Makefile" ;;
+    "libxmpf/src/Makefile") CONFIG_FILES="$CONFIG_FILES libxmpf/src/Makefile" ;;
     "Driver/src/Makefile") CONFIG_FILES="$CONFIG_FILES Driver/src/Makefile" ;;
     "Driver/etc/setup.conf") CONFIG_FILES="$CONFIG_FILES Driver/etc/setup.conf" ;;
     "Driver/etc/ompcc.conf") CONFIG_FILES="$CONFIG_FILES Driver/etc/ompcc.conf" ;;
@@ -14167,11 +13816,6 @@ do
     "Driver/bin/ompf90") CONFIG_FILES="$CONFIG_FILES Driver/bin/ompf90" ;;
     "Driver/bin/xmpcc") CONFIG_FILES="$CONFIG_FILES Driver/bin/xmpcc" ;;
     "Driver/bin/xmpf90") CONFIG_FILES="$CONFIG_FILES Driver/bin/xmpf90" ;;
-    "libxmp/include/Makefile") CONFIG_FILES="$CONFIG_FILES libxmp/include/Makefile" ;;
-    "libxmp/src/Makefile") CONFIG_FILES="$CONFIG_FILES libxmp/src/Makefile" ;;
-    "libxmp/src_threads/Makefile") CONFIG_FILES="$CONFIG_FILES libxmp/src_threads/Makefile" ;;
-    "libxmpf/include/Makefile") CONFIG_FILES="$CONFIG_FILES libxmpf/include/Makefile" ;;
-    "libxmpf/src/Makefile") CONFIG_FILES="$CONFIG_FILES libxmpf/src/Makefile" ;;
     "libompc/src/Makefile") CONFIG_FILES="$CONFIG_FILES libompc/src/Makefile" ;;
     "libompf/src/Makefile") CONFIG_FILES="$CONFIG_FILES libompf/src/Makefile" ;;
     "libtlog/src_threads/Makefile") CONFIG_FILES="$CONFIG_FILES libtlog/src_threads/Makefile" ;;
@@ -14194,7 +13838,6 @@ done
 if $ac_need_defaults; then
   test "${CONFIG_FILES+set}" = set || CONFIG_FILES=$config_files
   test "${CONFIG_HEADERS+set}" = set || CONFIG_HEADERS=$config_headers
-  test "${CONFIG_COMMANDS+set}" = set || CONFIG_COMMANDS=$config_commands
 fi
 
 # Have a temporary directory for convenience.  Make it in the build tree
@@ -14491,7 +14134,7 @@ cat >>$CONFIG_STATUS <<\_ACEOF || ac_write_fail=1
 fi # test -n "$CONFIG_HEADERS"
 
 
-eval set X "  :F $CONFIG_FILES  :H $CONFIG_HEADERS    :C $CONFIG_COMMANDS"
+eval set X "  :F $CONFIG_FILES  :H $CONFIG_HEADERS    "
 shift
 for ac_tag
 do
@@ -14724,18 +14367,9 @@ $as_echo "$as_me: $ac_file is unchanged" >&6;}
   fi
  ;;
 
-  :C)  { $as_echo "$as_me:${as_lineno-$LINENO}: executing $ac_file commands" >&5
-$as_echo "$as_me: executing $ac_file commands" >&6;}
- ;;
-  esac
-
-
-  case $ac_file$ac_mode in
-    "modify-config":C) (cd Driver/atool && ${BASH} ./mk/finalizeconfig ${OS_CPPFLAGS}) ;;
-    "includes":C) ${BASH} ./Driver/atool/mk/initheaders ;;
-    "depend":C) (${BASH} ./Driver/atool/mk/initdepend && cd ./Driver/atool && ${MAKE} depend) ;;
 
   esac
+
 done # for ac_tag
 
 
@@ -14773,6 +14407,29 @@ $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
 
 
+# --------------------------------------------------------------------
+# Create Makefile on xcodeml-tools
+OPTIONS="--prefix=${prefix} --with-libxml2=${LIBXML2_PREFIX} --with-mpfr=${MPFR_PREFIX} --with-gmp=${GMP_PREFIX}"
+
+if test "x${ENABLE_UCHARDET} = "xyes""; then
+  OPTIONS+=${UCHARDET_PREFIX}
+fi
+
+if test "x${doatool}" = "xyes"; then
+  OPTIONS+=" --enable-atool"
+fi
+
+if test "x${domod2xmod}" = "xyes"; then
+  OPTIONS+=" --enable-mod2xmod"
+fi
+
+if test "x${dognuext}" = "xyes"; then
+  OPTIONS+=" --enable-gnu-extension"
+fi
+
+cd xcodeml-tools
+echo ./configure ${OPTIONS} CC="${CC}" CFLAGS="${CFLAGS}"
+./configure ${OPTIONS} CC="${CC}" CFLAGS="${CFLAGS}"
 # --------------------------------------------------------------------
 # Output
 

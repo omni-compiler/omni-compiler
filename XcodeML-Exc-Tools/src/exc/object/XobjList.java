@@ -2,6 +2,7 @@ package exc.object;
 
 import java.util.Iterator;
 import exc.block.Block;
+import xcodeml.util.IXobject;
 
 /**
  * Xobject which contains the list of Xobjects.
