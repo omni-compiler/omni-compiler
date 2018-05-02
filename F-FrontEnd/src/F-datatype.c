@@ -1833,18 +1833,16 @@ struct_type_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2, int is_po
     if (debug_flag) fprintf(debug_fp,"* compare type names\n");
     if (!compare_derived_type_name(tp1, tp2)) {
         if (debug_flag) fprintf(debug_fp,"                                      ... not match\n");
-
-        if (TYPE_IS_CLASS(tp1) && TYPE_PARENT(btp2) && is_pointer_set) {
+        /* Check if the imported id match. Type ID might be not identical 
+         * in case of multiple indirection in module hierachy. */
+        if(btp1->imported_id && btp2->imported_id 
+            && strcmp(btp1->imported_id, btp2->imported_id) == 0) 
+        {
+            return TRUE;
+        } else if (TYPE_IS_CLASS(tp1) && TYPE_PARENT(btp2) && is_pointer_set) {
             if (debug_flag) fprintf(debug_fp,"* compare PARENT type\n");
             return struct_type_is_compatible_for_assignment(tp1, TYPE_PARENT_TYPE(btp2), is_pointer_set);
         } else {
-            /* Check if the imported id match. Type ID might be not identical 
-             * in case of multiple indirection in module hierachy. */
-            if(btp1->imported_id && btp2->imported_id 
-                && strcmp(btp1->imported_id, btp2->imported_id) == 0) 
-            {
-                return TRUE;
-            }
             if (debug_flag) fprintf(debug_fp,"seems not compatible\n");
             return FALSE;
         }
