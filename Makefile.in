@@ -211,7 +211,9 @@ release:
 	cp -a . $(WORKDIR); cd $(WORKDIR); sh autogen.sh; \
 	if [ "${NIGHTLY_BUILD}" = "true" ]; then ./configure NIGHTLY_BUILD=$(VERSION); \
 	else ./configure; fi; \
-	rm -rf .git .gitignore config.log; make clean; make clean-tests; \
+	rm -rf autom4te.cache config.status config.log confdefs.h; \
+	rm -rf .git .gitignore .gitmodules xcodeml-tools/.git xcodeml-tools/.gitignore; \
+	make clean; make clean-tests; \
 	cd /tmp; tar cjf $(PACKAGE_NAME).tar.bz2 $(PACKAGE_NAME); \
 	echo "Created /tmp/$(PACKAGE_NAME).tar.bz2"; \
 	rm -rf $(WORKDIR)
@@ -224,4 +226,4 @@ remote-tests-short:
 	@bash ./tests/XMP/scripts/remote-tests.sh $(USER) short
 
 distclean: clean
-	rm -rf autom4te.cache
+	rm -rf config.status config.log autom4te.cache confdefs.h

@@ -14427,6 +14427,10 @@ if test "x${dognuext}" = "xyes"; then
   OPTIONS+=" --enable-gnu-extension"
 fi
 
+rm -f confdefs.h
+
+echo "--------------------------------------------"
+echo "Run configure script in xcodeml-tools."
 cd xcodeml-tools
 echo ./configure ${OPTIONS} CC="${CC}" CFLAGS="${CFLAGS}"
 ./configure ${OPTIONS} CC="${CC}" CFLAGS="${CFLAGS}"
