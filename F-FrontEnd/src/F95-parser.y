@@ -1310,6 +1310,8 @@ type_spec0:
         { $$ = list2(F03_PARAMETERIZED_TYPE,$4,$6); }
         | KW_TYPE '(' TYPE_KW type_spec1 ')'
         { $$ = $4; }
+        | KW_TYPE '(' '*' ')'
+        { $$ = list1(F08_ASSUMED_TYPE, NULL); }
         | CLASS '(' IDENTIFIER ')'
         { $$ = list1(F03_CLASS, $3); }
         | CLASS '(' IDENTIFIER '(' type_param_value_list ')' ')'

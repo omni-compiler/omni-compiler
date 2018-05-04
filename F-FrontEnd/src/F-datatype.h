@@ -108,6 +108,7 @@ typedef struct type_descriptor
 
     int is_access_inferred;    /* boolean flag that tell if the access-spec is
                                   inferred or clearly stated */
+    int is_assumed_type;       /* TYPE(*) */                                  
     struct type_attr {
 #define TYPE_ATTR_PARAMETER         0x00000001
 #define TYPE_ATTR_ALLOCATABLE       0x00000002
@@ -216,6 +217,9 @@ extern TYPE_DESC basic_type_desc[];
 #define TYPE_REF(tp)            ((tp)->ref)
 #define TYPE_TAGNAME(tp)        ((tp)->tagname)
 #define TYPE_IS_REFERENCED(tp)  ((tp)->is_referenced)
+#define TYPE_IS_ASSUMED(tp)     ((tp)->is_assumed_type)
+#define TYPE_SET_ASSUMED(tp)    ((tp)->is_assumed_type = TRUE)
+#define TYPE_UNSET_ASSUMED(tp)  ((tp)->is_assumed_type = FALSE)
 #define TYPE_CODIMENSION(tp)    ((tp)->codims)
 #define TYPE_LINK_ADD(tp, tlist, ttail) \
     { if((tlist) == NULL) (tlist) = (tp); \
