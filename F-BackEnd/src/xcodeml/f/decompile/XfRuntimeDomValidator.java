@@ -71,9 +71,10 @@ public class XfRuntimeDomValidator {
             }
 
             boolean isClass = XmDomUtil.getAttrBool(n, "is_class");
+            boolean isAssumed = XmDomUtil.getAttrBool(n, "is_assumed");
             boolean isProcedure = XmDomUtil.getAttrBool(n, "is_procedure");
 
-            if (!isClass && !isProcedure && XfUtilForDom.isNullOrEmpty(XmDomUtil.getAttr(n, "ref"))) {
+            if (!isClass && !isProcedure && !isAssumed && XfUtilForDom.isNullOrEmpty(XmDomUtil.getAttr(n, "ref"))) {
                 errorDescription =
                     XfUtilForDom.formatError(n,
                                              XfError.XCODEML_NEED_ATTR,
