@@ -95,7 +95,7 @@ public class XMPdimInfo {
 
   public Xobject getSize() { 
     if(lower == null) return upper;
-    else return Xcons.binaryOp(Xcode.PLUS_EXPR,upper,lower); 
+    else return Xcons.binaryOp(Xcode.PLUS_EXPR,Xcons.binaryOp(Xcode.MINUS_EXPR,upper,lower),Xcons.IntConstant(1));
   }
 
   public boolean hasStride() { 
