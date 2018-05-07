@@ -382,6 +382,7 @@ list_find_type_expr(const expr lst)
                 break;
             case IDENT:
             case F03_PARAMETERIZED_TYPE:
+            case F08_ASSUMED_TYPE:
             case F03_CLASS:
                 type_expr = x;
                 break;
@@ -712,9 +713,10 @@ compile_statement1(int st_no, expr x)
                 /* implicit none?  result in peek the data structture.  */
                 if (EXPR_CODE(EXPR_ARG1(EXPR_ARG1(v))) == F_TYPE_NODE) {
                     compile_IMPLICIT_decl(EXPR_ARG1(v), EXPR_ARG2(v));
-                } else if (EXPR_CODE(EXPR_ARG1(EXPR_ARG1(v))) == F03_PARAMETERIZED_TYPE) {
-                    compile_IMPLICIT_decl(EXPR_ARG1(EXPR_ARG1(v)), EXPR_ARG2(v));
-                } else if (EXPR_CODE(EXPR_ARG1(EXPR_ARG1(v))) == F03_CLASS) {
+                } else if (EXPR_CODE(EXPR_ARG1(EXPR_ARG1(v))) == F03_PARAMETERIZED_TYPE
+                    || EXPR_CODE(EXPR_ARG1(EXPR_ARG1(v))) == F03_CLASS
+                    || EXPR_CODE(EXPR_ARG1(EXPR_ARG1(v))) == F08_ASSUMED_TYPE) 
+                {
                     compile_IMPLICIT_decl(EXPR_ARG1(EXPR_ARG1(v)), EXPR_ARG2(v));
                 } else {
                     v = EXPR_ARG1(v);

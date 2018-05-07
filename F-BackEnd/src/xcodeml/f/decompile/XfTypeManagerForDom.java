@@ -413,6 +413,9 @@ class XfTypeManagerForDom {
                 if (XmDomUtil.getAttrBool(basicType, "is_class") && XfUtilForDom.isNullOrEmpty(refType))
                     break;
 
+                if (XmDomUtil.getAttrBool(basicType, "is_assumed") && XfUtilForDom.isNullOrEmpty(refType))
+                    break;
+
                 if (XmDomUtil.getAttrBool(basicType, "is_pointer") && XfUtilForDom.isNullOrEmpty(refType))
                     break;
 

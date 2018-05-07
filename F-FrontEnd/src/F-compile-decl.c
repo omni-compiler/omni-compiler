@@ -2382,6 +2382,7 @@ compile_derived_type(expr x, int allow_predecl)
     int is_class = FALSE;
     int is_parameterized_type = FALSE;
 
+
     if (EXPR_CODE(x) == F03_CLASS) {
         x = EXPR_ARG1(x);
 
@@ -2395,6 +2396,16 @@ compile_derived_type(expr x, int allow_predecl)
         }
 
         is_class = TRUE;
+    } else if (EXPR_CODE(x) == F08_ASSUMED_TYPE) {
+        x = EXPR_ARG1(x);
+        if (x == NULL) {
+            /*
+             * for `TYPE(*)`
+             */
+            tp = struct_type(NULL);
+            TYPE_SET_ASSUMED(tp);
+            return tp;
+        }
     }
 
     if (EXPR_CODE(x) == IDENT) {
@@ -2739,11 +2750,11 @@ compile_type(expr x, int allow_predecl)
 {
     if (x == NULL) {
         return NULL;
-    } else if (EXPR_CODE(x) == IDENT ||
-        EXPR_CODE(x) == F03_PARAMETERIZED_TYPE ||
-        EXPR_CODE(x) == F03_CLASS) {
+    } else if (EXPR_CODE(x) == IDENT 
+        || EXPR_CODE(x) == F03_PARAMETERIZED_TYPE 
+        || EXPR_CODE(x) == F03_CLASS || EXPR_CODE(x) == F08_ASSUMED_TYPE) 
+    {
         return compile_derived_type(x, allow_predecl);
-
     } else {
         return compile_basic_type(x);
     }
@@ -3739,7 +3750,7 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
          * Create new TYPE_DESC, ALWAYS.  Since we need it. Otherwise
          * identifier-origin attribute are corrupted.
          */
-        if (!TYPE_IS_CLASS(tp)) {
+        if (!TYPE_IS_CLASS(tp) && !TYPE_IS_ASSUMED(tp)) {
             tp = wrap_type(tp);
         }
 
