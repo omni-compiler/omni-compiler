@@ -147,12 +147,12 @@ expv_reduce(expv v, int doParamReduce)
 {
     enum expr_code code, lcode, rcode;
     TYPE_DESC tp;
-    expv left,right,arg;
+    expv left,right,arg, ret;
     list lp;
     int bytes;
     omllint_t n;
     omldouble_t f;
-    
+
     if (v == NULL) return(v);   /* error recovery */
 
     code = EXPV_CODE(v);
@@ -265,7 +265,7 @@ expv_reduce(expv v, int doParamReduce)
     }
 
 
-
+    
     /* constant folding */
     switch(code){
     /*
@@ -413,12 +413,16 @@ expv_reduce(expv v, int doParamReduce)
         break;
 
     case UNARY_MINUS_EXPR:
-        if(lcode == INT_CONSTANT)
-            return(expv_int_term(INT_CONSTANT,EXPV_TYPE(v),
-                               -EXPV_INT_VALUE(left)));
-
+        if(lcode == INT_CONSTANT){
+            ret = expv_int_term(INT_CONSTANT, EXPV_TYPE(v), 
+            -EXPV_INT_VALUE(left));
+            if(EXPV_KWOPT_NAME(v)) {
+                EXPV_KWOPT_NAME(ret) = EXPV_KWOPT_NAME(v); // keep named value
+            }
+            return ret;
+        }
+    
         /* deleted reducing float constant */
-
         if (IS_NUMERIC_CONST_V(left)) {
             return expv_numeric_const_reduce(left, (expv)NULL, code, v);
         }

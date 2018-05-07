@@ -12,6 +12,7 @@ typedef struct type_entry {
     EXT_ID ep;
     TYPE_DESC tp;
     char * parent_type_id;
+    char * type_ref;
 } * TYPE_ENTRY;
 
 static int input_FfunctionDecl(xmlTextReaderPtr, HashTable *, EXT_ID, ID);
@@ -1631,6 +1632,19 @@ input_FdoLoop(xmlTextReaderPtr reader, HashTable * ht, expv * v)
     return TRUE;
 }
 
+static TYPE_ENTRY
+has_ext_id_in_types(HashTable* ht, TYPE_ENTRY base) {
+    if(base->type_ref) {
+        TYPE_ENTRY ref = getTypeEntry(ht, base->type_ref);
+        if(!base->hasExtID && ref->hasExtID) {
+            return ref;
+        } else if(ref->type_ref) {
+            return has_ext_id_in_types(ht, ref);
+        }
+    }
+    return NULL;
+}
+
 /**
  * input <FbasicType> node
  */
@@ -1638,6 +1652,8 @@ static int
 input_FbasicType(xmlTextReaderPtr reader, HashTable * ht)
 {
     TYPE_DESC tp = NULL;
+    TYPE_ENTRY baseTep;
+    TYPE_ENTRY refTep;
     char * typeId = NULL;
     char * ref;
     int isEmpty;
@@ -1653,6 +1669,15 @@ input_FbasicType(xmlTextReaderPtr reader, HashTable * ht)
     ref = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "ref");
     if (ref != NULL) {
         TYPE_REF(tp) = getTypeDesc(ht, ref);
+        baseTep = getTypeEntry(ht, typeId);
+        baseTep->type_ref = ref;
+
+        refTep = has_ext_id_in_types(ht, baseTep);
+        if(refTep) {
+            baseTep->hasExtID = TRUE;
+            baseTep->ep = refTep->ep;
+        }
+
         TYPE_BASIC_TYPE(tp) = TYPE_BASIC_TYPE(TYPE_REF(tp));
         shrink_type(tp);
 
@@ -1662,8 +1687,10 @@ input_FbasicType(xmlTextReaderPtr reader, HashTable * ht)
 
     } else {
         TYPE_REF(tp) = NULL;
-        if (TYPE_IS_PROCEDURE(tp)) {
+        if (IS_FUNCTION_TYPE(tp)) {
             TYPE_BASIC_TYPE(tp) = TYPE_FUNCTION;
+        } else if (IS_SUBR(tp)) {
+            TYPE_BASIC_TYPE(tp) = TYPE_SUBR;
         } else if (TYPE_IS_CLASS(tp)) {
             TYPE_BASIC_TYPE(tp) = TYPE_STRUCT;
         }
@@ -2214,7 +2241,34 @@ input_typeBoundGenericProcedure(xmlTextReaderPtr reader, HashTable * ht, ID *id)
 
     str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_operator");
     if (str != NULL) {
-        binding_attr_flags |= TYPE_BOUND_PROCEDURE_IS_OPERATOR;
+        if (strcmp(".not", name) == 0) {
+            binding_attr_flags |= TYPE_BOUND_PROCEDURE_IS_UNARY_OPERATOR;
+        } else if (
+            strcmp(".", name) == 0 ||
+            strcmp("**", name) == 0 ||
+            strcmp("*", name) == 0 ||
+            strcmp("/", name) == 0 ||
+            strcmp("==", name) == 0 ||
+            strcmp("/=", name) == 0 ||
+            strcmp("<", name) == 0 ||
+            strcmp("<=", name) == 0 ||
+            strcmp(">", name) == 0 ||
+            strcmp(">=", name) == 0 ||
+            strcmp(".eq.", name) == 0 ||
+            strcmp("/=", name) == 0 ||
+            strcmp(".lt.", name) == 0 ||
+            strcmp(".le.", name) == 0 ||
+            strcmp(".gt.", name) == 0 ||
+            strcmp(".ge.", name) == 0 ||
+            strcmp(".and.", name) == 0 ||
+            strcmp(".or.", name) == 0 ||
+            strcmp(".eqv.", name) == 0 ||
+            strcmp(".neqv.", name) == 0 ||
+            strcmp("//", name) == 0) {
+            binding_attr_flags |= TYPE_BOUND_PROCEDURE_IS_BINARY_OPERATOR;
+        } else {
+            binding_attr_flags |= TYPE_BOUND_PROCEDURE_IS_OPERATOR;
+        }
     }
 
     str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_assignment");
@@ -2299,17 +2353,15 @@ input_typeBoundGenericProcedure(xmlTextReaderPtr reader, HashTable * ht, ID *id)
 
 
 static int
-input_finalProcedure(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC stp)
+input_finalProcedure(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC stp, 
+                     ID *id)
 {
     char * name = NULL;
     ID binding;
     ID mem;
     ID last_ip = NULL;
-    ID id = NULL;
-    SYMBOL sym = find_symbol(FINALIZER_PROCEDURE);
 
-    if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT,
-                       "finalProcedure"))
+    if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "finalProcedure"))
         return FALSE;
 
     if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "name"))
@@ -2323,34 +2375,16 @@ input_finalProcedure(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC stp)
         return FALSE;
     }
 
-    id = find_struct_member(stp, sym);
-    if (id == NULL) {
-        ID last = NULL;
-        id = new_ident_desc(sym);
-        ID_LINK_ADD(id, TYPE_MEMBER_LIST(stp), last);
-    }
-
-    if (xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "name")) {
-        name = (char *)xmlTextReaderConstValue(reader);
-        if (!xmlSkipWhiteSpace(reader)) {
-            return FALSE;
-        }
-    }
-
-    if (name != NULL) {
-        name = strdup(name);
-    }
-
     binding = new_ident_desc(find_symbol(name));
-    FOREACH_ID(mem, TBP_BINDING(id)) {
+    FOREACH_ID(mem, TBP_BINDING(*id)) {
         last_ip = mem;
     }
-    ID_LINK_ADD(binding, TBP_BINDING(id), last_ip);
+    ID_LINK_ADD(binding, TBP_BINDING(*id), last_ip);
 
     if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "name"))
         return FALSE;
 
-    if (!xmlMatchNode(reader, XML_READER_TYPE_END_ELEMENT, "finalProcedure"))
+    if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "finalProcedure"))
         return FALSE;
 
     return TRUE;
@@ -2384,12 +2418,24 @@ input_typeBoundProcedures(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC str
             if (!input_typeBoundGenericProcedure(reader, ht, &mem))
                 return FALSE;
         } else if (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT,
-                                "finalProcedure")) {
-            if (!input_finalProcedure(reader, ht, struct_tp))
+                                "finalProcedure")) 
+        {
+            // Init special member _final if not already there
+            mem = find_struct_member(struct_tp, 
+                find_symbol(FINALIZER_PROCEDURE));
+            if (mem == NULL) {
+                mem = new_ident_desc(find_symbol(FINALIZER_PROCEDURE));
+                ID_CLASS(mem) = CL_TYPE_BOUND_PROC;
+                ID_TYPE(mem) = type_bound_procedure_type();
+                TBP_BINDING_ATTRS(mem) = TYPE_BOUND_PROCEDURE_IS_FINAL;
+            }
+
+            if (!input_finalProcedure(reader, ht, struct_tp, &mem))
                 return FALSE;
         }
-
-        ID_LINK_ADD(mem, TYPE_MEMBER_LIST(struct_tp), last_ip);
+        if(mem) {
+            ID_LINK_ADD(mem, TYPE_MEMBER_LIST(struct_tp), last_ip);
+        }
     }
 
 
@@ -3201,6 +3247,7 @@ input_FfunctionDecl(xmlTextReaderPtr reader, HashTable * ht, EXT_ID parent,
                     ID id_list)
 {
     ID id;
+    ID tail = NULL;
     EXT_ID ep;
     SYMBOL s;
     TYPE_DESC tp = NULL;
@@ -3226,6 +3273,21 @@ input_FfunctionDecl(xmlTextReaderPtr reader, HashTable * ht, EXT_ID parent,
     else
         extid_put_last(EXT_PROC_INTR_DEF_EXT_IDS(parent), ep);
 
+    if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "symbols"))
+        return FALSE;
+
+    while (TRUE) {
+        if (xmlMatchNodeType(reader, XML_READER_TYPE_END_ELEMENT))
+            /* must be </symbols> */
+            break;
+
+        if (!input_symbol(reader, ht, tp, &tail))
+            return FALSE;
+    }
+
+    if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "symbols"))
+        return FALSE;
+    
     if (!input_declarations(reader, ht, ep, id_list))
         return FALSE;
 
@@ -3403,6 +3465,16 @@ update_struct_type(HashTable * ht)
         tep = GetHashValue(e);
         tp = tep->tp;
         if (TYPE_BASIC_TYPE(tp) == TYPE_STRUCT) {
+            FOREACH_MEMBER(mem, tp) {
+                if (IS_PROCEDURE_TYPE(ID_TYPE(mem))) {
+                    if (TYPE_REF(ID_TYPE(mem)) &&
+                        TYPE_BASIC_TYPE(ID_TYPE(mem)) !=
+                        TYPE_BASIC_TYPE(TYPE_REF(ID_TYPE(mem)))) {
+                        TYPE_BASIC_TYPE(ID_TYPE(mem)) = TYPE_BASIC_TYPE(TYPE_REF(ID_TYPE(mem)));
+                    }
+                }
+            }
+
             FOREACH_TYPE_BOUND_GENERIC(mem, tp) {
                 /*
                  * generic type bound procedure

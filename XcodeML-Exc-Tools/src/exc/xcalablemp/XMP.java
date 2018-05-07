@@ -1,9 +1,3 @@
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
-
 package exc.xcalablemp;
 
 import exc.object.*;
@@ -27,6 +21,7 @@ public class XMP {
   public final static String COARRAY_DESC_PREFIX_	= "_XMP_COARRAY_DESC_";
   public final static String COARRAY_ADDR_PREFIX_       = "_XMP_COARRAY_ADDR_";
   public final static String ADDR_PREFIX_		= "_XMP_ADDR_";
+  public final static String MULTI_ADDR_PREFIX_         = "_XMP_MULTI_ADDR_";
   public final static String GTOL_PREFIX_		= "_XMP_GTOL_";
   public final static String ASTERISK			= "* @{ASTERISK}@";
   public final static String COLON			= ": @{COLON}@";

@@ -54,6 +54,7 @@ public class XcodeMLNameTable_F extends XcodeMLNameTable {
 			new XcodeMLName(Xcode.F_ARRAY_REF, "FarrayRef"),
 			new XcodeMLName(Xcode.F_CHARACTER_REF, "FcharacterRef"),
 			new XcodeMLName(Xcode.MEMBER_REF, "FmemberRef"),
+			new XcodeMLName(Xcode.F_COMPLEX_PART_REF, "FcomplexPartRef"),
 			new XcodeMLName(Xcode.CO_ARRAY_REF, "FcoArrayRef"),      // #060
 			new XcodeMLName(Xcode.FUNC_ADDR, "Ffunction"),
 			new XcodeMLName(Xcode.F_VAR_REF, "varRef"),
@@ -121,6 +122,7 @@ public class XcodeMLNameTable_F extends XcodeMLNameTable {
 			new XcodeMLName(Xcode.F_EQUIVALENCE_DECL, "FequivalenceDecl"),
 			new XcodeMLName(Xcode.F_COMMON_DECL, "FcommonDecl"),
 			new XcodeMLName(Xcode.F_ENTRY_DECL, "FentryDecl"),
+			new XcodeMLName(Xcode.F_ENUM_DECL, "FenumDecl"),
 			new XcodeMLName(Xcode.F_ALLOCATE_STATEMENT, "FallocateStatement"),
 			new XcodeMLName(Xcode.F_DEALLOCATE_STATEMENT,
 					"FdeallocateStatement"),
@@ -134,6 +136,8 @@ public class XcodeMLNameTable_F extends XcodeMLNameTable {
 			new XcodeMLName(Xcode.XMP_PRAGMA, "XMPPragma"),
 			new XcodeMLName(Xcode.ACC_PRAGMA, "ACCPragma"),
 
+			new XcodeMLName(Xcode.COMMENT_LINE, "FcommentLine"),
+
 			new XcodeMLName(Xcode.F_SYNCALL_STATEMENT, "syncAllStatement"),
 			new XcodeMLName(Xcode.F_SYNCIMAGE_STATEMENT, "syncImagesStatement"),
 			new XcodeMLName(Xcode.F_SYNCMEMORY_STATEMENT, "syncMemoryStatement"),
@@ -142,6 +146,7 @@ public class XcodeMLNameTable_F extends XcodeMLNameTable {
 			new XcodeMLName(Xcode.F_UNLOCK_STATEMENT, "unlockStatement"),
 			new XcodeMLName(Xcode.F_SYNC_STAT, "syncStat"),
 			new XcodeMLName(Xcode.F_BLOCK_STATEMENT, "blockStatement"),
+			new XcodeMLName(Xcode.F_ASSOCIATE_STATEMENT, "associateStatement"),
 			new XcodeMLName(Xcode.F_TYPE_PARAM, "typeParam"),
 			new XcodeMLName(Xcode.F_TYPE_PARAMS, "typeParams"),
 			new XcodeMLName(Xcode.F_TYPE_PARAM_VALUES, "typeParamValues"),

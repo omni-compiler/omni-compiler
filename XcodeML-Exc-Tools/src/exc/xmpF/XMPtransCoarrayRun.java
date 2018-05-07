@@ -639,7 +639,7 @@ public class XMPtransCoarrayRun
   public void run3() {
     _hoistLocalCoarrays(               null,               null, getFblock(), true );
     _rewriteExprLocalCoarrays(getFblock());
-    funcDef.Finalize();
+    funcDef.finalizeBlock();
   }
 
   /*
@@ -647,7 +647,7 @@ public class XMPtransCoarrayRun
    */
   public void run4() {
     _hoistLocalCoarrays(def.getFuncIdList(), def.getFuncDecls(), getFblock(), false);
-    funcDef.Finalize();
+    funcDef.finalizeBlock();
   }
 
   /*
@@ -680,8 +680,10 @@ public class XMPtransCoarrayRun
       if (onlyCafMode) {
         // SPECIAL HANDLING (TEMPORARY) to work XMPtransCoarray alone without XMPtranslate
         //  convert main program to soubroutine xmpf_main
-        if (isMainProgram())
+        if (isMainProgram()){
           _convMainProgramToSubroutine("xmpf_main");
+          XMPtranslate.create_main(def);
+        }
       }
     } else {
       XMP.fatal("XMPtransCoarrayRun.run1(), def kind unkown : " + def);
@@ -707,7 +709,7 @@ public class XMPtransCoarrayRun
     _setVisibleCoarrays();
     transExecPart();
 
-    funcDef.Finalize();
+    funcDef.finalizeBlock();
   }
 
 
@@ -739,7 +741,7 @@ public class XMPtransCoarrayRun
     // should be made after execution of transDeclPart_*.
     _setVisibleCoarrays();
 
-    funcDef.Finalize();
+    funcDef.finalizeBlock();
   }
 
 

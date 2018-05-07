@@ -1,9 +1,3 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package exc.block;
 
 import exc.object.Xcode;
@@ -34,6 +28,25 @@ public class FdoBlock extends Block implements ForBlock
             upper_part = BasicBlock.Expr(this, idx_range.getArg(1));
             step_part = BasicBlock.Expr(this, idx_range.getArgOrNull(2));
         }
+    }
+
+    public FdoBlock(FdoBlock doBlock)
+    {
+      super(doBlock);
+      this.setLineNo(doBlock.getLineNo());
+      this.body = doBlock.getBody().copy();
+      this.is_canonical = doBlock.is_canonical;
+      body.parent = this;
+      ind_var_part = BasicBlock.Expr(this, doBlock.getInductionVar());
+      lower_part = BasicBlock.Expr(this, doBlock.getLowerBound());
+      upper_part = BasicBlock.Expr(this, doBlock.getUpperBound());
+      step_part = BasicBlock.Expr(this, doBlock.getStep());
+    }
+
+    @Override
+    public Block copy()
+    {
+        return new FdoBlock(this);
     }
 
     @Override

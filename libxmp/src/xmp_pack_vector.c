@@ -91,6 +91,210 @@ void _XMPF_unpack_transpose_vector(char * restrict dst, char * restrict src,
 
 #include "xmp_internal.h"
 
+#define _XMP_SUM_VECTOR(_type) \
+  for (long i = 0; i < count; i++){ \
+    for (long j = 0; j < blocklength; j++){ \
+      ((_type *)dst)[i * stride + j] += ((_type *)src)[i * blocklength + j]; \
+    } \
+  }
+
+void _XMP_sum_vector(int type, char * restrict dst, char * restrict src,
+		     int count, int blocklength, long stride){
+
+  if (_xmp_omp_num_procs > 1 && count > 8 * _xmp_omp_num_procs){
+
+    switch (type){
+
+    case _XMP_N_TYPE_SHORT:
+#pragma omp parallel for
+      _XMP_SUM_VECTOR(short);
+      break;
+
+    case _XMP_N_TYPE_UNSIGNED_SHORT:
+#pragma omp parallel for
+      _XMP_SUM_VECTOR(unsigned short);
+      break;
+
+    case _XMP_N_TYPE_INT:
+#pragma omp parallel for
+      _XMP_SUM_VECTOR(int);
+      break;
+
+    case _XMP_N_TYPE_UNSIGNED_INT:
+#pragma omp parallel for
+      _XMP_SUM_VECTOR(unsigned int);
+      break;
+
+    case _XMP_N_TYPE_LONG:
+#pragma omp parallel for
+      _XMP_SUM_VECTOR(long);
+      break;
+
+    case _XMP_N_TYPE_UNSIGNED_LONG:
+#pragma omp parallel for
+      _XMP_SUM_VECTOR(unsigned long);
+      break;
+
+    case _XMP_N_TYPE_LONGLONG:
+#pragma omp parallel for
+      _XMP_SUM_VECTOR(long long);
+      break;
+
+    case _XMP_N_TYPE_UNSIGNED_LONGLONG:
+#pragma omp parallel for
+      _XMP_SUM_VECTOR(unsigned long long);
+      break;
+
+    case _XMP_N_TYPE_FLOAT:
+#pragma omp parallel for
+      _XMP_SUM_VECTOR(float);
+      break;
+
+    case _XMP_N_TYPE_DOUBLE:
+#pragma omp parallel for
+      _XMP_SUM_VECTOR(double);
+      break;
+      
+    case _XMP_N_TYPE_LONG_DOUBLE:
+#pragma omp parallel for
+      _XMP_SUM_VECTOR(long double);
+      break;
+	
+#ifdef __STD_IEC_559_COMPLEX__
+
+    case _XMP_N_TYPE_FLOAT_IMAGINARY:
+#pragma omp parallel for
+      _XMP_SUM_VECTOR(float imaginary);
+      break;
+
+    case _XMP_N_TYPE_FLOAT_COMPLEX:
+#pragma omp parallel for
+      _XMP_SUM_VECTOR(float complex);
+      break;
+
+    case _XMP_N_TYPE_DOUBLE_IMAGINARY:
+#pragma omp parallel for
+      _XMP_SUM_VECTOR(double imaginary);
+      break;
+
+    case _XMP_N_TYPE_DOUBLE_COMPLEX:
+#pragma omp parallel for
+      _XMP_SUM_VECTOR(double complex);
+      break;
+
+    case _XMP_N_TYPE_LONG_DOUBLE_IMAGINARY:
+#pragma omp parallel for
+      _XMP_SUM_VECTOR(long double imaginary);
+      break;
+
+    case _XMP_N_TYPE_LONG_DOUBLE_COMPLEX:
+#pragma omp parallel for
+      _XMP_SUM_VECTOR(long double complex);
+      break;
+
+#endif
+
+    case _XMP_N_TYPE_BOOL:
+    case _XMP_N_TYPE_CHAR:
+    case _XMP_N_TYPE_UNSIGNED_CHAR:
+    case _XMP_N_TYPE_NONBASIC:
+    default:
+      _XMP_fatal("_XMP_sum_vector: array arguments must be of a numerical type");
+      break;
+    }
+    
+  }
+  else {
+
+    switch (type){
+
+    case _XMP_N_TYPE_SHORT:
+      _XMP_SUM_VECTOR(short);
+      break;
+
+    case _XMP_N_TYPE_UNSIGNED_SHORT:
+      _XMP_SUM_VECTOR(unsigned short);
+      break;
+
+    case _XMP_N_TYPE_INT:
+      _XMP_SUM_VECTOR(int);
+      break;
+
+    case _XMP_N_TYPE_UNSIGNED_INT:
+      _XMP_SUM_VECTOR(unsigned int);
+      break;
+
+    case _XMP_N_TYPE_LONG:
+      _XMP_SUM_VECTOR(long);
+      break;
+
+    case _XMP_N_TYPE_UNSIGNED_LONG:
+      _XMP_SUM_VECTOR(unsigned long);
+      break;
+
+    case _XMP_N_TYPE_LONGLONG:
+      _XMP_SUM_VECTOR(long long);
+      break;
+
+    case _XMP_N_TYPE_UNSIGNED_LONGLONG:
+      _XMP_SUM_VECTOR(unsigned long long);
+      break;
+
+    case _XMP_N_TYPE_FLOAT:
+      _XMP_SUM_VECTOR(float);
+      break;
+
+    case _XMP_N_TYPE_DOUBLE:
+      _XMP_SUM_VECTOR(double);
+      break;
+      
+    case _XMP_N_TYPE_LONG_DOUBLE:
+      _XMP_SUM_VECTOR(long double);
+      break;
+	
+#ifdef __STD_IEC_559_COMPLEX__
+
+    case _XMP_N_TYPE_FLOAT_IMAGINARY:
+      _XMP_SUM_VECTOR(float imaginary);
+      break;
+
+    case _XMP_N_TYPE_FLOAT_COMPLEX:
+      _XMP_SUM_VECTOR(float complex);
+      break;
+
+    case _XMP_N_TYPE_DOUBLE_IMAGINARY:
+      _XMP_SUM_VECTOR(double imaginary);
+      break;
+
+    case _XMP_N_TYPE_DOUBLE_COMPLEX:
+      _XMP_SUM_VECTOR(double complex);
+      break;
+
+    case _XMP_N_TYPE_LONG_DOUBLE_IMAGINARY:
+      _XMP_SUM_VECTOR(long double imaginary);
+      break;
+
+    case _XMP_N_TYPE_LONG_DOUBLE_COMPLEX:
+      _XMP_SUM_VECTOR(long double complex);
+      break;
+
+#endif
+
+    case _XMP_N_TYPE_BOOL:
+    case _XMP_N_TYPE_CHAR:
+    case _XMP_N_TYPE_UNSIGNED_CHAR:
+    case _XMP_N_TYPE_NONBASIC:
+    default:
+      _XMP_fatal("_XMP_sum_vector: array arguments must be of a numerical type");
+      break;
+    }
+
+  }
+
+}
+
+#include "xmp_internal.h"
+
 int _xmp_reflect_pack_flag = 0;
 
 void _XMP_check_reflect_type(void)

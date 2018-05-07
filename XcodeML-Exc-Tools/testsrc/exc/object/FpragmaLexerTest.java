@@ -1,18 +1,9 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package exc.object;
 
 import static org.junit.Assert.*;
-
 import org.junit.Before;
 import org.junit.Test;
-
 import exc.xcodeml.XmfXmObjToXobjectTranslator;
-
 import xcodeml.XmLanguage;
 import xcodeml.f.binding.gen.XbfBody;
 import xcodeml.f.binding.gen.XbfFfunctionDefinition;

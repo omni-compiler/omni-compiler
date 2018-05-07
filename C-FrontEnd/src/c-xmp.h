@@ -28,6 +28,7 @@ enum XMP_pragma {
     XMP_REFLECT_INIT    = 124,
     XMP_REFLECT_DO      = 125,
     XMP_STATIC_DESC     = 126,
+    XMP_REDUCE_SHADOW   = 127,
 
     XMP_MASTER_IO	= 130,
     XMP_MASTER_IO_BEGIN	= 131,
@@ -59,6 +60,10 @@ enum XMP_pragma_clause {
     XMP_GMOVE_IN             = 401,
     XMP_GMOVE_OUT            = 402,
   
+    XMP_LOOP_EXPAND          = 410,
+    XMP_LOOP_MARGIN          = 411,
+    XMP_LOOP_PEEL_AND_WAIT   = 412,
+
     XMP_DATA_REDUCE_SUM	     = 300,
     XMP_DATA_REDUCE_PROD     = 301,
     XMP_DATA_REDUCE_BAND     = 302,

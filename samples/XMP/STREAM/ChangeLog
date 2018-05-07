@@ -1,0 +1,11 @@
+# 2015.10.23
+* Minor change of dynamic-STREAM.c
+
+# 2014.11.9
+* Add optional pragma for the K computer
+
+# 2014.6.20
+* Add Makefile-K which is makefile for the K computer
+
+# 2013.11.20
+* Release

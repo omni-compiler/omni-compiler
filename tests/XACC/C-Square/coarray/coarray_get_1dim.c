@@ -18,7 +18,7 @@ int main(){
 
     for(start[0]=0;start[0]<2;start[0]++){
       for(len[0]=1;len[0]<=SIZE;len[0]++){
-	for(stride[0]=1;stride[0]<3;stride[0]++){
+	for(stride[0]=1;stride[0]<2;stride[0]++){
 	  if(start[0]+(len[0]-1)*stride[0] < SIZE){
 
 	    for(int i=0;i<SIZE;i++) a[i] = -1;

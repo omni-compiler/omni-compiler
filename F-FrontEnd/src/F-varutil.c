@@ -49,6 +49,17 @@ get_bottom_ref_type(TYPE_DESC tp)
     return get_bottom_ref_type(TYPE_REF(tp));
 }
 
+int
+has_attr_in_types(TYPE_DESC tp, uint32_t type_attr) {
+    assert(tp);
+    if(((tp)->attr.type_attr_flags & type_attr)) {
+        return TRUE;
+    }
+    if(TYPE_REF(tp) != NULL) {
+        return has_attr_in_types(TYPE_REF(tp), type_attr);
+    }
+    return FALSE;
+}
 
 static int
 expr_is_param_typeof(expr x, BASIC_DATA_TYPE bt)
@@ -79,9 +90,15 @@ expr_is_param_typeof(expr x, BASIC_DATA_TYPE bt)
                 (bt == TYPE_UNKNOWN || bt == TYPE_BASIC_TYPE(ID_TYPE(id)))) {
                 return TRUE;
             }
+            if (ID_STORAGE(id) == STG_ARG &&
+                (bt == TYPE_UNKNOWN || bt == TYPE_BASIC_TYPE(ID_TYPE(id)))) {
+                return TRUE;
+            }
         } else {
             if (bt == TYPE_UNKNOWN &&
-                (ID_CLASS(id) == CL_PARAM || TYPE_IS_PARAMETER(id))) {
+                (ID_CLASS(id) == CL_PARAM ||
+                 TYPE_IS_PARAMETER(id) ||
+                 ID_STORAGE(id) == STG_ARG)) {
                 return TRUE;
             }
         }
@@ -1014,8 +1031,20 @@ expv_is_restricted(expv x)
         /* x is a variable in common block or part of it. */
         if(EXPV_CODE(base) == IDENT || EXPV_CODE(base) == F_VAR) {
             ID id = find_ident(EXPV_NAME(base));
-            if (id != NULL && ID_STORAGE(id) == STG_COMMON)
-                return TRUE;
+            if (id != NULL) {
+                if (ID_STORAGE(id) == STG_COMMON)
+                    return TRUE;
+
+                if (ID_STORAGE(id) == STG_ARG &&
+                    !(TYPE_IS_OPTIONAL(id) ||
+                      TYPE_IS_INTENT_OUT(id) ||
+                      TYPE_IS_INTENT_INOUT(id)) &&
+                    !(ID_TYPE(id) != NULL &&
+                      (TYPE_IS_OPTIONAL(ID_TYPE(id)) ||
+                       TYPE_IS_INTENT_OUT(ID_TYPE(id)) ||
+                       TYPE_IS_INTENT_INOUT(ID_TYPE(id)))))
+                    return TRUE;
+            }
         }
 
         /* x is a variable which is be accecible by host or use association */

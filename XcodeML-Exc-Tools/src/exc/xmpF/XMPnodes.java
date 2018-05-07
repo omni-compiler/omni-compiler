@@ -1,15 +1,8 @@
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
-
 package exc.xmpF;
 
 import exc.block.*;
 import exc.object.*;
 import xcodeml.util.XmOption;
-
 import java.util.Vector;
 
 /* 

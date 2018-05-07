@@ -1,9 +1,3 @@
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
-
 package exc.xcalablemp;
 
 import exc.block.*;
@@ -166,34 +160,17 @@ public class XMPlocalDecl {
       }
 
     }
-
   }
 
-  // public static void setupConstructor(FunctionBlock functionBlock)
-  // {
-  //   BlockList funcStmtList = functionBlock.getBody().getTail().getBody();
-
-  //   XobjList alloc = (XobjList)functionBlock.getProp(ALLOC);
-  //   if (alloc != null) {
-  //     funcStmtList.insert(Bcons.buildBlock(Xcons.List(Xcode.COMPOUND_STATEMENT, (Xobject)null, null, alloc)));
-  //   }
-
-  //   XobjList constructor = (XobjList)functionBlock.getProp(CONSTRUCTOR);
-  //   if (constructor != null) {
-  //     funcStmtList.insert(Bcons.buildBlock(Xcons.List(Xcode.COMPOUND_STATEMENT, (Xobject)null, null, constructor)));
-  //   }
-  // }
-
-  public static void setupConstructor(FunctionBlock functionBlock){
-
+  public static void setupConstructor(FunctionBlock functionBlock)
+  {
     topdownBlockIterator iter = new topdownBlockIterator(functionBlock);
 
     for (iter.init(); !iter.end(); iter.next()) {
-
       Block b = iter.getBlock();
       BlockList bl = b.getBody();
-
       XobjList alloc = (XobjList)b.getProp(ALLOC);
+      
       if (alloc != null) {
 	bl.insert(Bcons.buildBlock(Xcons.List(Xcode.COMPOUND_STATEMENT, (Xobject)null, null, alloc)));
       }
@@ -202,44 +179,20 @@ public class XMPlocalDecl {
       if (constructor != null) {
 	bl.insert(Bcons.buildBlock(Xcons.List(Xcode.COMPOUND_STATEMENT, (Xobject)null, null, constructor)));
       }
-
     }
-
   }
 
-  // public static void setupDestructor(FunctionBlock functionBlock) {
-  //   XobjList destructor = (XobjList)functionBlock.getProp(DESTRUCTOR);
-  //   if (destructor != null) {
-  //     Block funcStmts = functionBlock.getBody().getTail();
-
-  //     // insert destructor before return statements
-  //     BlockIterator i = new topdownBlockIterator(funcStmts);
-  //     for (i.init(); !i.end(); i.next()) {
-  //       Block b = i.getBlock();
-  //       if (b.Opcode() == Xcode.RETURN_STATEMENT)
-  //         b.insert(Bcons.buildBlock(Xcons.List(Xcode.COMPOUND_STATEMENT, (Xobject)null, null, destructor)));
-  //     }
-
-  //     // add destructor at the end of the function
-  //     funcStmts.getBody().add(Bcons.buildBlock(Xcons.List(Xcode.COMPOUND_STATEMENT, (Xobject)null, null, destructor)));
-  //   }
-  // }
-
-  public static void setupDestructor(FunctionBlock functionBlock) {
-
-    topdownBlockIterator iter = new topdownBlockIterator(functionBlock);
-
+  public static void setupDestructor(FunctionBlock functionBlock)
+  {
+    bottomupBlockIterator iter = new bottomupBlockIterator(functionBlock);
     for (iter.init(); !iter.end(); iter.next()) {
-
       Block b = iter.getBlock();
       BlockList bl = b.getBody();
-
       XobjList destructor = (XobjList)b.getProp(DESTRUCTOR);
 
       if (destructor != null) {
-
 	// insert destructor before return statements
-	BlockIterator i = new topdownBlockIterator(b);
+        BlockIterator i = new topdownBlockIterator(b);
 	for (i.init(); !i.end(); i.next()) {
 	  Block bb = i.getBlock();
 	  if (bb.Opcode() == Xcode.RETURN_STATEMENT)
@@ -249,13 +202,10 @@ public class XMPlocalDecl {
 	// add destructor at the end of the function
 	bl.add(Bcons.buildBlock(Xcons.List(Xcode.COMPOUND_STATEMENT, (Xobject)null, null, destructor)));
       }
-
     }
-
   }
 
   // add to the block
-
   public static XMPsymbolTable getXMPsymbolTable2(Block block) {
     if (block == null) return null;
     else return (XMPsymbolTable)block.getProp(XMP_SYMBOL_TABLE);

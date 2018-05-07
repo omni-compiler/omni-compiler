@@ -87,7 +87,7 @@ public class XobjectDefEnv extends PropObject
     {
         topdownXobjectDefIterator ite = new topdownXobjectDefIterator(this);
         for(ite.init(); !ite.end(); ite.next())
-            op.doDef(ite.getDef());
+            if (!ite.getDef().isPragma()) op.doDef(ite.getDef());
     }
 
     public void iterateFuncDef(XobjectDefVisitor op)

@@ -5,11 +5,11 @@ import exc.object.*;
 import java.util.Vector;
 
 public class XMPnodes extends XMPobject {
-  public final static int INHERIT_NULL   = -1;
   public final static int INHERIT_GLOBAL = 10;
   public final static int INHERIT_EXEC   = 11;
   public final static int INHERIT_NODES  = 12;
   private Vector<Xobject> _rankVector;
+  private boolean         _is_inherit = false;
 
   public XMPnodes(String name, int dim, Ident descId) {
     super(XMPobject.NODES, name, dim, descId);
@@ -19,6 +19,14 @@ public class XMPnodes extends XMPobject {
       this.addLower(Xcons.IntConstant(1));
   }
 
+  private void setInherit(){
+    _is_inherit = true;
+  }
+
+  public boolean isInherit(){
+    return _is_inherit;
+  }
+  
   public Xobject getSizeAt(int index) {
     return getUpperAt(index);
   }
@@ -89,7 +97,7 @@ public class XMPnodes extends XMPobject {
     // create function call
     XobjList nodesArgs   = Xcons.List(nodesDescId.getAddr(), Xcons.IntConstant(nodesDim));
     XobjList inheritDecl = (XobjList)nodesDecl.getArg(2);
-    XMPpair<String, XobjList> inheritInfo = getInheritInfo(inheritDecl, globalDecl, pb);
+    XMPpair<String, XobjList> inheritInfo = getInheritInfo(inheritDecl, globalDecl, pb, nodesObject);
     nodesArgs.mergeList(inheritInfo.getSecond());
 
     String allocType = "STATIC";
@@ -158,7 +166,7 @@ public class XMPnodes extends XMPobject {
   }
 
   public static XMPpair<String, XobjList> getInheritInfo(XobjList inheritDecl, XMPglobalDecl globalDecl,
-                                                         Block block) throws XMPexception {
+                                                         Block block, XMPnodes nodesObject) throws XMPexception {
     String inheritType = null;
     XobjList nodesArgs = Xcons.List();
 
@@ -193,6 +201,8 @@ public class XMPnodes extends XMPobject {
           String nodesRefName = nodesRef.getArg(0).getString();
           
           nodesRefObject = globalDecl.getXMPnodes(nodesRefName, block);
+          nodesObject.setInherit();
+          
           if (nodesRefObject == null)
             throw new XMPexception("cannot find nodes '" + nodesRefName + "'");
           

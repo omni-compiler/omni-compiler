@@ -977,7 +977,6 @@ unsigned long long _XMP_get_array_total_elmts(_XMP_array_t *array) {
 
 void _XMP_align_array_noalloc(_XMP_array_t *a, int adim, int tdim, long long align_subscript, 
 			     int *temp0, unsigned long long *acc0){
-  _XMP_ASSERT(a->dim == 1);
 
   a->is_allocated = false;
 

@@ -1,12 +1,6 @@
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
-
 package exc.xcalablemp;
-import xcodeml.util.XmOption;
 
+import xcodeml.util.XmOption;
 import exc.object.*;
 import exc.block.*;
 

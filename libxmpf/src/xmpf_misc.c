@@ -121,10 +121,3 @@ void xmpf_array___(_XMP_array_t **a_desc)
 void xmp_desc_of_(){
 }
 
-void xmpc_traverse_init()
-{
-}
-
-void xmpc_traverse_finalize()
-{
-}

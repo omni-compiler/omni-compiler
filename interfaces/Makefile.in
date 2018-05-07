@@ -1,0 +1,15 @@
+.PHONY: all install clean
+
+LIBDIR    = @OMNI_HOME@/lib
+MKDIR_P   = @MKDIR_P@
+INSTALL   = @INSTALL@
+
+all:
+
+install: xmp.py
+	$(MKDIR_P) $(DESTDIR)$(LIBDIR)
+	$(INSTALL) $^ $(DESTDIR)$(LIBDIR)
+
+clean:
+	rm -rf *~ *.pyc
+

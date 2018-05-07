@@ -4,6 +4,7 @@
 *.mod
 *.xmod
 *.so
+*.hex
 a.out
 Xcode.java
 
@@ -14,6 +15,8 @@ config.status
 /Makefile
 
 # Sub directories
+interfaces/Makefile
+
 C-BackEnd/Makefile
 C-BackEnd/build/
 C-FrontEnd/src/C_Front

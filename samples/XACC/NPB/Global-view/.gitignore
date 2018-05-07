@@ -1,0 +1,5 @@
+*.o
+sys/setparams
+config/suite.def
+*/npbparams.h
+bin

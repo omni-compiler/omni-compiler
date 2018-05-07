@@ -28,8 +28,8 @@ public class XMPtranslate implements XobjectDefVisitor {
     _selective_profile = false;
   }
 
-  public void finalize() {
-    _globalDecl.finalize();
+  public void finish() {
+    _globalDecl.finalizeGlobalDecl();
   }
 
   public void doDef(XobjectDef def) {
@@ -108,12 +108,20 @@ public class XMPtranslate implements XobjectDefVisitor {
   
   // Create a new function xmpc_main() and copy main() to the new function
   private void create_new_main(FuncDefBlock fd) throws XMPexception {
+
+    XobjectFile _env      = _globalDecl.getEnv();
+
     Ident mainId          = _globalDecl.findVarIdent("main");
     Xtype mainType        = ((FunctionType)mainId.Type()).getBaseRefType();
+
+    if (!XmOption.getMainName().equals("")){
+      mainId = _env.declGlobalIdent(XmOption.getMainName(), Xtype.Function(mainType));
+    }
+
     Xobject mainIdList    = fd.getDef().getFuncIdList();
     Xobject mainDecls     = fd.getDef().getFuncDecls();
     Xobject mainBody      = fd.getDef().getFuncBody();
-    XobjectFile _env      = _globalDecl.getEnv();
+    
     Ident xmpcInitAll     = _env.declExternIdent("xmp_init_all", Xtype.Function(Xtype.voidType));
     Ident xmpcMain        = _env.declStaticIdent("xmpc_main", Xtype.Function(mainType));
     Ident xmpcFinalizeAll = _env.declExternIdent("xmp_finalize_all", Xtype.Function(Xtype.voidType));
@@ -222,7 +230,7 @@ public class XMPtranslate implements XobjectDefVisitor {
 
 	  for (int i = 0; i < n; i++, arrayType = arrayType.getRef()){
             if(subscripts.Nargs() == i){
-              XMP.fatal(block.getLineNo(), "Invalid access of coarray");
+              XMP.fatal(block.getLineNo(), "Invalid access of array");
             }
             else{
               long dimSize = arrayType.getArraySize();

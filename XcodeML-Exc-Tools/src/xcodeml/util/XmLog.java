@@ -1,16 +1,7 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package xcodeml.util;
 
 import xcodeml.util.ILineNo;
 import exc.object.IXobject;
-
-// import xcodeml.binding.IXbLineNo;
-// import xcodeml.XmObj;
 
 public class XmLog
 {
@@ -35,11 +26,6 @@ public class XmLog
     {
         printlnToErr("warn: " + s);
     }
-    
-    // public static void warning(XmObj xmobj, String s)
-    // {
-    //     warning(wrapLocation(xmobj, s));
-    // }
     
     public static void warning(ILineNo lineNo, String s)
     {

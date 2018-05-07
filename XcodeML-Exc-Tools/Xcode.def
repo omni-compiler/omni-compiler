@@ -110,6 +110,7 @@ L   ARRAY_REF                  XbcArrayRef
 # -----------------
 # C: Directive
 L   PRAGMA_LINE                XbcPragma                    XbfFpragmaStatement
+L   COMMENT_LINE
 L   TEXT                       XbcText
 
 # -----------------
@@ -157,6 +158,7 @@ L   F_RENAME                   -                            XbfRename
 L   F_RENAMABLE                -                            XbfRenamable
 L   F_USE_ONLY_DECL            -                            XbfFuseOnlyDecl
 L   F_STATEMENT_LIST           -                            XbfBody
+L   F_ENUM_DECL
 
 # -----------------
 # Fortran: Statement
@@ -233,6 +235,7 @@ L   F_ARRAY_INDEX              -                            XbfArrayIndex
 L   F_CONDITION                -                            XbfCondition
 L   F_NAMED_VALUE              -                            XbfNamedValue
 L   F_NAMED_VALUE_LIST         -                            XbfNamedValueList
+L   F_COMPLEX_PART_REF	       -
 
 # -----------------
 # External Pragma
@@ -311,8 +314,9 @@ T   ID
 L   CPP_NESTEDNAMESPECIFIER_TYPESPEC
 
 # -----------------
-# Fortran2008: BLOCK, VOLATILE.
+# Fortran2008: BLOCK, VOLATILE, ASSOCIATE.
 L   F_BLOCK_STATEMENT
+L   F_ASSOCIATE_STATEMENT
 
 # -----------------
 # C++11

@@ -201,6 +201,15 @@ compile_intrinsic_call0(ID id, expv args, int ignoreTypeMismatch) {
                 //return NULL;    /* error recovery */
                 continue;
             }
+
+            if (i == 1 &&
+                INTR_ARG_TYPE(ep)[i] == INTR_TYPE_PASSIGNABLE) {
+
+                if (expv_is_pointer_assignable(NULL, expr_list_get_n(args, 0), a)) {
+                    break;
+                }
+            }
+
             if (compare_intrinsic_arg_type(a, tp,
                                            ((isVarArgs == 0) ?
                                             INTR_ARG_TYPE(ep)[i] :
@@ -252,22 +261,32 @@ compile_intrinsic_call0(ID id, expv args, int ignoreTypeMismatch) {
         }
 
         if (IS_VOID(tp)) {
-            ftp = intrinsic_subroutine_type();
+            TYPE_DESC ret = new_type_desc();
+            *ret = *tp;
+            tp = intrinsic_subroutine_type();
         } else {
-            ftp = intrinsic_function_type(tp);
+            TYPE_DESC ret = new_type_desc();
+            *ret = *tp;
+            tp = intrinsic_function_type(ret);
+        }
+
+        if (ID_TYPE(id)) {
+            *ID_TYPE(id) = *tp;
+        } else {
+            ID_TYPE(id) = tp;
         }
 
         /* set external id for functionType's type ID.
          * dont call declare_external_id() */
-        extid = new_external_id_for_external_decl(ID_SYM(id), ftp);
-        ID_TYPE(id) = ftp;
+        extid = new_external_id_for_external_decl(ID_SYM(id), tp);
+
         PROC_EXT_ID(id) = extid;
-        if(TYPE_IS_EXTERNAL(ftp)){
+        if(TYPE_IS_EXTERNAL(tp)){
            ID_STORAGE(id) = STG_EXT;
         }else{
            EXT_PROC_CLASS(extid) = EP_INTRINSIC;
         }
-        ret = expv_cons(FUNCTION_CALL, tp, symV, args);
+        ret = expv_cons(FUNCTION_CALL, FUNCTION_TYPE_RETURN_TYPE(tp), symV, args);
     }
 
     if (ret == NULL && !ignoreTypeMismatch) {
@@ -506,10 +525,14 @@ compare_intrinsic_arg_type(expv arg,
                             break;
                         argtp = ID_TYPE(id);
                     } break;
+                    case(ARRAY_REF):
                     case(F95_MEMBER_REF): {
                         if(iType != INTR_TYPE_ANY_OPTIONAL)
                             argtp = EXPV_TYPE(arg);
                     } break;
+		    case(FUNCTION_CALL):
+		      argtp = tp;
+		      break;
                     default: {
                         break;
                     }
@@ -567,7 +590,7 @@ generate_shape_expr(TYPE_DESC tp, expr dimSpec) {
 }
 
 
-static void
+void
 generate_assumed_shape_expr(expr dimSpec, int dim) {
     expv dimElm;
 
@@ -1170,7 +1193,88 @@ get_intrinsic_return_type(intrinsic_entry *ep, expv args, expv kindV) {
                     }
                     break;
 
+                    case INTR_MAXLOC:
+                    case INTR_MINLOC:
+                    {
+                        /*
+                         * `MAXLOC/MINLOC(ARRAY, DIM)` returns an 1-rank array.
+                         * Its shape is [d_1, ..., d_dim-1, d_dim+1, ..., d_n]
+                         */
 
+                        expr dim;
+                        int array_has_dim = FALSE;
+                        int i;
+                        TYPE_DESC tp = NULL;
+                        TYPE_DESC first = NULL;
+                        TYPE_DESC prev = NULL;
+
+                        ret = type_basic(TYPE_INT);
+
+                        TYPE_KIND(ret) = expr_list_get_n(args, 3);
+
+                        a = expr_list_get_n(args, 0);
+                        tp = EXPV_TYPE(a);
+                        if (TYPE_N_DIM(tp) < 1) {
+                            goto return_assumed_shape;
+                        }
+
+                        dim = expr_list_get_n(args, 1);
+                        dim = expv_reduce(dim, FALSE);
+
+                        if (dim == NULL || EXPV_CODE(dim) != INT_CONSTANT) {
+                            goto return_assumed_shape;
+                        }
+
+                        for (i = TYPE_N_DIM(tp); IS_ARRAY_TYPE(tp); i--, tp = TYPE_REF(tp)) {
+                            TYPE_DESC tp0;
+
+                            if (i == EXPR_INT(dim)) {
+                                array_has_dim = TRUE;
+                                continue;
+                            }
+
+                            tp0 = new_type_desc();
+                            TYPE_BASIC_TYPE(tp0)        = TYPE_ARRAY;
+                            TYPE_ARRAY_ASSUME_KIND(tp0) = TYPE_ARRAY_ASSUME_KIND(tp);
+                            TYPE_DIM_SIZE(tp0)          = TYPE_DIM_SIZE(tp);
+                            TYPE_DIM_LOWER(tp0)         = TYPE_DIM_LOWER(tp);
+                            TYPE_DIM_UPPER(tp0)         = TYPE_DIM_UPPER(tp);
+                            TYPE_DIM_STEP(tp0)          = TYPE_DIM_STEP(tp);
+
+                            if (prev != NULL) {
+                                TYPE_REF(prev) = tp0;
+                            } else {
+                                first = tp0;
+                            }
+                            prev = tp0;
+                        }
+
+                        if (!array_has_dim) {
+                            error("not valid dimension index");
+                            return NULL;
+                        }
+
+                        if (prev != NULL) {
+                            TYPE_REF(prev) = ret;
+                            fix_array_dimensions(first);
+                            return first;
+                        }
+
+                  return_assumed_shape:
+                        /*
+                         * dummy N-1 dimensional assumed array or scala.
+                         */
+
+                        if (TYPE_N_DIM(tp) > 1) {
+                            generate_assumed_shape_expr(shape, TYPE_N_DIM(tp));
+                            ret = compile_dimensions(ret, shape);
+                            fix_array_dimensions(ret);
+                        }
+
+
+                        return ret;
+                    }
+                    break;
 
 
                     default:
@@ -1229,6 +1333,12 @@ get_intrinsic_return_type(intrinsic_entry *ep, expv args, expv kindV) {
                 nDims = TYPE_N_DIM(tp);
                 dims = list1(LIST, make_int_enode(nDims));
                 ret = compile_dimensions(bTypeDsc, dims);
+
+                if (INTR_OP(ep) == INTR_MAXLOC ||
+                    INTR_OP(ep) == INTR_MINLOC) {
+                    TYPE_KIND(ret) = expr_list_get_n(args, 2);
+                }
+
                 fix_array_dimensions(ret);
 
                 break;

@@ -1,13 +1,6 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package xcodeml.util;
 
 import java.lang.reflect.Method;
-
 import xcodeml.util.XmException;
 import xcodeml.util.XmLanguage;
 import xcodeml.util.XmXcodeProgram;

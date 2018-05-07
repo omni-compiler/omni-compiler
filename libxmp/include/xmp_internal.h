@@ -169,6 +169,12 @@ extern void _XMP_local_put(_XMP_coarray_t *, const void *, const int, const int,
 extern void _XMP_local_get(void *, const _XMP_coarray_t *, const int, const int, const int, const int, 
 			   const _XMP_array_section_t *, const _XMP_array_section_t *, const size_t, const size_t);
 
+// From xmp_index.c
+extern void _XMP_L2G(int local_idx, long long int *global_idx,
+		     _XMP_template_t *template, int template_index);
+extern void _XMP_G2L(long long int global_idx,int *local_idx,
+		     _XMP_template_t *template, int template_index);
+
 // xmp_intrinsic.c
 extern void xmpf_transpose(void *dst_p, void *src_p, int opt);
 extern void xmpf_matmul(void *x_p, void *a_p, void *b_p);
@@ -301,6 +307,10 @@ extern void _XMP_reflect__(_XMP_array_t *a);
 extern void _XMP_wait_async__(int async_id);
 extern void _XMP_reflect_async__(_XMP_array_t *a, int async_id);
 
+// xmp_reduce_shadow.c
+extern void _XMP_reduce_shadow_wait(_XMP_array_t *a);
+extern void _XMP_reduce_shadow_sum(_XMP_array_t *a);
+  
 // xmp_runtime.c
 extern void _XMP_init(int argc, char** argv, MPI_Comm comm);
 extern void _XMP_finalize(bool isFinalize);
@@ -625,7 +635,7 @@ void _xmp_mpi_post(const int node, int tag);
 void _xmp_mpi_wait(const int node, const int tag);
 void _xmp_mpi_wait_node(const int node);
 void _xmp_mpi_wait_noargs();
-void _XMP_mpi_sync_images(const int num, int *image_set, int *status);
+void _XMP_mpi_sync_images(const int num, const int *image_set, int *status);
 void _XMP_sync_images_EXEC(int* status);
 void _XMP_sync_images_COMM(MPI_Comm *comm, int* status);
 void _XMP_mpi_build_sync_images_table();
