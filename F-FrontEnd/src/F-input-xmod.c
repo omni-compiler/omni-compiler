@@ -48,12 +48,13 @@ xmlSkipUntil(xmlTextReaderPtr reader, int type, const char * name, int depth)
     const char * current_name;
 
     do {
-        if (!xmlTextReaderRead(reader))
+        if (!xmlTextReaderRead(reader)){
             return FALSE;
+        }
 
-            current_type = xmlTextReaderNodeType(reader);
-            current_name = (const char *) xmlTextReaderConstName(reader);
-            current_depth = xmlTextReaderDepth(reader);
+        current_type = xmlTextReaderNodeType(reader);
+        current_name = (const char *) xmlTextReaderConstName(reader);
+        current_depth = xmlTextReaderDepth(reader);
     } while (current_type != type ||
              strcmp(current_name, name) != 0 ||
              current_depth != depth);
@@ -2727,7 +2728,8 @@ input_id(xmlTextReaderPtr reader, HashTable * ht, struct module * mod)
     char * sclass;
     TYPE_ENTRY tep;
     SYMBOL name;
-    ID id;
+    ID id, last;
+    ID cid = NULL, pid = NULL;
 
     if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "id"))
        return FALSE;
@@ -2801,13 +2803,38 @@ input_id(xmlTextReaderPtr reader, HashTable * ht, struct module * mod)
 
     set_sclass(id, sclass);
 
-    if (mod->last == NULL) {
-        mod->last = id;
-        mod->head = id;
-    } else {
-        ID_NEXT(mod->last) = id;
-        mod->last = id;
+
+    // Look for previously defined identifier
+    FOREACH_ID(cid, mod->head) {
+        if(strcmp(ID_NAME(cid), ID_NAME(id)) == 0) {
+            pid = cid;
+            break;
+        }
     }
+
+    if(pid != NULL) {
+        // If id was declared before, multize it
+        if(ID_CLASS(pid) != CL_MULTI) {
+            id_multilize(pid);
+            ID_NEXT(MULTI_ID_LIST(pid)) = id;
+        } else {
+            FOREACH_ID(pid, MULTI_ID_LIST(pid)) {
+                last = pid;
+            }
+            ID_NEXT(last) = id;
+        }
+    } else {
+        // New id, so put it in the list
+        if (mod->last == NULL) {
+            mod->last = id;
+            mod->head = id;
+        } else {
+            ID_NEXT(mod->last) = id;
+            mod->last = id;
+        }
+    }
+
+    
 
     if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "id"))
         return FALSE;
@@ -3326,7 +3353,11 @@ input_FinterfaceDecl(xmlTextReaderPtr reader, HashTable * ht, ID id_list)
         id = find_ident_head(find_symbol(name), id_list);
         if (ID_CLASS(id) == CL_TAGNAME) { /* for multi class */
             id = find_ident_head(ID_SYM(id), ID_NEXT(id));
+        } else if(ID_CLASS(id) == CL_MULTI) {
+            id = multi_find_class(id, CL_PROC);
+            PROC_CLASS(id) = P_UNDEFINEDPROC;
         }
+
         interface_class = INTF_OPERATOR;
         free(is_operator);
         free(name);
