@@ -41,6 +41,12 @@ extern int _XMPF_running;
   } \
 }
 
+extern int xmp_get_ruuning();
+#define _XMP_RETURN_IF_AFTER_FINALIZATION \
+  { \
+    if (! xmp_get_ruuning()) return; \
+  }
+
 #define _XMP_IS_SINGLE \
 (_XMP_world_size == 1)
 
@@ -149,8 +155,8 @@ extern void _XMP_coarray_rdma_do2(const int rdma_code, void *remote_coarray, voi
 extern _XMP_coarray_t** _XMP_coarray_get_list(int *num);
 #endif
 
-extern void _XMP_initialize_onesided_functions(int, char **);
-extern void _XMP_finalize_onesided_functions(const int);
+extern void _XMP_initialize_onesided_functions();
+extern void _XMP_finalize_onesided_functions();
 extern void _XMP_build_sync_images_table();
 extern void _XMP_sync_images_EXEC(int* status);
 extern void _XMP_build_coarray_queue();
@@ -162,6 +168,12 @@ extern void _XMP_local_put(_XMP_coarray_t *, const void *, const int, const int,
 			   const _XMP_array_section_t *, const _XMP_array_section_t *, const size_t, const size_t);
 extern void _XMP_local_get(void *, const _XMP_coarray_t *, const int, const int, const int, const int, 
 			   const _XMP_array_section_t *, const _XMP_array_section_t *, const size_t, const size_t);
+
+// From xmp_index.c
+extern void _XMP_L2G(int local_idx, long long int *global_idx,
+		     _XMP_template_t *template, int template_index);
+extern void _XMP_G2L(long long int global_idx,int *local_idx,
+		     _XMP_template_t *template, int template_index);
 
 // xmp_intrinsic.c
 extern void xmpf_transpose(void *dst_p, void *src_p, int opt);
@@ -295,9 +307,13 @@ extern void _XMP_reflect__(_XMP_array_t *a);
 extern void _XMP_wait_async__(int async_id);
 extern void _XMP_reflect_async__(_XMP_array_t *a, int async_id);
 
+// xmp_reduce_shadow.c
+extern void _XMP_reduce_shadow_wait(_XMP_array_t *a);
+extern void _XMP_reduce_shadow_sum(_XMP_array_t *a);
+  
 // xmp_runtime.c
-extern void _XMP_init(int argc, char** argv);
-extern void _XMP_finalize(int return_val);
+extern void _XMP_init(int argc, char** argv, MPI_Comm comm);
+extern void _XMP_finalize(bool isFinalize);
 extern size_t _XMP_get_datatype_size(int datatype);
 
 // xmp_section_desc.c
@@ -364,7 +380,7 @@ extern int _XMP_world_rank;
 extern void *_XMP_world_nodes;
 
 extern void _XMP_init_world(int *argc, char ***argv);
-extern void _XMP_finalize_world(void);
+extern void _XMP_finalize_world(bool);
 extern int _XMP_split_world_by_color(int color);
 
 
@@ -447,9 +463,9 @@ extern size_t _XMP_calc_max_copy_chunk(const int, const int, const _XMP_array_se
 
 
 extern void _XMP_gasnet_coarray_malloc(_XMP_coarray_t *, void **, const size_t);
-extern void _XMP_gasnet_initialize(int, char**, const size_t, const size_t);
+extern void _XMP_gasnet_initialize(const size_t, const size_t);
 extern void _XMP_gasnet_intrinsic_initialize();
-extern void _XMP_gasnet_finalize(const int);
+extern void _XMP_gasnet_finalize();
 extern void _XMP_gasnet_put(const int, const int, const int, const int, const int, const _XMP_array_section_t*, 
 			    const _XMP_array_section_t*, const _XMP_coarray_t*, const void*, const size_t, const size_t);
 extern void _XMP_gasnet_get(const int, const int, const int, const int, const int, const _XMP_array_section_t*,
@@ -497,7 +513,7 @@ extern void XMP_gasnet_atomic_sync_memory();
 #define _XMP_SYNC_IMAGES_TAG    1
 
 #include <mpi-ext.h>
-extern void _XMP_fjrdma_initialize(int, char**);
+extern void _XMP_fjrdma_initialize();
 extern void _XMP_fjrdma_finalize();
 extern void _XMP_fjrdma_sync_memory();
 extern void _XMP_fjrdma_sync_all();
@@ -548,7 +564,7 @@ void _xmp_tca_wait(const int node, const int tag);
 void _xmp_tca_wait_node(const int node);
 void _xmp_tca_wait_noargs();
 //xmp_onesided_tca.c
-void _XMP_tca_initialize(int argc, char **argv);
+void _XMP_tca_initialize();
 void _XMP_tca_finalize();
 void _XMP_tca_lock();
 void _XMP_tca_unlock();
@@ -581,7 +597,7 @@ extern char *_xmp_mpi_onesided_buf_acc;
 extern MPI_Win _xmp_mpi_onesided_win_acc;
 extern MPI_Win _xmp_mpi_distarray_win_acc;
 //#endif
-void _XMP_mpi_onesided_initialize(int argc, char **argv, const size_t heap_size);
+void _XMP_mpi_onesided_initialize(const size_t heap_size);
 void _XMP_mpi_onesided_finalize();
 void _XMP_mpi_onesided_create_win(MPI_Win *win, void *addr, size_t size, MPI_Comm comm);
 void _XMP_mpi_onesided_alloc_win(MPI_Win *win, void **addr, size_t size, MPI_Comm comm, bool is_acc);
@@ -619,7 +635,7 @@ void _xmp_mpi_post(const int node, int tag);
 void _xmp_mpi_wait(const int node, const int tag);
 void _xmp_mpi_wait_node(const int node);
 void _xmp_mpi_wait_noargs();
-void _XMP_mpi_sync_images(const int num, int *image_set, int *status);
+void _XMP_mpi_sync_images(const int num, const int *image_set, int *status);
 void _XMP_sync_images_EXEC(int* status);
 void _XMP_sync_images_COMM(MPI_Comm *comm, int* status);
 void _XMP_mpi_build_sync_images_table();

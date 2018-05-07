@@ -1,3 +1,4 @@
+/* -*- Mode: java; c-basic-offset:2 ; indent-tabs-mode:nil ; -*- */
 package exc.util;
 
 import java.io.*;
@@ -70,6 +71,8 @@ public class omompx
       "  -max_assumed_shape=N  set max number of assumed-shape arrays of a proedure (for Fortran).",
       "  -decomp      output decompiled source code.",
       "  -silent      no output.",
+      "  -rename_main=NAME",
+      "               rename the main function NAME.",
       "",
       " Debug Options:",
       "  -d           enable output debug message.",
@@ -82,8 +85,9 @@ public class omompx
       "  -tlog-all           : output results in tlog format for all directives.",
       "  -tlog-selective     : output results in tlog format for selected directives.",
       "",
-      "  -enable-threads  enable 'threads' clause",
-      "  -enable-gpu      enable xmp-dev directive/clauses"
+      "  -enable-threads     : enable 'threads' clause",
+      "  -enable-gpu         : enable xmp-dev directive/clauses",
+      "  -enable-Fonesided   : enable one-sided functions (Only Fortran)"
     };
         
     for(String line : lines) {
@@ -114,6 +118,7 @@ public class omompx
     boolean doScalasca         = false;
     boolean doTlog             = false;
     boolean silent             = false;
+    boolean Fonesided          = false;
     int maxColumns             = 0;
     String coarray_suboption   = "";        // HIDDEN
     boolean coarray_noUseStmt  = false;     // TEMPORARY
@@ -156,6 +161,8 @@ public class omompx
         xcalableMPthreads = true;
       } else if(arg.equals("-enable-gpu")) {
         xcalableMPGPU = true;
+      } else if(arg.equals("-enable-Fonesided")) {
+        Fonesided = true;
       } else if(arg.equals("-fxmpf")) {
         xmpf = true;
       } else if(arg.equals("-fasync")) {
@@ -173,6 +180,9 @@ public class omompx
         outputDecomp = true;
       } else if(arg.equals("-silent")){
         silent = true;
+      } else if(arg.startsWith("-rename_main=")) {
+        String main_name = arg.substring(arg.indexOf("=") + 1);
+        XmOption.setMainName(main_name);
       } else if(arg.equals("-dump")) {
         dump = true;
         outputXcode = true;
@@ -239,7 +249,8 @@ public class omompx
       }
     }
         
-    doScalasca = (all_profile == true || selective_profile == true) && (doScalasca == false && doTlog == false);
+    doScalasca = (all_profile == true || selective_profile == true) 
+      && (doScalasca == false && doTlog == false);
 
     Reader reader = null;
     File dir      = null;
@@ -268,11 +279,14 @@ public class omompx
     XmOption.setIsXcalableMPthreads(xcalableMPthreads);
     XmOption.setIsXcalableMPGPU(xcalableMPGPU);
     XmOption.setTlogMPIisEnable(doTlog);
+    XmOption.setFonesided(Fonesided);
     XmOption.setCoarrayNoUseStatement(coarray_noUseStmt);   // TEMPORARY
     XmOption.setIsXcalableACC(xcalableACC);
     
     // read XcodeML
-    XcodeMLtools tools = (XmOption.getLanguage() == XmLanguage.F)? new XcodeMLtools_F() : new XcodeMLtools_C();
+    XcodeMLtools tools = 
+      (XmOption.getLanguage() == XmLanguage.F)? 
+      new XcodeMLtools_F() : new XcodeMLtools_C();
     XobjectFile xobjFile = tools.read(reader);
     
     if (inXmlFile != null) reader.close();
@@ -340,7 +354,7 @@ public class omompx
           xobjFile.addHeaderLine("# include \"openacc.h\"");
         }
       }
-      xmpTranslator.finalize();
+      xmpTranslator.finish();
 
       if(xcodeWriter != null) {
         xobjFile.Output(xcodeWriter);

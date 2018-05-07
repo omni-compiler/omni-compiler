@@ -79,7 +79,7 @@ void _XMP_coarray_contiguous_put_acc(const int target_image, const _XMP_coarray_
 				   const size_t dst_elmts, const size_t src_elmts,
   				   const int is_dst_on_acc, const int is_src_on_acc)
 {
-  int target_rank = target_image - 1;
+  int target_rank = target_image;
   size_t elmt_size = dst_desc->elmt_size;
 
   if(!is_dst_on_acc || !is_src_on_acc){
@@ -129,7 +129,7 @@ void _XMP_coarray_contiguous_get_acc(const int target_image, _XMP_coarray_t *dst
 				   const size_t dst_elmts, const size_t src_elmts,
 				   const int is_dst_on_acc, const int is_src_on_acc)
 {
-  int target_rank = target_image - 1;
+  int target_rank = target_image;
   size_t elmt_size = dst_desc->elmt_size;
 
   if(!is_dst_on_acc || !is_src_on_acc){

@@ -31,12 +31,12 @@ print_subr_malloc() {
 
     echo       "        integer(8), intent(in) :: descptr"
     echo       "        integer(8), intent(in) :: tag"
-    echo       "        integer, intent(in) :: count, element, rank"
+    echo       "        integer(4), intent(in) :: count, element, rank"
 
  case "${DIM}" in
  0) ;;
  *) for i in `seq 1 ${DIM}`; do
-        echo   "        integer, intent(in) :: lb${i}, ub${i}"
+        echo   "        integer(4), intent(in) :: lb${i}, ub${i}"
     done ;;
  esac
 
@@ -116,12 +116,12 @@ print_subr_regmem() {
 
     echo       "        integer(8), intent(in) :: descptr"
     echo       "        integer(8), intent(in) :: tag"
-    echo       "        integer, intent(in) :: count, element, rank"
+    echo       "        integer(4), intent(in) :: count, element, rank"
 
  case "${DIM}" in
  0) ;;
  *) for i in `seq 1 ${DIM}`; do
-        echo   "        integer, intent(in) :: lb${i}, ub${i}"
+        echo   "        integer(4), intent(in) :: lb${i}, ub${i}"
     done ;;
  esac
 

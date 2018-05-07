@@ -1,13 +1,6 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
-
 package exc.object;
-import exc.block.Block;
 
+import exc.block.Block;
 import java.util.Map;
 import java.util.HashMap;
 
@@ -53,7 +46,7 @@ public class BasicType extends Xtype
     private Xobject flen;
 
     /** constructor */
-    public BasicType(int basic_type, String id, int typeQualFlags, Xobject gccAttrs,
+    public BasicType(int basic_type, String id, long typeQualFlags, Xobject gccAttrs,
                      Xobject fkind, Xobject flen, Xobject[] codimensions)
     {
         super(Xtype.BASIC, id, typeQualFlags, gccAttrs, codimensions);
@@ -67,12 +60,12 @@ public class BasicType extends Xtype
         this(basic_type, null, 0, null, null, null);
     }
 
-    public BasicType(int basic_type, int typeQualFlags)
+    public BasicType(int basic_type, long typeQualFlags)
     {
         this(basic_type, null, typeQualFlags, null, null, null);
     }
     
-    public BasicType(int basic_type, String id, int typeQualFlags, Xobject gccAttrs,
+    public BasicType(int basic_type, String id, long typeQualFlags, Xobject gccAttrs,
                      Xobject fkind, Xobject flen)
     {
         this(basic_type, id, typeQualFlags, gccAttrs, fkind, flen, null);

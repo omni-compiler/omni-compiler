@@ -38,6 +38,7 @@ import exc.object.XobjString;
 import exc.object.Xobject;
 import exc.object.XobjectFile;
 import exc.object.Xtype;
+import exc.object.EnumType;
 
 
 /**
@@ -58,6 +59,8 @@ public class XcodeMLtools_F extends XcodeMLtools {
       declFfunctionType(n);
     } else if (name == "FstructType") {
       declFstructType(n);
+    } else if (name == "FenumType") {
+      declFenumType(n);
     } else
       fatal("Unknown node in typeTable: " + n);
   }
@@ -85,19 +88,22 @@ public class XcodeMLtools_F extends XcodeMLtools {
                               getAttrBool(n, "is_procedure")) &&
                              (getAttr(n, "ref") == null) ?
                                "Fvoid" : getAttr(n, "ref"));
-    int tq = (getAttrBool(n, "is_allocatable") ? Xtype.TQ_FALLOCATABLE : 0)
+    long tq = (getAttrBool(n, "is_allocatable") ? Xtype.TQ_FALLOCATABLE : 0)
       | (getAttrBool(n, "is_optional") ? Xtype.TQ_FOPTIONAL : 0)
       | (getAttrBool(n, "is_parameter") ? Xtype.TQ_FPARAMETER : 0)
       | (getAttrBool(n, "is_pointer") ? Xtype.TQ_FPOINTER : 0)
       | (getAttrBool(n, "is_private") ? Xtype.TQ_FPRIVATE : 0)
       | (getAttrBool(n, "is_public") ? Xtype.TQ_FPUBLIC : 0)
+      | (getAttrBool(n, "is_protected") ? Xtype.TQ_FPROTECTED : 0)
       | (getAttrBool(n, "is_save") ? Xtype.TQ_FSAVE : 0)
       | (getAttrBool(n, "is_target") ? Xtype.TQ_FTARGET : 0)
       | (getAttrBool(n, "is_cray_pointer") ? Xtype.TQ_FCRAY_POINTER : 0) //#060c
       | (getAttrBool(n, "is_volatile") ? Xtype.TQ_FVOLATILE : 0)
       | (getAttrBool(n, "is_class") ? Xtype.TQ_FCLASS : 0)
       | (getAttrBool(n, "is_value") ? Xtype.TQ_FVALUE : 0)
-      | (getAttrBool(n, "is_procedure") ? Xtype.TQ_FPROCEDURE : 0);
+      | (getAttrBool(n, "is_procedure") ? Xtype.TQ_FPROCEDURE : 0)
+      | (getAttrBool(n, "is_contiguous") ? Xtype.TQ_FCONTIGUOUS : 0)
+      | (getAttrBool(n, "is_asynchronous") ? Xtype.TQ_FASYNCHRONOUS : 0);
 
     String intent = getAttr(n, "intent");
 
@@ -225,15 +231,20 @@ public class XcodeMLtools_F extends XcodeMLtools {
     String tid = getAttr(n, "type");
     Xtype retType = getType(getAttr(n, "return_type"));
 
-    int tq = (getAttrBool(n, "is_external") ? Xtype.TQ_FEXTERNAL : 0)
+    long tq = (getAttrBool(n, "is_external") ? Xtype.TQ_FEXTERNAL : 0)
       | (getAttrBool(n, "is_internal") ? Xtype.TQ_FINTERNAL : 0)
       | (getAttrBool(n, "is_intrinsic") ? Xtype.TQ_FINTRINSIC : 0)
       | (getAttrBool(n, "is_private") ? Xtype.TQ_FPRIVATE : 0)
       | (getAttrBool(n, "is_public") ? Xtype.TQ_FPUBLIC : 0)
+      | (getAttrBool(n, "is_protected") ? Xtype.TQ_FPROTECTED : 0)
       | (getAttrBool(n, "is_program") ? Xtype.TQ_FPROGRAM : 0)
+      | (getAttrBool(n, "is_elemental") ? Xtype.TQ_FELEMENTAL : 0)
       | (getAttrBool(n, "is_recursive") ? Xtype.TQ_FRECURSIVE : 0)
       | (getAttrBool(n, "is_module") ? Xtype.TQ_FMODULE : 0);
 
+    if (getAttr(n, "is_pure") != null)
+      tq |= (getAttrBool(n, "is_pure") ? Xtype.TQ_FPURE : Xtype.TQ_FIMPURE);
+    
     Xobject params = toXobject(getElement(n, "params"));
     FunctionType type = new FunctionType(tid, retType, params, tq, false,
         null, getAttr(n, "result_name"));
@@ -263,16 +274,19 @@ public class XcodeMLtools_F extends XcodeMLtools {
   private void declFstructType(Node n) {
     String tid = getAttr(n, "type");
     String parent_tid = getAttr(n, "extends");
-    int tq = (getAttrBool(n, "is_internal_private") ? Xtype.TQ_FINTERNAL_PRIVATE
+    long tq = (getAttrBool(n, "is_internal_private") ? Xtype.TQ_FINTERNAL_PRIVATE
 	      : 0)
       | (getAttrBool(n, "is_private") ? Xtype.TQ_FPRIVATE : 0)
       | (getAttrBool(n, "is_public") ? Xtype.TQ_FPUBLIC : 0)
-      | (getAttrBool(n, "is_sequence") ? Xtype.TQ_FSEQUENCE : 0);
+      | (getAttrBool(n, "is_protected") ? Xtype.TQ_FPROTECTED : 0)
+      | (getAttrBool(n, "is_sequence") ? Xtype.TQ_FSEQUENCE : 0)
+      | (getAttrBool(n, "is_abstract") ? Xtype.TQ_FABSTRACT : 0);
 
     XobjList tparam_list = (XobjList) toXobject(getElement(n, "typeParams"));
     XobjList id_list = (XobjList) toXobject(getElement(n, "symbols"));
     XobjList proc_list = (XobjList) toXobject(getElement(n, "typeBoundProcedures"));
-    StructType type = new StructType(tid, parent_tid, id_list, proc_list, tq, null, tparam_list);
+    Xobject finalProcedure = toXobject(getElement(n, "finalProcedure"));
+    StructType type = new StructType(tid, parent_tid, id_list, proc_list, tq, null, tparam_list, finalProcedure);
 
     String bind = getAttr(n, "bind");
     if(bind != null){
@@ -282,6 +296,34 @@ public class XcodeMLtools_F extends XcodeMLtools {
     xobjFile.addType(type);
   }
 
+  /*
+   * (symbols)
+   *
+   * enum, bind(C)
+   *  enumerator :: open_door=4, close_door=17
+   *  enumerator :: lock_door
+   * end enum
+   *
+   * <FenumType type="TYPE_NAME">
+   *   <name>open_door</name>
+   *   <value>
+   *     <FintConstant type="Fint">4</FintConstant>
+   *   </value>
+   *   <name>close_door</name>
+   *   <value>
+   *     <FintConstant type="Fint">17</FintConstant>
+   *   </value>
+   *   <name>lock_door</name>
+   * </FenumType>
+   */
+  private void declFenumType(Node n) {
+    String tid = getAttr(n, "type");
+    long tq = 0;
+    XobjList moe_list = (XobjList)toXobject(getElement(n, "symbols"));
+    EnumType type = new EnumType(tid, moe_list, tq, null);
+    xobjFile.addType(type);
+  }
+  
   /*
    * global Ident section
    */
@@ -300,6 +342,8 @@ public class XcodeMLtools_F extends XcodeMLtools {
     case FUNCTION_DEFINITION:
     case F_MODULE_DEFINITION:
     case F_BLOCK_DATA_DEFINITION:
+    case PRAGMA_LINE:
+    case COMMENT_LINE:
       xobjFile.add(xobj);
       break;
     default:
@@ -377,7 +421,8 @@ public class XcodeMLtools_F extends XcodeMLtools {
                                                getSymbol(n, "name"),
                                                getAttrIntFlag(n, "is_operator"),
                                                getAttrIntFlag(n, "is_assignment"),
-                                               getChildList(n)));
+                                               getChildList(n),
+					       getAttrIntFlag(n, "is_abstract")));
 
     case F_BLOCK_DATA_DEFINITION:
       x = getSymbol(n, "name");
@@ -387,7 +432,8 @@ public class XcodeMLtools_F extends XcodeMLtools {
 
     case FUNCTION_DECL:
       return setCommonAttributes(n, Xcons.List(code, type, toXobject(getElement(n, "name")),
-					       null, null, toXobject(getElement(n, "declarations"))));
+					       toXobject(getElement(n, "symbols")),
+					       null, toXobject(getElement(n, "declarations"))));
 
     case STRING:
       return Xcons.String(getContentText(n));
@@ -398,8 +444,9 @@ public class XcodeMLtools_F extends XcodeMLtools {
       return getChildList(n, xlist);
 
     case PRAGMA_LINE:
-      String contentText = getContentText(n);
-      x = Xcons.List(Xcode.PRAGMA_LINE,
+    case COMMENT_LINE:
+	String contentText = getContentText(n);
+      x = Xcons.List(code,
 		     new XobjString(Xcode.STRING, contentText));
       setCommonAttributes(n, x);
       return x;
@@ -459,6 +506,9 @@ public class XcodeMLtools_F extends XcodeMLtools {
 
     case MEMBER_REF:
       return Xcons.List(code, type, toXobject(getElement(n, "varRef")), getSymbol(n, "member"));
+
+    case F_COMPLEX_PART_REF:
+      return Xcons.List(code, type, toXobject(getElement(n, "varRef")), getSymbol(n, "part"));
 
     case F_USER_BINARY_EXPR: {
       XobjList xx = Xcons.List(code, type);
@@ -545,6 +595,11 @@ public class XcodeMLtools_F extends XcodeMLtools {
 	return getChildList(n, xx);
       }
 
+    case F_RENAME:
+      boolean isOperator = getAttrBool(n, "is_operator");
+      return Xcons.List(code, type, Xcons.IntConstant(isOperator ? 1 : 0),
+			getSymbol(n, "use_name"), getSymbol(n, "local_name"));
+      
     case F_RENAMABLE:
       return Xcons.List(code, type, getSymbol(n, "use_name"), getSymbol(n, "local_name"));
 
@@ -647,18 +702,26 @@ public class XcodeMLtools_F extends XcodeMLtools {
 
     case F_WHERE_STATEMENT:
       x = new XobjList(code, type);
-      x.add(null);
+      x.add(getSymbol(n, "construct_name"));
       x.add(toXobject(getContent(getElement(n, "condition"))));
       x.add(toXobject(getContent(getElement(n, "then"))));
       x.add(toXobject(getContent(getElement(n, "else"))));
       return setCommonAttributes(n, x);
 
     case F_STOP_STATEMENT:
+    case F_ERROR_STOP_STATEMENT:
       {
 	t = getAttr(n, "code");
 	Xobject cd = (t == null ? null : Xcons.String(t));
 	t = getAttr(n, "message");
-	Xobject mes = (t == null ? null : Xcons.FcharacterConstant(Xtype.FcharacterType, t, null));
+	Xobject mes = null;
+	if (t != null){
+	  mes = Xcons.FcharacterConstant(Xtype.FcharacterType, t, null);
+	}
+	else {
+	  mes = toXobject(getContent(getElement(n, "message")));
+	}
+	//	Xobject mes = (t == null ? null : Xcons.FcharacterConstant(Xtype.FcharacterType, t, null));
 	return setCommonAttributes(n, Xcons.List(code, type, cd, mes));
       }
 
@@ -683,6 +746,11 @@ public class XcodeMLtools_F extends XcodeMLtools {
       return setCommonAttributes(n, Xcons.List(code, type,
 					       Xcons.String(t),
 					       toXobject(getElement(n, "valueList"))
+					       ));
+
+    case F_FLUSH_STATEMENT:
+      return setCommonAttributes(n, Xcons.List(code, type,
+					       toXobject(getElement(n, "namedValueList"))
 					       ));
 
     case F_DO_LOOP:
@@ -713,6 +781,7 @@ public class XcodeMLtools_F extends XcodeMLtools {
       x = Xcons.String(t);
       return setCommonAttributes(n, Xcons.List(code, type, x));
 
+    case F_DATA_STATEMENT:
     case F_DATA_DECL:
       return setCommonAttributes(n, Xcons.List(code, type, Xcons.List(toXobject(getElement(n, "varList")), toXobject(getElement(n, "valueList")))));
 
@@ -721,11 +790,80 @@ public class XcodeMLtools_F extends XcodeMLtools {
 
     case F_ALLOCATE_STATEMENT:
     case F_DEALLOCATE_STATEMENT:
-      x = Xcons.List(code, type);
-      x.add(getSymbol(n, "stat_name"));
-      x.add(getChildList(n));
-      return setCommonAttributes(n, x);
+      {
+	// x = Xcons.List(code, type);
+	// //x.add(getSymbol(n, "stat_name"));
+	// //x.add(getChildList(n));
 
+	// XobjList xx = Xcons.List();
+
+	// NodeList list = n.getChildNodes();
+	// for (int i = 0; i < list.getLength(); i++) {
+	//   Node nn = list.item(i);
+	//   String name = nn.getNodeName();
+	//   if (name == "allocOpt"){
+	//     switch (getAttr(nn, "kind")){
+	//     case "stat":
+	//       XobjList v = getChildList(nn);
+	//       x.add(v.getArg(0));
+	//       break;
+	//     default:
+	//       // for this moment, do nothing.
+	//     }
+	//     continue;
+	//   }
+	//   else if (name == "alloc"){
+	//     xx.add(toXobject(nn));
+	//   }
+	//   else
+	//     continue;
+	// }
+
+	// if (x.Nargs() == 0) x.add(null);
+	// x.add(xx);
+
+	x = Xcons.List(code, type, null, null, null, null, null);
+	XobjList xx = Xcons.List();
+	Xobject v = null;
+
+	NodeList list = n.getChildNodes();
+	for (int i = 0; i < list.getLength(); i++) {
+	  Node nn = list.item(i);
+	  String name = nn.getNodeName();
+	  if (name == "allocOpt"){
+	    switch (getAttr(nn, "kind")){
+	    case "stat":
+	      v = getChildList(nn);
+	      x.setArg(0, v.getArg(0));
+	      break;
+	    case "source":
+	      v = getChildList(nn);
+	      x.setArg(2, v.getArg(0));
+	      break;
+	    case "mold":
+	      v = getChildList(nn);
+	      x.setArg(3, v.getArg(0));
+	      break;
+	    case "errmsg":
+	      v = getChildList(nn);
+	      x.setArg(4, v.getArg(0));
+	      break;
+	    default:
+	      fatal("Unknown AllocOpt: " + nn);
+	    }
+	    continue;
+	  }
+	  else if (name == "alloc"){
+	    xx.add(toXobject(nn));
+	  }
+	  else
+	    continue;
+	}
+
+	x.setArg(1, xx);
+	  
+	return setCommonAttributes(n, x);
+      }
     case F_CONTAINS_STATEMENT:
       {
 	XobjList xx = Xcons.List(code, type);
@@ -749,6 +887,15 @@ public class XcodeMLtools_F extends XcodeMLtools {
 						 ));
       }
 
+    case F_ASSOCIATE_STATEMENT:
+      {
+        attr = getSymbol(n, "construct_name");
+        return setCommonAttributes(n, Xcons.List(code, type, attr,
+						 toXobject(getElement(n, "symbols")),
+						 toXobject(getElement(n, "body"))
+						 ));
+      }
+      
     case F_SYNC_STAT:
       {
         attr = getSymbol(n, "kind");
@@ -770,27 +917,43 @@ public class XcodeMLtools_F extends XcodeMLtools {
       {
         XobjString pass     = Xcons.String(getAttr(n, "pass"         ));
         XobjString pass_arg = Xcons.String(getAttr(n, "pass_arg_name"));
-        int tq = (getAttrBool(n, "is_private") ? Xtype.TQ_FPRIVATE : 0)
-               | (getAttrBool(n, "is_public" ) ? Xtype.TQ_FPUBLIC  : 0);
+        long tq = (getAttrBool(n, "is_private") ? Xtype.TQ_FPRIVATE : 0)
+               | (getAttrBool(n, "is_public" ) ? Xtype.TQ_FPUBLIC  : 0)
+	       | (getAttrBool(n, "is_protected") ? Xtype.TQ_FPROTECTED : 0)
+	       | (getAttrBool(n, "is_deferred") ? Xtype.TQ_FDEFERRED : 0);
         Node bdg = getElement(n, "binding");
         return setCommonAttributes(n, Xcons.List(code, type, pass, pass_arg,
                                                  toXobject(getElement(n, "name")),
-                                                 Xcons.IntConstant(tq),
+                                                 Xcons.LongConstant(tq),
                                                  (bdg != null) ? toXobject(getContent(bdg)) : null,
                                                  getAttrIntFlag(n, "is_non_overridable")
                                                 ));
       }
 
+    case F_FINAL_PROCEDURE:
+      {
+	return setCommonAttributes(n, Xcons.List(code, toXobject(getElement(n, "name"))
+                                                ));
+      }
+      
     case F_TYPE_BOUND_GENERIC_PROCEDURE:
       {
-        int tq = (getAttrBool(n, "is_private") ? Xtype.TQ_FPRIVATE : 0)
-               | (getAttrBool(n, "is_public" ) ? Xtype.TQ_FPUBLIC  : 0);
+        long tq = (getAttrBool(n, "is_private") ? Xtype.TQ_FPRIVATE : 0)
+               | (getAttrBool(n, "is_public" ) ? Xtype.TQ_FPUBLIC  : 0)
+	       | (getAttrBool(n, "is_protected") ? Xtype.TQ_FPROTECTED : 0);
         Node bdg = getElement(n, "binding");
+
+	Xobject name = toXobject(getElement(n, "name"));
+	if (name == null){
+	  String defined_io = getAttr(n, "is_defined_io");
+	  name = Xcons.String(defined_io);
+	}
+	
         return setCommonAttributes(n, Xcons.List(code, (Xtype)null,
                                                  getAttrIntFlag(n, "is_operator"),
                                                  getAttrIntFlag(n, "is_assignment"),
-                                                 toXobject(getElement(n, "name")),
-                                                 Xcons.IntConstant(tq),
+                                                 name,
+                                                 Xcons.LongConstant(tq),
                                                  toXobject(bdg)
                                                 ));
       }
@@ -815,6 +978,7 @@ public class XcodeMLtools_F extends XcodeMLtools {
       return toXobject(getContent(n));
 
     case F_FORALL_STATEMENT:
+    case F_DO_CONCURRENT_STATEMENT:
       {
         XobjList xobj = new XobjList(code, type);
         xobj.add(getSymbol(n, "construct_name"));
@@ -896,8 +1060,10 @@ public class XcodeMLtools_F extends XcodeMLtools {
 	addr.setScope(VarScope.LOCAL);
 	break;
       }
-    } else if (valueNode != null) {
-        addr = toXobject(valueNode);
+    }
+    
+    if (valueNode != null) {
+      addr = toXobject(valueNode);
     }
 
     // create ident

@@ -30,7 +30,6 @@ ENABLE_XACC=false
 ENABLE_SCALASCA=false
 ENABLE_SCALASCA_ALL=false
 ENABLE_SCALASCA_SELECTIVE=false
-ENABLE_TLOG=false
 ENABLE_TLOG_ALL=false
 ENABLE_TLOG_SELECTIVE=false
 DISABLE_LDG=false
@@ -81,6 +80,7 @@ omni_set_trap
 ### Preprocessor ###
 [ $ONLY_PP = true -a -f "${output_file}" ] && omni_exec rm "${output_file}"
 [ $ENABLE_OPENMP = true ] && OMNI_CPP_OPT="$OPENMP_OPT_C $OMNI_CPP_OPT"
+[ $ENABLE_XACC = true ]   && OMNI_CPP_OPT="-D_XCALABLEACC $OMNI_CPP_OPT"
 for c_file in "${c_files[@]}"; do
     C_FILE=("${c_file}")
     FILE_NAME=`omni_c_norm_file_name "${C_FILE}"`     # ./hoge/fuga.c -> hoge_2f_fuga_2f_a
@@ -212,9 +212,9 @@ OMNI_TRAVERSE_OPT="--C --nm ${NM}"
 [ "${TARGET}" = "powerpc-hitachi-aix" ] && OMNI_TRAVERSE_OPT="${OMNI_TRAVERSE_OPT} --sr"
 [ $ENABLE_OPENACC = true ] && OMNI_TRAVERSE_ACC_OPT="${OMNI_TRAVERSE_OPT} --prefix acc"
 OMNI_TRAVERSE_OPT="${OMNI_TRAVERSE_OPT} --prefix xmpc"
-omni_exec $OMNI_TRAVERSE $OMNI_TRAVERSE_OPT -o $TRAVERSE_FILE_C "${obj_files[@]}" "${archive_files[@]}"
+omni_exec $OMNI_TRAVERSE $OMNI_TRAVERSE_OPT -o $TRAVERSE_FILE_C "${obj_files[@]}" "${archive_files[@]}" ${OMNI_HOME}/lib/libxmp.a
 
-omni_exec $OMNI_MPICC_CMD -c $TRAVERSE_FILE_C -o $TRAVERSE_FILE_O
+omni_exec $OMNI_MPICC_CMD $OMNI_MPICC_OPT "${native_add_opt[@]}" "${other_args[@]}" -c $TRAVERSE_FILE_C -o $TRAVERSE_FILE_O
 
 # omni_traverse for ACC
 if [ $ENABLE_OPENACC = true ]; then
@@ -226,7 +226,7 @@ fi
 
 # link
 [ $ENABLE_SCALASCA = true ] && OMNI_LINKER_CMD="scalasca -instrument -user $OMNI_LINKER_CMD"
-[ $ENABLE_TLOG     = true ] && OMNI_LINKER_OPT="$OMNI_LINKER_OPT -ltlog_mpi"
+OMNI_LINKER_OPT="$OMNI_LINKER_OPT -ltlog_mpi"
 
 if [ "$target" != "sxace-nec-superux" -a "${output_file}" != "" ]; then
     other_args+=("-o" "${output_file[@]}")
@@ -236,8 +236,10 @@ elif [ "$target"  = "sxace-nec-superux" -a "${output_file}" != "" ]; then
 fi
 
 obj_files+=("$TRAVERSE_FILE_O")
-[ @XACC@ = 0 ] && OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_CUDA_LIB"
-    
+if [ @XACC@ = 0 ]; then
+    [ @CUDA@ = 0 ] && OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_CUDA_LIB"
+    [ @OPENCL@ = 0 ] && OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_OPENCL_LIB"
+fi
 if [ $ENABLE_OPENACC = true ]; then
     if [ $OPENACC_PLATFORM = "CUDA" ]; then
 	OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_ACC_CUDA_LIB"

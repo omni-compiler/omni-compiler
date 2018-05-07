@@ -1,0 +1,31 @@
+# Algorithm
+ The XMP RandomAccess is iterated over sets of CHUNK updates on each node.
+ In each iteration, the algorithm calculates for each update the destination node 
+ that owns the array element to be updated and communicates the data with each node. 
+ This communication pattern is known as complete exchange or all-to-all personalized 
+ communication, which can be performed efficiently by an algorithm referred to as 
+ the recursive exchange algorithm when the number of nodes is a power of two [1].
+
+# Reference
+[1] R. Ponnusamy, A. Choudhary and G. Fox. "Communication Overhead on CM5: 
+    An Experimental Performance Evaluation", Proc. Frontiers ’92, pp.108–115, 1992.
+
+# How to use
+ Edit the following MACRO in RandomAccess.c.
+---
+#define PROCS             (1024)
+#define MAXLOGPROCS       10
+#XMP_TABLE_SIZE           (512L*1024*1024 / 8 * PROCS)
+--
+
+* PROCS is a number of processes whose value must be a power of two.
+* MAXLOGPROCS is grater than log2(PROCS).
+* XMP_TABLE_SIZE is a problem size. In case of (512L*1024*1024 / 8 * PROCS),
+  this program uses about 4GB on each process.
+
+# HOW to compile
+## For the K computer
+ $ make arch=K
+
+## For general cluster
+ $ make

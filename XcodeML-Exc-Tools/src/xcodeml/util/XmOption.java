@@ -1,9 +1,3 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package xcodeml.util;
 
 import xcodeml.util.XmLanguage;
@@ -26,6 +20,7 @@ public class XmOption
     private static boolean _xcalableMPasync = false;
 
     private static boolean _tlog = false;
+    private static boolean _Fonesided = false;
 
     /** if compiling XcalableACC is enabled */
     private static boolean _xcalableACC = false;
@@ -41,6 +36,9 @@ public class XmOption
 
     /** target language ID */
     private static XmLanguage _language = XmLanguage.C;
+
+    /** Name of tht main function */
+    private static String _mainName = "";
     
     /** if transforming Fortran IO statement as atomic operation */
     private static boolean _isAtomicIO = false;
@@ -169,6 +167,19 @@ public class XmOption
     }
 
     /**
+     * Sets compiler to or not to use one-sided functions in Fortran.
+    */
+    public static void setFonesided(boolean enable)
+    {
+        _Fonesided = enable;
+    }
+
+    public static boolean isFonesided()
+    {
+        return _Fonesided;
+    }
+  
+    /**
      * Checks does compiler use tlog for MPI.
      */
     public static boolean tlogMPIisEnable()
@@ -248,6 +259,22 @@ public class XmOption
         return _language;
     }
 
+    /**
+     * Set name of the main function
+     */
+    public static void setMainName(String main_name)
+    {
+        _mainName = main_name;
+    }
+    
+    /**
+     * Get name of the main function
+     */
+    public static String getMainName()
+    {
+        return _mainName;
+    }
+    
     /**
      * Return if the language is C
      */

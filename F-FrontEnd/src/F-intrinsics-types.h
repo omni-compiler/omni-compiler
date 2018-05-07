@@ -80,9 +80,17 @@ typedef enum {
     INTR_TYPE_SCALAR_COARRAY_REAL,
     INTR_TYPE_SCALAR_COARRAY_LOGICAL,
 
+
+
+    /*
+     * for ASSOCIATED().
+     * Check if argument can be Pointer ASSIGNed to the previous argument
+     */
+    INTR_TYPE_PASSIGNABLE,
+
 
     /* Others. */
-    INTR_TYPE_POINTER, 
+    INTR_TYPE_POINTER,
     INTR_TYPE_TARGET,
 
     INTR_TYPE_ANY_ARRAY_ALLOCATABLE,
@@ -172,6 +180,8 @@ typedef enum {
     INTR_KIND,
     INTR_SELECTED_INT_KIND,
     INTR_SELECTED_REAL_KIND,
+    /* F2003 kind function */
+    INTR_SELECTED_CHAR_KIND,
 
     /* 7. Logical function */
 
@@ -280,9 +290,113 @@ typedef enum {
     INTR_ATOMIC_DEFINE,
     INTR_ATOMIC_REF,
 
+    /* F03 intrinsic subroutins */
+    INTR_IS_IOSTAT_END,
+    INTR_IS_IOSTAT_EOR,
+
+    INTR_EXTENDS_TYPE_OF,
+    INTR_SAME_TYPE_AS,
+    INTR_MOVE_ALLOC,
+
+    /* F08 intrinsic subroutines */
+    INTR_COMMAND_ARUGMENT_COUNT,
+    INTR_GET_COMMAND,
+    INTR_GET_COMMAND_ARUGMENT,
+    INTR_GET_ENVIRONMENT_VARIABLE,
+    INTR_GAMMA,
+    INTR_LOGGAMMA,
+
     INTR_COARRAY_MALLOC_BYTES,       // hidden interface
     INTR_COARRAY_ALLOCATED_BYTES,    // hidden interface
     INTR_COARRAY_GARBAGE_BYTES,      // hidden interface
+
+#ifdef GNU_INTRINSIC_EXTENSION
+    INTR_GNU_ABORT,
+    INTR_GNU_ACCESS,
+    INTR_GNU_ACOSD,
+    INTR_GNU_ALARM,
+    INTR_GNU_AND,
+    INTR_GNU_ASIND,
+    INTR_GNU_ATAND,
+    INTR_GNU_ATAN2D,
+    INTR_GNU_BACKTRACE,
+    INTR_GNU_CHDIR,
+    INTR_GNU_CHMOD,
+    INTR_GNU_COMPLEX,
+    INTR_GNU_COSD,
+    INTR_GNU_COTAN,
+    INTR_GNU_COTAND,
+    INTR_GNU_CTIME,
+    INTR_GNU_DCMPLX,
+    INTR_GNU_DREAL,
+    INTR_GNU_DTIME,
+    INTR_GNU_ETIME,
+    INTR_GNU_EXIT,
+    INTR_GNU_FDATE,
+    INTR_GNU_FGET,
+    INTR_GNU_FGETC,
+    INTR_GNU_FLUSH,
+    INTR_GNU_FNUM,
+    INTR_GNU_FPUT,
+    INTR_GNU_FPUTC,
+    INTR_GNU_FREE,
+    INTR_GNU_FSEEK,
+    INTR_GNU_FSTAT,
+    INTR_GNU_FTELL,
+    INTR_GNU_GERROR,
+    INTR_GNU_GETARG,
+    INTR_GNU_GETCWD,
+    INTR_GNU_GETENV,
+    INTR_GNU_GETGID,
+    INTR_GNU_GETLOG,
+    INTR_GNU_GETPID,
+    INTR_GNU_GETUID,
+    INTR_GNU_GMTIME,
+    INTR_GNU_HOSTNM,
+    INTR_GNU_IARGC,
+    INTR_GNU_IDATE,
+    INTR_GNU_IERRNO,
+    INTR_GNU_INT2,
+    INTR_GNU_INT8,
+    INTR_GNU_IRAND,
+    INTR_GNU_ISATTY,
+    INTR_GNU_ISNAN,
+    INTR_GNU_ITIME,
+    INTR_GNU_KILL,
+    INTR_GNU_LINK,
+    INTR_GNU_LNBLNK,
+    INTR_GNU_LOC,
+    INTR_GNU_LONG,
+    INTR_GNU_LSHIFT,
+    INTR_GNU_LSTAT,
+    INTR_GNU_LTIME,
+    INTR_GNU_MALLOC,
+    INTR_GNU_MCLOCK,
+    INTR_GNU_MCLOCK8,
+    INTR_GNU_OR,
+    INTR_GNU_PERROR,
+    INTR_GNU_RAN,
+    INTR_GNU_RAND,
+    INTR_GNU_RENAME,
+    INTR_GNU_RSHIFT,
+    INTR_GNU_SECNDS,
+    INTR_GNU_SECOND,
+    INTR_GNU_SIGNAL,
+    INTR_GNU_SIND,
+    INTR_GNU_SIZEOF,
+    INTR_GNU_SLEEP,
+    INTR_GNU_SRAND,
+    INTR_GNU_STAT,
+    INTR_GNU_SYMLNK,
+    INTR_GNU_SYSTEM,
+    INTR_GNU_TAND,
+    INTR_GNU_TIME,
+    INTR_GNU_TIME8,
+    INTR_GNU_TTYNAM,
+    INTR_GNU_UMASK,
+    INTR_GNU_UNLINK,
+    INTR_GNU_XOR,
+#endif       
 
     /* XMP/F */
     INTR_DESC_OF,
@@ -374,6 +488,25 @@ typedef struct {
                             may assume INTR_TYPE_INT. */
 
     int langSpec;
+    int intrinsicClass;
+#define INTRINSIC_CLASS_NONE           0x0000
+#define INTRINSIC_CLASS_ATOMIC         0x0001
+#define INTRINSIC_CLASS_ELEMENTAL_FUN  0x0002
+#define INTRINSIC_CLASS_ELEMENTAL_SUB  0x0004
+#define INTRINSIC_CLASS_INQUIRY        0x0008
+#define INTRINSIC_CLASS_PURE_SUB       0x0010
+#define INTRINSIC_CLASS_SUB            0x0020
+#define INTRINSIC_CLASS_TRANS          0x0040
+
+#define INTR_CLASS_N       INTRINSIC_CLASS_NONE
+#define INTR_CLASS_A       INTRINSIC_CLASS_ATOMIC
+#define INTR_CLASS_E       INTRINSIC_CLASS_ELEMENTAL_FUN
+#define INTR_CLASS_ES      INTRINSIC_CLASS_ELEMENTAL_SUB
+#define INTR_CLASS_I       INTRINSIC_CLASS_INQUIRY
+#define INTR_CLASS_PS      INTRINSIC_CLASS_PURE_SUB
+#define INTR_CLASS_S       INTRINSIC_CLASS_SUB
+#define INTR_CLASS_T       INTRINSIC_CLASS_TRANS
+
 } intrinsic_entry;
 #define INTR_OP(ep)             ((ep)->ops)
 #define INTR_NAMETYPE(ep)       ((ep)->nameType)
@@ -385,6 +518,7 @@ typedef struct {
 #define INTR_RETURN_TYPE(ep)    ((ep)->returnType)
 #define INTR_N_ARGS(ep)         ((ep)->nArgs)
 #define INTR_RETURN_TYPE_SAME_AS(ep)    ((ep)->retTypeSameAs)
+#define INTR_CLASS(ep)          ((ep)->intrinsicClass)
 
 #define INTR_IS_RETURN_TYPE_DYNAMIC(ep) \
     (INTR_RETURN_TYPE(ep) == INTR_TYPE_INT_DYNAMIC_ARRAY || \

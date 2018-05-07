@@ -1869,7 +1869,7 @@ public class XmcXcodeToXcTranslator {
                 if (childNode.getNodeType() != Node.ELEMENT_NODE) {
                     continue;
                 }
-		enterNodes(tc, parent, childNode);
+		enterNodes(tc, obj, childNode);
             }
 
 	    //            writer.decrementIndentLevel();
@@ -1987,7 +1987,7 @@ public class XmcXcodeToXcTranslator {
 		if (childNode.getNodeType() != Node.ELEMENT_NODE) {
 		    continue;
 		}
-		enterNodes(tc, parent, childNode);
+		enterNodes(tc, obj, childNode);
 	    }
 	}
 
@@ -2342,29 +2342,27 @@ public class XmcXcodeToXcTranslator {
             addChild(parent, obj);
 
             enterNodes(tc, obj,
-                       getElement(n, "lowerBound"),
-                       getElement(n, "upperBound"),
+                       getElement(n, "base"),
+                       getElement(n, "length"),
                        getElement(n, "step"));
         }
     }
 
-    // lowerBound
-    class LowerBoundVisitor extends XcodeNodeVisitor {
+    // base
+    class BaseVisitor extends XcodeNodeVisitor {
         @Override
         public void enter(TranslationContext tc, Node n, XcNode parent) {
-            XcIndexRangeObj.LowerBound obj = new XcIndexRangeObj.LowerBound();
-            addChild(parent, obj);
-            transChildren(tc, n, obj);
+            enterNodesWithNull(tc, parent,
+                    getContent(n));
         }
     }
 
-    // upperBound
-    class UpperBoundVisitor extends XcodeNodeVisitor {
+    // length
+    class LengthVisitor extends XcodeNodeVisitor {
         @Override
         public void enter(TranslationContext tc, Node n, XcNode parent) {
-            XcIndexRangeObj.UpperBound obj = new XcIndexRangeObj.UpperBound();
-            addChild(parent, obj);
-            transChildren(tc, n, obj);
+            enterNodesWithNull(tc, parent,
+                    getContent(n));
         }
     }
 
@@ -2372,9 +2370,8 @@ public class XmcXcodeToXcTranslator {
     class StepBoundVisitor extends XcodeNodeVisitor {
         @Override
         public void enter(TranslationContext tc, Node n, XcNode parent) {
-            XcIndexRangeObj.Step obj = new XcIndexRangeObj.Step();
-            addChild(parent, obj);
-            transChildren(tc, n, obj);
+            enterNodesWithNull(tc, parent,
+                    getContent(n));
         }
     }
 
@@ -2885,13 +2882,30 @@ public class XmcXcodeToXcTranslator {
         List<Node> childNodes = XmDomUtil.collectChildNodes(arrayRefNode);
         Node arrayAddrNode = childNodes.remove(0);
         String nodeName = arrayAddrNode.getNodeName();
-        if (! nodeName.equals("arrayAddr") && ! nodeName.equals("Var")) {
-            throw new XmTranslationException(arrayRefNode, "Invalid arrayRef: arrayAddr not found.");
+
+        // if (! nodeName.equals("arrayAddr") && ! nodeName.equals("Var")) {
+        //     throw new XmTranslationException(arrayRefNode, "Invalid arrayRef: arrayAddr not found.");
+        // }
+
+        // XcIdent ident = _getIdent(tc, XcSymbolKindEnum.VAR, arrayAddrNode);
+        // XcVarObj arrayObj = new XcVarObj(ident);
+
+	XcIdent ident = null;
+        XcExprObj arrayObj = null;
+
+	if (nodeName.equals("arrayAddr") || nodeName.equals("Var")) {
+	  ident = _getIdent(tc, XcSymbolKindEnum.VAR, arrayAddrNode);
+	  arrayObj = new XcVarObj(ident);
         }
-
-        XcIdent ident = _getIdent(tc, XcSymbolKindEnum.VAR, arrayAddrNode);
-        XcVarObj arrayObj = new XcVarObj(ident);
-
+	else if (nodeName.equals("memberArrayRef")){
+	  ident = _getIdentCompositeTypeMember(tc, arrayAddrNode);
+	  arrayObj = new XcRefObj.MemberRef(ident);
+	  enterNodes(tc, arrayObj, getContent(arrayAddrNode));
+	}
+	else {
+	  throw new XmTranslationException(arrayRefNode, "Invalid arrayRef: arrayAddr not found.");
+	}
+	
         if (arrayRefObj instanceof XcArrayRefObj) {
             XcArrayRefObj obj = (XcArrayRefObj) arrayRefObj;
             obj.setType(ident.getType());
@@ -3049,8 +3063,8 @@ public class XmcXcodeToXcTranslator {
         new Pair("coArrayType", new CoArrayTypeVisitor()),
         new Pair("subArrayRef", new SubArrayRefVisitor()),
         new Pair("indexRange", new IndexRangeVisitor()),
-        new Pair("lowerBound", new LowerBoundVisitor()),
-        new Pair("upperBound", new UpperBoundVisitor()),
+        new Pair("base", new BaseVisitor()),
+        new Pair("length", new LengthVisitor()),
         new Pair("step", new StepBoundVisitor()),
     };
 

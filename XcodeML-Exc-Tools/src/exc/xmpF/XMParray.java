@@ -1,9 +1,3 @@
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
-
 package exc.xmpF;
 
 import exc.block.*;
@@ -252,10 +246,10 @@ public class XMParray {
       XMP.errorAt(pb,"template '" + templateName + "' is not declared");
     }
 
-    if (!template.isFixed() && !type.isFallocatable()) {
-      XMP.errorAt(pb, "non-allocatable array cannot be aligned with an unfixed template");
-      //XMP.errorAt(pb,"template '" + templateName + "' is not fixed");
-    }
+    // if (!template.isFixed() && !type.isFallocatable()) {
+    //   XMP.errorAt(pb, "non-allocatable array cannot be aligned with an unfixed template");
+    //   //XMP.errorAt(pb,"template '" + templateName + "' is not fixed");
+    // }
 
     if (!template.isDistributed() && !type.isFallocatable()) {
       XMP.errorAt(pb,"template '" + templateName + "' is not distributed");
@@ -276,77 +270,6 @@ public class XMParray {
     descId = env.declObjectId(desc_id_name, arrayIdBlock);
     elementType = type.getRef();
     
-    Xtype localType = null;
-    Xobject sizeExprs[];
-    switch(sclass){
-    case FPARAM: {
-
-      if (type.isFallocatable()){
-	XMP.errorAt(pb, "allocatable dummy arrays cannot be distributed.");
-      }
-
-      Xtype ftype = env.getCurrentDef().getDef().getNameObj().Type();
-
-      if (ftype.isFunction() && !ftype.isFsubroutine() && type.isFassumedShape()){
-	XMP.fatal("assumed-shape distributed arrays in functions are not supported.");
-      }
-
-      if (ftype.isFsubroutine() && type.isFassumedShape()){
-	Xobject id_list = env.getCurrentDef().getBlock().getBody().getIdentList();
-	int k = 0;
-	for (Xobject i: (XobjList) id_list){
-	  Ident id = (Ident)i;
-	  if (id.Type().isFassumedShape()){
-	    if (id.getSym().equals(name)){
-	      NthAssumedShape = k;
-	      break;
-	    }
-	    k++;
-	  }
-	}
-	if (NthAssumedShape == -1) XMP.fatal("non-dummy argument cannot have a deferred shape.");
-	if (NthAssumedShape >= XMP.MAX_ASSUMED_SHAPE){
-	  XMP.fatal("too many assumed-shape arguments (MAX = " + XMP.MAX_ASSUMED_SHAPE + ").");
-	}
-      }
-
-      if (env.getCurrentDef().getDef().getParent() != null ||
-	  (NthAssumedShape >= 0 && NthAssumedShape < XMP.MAX_ASSUMED_SHAPE)){ // to assumed-shape
-	sizeExprs = new Xobject[arrayDim];
-	for (int i = 0; i < arrayDim; i++)
-	  sizeExprs[i] = Xcons.FindexRangeOfAssumedShape(Xcons.IntConstant(0));
-	localType = Xtype.Farray(elementType, sizeExprs);
-	localType.setTypeQualFlags(type.getTypeQualFlags());
-      }
-      else { // now linearize it
-	sizeExprs = new Xobject[1];
-	sizeExprs[0] = Xcons.FindexRange(Xcons.IntConstant(0),
-					 Xcons.IntConstant(1));
-	localType = Xtype.Farray(elementType, sizeExprs);
-	setLinearized(true);
-      }
-      break;
-
-    }
-    case FLOCAL:
-    case FSAVE:
-      sizeExprs = new Xobject[arrayDim];
-      for(int i = 0; i < arrayDim; i++)
-	sizeExprs[i] = Xcons.FindexRangeOfAssumedShape();
-      localType = Xtype.Farray(elementType,sizeExprs);
-      localType.setTypeQualFlags(type.getTypeQualFlags());
-      localType.setIsFallocatable(true);
-      break;
-    default:
-      XMP.fatal("XMP_array: unknown sclass");
-    }
-    String localName = XMP.PREFIX_+name;
-    localId = env.declIdent(localName,localType,false,arrayIdBlock);
-    localId.setStorageClass(arrayId.getStorageClass());
-    localId.setValue(Xcons.Symbol(Xcode.VAR,localType,localName));
-    
-    setArray(arrayId,this);
-
     Vector<XMPdimInfo> src_dims = XMPdimInfo.parseSubscripts(alignSourceList);
     Vector<XMPdimInfo> tmpl_dims = XMPdimInfo.parseSubscripts(alignScriptList);
 
@@ -449,6 +372,83 @@ public class XMParray {
 					 Xtype.FintType,arrayIdBlock));
       dim_i++;
     }
+
+    Xtype localType = null;
+    Xobject sizeExprs[];
+    switch(sclass){
+    case FPARAM: {
+
+      if (type.isFallocatable()){
+	XMP.errorAt(pb, "allocatable dummy arrays cannot be distributed.");
+      }
+
+      Xtype ftype = env.getCurrentDef().getDef().getNameObj().Type();
+
+      if (ftype.isFunction() && !ftype.isFsubroutine() && type.isFassumedShape()){
+	XMP.fatal("assumed-shape distributed arrays in functions are not supported.");
+      }
+
+      if (ftype.isFsubroutine() && type.isFassumedShape()){
+	Xobject id_list = env.getCurrentDef().getBlock().getBody().getIdentList();
+	int k = 0;
+	for (Xobject i: (XobjList) id_list){
+	  Ident id = (Ident)i;
+	  if (id.Type().isFassumedShape()){
+	    if (id.getSym().equals(name)){
+	      NthAssumedShape = k;
+	      break;
+	    }
+	    k++;
+	  }
+	}
+	if (NthAssumedShape == -1) XMP.fatal("non-dummy argument cannot have a deferred shape.");
+	if (NthAssumedShape >= XMP.MAX_ASSUMED_SHAPE){
+	  XMP.fatal("too many assumed-shape arguments (MAX = " + XMP.MAX_ASSUMED_SHAPE + ").");
+	}
+      }
+
+      if (env.getCurrentDef().getDef().getParent() != null ||
+	  (NthAssumedShape >= 0 && NthAssumedShape < XMP.MAX_ASSUMED_SHAPE)){ // to assumed-shape
+	sizeExprs = new Xobject[arrayDim];
+	for (int i = 0; i < arrayDim; i++){
+	  if (isDistributed(i))
+	    sizeExprs[i] = Xcons.FindexRangeOfAssumedShape(Xcons.IntConstant(0));
+	  else
+	    sizeExprs[i] = Xcons.FindexRangeOfAssumedShape(type.getFarraySizeExpr()[i].getArg(0));
+	}
+	localType = Xtype.Farray(elementType, sizeExprs);
+	localType.setTypeQualFlags(type.getTypeQualFlags());
+      }
+      else { // now linearize it
+	sizeExprs = new Xobject[1];
+	sizeExprs[0] = Xcons.FindexRange(Xcons.IntConstant(0),
+					 Xcons.IntConstant(1));
+	localType = Xtype.Farray(elementType, sizeExprs);
+	setLinearized(true);
+      }
+      break;
+
+    }
+    case FLOCAL:
+    case FSAVE:
+      sizeExprs = new Xobject[arrayDim];
+      for(int i = 0; i < arrayDim; i++)
+	sizeExprs[i] = Xcons.FindexRangeOfAssumedShape();
+      localType = Xtype.Farray(elementType,sizeExprs);
+      localType.setTypeQualFlags(type.getTypeQualFlags());
+      localType.setIsFallocatable(true);
+      break;
+    default:
+      XMP.fatal("XMP_array: unknown sclass");
+    }
+    
+    String localName = XMP.PREFIX_+name;
+    localId = env.declIdent(localName,localType,false,arrayIdBlock);
+    localId.setStorageClass(arrayId.getStorageClass());
+    localId.setValue(Xcons.Symbol(Xcode.VAR,localType,localName));
+    
+    setArray(arrayId,this);
+
   }
 
   public static void analyzeShadow(Xobject a, Xobject shadow_w_list,
@@ -758,6 +758,8 @@ public class XMParray {
     Ident f;
     Xobject args;
 
+    Xobject orig_lower[] = new Xobject[dims.size()];
+
     // Following codes come from XMParray.buildConstructor
 
     f = env.declInternIdent(XMP.init_allocated_f, Xtype.FsubroutineType, block);
@@ -779,6 +781,8 @@ public class XMParray {
 	upper = bound.getArg(1);
       }
 
+      orig_lower[i] = lower;
+      
       XMPdimInfo info = dims.elementAt(i);
       if(info.isAlignAny()){
 	args = Xcons.List(descId.Ref(),Xcons.IntConstant(i),
@@ -860,7 +864,7 @@ public class XMParray {
 	}
 	else {
 	    // not distributed
-	    alloc_args.add(Xcons.FindexRange(info.getLower(),
+	    alloc_args.add(Xcons.FindexRange(orig_lower[i],
 					     info.getArraySizeVar().Ref()));
 	}
       }
@@ -920,7 +924,7 @@ public class XMParray {
       Xobject offset = info.getAlignSubscriptOffset();
       Xobject alb = info.getLower();
       Xobject tlb = this.getAlignTemplate().getLowerAt(info.getAlignSubscriptIndex());
-      if ((offset != null && !offset.isZeroConstant()) || !alb.equals(tlb))
+      if ((offset != null && !offset.isZeroConstant()) || !alb.equals(tlb) || !getAlignTemplate().isFixed())
 	  return info.getArrayOffsetVar().Ref();
       else
 	  return null;

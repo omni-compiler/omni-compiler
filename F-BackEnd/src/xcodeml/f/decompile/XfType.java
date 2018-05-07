@@ -19,6 +19,7 @@ enum XfType
     CHARACTER("Fcharacter", "CHARACTER", true),
     NUMERIC("Fnumeric", null, true),
     NUMERICALL("FnumericAll", null, true),
+    ENUM("FenumType", null, false),
     DERIVED(null, null, false);
 
     private boolean _isPrimitive = false;
@@ -42,9 +43,18 @@ enum XfType
         return _xcodemlName;
     }
 
+    public boolean hasXcodemlName() {
+        return _xcodemlName != null;
+    }
+
     public String fortranName()
     {
         return _fortranName;
+    }
+
+    public boolean hasFortranName()
+    {
+        return _fortranName != null;
     }
 
     public static XfType getTypeIdFromXcodemlTypeName(String xcodemlTypeName)

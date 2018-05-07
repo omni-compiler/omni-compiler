@@ -1,0 +1,14 @@
+#!/bin/bash
+
+. ../Config.env
+
+if [ ! "$NOMAKE" ]
+then
+   FC=$MPIC
+   FFLAGS=$MPIFLAGS
+   export CC CFLAGS FC FFLAGS AR ARFLAG RANLIB RANLIBFLAG
+   make clean
+   make -e
+fi
+
+exit

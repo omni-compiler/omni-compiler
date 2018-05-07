@@ -1,11 +1,4 @@
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
-
 package exc.xcalablemp;
-
 import exc.object.*;
 import java.util.*;
 
@@ -94,10 +87,17 @@ public class XMPtranslateGlobalPragma {
   }
 
   private void translateAlign(Xobject alignPragma) throws XMPexception {
-    XobjList alignDecl = (XobjList)alignPragma.getArg(1);
-    XobjList alignNameList = (XobjList)alignDecl.getArg(0);
+    XobjList alignDecl             = (XobjList)alignPragma.getArg(1);
+    XobjList alignNameList         = (XobjList)alignDecl.getArg(0);
+    XobjList alignSubscriptList    = (XobjList)alignDecl.getArg(3);
+    XobjList alignSubscriptVarList = (XobjList)alignSubscriptList.left();
+  
+    String kind_bracket = alignSubscriptList.getTail().getString();
+    boolean isSquare    = kind_bracket.equals("SQUARE");
+    alignSubscriptList.removeLastArgs(); // Remove information of ROUND or SQUARE
+    if(isSquare) alignSubscriptVarList.reverse();
+    
     XobjList alignDeclCopy = (XobjList)alignDecl.copy();
-
     Iterator<Xobject> iter = alignNameList.iterator();
     while (iter.hasNext()) {
       Xobject x = iter.next();

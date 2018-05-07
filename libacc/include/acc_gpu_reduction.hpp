@@ -336,6 +336,14 @@ void _ACC_gpu_reduction_bt(T *resultInGrid, int kind, T resultInThread){
 
 template<typename T>
 __device__ static inline
+void _ACC_gpu_reduction_b(T *resultInGrid, int kind, T resultInBlock){
+  if(threadIdx.x == 0){
+    _ACC_atomic_accumulate(resultInGrid, resultInBlock, kind);
+  }
+}
+
+template<typename T>
+__device__ static inline
 void _ACC_gpu_reduction_t(T *resultInBlock, int kind, T resultInThread){
   _ACC_reduce_threads(resultInBlock, resultInThread, kind, true);
 }

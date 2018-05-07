@@ -1,17 +1,9 @@
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
-
 package exc.xmpF;
 
 import java.io.*;
 import java.util.Vector;
-
 import exc.object.*;
 import exc.block.*;
-
 import xcodeml.util.XmOption;
 
 /** 
@@ -271,7 +263,7 @@ public class XMPenv {
   /**
    * Finalize this XMPenv. 
    */
-  public void finalize() {
+  public void finalizeEnv() {
     env.collectAllTypes();
     env.fixupTypeRef();
   }

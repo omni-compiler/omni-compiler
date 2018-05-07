@@ -1,15 +1,8 @@
-/* 
- * $TSUKUBA_Release: Omni XMP Compiler $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package exc.xmpF;
 
 import exc.object.*;
 import exc.block.*;
 import exc.xcalablemp.*;
-
 import java.util.*;
 import static xcodeml.util.XmLog.fatal;
 
@@ -813,7 +806,8 @@ public class XMPrewriteExpr
 	if (decl.Opcode() == Xcode.F_INTERFACE_DECL){
 	  XobjList func_list = (XobjList)decl.getArg(3);
 	  for (Xobject func: func_list){
-	    if (func.getArg(0).getString().equals(fname)){
+	    if (func.Opcode() == Xcode.FUNCTION_DECL &&
+		func.getArg(0).getString().equals(fname)){
 	      ftype = func.getArg(0).Type();
 	      param_list = (XobjList)ftype.getFuncParam();
 	      break DECLLOOP;

@@ -266,10 +266,14 @@ list_delete_item(lx, x)
     }
     if (lp != NULL) {
         if (lp == first) {
-            struct list_node *l = (struct list_node *)malloc(sizeof(struct list_node));
-            memcpy(l, LIST_NEXT(lp), sizeof(struct list_node));
-            LIST_NEXT(lp) = NULL;
-            EXPR_LIST(lx) = l;
+            if (LIST_NEXT(lp)) {
+                struct list_node *l = (struct list_node *)malloc(sizeof(struct list_node));
+                memcpy(l, LIST_NEXT(lp), sizeof(struct list_node));
+                LIST_NEXT(lp) = NULL;
+                EXPR_LIST(lx) = l;
+            } else {
+                return NULL;
+            }
         } else {
             LIST_NEXT(oLp) = LIST_NEXT(lp);
             LIST_NEXT(lp) = NULL;

@@ -5,7 +5,7 @@ OBJS    = $(TESTS:.c=.o)
 
 ifeq ($(JOBSCHED), PBS)
 XRUN    = mpirun_rsh -hostfile $$PBS_NODEFILE
-XSCRIPT = run_pbs.sh
+XSCRIPT = ../run_pbs.sh
 XSUBMIT = qsub
 endif
 XRUN    ?= mpiexec

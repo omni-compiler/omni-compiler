@@ -714,9 +714,21 @@ public class XcodeMLtools_C extends XcodeMLtools {
 
   /** process arrayRef. */
   private XobjList enterArrayRef(Xcode code, Xtype type, Node arrayRefNode) {
-    ArrayList<Node> childNodes = collectElementsExclude(arrayRefNode,
-							"arrayAddr");
+    // ArrayList<Node> childNodes = collectElementsExclude(arrayRefNode,
+    // 							"arrayAddr");
+
+    ArrayList<Node> childNodes;
     Node arrayAddrNode = getElement(arrayRefNode, "arrayAddr");
+
+    if (arrayAddrNode != null){
+      childNodes = collectElementsExclude(arrayRefNode, "arrayAddr");
+    }
+    else { // pointer
+      childNodes = collectChildNodes(arrayRefNode);
+      arrayAddrNode = childNodes.get(0);
+      childNodes.remove(0);
+    }
+
     XobjList objList = enterAsXobjList(arrayRefNode,
 				       code,
 				       type,
@@ -744,8 +756,11 @@ public class XcodeMLtools_C extends XcodeMLtools {
       childNodes = collectElementsExclude(subArrayRefNode, "arrayAddr");
     }
     else { // pointer
-      arrayAddrNode = getElement(subArrayRefNode, "Var");
-      childNodes = collectElementsExclude(subArrayRefNode, "Var");
+      //arrayAddrNode = getElement(subArrayRefNode, "Var");
+      //childNodes = collectElementsExclude(subArrayRefNode, "Var");
+      childNodes = collectChildNodes(subArrayRefNode);
+      arrayAddrNode = childNodes.get(0);
+      childNodes.remove(0);
     }
 
     XobjList objList = enterAsXobjList(subArrayRefNode,
@@ -790,12 +805,12 @@ public class XcodeMLtools_C extends XcodeMLtools {
     return objList;
   }
 
-  private int getTypeQualFlags(Node n, boolean isFunctionType) {
-    int tqConst = getAttrBool(n, "is_const") ? Xtype.TQ_CONST : 0;
-    int tqRestrict = getAttrBool(n, "is_restrict") ? Xtype.TQ_RESTRICT : 0;
-    int tqVolatile = getAttrBool(n, "is_volatile") ? Xtype.TQ_VOLATILE : 0;
-    int tqInline = (isFunctionType && getAttrBool(n, "is_inline")) ? Xtype.TQ_INLINE : 0;
-    int tqFuncStatic = (isFunctionType && getAttrBool(n, "is_static")) ? Xtype.TQ_FUNC_STATIC : 0;
+  private long getTypeQualFlags(Node n, boolean isFunctionType) {
+    long tqConst = getAttrBool(n, "is_const") ? Xtype.TQ_CONST : 0;
+    long tqRestrict = getAttrBool(n, "is_restrict") ? Xtype.TQ_RESTRICT : 0;
+    long tqVolatile = getAttrBool(n, "is_volatile") ? Xtype.TQ_VOLATILE : 0;
+    long tqInline = (isFunctionType && getAttrBool(n, "is_inline")) ? Xtype.TQ_INLINE : 0;
+    long tqFuncStatic = (isFunctionType && getAttrBool(n, "is_static")) ? Xtype.TQ_FUNC_STATIC : 0;
 
     return tqConst | tqRestrict | tqVolatile | tqInline | tqFuncStatic;
   }
@@ -807,7 +822,7 @@ public class XcodeMLtools_C extends XcodeMLtools {
   private void declBasicType(Node n) {
     String typeId = getAttr(n, "type");
     String name = getAttr(n, "name");
-    int tq = getTypeQualFlags(n, false);
+    long tq = getTypeQualFlags(n, false);
     Xobject gccAttrs = getGccAttributes(n);
     BasicType.TypeInfo ti = BasicType.getTypeInfoByCName(name);
 

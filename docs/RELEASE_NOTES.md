@@ -1,5 +1,31 @@
 Omni Compiler Software RELEASE NOTES
 
+# ver. 1.3.0    2018/03/30
+* XcalableACC official release.
+* Remove round brackets tests in XMP/C.
+* Support the reduce_shadow directive.
+* Add benchmarks in ./samples directory.
+* Fixed lots of bugs.
+
+# ver. 1.2.3    2018/01/15
+* Python module supports master-worker pattern
+* Improve performance of XMP/C on for-loop statement.
+* Fixed lots of bugs.
+
+# ver. 1.2.2    2017/12/04
+* Add Python module.
+* Support KNL : "./configure --target=KNL-linux-gnu".
+* Improve performance of XMP/C on for-loop statement.
+* Fixed lots of bugs.
+
+# ver. 1.2.1    2017/09/04
+* Fix xmp_init() and xmp_finalize() to call an XMP program from an MPI program.
+* Fixed lots of bugs.
+
+# ver. 1.2.0    2017/08/12
+* Change to 0-origin from 1-origin for coindex in XMP/C for the XMP specification 1.3.
+* Fixed lots of bugs.
+
 # ver. 1.1.3     2017/07/03
 * Support square bracket in XMP/C directives.
 * Add xmpc_all_node_num(), xmpc_node_num(), xmpc_this_image(), and xmp_num_images().

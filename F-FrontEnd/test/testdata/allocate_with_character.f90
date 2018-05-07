@@ -1,0 +1,3 @@
+      CHARACTER(:),ALLOCATABLE,DIMENSION(:) :: p
+      ALLOCATE(CHARACTER::p(1:4))
+      END

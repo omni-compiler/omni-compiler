@@ -1,9 +1,3 @@
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
-
 #include "xmpf_internal.h"
 #include "xmp_internal.h"
 #include "xmp.h"
@@ -23,19 +17,17 @@ void xmp_init_mpi_(void) {
 void xmp_finalize_mpi_(void) {
 }
 
-void xmp_init_() {
-  _XMP_init(0, NULL);
+void xmp_init_(MPI_Fint *comm) {
+  _XMP_init(1, NULL, MPI_Comm_f2c(*comm));
 }
 
 void xmp_finalize_(void) {
-  xmp_finalize();
+  _XMP_finalize(false);
 }
-
 
 int xmpf_desc_kind_(xmp_desc_t **d, int *kind) {
   return xmp_desc_kind(*d, kind);
 }
-
 
 int xmp_num_nodes_(void) {
   return _XMP_get_execution_nodes()->comm_size;
@@ -77,9 +69,25 @@ int xmp_array_lbound_(xmp_desc_t **d, int *dim, int *lbound) {
 
 }
 
+int xmp_lbound_(xmp_desc_t **d, int *dim) {
+
+  int lbound;
+  xmp_array_lbound(*d, *dim, &lbound);
+  return lbound;
+
+}
+
 int xmp_array_ubound_(xmp_desc_t **d, int *dim, int *ubound) {
 
   return xmp_array_ubound(*d, *dim, ubound);
+
+}
+
+int xmp_ubound_(xmp_desc_t **d, int *dim) {
+
+  int ubound;
+  xmp_array_ubound(*d, *dim, &ubound);
+  return ubound;
 
 }
 
