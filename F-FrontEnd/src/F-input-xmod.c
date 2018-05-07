@@ -135,6 +135,7 @@ getTypeEntry(HashTable * ht, const char * typeId) {
             TYPE_BASIC_TYPE(tp) = TYPE_VOID;
         } else {
             e = CreateHashEntry(ht, typeId, &isNew);
+            tp->imported_id = strdup(typeId);
             SetHashValue(e, tep);
         }
     }
@@ -277,12 +278,18 @@ input_type_and_attr(xmlTextReaderPtr reader, HashTable * ht, char ** retTypeId,
 {
     char * str;
     char * typeId;
+    char * importedId;
 
     typeId = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "type");
     if (typeId == NULL)
         return FALSE;
 
     *tp = getTypeDesc(ht, typeId);
+    importedId = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "imported_id");
+    if (importedId != NULL) {
+        (*tp)->imported_id = strdup(importedId);
+        free(importedId);
+    }
 
     str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "intent");
     if (str != NULL) {
