@@ -947,15 +947,15 @@ get_intrinsic_return_type(intrinsic_entry *ep, expv args, expv kindV) {
                         /* intrinsic arguments */
                         expv array, dim, ncopies;
 
-                        array = expr_list_get_n(args, 0);
+                        array = expr_list_get_n_or_named(args, 0, "array");
                         if (!(isValidTypedExpv(array))) {
                             return NULL;
                         }
-                        dim = expr_list_get_n(args, 1);
+                        dim = expr_list_get_n_or_named(args, 1, "dim");
                         if (!(isValidTypedExpv(dim))) {
                             return NULL;
                         }
-                        ncopies = expr_list_get_n(args, 2);
+                        ncopies = expr_list_get_n_or_named(args, 2, "ncopies");
                         if (!(isValidTypedExpv(ncopies))) {
                             return NULL;
                         }

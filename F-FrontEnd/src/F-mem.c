@@ -186,6 +186,36 @@ expr_list_get_n(x, n)
     return LIST_ITEM(lp);
 }
 
+expr
+expr_list_get_n_or_named(x, n, named_arg)
+     expr x;
+     int n;
+     const char* named_arg;
+{
+    list lp;
+    int i;
+
+    for (i = 0, lp = EXPR_LIST(x); (i < n && lp != NULL); i++, lp = LIST_NEXT(lp)) {};
+    if (lp == NULL) {
+        return NULL;
+    }
+    if(EXPV_KWOPT_NAME(LIST_ITEM(lp)) == NULL 
+        || strcmp(EXPV_KWOPT_NAME(LIST_ITEM(lp)), named_arg) == 0) 
+    {
+        return LIST_ITEM(lp);
+    } else {
+
+        for (i = 0, lp = EXPR_LIST(x); lp != NULL; ++i, lp = LIST_NEXT(lp)) {
+            if(LIST_ITEM(lp) != NULL) {
+                if(EXPV_KWOPT_NAME(LIST_ITEM(lp)) != NULL && strcmp(named_arg, EXPV_KWOPT_NAME(LIST_ITEM(lp))) == 0) {
+                    return LIST_ITEM(lp);
+                }
+            }
+        }
+    }
+    return NULL; //LIST_ITEM(lp);
+}
+
 int
 expr_list_set_n(x, n, val, doOverride)
      expr x;
