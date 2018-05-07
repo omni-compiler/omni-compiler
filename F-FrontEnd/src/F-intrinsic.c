@@ -530,6 +530,9 @@ compare_intrinsic_arg_type(expv arg,
                         if(iType != INTR_TYPE_ANY_OPTIONAL)
                             argtp = EXPV_TYPE(arg);
                     } break;
+		    case(FUNCTION_CALL):
+		      argtp = tp;
+		      break;
                     default: {
                         break;
                     }
@@ -587,7 +590,7 @@ generate_shape_expr(TYPE_DESC tp, expr dimSpec) {
 }
 
 
-static void
+void
 generate_assumed_shape_expr(expr dimSpec, int dim) {
     expv dimElm;
 

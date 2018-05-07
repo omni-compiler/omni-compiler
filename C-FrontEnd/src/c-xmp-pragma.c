@@ -46,6 +46,8 @@ static CExpr* parse_TASKS_clause();
 static CExpr* parse_LOOP_clause();
 static CExpr* parse_REFLECT_clause();
 static CExpr* parse_REDUCTION_clause();
+static CExpr* parse_EXPAND_list();
+static CExpr *parse_loop_opt();
 static CExpr* parse_BARRIER_clause();
 static CExpr* parse_BCAST_clause();
 static CExpr* parse_GMOVE_clause();
@@ -546,7 +548,7 @@ CExpr* parse_TASK_clause()
 CExpr* parse_LOOP_clause()
 {
   CExpr *subscriptList = NULL;
-  CExpr *onRef, *reductionOpt, *opt;
+  CExpr *onRef, *reductionOpt, *opt, *loopOpt;
 
   if(pg_tok == '(')
     subscriptList = parse_XMP_loop_subscript_list_round();
@@ -568,7 +570,9 @@ CExpr* parse_LOOP_clause()
   CExpr *async, *profile, *acc_or_host; // async and acc_or_host is not used
   parse_ASYNC_ACC_or_HOST_PROFILE(&async, &acc_or_host, &profile);
 
-  return XMP_LIST5(subscriptList,onRef,reductionOpt,opt,profile);
+  loopOpt = parse_loop_opt();
+
+  return XMP_LIST6(subscriptList,onRef,reductionOpt,opt,profile, loopOpt);
 
  err:
   XMP_has_err = 1;
@@ -1815,6 +1819,127 @@ CExpr *parse_Reduction_ref()
 static CExpr *parse_XMP_opt()
 {
   return (CExpr *)allocExprOfNull();
+}
+
+static CExpr* parse_EXPAND_list()
+{
+  CExpr *list = EMPTY_LIST;
+  CExpr *v1, *v2;
+  int unbound_flag;
+
+  while(1){
+
+    v1 = v2 = NULL;
+    unbound_flag = 0;
+
+    if (pg_tok == '/'){
+      pg_get_token();
+      if (!PG_IS_IDENT("unbound")) goto err;
+      pg_get_token();
+      if (pg_tok != '/') goto err;
+
+      unbound_flag = 1;
+      pg_get_token();
+    }
+
+    switch (pg_tok){
+    case ')':
+    case ',':
+    case ':':
+      goto err;
+    default:
+      v1 = pg_parse_expr();
+    }
+	
+    if (pg_tok != ':'){
+      v2 = v1;
+      goto next;
+    }
+
+    pg_get_token();
+
+    switch (pg_tok){
+    case ')':
+    case ',':
+    case ':':
+      goto err;
+    default:
+      v2 = pg_parse_expr();
+    }
+
+  next:
+    list = exprListAdd(list, XMP_LIST3(v1, v2, (CExpr*)allocExprOfNumberConst2(unbound_flag, BT_INT)));
+
+    if (pg_tok == ')'){
+      break;
+    }
+
+    if (pg_tok == ',')  pg_get_token();
+    else goto err;
+
+  }
+
+  return list;
+
+ err:
+  XMP_Error0("syntax error in the EXPAND clause");
+  XMP_has_err = 1;
+  return NULL;
+}
+
+static CExpr *parse_loop_opt()
+{
+  int expand_type;
+  CExpr* async = NULL;
+  CExpr *expandList = NULL;
+    
+  if (PG_IS_IDENT("expand")){
+    expand_type = XMP_LOOP_EXPAND;
+  }
+  else if (PG_IS_IDENT("margin")){
+    expand_type = XMP_LOOP_MARGIN;
+  }
+  else if (PG_IS_IDENT("peel_and_wait")){
+    expand_type = XMP_LOOP_PEEL_AND_WAIT;
+  }
+  else {
+    return EMPTY_LIST;
+  }
+  
+  pg_get_token();
+
+  if (pg_tok != '(') goto err;
+  pg_get_token();
+
+  if (expand_type == XMP_LOOP_PEEL_AND_WAIT){
+    async = pg_parse_expr();
+
+    if (pg_tok != ',') goto err;
+    pg_get_token();
+
+    expandList = parse_EXPAND_list();
+
+    if (pg_tok != ')') goto err;
+    pg_get_token();
+
+    return XMP_LIST3((CExpr*)allocExprOfNumberConst2(expand_type, BT_INT),
+		     async, expandList);
+  }
+  else { // EXPAND or MARGIN
+    expandList = parse_EXPAND_list();
+
+    if (pg_tok != ')') goto err;
+    pg_get_token();
+
+    return XMP_LIST2((CExpr*)allocExprOfNumberConst2(expand_type, BT_INT),
+		     expandList);
+  }
+
+ err:
+  XMP_Error0("syntax error in loop clause");
+  XMP_has_err = 1;
+  return NULL;
+
 }
 
 static CExpr *parse_TASKS_clause()

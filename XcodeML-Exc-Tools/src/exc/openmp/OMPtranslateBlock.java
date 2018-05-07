@@ -55,7 +55,7 @@ public class OMPtranslateBlock implements XobjectDefVisitor
                 if(OMP.debugFlag)
                     debug_out.print(fd.getBlock());
                 transPragma.transBlock(fd);
-                fd.Finalize();
+                fd.finalizeBlock();
             }
             return;
         }

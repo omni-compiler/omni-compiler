@@ -37,7 +37,7 @@ public class XMPtransCoarray implements XobjectDefVisitor
 
   public void finish()
   {
-    env.finalize();
+    env.finalizeEnv();
   }
     
 

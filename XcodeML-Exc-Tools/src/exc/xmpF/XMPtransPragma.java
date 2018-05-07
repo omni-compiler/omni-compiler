@@ -230,6 +230,8 @@ public class XMPtransPragma
 
   private Block translateLoop(PragmaBlock pb, XMPinfo info){
     BlockList ret_body = Bcons.emptyBody();
+    int origLoopType = info.getLoopType();
+    Vector<XMPdimInfo> widthList = info.getWidthList();
     XMPobjectsRef on_ref = info.getOnRef();
 
     // generate on_ref object
@@ -262,6 +264,10 @@ public class XMPtransPragma
     BasicBlock entry_bb = entry_block.getBasicBlock();
 
     for(int k = 0; k < info.getLoopDim(); k++){
+
+      XMPtemplate t = on_ref.getTemplate();
+      int t_idx = on_ref.getLoopOnIndex(k);
+
       XMPdimInfo d_info = info.getLoopDimInfo(k);
       Ident local_loop_var = d_info.getLoopLocalVar();
 
@@ -294,18 +300,40 @@ public class XMPtransPragma
       entry_bb.add(Xcons.Set(ub_var.Ref(), for_block.getUpperBound()));
       entry_bb.add(Xcons.Set(step_var.Ref(), for_block.getStep()));
 
+      Xobject lower, upper, unboundFlag;
+      if (widthList.isEmpty()){
+	lower = Xcons.IntConstant(0);
+	upper = Xcons.IntConstant(0);
+	unboundFlag = Xcons.IntConstant(0);
+      }
+      else {
+	// Here the stride means an unbound flag.
+	XMPdimInfo w = widthList.get(t_idx);
+	lower = w.getLower();
+	upper = w.getUpper();
+	unboundFlag = w.getStride();
+      }
+
+      int loopType;
+      if (origLoopType == XMP.LOOP_MARGIN && unboundFlag.getInt() == -1){
+	loopType = XMP.LOOP_EXPAND;
+      }
+      else {
+	loopType = origLoopType;
+      }
+      
       Ident schd_f = 
 	env.declInternIdent(XMP.loop_sched_f,Xtype.FsubroutineType);
       Xobject args = Xcons.List(lb_var.Ref(), ub_var.Ref(), step_var.Ref(),
 				Xcons.IntConstant(k),
-				on_ref.getDescId().Ref());
+				on_ref.getDescId().Ref(),
+				Xcons.IntConstant(loopType),
+				lower, upper, unboundFlag);
       entry_bb.add(schd_f.callSubroutine(args));
 
       for_block.setLowerBound(lb_var.Ref());
       for_block.setUpperBound(ub_var.Ref());
 
-      XMPtemplate t = on_ref.getTemplate();
-      int t_idx = on_ref.getLoopOnIndex(k);
       if (for_block.getStep().isOneConstant() && (t.getDistMannerAt(t_idx) != XMPtemplate.CYCLIC ||
 						  t.getDistArgAt(t_idx) == null ||
 						  t.getDistArgAt(t_idx).isOneConstant())){
@@ -322,7 +350,7 @@ public class XMPtransPragma
           case XMPtemplate.BLOCK:
           case XMPtemplate.GBLOCK:
           {
-            Ident l2g_off_var = env.declIdent(XMP.genSym("l2g_off"), Xtype.FintType, pb);
+            Ident l2g_off_var = env.declIdent(XMP.genSym("loop_l2goff"), Xtype.FintType, pb);
             Ident l2g_f =
                     env.declInternIdent(XMP.l2g_f, Xtype.FsubroutineType);
             args = Xcons.List(l2g_off_var.Ref(),
@@ -339,11 +367,29 @@ public class XMPtransPragma
         }else {
           Ident l2g_f =
                   env.declInternIdent(XMP.l2g_f, Xtype.FsubroutineType);
-          args = Xcons.List(org_loop_ind_var,
-                  local_loop_var.Ref(),
-                  Xcons.IntConstant(k),
-                  on_ref.getDescId().Ref());
-          for_block.getBody().insert(l2g_f.callSubroutine(args));
+
+          switch (t.getDistMannerAt(t_idx)){
+          case XMPtemplate.BLOCK:
+          case XMPtemplate.GBLOCK:
+            {
+              Ident l2g_off_var = env.declIdent(XMP.genSym("loop_l2goff"), Xtype.FintType, pb);
+              args = Xcons.List(l2g_off_var.Ref(),
+                                Xcons.IntConstant(0),
+                                Xcons.IntConstant(k),
+                                on_ref.getDescId().Ref());
+              entry_bb.add(l2g_f.callSubroutine(args));
+              for_block.getBody().insert(Xcons.Set(org_loop_ind_var, Xcons.binaryOp(Xcode.PLUS_EXPR, l2g_off_var.Ref(), local_loop_var.Ref())));
+              break;
+            }
+          default:
+            {
+              args = Xcons.List(org_loop_ind_var,
+                                local_loop_var.Ref(),
+                                Xcons.IntConstant(k),
+                                on_ref.getDescId().Ref());
+              for_block.getBody().insert(l2g_f.callSubroutine(args));
+            }
+          }
         }
       }
     }

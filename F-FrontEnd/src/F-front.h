@@ -77,8 +77,9 @@ extern int doImplicitUndef;
 extern int nerrors;
 
 /* max nam length */
-#define MAX_NAME_LEN_F77          31    /* limitation of fortran 77, 90 */
-#define MAX_NAME_LEN_F03          63    /* limitation of fortran 2003 */
+/* #define MAX_NAME_LEN_F77          31    /\* limitation of fortran 77, 90 *\/ */
+/* #define MAX_NAME_LEN_F03          63    /\* limitation of fortran 2003 *\/ */
+#define MAX_NAME_LEN              63   /* limitation of fortran 2003 */
 #define MAX_NAME_LEN_UPPER_LIMIT 256   /* upper bound */
 #define MAX_DIM  15
 
@@ -723,6 +724,7 @@ extern int      is_intrinsic_function _ANSI_ARGS_((ID id));
 extern expv     compile_intrinsic_call _ANSI_ARGS_((ID id,expv args));
 extern expv     compile_intrinsic_call0 _ANSI_ARGS_((ID, expv, int));
 extern void     generate_shape_expr _ANSI_ARGS_((TYPE_DESC tp, expv dimSpec));
+extern void     generate_assumed_shape_expr _ANSI_ARGS_((expr dimSpec, int dim));
 
 extern EXT_ID   declare_external_proc_id _ANSI_ARGS_((SYMBOL s, TYPE_DESC tp,
                                                       int def_flag));
@@ -792,7 +794,7 @@ extern void     replace_or_assign_type
                     _ANSI_ARGS_((TYPE_DESC *tp, const TYPE_DESC new_tp));
 
 extern int      are_dimension_and_shape_conformant_by_type _ANSI_ARGS_((
-    expr x, TYPE_DESC lt, TYPE_DESC rt, expv *shapePtr, int issue_error));
+    expr x, TYPE_DESC lt, TYPE_DESC rt, expv *shapePtr, int for_argument, int issue_error));
 
 extern TYPE_DESC
 	get_binary_numeric_intrinsic_operation_type(TYPE_DESC t0,
@@ -1006,6 +1008,7 @@ extern TYPE_DESC               bottom_type(TYPE_DESC tp); /* bottom
                                                            * array
                                                            * type. */
 extern TYPE_DESC               get_bottom_ref_type(TYPE_DESC tp);
+extern int                     has_attr_in_types(TYPE_DESC tp, uint32_t type_attr);
 extern int                     type_is_assumed_size_array(TYPE_DESC tp);
 
 extern TYPE_DESC               wrap_type(TYPE_DESC tp);

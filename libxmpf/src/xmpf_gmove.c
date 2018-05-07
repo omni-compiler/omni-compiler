@@ -129,9 +129,23 @@ xmpf_gmv_l_dim_info__(_XMP_gmv_desc_t **gmv_desc , int *i_dim, int *a_lb, int *a
   gp->a_ub[i] = *a_ub;
 
   gp->kind[i] = *kind;
-  gp->lb[i] = *lb;
-  gp->ub[i] = *ub;
-  gp->st[i] = *st;
+
+  switch (*kind){
+  case XMP_N_GMOVE_ALL:
+    gp->lb[i] = *a_lb;
+    gp->ub[i] = *a_ub;
+    gp->st[i] = 1;
+    break;
+  case XMP_N_GMOVE_INDEX:
+  case XMP_N_GMOVE_RANGE:
+    gp->lb[i] = *lb;
+    gp->ub[i] = *ub;
+    gp->st[i] = *st;
+    break;
+  default:
+    _XMP_fatal("wrong gmove kind");
+  }
+
 }
 
 

@@ -3,7 +3,7 @@
 F_FRONT = F_Front
 CC      = @CC@
 LIBXML2 = @LIBXML2_INCLUDE_DIR@
-CFLAGS  = @CFLAGS@ -DNDEBUG -DBUGFIX -D__XCODEML__ -DYYDEBUG -I$(LIBXML2)/libxml2 -I../../include
+CFLAGS  = @CFLAGS@ @EXTENSION_FLAGS@ -DNDEBUG -DBUGFIX -D__XCODEML__ -DYYDEBUG -I$(LIBXML2)/libxml2 -I../../include
 LDFLAGS = -L@LIBXML2_LIB_DIR@ -lxml2 -lm
 MKDIR_P = @MKDIR_P@
 INSTALL = @INSTALL@
@@ -49,6 +49,8 @@ all: $(F_FRONT) $(INTRMOD)
 
 $(F_FRONT): $(OBJECTS) $(HEADERS)
 	$(CC) $(CFLAGS) -o $@ $(OBJECTS) $(LDFLAGS)
+
+F95-parser.o : F95-parser.y F95-lex.c
 
 $(OBJECTS): $(HEADERS)
 

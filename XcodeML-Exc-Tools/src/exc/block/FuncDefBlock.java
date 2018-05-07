@@ -67,7 +67,13 @@ public class FuncDefBlock
         return def.getFile();
     }
 
+    /** obsolute interface. should be replaced by finalizeBlock() */
     public void Finalize()
+    {
+	finalizeBlock();
+    }
+
+    public void finalizeBlock()
     {
 	if(fblock != null)
 	    def.setDef(fblock.toXobject());

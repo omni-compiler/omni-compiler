@@ -119,7 +119,7 @@ public class OMPtranslate implements XobjectDefVisitor
             return;
         
         // finally, replace body
-        fd.Finalize();
+        fd.finalizeBlock();
     }
 
     // not used?

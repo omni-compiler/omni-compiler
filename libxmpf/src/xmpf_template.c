@@ -129,10 +129,8 @@ void xmpf_ref_templ_alloc__(_XMP_object_ref_t **r_desc,
 
     rp->ndims = n ? n : (*t_desc)->dim;
 
-    //rp->offset = ip;
     rp->REF_OFFSET = ip;
     rp->t_desc = *t_desc;
-    //rp->index = iq;
     rp->REF_INDEX = iq;
     rp->REF_STRIDE = ir;
     rp->subscript_type = is;
@@ -159,10 +157,8 @@ void xmpf_ref_nodes_alloc__(_XMP_object_ref_t **r_desc,
 
     rp->ndims = n ? n : (*n_desc)->dim;
 
-    //rp->offset = ip;
     rp->REF_OFFSET = ip;
     rp->n_desc = *n_desc;
-    //rp->index = iq;
     rp->REF_INDEX = iq;
     rp->REF_STRIDE = ir;
     rp->subscript_type = is;

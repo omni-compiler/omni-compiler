@@ -2882,13 +2882,30 @@ public class XmcXcodeToXcTranslator {
         List<Node> childNodes = XmDomUtil.collectChildNodes(arrayRefNode);
         Node arrayAddrNode = childNodes.remove(0);
         String nodeName = arrayAddrNode.getNodeName();
-        if (! nodeName.equals("arrayAddr") && ! nodeName.equals("Var")) {
-            throw new XmTranslationException(arrayRefNode, "Invalid arrayRef: arrayAddr not found.");
+
+        // if (! nodeName.equals("arrayAddr") && ! nodeName.equals("Var")) {
+        //     throw new XmTranslationException(arrayRefNode, "Invalid arrayRef: arrayAddr not found.");
+        // }
+
+        // XcIdent ident = _getIdent(tc, XcSymbolKindEnum.VAR, arrayAddrNode);
+        // XcVarObj arrayObj = new XcVarObj(ident);
+
+	XcIdent ident = null;
+        XcExprObj arrayObj = null;
+
+	if (nodeName.equals("arrayAddr") || nodeName.equals("Var")) {
+	  ident = _getIdent(tc, XcSymbolKindEnum.VAR, arrayAddrNode);
+	  arrayObj = new XcVarObj(ident);
         }
-
-        XcIdent ident = _getIdent(tc, XcSymbolKindEnum.VAR, arrayAddrNode);
-        XcVarObj arrayObj = new XcVarObj(ident);
-
+	else if (nodeName.equals("memberArrayRef")){
+	  ident = _getIdentCompositeTypeMember(tc, arrayAddrNode);
+	  arrayObj = new XcRefObj.MemberRef(ident);
+	  enterNodes(tc, arrayObj, getContent(arrayAddrNode));
+	}
+	else {
+	  throw new XmTranslationException(arrayRefNode, "Invalid arrayRef: arrayAddr not found.");
+	}
+	
         if (arrayRefObj instanceof XcArrayRefObj) {
             XcArrayRefObj obj = (XcArrayRefObj) arrayRefObj;
             obj.setType(ident.getType());

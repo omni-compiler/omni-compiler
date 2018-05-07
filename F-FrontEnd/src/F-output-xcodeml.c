@@ -138,6 +138,7 @@ xtag(enum expr_code code)
     case F_STOP_STATEMENT:          return "FstopStatement";
     case F_PAUSE_STATEMENT:         return "FpauseStatement";
     case F_PRAGMA_STATEMENT:        return "FpragmaStatement";
+    case F_COMMENT_LINE:            return "FcommentLine";
     case F_LET_STATEMENT:           return "FassignStatement";
     case F95_CYCLE_STATEMENT:       return "FcycleStatement";
     case F95_EXIT_STATEMENT:        return "FexitStatement";
@@ -2679,7 +2680,7 @@ outx_constants(int l, expv v)
 
     print_constant:
         outx_printi(l, "<%s type=\"%s\"", tag, tid);
-        if(EXPV_CODE(v) != STRING_CONSTANT &&
+        if(//EXPV_CODE(v) != STRING_CONSTANT &&
             (kind = getKindParameter(tp)) != NULL)
             outx_print(" kind=\"%s\"", kind);
         outx_print(">%s</%s>\n", buf, tag);
@@ -2704,6 +2705,18 @@ outx_constants(int l, expv v)
  */
 static void
 outx_pragmaStatement(int l, expv v)
+{
+    list lp = EXPV_LIST(v);
+    outx_tagOfStatement2(l, v);
+    outx_puts(getXmlEscapedStr(EXPV_STR(LIST_ITEM(lp))));
+    outx_expvClose(0, v);
+}
+
+/**
+ * output comment line
+ */
+static void
+outx_commentLine(int l, expv v)
 {
     list lp = EXPV_LIST(v);
     outx_tagOfStatement2(l, v);
@@ -3805,6 +3818,7 @@ outx_expv(int l, expv v)
     case F_PAUSE_STATEMENT:         outx_STOPPAUSE_statement(l, v); break;
     case F_LET_STATEMENT:           outx_assignStatement(l, v); break;
     case F_PRAGMA_STATEMENT:        outx_pragmaStatement(l, v); break;
+    case F_COMMENT_LINE:            outx_commentLine(l, v); break;
     case F95_CYCLE_STATEMENT:
     case F95_EXIT_STATEMENT:        outx_EXITCYCLE_statement(l, v); break;
     case F_ENTRY_STATEMENT:         outx_entryDecl(l, v); break;
@@ -5269,8 +5283,9 @@ emit_decl(int l, ID id)
                 break;
 
             case STG_EXT:
-                if (id_is_visibleVar(id) &&
-                    IS_NO_PROC_OR_DECLARED_PROC(id)) {
+                if (id_is_visibleVar(id) && IS_NO_PROC_OR_DECLARED_PROC(id) 
+                    && !TBP_BINDING_ATTRS(id)) 
+                {
                     outx_varDecl(l, id);
                 }
                 break;
@@ -5341,16 +5356,16 @@ outx_id_declarations(int l, ID id_list, int hasResultVar, const char * functionN
                             continue;
                         }
 
-			if (hasResultVar == TRUE && functionName != NULL &&
-			    strcasecmp(functionName, SYM_NAME(ID_SYM(ids[j]))) == 0) {
-			  continue;
-			}
+                        if (hasResultVar == TRUE && functionName != NULL &&
+                            strcasecmp(functionName, SYM_NAME(ID_SYM(ids[j]))) == 0) {
+                            continue;
+                        }
 
-			if (TYPE_IS_MODIFIED(ID_TYPE(id)) == TRUE) {
-			  continue;
-			}
-			
-			if (is_id_used_in_struct_member(ids[j], tp) == TRUE) {
+                        if (TYPE_IS_MODIFIED(ID_TYPE(id)) == TRUE) {
+                            continue;
+                        }
+
+                        if (is_id_used_in_struct_member(ids[j], tp) == TRUE) {
                             emit_decl(l, ids[j]);
                             ID_IS_EMITTED(ids[j]) = TRUE;
                         }
@@ -5475,6 +5490,9 @@ outx_declarations1(int l, EXT_ID parent_ep, int outputPragmaInBody)
                 break;
 	    case XMP_PRAGMA:
 		outx_XMP_pragma(l1, v);
+		break;
+	    case OMP_PRAGMA:
+		outx_OMP_pragma(l1, v);
 		break;
 	    case ACC_PRAGMA:
 		outx_ACC_pragma(l1, v);

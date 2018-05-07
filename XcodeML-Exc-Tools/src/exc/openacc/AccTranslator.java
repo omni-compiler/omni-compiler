@@ -34,7 +34,7 @@ public class AccTranslator implements XobjectDefVisitor {
       FuncDefBlock fd = new FuncDefBlock(def);
       FunctionBlock fb = fd.getBlock();
       doFuncDef(fb);
-      fd.Finalize();
+      fd.finalizeBlock();
     } else {
       Xobject x = def.getDef();
       doNonFuncDef(x);

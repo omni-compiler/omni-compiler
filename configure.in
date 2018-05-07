@@ -1,5 +1,5 @@
 AC_PREREQ([2.69])
-AC_INIT([Omni Compiler], [1.2.3], [omni-compiler@googlegroups.com], [omni])
+AC_INIT([Omni Compiler], [1.3.0], [omni-compiler@googlegroups.com], [omni])
 AC_CONFIG_AUX_DIR([./buildutils])
 AC_CONFIG_MACRO_DIR([./buildutils])
 AC_CANONICAL_TARGET
@@ -452,8 +452,12 @@ AC_ARG_ENABLE(fjrdma,
                           MPI3 is used instead of FJRDMA. This disable option works on only FX100 (true default)],
   [dofjrdma=no], [dofjrdma=yes])
 
+AC_ARG_ENABLE(gnu-extension,
+  [  --enable-gnu-extension  enable Fortran GNU intrinsic extension (false default).],
+  [dognuext=yes], [dognuext=no])
+
 # check --disable-fjrdma is used with --target=FX100-linux-gnu
-if test x${dofjrdma} = xno -a x${target} != xFX100-linux-gnu; then
+if test "x${dofjrdma}" = "xno" -a "x${target}" != "xFX100-linux-gnu"; then
     echo "Error!! --disable-fjrdma works on only FX100. Please attach --target=FX100-linux-gnu"
     exit 1
 fi
@@ -470,6 +474,16 @@ elif test "x${doOpenAcc}" = "xyes"; then
 fi
 AC_SUBST(ACC_DEFAULT_PLATFORM)
 AC_SUBST(ACC_DEFAULT_DEVICE)
+
+#--------------------------------------------------------------------
+# Fortran GNU Extension
+#--------------------------------------------------------------------
+EXTENSION_FLAGS=""
+if test "x${dognuext}" = "xyes"; then
+  EXTENSION_FLAGS="-DGNU_INTRINSIC_EXTENSION"
+fi
+AC_SUBST(EXTENSION_FLAGS)
+
 
 #--------------------------------------------------------------------
 #  General
@@ -656,7 +670,7 @@ if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$t
     # ranlib & ar & nm
     AC_CHECK_PROG([RANLIB], [ranlibpx], [ranlibpx], [ranlib])
     AC_CHECK_PROG([AR], [arpx], [arpx], [ar])
-    ARFLAGS="cru"
+    ARFLAGS="cr"
     AC_CHECK_PROG([NM], [nmpx], [nmpx], [nm])
 
 elif test "$target" = "KNL-linux-gnu"; then
@@ -698,7 +712,7 @@ elif test "$target" = "KNL-linux-gnu"; then
     # ranlib & ar & nm
     AC_CHECK_PROG([RANLIB], [ranlib], [ranlib])
     AC_CHECK_PROG([AR], [ar], [ar])
-    ARFLAGS="cru"
+    ARFLAGS="cr"
     AC_CHECK_PROG([NM], [nm], [nm])
 
 elif test "$target" = "KNC-linux-gnu"; then
@@ -740,7 +754,7 @@ elif test "$target" = "KNC-linux-gnu"; then
     # ranlib & ar & nm
     AC_CHECK_PROG([RANLIB], [ranlib], [ranlib])
     AC_CHECK_PROG([AR], [ar], [ar])
-    ARFLAGS="cru"
+    ARFLAGS="cr"
     AC_CHECK_PROG([NM], [nm], [nm])
 
 elif test "$target" = "Cray-linux-gnu"; then
@@ -782,7 +796,7 @@ elif test "$target" = "Cray-linux-gnu"; then
     # ranlib & ar & nm
     AC_CHECK_PROG([RANLIB], [ranlib], [ranlib])
     AC_CHECK_PROG([AR], [ar], [ar])
-    ARFLAGS="cru"
+    ARFLAGS="cr"
     AC_CHECK_PROG([NM], [nm], [nm])
 
 elif test "$target" = "sxace-nec-superux"; then
@@ -826,7 +840,7 @@ elif test "$target" = "sxace-nec-superux"; then
     # ranlib & ar & nm
     RANLIB="sxar -sq"
     AC_CHECK_PROG([AR], [sxar], [sxar], [sxar])
-    ARFLAGS="cru"
+    ARFLAGS="cr"
     NM="sxnm"
     NM_OPT="-px"
     #  AC_CHECK_PROG([NM], [sxnm], [sxnm], [sxnm])
@@ -870,7 +884,7 @@ elif test "$target" = "sx9-nec-superux"; then
     # ranlib & ar & nm
     RANLIB="sxar -sq"
     AC_CHECK_PROG([AR], [sxar], [sxar], [sxar])
-    ARFLAGS="cru"
+    ARFLAGS="cr"
     NM="sxnm"
     NM_OPT="-px"
     #  AC_CHECK_PROG([NM], [sxnm], [sxnm], [sxnm])
@@ -937,7 +951,7 @@ elif test "$target" = "powerpc-ibm-cnk"; then
     # ranlib & ar & nm
     AC_CHECK_PROG([RANLIB], [ranlib], [ranlib])
     AC_CHECK_PROG([AR], [ar], [ar])
-    ARFLAGS="cru"
+    ARFLAGS="cr"
     AC_CHECK_PROG([NM], [nm], [nm])
 
 elif test "$target" = "powerpc-hitachi-aix"; then
@@ -979,14 +993,14 @@ elif test "$target" = "powerpc-hitachi-aix"; then
     # ranlib & ar & nm
     AC_CHECK_PROG([RANLIB], [ranlib], [ranlib])
     AC_CHECK_PROG([AR], [ar], [ar])
-    ARFLAGS="-X32_64 cru"
+    ARFLAGS="-X32_64 cr"
     AC_CHECK_PROG([NM], [nm], [nm])
 
 else
     # ranlib & ar & nm
     AC_CHECK_PROG([RANLIB], [ranlib], [ranlib])
     AC_CHECK_PROG([AR], [ar], [ar])
-    ARFLAGS="cru"
+    ARFLAGS="cr"
     AC_CHECK_PROG([NM], [nm], [nm])
 
     # C
@@ -995,7 +1009,7 @@ else
 
     chk=`${MPI_CC} --version | head -n1`
     case $chk in
-       gcc* | Apple* | cc*)
+       gcc* | Apple* | cc* | *mpc-gcc_620* )
 	    # OpenMP
 	    OPENMP_OPT_C="-fopenmp"
 
@@ -1601,7 +1615,7 @@ if test "x${doMPI3_ASYNC}" = "xyes"; then
 fi
 
 if test x${use_tca} = xyes; then
-    if test x${doMPI3_ASYNC} = xno -a x${use_gasnet} = xno; then
+    if test "x${doMPI3_ASYNC}" = xno -a "x${use_gasnet}" = xno; then
 	echo "Error!! TCA must use MPI version 3 or GASNet"
 	exit 1
     fi
@@ -1610,7 +1624,7 @@ fi
 use_mpi3_onesided=no
 if test "x${doMPI3_ASYNC}" = "xyes" -a "x${use_gasnet}" = "xno" -a "x${target}" != "xKcomputer-linux-gnu" -a "x${target}" != "xFX10-linux-gnu" -a "x${target}" != "xFX100-linux-gnu" ; then
     use_mpi3_onesided=yes
-elif test x${dofjrdma} = xno; then
+elif test "x${dofjrdma}" = "xno"; then
     use_mpi3_onesided=yes
 fi
 
@@ -1623,12 +1637,12 @@ if test "x${use_mpi3_onesided}" = "xyes"; then
     MPI3_ONESIDED=$TRUE
 fi
 
-if test x${use_gasnet} = xyes; then
+if test "x${use_gasnet}" = "xyes"; then
     ONESIDED_CPPFLAGS="-D_XMP_GASNET"
-elif test x${use_mpi3_onesided} = xyes; then
+elif test "x${use_mpi3_onesided}" = "xyes"; then
     ONESIDED_CPPFLAGS="-D_XMP_MPI3_ONESIDED"
-elif test x${target} = xKcomputer-linux-gnu -o x${target} = xFX10-linux-gnu -o x${target} = xFX100-linux-gnu; then
-    if x${dofjrdma} = xyes; then
+elif test "x${target}" = "xKcomputer-linux-gnu" -o "x${target}" = "xFX10-linux-gnu" -o "x${target}" = "xFX100-linux-gnu"; then
+    if test "x${dofjrdma}" = "xyes"; then
         ONESIDED_CPPFLAGS="-D_XMP_FJRDMA"
     fi
 fi
@@ -2061,7 +2075,10 @@ AC_SUBST(omniQRealFillGap)
 #--------------------------------------------------------------------
 # Export Omni Config Variable
 
-if test "${prefix}" = "NONE" -o "${prefix}" = ""; then
+PWD=`pwd`
+if test "${prefix}" = ${PWD}; then
+    AC_MSG_ERROR("${PWD}" is not specified in --prefix=)
+elif test "${prefix}" = "NONE" -o "${prefix}" = ""; then
     OMNI_HOME=/usr/local
 else
     OMNI_HOME=${prefix}
@@ -2444,6 +2461,7 @@ cat << EOF
         please rerun ./configure MPI_CC=...
 
   Options:
+    GNU Intrinsic extension      : $dognuext
     BLAS Library                 : $output_libblas
     OpenACC                      : $doOpenAcc
     Onesided                     : $isOnesided

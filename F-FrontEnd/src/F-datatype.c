@@ -50,8 +50,21 @@ function_type(TYPE_DESC tp)
 
     if (tp != NULL) {
         if (TYPE_IS_EXTERNAL(tp)) {
-            TYPE_SET_EXTERNAL(ftp);
-            TYPE_UNSET_EXTERNAL(tp);
+            TYPE_DESC tq;
+            /*
+             * EXTERNAL :: f
+             * REAL, POINTER :: f
+             *
+             * f is a pointer to the function which returns REAL.
+             */
+            tp = copy_type_partially(tp, /*doCopyAttr=*/TRUE);
+            FUNCTION_TYPE_RETURN_TYPE(ftp) = tp;
+            TYPE_ATTR_FLAGS(ftp) |= TYPE_ATTR_FLAGS(tp);
+            TYPE_ATTR_FLAGS(tp) = 0;
+            tq = tp;
+            for (tq = tp; tq != NULL; tq = TYPE_REF(tq)) {
+                TYPE_ATTR_FLAGS(tq) = 0;
+            }
         }
 
         if (TYPE_IS_USED_EXPLICIT(tp)) {
@@ -96,6 +109,28 @@ function_type(TYPE_DESC tp)
             TYPE_SET_IMPURE(ftp);
             TYPE_UNSET_IMPURE(tp);
         }
+
+        if (TYPE_IS_INTENT_IN(tp)) {
+            TYPE_SET_INTENT_IN(ftp);
+            TYPE_UNSET_INTENT_IN(tp);
+        }
+        if (TYPE_IS_INTENT_OUT(tp)) {
+            TYPE_SET_INTENT_OUT(ftp);
+            TYPE_UNSET_INTENT_OUT(tp);
+        }
+        if (TYPE_IS_INTENT_INOUT(tp)) {
+            TYPE_SET_INTENT_INOUT(ftp);
+            TYPE_UNSET_INTENT_INOUT(tp);
+        }
+        if (TYPE_IS_OPTIONAL(tp)) {
+            TYPE_SET_OPTIONAL(ftp);
+            TYPE_UNSET_OPTIONAL(tp);
+        }
+        if (TYPE_IS_VALUE(tp)) {
+            TYPE_SET_VALUE(ftp);
+            TYPE_UNSET_VALUE(tp);
+        }
+
         TYPE_UNSET_SAVE(tp);
 
         if (FUNCTION_TYPE_IS_VISIBLE_INTRINSIC(tp)) {
@@ -804,7 +839,11 @@ type_parameter_expv_equals(expv v1, expv v2, int is_strict, int for_argument, in
          */
 
         if (v1 == NULL || v2 == NULL) {
-            return FALSE;
+            /*
+             * if v1 or v2 is NULL, the kind specifies the default value of its type.
+             * Maybe the default value is 4, but don't consider it.
+             */
+            return TRUE;
         }
 
         if (EXPR_CODE(v1) != INT_CONSTANT) {
@@ -1068,9 +1107,7 @@ type_is_compatible(TYPE_DESC left, TYPE_DESC right,
     TYPE_DESC left_basic, right_basic;
 
     if (left == NULL || right == NULL) {
-        if (debug_flag) {
-            fprintf(debug_fp, "# unexpected comparison\n");
-        }
+        debug("# unexpected comparison");
         return FALSE;
     }
 
@@ -1084,9 +1121,7 @@ type_is_compatible(TYPE_DESC left, TYPE_DESC right,
 
     /* type_comparison: */
 
-    if (debug_flag) {
-        fprintf(debug_fp, "# comparing basic types\n");
-    }
+    debug("# comparing basic types");
 
     if (IS_ANY_CLASS(left) || IS_ANY_CLASS(right)) {
         debug("# CLASS(*) \n");
@@ -1124,9 +1159,7 @@ type_is_compatible(TYPE_DESC left, TYPE_DESC right,
 
 kind_compatibility:
 
-    if (debug_flag) {
-        fprintf(debug_fp, "# comparing kind of types\n");
-    }
+    debug("# comparing kind of types");
 
     if (TYPE_BASIC_TYPE(left_basic) == TYPE_DREAL) {
         if (type_is_double(right_basic)) {
@@ -1147,9 +1180,7 @@ kind_compatibility:
 
 length_compatiblity:
 
-    if (debug_flag) {
-        fprintf(debug_fp, "# comparing length of types\n");
-    }
+    debug("# comparing length of types");
 
     if (TYPE_CHAR_LEN(left_basic) > 0 && TYPE_CHAR_LEN(right_basic) > 0) {
         int l1 = TYPE_CHAR_LEN(left_basic);
@@ -1166,15 +1197,13 @@ length_compatiblity:
 
 rank_compatibility:
 
-    if (debug_flag) {
-        fprintf(debug_fp, "# comparing rank of types\n");
-    }
+    debug("# comparing rank of types");
 
     if (TYPE_N_DIM(left) == 0 && TYPE_N_DIM(right) == 0) {
         goto attribute_compatibility;
 
     } else if (TYPE_N_DIM(left) > 0 && TYPE_N_DIM(right) > 0 &&
-         are_dimension_and_shape_conformant_by_type(NULL, left, right, NULL, issue_error)) 
+               are_dimension_and_shape_conformant_by_type(NULL, left, right, NULL, for_argunemt, issue_error))
     {
         goto attribute_compatibility;
     } else {
@@ -1187,12 +1216,10 @@ attribute_compatibility:
         goto compatible;
     }
 
-    if (debug_flag) {
-        fprintf(debug_fp, "# comparing attribute of types\n");
-        fprintf(debug_fp, "#  left is '%x', right is '%x'\n",
-                TYPE_ATTR_FOR_COMPARE & TYPE_ATTR_FLAGS(left),
-                TYPE_ATTR_FOR_COMPARE & TYPE_ATTR_FLAGS(right));
-    }
+    debug("# comparing attribute of types");
+    debug("#  left is '%08x', right is '%08x'",
+            TYPE_ATTR_FOR_COMPARE & TYPE_ATTR_FLAGS(left),
+            TYPE_ATTR_FOR_COMPARE & TYPE_ATTR_FLAGS(right));
 
     if (IS_ANY_CLASS(left) || IS_ANY_CLASS(right)) {
         debug("# CLASS(*) \n");
@@ -1205,9 +1232,7 @@ attribute_compatibility:
     }
 
 compatible:
-    if (debug_flag) {
-        fprintf(debug_fp, "# compatible!\n");
-    }
+    debug("# compatible!");
 
     return TRUE;
 
@@ -1646,7 +1671,8 @@ function_type_is_appliable(TYPE_DESC ftp, expv actual_args, int issue_error)
         compare_rank = FALSE;
     }
 
-    if (TYPE_REF(ftp) != NULL && FUNCTION_TYPE_IS_TYPE_BOUND(ftp)) {
+    if (TYPE_REF(ftp) != NULL && (
+            FUNCTION_TYPE_IS_TYPE_BOUND(ftp) || FUNCTION_TYPE_HAS_PASS_ARG(ftp))) {
         /* ftp is the type of type-bound procedure */
         tbp_tp = ftp;
         ftp = TYPE_REF(tbp_tp);
@@ -1663,11 +1689,14 @@ function_type_is_appliable(TYPE_DESC ftp, expv actual_args, int issue_error)
 
     FOREACH_ID(dummy_arg, dummy_args) {
 
-        if (debug_flag)
-            fprintf(debug_fp, "dummy args is '%s'\n", SYM_NAME(ID_SYM(dummy_arg)));
+        debug("dummy args is '%s'\n", SYM_NAME(ID_SYM(dummy_arg)));
+
+        if (actual_arg != NULL && EXPV_KWOPT_NAME(actual_arg) != NULL) {
+            break;
+        }
 
         /* skip type check for PASS argument */
-        if (tbp_tp != NULL && TYPE_BOUND_PROCEDURE_TYPE_HAS_PASS_ARG(tbp_tp)) {
+        if (tbp_tp != NULL) {
             if (TYPE_BOUND_PROCEDURE_TYPE_PASS_ARG(tbp_tp)) {
                 if (ID_SYM(dummy_arg) == ID_SYM(TYPE_BOUND_PROCEDURE_TYPE_PASS_ARG(tbp_tp))) {
                     continue;
@@ -1685,12 +1714,16 @@ function_type_is_appliable(TYPE_DESC ftp, expv actual_args, int issue_error)
             return FALSE;
         }
 
+        if (EXPV_KWOPT_NAME(actual_arg) != NULL) {
+            break;
+        }
+
         if (!isValidType(EXPV_TYPE(actual_arg))) {
             return FALSE;
         }
 
-        if (!type_is_match_for_argument(EXPV_TYPE(actual_arg),
-                                       ID_TYPE(dummy_arg), compare_rank, issue_error))
+        if (!type_is_match_for_argument(ID_TYPE(dummy_arg),
+                                        EXPV_TYPE(actual_arg), compare_rank, issue_error))
         {
             return FALSE;
         }
@@ -1701,6 +1734,45 @@ function_type_is_appliable(TYPE_DESC ftp, expv actual_args, int issue_error)
         } else {
             actual_lp = NULL;
             actual_arg = NULL;
+        }
+    }
+
+    if (actual_arg != NULL && EXPV_KWOPT_NAME(actual_arg) != NULL) {
+
+        dummy_args = dummy_arg;
+
+        for(; actual_lp != NULL; actual_lp = LIST_NEXT(actual_lp)) {
+
+            SYMBOL sym;
+
+            if ((actual_arg = LIST_ITEM(actual_lp)) == NULL) {
+                break;
+            }
+
+            if (EXPV_KWOPT_NAME(actual_arg) == NULL) {
+                /* invalid argument */
+                return FALSE;
+            }
+
+            sym = find_symbol(EXPV_KWOPT_NAME(actual_arg));
+
+            if (tbp_tp != NULL) {
+                if (TYPE_BOUND_PROCEDURE_TYPE_PASS_ARG(tbp_tp)) {
+                    if (sym == ID_SYM(TYPE_BOUND_PROCEDURE_TYPE_PASS_ARG(tbp_tp))) {
+                        continue;
+                    }
+                }
+            }
+
+            dummy_arg = find_ident_head(sym, dummy_args);
+            if (dummy_arg == NULL) {
+                return FALSE;
+            }
+
+            if (!type_is_match_for_argument(ID_TYPE(dummy_arg),
+                                            EXPV_TYPE(actual_arg), compare_rank, issue_error)) {
+                return FALSE;
+            }
         }
     }
 

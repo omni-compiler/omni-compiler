@@ -1,7 +1,7 @@
 MODULE mod1
 
 INTERFACE
-  SUBROUTINE gcl_AddFieldToHaloExchange_Wrapper() &
+  SUBROUTINE gcl_AddFieldToHaloExchange_Wrapper(field) &
   BIND(c, name='communicationwrapper_add_field_to_halo_exchange')
     USE, INTRINSIC :: iso_c_binding
     TYPE(C_PTR), value    :: field

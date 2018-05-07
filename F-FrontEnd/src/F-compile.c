@@ -153,6 +153,10 @@ static EXT_ID unify_ext_id_list(EXT_ID parents, EXT_ID childs, int overshadow);
 
 static expr get_generic_spec_symbol(int expr_code);
 
+static int check_variable_definition_context(const expr x,
+                                             const TYPE_DESC tp,
+                                             const char target_errmsg[]);
+
 void init_for_OMP_pragma();
 void check_for_OMP_pragma(expr x);
 
@@ -1221,25 +1225,39 @@ compile_statement1(int st_no, expr x)
             push_ctl(CTL_TYPE_GUARD);
             push_env(CTL_ENV(ctl_top));
 
-            if (EXPR_ARG1(x) != NULL) { // NULL for CLASS DEFAULT
+            if (EXPR_ARG1(x) != NULL) {
                 tp = compile_type(EXPR_ARG1(x), /* allow_predecl=*/ FALSE);
                 type = expv_sym_term(IDENT, tp, EXPR_SYM(EXPR_ARG1(x)));
-            }
-            if (EXPR_CODE(x) == F03_CLASSIS_STATEMENT) {
-                if (tp != NULL && !IS_STRUCT_TYPE(tp)) {
-                    error("'class is' accepts only derived-type");
-                    break;
+                
+                if (EXPR_CODE(x) == F03_CLASSIS_STATEMENT) {
+                    if (tp != NULL && !IS_STRUCT_TYPE(tp)) {
+                        error("'class is' accepts only derived-type");
+                        break;
+                    }
                 }
-            }
 
-            tp = compile_dimensions(tp, shape);
-            fix_array_dimensions(tp);
+                tp = compile_dimensions(tp, shape);
+                fix_array_dimensions(tp);
+
+                selector = CTL_SELECT_TYPE_ASSICIATE(CTL_PREV(ctl_top))?:CTL_SELECT_TYPE_SELECTOR(CTL_PREV(ctl_top));
+                // Get selector infor before declaring new ident.
+                ID selector_id = find_ident(EXPR_SYM(selector));
+
+                id = declare_ident(EXPR_SYM(selector), CL_VAR);
+                declare_id_type(id, tp);
+
+                // Copy back some of the saved vital selector information
+                // Fix issue #550 - Maybe all attributes should be copied
+                if(selector_id != NULL) {
+                    if(TYPE_IS_POINTER(ID_TYPE(selector_id))) {
+                        TYPE_SET_POINTER(tp);
+                    }
+                }
+            } else { // NULL for CLASS DEFAULT
+                tp = NULL;
+            }
 
             check_select_types(x, tp);
-
-            selector = CTL_SELECT_TYPE_ASSICIATE(CTL_PREV(ctl_top))?:CTL_SELECT_TYPE_SELECTOR(CTL_PREV(ctl_top));
-            id = declare_ident(EXPR_SYM(selector), CL_VAR);
-            declare_id_type(id, tp);
 
             st = list3(EXPR_CODE(x), type, NULL, const_name);
             CTL_BLOCK(ctl_top) = st;
@@ -1314,6 +1332,18 @@ compile_statement1(int st_no, expr x)
 	EXPR_LINE(new_pragma) = current_line;
 	if (!preceding_pragmas) preceding_pragmas = list0(LIST);
 	preceding_pragmas = list_put_last(preceding_pragmas, new_pragma);
+      }
+      break;
+
+    case F_COMMENT_LINE:
+      if (CURRENT_STATE == OUTSIDE)
+      	compile_pragma_outside(x);
+      else { // others should be issued at the next statemet.
+      	char *str = strdup(EXPR_STR(EXPR_ARG1(x)));
+      	expr new_pragma = list1(F_COMMENT_LINE, make_enode(STRING_CONSTANT, str));
+      	EXPR_LINE(new_pragma) = current_line;
+      	if (!preceding_pragmas) preceding_pragmas = list0(LIST);
+      	preceding_pragmas = list_put_last(preceding_pragmas, new_pragma);
       }
       break;
 
@@ -1607,9 +1637,7 @@ compile_exec_statement(expr x)
                     break;
                 }
 
-                if (TYPE_IS_PROTECTED(EXPV_TYPE(v1)) && TYPE_IS_READONLY(EXPV_TYPE(v1))) {
-                    error_at_node(x, "assignment to a PROTECTED variable");
-                }
+                (void)check_variable_definition_context(x, EXPV_TYPE(v1), "lhs");
 
                 if (TYPE_BASIC_TYPE(EXPV_TYPE(v1)) == TYPE_FUNCTION) {
                     /*
@@ -2203,7 +2231,6 @@ update_procedure_variable(ID id, const ID target, int is_final)
         return;
     }
 
-
     if (ID_TYPE(target) == NULL || !IS_PROCEDURE_TYPE(ID_TYPE(target))) {
         if (is_final) {
             error_at_id(VAR_REF_PROC(id), "not procedure");
@@ -2236,6 +2263,7 @@ update_procedure_variable(ID id, const ID target, int is_final)
         TYPE_BASIC_TYPE(ID_TYPE(VAR_REF_PROC(id))) = TYPE_SUBR;
         TYPE_BASIC_TYPE(ID_TYPE(id)) = TYPE_SUBR;
     }
+
     TYPE_REF(ID_TYPE(id)) = ID_TYPE(target);
     ID_DEFINED_BY(VAR_REF_PROC(id)) = target;
     PROC_CLASS(VAR_REF_PROC(id)) = P_DEFINEDPROC;
@@ -2254,7 +2282,7 @@ update_procedure_variable(ID id, const ID target, int is_final)
  */
 static void
 update_procedure_variables_forall(ID ids, TYPE_DESC struct_decls, BLOCK_ENV block,
-                                  const ID targets, int is_final)
+                                  const ID targets, int forall_target, int is_final)
 {
     ID id;
     ID target;
@@ -2271,7 +2299,17 @@ update_procedure_variables_forall(ID ids, TYPE_DESC struct_decls, BLOCK_ENV bloc
             if (VAR_REF_PROC(id) == NULL)
                 continue;
 
-            target = find_ident_head(ID_SYM(VAR_REF_PROC(id)), targets);
+            if (ID_IS_DECLARED(VAR_REF_PROC(id)))
+                continue;
+
+            if (forall_target) {
+                target = find_ident_head(ID_SYM(VAR_REF_PROC(id)), targets);
+            } else {
+                target = targets;
+                if (ID_SYM(target) != ID_SYM(VAR_REF_PROC(id))) {
+                    continue;
+                }
+            }
             update_procedure_variable(id, target, is_final);
         }
     }
@@ -2284,7 +2322,7 @@ update_procedure_variables_forall(ID ids, TYPE_DESC struct_decls, BLOCK_ENV bloc
         }
 
         update_procedure_variables_forall(TYPE_MEMBER_LIST(stp), NULL, NULL,
-                                          targets, is_final);
+                                          targets, forall_target, is_final);
     }
 
 
@@ -2292,7 +2330,7 @@ update_procedure_variables_forall(ID ids, TYPE_DESC struct_decls, BLOCK_ENV bloc
         update_procedure_variables_forall(BLOCK_LOCAL_SYMBOLS(bp),
                                           BLOCK_LOCAL_STRUCT_DECLS(bp),
                                           BLOCK_CHILDREN(bp),
-                                          targets, is_final);
+                                          targets, forall_target, is_final);
     }
 }
 
@@ -2453,11 +2491,15 @@ end_declaration()
                 tp = ID_TYPE(resId);
             }
 
-            if (IS_FUNCTION_TYPE(tp)) {
+            if (IS_PROCEDURE_POINTER(tp)) {
+                declare_id_type(myId, tp);
+
+            } else if (IS_FUNCTION_TYPE(tp)) {
                 ID_TYPE(myId) = NULL;
                 declare_id_type(myId, tp);
                 replace_or_assign_type(&FUNCTION_TYPE_RETURN_TYPE(tp), ID_TYPE(resId));
                 declare_id_type(resId, FUNCTION_TYPE_RETURN_TYPE(tp));
+
             } else {
                 // declare_id_type(myId, function_type(tp));
 
@@ -2631,23 +2673,29 @@ end_declaration()
 
         tp = ID_TYPE(ip);
 
-        if (tp == NULL) {
-            implicit_declaration(ip);
-            tp = ID_TYPE(ip);
-        }
-
         /* fix external identifier whose type is not fixed */
         if (tp == NULL &&
             ID_CLASS(ip) == CL_PROC &&
             PROC_CLASS(ip) == P_EXTERNAL) {
             ep = find_ext_id(ID_SYM(ip));
             if (ep != NULL && EXT_PROC_TYPE(ep) != NULL) {
-                tp = EXT_PROC_TYPE(ep);
+                /* Copy type to avoid modifying TYPE_ATTR_FLAGS */
+                if (TYPE_IS_EXTERNAL(ip)) {
+                    tp = new_type_desc();
+                    *tp = *EXT_PROC_TYPE(ep);
+                } else {
+                    tp = EXT_PROC_TYPE(ep);
+                }
             } else {
-                tp = subroutine_type();
-                PROC_IS_FUNC_SUBR_AMBIGUOUS(ip) = TRUE;
+                tp = wrap_type(type_GNUMERIC_ALL);
+                TYPE_SET_IMPLICIT(tp);
             }
             declare_id_type(ip, tp);
+        }
+
+        if (tp == NULL) {
+            implicit_declaration(ip);
+            tp = ID_TYPE(ip);
         }
 
         if(tp == NULL)
@@ -2677,18 +2725,50 @@ end_declaration()
         if (TYPE_HAS_BIND(ip)) {
             TYPE_BIND_NAME(tp) = ID_BIND(ip);
         }
+        if (TYPE_IS_EXTERNAL(tp)) {
+            uint32_t type_attr_flags;
+            TYPE_DESC ftp;
+            TYPE_DESC ret;
+
+            if (!IS_PROCEDURE_TYPE(tp)) {
+                tp = function_type(tp);
+            }
+            type_attr_flags = TYPE_ATTR_FLAGS(ip);
+            ftp = tp;
+
+            ftp = copy_type_partially(ftp, /*doCopyAttr=*/TRUE);
+
+            type_attr_flags = TYPE_ATTR_FLAGS(ftp);
+
+            if ((type_attr_flags & ~TYPE_ATTR_EXTERNAL) != 0 && TYPE_REF(tp) == NULL) {
+                tp = wrap_type(ftp);
+                TYPE_ATTR_FLAGS(tp) |= type_attr_flags;
+                TYPE_ATTR_FLAGS(ftp) &= TYPE_ATTR_EXTERNAL;
+            }
+            TYPE_UNSET_SAVE(tp);
+            ID_TYPE(ip) = tp;
+
+            ret = FUNCTION_TYPE_RETURN_TYPE(ftp);
+            if (TYPE_IS_IMPLICIT(ret)) {
+                /*
+                 * If the return type of EXTERNAL procedure is implicit,
+                 * its type should be determind.
+                 */
+                TYPE_BASIC_TYPE(ret) = TYPE_GNUMERIC_ALL;
+                TYPE_SET_IMPLICIT(tp);
+            }
+        }
+
         if (IS_FUNCTION_TYPE(tp) && TYPE_REF(tp) == NULL) {
             /*
              * The type attributes for the function (PURE, ELEMENETAL, etc) are
              * never set to local symbol, so there is no need to filter out them.
              */
             TYPE_ATTR_FLAGS(FUNCTION_TYPE_RETURN_TYPE(tp))
-                    |= (TYPE_ATTR_FLAGS(ip) & ~(TYPE_ATTR_SAVE|TYPE_ATTR_BIND|TYPE_ATTR_PUBLIC|TYPE_ATTR_PRIVATE));
-        }
-        if (TYPE_IS_EXTERNAL(tp) && !IS_PROCEDURE_TYPE(tp)) {
-            tp = function_type(tp);
-            TYPE_UNSET_SAVE(tp);
-            ID_TYPE(ip) = tp;
+                    |= (TYPE_ATTR_FLAGS(ip) &
+                        ~(TYPE_ATTR_SAVE|TYPE_ATTR_BIND|TYPE_ATTR_PUBLIC|TYPE_ATTR_PRIVATE|
+                          TYPE_ATTR_INTENT_INOUT|TYPE_ATTR_INTENT_IN|TYPE_ATTR_INTENT_OUT|
+                          TYPE_ATTR_OPTIONAL|TYPE_ATTR_VALUE|TYPE_ATTR_VOLATILE|TYPE_ATTR_ASYNCHRONOUS));
         }
 
         if (FUNCTION_TYPE_IS_VISIBLE_INTRINSIC(tp)) {
@@ -3019,13 +3099,15 @@ end_declaration()
                                               PARENT_LOCAL_STRUCT_DECLS,
                                               UNIT_CTL_LOCAL_BLOCKS(PARENT_UNIT_CTL),
                                               myId,
-                                              /*is_final = */ FALSE);
+                                              /* forall target =*/ FALSE,
+                                              /* is_final = */ FALSE);
 
             FOREACH_EXT_ID(ep, LOCAL_EXTERNAL_SYMBOLS) {
                 update_procedure_variables_forall(EXT_PROC_ID_LIST(ep),
                                                   EXT_PROC_STRUCT_DECLS(ep),
                                                   EXT_PROC_BLOCKS(ep),
                                                   myId,
+                                                  /* forall target =*/ FALSE,
                                                   /*is_final = */ FALSE);
             }
         }
@@ -3273,9 +3355,9 @@ redefine_procedures(EXT_ID proc, EXT_ID unit_ctl_procs[], int redefine_unit_ctl_
     if(debug_flag) {
         for(i = redefine_unit_ctl_level; i >= 0; i--) fprintf(debug_fp,"  ");
         if (EXT_SYM(proc)) {
-            fprintf(debug_fp,"redefine '%s'\n", SYM_NAME(EXT_SYM(proc)));
+            fprintf(debug_fp,"running redefine_procedures at '%s'\n", SYM_NAME(EXT_SYM(proc)));
         } else {
-            fprintf(debug_fp,"redefine (anonymous)\n");
+            fprintf(debug_fp,"running redefine_procedures at (anonymous)\n");
         }
 
         for(i = redefine_unit_ctl_level; i >= 0; i--) fprintf(debug_fp,"  ");
@@ -3306,8 +3388,22 @@ redefine_procedures(EXT_ID proc, EXT_ID unit_ctl_procs[], int redefine_unit_ctl_
            PROC_CLASS(id) != P_UNDEFINEDPROC)
             continue;
 
+        if(debug_flag) {
+            for(i = redefine_unit_ctl_level; i >= 0; i--) fprintf(debug_fp,"  ");
+            fprintf(debug_fp, "checking %s\n", ID_NAME(id));
+        }
+
+        if (ID_TYPE(id) && ID_STORAGE(id) == STG_ARG) {
+            if (!IS_PROCEDURE_TYPE(ID_TYPE(id))) {
+                ID_TYPE(id) = function_type(ID_TYPE(id));
+            }
+            continue;
+        }
+
         contained_proc = procedure_defined(id, unit_ctl_procs, redefine_unit_ctl_level);
+
         if (contained_proc == NULL) {
+
             EXT_ID external_proc = NULL;
 
             EXT_ID ep;
@@ -3338,9 +3434,31 @@ redefine_procedures(EXT_ID proc, EXT_ID unit_ctl_procs[], int redefine_unit_ctl_
             PROC_EXT_ID(id) = external_proc;
 
         } else {
+            if(debug_flag) {
+                for(i = redefine_unit_ctl_level; i >= 0; i--) fprintf(debug_fp,"  ");
+                fprintf(debug_fp, "found %s in CONTAINS block\n", ID_NAME(id));
+            }
+
             /* undefine procedure is defined in contains statement. */
             PROC_CLASS(id)  = P_DEFINEDPROC;
             PROC_EXT_ID(id) = contained_proc;
+
+            if (IS_SUBR(EXT_PROC_TYPE(contained_proc))) {
+                TYPE_DESC ret = NULL;
+                TYPE_DESC tp = ID_TYPE(id);
+                if (tp) {
+                    TYPE_BASIC_TYPE(tp) = TYPE_SUBR;
+                    if ((ret = FUNCTION_TYPE_RETURN_TYPE(tp))) {
+                        while (ret != NULL) {
+                            TYPE_BASIC_TYPE(ret) = TYPE_VOID;
+                            ret = TYPE_REF(ret);
+                        }
+                    }
+                } else {
+                    ID_TYPE(id) = EXT_PROC_TYPE(contained_proc);
+                }
+            }
+
         }
 
     }
@@ -3936,6 +4054,11 @@ check_type_bound_procedures()
         FOREACH_TYPE_BOUND_GENERIC(mem, tp) {
             FOREACH_ID(binding, TBP_BINDING(mem)) {
                 bindto = find_struct_member(tp, ID_SYM(binding));
+                if (bindto == NULL) {
+                    error("TYPE BOUND PROCEDURE '%s' does not exist", ID_NAME(binding));
+                    break;
+                }
+
                 TBP_BINDING_ATTRS(bindto) |= TBP_BINDING_ATTRS(mem) & (
                         TYPE_BOUND_PROCEDURE_IS_OPERATOR |
                         TYPE_BOUND_PROCEDURE_IS_UNARY_OPERATOR |
@@ -4316,7 +4439,6 @@ end_procedure()
                 ID_NEXT(id) = ip;
                 ID_NEXT(ip) = next;
             }
-            MULTI_ID_LIST(id) = NULL;
         }
     }
 
@@ -4334,7 +4456,9 @@ end_procedure()
         }
 
         if ((ID_CLASS(id) == CL_PROC && PROC_CLASS(id) == P_THISPROC) ||
-            ID_CLASS(id) == CL_ENTRY) {
+            ID_CLASS(id) == CL_ENTRY ||
+	    (ID_CLASS(id) == CL_PROC && PROC_CLASS(id) == P_DEFINEDPROC &&
+	     PROC_IS_RECURSIVE(id) && PROC_RESULTVAR(id))) {
             PROC_CLASS(id) = P_DEFINEDPROC;
             if(unit_ctl_level != 0) {
                 TYPE_DESC tp;
@@ -4419,7 +4543,9 @@ end_procedure()
         update_procedure_variables_forall(EXT_PROC_ID_LIST(ep),
                                           EXT_PROC_STRUCT_DECLS(ep),
                                           EXT_PROC_BLOCKS(ep),
-                                          LOCAL_SYMBOLS, /* is_final = */ TRUE);
+                                          LOCAL_SYMBOLS,
+                                          /* forall target =*/ TRUE,
+                                          /* is_final = */ TRUE);
     }
 
 
@@ -4630,8 +4756,7 @@ compile_DO_statement(range_st_no, construct_name, var, init, limit, incr)
             error("bad type on do variable");
             return;
         }
-        if (TYPE_IS_PROTECTED(var_tp) && TYPE_IS_READONLY(var_tp)) {
-            error("do variable is PROTECTED");
+        if (!check_variable_definition_context(NULL, var_tp, "do variable")) {
             return;
         }
 
@@ -5211,6 +5336,7 @@ shallow_copy_ext_id(EXT_ID original) {
 
 #define ID_SEEM_GENERIC_PROCEDURE(id)                                          \
     (ID_TYPE((id)) != NULL &&                                                  \
+     FUNCTION_TYPE_RETURN_TYPE(ID_TYPE((id))) != NULL &&                       \
      ((ID_CLASS((id)) == CL_PROC &&                                            \
        TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE((id))))               \
          == TYPE_GENERIC) ||                                                   \
@@ -5547,13 +5673,6 @@ import_module_id(ID mid,
         EXT_NEXT(ep) = NULL;
         EXT_PROC_INTR_DEF_EXT_IDS(ep) = NULL;
 
-#if 0
-        if (type_has_replica(EXT_PROC_TYPE(mep), &EXT_PROC_TYPE(ep))) {
-            EXT_PROC_TYPE(ep)
-                    = shallow_copy_type_for_module_id(EXT_PROC_TYPE(mep));
-        }
-#endif
-
         if (EXT_PROC_INTR_DEF_EXT_IDS(mep) != NULL) {
             EXT_ID head, p;
             head = shallow_copy_ext_id(EXT_PROC_INTR_DEF_EXT_IDS(mep));
@@ -5578,18 +5697,21 @@ import_module_id(ID mid,
         // shallow copy type from module
         if (!type_has_replica(ID_TYPE(id), &ID_TYPE(id))) {
             ID_TYPE(id) = shallow_copy_type_for_module_id(ID_TYPE(id));
-
-            TYPE_UNSET_PUBLIC(id);
-            TYPE_UNSET_PRIVATE(id);
-
-            /*
-             * If type is PROTECTED and id is not imported to SUBMODULE,
-             * id should be READ ONLY
-             */
-            if (TYPE_IS_PROTECTED(ID_TYPE(id)) && !fromParentModule) {
-                TYPE_SET_READONLY(ID_TYPE(id));
-            }
         }
+
+        /*
+         * If type is PROTECTED and id is not imported to SUBMODULE,
+         * id should be READ ONLY
+         */
+        if ((TYPE_IS_PROTECTED(ID_TYPE(id)) && !TYPE_IS_POINTER(ID_TYPE(id))) &&
+             !fromParentModule) {
+            TYPE_SET_READONLY(ID_TYPE(id));
+        }
+
+        TYPE_UNSET_PUBLIC(id);
+        TYPE_UNSET_PRIVATE(id);
+        TYPE_UNSET_PUBLIC(ID_TYPE(id));
+        TYPE_UNSET_PRIVATE(ID_TYPE(id));
 
         ID_ADDR(id) = expv_sym_term(F_VAR, ID_TYPE(id), ID_SYM(id));
     }
@@ -5737,15 +5859,23 @@ import_module_ids(struct module *mod, struct use_argument * args,
 
     FOREACH_ID(mid, MODULE_ID_LIST(mod)) {
         if (args != NULL) {
+            int found = FALSE;
             FOREACH_USE_ARG(arg, args) {
                 wrap_type = TRUE;
                 if (arg->local != ID_SYM(mid))
                     continue;
+                found = TRUE;
                 import_module_id(mid,
                                  &LOCAL_SYMBOLS, &last_id,
                                  &LOCAL_STRUCT_DECLS, &sttail,
                                  arg->use, wrap_type, fromParentModule);
                 arg->used = TRUE;
+            }
+            if (!found && !isOnly) {
+                import_module_id(mid,
+                                 &LOCAL_SYMBOLS, &last_id,
+                                 &LOCAL_STRUCT_DECLS, &sttail,
+                                 NULL, wrap_type, fromParentModule);
             }
         } else {
             if (!isOnly) {
@@ -6280,6 +6410,7 @@ end_interface()
             PROC_EXT_ID(fid) = ep;
             EXT_PROC_CLASS(ep) = EP_INTERFACE_DEF;
             ID_ORDER(fid) = ID_ORDER(EXT_PROC_ID_LIST(ep));
+            ID_LINE(fid) = EXT_LINE(EXT_PROC_ID_LIST(ep));
         }
 
         if (INTF_IS_ABSTRACT(EXT_PROC_INTERFACE_INFO(intr))) {
@@ -6433,6 +6564,8 @@ compile_interface_MODULEPROCEDURE_statement(expr x)
 
         if (EXT_PROC_TYPE(ep) != NULL) {
             FUNCTION_TYPE_SET_MOUDLE_PROCEDURE(EXT_PROC_TYPE(ep));
+        } else {
+            EXT_PROC_TYPE(ep) = ID_TYPE(id);
         }
 
         if (ID_TYPE(id) != NULL) {
@@ -6797,10 +6930,7 @@ compile_NULLIFY_statement (expr x)
             error("argument is not a pointer type");
             continue;
         }
-        if (TYPE_IS_PROTECTED(EXPV_TYPE(ev)) && TYPE_IS_READONLY(EXPV_TYPE(ev))) {
-            error("argument is a PROTECTED type");
-            continue;
-        }
+        (void)check_variable_definition_context(NULL, EXPV_TYPE(ev), "argument");
         args = list_put_last(args, ev);
     }
     v = expv_cons(F95_NULLIFY_STATEMENT, NULL, args, NULL);
@@ -6808,6 +6938,17 @@ compile_NULLIFY_statement (expr x)
     output_statement(v);
 }
 
+
+static int
+isSetTypeAttrRecursive(TYPE_DESC tp, uint32_t typeAttrFlags)
+{
+  if (!tp) return 0;
+  else if ((TYPE_ATTR_FLAGS(tp) & typeAttrFlags) > 0) return 1;
+
+  if (TYPE_REF(tp)) return isSetTypeAttrRecursive(TYPE_REF(tp), typeAttrFlags);
+  else return 0;
+}
+  
 
 static int
 isVarSetTypeAttr(expv v, uint32_t typeAttrFlags)
@@ -6818,7 +6959,8 @@ isVarSetTypeAttr(expv v, uint32_t typeAttrFlags)
     case F_VAR:
     case F95_MEMBER_REF:
         tp = EXPV_TYPE(v);
-        return tp && ((TYPE_ATTR_FLAGS(tp) & typeAttrFlags) > 0);
+        //return tp && ((TYPE_ATTR_FLAGS(tp) & typeAttrFlags) > 0);
+	return isSetTypeAttrRecursive(tp, typeAttrFlags);
     case ARRAY_REF:
     case XMP_COARRAY_REF:
         return isVarSetTypeAttr(EXPR_ARG1(v), typeAttrFlags);
@@ -6865,7 +7007,7 @@ compile_ALLOCATE_DEALLOCATE_statement(expr x)
                     error("duplicate stat keyword");
                 }
 
-                vstat = compile_expression(v);
+                vstat = v;
 
                 if (vstat == NULL || (EXPR_CODE(vstat) != F_VAR &&
                                       EXPR_CODE(vstat) != ARRAY_REF &&
@@ -6882,7 +7024,7 @@ compile_ALLOCATE_DEALLOCATE_statement(expr x)
                     error("duplicate mold keyword");
                 }
 
-                vmold = compile_expression(v);
+                vmold = v;
 
             } else if (strcmp(SYM_NAME(EXPR_SYM(kwd)), "source") == 0) {
                 if (code == F95_DEALLOCATE_STATEMENT) {
@@ -6893,14 +7035,14 @@ compile_ALLOCATE_DEALLOCATE_statement(expr x)
                     error("duplicate source keyword");
                 }
 
-                vsource = compile_expression(v);
+                vsource = v;
 
             } else if (strcmp(SYM_NAME(EXPR_SYM(kwd)), "errmsg") == 0) {
                 if (verrmsg != NULL) {
                     error("duplicate errmsg keyword");
                 }
 
-                verrmsg = compile_expression(v);
+                verrmsg = v;
 
                 if (verrmsg == NULL || (EXPR_CODE(verrmsg) != F_VAR &&
                                         EXPR_CODE(verrmsg) != ARRAY_REF &&
@@ -6908,11 +7050,10 @@ compile_ALLOCATE_DEALLOCATE_statement(expr x)
                     error("invalid errmsg variable");
 
                 }
-                
+
                 if(IS_CHAR(EXPV_TYPE(verrmsg)) == FALSE) {
                     error("errmsg variable is not a scala character type");
                 }
-
 
             }
         } else {
@@ -6961,14 +7102,10 @@ compile_ALLOCATE_DEALLOCATE_statement(expr x)
     }
 
     if (vstat) {
-        if (TYPE_IS_PROTECTED(EXPV_TYPE(vstat)) && TYPE_IS_READONLY(EXPV_TYPE(vstat))) {
-            error("an argument for STAT is PROTECTED");
-        }
+        (void)check_variable_definition_context(NULL, EXPV_TYPE(vstat), "an argument for STAT");
     }
     if (verrmsg) {
-        if (TYPE_IS_PROTECTED(EXPV_TYPE(verrmsg)) && TYPE_IS_READONLY(EXPV_TYPE(verrmsg))) {
-            error("an argument for ERRMSG is PROTECTED");
-        }
+        (void)check_variable_definition_context(NULL, EXPV_TYPE(verrmsg), "an argument for ERRMSG");
     }
 
     /*
@@ -6976,30 +7113,48 @@ compile_ALLOCATE_DEALLOCATE_statement(expr x)
      */
 
     FOR_ITEMS_IN_LIST(lp, args) {
+        TYPE_DESC ltp = NULL;
+
         if (tp) {
-            if (!type_is_compatible_for_allocation(EXPV_TYPE(LIST_ITEM(lp)),
+            TYPE_DESC tq = EXPV_TYPE(LIST_ITEM(lp));
+            if (IS_ARRAY_TYPE(tq)) {
+                tq = get_bottom_ref_type(tq);
+            }
+
+            if (!type_is_compatible_for_allocation(tq,
                                                    tp)) {
                 error("type incompatible");
                 return;
             }
 
-            if (TYPE_IS_PROTECTED(tp) && TYPE_IS_READONLY(tp)) {
-                error("an argument for STAT is PROTECTED");
+            if (!check_variable_definition_context(NULL, tp, "an argument for STAT")) {
+                return;
             }
         }
 
+        ltp = EXPV_TYPE(LIST_ITEM(lp));
+        if (EXPR_CODE(LIST_ITEM(lp)) == ARRAY_REF) {
+            /*
+             * arg seems F_ARRAY_REF (ex. a(10, 10)),
+             * but it have the array type in the ALLOCATE statement.
+             * So change its type.
+             */
+            ltp = compile_dimensions(bottom_type(ltp), EXPR_ARG2(LIST_ITEM(lp)));
+            fix_array_dimensions(ltp);
+            EXPV_TYPE(LIST_ITEM(lp)) = ltp;
+        }
+
         if (vsource) {
-            if (!type_is_compatible_for_allocation(EXPV_TYPE(LIST_ITEM(lp)),
-                                                  EXPV_TYPE(vsource))) {
+            if (!type_is_compatible_for_allocation(ltp, EXPV_TYPE(vsource))) {
                 error("type incompatible");
                 return;
             }
         }
+
         if (vmold) {
-            if (!type_is_compatible_for_allocation(EXPV_TYPE(LIST_ITEM(lp)),
-                                                  EXPV_TYPE(vmold))) {
-                return;
+            if (!type_is_compatible_for_allocation(ltp, EXPV_TYPE(vmold))) {
                 error("type incompatible");
+                return;
             }
         }
     }
@@ -7056,6 +7211,7 @@ compile_CALL_member_procedure_statement(expr x)
     ID mem;
     expv structRef;
     expr x1, x2, args;
+    TYPE_DESC atp = NULL;
     TYPE_DESC stp;
     TYPE_DESC tp;
     expv v = NULL;
@@ -7069,12 +7225,17 @@ compile_CALL_member_procedure_statement(expr x)
 
     structRef = compile_lhs_expression(x1);
 
-    if (!IS_STRUCT_TYPE(EXPV_TYPE(structRef))) {
+    stp = EXPV_TYPE(structRef);
+
+    if (IS_ARRAY_TYPE(stp)) {
+        atp = stp;
+        stp = bottom_type(atp);
+    }
+
+    if (!IS_STRUCT_TYPE(stp)) {
         error("invalid calling member procedure of non derived-type");
         return;
     }
-
-    stp = EXPV_TYPE(structRef);
 
     mem = find_struct_member(stp, EXPR_SYM(x2));
 
@@ -7095,7 +7256,48 @@ compile_CALL_member_procedure_statement(expr x)
         TYPE_BASIC_TYPE(tp) = TYPE_SUBR;
     }
 
-    if (!IS_SUBR(tp) && !TYPE_BOUND_GENERIC_TYPE_GENERICS(tp)) {
+    if (IS_PROCEDURE_POINTER(tp)) {
+        tp = TYPE_REF(tp);
+    }
+
+    if (FUNCTION_TYPE_RETURN_TYPE(tp) != NULL &&
+        (FUNCTION_TYPE_HAS_UNKNOWN_RETURN_TYPE(tp) ||
+         FUNCTION_TYPE_HAS_IMPLICIT_RETURN_TYPE(tp))) {
+        TYPE_BASIC_TYPE(ID_TYPE(mem)) = TYPE_SUBR;
+        TYPE_SET_USED_EXPLICIT(tp);
+        TYPE_BASIC_TYPE(tp) = TYPE_SUBR;
+        TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) = TYPE_VOID;
+        TYPE_ATTR_FLAGS(FUNCTION_TYPE_RETURN_TYPE(tp)) = 0;
+        TYPE_REF(FUNCTION_TYPE_RETURN_TYPE(tp)) = NULL;
+    }
+
+    /**
+     * Fix for issue#531
+     * Check if binded procedure has been declared already. 
+     * If not, we have to switch the type has it is set to TYPE_FUNCTION 
+     * by default and we want to deal with SUBROUTINE for a CALL xx%yy
+     */
+    if(TBP_BINDING(mem) && !find_ident(ID_SYM(TBP_BINDING(mem)))
+        && TYPE_BASIC_TYPE(tp) == TYPE_FUNCTION)
+    {
+        TYPE_BASIC_TYPE(tp) = TYPE_SUBR;
+        TYPE_SET_USED_EXPLICIT(tp);
+    } else if(TBP_BINDING(mem) && find_ident(ID_SYM(TBP_BINDING(mem)))) {
+        // id has been declared but no type yet
+        ID tbp = find_ident(ID_SYM(TBP_BINDING(mem)));
+        if(ID_TYPE(tbp) == NULL) {
+            TYPE_BASIC_TYPE(tp) = TYPE_SUBR;
+            TYPE_SET_USED_EXPLICIT(tp);
+        }
+    }
+
+    if (!TYPE_IS_IMPLICIT(tp) &&
+        !FUNCTION_TYPE_IS_GENERIC(tp) &&
+        !IS_SUBR(tp) &&
+        !(FUNCTION_TYPE_RETURN_TYPE(tp) != NULL &&
+          (IS_VOID(FUNCTION_TYPE_RETURN_TYPE(tp)) ||
+           IS_GNUMERIC_ALL(FUNCTION_TYPE_RETURN_TYPE(tp)) ||
+           IS_GENERIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp))))) {
         error("'%s' is not a subroutine", SYM_NAME(EXPR_SYM(x2)));
         return;
     }
@@ -7131,7 +7333,7 @@ compile_CALL_member_procedure_statement(expr x)
 }
 
 
-static void
+ void
 compile_CALL_subroutine_statement(expr x)
 {
     expr x1;
@@ -7186,7 +7388,7 @@ compile_CALL_subroutine_statement(expr x)
                 !(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)) != NULL &&
                   (IS_VOID(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id))) ||
                    TYPE_IS_IMPLICIT(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id))) ||
-                   IS_GENERIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)))))) {
+                   IS_GNUMERIC_ALL(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)))))) {
                 error("called '%s' which doesn't have a type like a subroutine", ID_NAME(id));
                 return;
             }
@@ -7504,6 +7706,7 @@ static int markAsPublic(ID id)
     TYPE_UNSET_PRIVATE(id);
     if(tp != NULL) {
         TYPE_ACCESS_IS_INFERRED(tp) = FALSE;
+        TYPE_UNSET_PRIVATE(tp);
     }
     
     return TRUE;
@@ -7520,6 +7723,7 @@ static int markAsPrivate(ID id)
     TYPE_SET_PRIVATE(id);
     if(tp != NULL) {
         TYPE_ACCESS_IS_INFERRED(tp) = FALSE;
+        TYPE_UNSET_PUBLIC(tp);
     }
 
     return TRUE;
@@ -7725,7 +7929,9 @@ pointer_assignable(expr x,
         return FALSE;
     }
 
-    if (TYPE_IS_PROTECTED(vPtrTyp) && TYPE_IS_READONLY(vPtrTyp)) {
+    if (TYPE_IS_READONLY(vPtrTyp) &&
+        (TYPE_IS_PROTECTED(vPtrTyp) && !TYPE_IS_POINTER(vPtrTyp))) {
+
         if (x) error_at_node(x, "'%s' is PROTECTED.",
                              SYM_NAME(EXPR_SYM(EXPR_ARG1(x))));
         return FALSE;
@@ -7952,10 +8158,11 @@ accept:
 
             } else {
                 if (get_bottom_ref_type(vPtrTyp) == get_bottom_ref_type(vPteTyp)) {
-                    /* DO NOTHING */
-                } else if ((IS_FUNCTION_TYPE(vPteTyp) &&
-                     TYPE_IS_IMPLICIT(FUNCTION_TYPE_RETURN_TYPE(vPteTyp)))
-                    && TYPE_REF(vPtrTyp)) {
+                    /* DO NOTHING, procedures are the same type */
+                } else if (IS_FUNCTION_TYPE(vPteTyp) &&
+                           TYPE_IS_IMPLICIT(vPteTyp) &&
+                           !TYPE_IS_EXTERNAL(vPteTyp) &&
+                           TYPE_REF(vPtrTyp)) {
                     /*
                      * ex)
                      *  i = g()
@@ -7970,7 +8177,8 @@ accept:
 
                     TYPE_REF(vPteTyp) = ftp;
                     TYPE_REF(FUNCTION_TYPE_RETURN_TYPE(vPteTyp)) = FUNCTION_TYPE_RETURN_TYPE(ftp);
-                    TYPE_ATTR_FLAGS(vPteTyp) = 0;
+                    /* maybe, g is a procedure pointer */
+                    TYPE_ATTR_FLAGS(vPteTyp) &= TYPE_ATTR_POINTER;
                     TYPE_EXTATTR_FLAGS(vPteTyp) = 0;
                     TYPE_ATTR_FLAGS(FUNCTION_TYPE_RETURN_TYPE(vPteTyp)) = 0;
                     TYPE_EXTATTR_FLAGS(FUNCTION_TYPE_RETURN_TYPE(vPteTyp)) = 0;
@@ -8610,11 +8818,9 @@ compile_stat_args(expv st, expr x, int expect_acquired_lock) {
                 return FALSE;
             }
 
-            if (TYPE_IS_PROTECTED(EXPV_TYPE(arg)) && TYPE_IS_READONLY(EXPV_TYPE(arg))) {
-                error("acquired_lock variable is PROTECTED");
+            if (!check_variable_definition_context(NULL, EXPV_TYPE(arg), "acquired_lock variable")) {
                 return FALSE;
             }
-
 
         } else {
             error("unexpected specifier '%s'", keyword);
@@ -8795,9 +9001,10 @@ compile_LOCK_statement(expr x) {
         error("The first argument of lock statement must be LOCK_TYPE");
         return;
     }
-    if (TYPE_IS_PROTECTED(EXPV_TYPE(lock_variable)) &&
-        TYPE_IS_READONLY(EXPV_TYPE(lock_variable))) {
-        error("an argument is PROTECTED");
+
+    if (!check_variable_definition_context(NULL, EXPV_TYPE(lock_variable),
+                                           "an argument")) {
+        return;
     }
 
     sync_stat_list = list0(LIST);
@@ -8839,9 +9046,10 @@ compile_UNLOCK_statement(expr x) {
         error("The first argument of unlock statement must be LOCK_TYPE");
         return;
     }
-    if (TYPE_IS_PROTECTED(EXPV_TYPE(lock_variable)) &&
-        TYPE_IS_READONLY(EXPV_TYPE(lock_variable))) {
-        error("an argument is PROTECTED");
+
+    if (!check_variable_definition_context(NULL, EXPV_TYPE(lock_variable),
+                                           "an argument")) {
+        return;
     }
 
     sync_stat_list = list0(LIST);
@@ -8990,13 +9198,18 @@ import_ident(ID id)
     FOREACH_ID(ip, LOCAL_SYMBOLS) {
         last_ip = ip;
     }
-    ID_LINK_ADD(imported, LOCAL_SYMBOLS, last_ip);
+    if (ID_CLASS(id) == CL_MULTI) {
+        FOREACH_ID(ip, MULTI_ID_LIST(id)) {
+            import_ident(ip);
+        }
+        return;
+    }
 
+    ID_LINK_ADD(imported, LOCAL_SYMBOLS, last_ip);
     if (ID_CLASS(id) == CL_TAGNAME) {
         TYPE_DESC stp;
         TYPE_DESC tp;
         TYPE_DESC last_tp = NULL;
-
         for (tp = LOCAL_STRUCT_DECLS; tp != NULL; tp = TYPE_SLINK(tp)) {
             last_tp = tp;
         }
@@ -9031,7 +9244,7 @@ compile_IMPORT_statement(expr x)
     } else if (EXPR_LIST(ident_list)) {
         FOR_ITEMS_IN_LIST(lp, ident_list) {
             arg = LIST_ITEM(lp);
-            if ((ident = find_ident_parent(EXPR_SYM(arg))) == NULL){
+            if ((ident = find_ident_parent(EXPR_SYM(arg))) == NULL) {
                 error("%s part of the IMPORT statement has not been declared yet.",
                       SYM_NAME(EXPR_SYM(arg)));
             }
@@ -9958,3 +10171,31 @@ compile_ENDASSOCIATE_statement(expr x)
     pop_env();
     CURRENT_STATE = INEXEC;
 }
+
+int
+check_variable_definition_context(const expr x,
+                                  const TYPE_DESC tp,
+                                  const char target_errmsg[])
+{
+    if (TYPE_IS_READONLY(tp)) {
+        if (TYPE_IS_PROTECTED(tp) && !TYPE_IS_POINTER(tp)) {
+            if (x != NULL) {
+                error_at_node(x, "%s is a non-pointer PROTECTED", target_errmsg);
+                return FALSE;
+            } else {
+                error("%s is a non-pointer PROTECTED", target_errmsg);
+                return FALSE;
+            }
+        } else {
+            if (x != NULL) {
+                error_at_node(x, "%s is read only", target_errmsg);
+                return FALSE;
+            } else {
+                error("%s is read only", target_errmsg);
+                return FALSE;
+            }
+        }
+    }
+    return TRUE;
+}
+

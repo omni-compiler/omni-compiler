@@ -36,6 +36,9 @@ public class XmOption
 
     /** target language ID */
     private static XmLanguage _language = XmLanguage.C;
+
+    /** Name of tht main function */
+    private static String _mainName = "";
     
     /** if transforming Fortran IO statement as atomic operation */
     private static boolean _isAtomicIO = false;
@@ -256,6 +259,22 @@ public class XmOption
         return _language;
     }
 
+    /**
+     * Set name of the main function
+     */
+    public static void setMainName(String main_name)
+    {
+        _mainName = main_name;
+    }
+    
+    /**
+     * Get name of the main function
+     */
+    public static String getMainName()
+    {
+        return _mainName;
+    }
+    
     /**
      * Return if the language is C
      */

@@ -1,3 +1,4 @@
+/* -*- Mode: java; c-basic-offset:2 ; indent-tabs-mode:nil ; -*- */
 package exc.util;
 
 import java.io.*;
@@ -70,6 +71,8 @@ public class omompx
       "  -max_assumed_shape=N  set max number of assumed-shape arrays of a proedure (for Fortran).",
       "  -decomp      output decompiled source code.",
       "  -silent      no output.",
+      "  -rename_main=NAME",
+      "               rename the main function NAME.",
       "",
       " Debug Options:",
       "  -d           enable output debug message.",
@@ -177,6 +180,9 @@ public class omompx
         outputDecomp = true;
       } else if(arg.equals("-silent")){
         silent = true;
+      } else if(arg.startsWith("-rename_main=")) {
+        String main_name = arg.substring(arg.indexOf("=") + 1);
+        XmOption.setMainName(main_name);
       } else if(arg.equals("-dump")) {
         dump = true;
         outputXcode = true;
@@ -243,7 +249,8 @@ public class omompx
       }
     }
         
-    doScalasca = (all_profile == true || selective_profile == true) && (doScalasca == false && doTlog == false);
+    doScalasca = (all_profile == true || selective_profile == true) 
+      && (doScalasca == false && doTlog == false);
 
     Reader reader = null;
     File dir      = null;
@@ -277,7 +284,9 @@ public class omompx
     XmOption.setIsXcalableACC(xcalableACC);
     
     // read XcodeML
-    XcodeMLtools tools = (XmOption.getLanguage() == XmLanguage.F)? new XcodeMLtools_F() : new XcodeMLtools_C();
+    XcodeMLtools tools = 
+      (XmOption.getLanguage() == XmLanguage.F)? 
+      new XcodeMLtools_F() : new XcodeMLtools_C();
     XobjectFile xobjFile = tools.read(reader);
     
     if (inXmlFile != null) reader.close();
@@ -345,7 +354,7 @@ public class omompx
           xobjFile.addHeaderLine("# include \"openacc.h\"");
         }
       }
-      xmpTranslator.finalize();
+      xmpTranslator.finish();
 
       if(xcodeWriter != null) {
         xobjFile.Output(xcodeWriter);
