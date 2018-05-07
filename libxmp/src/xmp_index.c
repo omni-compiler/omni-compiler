@@ -4,6 +4,10 @@
 void _XMP_L2G(int local_idx, long long int *global_idx,
 	      _XMP_template_t *template, int template_index)
 {
+  if(! template->is_owner){
+    return;
+  }
+
   _XMP_template_chunk_t *chunk = &(template->chunk[template_index]);
   _XMP_nodes_info_t *n_info = chunk->onto_nodes_info;
   long long base = template->info[template_index].ser_lower;
