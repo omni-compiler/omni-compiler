@@ -2309,11 +2309,15 @@ declare_id_type(ID id, TYPE_DESC tp)
             tpp = tp;
             while(TYPE_REF(tpp) != NULL && IS_ARRAY_TYPE(TYPE_REF(tpp)))
                 tpp = TYPE_REF(tpp);
-            if (TYPE_REF(tpp) != NULL && !type_is_soft_compatible(tq, TYPE_REF(tpp)))
-                goto no_compatible;
-            if (TYPE_REF(tpp) == NULL ||
-                type_is_specific_than(tq, TYPE_REF(tpp)))
-                TYPE_REF(tpp) = tq;
+            if (TYPE_REF(tpp) != NULL 
+                && !type_is_soft_compatible(tq, TYPE_REF(tpp))) 
+            {
+                if(TYPE_BASIC_TYPE(TYPE_REF(tpp)) == TYPE_FUNCTION) {
+                    TYPE_REF(tpp) = tq;
+                } else {
+                    goto no_compatible;
+                }
+            }
         }
         *id_type = tp;
         return;
