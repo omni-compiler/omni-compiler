@@ -166,6 +166,15 @@ typedef enum xmpt_event_e {
   xmpt_event_sync_images_begin     = 37,
   xmpt_event_sync_images_end       = 38,
 
+  // data mapping
+  xmpt_event_nodes_desc_begin      = 39,
+  xmpt_event_nodes_desc_end        = 40,
+  xmpt_event_template_desc_begin   = 41,
+  xmpt_event_template_desc_end     = 42,
+  xmpt_event_array_desc_begin      = 43,
+  xmpt_event_array_desc_end        = 44,
+  xmpt_event_template_fix          = 45,
+
   XMPT_EVENT_ALL
   
 } xmpt_event_t;

@@ -45,6 +45,15 @@ int xmpt_support_level[XMPT_EVENT_ALL+1] = {
   2, /* xmpt_event_sync_images_all_end */
   4, /* xmpt_event_sync_images_begin */
   4, /* xmpt_event_sync_images_end */
+
+  2, /* xmpt_event_nodes_desc_begin */
+  2, /* xmpt_event_nodes_desc_end */
+  2, /* xmpt_event_template_desc_begin */
+  2, /* xmpt_event_template_desc_end */
+  2, /* xmpt_event_array_desc_begin */
+  2, /* xmpt_event_array_desc_end */
+  2, /* xmpt_event_template_fix */
+
   0  /* XMPT_EVENT_ALL */
 };
 
