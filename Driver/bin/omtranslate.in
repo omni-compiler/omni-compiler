@@ -1,10 +1,5 @@
 #!/bin/bash
 
-# $TSUKUBA_Release: Omni OpenMP Compiler 3 $
-# $TSUKUBA_Copyright:
-#  PLEASE DESCRIBE LICENSE AGREEMENT HERE
-#  $
-
 defSetupConf="@OM_DRIVER_CONF_DIR@/setup.conf"
 if test ! -z "${OMNI_HOME}"; then
     setupConf="${OMNI_HOME}/etc/setup.conf"

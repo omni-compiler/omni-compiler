@@ -2135,6 +2135,8 @@ AC_CONFIG_FILES(Driver/bin/ompcc)
 AC_CONFIG_FILES(Driver/bin/ompf90)
 AC_CONFIG_FILES(Driver/bin/xmpcc)
 AC_CONFIG_FILES(Driver/bin/xmpf90)
+AC_CONFIG_FILES(Driver/bin/C_Trans)
+AC_CONFIG_FILES(Driver/bin/F_Trans)
 #--------------------------------------------------------------------
 genLibTargetTmpl () {
     dir=$1
