@@ -1,4 +1,4 @@
-Implementation Status version 1.1.1
+Implementation Status version 1.3.0
 ---------------------------------------
 # General
 Current implementaion supports almost parts of OpenACC 1.0 and some feature of OpenACC 2.0.

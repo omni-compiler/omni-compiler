@@ -1,4 +1,5 @@
 #include <string.h>
+#include <stdlib.h>
 #include "xmp_internal.h"
 #include "xmp_math_function.h"
 
@@ -485,8 +486,28 @@ static void _local_NON_contiguous_copy(char *dst, const char *src, const int dst
       _XMP_set_stride(src_stride, src_info, src_dims, copy_chunk, copy_elmts);
 
     // Execute local memory copy
-    for(size_t i=0;i<copy_elmts;i++)
-      memcpy(dst+dst_stride[i], src+src_stride[i], copy_chunk);
+    if(_XMP_check_overlapping(dst+dst_stride[0], dst+dst_stride[copy_elmts-1]+copy_chunk,
+			      src+src_stride[0], src+src_stride[copy_elmts-1]+copy_chunk)){
+
+      char *tmp = malloc(copy_elmts * copy_chunk);
+
+      size_t offset = 0;
+      for(size_t i=0;i<copy_elmts;i++){
+	memcpy(tmp+offset, src+src_stride[i], copy_chunk);
+	offset += copy_chunk;
+      }
+
+      offset = 0;
+      for(size_t i=0;i<copy_elmts;i++){
+	memmove(dst+dst_stride[i], tmp+offset, copy_chunk);
+	offset += copy_chunk;
+      }
+
+      free(tmp);
+    }
+    else
+      for(size_t i=0;i<copy_elmts;i++)
+	memcpy(dst+dst_stride[i], src+src_stride[i], copy_chunk);
   }
   else if(src_elmts == 1){     /* a[0:100:2]:[1] = b[2]; or a[0:100:2] = b[2]:[1]; */
     switch (dst_dims){

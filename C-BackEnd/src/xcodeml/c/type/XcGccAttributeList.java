@@ -1,9 +1,3 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package xcodeml.c.type;
 
 import java.util.ArrayList;
@@ -11,10 +5,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-
-import xcodeml.XmException;
-//import xcodeml.c.binding.gen.IRVisitable;
-//import xcodeml.c.binding.gen.XbcGccAttributes;
+import xcodeml.util.XmException;
 import xcodeml.c.decompile.XcObj;
 import xcodeml.c.obj.XcNode;
 import xcodeml.c.util.XmcWriter;
@@ -58,6 +49,18 @@ public class XcGccAttributeList extends XcObj implements XcLazyEvalType
         _attrs.add(attr);
     }
 
+    public boolean isGccAligned() throws XmException
+    {
+      Iterator<XcGccAttribute> iter = _attrs.iterator();
+
+      while (iter.hasNext()) {
+        if(iter.next().getName().equals("aligned"))
+          return true;
+      }
+      
+      return false;
+    }
+  
     @Override
     public void appendCode(XmcWriter w) throws XmException
     {

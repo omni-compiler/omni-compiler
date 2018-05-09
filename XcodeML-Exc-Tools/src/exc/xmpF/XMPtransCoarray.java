@@ -1,10 +1,3 @@
-/* 
- * $TSUKUBA_Release: Omni XMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
-
 package exc.xmpF;
 
 import exc.object.*;
@@ -18,8 +11,9 @@ public class XMPtransCoarray implements XobjectDefVisitor
 {
   XMPenv env;
   private int pass;
-  private int version;
-  private Boolean useMalloc;
+  private int version = 3;             // default (useMalloc=true, optLevel=1)
+  private Boolean useMalloc = true;    // default (use RA or RS method for mamory allocation)
+  private int optLevel = 0;            // default
   private Boolean onlyCafMode;
 
   private ArrayList<XMPtransCoarrayRun> pastRuns;
@@ -43,7 +37,7 @@ public class XMPtransCoarray implements XobjectDefVisitor
 
   public void finish()
   {
-    env.finalize();
+    env.finalizeEnv();
   }
     
 
@@ -53,27 +47,44 @@ public class XMPtransCoarray implements XobjectDefVisitor
 
   private void _set_version(String suboption)
   {
-    if (suboption == null || "".equals(suboption)) {
-      // default
-      version = 3;
-      useMalloc = true;
-    } else if ("3".equals(suboption)) {
-      version = 3;
-      useMalloc = true;
-    } else if ("4".equals(suboption)) {
-      version = 4;
-      useMalloc = false;
-    } else if ("6".equals(suboption)) {
-      version = 6;
-      useMalloc = false;
-    } else if ("7".equals(suboption)) {
-      version = 7;
-      useMalloc = false;
-    } else if ("7g".equals(suboption)) {
-      version = 7;
-      useMalloc = true;
-    } else {
-      XMP.fatal("suboption usage: -fcoarray[={3|4|6|7|7g}]");
+    if (suboption == null || "".equals(suboption))
+      return;
+
+    for (String token: suboption.split(",", 0)) {
+      if ("-O0".equalsIgnoreCase(token)) {      // no optimization for GET communication
+        optLevel = 0;
+      } else if ("-O1".equalsIgnoreCase(token)) { // convert to subroutine call for GET if available
+        optLevel = 1;
+      } else if ("RA".equalsIgnoreCase(token)) { // RuntimeAllocation (RA) method or RS method
+        version = 3;
+        useMalloc = true;
+      } else if ("CA".equalsIgnoreCase(token)) {  // CompilerAllocation (CA) method 
+        version = 4;
+        useMalloc = false;
+      }
+      //--- old fashioned ----
+      else if ("3".equals(token)) {     // RA method or RS method
+        version = 3;
+        useMalloc = true;
+      } else if ("4".equals(token)) {   // CA method
+        version = 4;
+        useMalloc = false;        
+      } else if ("6".equals(token)) {   // >=6 versions are under developping
+        version = 6;
+        useMalloc = false;
+      } else if ("7".equals(token)) {
+        version = 7;
+        useMalloc = false;
+      } else if ("7g".equals(token)) {
+        version = 7;
+        useMalloc = true;
+      }
+
+      else {
+        XMP.fatal("found illegal suboption of coarray. \n" +
+                  "  Usage: -fcoarray={{RA|CA}|{-O0|-O1}|{3|4|6|7|7g}},...\n" +
+                  "  Default: RA,-O0 and 3");
+      }
     }
   }
 
@@ -98,8 +109,8 @@ public class XMPtransCoarray implements XobjectDefVisitor
       break;
 
     case 1:               // for both procedures and modules
-      transCoarrayRun = new XMPtransCoarrayRun(d, env, pastRuns, 1, version,
-                                               useMalloc, onlyCafMode);
+      transCoarrayRun = new XMPtransCoarrayRun
+        (d, env, pastRuns, 1, version, useMalloc, onlyCafMode, optLevel);
       transCoarrayRun.run1();
       // assuming top-down translation along host-association
       pastRuns.add(transCoarrayRun);
@@ -109,21 +120,21 @@ public class XMPtransCoarray implements XobjectDefVisitor
     case 2:               // second pass for modules
       if (!is_module)
         return;
-      transCoarrayRun = new XMPtransCoarrayRun(d, env, pastRuns, 2, version,
-                                               useMalloc, onlyCafMode);
+      transCoarrayRun = new XMPtransCoarrayRun
+        (d, env, pastRuns, 2, version, useMalloc, onlyCafMode, optLevel);
       transCoarrayRun.run2();
       //transCoarrayRun.finalize();
       break;
 
     case 3:               // for both procedures and modules
-      transCoarrayRun = new XMPtransCoarrayRun(d, env,     null, 3, version,
-                                               useMalloc, onlyCafMode);
+      transCoarrayRun = new XMPtransCoarrayRun
+        (d, env,     null, 3, version, useMalloc, onlyCafMode, optLevel);
       transCoarrayRun.run3();
       break;
 
     case 4:               // for both procedures and modules
-      transCoarrayRun = new XMPtransCoarrayRun(d, env,     null, 4, version,
-                                               useMalloc, onlyCafMode);
+      transCoarrayRun = new XMPtransCoarrayRun
+        (d, env,     null, 4, version, useMalloc, onlyCafMode, optLevel);
       transCoarrayRun.run4();
       break;
 

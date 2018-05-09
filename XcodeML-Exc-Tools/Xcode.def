@@ -1,0 +1,476 @@
+L   NULL
+
+# -----------------
+# FOR any list this must be first LIST
+L   LIST
+
+# -----------------
+# C: Terminal Node. DO NOT change.
+T   ID_LIST
+T   IDENT		
+T   STRING_CONSTANT            XbcStringConstant
+T   INT_CONSTANT               XbcIntConstant              XbfFintConstant
+T   FLOAT_CONSTANT             XbcFloatConstant            XbfFrealConstant
+T   LONG_CONSTANT
+T   LONGLONG_CONSTANT	       XbcLonglongConstant         XbfFintConstant
+T   MOE_CONSTANT               XbcMoeConstant
+
+# -----------------
+# C: Declaration / Definition
+L   FUNCTION_DEFINITION        XbcFunctionDefinition       XbfFfunctionDefinition
+L   VAR_DECL                   XbcVarDecl                  XbfVarDecl
+L   FUNCTION_DECL              XbcFunctionDecl             XbfFfunctionDecl
+
+# -----------------
+# C: Statement
+S   COMPOUND_STATEMENT         XbcCompoundStatement
+S   EXPR_STATEMENT             XbcExprStatement            XbfExprStatement
+S   WHILE_STATEMENT            XbcWhileStatement
+S   DO_STATEMENT               XbcDoStatement
+S   FOR_STATEMENT              XbcForStatement
+S   IF_STATEMENT               XbcIfStatement
+S   SWITCH_STATEMENT           XbcSwitchStatement
+S   BREAK_STATEMENT            XbcBreakStatement
+S   RETURN_STATEMENT           XbcReturnStatement          XbfFreturnStatement
+S   GOTO_STATEMENT             XbcGotoStatement
+S   CONTINUE_STATEMENT         XbcContinueStatement
+S   STATEMENT_LABEL            XbcStatementLabel           XbfStatementLabel
+S   CASE_LABEL                 XbcCaseLabel
+S   DEFAULT_LABEL              XbcDefaultLabel
+
+# -----------------
+# C: Expression
+L   CONDITIONAL_EXPR           XbcCondExpr
+L   COMMA_EXPR                 XbcCommaExpr
+A   ASSIGN_EXPR                XbcAssignExpr
+B   PLUS_EXPR                  XbcPlusExpr                 XbfPlusExpr
+A   ASG_PLUS_EXPR              XbcAsgPlusExpr
+B   MINUS_EXPR                 XbcMinusExpr                XbfMinusExpr
+A   ASG_MINUS_EXPR             XbcAsgMinusExpr
+U   UNARY_MINUS_EXPR           XbcUnaryMinusExpr           XbfUnaryMinusExpr
+B   MUL_EXPR                   XbcMulExpr                  XbfMulExpr
+A   ASG_MUL_EXPR               XbcAsgMulExpr
+B   DIV_EXPR                   XbcDivExpr                  XbfDivExpr
+A   ASG_DIV_EXPR               XbcAsgDivExpr
+B   MOD_EXPR                   XbcModExpr
+A   ASG_MOD_EXPR               XbcAsgModExpr
+B   LSHIFT_EXPR                XbcLshiftExpr
+A   ASG_LSHIFT_EXPR            XbcAsgLshiftExpr
+B   RSHIFT_EXPR                XbcRshiftExpr
+A   ASG_RSHIFT_EXPR            XbcAsgRshiftExpr
+B   BIT_AND_EXPR               XbcBitAndExpr
+A   ASG_BIT_AND_EXPR           XbcAsgBitAndExpr
+B   BIT_OR_EXPR                XbcBitOrExpr
+A   ASG_BIT_OR_EXPR            XbcAsgBitOrExpr
+B   BIT_XOR_EXPR               XbcBitXorExpr
+A   ASG_BIT_XOR_EXPR           XbcAsgBitXorExpr
+U   BIT_NOT_EXPR               XbcBitNotExpr
+L   DESIGNATED_VALUE           XbcDesignatedValue
+L   COMPOUND_VALUE             XbcCompoundValueExpr
+L   COMPOUND_VALUE_ADDR        XbcCompoundValueAddrExpr
+
+# -----------------
+# C: Logical Expression
+B   LOG_EQ_EXPR                XbcLogEQExpr                 XbfLogEQExpr
+B   LOG_NEQ_EXPR               XbcLogNEQExpr                XbfLogNEQExpr
+B   LOG_GE_EXPR                XbcLogGEExpr                 XbfLogGEExpr
+B   LOG_GT_EXPR                XbcLogGTExpr                 XbfLogGTExpr
+B   LOG_LE_EXPR                XbcLogLEExpr                 XbfLogLEExpr
+B   LOG_LT_EXPR                XbcLogLTExpr                 XbfLogLTExpr
+B   LOG_AND_EXPR               XbcLogAndExpr                XbfLogAndExpr
+B   LOG_OR_EXPR                XbcLogOrExpr                 XbfLogOrExpr
+U   LOG_NOT_EXPR               XbcLogNotExpr                XbfLogNotExpr
+
+# -----------------
+# C: Primary Expression
+P   FUNCTION_CALL              XbcFunctionCall              XbfFunctionCall
+P   POINTER_REF	               XbcPointerRef
+P   SIZE_OF_EXPR               XbcSizeOfExpr
+P   CAST_EXPR                  XbcCastExpr
+P   PRE_INCR_EXPR              XbcPreIncrExpr
+P   PRE_DECR_EXPR              XbcPreDecrExpr
+A   POST_INCR_EXPR             XbcPostIncrExpr
+A   POST_DECR_EXPR             XbcPostDecrExpr
+P   ADDR_OF                  
+L   TYPE_NAME                  XbcTypeName
+
+# -----------------
+# C: Symbol Reference
+T   VAR                        XbcVar                       XbfVar
+T   VAR_ADDR                   XbcVarAddr
+T   ARRAY_ADDR                 XbcArrayAddr
+T   FUNC_ADDR                  XbcFuncAddr                  XbfFfunction
+P   MEMBER_REF                 XbcMemberRef                 XbfFmemberRef
+L   MEMBER_ARRAY_REF           XbcMemberArrayRef
+L   MEMBER_ADDR                XbcMemberAddr
+L   MEMBER_ARRAY_ADDR          XbcMemberArrayAddr
+L   ARRAY_REF                  XbcArrayRef
+#L   ARRAY_AREF               
+
+# -----------------
+# C: Directive
+L   PRAGMA_LINE                XbcPragma                    XbfFpragmaStatement
+L   COMMENT_LINE
+L   TEXT                       XbcText
+
+# -----------------
+# C: GCC Syntax
+L   BUILTIN_OP                 XbcBuiltinOp
+L   GCC_ATTRIBUTES             XbcGccAttributes
+L   GCC_ATTRIBUTE              XbcGccAttribute
+L   GCC_ASM                    XbcGccAsm
+L   GCC_ASM_DEFINITION         XbcGccAsmDefinition
+L   GCC_ASM_STATEMENT          XbcGccAsmStatement
+L   GCC_ASM_OPERANDS           XbcGccAsmOperands
+L   GCC_ASM_OPERAND            XbcGccAsmOperand
+L   GCC_ASM_CLOBBERS           XbcGccAsmClobbers
+L   GCC_ALIGN_OF_EXPR          XbcGccAlignOfExpr
+L   GCC_MEMBER_DESIGNATOR      XbcGccMemberDesignator
+L   GCC_LABEL_ADDR             XbcGccLabelAddr
+L   GCC_COMPOUND_EXPR          XbcGccCompoundExpr
+L   GCC_RANGED_CASE_LABEL      XbcGccRangedCaseLabel
+
+# -----------------
+# C: XcalableMP Syntax
+L   SUB_ARRAY_REF              XbcSubArrayRef
+# L   SUBA_LOWER_BOUND           
+# L   SUBA_UPPER_BOUND           
+# L   SUBA_STEP                  
+L   CO_ARRAY_REF               XbcCoArrayRef
+L   CO_ARRAY_ASSIGN_EXPR       XbcCoArrayAssignExpr
+
+# -----------------
+# Fortran: Declaration / Definition
+L   F_DATA_DECL                -                            XbfFdataDecl
+L   F_BLOCK_DATA_DEFINITION    -                            XbfFblockDataDefinition
+L   F_ENTRY_DECL               -                            XbfFentryDecl
+L   F_EXTERN_DECL              -                            XbfExternDecl
+L   F_EQUIVALENCE_DECL         -                            XbfFequivalenceDecl
+L   F_COMMON_DECL              -                            XbfFcommonDecl
+L   F_MODULE_DEFINITION        -                            XbfFmoduleDefinition
+L   F_MODULE_PROCEDURE_DECL    -                            XbfFmoduleProcedureDecl
+L   F_INTERFACE_DECL           -                            XbfFinterfaceDecl
+L   F_FORMAT_DECL              -                            XbfFformatDecl
+L   F_NAMELIST_DECL            -                            XbfFnamelistDecl
+L   F_STRUCT_DECL              -                            XbfFstructDecl
+L   F_USE_DECL                 -                            XbfFuseDecl
+L   F_RENAME                   -                            XbfRename
+L   F_RENAMABLE                -                            XbfRenamable
+L   F_USE_ONLY_DECL            -                            XbfFuseOnlyDecl
+L   F_STATEMENT_LIST           -                            XbfBody
+L   F_ENUM_DECL
+
+# -----------------
+# Fortran: Statement
+S   F_ASSIGN_STATEMENT         -                            XbfFassignStatement
+S   F_POINTER_ASSIGN_STATEMENT -                            XbfFpointerAssignStatement
+S   F_DO_STATEMENT             -                            XbfFdoStatement
+S   F_DO_WHILE_STATEMENT       -                            XbfFdoWhileStatement
+S   F_SELECT_CASE_STATEMENT    -                            XbfFselectCaseStatement
+S   F_CASE_LABEL               -                            XbfFcaseLabel
+S   F_WHERE_STATEMENT          -                            XbfFwhereStatement
+S   F_IF_STATEMENT             -                            XbfFifStatement
+S   F_CYCLE_STATEMENT          -                            XbfFcycleStatement
+S   F_EXIT_STATEMENT           -                            XbfFexitStatement
+S   F_CONTINUE_STATEMENT       -                            XbfContinueStatement
+S   F_CONTAINS_STATEMENT       -                            XbfFcontainsStatement
+S   F_ALLOCATE_STATEMENT       -                            XbfFallocateStatement
+S   F_BACKSPACE_STATEMENT      -                            XbfFbackspaceStatement
+S   F_CLOSE_STATEMENT          -                            XbfFcloseStatement
+S   F_DEALLOCATE_STATEMENT     -                            XbfFdeallocateStatement
+S   F_END_FILE_STATEMENT       -                            XbfFendFileStatement
+S   F_INQUIRE_STATEMENT        -                            XbfFinquireStatement
+S   F_NULLIFY_STATEMENT        -                            XbfFnullifyStatement
+S   F_OPEN_STATEMENT           -                            XbfFopenStatement
+S   F_PRINT_STATEMENT          -                            XbfFprintStatement
+S   F_READ_STATEMENT           -                            XbfFreadStatement
+S   F_REWIND_STATEMENT         -                            XbfFrewindStatement
+S   F_WRITE_STATEMENT          -                            XbfFwriteStatement
+S   F_PAUSE_STATEMENT          -                            XbfFpauseStatement
+S   F_STOP_STATEMENT           -                            XbfFstopStatement
+S   F_DATA_STATEMENT           -                            XbfFdataStatement
+S   F_WAIT_STATEMENT	       -
+
+# -----------------
+# Fortran: Variable Reference
+L   F_VAR_REF                  -                            XbfVarRef
+L   F_ARRAY_REF                -                            XbfFarrayRef
+
+# -----------------
+# Unary Expression
+U   F_USER_UNARY_EXPR          -                            XbfUserUnaryExpr
+
+# -----------------
+# Fortran: Binary Expression
+B   F_POWER_EXPR               -                            XbfFpowerExpr
+B   F_LOG_EQV_EXPR             -                            XbfLogEQVExpr
+B   F_LOG_NEQV_EXPR            -                            XbfLogNEQVExpr
+B   F_USER_BINARY_EXPR         -                            XbfUserBinaryExpr
+
+# -----------------
+# Fortran: Character Expression
+L   F_CHARACTER_REF            -                            XbfFcharacterRef
+L   F_CONCAT_EXPR              -                            XbfFconcatExpr
+
+# -----------------
+# Fortran: Constant Expression
+T   F_LOGICAL_CONSTATNT        -                            XbfFlogicalConstant
+T   F_CHARACTER_CONSTATNT      -                            XbfFcharacterConstant
+L   F_COMPLEX_CONSTATNT        -                            XbfFcomplexConstant
+
+# -----------------
+# Fortran: Other Expression
+L   F_ARRAY_CONSTRUCTOR        -                            XbfFarrayConstructor
+L   F_STRUCT_CONSTRUCTOR       -                            XbfFstructConstructor
+
+# -----------------
+# Fortran: Other Elements
+L   F_VAR_LIST                 -                            XbfVarList
+L   F_VALUE_LIST               -                            XbfValueList
+L   F_VALUE                    -                            XbfValue
+L   F_DO_LOOP                  -                            XbfFdoLoop
+L   F_INDEX_RANGE              -                            XbfIndexRange
+L   F_ALLOC                    -                            XbfAlloc
+L   F_ARRAY_INDEX              -                            XbfArrayIndex
+L   F_CONDITION                -                            XbfCondition
+L   F_NAMED_VALUE              -                            XbfNamedValue
+L   F_NAMED_VALUE_LIST         -                            XbfNamedValueList
+L   F_COMPLEX_PART_REF	       -
+
+# -----------------
+# External Pragma
+L   OMP_PRAGMA
+
+# -----------------
+# OpenMP Code Transformation
+L   OMP_PARALLEL
+L   OMP_FORALL
+L   OMP_SECTIONS
+L   OMP_SINGLE
+L   OMP_MASTER
+L   OMP_CRITICAL
+L   OMP_ORDERED
+L   OMP_ATOMIC
+L   OMP_BARRIER
+L   OMP_FLUSH
+
+L   OMP_SETARG
+L   OMP_GETARG
+L   OMP_BCAST
+L   OMP_BCAST_THDPRV
+L   OMP_SHARE
+L   OMP_REDUCTION
+L   OMP_LAST_UPDATE
+L   OMP_SCHEDULE
+
+# -----------------
+# Using Internally
+T   STRING
+
+# -----------------
+# register, temporary variable generated by compiler
+T   REG
+
+# -----------------
+# join operator in SSA
+B   JOIN
+
+# -----------------
+# XcalableMP Pragma
+L   XMP_PRAGMA
+U   XMP_DESC_OF
+
+# -----------------
+# OpenACC Pragma
+L   ACC_PRAGMA 
+
+# -----------------
+L   INDEX_RANGE
+L   LOWER_BOUND
+L   UPPER_BOUND
+L   STEP
+
+# -----------------
+# added for coarray
+L   F_CO_SHAPE
+
+# -----------------
+# Fortran2008: SYNCXX, CRITICAL, LOCK.
+S   F_SYNCALL_STATEMENT
+S   F_SYNCIMAGE_STATEMENT
+S   F_SYNCMEMORY_STATEMENT
+S   F_CRITICAL_STATEMENT
+S   F_LOCK_STATEMENT
+S   F_UNLOCK_STATEMENT
+L   F_SYNC_STAT
+
+# -----------------
+# C++11
+L   CPP_DECL_NAMESPACE
+L   CPP_CLASS_DECL
+L   CPP_CONSTRUCT_EXPR_CLASS_STATEMENT
+L   CPP_THIS_EXPR
+T   ID
+L   CPP_NESTEDNAMESPECIFIER_TYPESPEC
+
+# -----------------
+# Fortran2008: BLOCK, VOLATILE, ASSOCIATE.
+L   F_BLOCK_STATEMENT
+L   F_ASSOCIATE_STATEMENT
+
+# -----------------
+# C++11
+L   CPP_CONST_CAST_EXPR
+L   CPP_STATIC_CAST_EXPR
+L   CPP_REINTERPRET_CAST_EXPR
+L   CPP_DYNAMIC_CAST_EXPR
+T   CPP_OPERATOR_ADDR
+L   CPP_TRY_STATEMENT
+L   CPP_THROW_STATEMENT
+L   CPP_CATCH_STATEMENT
+
+# -----------------
+# Fortran2008: PARAMETERIZED DERIVED TYPE.
+L   F_TYPE_PARAM
+L   F_TYPE_PARAMS
+L   F_TYPE_PARAM_VALUES
+L   F_LEN
+
+# -----------------
+# Fortran2003: IMPORT Statement
+L   F_IMPORT_STATEMENT
+
+# -----------------
+# Fortran2003: SELECT TYPE
+L   SELECT_TYPE_STATEMENT
+L   TYPE_GUARD
+
+# -----------------
+# Fortran2003: TYPE BOUND PROCEDURES
+L   F_TYPE_BOUND_PROCEDURES
+L   F_TYPE_BOUND_PROCEDURE
+L   F_FINAL_PROCEDURE
+L   F_TYPE_BOUND_GENERIC_PROCEDURE
+L   F_BINDING
+
+# -----------------
+# Fortran2008: SUBMODULE
+L   F_MODULE_PROCEDURE_DEFINITION
+
+# -----------------
+# Fortran2003: FORALL STATEMENT
+L   F_FORALL_STATEMENT
+
+# -----------------
+# Fortran2003
+S   F_FLUSH_STATEMENT
+
+# -----------------
+# Fortran2008
+S   F_ERROR_STOP_STATEMENT
+S   F_DO_CONCURRENT_STATEMENT
+
+# -----------------
+# Codes dynamically assignable
+L    DYN_1
+L    DYN_2
+L    DYN_3
+L    DYN_4
+L    DYN_5
+L    DYN_6
+L    DYN_7
+L    DYN_8
+L    DYN_9
+L    DYN_10
+L    DYN_11
+L    DYN_12
+L    DYN_13
+L    DYN_14
+L    DYN_15
+L    DYN_16
+L    DYN_17
+L    DYN_18
+L    DYN_19
+L    DYN_20
+L    DYN_21
+L    DYN_22
+L    DYN_23
+L    DYN_24
+L    DYN_25
+L    DYN_26
+L    DYN_27
+L    DYN_28
+L    DYN_29
+L    DYN_30
+L    DYN_31
+L    DYN_32
+L    DYN_33
+L    DYN_34
+L    DYN_35
+L    DYN_36
+L    DYN_37
+L    DYN_38
+L    DYN_39
+L    DYN_40
+L    DYN_41
+L    DYN_42
+L    DYN_43
+L    DYN_44
+L    DYN_45
+L    DYN_46
+L    DYN_47
+L    DYN_48
+L    DYN_49
+L    DYN_50
+L    DYN_51
+L    DYN_52
+L    DYN_53
+L    DYN_54
+L    DYN_55
+L    DYN_56
+L    DYN_57
+L    DYN_58
+L    DYN_59
+L    DYN_60
+L    DYN_61
+L    DYN_62
+L    DYN_63
+L    DYN_64
+L    DYN_65
+L    DYN_66
+L    DYN_67
+L    DYN_68
+L    DYN_69
+L    DYN_70
+L    DYN_71
+L    DYN_72
+L    DYN_73
+L    DYN_74
+L    DYN_75
+L    DYN_76
+L    DYN_77
+L    DYN_78
+L    DYN_79
+L    DYN_80
+L    DYN_81
+L    DYN_82
+L    DYN_83
+L    DYN_84
+L    DYN_85
+L    DYN_86
+L    DYN_87
+L    DYN_88
+L    DYN_89
+L    DYN_90
+L    DYN_91
+L    DYN_92
+L    DYN_93
+L    DYN_94
+L    DYN_95
+L    DYN_96
+L    DYN_97
+L    DYN_98
+L    DYN_99
+L    DYN_100
+
+# EOF

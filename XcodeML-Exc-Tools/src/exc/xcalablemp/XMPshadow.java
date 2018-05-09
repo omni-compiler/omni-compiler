@@ -1,9 +1,3 @@
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
-
 package exc.xcalablemp;
 
 import exc.block.*;
@@ -253,7 +247,7 @@ public class XMPshadow {
 
     Block reflectFuncCallBlock = Bcons.COMPOUND(reflectFuncBody);
     if(isAcc && !accUseDeviceClauseArgs.isEmpty()) {
-      reflectFuncCallBlock = XMPtranslateLocalPragma.encloseWithAccHostDataConstruct(reflectFuncCallBlock, accUseDeviceClauseArgs);
+      reflectFuncCallBlock = XMPtranslateLocalPragma.encloseWithAccHostDataDirective(reflectFuncCallBlock, accUseDeviceClauseArgs);
     }
 
     pb.replace(reflectFuncCallBlock);
@@ -261,6 +255,93 @@ public class XMPshadow {
     return reflectFuncCallBlock;
   }
 
+  public static Block translateReduceShadow(PragmaBlock pb, XMPglobalDecl globalDecl, boolean isAcc) throws XMPexception {
+    // start translation
+    XobjList reduceShadowDecl = (XobjList)pb.getClauses();
+    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
+    BlockList reduceShadowFuncBody = Bcons.emptyBody();
+    XobjList accUseDeviceClauseArgs = Xcons.List();
+
+    XobjList arrayList = (XobjList)reduceShadowDecl.getArg(0);
+    for (XobjArgs iter = arrayList.getArgs(); iter != null; iter = iter.nextArgs()) {
+      String arrayName = iter.getArg().getString();
+      //XMPalignedArray alignedArray = globalDecl.getXMPalignedArray(arrayName, localXMPsymbolTable);
+      XMPalignedArray alignedArray = globalDecl.getXMPalignedArray(arrayName, pb);
+      if (alignedArray == null) {
+        throw new XMPexception("the aligned array '" + arrayName + "' is not found");
+      }
+
+      if (!alignedArray.hasShadow()) {
+        throw new XMPexception("the aligned array '" + arrayName + "' has no shadow declaration");
+      }
+
+      Xobject asyncId = null;
+
+      if (reduceShadowDecl.Nargs() > 2){
+
+	if (reduceShadowDecl.getArg(1) != null){
+	  XobjList widthList = (XobjList)reduceShadowDecl.getArg(1);
+	  for (int i = 0; i < widthList.Nargs(); i++){
+	    XobjList width = (XobjList)widthList.getArg(i);
+
+	    // Here the stride means the periodic flag.
+	    // check wheter the shadow is full.
+	    if (width.getArg(2).getInt() == 1 && alignedArray.getShadowAt(i).getType() == XMPshadow.SHADOW_FULL){
+	      throw new XMPexception("Periodic reduceShadow cannot be specified for a dimension with full shadow.");
+	    }
+
+	    Ident funcId = globalDecl.declExternFunc(isAcc? "_XMP_set_reduce_shadow_acc__" : "_XMP_set_reduce_shadow__");
+	    XobjList funcArgs = Xcons.List(alignedArray.getDescId().Ref(), Xcons.IntConstant(i),
+					   width.getArg(0), width.getArg(1), width.getArg(2));
+	    reduceShadowFuncBody.add(Bcons.Statement(funcId.Call(funcArgs)));
+	  }
+	}
+
+	if (reduceShadowDecl.getArg(2) != null &&
+	    !(reduceShadowDecl.getArg(2) instanceof XobjList && reduceShadowDecl.getArg(2).Nargs() == 0)){
+	  asyncId = reduceShadowDecl.getArg(2);
+	}
+
+      }
+
+      if (asyncId != null){
+        Ident funcId1 = globalDecl.declExternFunc("xmpc_init_async");
+        XobjList funcArgs1 = Xcons.List(asyncId);
+
+	Ident funcId2 = globalDecl.declExternFunc("_XMP_reduce_shadow__"); // same as synchronous
+	XobjList funcArgs2 = Xcons.List(alignedArray.getDescId().Ref());
+
+        Ident funcId3 = globalDecl.declExternFunc("xmpc_start_async");
+        XobjList funcArgs3 = Xcons.List();
+
+        reduceShadowFuncBody.add(Bcons.Statement(funcId1.Call(funcArgs1)));
+	reduceShadowFuncBody.add(Bcons.Statement(funcId2.Call(funcArgs2)));
+        reduceShadowFuncBody.add(Bcons.Statement(funcId3.Call(funcArgs3)));
+      }
+      else {
+	Ident funcId = globalDecl.declExternFunc(isAcc? "_XMP_reduce_shadow_acc__" : "_XMP_reduce_shadow__");
+	XobjList funcArgs = Xcons.List(alignedArray.getDescId().Ref());
+        if(isAcc){
+          Xobject addrRef = alignedArray.getAddrId().Ref();
+          funcArgs.cons(addrRef);
+          accUseDeviceClauseArgs.add(addrRef);
+        }
+	reduceShadowFuncBody.add(Bcons.Statement(funcId.Call(funcArgs)));
+      }
+
+    }
+
+    Block reduceShadowFuncCallBlock = Bcons.COMPOUND(reduceShadowFuncBody);
+    if(isAcc && !accUseDeviceClauseArgs.isEmpty()) {
+      reduceShadowFuncCallBlock = XMPtranslateLocalPragma.encloseWithAccHostDataDirective(reduceShadowFuncCallBlock,
+											  accUseDeviceClauseArgs);
+    }
+
+    pb.replace(reduceShadowFuncCallBlock);
+
+    return reduceShadowFuncCallBlock;
+  }
+    
 //   private static void createReflectNormalShadowFunc0(PragmaBlock pb, XMPglobalDecl globalDecl,
 // 						     XMPalignedArray alignedArray, int arrayIndex,
 // 						     BlockList reflectFuncBody) {

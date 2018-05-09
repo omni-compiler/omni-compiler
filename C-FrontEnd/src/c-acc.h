@@ -89,5 +89,6 @@ enum ACC_pragma_clause {
 
 void out_ACC_PRAGMA(FILE *fp, int indent, int pragma_code, CExpr* expr);
 CExpr* lexParsePragmaACC(char *p, int *token);
+void compile_acc_pragma(CExpr *expr, CExpr *parent);
 
 #endif

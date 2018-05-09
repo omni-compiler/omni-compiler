@@ -19,7 +19,7 @@ static char _run_flag = 0;
 /**
    Initialize TCA
 */
-void _XMP_tca_initialize(int argc, char **argv)
+void _XMP_tca_initialize()
 {
   if(_XMP_world_rank == 0){
     fprintf(stderr, "TCA Library Version = %s\n", TCA_LIB_VERSION);

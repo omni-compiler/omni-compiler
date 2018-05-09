@@ -5,39 +5,31 @@
 #if !defined(_KCOMPUTER) || !defined(K_RDMA_REFLECT)
 static void _XMP_reflect_normal_sched_dim(_XMP_array_t *adesc, int target_dim,
 					   int lwidth, int uwidth, int is_periodic);
-static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
-					 int lwidth, int uwidth, int is_periodic);
-static void _XMP_reflect_wait(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_periodic);
-/* static void _XMP_reflect_start(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_periodic, */
-/* 				int dummy); */
-static void _XMP_reflect_async_cardinal(_XMP_array_t *a, int async_id);
-static void _XMP_reflect_async_ordinal(_XMP_array_t *a, int async_id);
-static void _XMP_reflect_sched_dir(_XMP_array_t *adesc, int ishadow[],
-				   int lwidth[], int uwidth[], int is_periodic_dim[]);
+void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
+				  int lwidth, int uwidth, int is_periodic, int shadow_comm_type);
 #else
-/* static void _XMP_reflect_sched(_XMP_array_t *a, int *lwidth, int *uwidth, */
-/* 				int *is_periodic, int is_async); */
 static void _XMP_reflect_rdma_sched_dim(_XMP_array_t *adesc, int target_dim,
 					int lwidth, int uwidth, int is_periodic);
 static void _XMP_reflect_start(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_periodic,
 				 int tag);
-static void _XMP_reflect_wait(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_periodic);
 #endif
 
+static void _XMP_reflect_wait(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_periodic);
 
 //int _XMP_get_owner_pos_BLOCK(_XMP_array_t *a, int dim, int index);
 int _XMP_get_owner_pos(_XMP_array_t *a, int dim, int index);
 
 //void _XMP_reflect_pack(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_periodic);
-void _XMP_reflect_unpack(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_periodic);
+static void _XMP_reflect_unpack(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_periodic);
 
-static void _XMP_reflect_pack_dim(_XMP_array_t *a, int i, int *lwidth, int *uwidth, int *is_periodic);
+void _XMP_reflect_pack_dim(_XMP_array_t *a, int i, int *lwidth, int *uwidth,
+			   int *is_periodic, int shadow_comm_type);
 static void _XMP_reflect_unpack_dim(_XMP_array_t *a, int i, int *lwidth, int *uwidth, int *is_periodic);
 
 static void _XMP_reflect_sched_dir(_XMP_array_t *adesc, int ishadow[],
 				   int lwidth[], int uwidth[], int is_periodic_dim[]);
-static void _XMP_reflect_async_cardinal(_XMP_array_t *a, int async_id);
-static void _XMP_reflect_async_ordinal(_XMP_array_t *a, int async_id);
+void _XMP_reflect_async_cardinal(_XMP_array_t *a, int async_id);
+void _XMP_reflect_async_ordinal(_XMP_array_t *a, int async_id);
 
 //#define DBG 1
 
@@ -61,7 +53,7 @@ double t0, t1;
 
 extern int _xmp_reflect_pack_flag;
 
-static int _xmpf_set_reflect_flag = 0;
+static int _xmp_set_reflect_flag = 0;
 static int _xmp_lwidth[_XMP_N_MAX_DIM] = {0};
 static int _xmp_uwidth[_XMP_N_MAX_DIM] = {0};
 static int _xmp_is_periodic[_XMP_N_MAX_DIM] = {0};
@@ -70,7 +62,7 @@ static int _xmp_is_periodic[_XMP_N_MAX_DIM] = {0};
 void _XMP_set_reflect__(_XMP_array_t *a, int dim, int lwidth, int uwidth,
 		       int is_periodic)
 {
-  _xmpf_set_reflect_flag = 1;
+  _xmp_set_reflect_flag = 1;
   _xmp_lwidth[dim] = lwidth;
   _xmp_uwidth[dim] = uwidth;
   _xmp_is_periodic[dim] = is_periodic;
@@ -83,11 +75,11 @@ void _XMP_set_reflect__(_XMP_array_t *a, int dim, int lwidth, int uwidth,
 
 /*   _XMP_RETURN_IF_SINGLE; */
 /*   if (!a->is_allocated){ */
-/*     _xmpf_set_reflect_flag = 0; */
+/*     _xmp_set_reflect_flag = 0; */
 /*     return; */
 /*   } */
 
-/*   if (!_xmpf_set_reflect_flag){ */
+/*   if (!_xmp_set_reflect_flag){ */
 /*     for (int i = 0; i < a->dim; i++){ */
 /*       _XMP_array_info_t *ai = &(a->info[i]); */
 /*       _xmp_lwidth[i] = ai->shadow_size_lo; */
@@ -108,7 +100,7 @@ void _XMP_set_reflect__(_XMP_array_t *a, int dim, int lwidth, int uwidth,
 /*   _XMP_reflect_wait(a, _xmp_lwidth, _xmp_uwidth, _xmp_is_periodic); */
 /*   //  t_wait = t_wait + (MPI_Wtime() - t0); */
 
-/*   _xmpf_set_reflect_flag = 0; */
+/*   _xmp_set_reflect_flag = 0; */
 /*   for (int i = 0; i < a->dim; i++){ */
 /*     _xmp_lwidth[i] = 0; */
 /*     _xmp_uwidth[i] = 0; */
@@ -131,11 +123,11 @@ void _XMP_reflect__(_XMP_array_t *a)
 
   _XMP_RETURN_IF_SINGLE;
   if (!a->is_allocated){
-    _xmpf_set_reflect_flag = 0;
+    _xmp_set_reflect_flag = 0;
     return;
   }
 
-  if (!_xmpf_set_reflect_flag){
+  if (!_xmp_set_reflect_flag){
     for (int i = 0; i < a->dim; i++){
       _XMP_array_info_t *ai = &(a->info[i]);
       _xmp_lwidth[i] = ai->shadow_size_lo;
@@ -176,27 +168,46 @@ void _XMP_reflect__(_XMP_array_t *a)
 
 	_XMP_ASSERT(reflect);
 
-	if (reflect->is_periodic == -1 /* not set yet */ ||
+	/* if (!reflect->reflect_is_initialized || */
+	/*     _xmp_lwidth[i] != reflect->lo_width || */
+	/*     _xmp_uwidth[i] != reflect->hi_width || */
+	/*     _xmp_is_periodic[i] != reflect->is_periodic){ */
+
+	/*   reflect->lo_width = _xmp_lwidth[i]; */
+	/*   reflect->hi_width = _xmp_uwidth[i]; */
+	/*   reflect->is_periodic = _xmp_is_periodic[i]; */
+
+	/*   if (_xmp_reflect_pack_flag){ */
+	/*     _XMP_reflect_pcopy_sched_dim(a, i, _xmp_lwidth[i], _xmp_uwidth[i], _xmp_is_periodic[i], 0); */
+	/*   } */
+	/*   else { */
+	/*     _XMP_reflect_normal_sched_dim(a, i, _xmp_lwidth[i], _xmp_uwidth[i], _xmp_is_periodic[i]); */
+	/*   } */
+
+	/*   reflect->reflect_is_initialized = 1; */
+	/* } */
+
+	if (!reflect->reflect_is_initialized ||
 	    _xmp_lwidth[i] != reflect->lo_width ||
 	    _xmp_uwidth[i] != reflect->hi_width ||
 	    _xmp_is_periodic[i] != reflect->is_periodic){
 
-	  reflect->lo_width = _xmp_lwidth[i];
-	  reflect->hi_width = _xmp_uwidth[i];
-	  reflect->is_periodic = _xmp_is_periodic[i];
-
 	  if (_xmp_reflect_pack_flag){
-	    _XMP_reflect_pcopy_sched_dim(a, i, _xmp_lwidth[i], _xmp_uwidth[i], _xmp_is_periodic[i]);
+	    _XMP_reflect_pcopy_sched_dim(a, i, _xmp_lwidth[i], _xmp_uwidth[i], _xmp_is_periodic[i], _XMP_COMM_REFLECT);
 	  }
 	  else {
 	    _XMP_reflect_normal_sched_dim(a, i, _xmp_lwidth[i], _xmp_uwidth[i], _xmp_is_periodic[i]);
 	  }
 
+	  reflect->reflect_is_initialized = 1;
+	  reflect->lo_width = _xmp_lwidth[i];
+	  reflect->hi_width = _xmp_uwidth[i];
+	  reflect->is_periodic = _xmp_is_periodic[i];
 	}
 
 	if (_xmp_reflect_pack_flag){
 	  _XMP_TSTART(t0);
-	  _XMP_reflect_pack_dim(a, i, _xmp_lwidth, _xmp_uwidth, _xmp_is_periodic);
+	  _XMP_reflect_pack_dim(a, i, _xmp_lwidth, _xmp_uwidth, _xmp_is_periodic, _XMP_COMM_REFLECT);
 	  _XMP_TEND(xmptiming_.t_copy, t0);
 	}
 
@@ -230,7 +241,7 @@ void _XMP_reflect__(_XMP_array_t *a)
     _XMP_reflect_wait(a, _xmp_lwidth, _xmp_uwidth, _xmp_is_periodic);
   //  t_wait = t_wait + (MPI_Wtime() - t0);
 
-  _xmpf_set_reflect_flag = 0;
+  _xmp_set_reflect_flag = 0;
   for (int i = 0; i < a->dim; i++){
     _xmp_lwidth[i] = 0;
     _xmp_uwidth[i] = 0;
@@ -473,8 +484,8 @@ static void _XMP_reflect_normal_sched_dim(_XMP_array_t *adesc, int target_dim,
 }
 
 
-static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
-					 int lwidth, int uwidth, int is_periodic){
+void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
+				  int lwidth, int uwidth, int is_periodic, int shadow_comm_type){
 
   if (lwidth == 0 && uwidth == 0) return;
 
@@ -508,6 +519,9 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
   int lo_rank = my_rank + (lo_pos - my_pos) * ni->multiplier;
   int hi_rank = my_rank + (hi_pos - my_pos) * ni->multiplier;
 
+  int count = 0, blocklength = 0;
+  long long stride = 0;
+
   int type_size = adesc->type_size;
   void *array_addr = adesc->array_addr_p;
 
@@ -522,12 +536,25 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
   int lo_buf_size = 0;
   int hi_buf_size = 0;
 
+  if (reflect->prev_pcopy_sched_type &&
+      lwidth == reflect->lo_width &&
+      uwidth == reflect->hi_width &&
+      is_periodic == reflect->is_periodic){
+    if ((adesc->order == MPI_ORDER_FORTRAN && target_dim != ndims - 1) ||
+	(adesc->order == MPI_ORDER_C && target_dim != 0)){
+      goto init_comm;
+    }
+    else if (reflect->prev_pcopy_sched_type != shadow_comm_type){
+      count = reflect->count;
+      blocklength = reflect->blocklength;
+      stride = reflect->stride;
+      goto alloc_buf;
+    }
+  }
+  
   //
   // setup data_type
   //
-
-  int count = 0, blocklength = 0;
-  long long stride = 0;
 
   if (adesc->order == MPI_ORDER_FORTRAN){ /* for XMP/F */
 
@@ -569,6 +596,8 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
   // calculate base address
   //
 
+ alloc_buf:
+  
   // for lower reflect
 
   if (lwidth){
@@ -635,8 +664,12 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
   // Allocate buffers
   //
 
-  if ((adesc->order == MPI_ORDER_FORTRAN && target_dim != ndims - 1) ||
-      (adesc->order == MPI_ORDER_C && target_dim != 0)){
+  if (reflect->prev_pcopy_sched_type == _XMP_COMM_REFLECT &&
+      ((adesc->order == MPI_ORDER_FORTRAN && target_dim == ndims - 1) ||
+       (adesc->order == MPI_ORDER_C && target_dim == 0))){
+    ;
+  }
+  else {
     _XMP_free(reflect->lo_send_buf);
     _XMP_free(reflect->lo_recv_buf);
     _XMP_free(reflect->hi_send_buf);
@@ -649,8 +682,9 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
 
     lo_buf_size = lwidth * blocklength * count;
 
-    if ((adesc->order == MPI_ORDER_FORTRAN && target_dim == ndims - 1) ||
-	(adesc->order == MPI_ORDER_C && target_dim == 0)){
+    if (shadow_comm_type == _XMP_COMM_REFLECT &&
+	((adesc->order == MPI_ORDER_FORTRAN && target_dim == ndims - 1) ||
+	 (adesc->order == MPI_ORDER_C && target_dim == 0))){
       lo_send_buf = lo_send_array;
       lo_recv_buf = lo_recv_array;
     }
@@ -669,8 +703,9 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
 
     hi_buf_size = uwidth * blocklength * count;
 
-    if ((adesc->order == MPI_ORDER_FORTRAN && target_dim == ndims - 1) ||
-	(adesc->order == MPI_ORDER_C && target_dim == 0)){
+    if (shadow_comm_type == _XMP_COMM_REFLECT &&
+	((adesc->order == MPI_ORDER_FORTRAN && target_dim == ndims - 1) ||
+	 (adesc->order == MPI_ORDER_C && target_dim == 0))){
       hi_send_buf = hi_send_array;
       hi_recv_buf = hi_recv_array;
     }
@@ -682,68 +717,6 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
     }
 
   }
-
-  //
-  // initialize communication
-  //
-
-  int src, dst;
-
-  if (!is_periodic && my_pos == lb_pos){ // no periodic
-    lo_rank = MPI_PROC_NULL;
-  }
-
-  if (!is_periodic && my_pos == ub_pos){ // no periodic
-    hi_rank = MPI_PROC_NULL;
-  }
-
-  // for lower shadow
-
-  if (lwidth){
-    src = lo_rank;
-    dst = hi_rank;
-  }
-  else {
-    src = MPI_PROC_NULL;
-    dst = MPI_PROC_NULL;
-  }
-
-  if (reflect->req[0] != MPI_REQUEST_NULL){
-    MPI_Request_free(&reflect->req[0]);
-  }
-	
-  if (reflect->req[1] != MPI_REQUEST_NULL){
-    MPI_Request_free(&reflect->req[1]);
-  }
-
-  MPI_Recv_init(lo_recv_buf, lo_buf_size, MPI_BYTE, src,
-		_XMP_N_MPI_TAG_REFLECT_LO, *comm, &reflect->req[0]);
-  MPI_Send_init(lo_send_buf, lo_buf_size, MPI_BYTE, dst,
-		_XMP_N_MPI_TAG_REFLECT_LO, *comm, &reflect->req[1]);
-
-  // for upper shadow
-
-  if (uwidth){
-    src = hi_rank;
-    dst = lo_rank;
-  }
-  else {
-    src = MPI_PROC_NULL;
-    dst = MPI_PROC_NULL;
-  }
-
-  if (reflect->req[2] != MPI_REQUEST_NULL){
-    MPI_Request_free(&reflect->req[2]);
-  }
-	
-  if (reflect->req[3] != MPI_REQUEST_NULL){
-    MPI_Request_free(&reflect->req[3]);
-  }
-
-  MPI_Recv_init(hi_recv_buf, hi_buf_size, MPI_BYTE, src,
-		_XMP_N_MPI_TAG_REFLECT_HI, *comm, &reflect->req[2]);
-  MPI_Send_init(hi_send_buf, hi_buf_size, MPI_BYTE, dst,
-		_XMP_N_MPI_TAG_REFLECT_HI, *comm, &reflect->req[3]);
 
   //
   // cache schedule
@@ -762,6 +735,110 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
   reflect->lo_recv_buf = lo_recv_buf;
   reflect->hi_send_buf = hi_send_buf;
   reflect->hi_recv_buf = hi_recv_buf;
+
+  //
+  // initialize communication
+  //
+
+  int src, dst;
+
+ init_comm:
+  
+  if (!is_periodic && my_pos == lb_pos){ // no periodic
+    lo_rank = MPI_PROC_NULL;
+  }
+
+  if (!is_periodic && my_pos == ub_pos){ // no periodic
+    hi_rank = MPI_PROC_NULL;
+  }
+
+  lo_buf_size = lwidth * reflect->blocklength * reflect->count;
+  hi_buf_size = uwidth * reflect->blocklength * reflect->count;
+
+  // for lower shadow
+
+  if (lwidth){
+    src = lo_rank;
+    dst = hi_rank;
+  }
+  else {
+    src = MPI_PROC_NULL;
+    dst = MPI_PROC_NULL;
+  }
+
+  if (shadow_comm_type == _XMP_COMM_REDUCE_SHADOW){
+    if (reflect->req_reduce[0] != MPI_REQUEST_NULL){
+      MPI_Request_free(&reflect->req_reduce[0]);
+    }
+	
+    if (reflect->req_reduce[1] != MPI_REQUEST_NULL){
+      MPI_Request_free(&reflect->req_reduce[1]);
+    }
+
+    MPI_Send_init(reflect->lo_recv_buf, lo_buf_size, MPI_BYTE, src,
+		  _XMP_N_MPI_TAG_REFLECT_LO, *comm, &reflect->req_reduce[0]);
+    MPI_Recv_init(reflect->lo_send_buf, lo_buf_size, MPI_BYTE, dst,
+		  _XMP_N_MPI_TAG_REFLECT_LO, *comm, &reflect->req_reduce[1]);
+  }
+  else {
+    if (reflect->req[0] != MPI_REQUEST_NULL){
+      MPI_Request_free(&reflect->req[0]);
+    }
+	
+    if (reflect->req[1] != MPI_REQUEST_NULL){
+      MPI_Request_free(&reflect->req[1]);
+    }
+
+    MPI_Recv_init(reflect->lo_recv_buf, lo_buf_size, MPI_BYTE, src,
+		  _XMP_N_MPI_TAG_REFLECT_LO, *comm, &reflect->req[0]);
+    MPI_Send_init(reflect->lo_send_buf, lo_buf_size, MPI_BYTE, dst,
+		  _XMP_N_MPI_TAG_REFLECT_LO, *comm, &reflect->req[1]);
+  }
+  
+  // for upper shadow
+
+  if (uwidth){
+    src = hi_rank;
+    dst = lo_rank;
+  }
+  else {
+    src = MPI_PROC_NULL;
+    dst = MPI_PROC_NULL;
+  }
+
+  if (shadow_comm_type == _XMP_COMM_REDUCE_SHADOW){
+    if (reflect->req_reduce[2] != MPI_REQUEST_NULL){
+      MPI_Request_free(&reflect->req_reduce[2]);
+    }
+	
+    if (reflect->req_reduce[3] != MPI_REQUEST_NULL){
+      MPI_Request_free(&reflect->req_reduce[3]);
+    }
+
+    MPI_Send_init(reflect->hi_recv_buf, hi_buf_size, MPI_BYTE, src,
+		  _XMP_N_MPI_TAG_REFLECT_HI, *comm, &reflect->req_reduce[2]);
+    MPI_Recv_init(reflect->hi_send_buf, hi_buf_size, MPI_BYTE, dst,
+		  _XMP_N_MPI_TAG_REFLECT_HI, *comm, &reflect->req_reduce[3]);
+  }
+  else {
+    if (reflect->req[2] != MPI_REQUEST_NULL){
+      MPI_Request_free(&reflect->req[2]);
+    }
+	
+    if (reflect->req[3] != MPI_REQUEST_NULL){
+      MPI_Request_free(&reflect->req[3]);
+    }
+
+    MPI_Recv_init(reflect->hi_recv_buf, hi_buf_size, MPI_BYTE, src,
+		  _XMP_N_MPI_TAG_REFLECT_HI, *comm, &reflect->req[2]);
+    MPI_Send_init(reflect->hi_send_buf, hi_buf_size, MPI_BYTE, dst,
+		  _XMP_N_MPI_TAG_REFLECT_HI, *comm, &reflect->req[3]);
+  }
+  
+  reflect->prev_pcopy_sched_type = shadow_comm_type;
+  
+  reflect->lo_rank = lo_rank;
+  reflect->hi_rank = hi_rank;
 
 }
 
@@ -813,7 +890,7 @@ static void _XMP_reflect_wait(_XMP_array_t *a, int *lwidth, int *uwidth, int *is
       _XMP_TEND2(xmptiming_.t_wait, xmptiming_.tdim_wait[i], t0);
     }
     else if (ai->shadow_type == _XMP_N_SHADOW_FULL){
-      _XMP_reflect_shadow_FULL(a->array_addr_p, a, i);
+      //_XMP_reflect_shadow_FULL(a->array_addr_p, a, i);
     }
 
   }
@@ -834,11 +911,11 @@ static void _XMP_reflect_wait(_XMP_array_t *a, int *lwidth, int *uwidth, int *is
 /*   MPI_Request *reqs; */
 
 /*   if (!a->is_allocated){ */
-/*     _xmpf_set_reflect_flag = 0; */
+/*     _xmp_set_reflect_flag = 0; */
 /*     return; */
 /*   } */
 
-/*   if (!_xmpf_set_reflect_flag){ */
+/*   if (!_xmp_set_reflect_flag){ */
 /*     for (int i = 0; i < a->dim; i++){ */
 /*       _XMP_array_info_t *ai = &(a->info[i]); */
 /*       _xmp_lwidth[i] = ai->shadow_size_lo; */
@@ -874,7 +951,7 @@ static void _XMP_reflect_wait(_XMP_array_t *a, int *lwidth, int *uwidth, int *is
 /*   MPI_Startall(nreqs, reqs); */
 /*   _XMP_TEND(xmptiming_.t_start, t0); */
 
-/*   _xmpf_set_reflect_flag = 0; */
+/*   _xmp_set_reflect_flag = 0; */
 
 /* } */
 
@@ -885,11 +962,11 @@ void _XMP_reflect_async__(_XMP_array_t *a, int async_id){
 
   _XMP_RETURN_IF_SINGLE;
   if (!a->is_allocated){
-    _xmpf_set_reflect_flag = 0;
+    _xmp_set_reflect_flag = 0;
     return;
   }
 
-  if (!_xmpf_set_reflect_flag){
+  if (!_xmp_set_reflect_flag){
     for (int i = 0; i < a->dim; i++){
       _XMP_array_info_t *ai = &(a->info[i]);
       if (ai->shadow_type == _XMP_N_SHADOW_FULL){
@@ -934,7 +1011,7 @@ void _XMP_reflect_async__(_XMP_array_t *a, int async_id){
     _XMP_reflect_async_ordinal(a, async_id);
   }
 
-  _xmpf_set_reflect_flag = 0;
+  _xmp_set_reflect_flag = 0;
   for (int i = 0; i < a->dim; i++){
     _xmp_lwidth[i] = 0;
     _xmp_uwidth[i] = 0;
@@ -950,7 +1027,7 @@ void _XMP_reflect_async__(_XMP_array_t *a, int async_id){
 }
 
 
-static void _XMP_reflect_async_cardinal(_XMP_array_t *a, int async_id)
+void _XMP_reflect_async_cardinal(_XMP_array_t *a, int async_id)
 {
 
   _XMP_async_comm_t *async = _XMP_get_current_async();
@@ -1013,7 +1090,7 @@ static void _XMP_reflect_async_cardinal(_XMP_array_t *a, int async_id)
 
 #include <math.h>
 
-static void _XMP_reflect_async_ordinal(_XMP_array_t *a, int async_id){
+void _XMP_reflect_async_ordinal(_XMP_array_t *a, int async_id){
 
   int n = a->dim;
   _XMP_async_reflect_t *async_reflect;
@@ -1121,7 +1198,7 @@ static void _XMP_reflect_sched_dir(_XMP_array_t *adesc, int ishadow[],
   int src = my_rank;
   int dst = my_rank;
 
-  _XMP_async_reflect_t *async_reflect = adesc->async_reflect;;
+  _XMP_async_reflect_t *async_reflect = adesc->async_reflect;
 
   MPI_Datatype *send_dtype = &async_reflect->datatype[async_reflect->nreqs];
   MPI_Datatype *recv_dtype = send_dtype + 1;
@@ -1266,11 +1343,11 @@ void _XMP_reflect__(_XMP_array_t *a)
 
   _XMP_RETURN_IF_SINGLE;
   if (!a->is_allocated){
-    _xmpf_set_reflect_flag = 0;
+    _xmp_set_reflect_flag = 0;
     return;
   }
 
-  if (!_xmpf_set_reflect_flag){
+  if (!_xmp_set_reflect_flag){
     for (int i = 0; i < a->dim; i++){
       _XMP_array_info_t *ai = &(a->info[i]);
       _xmp_lwidth[i] = ai->shadow_size_lo;
@@ -1338,7 +1415,7 @@ void _XMP_reflect__(_XMP_array_t *a)
 
   _XMP_reflect_wait(a, _xmp_lwidth, _xmp_uwidth, _xmp_is_periodic);
 
-  _xmpf_set_reflect_flag = 0;
+  _xmp_set_reflect_flag = 0;
   for (int i = 0; i < a->dim; i++){
     _xmp_lwidth[i] = 0;
     _xmp_uwidth[i] = 0;
@@ -1612,11 +1689,11 @@ void _XMP_reflect_async__(_XMP_array_t *a, int async_id)
 {
 
   if (!a->is_allocated){
-    _xmpf_set_reflect_flag = 0;
+    _xmp_set_reflect_flag = 0;
     return;
   }
 
-  if (!_xmpf_set_reflect_flag){
+  if (!_xmp_set_reflect_flag){
     for (int i = 0; i < a->dim; i++){
       _XMP_array_info_t *ai = &(a->info[i]);
       _xmp_lwidth[i] = ai->shadow_size_lo;
@@ -1653,7 +1730,7 @@ void _XMP_reflect_async__(_XMP_array_t *a, int async_id)
     if (_xmp_uwidth[i] && reflect->lo_rank != -1) async->nreqs += reflect->count;
   }
 
-  _xmpf_set_reflect_flag = 0;
+  _xmp_set_reflect_flag = 0;
   for (int i = 0; i < a->dim; i++){
     _xmp_lwidth[i] = 0;
     _xmp_uwidth[i] = 0;
@@ -1767,36 +1844,54 @@ int _XMP_get_owner_pos(_XMP_array_t *a, int dim, int index){
 /* } */
 
 
-static void _XMP_reflect_pack_dim(_XMP_array_t *a, int i, int *lwidth, int *uwidth, int *is_periodic)
+void _XMP_reflect_pack_dim(_XMP_array_t *a, int i, int *lwidth, int *uwidth, int *is_periodic,
+			   int shadow_comm_type)
 {
 
-  if (a->order == MPI_ORDER_FORTRAN){ /* for XMP/F */
-    if (i == a->dim - 1) return;
-  }
-  else if (a->order == MPI_ORDER_C){ /* for XMP/C */
-    if (i == 0) return;
-  }
-  else {
-    _XMP_fatal("cannot determin the base language.");
+  char *pack_dst_lo, *pack_src_lo;
+  char *pack_dst_hi, *pack_src_hi;
+  
+  if (shadow_comm_type == _XMP_COMM_REFLECT){
+    if (a->order == MPI_ORDER_FORTRAN){ /* for XMP/F */
+      if (i == a->dim - 1) return;
+    }
+    else if (a->order == MPI_ORDER_C){ /* for XMP/C */
+      if (i == 0) return;
+    }
+    else {
+      _XMP_fatal("cannot determin the base language.");
+    }
   }
 
   _XMP_array_info_t *ai = &(a->info[i]);
   _XMP_reflect_sched_t *reflect = ai->reflect_sched;
 
+  if (shadow_comm_type == _XMP_COMM_REDUCE_SHADOW){
+    pack_dst_lo = (char *)reflect->lo_recv_buf;
+    pack_src_lo = (char *)reflect->lo_recv_array;
+    pack_dst_hi = (char *)reflect->hi_recv_buf;
+    pack_src_hi = (char *)reflect->hi_recv_array;
+  }
+  else {
+    pack_dst_lo = (char *)reflect->lo_send_buf;
+    pack_src_lo = (char *)reflect->lo_send_array;
+    pack_dst_hi = (char *)reflect->hi_send_buf;
+    pack_src_hi = (char *)reflect->hi_send_array;
+  }
+
+  
   if (ai->shadow_type == _XMP_N_SHADOW_NORMAL){
 
     // for lower reflect
-    if (lwidth[i]){
-      _XMP_pack_vector((char *)reflect->lo_send_buf,
-		       (char *)reflect->lo_send_array,
+    if (lwidth[i] && reflect->hi_rank != MPI_PROC_NULL){
+      _XMP_pack_vector(pack_dst_lo, pack_src_lo,
 		       reflect->count, lwidth[i] * reflect->blocklength,
 		       reflect->stride);
     }
 
     // for upper reflect
-    if (uwidth[i]){
-      _XMP_pack_vector((char *)reflect->hi_send_buf,
-		       (char *)reflect->hi_send_array,
+    if (uwidth[i] && reflect->lo_rank != MPI_PROC_NULL){
+      _XMP_pack_vector(pack_dst_hi, pack_src_hi,
 		       reflect->count, uwidth[i] * reflect->blocklength,
 		       reflect->stride);
     }
@@ -1806,7 +1901,7 @@ static void _XMP_reflect_pack_dim(_XMP_array_t *a, int i, int *lwidth, int *uwid
 }
 
 
-void _XMP_reflect_unpack(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_periodic)
+static void _XMP_reflect_unpack(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_periodic)
 {
 
   int lb = 0, ub = 0;
@@ -1831,7 +1926,7 @@ void _XMP_reflect_unpack(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_peri
     if (ai->shadow_type == _XMP_N_SHADOW_NORMAL){
 
       // for lower reflect
-      if (lwidth[i]){
+      if (lwidth[i] && reflect->lo_rank != MPI_PROC_NULL){
 	_XMP_unpack_vector((char *)reflect->lo_recv_array,
 			   (char *)reflect->lo_recv_buf,
 			   reflect->count, lwidth[i] * reflect->blocklength,
@@ -1839,7 +1934,7 @@ void _XMP_reflect_unpack(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_peri
       }
 
       // for upper reflect
-      if (uwidth[i]){
+      if (uwidth[i] && reflect->hi_rank != MPI_PROC_NULL){
 	_XMP_unpack_vector((char *)reflect->hi_recv_array,
 			   (char *)reflect->hi_recv_buf,
 			   reflect->count, uwidth[i] * reflect->blocklength,
@@ -1872,7 +1967,7 @@ static void _XMP_reflect_unpack_dim(_XMP_array_t *a, int i, int *lwidth, int *uw
   if (ai->shadow_type == _XMP_N_SHADOW_NORMAL){
 
     // for lower reflect
-    if (lwidth[i]){
+    if (lwidth[i] && reflect->lo_rank != MPI_PROC_NULL){
       _XMP_unpack_vector((char *)reflect->lo_recv_array,
 			 (char *)reflect->lo_recv_buf,
 			 reflect->count, lwidth[i] * reflect->blocklength,
@@ -1880,7 +1975,7 @@ static void _XMP_reflect_unpack_dim(_XMP_array_t *a, int i, int *lwidth, int *uw
     }
 
     // for upper reflect
-    if (uwidth[i]){
+    if (uwidth[i] && reflect->hi_rank != MPI_PROC_NULL){
       _XMP_unpack_vector((char *)reflect->hi_recv_array,
 			 (char *)reflect->hi_recv_buf,
 			 reflect->count, uwidth[i] * reflect->blocklength,

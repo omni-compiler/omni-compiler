@@ -1,12 +1,6 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package xcodeml.c.decompile;
 
-import xcodeml.XmException;
+import xcodeml.util.XmException;
 import xcodeml.c.obj.XcNode;
 import xcodeml.c.type.XcFuncType;
 import xcodeml.c.type.XcGccAttributable;
@@ -22,12 +16,9 @@ import xcodeml.c.util.XmcWriter;
 public class XcFuncDefObj extends XcObj
     implements XcDecAndDefObj, XcGccAttributable, XcSourcePositioned
 {
-    private XcIdent _ident;
-
-    private XcCompStmtObj _compStmt;
-
-    private boolean _isGccExtension;
-
+    private XcIdent        _ident;
+    private XcCompStmtObj  _compStmt;
+    private boolean        _isGccExtension;
     private XcSourcePosObj _srcPos;
 
     /* types of parameters */
@@ -191,19 +182,13 @@ public class XcFuncDefObj extends XcObj
     {
         /* functionDefition is not predeclaration of function */
         boolean isPreDecl = false;
-
         XcParamList paramList;
-
         XcFuncType ft = (XcFuncType)_ident.getType();
 
         w.add(_srcPos);
-
         isPreDecl = ft.isPreDecl();
-
         ft.setIsPreDecl(_compStmt == null);
-
         paramList = ft.getParamList();
-
         ft.setParamList(_paramList);
 
         if (_isGccExtension)

@@ -16,7 +16,7 @@
 #define _ACC_REDUCTION_LOGAND 7
 #define _ACC_REDUCTION_LOGOR 8
 
-static __device__
+__device__ static inline
 void _ACC_gpu_init_reduction_var(int *var, int kind){
   switch(kind){
   case _ACC_REDUCTION_PLUS: *var = 0; return;
@@ -31,7 +31,7 @@ void _ACC_gpu_init_reduction_var(int *var, int kind){
   }
 }
 
-static __device__
+__device__ static inline
 void _ACC_gpu_init_reduction_var(float *var, int kind){
   switch(kind){
   case _ACC_REDUCTION_PLUS: *var = 0.0f; return;
@@ -40,7 +40,8 @@ void _ACC_gpu_init_reduction_var(float *var, int kind){
   case _ACC_REDUCTION_MIN: *var = FLT_MAX; return;
   }
 }
-static __device__
+
+__device__ static inline
 void _ACC_gpu_init_reduction_var(double *var, int kind){
   switch(kind){
   case _ACC_REDUCTION_PLUS: *var = 0.0; return;
@@ -51,14 +52,14 @@ void _ACC_gpu_init_reduction_var(double *var, int kind){
 }
 
 template<typename T>
-static __device__
+__device__ static inline
 void _ACC_gpu_init_reduction_var_single(T *var, int kind){
   if(threadIdx.x == 0 && threadIdx.y == 0 && threadIdx.z == 0){
     _ACC_gpu_init_reduction_var(var, kind);
   }
 }
 
-static __device__
+__device__ static inline
 int op(int a, int b, int kind){
   switch(kind){
   case _ACC_REDUCTION_PLUS: return a + b;
@@ -75,7 +76,7 @@ int op(int a, int b, int kind){
 }
 
 template<typename T>
-static __device__
+__device__ static inline
 T op(T a, T b, int kind){
   switch(kind){
   case _ACC_REDUCTION_PLUS: return a + b;
@@ -87,29 +88,10 @@ T op(T a, T b, int kind){
 }
 
 
-template<typename T>
-static __device__ void warpReduce(volatile T sdata[64], int kind){
-  sdata[threadIdx.x] = op(sdata[threadIdx.x], sdata[threadIdx.x + 32], kind);
-  sdata[threadIdx.x] = op(sdata[threadIdx.x], sdata[threadIdx.x + 16], kind);
-  sdata[threadIdx.x] = op(sdata[threadIdx.x], sdata[threadIdx.x + 8], kind);
-  sdata[threadIdx.x] = op(sdata[threadIdx.x], sdata[threadIdx.x + 4], kind);
-  sdata[threadIdx.x] = op(sdata[threadIdx.x], sdata[threadIdx.x + 2], kind);
-  sdata[threadIdx.x] = op(sdata[threadIdx.x], sdata[threadIdx.x + 1], kind);
-}
-
-template<typename T>
-static __device__ void warpReduce32(volatile T sdata[64], int kind){
-  sdata[threadIdx.x] = op(sdata[threadIdx.x], sdata[threadIdx.x + 16], kind);
-  sdata[threadIdx.x] = op(sdata[threadIdx.x], sdata[threadIdx.x + 8], kind);
-  sdata[threadIdx.x] = op(sdata[threadIdx.x], sdata[threadIdx.x + 4], kind);
-  sdata[threadIdx.x] = op(sdata[threadIdx.x], sdata[threadIdx.x + 2], kind);
-  sdata[threadIdx.x] = op(sdata[threadIdx.x], sdata[threadIdx.x + 1], kind);
-}
-
 #if __CUDA_ARCH__ >= 300
 #include <cuda.h>
 #if CUDA_VERSION <= 6000
-static __inline__ __device__
+__device__ static inline
 double __shfl_xor(double var, int laneMask, int width=warpSize)
 {
   int hi, lo;
@@ -119,27 +101,53 @@ double __shfl_xor(double var, int laneMask, int width=warpSize)
   return __hiloint2double( hi, lo );
 }
 #endif
+
+/**
+   Reduce input value among lanes and store it with addtional value to output location of lane 0 using shuffle instruction
+   *
+   * @param[out] output   pointer to output
+   * @param[in]  input    input value
+   * @param[in]  kind     operator kind
+   * @param[in]  addition additional value
+   */
 template<typename T>
-static __device__
-void reduceInBlock(T *resultInBlock, T resultInThread, int kind){
-  __shared__ T tmp[32];
+__device__ static inline
+void _ACC_reduce_lanes(T *output, T input, int kind, bool do_acc)
+{
+  T v = input;
+  unsigned int laneId = threadIdx.x & (32 - 1);
 
-  unsigned int warpId = threadIdx.x >> 5;
-  unsigned int lane = threadIdx.x & (32 - 1);
-
-  T v = resultInThread;
   v = op(v, __shfl_xor(v, 16), kind);
   v = op(v, __shfl_xor(v, 8), kind);
   v = op(v, __shfl_xor(v, 4), kind);
   v = op(v, __shfl_xor(v, 2), kind);
   v = op(v, __shfl_xor(v, 1), kind);
 
-  if(lane == 0){
-    tmp[warpId] = v;
+  if(laneId == 0){
+    *output = do_acc? op(*output, v, kind) : v;
   }
+}
+
+/**
+   Reduce input value among threads and store it to target pointer of thread 0 using shuffle instruction
+   *
+   * @param[in,out] target   target pointer
+   * @param[in]     input    input value
+   * @param[in]     kind     operator kind
+   * @param[in]     do_acc   do accumulate flag
+   */
+template<typename T>
+__device__ static inline
+void _ACC_reduce_threads(T *target, T input, int kind, bool do_acc){
+  __shared__ T tmp[32];
+
+  unsigned int warpId = threadIdx.x >> 5;
+
+  _ACC_reduce_lanes(&tmp[warpId], input, kind, false);
+
   __syncthreads();
-  
-  if(threadIdx.x < 32){
+
+  if(warpId == 0){
     unsigned int nwarps = blockDim.x >> 5 ;
     T v;
     if(threadIdx.x < nwarps){
@@ -147,263 +155,197 @@ void reduceInBlock(T *resultInBlock, T resultInThread, int kind){
     }else{
       _ACC_gpu_init_reduction_var(&v, kind);
     }
-    v = op(v, __shfl_xor(v, 16), kind);
-    v = op(v, __shfl_xor(v, 8), kind);
-    v = op(v, __shfl_xor(v, 4), kind);
-    v = op(v, __shfl_xor(v, 2), kind);
-    v = op(v, __shfl_xor(v, 1), kind);
-    if(threadIdx.x==0){
-      *resultInBlock = op(v, *resultInBlock, kind);
-    }
+    _ACC_reduce_lanes(target, v, kind, do_acc);
   }
   __syncthreads();
 }
-#else
+
+#else //__CUDA_ARCH__ < 300
+
 template<typename T>
-static __device__
-void reduceInBlock(T *resultInBlock, T resultInThread, int kind){
+__device__ static inline
+void warpReduce(volatile T sdata[64], int kind){
+  sdata[threadIdx.x] = op(sdata[threadIdx.x], sdata[threadIdx.x + 32], kind);
+  sdata[threadIdx.x] = op(sdata[threadIdx.x], sdata[threadIdx.x + 16], kind);
+  sdata[threadIdx.x] = op(sdata[threadIdx.x], sdata[threadIdx.x + 8],  kind);
+  sdata[threadIdx.x] = op(sdata[threadIdx.x], sdata[threadIdx.x + 4],  kind);
+  sdata[threadIdx.x] = op(sdata[threadIdx.x], sdata[threadIdx.x + 2],  kind);
+  sdata[threadIdx.x] = op(sdata[threadIdx.x], sdata[threadIdx.x + 1],  kind);
+}
+
+template<typename T>
+__device__ static inline
+void warpReduce32(volatile T sdata[64], int kind){
+  sdata[threadIdx.x] = op(sdata[threadIdx.x], sdata[threadIdx.x + 16], kind);
+  sdata[threadIdx.x] = op(sdata[threadIdx.x], sdata[threadIdx.x + 8],  kind);
+  sdata[threadIdx.x] = op(sdata[threadIdx.x], sdata[threadIdx.x + 4],  kind);
+  sdata[threadIdx.x] = op(sdata[threadIdx.x], sdata[threadIdx.x + 2],  kind);
+  sdata[threadIdx.x] = op(sdata[threadIdx.x], sdata[threadIdx.x + 1],  kind);
+}
+
+/**
+   Reduce input value among threads and store it to target pointer of thread 0 using shared memory
+   *
+   * @param[in,out] target   target pointer
+   * @param[in]     input    input value
+   * @param[in]     kind     operator kind
+   * @param[in]     do_acc   do accumulate flag
+   */
+template<typename T>
+__device__ static inline
+void _ACC_reduce_threads(T *target, T input, int kind, bool do_acc){
   __shared__ T tmp[64];
 
   if(blockDim.x >= 64){
   if(threadIdx.x < 64){
-    tmp[threadIdx.x] = resultInThread;
+    tmp[threadIdx.x] = input;
   }
   __syncthreads();
-  
+
   unsigned int div64_q = threadIdx.x >> 6;
   unsigned int div64_m = threadIdx.x % 64;
   unsigned int max_q = ((blockDim.x - 1) >> 6) + 1;
   for(unsigned int i = 1; i < max_q; i++){
     if(i == div64_q){
-      tmp[div64_m] = op(tmp[div64_m], resultInThread, kind);
+      tmp[div64_m] = op(tmp[div64_m], input, kind);
     }
     __syncthreads();
   }
 
   if(threadIdx.x < 32) warpReduce(tmp, kind);
   }else{
-    tmp[threadIdx.x] = resultInThread;
+    tmp[threadIdx.x] = input;
     warpReduce32(tmp, kind);
   }
 
   if(threadIdx.x == 0){
-    *resultInBlock = op(tmp[0], *resultInBlock, kind);
+    *target = do_acc? op(*target, tmp[0], kind) : tmp[0];
   }
   __syncthreads(); //sync for next reduction among threads
 }
 #endif
 
+/**
+   Atomic accumulate input value to target variable for int type
+   *
+   * @param[in,out] target target pointer
+   * @param[in]     val    value
+   * @param[in]     kind   operator kind
+   */
+__device__ static inline
+void _ACC_atomic_accumulate(int* target, int val, int kind){
+  switch(kind){
+  case _ACC_REDUCTION_PLUS:
+    atomicAdd(target, val);break;
+  case _ACC_REDUCTION_MAX:
+    atomicMax(target, val);break;
+  case _ACC_REDUCTION_MIN:
+    atomicMin(target, val);break;
+  case _ACC_REDUCTION_BITAND:
+    atomicAnd(target, val);break;
+  case _ACC_REDUCTION_BITOR:
+    atomicOr(target, val);break;
+  case _ACC_REDUCTION_BITXOR:
+    atomicXor(target, val);break;
+  case _ACC_REDUCTION_LOGOR:
+    if(val) atomicOr(target, ~0);
+    break;
+  case _ACC_REDUCTION_LOGAND:
+    if(! val) atomicAnd(target, 0);
+    break;
+  }
+}
+
+/**
+   Atomic accumulate input value to target variable for float type
+   *
+   * @param[in,out] target target pointer
+   * @param[in]     val    value
+   * @param[in]     kind   operator kind
+   */
+__device__ static inline
+void _ACC_atomic_accumulate(float *target, float val, int kind){
+  switch(kind){
+  case _ACC_REDUCTION_PLUS:
+    atomicAdd(target, val);break;
+  case _ACC_REDUCTION_MAX:
+    atomicMax(target, val);break;
+  case _ACC_REDUCTION_MIN:
+    atomicMin(target, val);break;
+  }
+}
+
+/**
+   Reduce buffer data using threads and accumulate it to output location
+   *
+   * @param[in,out] result         result address
+   * @param[in]     kind           operator kind
+   * @param[in]     buf            buffer
+   * @param[in]     element_offset (element_offset * num_elements) is buffer offset
+   * @param[in]     num_elements   number of elements
+   */
 template<typename T>
-__device__
-static void reduceInGridDefault(T *resultInGrid, T resultInBlock, int kind, T *tmp, unsigned int *cnt){
-  __shared__ bool isLastBlockDone;
+__device__ static inline
+void _ACC_gpu_reduction_block(T* result, int kind, void* buf, size_t element_offset, int num_elements){
+  T *data = (T*)((char*)buf + (element_offset * num_elements));
 
-  if(threadIdx.x == 0){
-    tmp[blockIdx.x] = resultInBlock;
-    __threadfence();
-    
-    //increase cnt after tmp is visible from all.
-    unsigned int value = atomicInc(cnt, gridDim.x);
-    isLastBlockDone = (value == (gridDim.x - 1));
-  }
-  __syncthreads();
-
-  if(isLastBlockDone){
-    T part_result;
-    _ACC_gpu_init_reduction_var(&part_result, kind);
-    for(int idx = threadIdx.x; idx < gridDim.x; idx += blockDim.x){
-      part_result = op(part_result, tmp[idx], kind);
-    }
-    T result;
-    if(threadIdx.x == 0){
-      _ACC_gpu_init_reduction_var(&result, kind);
-    }
-    reduceInBlock(&result, part_result, kind);
-    if(threadIdx.x == 0){
-      *resultInGrid = op(*resultInGrid, result, kind);
-      *cnt = 0; //important!
-    }
-  }
-}
-
-__device__
-static void _ACC_gpu_reduction_block(int* result, int kind, int resultInBlock){
-  if(threadIdx.x == 0){
-    switch(kind){
-    case _ACC_REDUCTION_PLUS:
-      atomicAdd(result, resultInBlock);break;
-    case _ACC_REDUCTION_MAX:
-      atomicMax(result, resultInBlock);break;
-    case _ACC_REDUCTION_MIN:
-      atomicMin(result, resultInBlock);break;
-    case _ACC_REDUCTION_BITAND:
-      atomicAnd(result, resultInBlock);break;
-    case _ACC_REDUCTION_BITOR:
-      atomicOr(result, resultInBlock);break;
-    case _ACC_REDUCTION_BITXOR:
-      atomicXor(result, resultInBlock);break;
-    case _ACC_REDUCTION_LOGOR:
-      if(resultInBlock) atomicOr(result, ~0);
-      break;
-    case _ACC_REDUCTION_LOGAND:
-      if(! resultInBlock) atomicAnd(result, 0);
-      break;
-    }
-  }
-}
-
-__device__
-static void _ACC_gpu_reduction_block(float *resultInGrid, int kind, float resultInBlock){ 
-  if(threadIdx.x == 0){
-    switch(kind){
-    case _ACC_REDUCTION_PLUS:
-      atomicAdd(resultInGrid, resultInBlock);break;
-    case _ACC_REDUCTION_MAX:
-      atomicMax(resultInGrid, resultInBlock);break;
-    case _ACC_REDUCTION_MIN:
-      atomicMin(resultInGrid, resultInBlock);break;
-    }
-  }
-}
-
-__device__
-static void reduceInGrid(double *resultInGrid, double resultInBlock, int kind, double *tmp, unsigned int *cnt){
-  if(kind == _ACC_REDUCTION_MAX){
-    if(threadIdx.x == 0) atomicMax(resultInGrid, resultInBlock);
-    __syncthreads();
-  }else if(kind == _ACC_REDUCTION_MIN){
-    if(threadIdx.x == 0) atomicMin(resultInGrid, resultInBlock);
-    __syncthreads();
-  }else{
-    reduceInGridDefault(resultInGrid, resultInBlock, kind, tmp, cnt);
-    //    __syncthreads();
-  }
-}  
-
-
-template<typename T>
-__device__
-static void _ACC_gpu_reduce_block_thread_x(T *result, T resultInThread, int kind){
-  T resultInBlock;
-  if(threadIdx.x == 0){
-    _ACC_gpu_init_reduction_var(&resultInBlock, kind);
-  }
-  reduceInBlock(&resultInBlock, resultInThread, kind);
-  reduceInGrid(result, resultInBlock, kind, NULL, NULL);
-}
-
-template<typename T>
-__device__
-static void _ACC_gpu_reduce_block_thread_x(T *result, T resultInThread, int kind, T *tmp, unsigned int *cnt){
-  T resultInBlock;
-  if(threadIdx.x == 0){ 
-    _ACC_gpu_init_reduction_var(&resultInBlock, kind);
-  }
-  reduceInBlock(&resultInBlock, resultInThread, kind);
-  reduceInGrid(result, resultInBlock, kind, tmp, cnt);
-}
-
-template<typename T>
-__device__
-static void _ACC_gpu_reduce_thread_x(T *result, T resultInThread, int kind){
-  reduceInBlock(result, resultInThread, kind);
-}
-
-/////////////
-
-
-//template<typename T>
-static __device__
-void _ACC_gpu_init_block_reduction(unsigned int *counter, void * volatile * tmp, size_t totalElementSize){
-  // initial value of counter and *tmp is 0 or NULL.
-  if(threadIdx.x == 0){
-    if(*tmp == NULL){
-      unsigned int value = atomicCAS(counter, 0, 1);
-      //      printf("counter=%d(%d)\n",value,blockIdx.x);
-      if(value == 0){
-	//malloc
-	*tmp = malloc(gridDim.x * totalElementSize);
-	__threadfence();
-	*counter = 0;
-	//	printf("malloced (%d)\n",blockIdx.x);
-      }else{
-	//wait completion of malloc
-	while(*tmp == NULL); //do nothing
-      }
-    }
-  }
-  __syncthreads();
-}
-
-template<typename T>
-__device__
-static void _ACC_gpu_reduction_thread(T *resultInBlock, T resultInThread, int kind){
-  reduceInBlock(resultInBlock, resultInThread, kind);
-}
-
-__device__
-static void _ACC_gpu_is_last_block(int *is_last, unsigned int *counter){
-  __threadfence();
-  if(threadIdx.x==0){
-    unsigned int value = atomicInc(counter, gridDim.x - 1);
-    *is_last = (value == (gridDim.x - 1));
-  }
-  __syncthreads();
-}
-
-template<typename T>
-__device__
-static void reduceInGridDefault_new(T *result, T *tmp, int kind, int numBlocks){
   T part_result;
   _ACC_gpu_init_reduction_var(&part_result, kind);
-  for(int idx = threadIdx.x; idx < numBlocks; idx += blockDim.x){
-    part_result = op(part_result, tmp[idx], kind);
+
+  for(int idx = threadIdx.x; idx < num_elements; idx += blockDim.x){
+    part_result = op(part_result, data[idx], kind);
   }
-  T resultInGrid;
-  if(threadIdx.x == 0){
-    _ACC_gpu_init_reduction_var(&resultInGrid, kind);
-  }
-  reduceInBlock(&resultInGrid, part_result, kind);
-  if(threadIdx.x == 0){
-    *result = op(*result, resultInGrid, kind);
-  }
+
+  _ACC_reduce_threads(result, part_result, kind, true);
+
 }
 
 template<typename T>
-__device__
-static void _ACC_gpu_reduction_block(T* result, int kind, void* tmp, size_t offsetElementSize, int numBlocks){
-  void *tmpAddr = (char*)tmp + (numBlocks * offsetElementSize);
-  reduceInGridDefault_new(result, (T*)tmpAddr, kind, numBlocks);
-}
-
-template<typename T>
-__device__
-static void _ACC_gpu_reduction_block(T* result, int kind, void* tmp, size_t offsetElementSize){
+__device__ static inline
+void _ACC_gpu_reduction_block(T* result, int kind, void* tmp, size_t offsetElementSize){
   _ACC_gpu_reduction_block(result, kind, tmp, offsetElementSize, gridDim.x);
 }
 
 template<typename T>
-__device__
-static void _ACC_gpu_reduction_singleblock(T* result, T resultInBlock, int kind){
+__device__ static inline
+void _ACC_gpu_reduction_singleblock(T* result, T resultInBlock, int kind){
   if(threadIdx.x == 0){
     *result = op(*result, resultInBlock, kind);
   }
 }
 
-//template<typename T>
-__device__
-static void _ACC_gpu_finalize_reduction(unsigned int *counter, void* tmp){
-  *counter = 0;
-}
-
 template<typename T>
-__device__
-static void _ACC_gpu_reduction_tmp(T resultInBlock, void *tmp, size_t offsetElementSize){
+__device__ static inline
+void _ACC_gpu_reduction_tmp(T resultInBlock, void *tmp, size_t offsetElementSize){
   if(threadIdx.x==0){
     void *tmpAddr =  (char*)tmp + (gridDim.x * offsetElementSize);
     ((T*)tmpAddr)[blockIdx.x] = resultInBlock;
   }
   __syncthreads();//is need?
+}
+
+template<typename T>
+__device__ static inline
+void _ACC_gpu_reduction_bt(T *resultInGrid, int kind, T resultInThread){
+  T resultInBlock;
+  _ACC_reduce_threads(&resultInBlock, resultInThread, kind, false);
+  if(threadIdx.x == 0){
+    _ACC_atomic_accumulate(resultInGrid, resultInBlock, kind);
+  }
+}
+
+template<typename T>
+__device__ static inline
+void _ACC_gpu_reduction_b(T *resultInGrid, int kind, T resultInBlock){
+  if(threadIdx.x == 0){
+    _ACC_atomic_accumulate(resultInGrid, resultInBlock, kind);
+  }
+}
+
+template<typename T>
+__device__ static inline
+void _ACC_gpu_reduction_t(T *resultInBlock, int kind, T resultInThread){
+  _ACC_reduce_threads(resultInBlock, resultInThread, kind, true);
 }
 
 #endif //_ACC_GPU_REDUCTION

@@ -1,9 +1,3 @@
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
-
 package exc.xmpF;
 
 import exc.object.*;
@@ -47,6 +41,11 @@ public class XMP {
   public final static int GMOVE_IN              = 401;
   public final static int GMOVE_OUT	        = 402;
 
+  public final static int LOOP_EXPAND           = 410;
+  public final static int LOOP_MARGIN           = 411;
+  public final static int LOOP_PEEL_AND_WAIT    = 412;
+  public final static int LOOP_NONE             = 413;
+    
   public final static int MAX_DIM		= 15;
   public       static int MAX_ASSUMED_SHAPE     = 16;
   public final static int NONBASIC_TYPE		= 99 /*599*/;
@@ -101,6 +100,10 @@ public class XMP {
   public final static String set_reflect_f    = "xmpf_set_reflect_";
   public final static String reflect_f        = "xmpf_reflect_";
   public final static String reflect_async_f  = "xmpf_reflect_async_";
+  public final static String set_reduce_shadow_f    = "xmpf_set_reduce_shadow_";
+  public final static String reduce_shadow_f        = "xmpf_reduce_shadow_";
+  public final static String reduce_shadow_async_f  = "xmpf_reduce_shadow_async_";
+    
   public final static String init_async_f     = "xmpf_init_async_";
   public final static String start_async_f    = "xmpf_start_async_";
   public final static String wait_async_f     = "xmpf_wait_async_";
@@ -129,6 +132,10 @@ public class XMP {
   public final static String set_reflect_acc_f    = "xaccf_set_reflect_";
   public final static String reflect_acc_f        = "xaccf_reflect_";
   public final static String reflect_async_acc_f  = "xaccf_reflect_async_";
+  public final static String set_reduce_shadow_acc_f    = "xaccf_set_reduce_shadow_";
+  public final static String reduce_shadow_acc_f        = "xaccf_reduce_shadow_";
+  public final static String reduce_shadow_async_acc_f  = "xaccf_reduce_shadow_async_";
+
   public final static String reduction_acc_f      = "xaccf_reduction_";
   public final static String reduction_loc_acc_f  = "xaccf_reduction_loc_";
   public final static String bcast_acc_f          = "xaccf_bcast_";
@@ -225,6 +232,9 @@ public class XMP {
 	}
       }
       break;
+    case BasicType.F_CHARACTER:
+      t = BasicType.CHAR;
+      break;
     case BasicType.CHAR:
     case BasicType.UNSIGNED_CHAR:
     case BasicType.SHORT:
@@ -258,7 +268,7 @@ public class XMP {
   static int gensym_num = 0;
   
   public static String genSym(String prefix) {
-    String newString = new String(prefix + String.valueOf(gensym_num));
+    String newString = new String("XMP_" + prefix + String.valueOf(gensym_num));
     gensym_num++;
     return newString;
   }

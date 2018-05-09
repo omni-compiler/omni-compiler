@@ -349,6 +349,8 @@ static void _XMP_reduce_FLMM_NODES_ENTIRE(_XMP_nodes_t *nodes,
 // _XMP_M_REDUCE_FLMM_EXEC(addr, count, datatype, op, num_locs, ...) is in xmp_comm_macro.h
 
 void _XMP_reduce_CLAUSE(void *data_addr, int count, int datatype, int op) {
+  _XMP_RETURN_IF_SINGLE;
+    
   // setup information
   MPI_Datatype mpi_datatype = MPI_INT; // dummy
   size_t datatype_size; // not used in this function

@@ -23,10 +23,13 @@ static unsigned int *_sync_images_table;
 #ifndef _SYNCIMAGE_SENDRECV
 static unsigned int *_sync_images_table_disp;
 #endif
+static int _XMP_mpi_trans_rank(const _XMP_coarray_t *coarray, int const world_rank);
 
 //external variables in xmp_onesided.c
 extern int _XMP_flag_put_nb; // This variable is temporal
 extern int _XMP_flag_get_nb; // This variable is temporal
+
+extern int _XMP_flag_multi_win;
 
 /*
 static bool _is_put_blocking = true;
@@ -81,14 +84,15 @@ static void set_flushed_flag(bool is_normal, bool is_acc, bool flag)
   }
 }
 
-static MPI_Win get_window(const _XMP_coarray_t *desc, bool is_acc)
+static inline
+MPI_Win get_window(const _XMP_coarray_t *desc, bool is_acc)
 {
   MPI_Win win = desc->win;
 #ifdef _XMP_XACC
-  if(is_acc){
-    win = desc->win_acc;
-  }
+  if(is_acc) win = desc->win_acc;
 #endif
+
+  if(! _XMP_flag_multi_win){
   if(win == MPI_WIN_NULL){ //when the coarray is normal
     win = _xmp_mpi_onesided_win;
 #ifdef _XMP_XACC
@@ -100,6 +104,7 @@ static MPI_Win get_window(const _XMP_coarray_t *desc, bool is_acc)
   }else{
     set_flushed_flag(false, is_acc, false);
   }
+  }
   return win;
 }
 
@@ -108,17 +113,21 @@ MPI_Win _XMP_mpi_coarray_get_window(const _XMP_coarray_t *desc, bool is_acc)
   return get_window(desc, is_acc);
 }
 
-static char *get_remote_addr(const _XMP_coarray_t *desc, const int target_rank, const bool is_acc)
+static inline
+char *get_remote_addr(const _XMP_coarray_t *desc, const int target_rank, const bool is_acc)
 {
 #ifdef _XMP_XACC
   if(is_acc){
+    if(desc->addr_dev == NULL) return (char*)0;
     return desc->addr_dev[target_rank];
   }
 #endif
+  if(desc->addr == NULL) return (char*)0;
   return desc->addr[target_rank];
 }
 
-static char *get_local_addr(const _XMP_coarray_t *desc, const bool is_acc)
+static inline
+char *get_local_addr(const _XMP_coarray_t *desc, const bool is_acc)
 {
 #ifdef _XMP_XACC
   if(is_acc){
@@ -126,6 +135,16 @@ static char *get_local_addr(const _XMP_coarray_t *desc, const bool is_acc)
   }
 #endif
   return desc->real_addr;
+}
+
+char *_XMP_mpi_coarray_get_remote_addr(const _XMP_coarray_t *desc, const int target_rank, const bool is_acc)
+{
+  return get_remote_addr(desc, target_rank, is_acc);
+}
+
+char *_XMP_mpi_coarray_get_local_addr(const _XMP_coarray_t *desc, const bool is_acc)
+{
+  return get_local_addr(desc, is_acc);
 }
 
 /**
@@ -137,7 +156,7 @@ void _XMP_mpi_build_shift_queue(bool is_acc)
   
   shift_queue->max_size = _XMP_MPI_ONESIDED_COARRAY_SHIFT_QUEUE_INITIAL_SIZE;
   shift_queue->num      = 0;
-  shift_queue->shifts   = malloc(sizeof(size_t*) * shift_queue->max_size);
+  shift_queue->shifts   = malloc(sizeof(size_t) * shift_queue->max_size);
   shift_queue->total_shift = 0;
 }
 
@@ -159,7 +178,7 @@ static void _rebuild_shift_queue(struct _shift_queue_t *shift_queue)
 {
   shift_queue->max_size *= _XMP_MPI_ONESIDED_COARRAY_SHIFT_QUEUE_INCREMENT_RAITO;
   size_t *tmp;
-  size_t next_size = shift_queue->max_size * sizeof(size_t*);
+  size_t next_size = shift_queue->max_size * sizeof(size_t);
   if((tmp = realloc(shift_queue->shifts, next_size)) == NULL)
     _XMP_fatal("cannot allocate memory");
   else
@@ -200,6 +219,15 @@ void _XMP_mpi_coarray_lastly_deallocate(bool is_acc){
 }
 
 
+void _XMP_mpi_coarray_deallocate(_XMP_coarray_t *c, bool is_acc)
+{
+  if(_XMP_flag_multi_win){
+    MPI_Win_unlock_all(c->win);
+    _XMP_barrier(NULL);
+    _XMP_mpi_onesided_dealloc_win(&(c->win), (void **)&(c->real_addr), is_acc);
+  }
+}
+
 /**********************************************************************/
 /* DESCRIPTION : Execute malloc operation for coarray                 */
 /* ARGUMENT    : [OUT] *coarray_desc : Descriptor of new coarray      */
@@ -208,16 +236,29 @@ void _XMP_mpi_coarray_lastly_deallocate(bool is_acc){
 /**********************************************************************/
 void _XMP_mpi_coarray_malloc(_XMP_coarray_t *coarray_desc, void **addr, const size_t coarray_size, bool is_acc)
 {
-  char **each_addr;  // gap_size on each node
+  char **each_addr = NULL;  // gap_size on each node
   struct _shift_queue_t *shift_queue = is_acc? &_shift_queue_acc : &_shift_queue;
   size_t shift;
+  char *real_addr = NULL;
+  MPI_Win win = MPI_WIN_NULL;
+  _XMP_nodes_t *nodes = _XMP_get_execution_nodes();
+  MPI_Comm comm = *(MPI_Comm *)nodes->comm;
 
+  if(coarray_size == 0){
+    _XMP_fatal("_XMP_mpi_coarray_malloc: zero size is not allowed");
+  }
+
+  if(_XMP_flag_multi_win){
+    _XMP_mpi_onesided_alloc_win(&win, (void**)&real_addr, coarray_size, comm, is_acc);
+    MPI_Win_lock_all(MPI_MODE_NOCHECK, win);
+
+    XACC_DEBUG("addr=%p, size=%zd, is_acc=%d", real_addr, coarray_size, is_acc);
+  }else{
   each_addr = (char**)_XMP_alloc(sizeof(char *) * _XMP_world_size);
-
   for(int i=0;i<_XMP_world_size;i++){
     each_addr[i] = (char *)(shift_queue->total_shift);
   }
-  char *real_addr = _xmp_mpi_onesided_buf;
+  real_addr = _xmp_mpi_onesided_buf;
 #ifdef _XMP_XACC
   if(is_acc){
     real_addr = _xmp_mpi_onesided_buf_acc;
@@ -247,17 +288,21 @@ void _XMP_mpi_coarray_malloc(_XMP_coarray_t *coarray_desc, void **addr, const si
     }
     _XMP_fatal_nomsg();
   }
+  }
 
   if(is_acc){
 #ifdef _XMP_XACC
     coarray_desc->addr_dev = each_addr;
     coarray_desc->real_addr_dev = real_addr;
-    coarray_desc->win_acc = MPI_WIN_NULL;
+    coarray_desc->win_acc = win;
+    coarray_desc->nodes = nodes;
 #endif
   }else{
     coarray_desc->addr = each_addr;
     coarray_desc->real_addr = real_addr;
-    coarray_desc->win = MPI_WIN_NULL;
+    coarray_desc->win = win;
+    coarray_desc->win_acc = MPI_WIN_NULL;
+    coarray_desc->nodes = nodes;
   }
   *addr = real_addr;
 }
@@ -279,10 +324,12 @@ void _XMP_mpi_coarray_malloc(_XMP_coarray_t *coarray_desc, void **addr, const si
 /* EXAMPLE    :                                                         */
 /*     a[0:100]:[1] = b[0:100]; // a[] is a dst, b[] is a src           */
 /************************************************************************/
-void _XMP_mpi_contiguous_put(const int target_rank, const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc,
-			   const size_t dst_offset, const size_t src_offset,
-			   const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size, const bool is_dst_on_acc, const bool is_src_on_acc)
+void _XMP_mpi_contiguous_put(const int org_target_rank, const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc,
+			     const size_t dst_offset, const size_t src_offset,
+			     const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size, const bool is_dst_on_acc, const bool is_src_on_acc)
 {
+  const int target_rank = _XMP_mpi_trans_rank(dst_desc, org_target_rank);
+
   size_t transfer_size = elmt_size * dst_elmts;
   char *src = get_local_addr(src_desc, is_src_on_acc);
   if(dst_elmts == src_elmts){
@@ -327,10 +374,12 @@ void _XMP_mpi_contiguous_put(const int target_rank, const _XMP_coarray_t *dst_de
 /* EXAMPLE    :                                                         */
 /*     a[0:100] = b[0:100]:[1]; // a[] is a dst, b[] is a src           */
 /************************************************************************/
-void _XMP_mpi_contiguous_get(const int target_rank, const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc,
-			   const size_t dst_offset, const size_t src_offset,
-			   const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size, const bool is_dst_on_acc, const bool is_src_on_acc)
+void _XMP_mpi_contiguous_get(const int org_target_rank, const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc,
+			     const size_t dst_offset, const size_t src_offset,
+			     const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size, const bool is_dst_on_acc, const bool is_src_on_acc)
 {
+  const int target_rank = _XMP_mpi_trans_rank(src_desc, org_target_rank);
+
   size_t transfer_size = elmt_size * dst_elmts;
   char *dst = get_local_addr(dst_desc, is_dst_on_acc);
   if(dst_elmts == src_elmts){
@@ -372,7 +421,7 @@ void _XMP_mpi_contiguous_get(const int target_rank, const _XMP_coarray_t *dst_de
 /*               [IN] src_elmts      : Number of elements of source array              */
 /*               [IN] is_dst_on_acc  : Is destination on accelerator ? (TRUE/FALSE)    */
 /***************************************************************************************/
-void _XMP_mpi_put(const int dst_contiguous, const int src_contiguous, const int target_rank, 
+void _XMP_mpi_put(const int dst_contiguous, const int src_contiguous, const int org_target_rank, 
 		  const int dst_dims, const int src_dims, const _XMP_array_section_t *dst_info, 
 		  const _XMP_array_section_t *src_info, const _XMP_coarray_t *dst_desc, 
 		  const void *src, const int dst_elmts, const int src_elmts,
@@ -381,6 +430,8 @@ void _XMP_mpi_put(const int dst_contiguous, const int src_contiguous, const int 
   size_t dst_offset = _XMP_get_offset(dst_info, dst_dims);
   size_t src_offset = _XMP_get_offset(src_info, src_dims);
   size_t transfer_size = dst_desc->elmt_size * dst_elmts;
+
+  const int target_rank = _XMP_mpi_trans_rank(dst_desc, org_target_rank);
 
   if(dst_elmts == src_elmts){
     if(dst_contiguous == _XMP_N_INT_TRUE && src_contiguous == _XMP_N_INT_TRUE){
@@ -429,7 +480,7 @@ void _XMP_mpi_put(const int dst_contiguous, const int src_contiguous, const int 
 /*               [IN] dst_elmts      : Number of elements of destination array         */
 /*               [IN] is_src_on_acc  : Is source on accelerator ? (TRUE/FALSE)         */
 /***************************************************************************************/
-void _XMP_mpi_get(const int src_contiguous, const int dst_contiguous, const int target_rank,
+void _XMP_mpi_get(const int src_contiguous, const int dst_contiguous, const int org_target_rank,
 		  const int src_dims, const int dst_dims, const _XMP_array_section_t *src_info,
 		  const _XMP_array_section_t *dst_info, const _XMP_coarray_t *src_desc,
 		  void *dst, const int src_elmts, const int dst_elmts,
@@ -438,6 +489,8 @@ void _XMP_mpi_get(const int src_contiguous, const int dst_contiguous, const int 
   size_t dst_offset = _XMP_get_offset(dst_info, dst_dims);
   size_t src_offset = _XMP_get_offset(src_info, src_dims);
   size_t transfer_size = src_desc->elmt_size * src_elmts;
+
+  const int target_rank = _XMP_mpi_trans_rank(src_desc, org_target_rank);
 
   XACC_DEBUG("_XMP_mpi_get, dst_elmts = %d, src_elmts = %d\n", src_elmts, dst_elmts);
 
@@ -470,10 +523,14 @@ void _XMP_mpi_get(const int src_contiguous, const int dst_contiguous, const int 
 
 static void _win_sync()
 {
+  XACC_DEBUG("sync for host single coarray");
+  XACC_DEBUG("sync for host single distarray");
   MPI_Win_sync(_xmp_mpi_onesided_win);
   MPI_Win_sync(_xmp_mpi_distarray_win);
 
 #ifdef _XMP_XACC
+  XACC_DEBUG("sync for acc single coarray");
+  XACC_DEBUG("sync for acc single distarray");
   MPI_Win_sync(_xmp_mpi_onesided_win_acc);
   MPI_Win_sync(_xmp_mpi_distarray_win_acc);
 #endif
@@ -484,37 +541,60 @@ static void _win_sync()
  */
 void _XMP_mpi_sync_memory()
 {
-  if(! _is_coarray_win_flushed){
-    XACC_DEBUG("sync_memory(normal, host)");
-    MPI_Win_flush_all(_xmp_mpi_onesided_win);
+  if(_XMP_flag_multi_win){
+    int num = 0;
+    _XMP_coarray_t **coarrays = _XMP_coarray_get_list(&num);
+    for(int i = 0; i < num; i++){
+      MPI_Win win = coarrays[i]->win;
+      if(win != MPI_WIN_NULL){
+	XACC_DEBUG("flush_all for host a coarray (%ld)", (long)win);
+	MPI_Win_flush_all(win);
+	XACC_DEBUG("sync for host a coarray (%ld)", (long)win);
+	MPI_Win_sync(win);
+      }
+#ifdef _XMP_XACC
+      MPI_Win win_acc = coarrays[i]->win_acc;
+      if(win_acc != MPI_WIN_NULL){
+	XACC_DEBUG("flush_all for acc a coarray (%ld)", (long)win_acc);
+	MPI_Win_flush_all(win_acc);
+	XACC_DEBUG("sync for acc a coarray (%ld)", (long)win_acc);
+	MPI_Win_sync(win_acc);
+      }
+#endif
+    }
+  }else{
+    if(! _is_coarray_win_flushed){
+      XACC_DEBUG("flush_all for host single coarray(%ld)", (long)_xmp_mpi_onesided_win);
+      MPI_Win_flush_all(_xmp_mpi_onesided_win);
 
-    _is_coarray_win_flushed = true;
-  }
+      _is_coarray_win_flushed = true;
+    }
 
-  if(! _is_distarray_win_flushed){
-    XACC_DEBUG("sync_memory(distarray, host)");
-    MPI_Win_flush_all(_xmp_mpi_distarray_win);
+    if(! _is_distarray_win_flushed){
+      XACC_DEBUG("flush_all for host single distarray(%ld)", (long)_xmp_mpi_distarray_win);
+      MPI_Win_flush_all(_xmp_mpi_distarray_win);
 
-    _is_distarray_win_flushed = true;
-  }
+      _is_distarray_win_flushed = true;
+    }
 
 #ifdef _XMP_XACC
-  if(! _is_coarray_win_acc_flushed){
-    XACC_DEBUG("sync_memory(normal, acc)");
-    MPI_Win_flush_all(_xmp_mpi_onesided_win_acc);
+    if(! _is_coarray_win_acc_flushed){
+      XACC_DEBUG("flush_all for acc single coarray(%ld)", (long)_xmp_mpi_onesided_win_acc);
+      MPI_Win_flush_all(_xmp_mpi_onesided_win_acc);
 
-    _is_coarray_win_acc_flushed = true;
-  }
+      _is_coarray_win_acc_flushed = true;
+    }
 
-  if(! _is_distarray_win_acc_flushed){
-    XACC_DEBUG("sync_memory(distarray, acc)");
-    MPI_Win_flush_all(_xmp_mpi_distarray_win_acc);
+    if(! _is_distarray_win_acc_flushed){
+      XACC_DEBUG("flush_all for acc single distarray(%ld)", (long)_xmp_mpi_distarray_win_acc);
+      MPI_Win_flush_all(_xmp_mpi_distarray_win_acc);
 
-    _is_distarray_win_acc_flushed = true;
-  }
+      _is_distarray_win_acc_flushed = true;
+    }
 #endif
 
-  _win_sync();
+    _win_sync();
+  }
 }
 
 /**
@@ -523,7 +603,7 @@ void _XMP_mpi_sync_memory()
 void _XMP_mpi_sync_all()
 {
   _XMP_mpi_sync_memory();
-  MPI_Barrier(MPI_COMM_WORLD);
+  _XMP_barrier(NULL);
   _XMP_mpi_sync_memory();
 }
 
@@ -531,8 +611,10 @@ static inline
 void _wait_puts(const int target_rank, const MPI_Win win)
 {
     if(_is_put_blocking){
+      XACC_DEBUG("flush(%d) for [host|acc]", target_rank);
       MPI_Win_flush(target_rank, win);
     }else if(_is_put_local_blocking){
+      XACC_DEBUG("flush_local(%d) for [host|acc]", target_rank);
       MPI_Win_flush_local(target_rank, win);
     }
 }
@@ -540,6 +622,7 @@ static inline
 void _wait_gets(const int target_rank, const MPI_Win win)
 {
   if(_is_get_blocking){
+    XACC_DEBUG("flush_local(%d) for [host|acc]", target_rank);
     MPI_Win_flush_local(target_rank, win);
   }
 }
@@ -769,6 +852,7 @@ static void _mpi_scalar_mget(const int target_rank,
 	  win);
 
   //we have to wait completion of the get
+  XACC_DEBUG("flush_local(%d) for [host|acc]", target_rank);
   MPI_Win_flush_local(target_rank, win);
 
   _unpack_scalar((char*)dst, dst_dims, laddr, dst_info);
@@ -779,63 +863,84 @@ static void _mpi_scalar_mget(const int target_rank,
 
 void _XMP_mpi_coarray_attach(_XMP_coarray_t *coarray_desc, void *addr, const size_t coarray_size, const bool is_acc)
 {
-  MPI_Win win = _xmp_mpi_distarray_win;
-#ifdef _XMP_XACC
-  if(is_acc){
-    win = _xmp_mpi_distarray_win_acc;
-  }
-#endif
-  MPI_Win_attach(win, addr, coarray_size);
-  
+  MPI_Win win = MPI_WIN_NULL;
+  char **each_addr = NULL;  // head address of a local array on each node
+
   _XMP_nodes_t *nodes = _XMP_get_execution_nodes();
   int comm_size = nodes->comm_size;
   MPI_Comm comm = *(MPI_Comm *)nodes->comm;
 
-  char **each_addr;  // head address of a local array on each node
-  each_addr = (char**)_XMP_alloc(sizeof(char *) * comm_size);
+  XACC_DEBUG("attach addr=%p, size=%zd, is_acc=%d", addr, coarray_size, is_acc);
 
-  MPI_Allgather(&addr, sizeof(char *), MPI_BYTE,
-		each_addr, sizeof(char *), MPI_BYTE,
-		comm); // exchange displacement
+  if(_XMP_flag_multi_win){
+    _XMP_mpi_onesided_create_win(&win, addr, coarray_size, comm);
+    MPI_Win_lock_all(MPI_MODE_NOCHECK, win);
+  }else{
+    win = _xmp_mpi_distarray_win;
+#ifdef _XMP_XACC
+    if(is_acc){
+      win = _xmp_mpi_distarray_win_acc;
+    }
+#endif
+    MPI_Win_attach(win, addr, coarray_size);
+
+    each_addr = (char**)_XMP_alloc(sizeof(char *) * comm_size);
+
+    MPI_Allgather(&addr, sizeof(char *), MPI_BYTE,
+		  each_addr, sizeof(char *), MPI_BYTE,
+		  comm); // exchange displacement
+  }
 
   if(is_acc){
 #ifdef _XMP_XACC
     coarray_desc->addr_dev = each_addr;
     coarray_desc->real_addr_dev = addr;
     coarray_desc->win_acc = win;
+    coarray_desc->nodes = nodes;
 #endif
   }else{
     coarray_desc->addr = each_addr;
     coarray_desc->real_addr = addr;
     coarray_desc->win = win;
+    coarray_desc->win_acc = MPI_WIN_NULL;
+    coarray_desc->nodes = nodes;
   }
 }
 
 void _XMP_mpi_coarray_detach(_XMP_coarray_t *coarray_desc, const bool is_acc)
 {
-  MPI_Win win = _xmp_mpi_distarray_win;
-  void *real_addr = coarray_desc->real_addr;
+  if(_XMP_flag_multi_win){
+    MPI_Win win = is_acc? coarray_desc->win_acc : coarray_desc->win;
+    MPI_Win_unlock_all(win);
+    _XMP_barrier(NULL);
+    _XMP_mpi_onesided_destroy_win(&win);
+  }else{
+    MPI_Win win = _xmp_mpi_distarray_win;
+    void *real_addr = coarray_desc->real_addr;
 #ifdef _XMP_XACC
-  if(is_acc){
-    win = _xmp_mpi_distarray_win_acc;
-    real_addr = coarray_desc->real_addr_dev;
-  }
+    if(is_acc){
+      win = _xmp_mpi_distarray_win_acc;
+      real_addr = coarray_desc->real_addr_dev;
+    }
 #endif
 
-  MPI_Win_detach(win, real_addr);
+    MPI_Win_detach(win, real_addr);
+  }
 
   if(is_acc){
 #ifdef _XMP_XACC
-    _XMP_free(coarray_desc->addr_dev);
+    _XMP_free(coarray_desc->addr_dev); //FIXME may be wrong
     coarray_desc->addr_dev = NULL;
     coarray_desc->real_addr_dev = NULL;
     coarray_desc->win_acc = MPI_WIN_NULL;
+    coarray_desc->nodes = NULL;
 #endif
   }else{
     _XMP_free(coarray_desc->addr);
     coarray_desc->addr = NULL;
     coarray_desc->real_addr = NULL;
     coarray_desc->win = MPI_WIN_NULL;
+    coarray_desc->nodes = NULL;
   }
 }
 
@@ -906,7 +1011,7 @@ static void _add_sync_images_table(const int rank, const int value)
    * @param[in]  num        number of nodes
    * @param[in]  *rank_set  rank set
    */
-static void _notify_sync_images(const int num, int *rank_set)
+static void _notify_sync_images(const int num, const int *rank_set)
 {
   for(int i=0;i<num;i++){
     if(rank_set[i] == _XMP_world_rank){
@@ -932,22 +1037,27 @@ static void _notify_sync_images(const int num, int *rank_set)
    * @param[in]  num                       number of nodes
    * @param[in]  *rank_set                 rank set
 */
-static void _wait_sync_images(const int num, int *rank_set)
+static void _wait_sync_images(const int num, const int *rank_set)
 {
-  while(1){
-    bool flag = true;
+  int unrecieved_rank_set[num];
+  int num_unrecieved_ranks = num;
 
-    for(int i=0;i<num;i++){
-      if(rank_set[i] < 0) continue;
-      if(_sync_images_table[rank_set[i]] > 0){
-	_add_sync_images_table(rank_set[i], -1);
-	rank_set[i] = -1;
-      }else{
-	flag = false;
+  for(int i = 0; i < num; i++){
+    unrecieved_rank_set[i] = rank_set[i];
+  }
+
+  while(1){
+    for(int i = 0; i < num_unrecieved_ranks; i++){
+      int rank = unrecieved_rank_set[i];
+      if(_sync_images_table[rank] > 0){
+	_add_sync_images_table(rank, -1);
+
+	// decrement num_unrecieved_ranks and overwrite the current element with the tail element
+	unrecieved_rank_set[i] = unrecieved_rank_set[--num_unrecieved_ranks];
       }
     }
 
-    if(flag) break;
+    if(num_unrecieved_ranks == 0) break;
 
 #ifdef _SYNCIMAGE_SENDRECV
     MPI_Status status;
@@ -967,7 +1077,7 @@ static void _wait_sync_images(const int num, int *rank_set)
    * @param[in]  *image_set  image set
    * @param[out] status      status
 */
-void _XMP_mpi_sync_images(const int num, int* image_set, int* status)
+void _XMP_mpi_sync_images(const int num, const int* image_set, int* status)
 {
   _XMP_mpi_sync_memory();
 
@@ -979,13 +1089,8 @@ void _XMP_mpi_sync_images(const int num, int* image_set, int* status)
     _XMP_fatal_nomsg();
   }
 
-  int rank_set[num];
-  for(int i=0;i<num;i++){
-    rank_set[i] = image_set[i] - 1;
-  }
-
-  _notify_sync_images(num, rank_set);
-  _wait_sync_images(num, rank_set);
+  _notify_sync_images(num, image_set);
+  _wait_sync_images(num, image_set);
 
   _XMP_mpi_sync_memory();
 }
@@ -993,13 +1098,105 @@ void _XMP_mpi_sync_images(const int num, int* image_set, int* status)
 
 void _XMP_sync_images_EXEC(int* status)
 {
-  MPI_Win_flush_all(_xmp_mpi_onesided_win);
+  _XMP_mpi_sync_memory();
   _XMP_barrier(NULL);
 }
 
-
 void _XMP_sync_images_COMM(MPI_Comm *comm, int* status)
 {
-  MPI_Win_flush_all(_xmp_mpi_onesided_win);
+  _XMP_mpi_sync_memory();
   MPI_Barrier(*comm);
+}
+
+static
+int _transRank_withComm(MPI_Comm comm1, int rank1, MPI_Comm comm2)
+{
+  int rank2;
+  MPI_Group group1, group2;
+  int stat1, stat2, stat3;
+
+  stat1 = MPI_Comm_group(comm1, &group1);
+  stat2 = MPI_Comm_group(comm2, &group2);
+
+  stat3 = MPI_Group_translate_ranks(group1, 1, &rank1, group2, &rank2);
+  //(in:Group1, n, rank1[n], Group2, out:rank2[n])
+  if (rank2 == MPI_UNDEFINED){
+    rank2 = -1;
+  }
+
+  if (stat1 != 0 || stat2 != 0 || stat3 != 0)
+    fprintf(stderr, "INTERNAL: _transRank_withComm failed with stat1=%d, stat2=%d, stat3=%d",
+	    stat1, stat2, stat3);
+
+  return rank2;
+}
+
+static int _XMP_mpi_trans_rank(const _XMP_coarray_t *coarray, int const world_rank)
+{
+  if(! _XMP_flag_multi_win){ //if single window mode, return world_rank
+    return world_rank;
+  }
+
+  _XMP_nodes_t* nodes = coarray->nodes;
+
+  if(nodes == NULL || nodes->attr == _XMP_ENTIRE_NODES){ //assume that comm is entire nodes if nodes is NULL
+    return world_rank;
+  }
+
+  MPI_Comm comm = *(MPI_Comm*)nodes->comm;
+
+  if(comm == MPI_COMM_WORLD){
+    return world_rank;
+  }
+
+  int rank = _transRank_withComm(MPI_COMM_WORLD, world_rank, comm);
+
+  return rank;
+}
+
+void _XMP_mpi_coarray_regmem(_XMP_coarray_t *coarray_desc, void *real_addr, const size_t coarray_size, bool is_acc)
+{
+  char **each_addr = NULL;
+  MPI_Win win = MPI_WIN_NULL;
+  _XMP_nodes_t *nodes = _XMP_get_execution_nodes();
+  MPI_Comm comm = *(MPI_Comm *)nodes->comm;
+
+  if(! _XMP_flag_multi_win){
+    _XMP_fatal("single window mode does not support coarray regmem");
+  }
+
+  if(coarray_size == 0){
+    _XMP_fatal("_XMP_mpi_coarray_regmem: zero size is not allowed");
+  }
+
+  _XMP_mpi_onesided_create_win(&win, real_addr, coarray_size, comm);
+  MPI_Win_lock_all(MPI_MODE_NOCHECK, win);
+
+  XACC_DEBUG("addr=%p, size=%zd, is_acc=%d", real_addr, coarray_size, is_acc);
+
+  if(is_acc){
+#ifdef _XMP_XACC
+    coarray_desc->addr_dev = each_addr;
+    coarray_desc->real_addr_dev = real_addr;
+    coarray_desc->win_acc = win;
+    coarray_desc->nodes = nodes;
+#endif
+  }else{
+    coarray_desc->addr = each_addr;
+    coarray_desc->real_addr = real_addr;
+    coarray_desc->win = win;
+    coarray_desc->win_acc = MPI_WIN_NULL;
+    coarray_desc->nodes = nodes;
+  }
+}
+
+void _XMP_mpi_coarray_deregmem(_XMP_coarray_t *c)
+{
+  if(! _XMP_flag_multi_win){
+    _XMP_fatal("single window mode does not support coarray deregmem");
+  }
+
+  MPI_Win_unlock_all(c->win);
+  _XMP_barrier(NULL);
+  _XMP_mpi_onesided_destroy_win(&(c->win));
 }

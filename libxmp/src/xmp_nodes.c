@@ -16,13 +16,15 @@ static _XMP_nodes_t *_XMP_create_new_nodes(int is_member, int dim, int comm_size
 {
   _XMP_nodes_t *n = _XMP_alloc(sizeof(_XMP_nodes_t) + sizeof(_XMP_nodes_info_t) * (dim - 1));
 
-  n->desc_kind = _XMP_DESC_NODES;
+  n->desc_kind   = _XMP_DESC_NODES;
   
-  n->on_ref_id = _XMP_get_on_ref_id();
-  n->is_member = is_member;
-  n->dim       = dim;
-  n->comm_size = comm_size;
-  n->comm      = comm;
+  n->on_ref_id   = _XMP_get_on_ref_id();
+  n->is_member   = is_member;
+  n->dim         = dim;
+  n->comm_size   = comm_size;
+  n->comm        = comm;
+  n->subcomm     = NULL;
+  n->use_subcomm = false;
 #ifdef _XMPT
   n->xmpt_nodes_data= NULL;
 #endif
@@ -339,7 +341,7 @@ static _XMP_comm_t* create_subcomm(_XMP_nodes_t* n)
   }
   MPI_Comm_dup(*ref_comm, &subcomm[0]);               // i == 0
   MPI_Comm_dup(MPI_COMM_SELF, &subcomm[num_comms-1]); // i == num_comms-1
-
+  
   return (_XMP_comm_t*)subcomm;
 }
 
@@ -819,6 +821,17 @@ void _XMP_finalize_nodes(_XMP_nodes_t *nodes)
 {
   if(!nodes->use_subcomm)
     _XMP_finalize_comm(nodes->comm);
+
+  if(nodes->subcomm != NULL){
+    int dim       = nodes->dim;
+    int num_comms = 1<<dim;
+    for(int i=0;i<num_comms;i++){
+      MPI_Comm *comm = (MPI_Comm *)nodes->subcomm;
+      MPI_Comm_free(&comm[i]);
+    }
+    free(nodes->subcomm);
+  }
+  
   _XMP_free(nodes->inherit_info);
   _XMP_free(nodes);
 }
@@ -1195,7 +1208,7 @@ int _XMP_calc_linear_rank_on_target_nodes(_XMP_nodes_t *n, int *rank_array, _XMP
 _Bool _XMP_calc_coord_on_target_nodes2(_XMP_nodes_t *n, int *ncoord, 
 				       _XMP_nodes_t *target_n, int *target_ncoord)
 {
-  if(n == target_n){
+  if (n == target_n){
     //printf("%d, %d\n", n->dim, target_n->dim);
     memcpy(target_ncoord, ncoord, sizeof(int) * n->dim);
     return true;
@@ -1208,7 +1221,7 @@ _Bool _XMP_calc_coord_on_target_nodes2(_XMP_nodes_t *n, int *ncoord,
   }
 
   _XMP_nodes_t *target_p = target_n->inherit_nodes;
-  if(target_p){
+  if (target_p){
     int target_pcoord[_XMP_N_MAX_DIM];
     if (_XMP_calc_coord_on_target_nodes2(n, ncoord, target_p, target_pcoord)){
       //int target_prank = _XMP_calc_linear_rank(target_p, target_pcoord);
@@ -1220,14 +1233,22 @@ _Bool _XMP_calc_coord_on_target_nodes2(_XMP_nodes_t *n, int *ncoord,
       int target_rank = 0;
       int multiplier  = 1;
 
-      for(int i=0;i<target_p->dim;i++){
-      	if(inherit_info[i].shrink){
+      for (int i = 0; i < target_p->dim; i++){
+
+	if (inherit_info[i].shrink){
 	  ;
       	}
-      	else{
+	else if (target_pcoord[i] < inherit_info[i].lower || target_pcoord[i] > inherit_info[i].upper){
+	  for (int i = 0; i < target_n->dim; i++){
+	    target_ncoord[i] = -1;
+	  }
+	  return true;
+	}
+      	else {
       	  int target_rank_dim = (target_pcoord[i] - inherit_info[i].lower) / inherit_info[i].stride;
 	  target_rank += multiplier * target_rank_dim;
-	  multiplier *= inherit_info[i].size;
+	  //multiplier *= inherit_info[i].size;
+	  multiplier *= _XMP_M_COUNT_TRIPLETi(inherit_info[i].lower, inherit_info[i].upper, inherit_info[i].stride);
       	}
       }
 
@@ -1236,6 +1257,7 @@ _Bool _XMP_calc_coord_on_target_nodes2(_XMP_nodes_t *n, int *ncoord,
       return true;
     }
   }
+  
   return false;
 }
     
@@ -1250,7 +1272,7 @@ _Bool _XMP_calc_coord_on_target_nodes(_XMP_nodes_t *n, int *ncoord,
     return true;
 
   _XMP_nodes_t *p = n->inherit_nodes;
-  if(p){
+  if (p){
     int pcoord[_XMP_N_MAX_DIM];
     int rank = _XMP_calc_linear_rank(n, ncoord);
     //_XMP_calc_rank_array(p, pcoord, rank);

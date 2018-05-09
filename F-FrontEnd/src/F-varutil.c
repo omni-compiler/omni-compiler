@@ -49,6 +49,17 @@ get_bottom_ref_type(TYPE_DESC tp)
     return get_bottom_ref_type(TYPE_REF(tp));
 }
 
+int
+has_attr_in_types(TYPE_DESC tp, uint32_t type_attr) {
+    assert(tp);
+    if(((tp)->attr.type_attr_flags & type_attr)) {
+        return TRUE;
+    }
+    if(TYPE_REF(tp) != NULL) {
+        return has_attr_in_types(TYPE_REF(tp), type_attr);
+    }
+    return FALSE;
+}
 
 static int
 expr_is_param_typeof(expr x, BASIC_DATA_TYPE bt)
@@ -79,9 +90,15 @@ expr_is_param_typeof(expr x, BASIC_DATA_TYPE bt)
                 (bt == TYPE_UNKNOWN || bt == TYPE_BASIC_TYPE(ID_TYPE(id)))) {
                 return TRUE;
             }
+            if (ID_STORAGE(id) == STG_ARG &&
+                (bt == TYPE_UNKNOWN || bt == TYPE_BASIC_TYPE(ID_TYPE(id)))) {
+                return TRUE;
+            }
         } else {
             if (bt == TYPE_UNKNOWN &&
-                (ID_CLASS(id) == CL_PARAM || TYPE_IS_PARAMETER(id))) {
+                (ID_CLASS(id) == CL_PARAM ||
+                 TYPE_IS_PARAMETER(id) ||
+                 ID_STORAGE(id) == STG_ARG)) {
                 return TRUE;
             }
         }
@@ -168,12 +185,76 @@ expr_has_type_param(x)
 }
 
 int
+expr_list_is_constant_expr(const expr x)
+{
+    list lp;
+    FOR_ITEMS_IN_LIST(lp, x) {
+        if (LIST_ITEM(lp) == NULL)
+            continue;
+        if (!expr_is_constant(LIST_ITEM(lp)))
+            return FALSE;
+    }
+    return TRUE;
+}
+
+int
+intrinsic_call_is_constant_expression(const ID id, const expr arg)
+{
+    intrinsic_entry *ep = NULL;
+
+    if (id == NULL ||
+        ID_SYM(id) == NULL)
+        return FALSE;
+
+    if (SYM_TYPE(ID_SYM(id)) != S_INTR) {
+        if (TYPE_IS_INTRINSIC(id) ||
+            (ID_TYPE(id) && TYPE_IS_INTRINSIC(ID_TYPE(id)))) {
+            /*
+             * `id` has a INTRINSIC attribute but is not listed in F-intrinsic-tables.c.
+             * So appcept this as a elemental function.
+             */
+            return expr_list_is_constant_expr(arg);
+        } else {
+            return FALSE;
+        }
+    }
+
+    ep = &(intrinsic_table[SYM_VAL(ID_SYM(id))]);
+
+    switch (INTR_CLASS(ep)) {
+        case INTRINSIC_CLASS_ELEMENTAL_FUN:
+            return expr_list_is_constant_expr(arg);
+            break;
+        case INTRINSIC_CLASS_TRANS:
+            if (INTR_OP(ep) == INTR_NUM_IMAGES ||
+                INTR_OP(ep) == INTR_THIS_IMAGE) {
+                /* TODO(shingo-s):
+                 *  Add INTR_COMMAND_ARGUMENT_COUNT
+                 */
+                return FALSE;
+            } else if (INTR_OP(ep) == INTR_NULL) {
+                /* TODO(shingo-s):
+                 *  Check if an arugment does not have assumed size type parameters
+                 */
+                return expr_list_is_constant_expr(arg);
+            } else {
+                return expr_list_is_constant_expr(arg);
+            }
+            break;
+        default:
+            break;
+    }
+
+    return FALSE;
+}
+
+
+int
 expr_is_constant(x)
      expr x;
 {
     return expr_is_constant_typeof(x, TYPE_UNKNOWN);
 }
-
 
 int
 expr_is_constant_typeof(x, bt)
@@ -218,6 +299,7 @@ expr_is_constant_typeof(x, bt)
     case MUL_EXPR:
     case DIV_EXPR:
     case POWER_EXPR:
+    case F_CONCAT_EXPR:
         if (EXPR_ARG1(x) == NULL) {
             fatal("internal compiler error.");
         }
@@ -232,14 +314,14 @@ expr_is_constant_typeof(x, bt)
         }
         return TRUE;
 
-    case ARRAY_REF:
+    case ARRAY_REF: /* acutually, ARRAY_REF is for expv */
     case F_ARRAY_REF: {
         list lp;
         expr x1 = EXPR_ARG1(x);
         expv v;
         TYPE_DESC tp;
         ID id;
-        if (EXPR_CODE(x1) == IDENT) {
+        if (EXPR_CODE(x1) == IDENT || EXPR_CODE(x1) == F_VAR) {
             /*
              * expr may be array ref or character ref or intrinsic call
              */
@@ -254,6 +336,11 @@ expr_is_constant_typeof(x, bt)
                     ID_STORAGE(id) = STG_NONE;
                     ID_IS_DECLARED(id) = TRUE;
                 }
+
+                if (!intrinsic_call_is_constant_expression(id, EXPR_ARG2(x))) {
+                    return FALSE;
+                }
+
                 if ((v = compile_function_call_check_intrinsic_arg_type(id, EXPR_ARG2(x), TRUE)) == NULL) {
                     return FALSE;
                 }
@@ -266,16 +353,18 @@ expr_is_constant_typeof(x, bt)
             } else if (id != NULL) {
                 if (bt != TYPE_UNKNOWN) {
                     if (ID_TYPE(id) != NULL) {
-                        if (ID_CLASS(id) != CL_PARAM ||
-                            (!TYPE_IS_PARAMETER(ID_TYPE(id))) ||
-                            (bt != TYPE_BASIC_TYPE(ID_TYPE(id)))) {
+                        if ((ID_CLASS(id) != CL_PARAM ||
+                             (!TYPE_IS_PARAMETER(ID_TYPE(id)))) &&
+                            (bt != get_basic_type(ID_TYPE(id)))) {
                             return FALSE;
                         }
                     } else {
                         return FALSE;
                     }
                 } else {
-                    if (ID_CLASS(id) != CL_PARAM && !TYPE_IS_PARAMETER(id)) {
+                    if (ID_CLASS(id) != CL_PARAM &&
+                        !TYPE_IS_PARAMETER(id) &&
+                        !(ID_TYPE(id) && TYPE_IS_PARAMETER(ID_TYPE(id)))) {
                         return FALSE;
                     }
                 }
@@ -294,6 +383,41 @@ expr_is_constant_typeof(x, bt)
                 return FALSE;
             }
         }
+        return TRUE;
+    } break;
+
+    case FUNCTION_CALL: {
+
+        char *name = NULL;
+        SYMBOL s = EXPV_NAME(EXPR_ARG1(x));
+        ID fId = find_ident(s);
+        expv v;
+
+        if(fId != NULL && PROC_CLASS(fId) == P_INTRINSIC){
+            name = SYM_NAME(ID_SYM(fId));
+        } else if(SYM_TYPE(s) == S_INTR){
+            fId = declare_ident(s, CL_PROC);
+            PROC_CLASS(fId) = P_INTRINSIC;
+            declare_function(fId);
+            name = SYM_NAME(s);
+        }
+
+        if (name == NULL) return FALSE; // error
+
+        if (!intrinsic_call_is_constant_expression(fId, EXPR_ARG2(x))) {
+            return FALSE;
+        }
+
+        if ((v = compile_function_call_check_intrinsic_arg_type(fId, EXPR_ARG2(x), TRUE)) == NULL) {
+            return FALSE;
+        }
+        if (bt != TYPE_UNKNOWN) {
+            TYPE_DESC tp = EXPV_TYPE(v);
+            if (getBasicType(tp) != bt) {
+                return FALSE;
+            }
+        }
+
         return TRUE;
     } break;
 
@@ -726,62 +850,13 @@ expv_is_restricted_argument(expv x)
 static int
 expv_is_intrinsic_inquiry(expv x)
 {
-    if(EXPV_IS_INTRINSIC_CALL(x)) {
+    if (EXPV_IS_INTRINSIC_CALL(x)) {
         intrinsic_entry *ep = NULL;
         ep = &(intrinsic_table[SYM_VAL(EXPV_NAME(EXPR_ARG1(x)))]);
-        switch(INTR_OP(ep)) {
-        /* array inquiry function */
-        case INTR_LBOUND:
-        case INTR_SHAPE:
-        case INTR_SIZE:
-        case INTR_UBOUND:
-        case INTR_ALLOCATED:
-        /* NOT IMPLEMENTED: IS_CONTIGUOUS */
-        /* bit inquiry function BIT_SIZE */
-        case INTR_BIT_SIZE:
-        /* character inquiry function LEN */
-        case INTR_LEN:
-        /* kind inquiry function KIND */
-        case INTR_KIND:
-        /* NOT IMPLEMENTED: character inquiry function NEW_LINE */
-        /* numeric inquiry functions */
-        case INTR_DIGITS:
-        case INTR_EPSILON:
-        case INTR_HUGE:
-        case INTR_MAXEXPONENT:
-        case INTR_MINEXPONENT:
-        case INTR_PRECISION:
-        case INTR_RADIX:
-        case INTR_RANGE:
-        case INTR_TINY:
-        /* pointer inquiry functions */
-        case INTR_ASSOCIATED:
-        /* argments inquiry functions */
-        case INTR_PRESENT:
-        /* Other intrinsic inquiry functions those are not not implemeted yet
-         *
-         * query dynamic type for extension
-         *
-         * EXTENDS_TYPE_OF
-         * SAME_TYPE_AS
-         *
-         * coarray inquify functions
-         * IMAGE_INDEX
-         * LCOBOUND
-         * UCOBOUND
-         *
-         * others
-         * STORAGE_SIZE
-         */
-            return TRUE;
-        default:
-            break;
-        }
+        return INTR_CLASS(ep) == INTRINSIC_CLASS_INQUIRY;
+    } else {
+        return FALSE;
     }
-
-    /* NOT IMPLEMENTED: type parameter inquiry */
-
-    return FALSE;
 }
 
 
@@ -874,7 +949,8 @@ expv_is_specification_function_call(expv x)
         return FALSE;
 
     /* must be pure */
-    if (!PROC_IS_PURE(id) && !TYPE_IS_PURE(tp))
+    if ((!PROC_IS_PURE(id) && !TYPE_IS_PURE(tp)) ||
+        (TYPE_IS_ELEMENTAL(tp) && !TYPE_IS_IMPURE(tp)))
         return FALSE;
 
     /* NOT IMPLEMENTED: not an internal function. but we can't check this */
@@ -955,8 +1031,20 @@ expv_is_restricted(expv x)
         /* x is a variable in common block or part of it. */
         if(EXPV_CODE(base) == IDENT || EXPV_CODE(base) == F_VAR) {
             ID id = find_ident(EXPV_NAME(base));
-            if (id != NULL && ID_STORAGE(id) == STG_COMMON)
-                return TRUE;
+            if (id != NULL) {
+                if (ID_STORAGE(id) == STG_COMMON)
+                    return TRUE;
+
+                if (ID_STORAGE(id) == STG_ARG &&
+                    !(TYPE_IS_OPTIONAL(id) ||
+                      TYPE_IS_INTENT_OUT(id) ||
+                      TYPE_IS_INTENT_INOUT(id)) &&
+                    !(ID_TYPE(id) != NULL &&
+                      (TYPE_IS_OPTIONAL(ID_TYPE(id)) ||
+                       TYPE_IS_INTENT_OUT(ID_TYPE(id)) ||
+                       TYPE_IS_INTENT_INOUT(ID_TYPE(id)))))
+                    return TRUE;
+            }
         }
 
         /* x is a variable which is be accecible by host or use association */

@@ -595,8 +595,8 @@ void _XMP_sendrecv_ARRAY(int type, int type_size, MPI_Datatype *mpi_datatype,
     _XMP_free(recv_alloc);
   }
 
-  _XMP_free(dst_ref);
-  _XMP_free(src_ref);
+  _XMP_finalize_nodes_ref(dst_ref);
+  _XMP_finalize_nodes_ref(src_ref);
 }
 
 /* // ----- gmove scalar to scalar -------------------------------------------------------------------------------------------------- */
@@ -3313,6 +3313,7 @@ _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_right
       gmove->a = lhs_array;
       gmove->comm_set = recv_comm_set;
       async->gmove = gmove;
+      async->type = _XMP_COMM_GMOVE;
 
       for (int rank = 0; rank < n_gmv_nodes; rank++){
 	for (int adim = 0; adim < n_rhs_dims; adim++){
@@ -3372,6 +3373,7 @@ _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_right
       gmove->mode = mode;
       gmove->sendbuf = _XMP_get_execution_nodes()->comm; // NOTE: the sendbuf field is used for an improper purpose.
       async->gmove = gmove;
+      async->type = _XMP_COMM_GMOVE;
     }
     else {
       _XMP_sync_images_EXEC(NULL);
@@ -3392,6 +3394,7 @@ _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_right
       gmove->mode = mode;
       gmove->sendbuf = _XMP_get_execution_nodes()->comm; // NOTE: the sendbuf field is used for an improper purpose.
       async->gmove = gmove;
+      async->type = _XMP_COMM_GMOVE;
     }
     else {
       _XMP_sync_images_EXEC(NULL);
@@ -4042,7 +4045,6 @@ static void _XMP_gmove_inout(_XMP_gmv_desc_t *gmv_desc_org, _XMP_gmv_desc_t *gmv
 
       int ncoord[_XMP_N_MAX_DIM];
       _XMP_calc_rank_array(gmv_nodes, ncoord, tgt_node);
-      for (int i = 0; i < ndims_gmv_nodes; i++) ncoord[i]++; // to one-based.
       _XMP_coarray_rdma_image_set_n(ndims_gmv_nodes, ncoord);
 
       long *org_lbound = gmv_inout_list->org.lb;
@@ -4150,7 +4152,6 @@ void _XMP_gmove_inout_scalar(void *scalar, _XMP_gmv_desc_t *gmv_desc, int rdma_t
 
       int ncoord[_XMP_N_MAX_DIM];
       _XMP_calc_rank_array(gmv_nodes, ncoord, tgt_node);
-      for (int i = 0; i < ndims_gmv_nodes; i++) ncoord[i]++; // to one-based.
       _XMP_coarray_rdma_image_set_n(ndims_gmv_nodes, ncoord);
 
       long *tgt_lbound = gmv_inout_list->tgt.lb;
@@ -5026,11 +5027,11 @@ _XMP_gmove_larray_garray(_XMP_gmv_desc_t *gmv_desc_leftp,
     _XMP_fatal("wrong assign statement for gmove");
   }
 
-  if(mode == _XMP_N_GMOVE_NORMAL){
-    if(dst_scalar_flag && src_scalar_flag){
+  if (mode == _XMP_N_GMOVE_NORMAL){
+    if (dst_scalar_flag && src_scalar_flag){
       char *dst_addr = (char *)gmv_desc_leftp->local_data;
-      for (int i=0;i<dst_dim;i++)
-	dst_addr += ((dst_l[i] - 1)* dst_d[i]) * type_size;
+      for (int i = 0; i < dst_dim; i++)
+	dst_addr += ((dst_l[i] - gmv_desc_leftp->a_lb[i]) * dst_d[i]) * type_size;
       _XMP_gmove_BCAST_GSCALAR(dst_addr, src_array, src_l);
       return;
     }

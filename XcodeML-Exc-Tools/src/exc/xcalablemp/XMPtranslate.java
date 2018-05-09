@@ -28,8 +28,8 @@ public class XMPtranslate implements XobjectDefVisitor {
     _selective_profile = false;
   }
 
-  public void finalize() {
-    _globalDecl.finalize();
+  public void finish() {
+    _globalDecl.finalizeGlobalDecl();
   }
 
   public void doDef(XobjectDef def) {
@@ -108,36 +108,44 @@ public class XMPtranslate implements XobjectDefVisitor {
   
   // Create a new function xmpc_main() and copy main() to the new function
   private void create_new_main(FuncDefBlock fd) throws XMPexception {
-    Ident mainId = _globalDecl.findVarIdent("main");
-    Xtype mainType = ((FunctionType)mainId.Type()).getBaseRefType();
-    Xobject mainIdList = fd.getDef().getFuncIdList();
-    Xobject mainDecls = fd.getDef().getFuncDecls();
-    Xobject mainBody = fd.getDef().getFuncBody();
-    XobjectFile _env = _globalDecl.getEnv();
-    Ident xmpcInitAll = _env.declExternIdent("xmpc_init_all", Xtype.Function(Xtype.voidType));
-    Ident xmpcTraverseInit = _env.declExternIdent("xmpc_traverse_init", Xtype.Function(Xtype.voidType));
-    Ident xmpcMain = _env.declStaticIdent("xmpc_main", Xtype.Function(mainType));
-    Ident xmpcTraverseFinalize = _env.declExternIdent("xmpc_traverse_finalize", Xtype.Function(Xtype.voidType));
-    Ident xmpcFinalizeAll = _env.declExternIdent("xmpc_finalize_all", Xtype.Function(Xtype.voidType));
+
+    XobjectFile _env      = _globalDecl.getEnv();
+
+    Ident mainId          = _globalDecl.findVarIdent("main");
+    Xtype mainType        = ((FunctionType)mainId.Type()).getBaseRefType();
+
+    if (!XmOption.getMainName().equals("")){
+      mainId = _env.declGlobalIdent(XmOption.getMainName(), Xtype.Function(mainType));
+    }
+
+    Xobject mainIdList    = fd.getDef().getFuncIdList();
+    Xobject mainDecls     = fd.getDef().getFuncDecls();
+    Xobject mainBody      = fd.getDef().getFuncBody();
+    
+    Ident xmpcInitAll     = _env.declExternIdent("xmp_init_all", Xtype.Function(Xtype.voidType));
+    Ident xmpcMain        = _env.declStaticIdent("xmpc_main", Xtype.Function(mainType));
+    Ident xmpcFinalizeAll = _env.declExternIdent("xmp_finalize_all", Xtype.Function(Xtype.voidType));
 
     _env.add(XobjectDef.Func(xmpcMain, mainIdList, mainDecls, mainBody));
 
-    XobjectDef mainXobjDef = fd.getDef();
-    BlockList newFuncBody = Bcons.emptyBody();
-
-    newFuncBody.add(xmpcInitAll.Call(mainIdList));
-    newFuncBody.add(xmpcTraverseInit.Call(null));
+    XobjectDef mainXobjDef  = fd.getDef();
+    BlockList newFuncBody   = Bcons.emptyBody();
+    newFuncBody.setIdentList(Xcons.IDList());
+    newFuncBody.setDecls(Xcons.List());
+    Ident firstArg          = (Ident)fd.getDef().getFuncIdList().getArg(0);
+    Ident secondArg         = (Ident)fd.getDef().getFuncIdList().getArg(1);
+    XobjList mainIdAddrList = Xcons.List(firstArg, secondArg);
+    
+    newFuncBody.add(xmpcInitAll.Call(mainIdAddrList));
     if(mainType.equals(Xtype.voidType)){
       newFuncBody.add(xmpcMain.Call(mainIdList));
-      newFuncBody.add(xmpcTraverseFinalize.Call(null));
       newFuncBody.add(xmpcFinalizeAll.Call(null));
     }
     else{
       Ident r = Ident.Local("r", mainType);
       newFuncBody.addIdent(r);
       newFuncBody.add(Xcons.Set(r.Ref(), xmpcMain.Call(mainIdList)));
-      newFuncBody.add(xmpcTraverseFinalize.Call(null));
-      newFuncBody.add(xmpcFinalizeAll.Call(Xcons.List(r)));
+      newFuncBody.add(xmpcFinalizeAll.Call(null));
       newFuncBody.add(Xcons.List(Xcode.RETURN_STATEMENT, r.Ref()));
     }
 
@@ -222,7 +230,7 @@ public class XMPtranslate implements XobjectDefVisitor {
 
 	  for (int i = 0; i < n; i++, arrayType = arrayType.getRef()){
             if(subscripts.Nargs() == i){
-              XMP.fatal(block.getLineNo(), "Invalid access of coarray");
+              XMP.fatal(block.getLineNo(), "Invalid access of array");
             }
             else{
               long dimSize = arrayType.getArraySize();

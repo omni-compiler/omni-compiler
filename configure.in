@@ -1,5 +1,5 @@
 AC_PREREQ([2.69])
-AC_INIT([Omni Compiler], [1.1.1], [omni-compiler@googlegroups.com], [omni])
+AC_INIT([Omni Compiler], [1.3.0], [omni-compiler@googlegroups.com], [omni])
 AC_CONFIG_AUX_DIR([./buildutils])
 AC_CONFIG_MACRO_DIR([./buildutils])
 AC_CANONICAL_TARGET
@@ -239,6 +239,7 @@ if ! test -d "$GMP_LIB_DIR"; then
   GMP_LIB_DIR=${GMP_PREFIX}/lib
 fi
 
+
 #--------------------------------------------------------------------
 # For OpenMP
 #--------------------------------------------------------------------
@@ -278,6 +279,25 @@ AC_SUBST(OS)
 AC_SUBST(CPU)
 AC_SUBST(MM5TGT)
 AC_SUBST(PPTGT)
+
+ENABLE_UCHARDET=no
+AC_ARG_ENABLE(uchardet,
+              [  --enable-uchardet       enable uchardet Library (false default)],
+              [ENABLE_UCHARDET=yes], [ENABLE_UCHARDET=no])
+
+#specify uchardet path
+AC_ARG_WITH(uchardet,
+	    [  --with-uchardet=DIR         specify prefix directory for installed uchardet package (default: /usr)
+                              Equivalent to --with-uchardet-include=PATH/include plus --with-uchardet-lib=PATH/lib64],
+			      [UCHARDET_PREFIX="${withval}"], [UCHARDET_PREFIX="/usr"])
+
+AC_ARG_WITH(uchardet-include,
+	    [  --with-uchardet-include=DIR  specify directory for installed uchardet include files],
+	    [UCHARDET_INCLUDE_DIR="${withval}"], [UCHARDET_INCLUDE_DIR="${UCHARDET_PREFIX}/include/"])
+
+AC_ARG_WITH(uchardet-lib,
+	    [  --with-uchardet-lib=DIR      specify directory for installed uchardet library],
+	    [UCHARDET_LIB_DIR="${withval}"], [UCHARDET_LIB_DIR="${UCHARDET_PREFIX}/lib64"])
 
 #--------------------------------------------------------------------
 # OpenMP runtime checking
@@ -404,7 +424,7 @@ AC_DEFINE_UNQUOTED(OBJEXT, "${OBJEXT}")
 
 #--------------------------------------------------------------------
 AC_ARG_ENABLE(debug,
-  [  --enable-debug          enable generate executable with debug symbol (false default)],
+  [  --enable-debug          enable to generate executable with debug symbol (false default)],
   [doDebug=yes], [doDebug=no])
 
 AC_ARG_ENABLE(openacc,
@@ -424,7 +444,7 @@ AC_ARG_ENABLE(mod2xmod,
   [domod2xmod=yes], [domod2xmod=no])
 
 AC_ARG_ENABLE(shared,
-  [  --enable-shared         enable to generate shared library (only OpenACC now) (false default)],
+  [  --enable-shared         enable to generate shared library (false default)],
   [doshared=yes], [doshared=no])
 
 AC_ARG_ENABLE(xmpt,
@@ -432,12 +452,16 @@ AC_ARG_ENABLE(xmpt,
   [doxmpt=yes], [doxmpt=no])
 
 AC_ARG_ENABLE(fjrdma,
-  [  --enable-fjrdma         enable FJRDMA for one-sided communication. If "--disable-fjrdma" is attatched, 
+  [  --enable-fjrdma         enable FJRDMA for one-sided communication. If "--disable-fjrdma" is attatched,
                           MPI3 is used instead of FJRDMA. This disable option works on only FX100 (true default)],
   [dofjrdma=no], [dofjrdma=yes])
 
+AC_ARG_ENABLE(gnu-extension,
+  [  --enable-gnu-extension  enable Fortran GNU intrinsic extension (false default).],
+  [dognuext=yes], [dognuext=no])
+
 # check --disable-fjrdma is used with --target=FX100-linux-gnu
-if test x${dofjrdma} = xno -a x${target} != xFX100-linux-gnu; then
+if test "x${dofjrdma}" = "xno" -a "x${target}" != "xFX100-linux-gnu"; then
     echo "Error!! --disable-fjrdma works on only FX100. Please attach --target=FX100-linux-gnu"
     exit 1
 fi
@@ -456,6 +480,16 @@ AC_SUBST(ACC_DEFAULT_PLATFORM)
 AC_SUBST(ACC_DEFAULT_DEVICE)
 
 #--------------------------------------------------------------------
+# Fortran GNU Extension
+#--------------------------------------------------------------------
+EXTENSION_FLAGS=""
+if test "x${dognuext}" = "xyes"; then
+  EXTENSION_FLAGS="-DGNU_INTRINSIC_EXTENSION"
+fi
+AC_SUBST(EXTENSION_FLAGS)
+
+
+#--------------------------------------------------------------------
 #  General
 #--------------------------------------------------------------------
 # Trget machine
@@ -463,26 +497,31 @@ FJRDMA=$FALSE
 KCOMPUTER=$FALSE
 FX10=$FALSE
 FX100=$FALSE
+T_FJMODULE=$FALSE
 POWERPC=$FALSE
 CRAY=$FALSE
 SUPERUX=$FALSE
-if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$target" = "FX100-linux-gnu"; then
-    if test "$dofjrdma" = "yes"; then
+if test "x${target}" = "xKcomputer-linux-gnu" -o "x${target}" = "xFX10-linux-gnu" -o "x${target}" = "xFX100-linux-gnu"; then
+    if test "x${domod2xmod}" = "xyes"; then
+        T_FJMODULE=$TRUE
+    fi
+
+    if test "x${dofjrdma}" = "xyes"; then
         FJRDMA=$TRUE
     fi
 
-    if test "$target" = "Kcomputer-linux-gnu"; then
+    if test "x${target}" = "xKcomputer-linux-gnu"; then
         KCOMPUTER=$TRUE
-    elif test "$target" = "FX10-linux-gnu"; then
+    elif test "x${target}" = "xFX10-linux-gnu"; then
         FX10=$TRUE
-    elif test "$target" = "FX100-linux-gnu"; then
+    elif test "x${target}" = "xFX100-linux-gnu"; then
         FX100=$TRUE
     fi
-elif test "$target" = "powerpc-ibm-cnk" -o "$target" = "powerpc-hitachi-aix"; then
+elif test "x${target}" = "xpowerpc-ibm-cnk" -o "x${target}" = "xpowerpc-hitachi-aix"; then
     POWERPC=$TRUE
-elif test "$target" = "Cray-linux-gnu"; then
+elif test "x${target}" = "xCray-linux-gnu"; then
     CRAY=$TRUE
-elif test "$target" = "sxace-nec-superux" -o "$target" = "sx9-nec-superux"; then
+elif test "x${target}" = "xsxace-nec-superux" -o "x${target}" = "xsx9-nec-superux"; then
     SUPERUX=$TRUE
 fi
 
@@ -493,9 +532,10 @@ AC_SUBST(FX100)
 AC_SUBST(POWERPC)
 AC_SUBST(CRAY)
 AC_SUBST(SUPERUX)
+AC_SUBST(T_FJMODULE)
 
 SUPERUX_OR_POWERPC=$FALSE
-if test $SUPERUX -eq 0 -o $POWERPC -eq 0; then
+if test $SUPERUX -eq $TRUE -o $POWERPC -eq $TRUE; then
     SUPERUX_OR_POWERPC=$TRUE
 fi
 AC_SUBST(SUPERUX_OR_POWERPC)
@@ -624,7 +664,7 @@ if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$t
     MPI_FCFLAGS="-Kfast,openmp"
     MPI_MODINC="-M"
     MPI_FCLIBS=""
-    KIND_MPI_FORTRAN=other
+    KIND_MPI_FORTRAN=frtpx
 
     # Omni C
     OMNI_C2X_FLAGS=""
@@ -642,10 +682,52 @@ if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$t
     # ranlib & ar & nm
     AC_CHECK_PROG([RANLIB], [ranlibpx], [ranlibpx], [ranlib])
     AC_CHECK_PROG([AR], [arpx], [arpx], [ar])
-    ARFLAGS="cru"
+    ARFLAGS="cr"
     AC_CHECK_PROG([NM], [nmpx], [nmpx], [nm])
 
-elif test "$target" = "MIC-linux-gnu"; then
+elif test "$target" = "KNL-linux-gnu"; then
+    # OpenMP
+    OPENMP_OPT_C="-qopenmp"
+    OPENMP_OPT_F=$OPENMP_OPT_C
+
+    # XcalableMP
+    XMPC_DEF="-D_XCALABLEMP"
+    XMPF_DEF="-D_XCALABLEMP"
+
+    # MPI C
+    AC_CHECK_PROG([MPI_CC], [mpiicc], [mpiicc])
+    MPI_CPPFLAGS="-E -std=gnu99"
+    MPI_CFLAGS="-O2 -fp-model fast=2 -ipo -no-prec-div -xMIC-AVX512 $OPENMP_OPT_C"
+    MPI_CLIBS=""
+
+    # MPI F
+    AC_CHECK_PROG([MPI_FC], [mpiifort], [mpiifort])
+    MPI_FPPFLAGS="-E -cpp"
+    MPI_FCFLAGS="-O2 -fp-model fast=2 -ipo -no-prec-div -xMIC-AVX512 $OPENMP_OPT_F"
+    MPI_MODINC="-module"
+    MPI_FCLIBS=""
+    KIND_MPI_FORTRAN=other
+
+    # Omni C
+    OMNI_C2X_FLAGS=""
+    OMNI_NTV_CFLAGS="-std=gnu99"
+    OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT_C"
+
+    # Omni F
+    OMNI_F2X_FLAGS=""
+    OMNI_NTV_FCFLAGS=""
+    OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT_F"
+
+    # Omni Common
+    OMNI_X2X_FLAGS=""
+
+    # ranlib & ar & nm
+    AC_CHECK_PROG([RANLIB], [ranlib], [ranlib])
+    AC_CHECK_PROG([AR], [ar], [ar])
+    ARFLAGS="cr"
+    AC_CHECK_PROG([NM], [nm], [nm])
+
+elif test "$target" = "KNC-linux-gnu"; then
     # OpenMP
     OPENMP_OPT_C="-mp"
     OPENMP_OPT_F=$OPENMP_OPT_C
@@ -672,7 +754,7 @@ elif test "$target" = "MIC-linux-gnu"; then
     OMNI_C2X_FLAGS=""
     OMNI_NTV_CFLAGS="-std=gnu99"
     OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT_C"
-    
+
     # Omni F
     OMNI_F2X_FLAGS=""
     OMNI_NTV_FCFLAGS=""
@@ -684,7 +766,7 @@ elif test "$target" = "MIC-linux-gnu"; then
     # ranlib & ar & nm
     AC_CHECK_PROG([RANLIB], [ranlib], [ranlib])
     AC_CHECK_PROG([AR], [ar], [ar])
-    ARFLAGS="cru"
+    ARFLAGS="cr"
     AC_CHECK_PROG([NM], [nm], [nm])
 
 elif test "$target" = "Cray-linux-gnu"; then
@@ -726,7 +808,7 @@ elif test "$target" = "Cray-linux-gnu"; then
     # ranlib & ar & nm
     AC_CHECK_PROG([RANLIB], [ranlib], [ranlib])
     AC_CHECK_PROG([AR], [ar], [ar])
-    ARFLAGS="cru"
+    ARFLAGS="cr"
     AC_CHECK_PROG([NM], [nm], [nm])
 
 elif test "$target" = "sxace-nec-superux"; then
@@ -744,7 +826,7 @@ elif test "$target" = "sxace-nec-superux"; then
     #  MPI_CFLAGS="-Chopt $OPENMP_OPT_C"  # Don't use OpenMP option because of SX-ACE bug [Xmp-dev:5418].
     MPI_CFLAGS="-Chopt"
     MPI_CLIBS=""
-    
+
     # MPI F
     AC_CHECK_PROG([MPI_FC], [sxmpif90], [sxmpif90])
     # Fix:[Xmp-dev:5723] [xmp-bts:0432]
@@ -770,7 +852,7 @@ elif test "$target" = "sxace-nec-superux"; then
     # ranlib & ar & nm
     RANLIB="sxar -sq"
     AC_CHECK_PROG([AR], [sxar], [sxar], [sxar])
-    ARFLAGS="cru"
+    ARFLAGS="cr"
     NM="sxnm"
     NM_OPT="-px"
     #  AC_CHECK_PROG([NM], [sxnm], [sxnm], [sxnm])
@@ -814,7 +896,7 @@ elif test "$target" = "sx9-nec-superux"; then
     # ranlib & ar & nm
     RANLIB="sxar -sq"
     AC_CHECK_PROG([AR], [sxar], [sxar], [sxar])
-    ARFLAGS="cru"
+    ARFLAGS="cr"
     NM="sxnm"
     NM_OPT="-px"
     #  AC_CHECK_PROG([NM], [sxnm], [sxnm], [sxnm])
@@ -881,7 +963,7 @@ elif test "$target" = "powerpc-ibm-cnk"; then
     # ranlib & ar & nm
     AC_CHECK_PROG([RANLIB], [ranlib], [ranlib])
     AC_CHECK_PROG([AR], [ar], [ar])
-    ARFLAGS="cru"
+    ARFLAGS="cr"
     AC_CHECK_PROG([NM], [nm], [nm])
 
 elif test "$target" = "powerpc-hitachi-aix"; then
@@ -923,14 +1005,14 @@ elif test "$target" = "powerpc-hitachi-aix"; then
     # ranlib & ar & nm
     AC_CHECK_PROG([RANLIB], [ranlib], [ranlib])
     AC_CHECK_PROG([AR], [ar], [ar])
-    ARFLAGS="-X32_64 cru"
+    ARFLAGS="-X32_64 cr"
     AC_CHECK_PROG([NM], [nm], [nm])
 
 else
     # ranlib & ar & nm
     AC_CHECK_PROG([RANLIB], [ranlib], [ranlib])
     AC_CHECK_PROG([AR], [ar], [ar])
-    ARFLAGS="cru"
+    ARFLAGS="cr"
     AC_CHECK_PROG([NM], [nm], [nm])
 
     # C
@@ -939,7 +1021,7 @@ else
 
     chk=`${MPI_CC} --version | head -n1`
     case $chk in
-	cc* | gcc* | Apple*)
+       gcc* | Apple* | cc* | *mpc-gcc_620* )
 	    # OpenMP
 	    OPENMP_OPT_C="-fopenmp"
 
@@ -997,12 +1079,14 @@ else
 
 		    # MPI C
 		    MPI_CPPFLAGS="-E -c99"
-		    MPI_CFLAGS="-fast -c99 $OPENMP_OPT_C"
+		    MPI_CFLAGS="-fast -c99 $OPENMP_OPT_C" 
 		    MPI_CLIBS=""
 
 		    # Omni C
 		    OMNI_C2X_FLAGS="--no-builtin-va-arg"
-		    OMNI_NTV_CFLAGS="-D_XMP_PGI"
+		    OMNI_NTV_CFLAGS="-D_XMP_PGI -Mlarge_arrays"
+		    # About the reason of adding "-Mlarge_arrays", please see the following URL
+		    # https://github.com/omni-compiler/omni-compiler/issues/179#issuecomment-326466300
 		    OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT_C"
 
 		    # Omni Common
@@ -1090,7 +1174,9 @@ else
 
 		    # Omni F
 		    OMNI_F2X_FLAGS=""
-		    OMNI_NTV_FCFLAGS=""
+		    OMNI_NTV_FCFLAGS="-Mlarge_arrays"
+		    # About the reason of adding "-Mlarge_arrays", please see the following URL
+		    # https://github.com/omni-compiler/omni-compiler/issues/179#issuecomment-326466300
 		    OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT_F"
 
 		    # Omni Common
@@ -1276,6 +1362,9 @@ AC_SUBST(TCA)
 AC_SUBST(TCA_PREFIX)
 AC_SUBST(GASNET)
 AC_SUBST(GASNET_LIBS)
+AC_SUBST(ENABLE_UCHARDET)
+AC_SUBST(UCHARDET_INCLUDE_DIR)
+AC_SUBST(UCHARDET_LIB_DIR)
 
 #--------------------------------------------------------------------
 # Set user defined value.
@@ -1291,11 +1380,21 @@ else
     if test "$target" = "powerpc-hitachi-aix"; then
 	CFLAGS="${CFLAGS} -maix64"
     fi
-    chk=`${CC} --version | head -n1`
+
+    if test "${userCFLAGS}" != ""; then
+      chk=`${CC} -V 2>&1 | head -n1`
+    elif test "$CRAY" = "$TRUE"; then
+      chk=`${CC} -V 2>&1 | head -n1`
+    else
+      chk=`${CC} --version | head -n1`
+    fi
     case $chk in
-	cc* | gcc* | Apple* | *ICC*)
+	gcc* | Apple* | *ICC*)
 	    CFLAGS="${CFLAGS} -std=gnu99 -Wall -Wpointer-arith"
 	    ;;
+        Cray* | cc*)
+            CFLAGS=""
+            ;;
 	*)
 	    chk2=`${CC} --version 2> /dev/null | head -n2 | tail -n1`
 	    case $chk2 in
@@ -1407,7 +1506,7 @@ if test "$domod2xmod" = "yes" -a "$KIND_MPI_FORTRAN" = "other"; then
 fi
 
 IS_MOD2XMOD=no
-if test "$domod2xmod" = "yes" -a "$KIND_MPI_FORTRAN" = "gfortran"; then
+if test "$domod2xmod" = "yes" -a \( "$KIND_MPI_FORTRAN" = "gfortran" -o "$KIND_MPI_FORTRAN" = "frtpx" \); then
     IS_MOD2XMOD=yes
 fi
 
@@ -1415,9 +1514,17 @@ MOD2XMOD=$FALSE
 if test "$IS_MOD2XMOD" = "yes"; then
     MOD2XMOD=$TRUE
 fi
-AC_SUBST(MOD2XMOD)
 
-if test "$IS_MOD2XMOD" = "yes"; then
+NEED_MAKE_MOD2XMOD=$FALSE
+if test "$IS_MOD2XMOD" = "yes" -a "$KIND_MPI_FORTRAN" = "gfortran"; then
+    NEED_MAKE_MOD2XMOD=$TRUE
+fi
+
+AC_SUBST(MOD2XMOD)
+AC_SUBST(KIND_MPI_FORTRAN)
+AC_SUBST(NEED_MAKE_MOD2XMOD)
+
+if test "$NEED_MAKE_MOD2XMOD" = $TRUE; then
     #### GMP ####
     # check dirs
     if ! test -d "$GMP_INCLUDE_DIR"; then
@@ -1437,7 +1544,7 @@ if test "$IS_MOD2XMOD" = "yes"; then
 	rm -f $tmp_file_c
 	AC_MSG_ERROR([gmp.h not found. Please attach --with-gmp=<DIR> or --with-gmp-include=<DIR>.])
     fi
-    
+
     # check -lgmp
     echo "int main(){return 0;}" > $tmp_file_c
     ${CC} -L$GMP_LIB_DIR -lgmp $tmp_file_c -o $tmp_file
@@ -1526,7 +1633,7 @@ if test "x${doMPI3_ASYNC}" = "xyes"; then
 fi
 
 if test x${use_tca} = xyes; then
-    if test x${doMPI3_ASYNC} = xno -a x${use_gasnet} = xno; then
+    if test "x${doMPI3_ASYNC}" = xno -a "x${use_gasnet}" = xno; then
 	echo "Error!! TCA must use MPI version 3 or GASNet"
 	exit 1
     fi
@@ -1535,7 +1642,7 @@ fi
 use_mpi3_onesided=no
 if test "x${doMPI3_ASYNC}" = "xyes" -a "x${use_gasnet}" = "xno" -a "x${target}" != "xKcomputer-linux-gnu" -a "x${target}" != "xFX10-linux-gnu" -a "x${target}" != "xFX100-linux-gnu" ; then
     use_mpi3_onesided=yes
-elif test x${dofjrdma} = xno; then
+elif test "x${dofjrdma}" = "xno"; then
     use_mpi3_onesided=yes
 fi
 
@@ -1548,12 +1655,12 @@ if test "x${use_mpi3_onesided}" = "xyes"; then
     MPI3_ONESIDED=$TRUE
 fi
 
-if test x${use_gasnet} = xyes; then
+if test "x${use_gasnet}" = "xyes"; then
     ONESIDED_CPPFLAGS="-D_XMP_GASNET"
-elif test x${use_mpi3_onesided} = xyes; then
+elif test "x${use_mpi3_onesided}" = "xyes"; then
     ONESIDED_CPPFLAGS="-D_XMP_MPI3_ONESIDED"
-elif test x${target} = xKcomputer-linux-gnu -o x${target} = xFX10-linux-gnu -o x${target} = xFX100-linux-gnu; then
-    if x${dofjrdma} = xyes; then
+elif test "x${target}" = "xKcomputer-linux-gnu" -o "x${target}" = "xFX10-linux-gnu" -o "x${target}" = "xFX100-linux-gnu"; then
+    if test "x${dofjrdma}" = "xyes"; then
         ONESIDED_CPPFLAGS="-D_XMP_FJRDMA"
     fi
 fi
@@ -1787,7 +1894,7 @@ else
     fi
 fi
 rm -f ./addr64.* ./addr64
-							
+
 #--------------------------------------------------------------------
 # has printf "%qd"
 
@@ -1809,7 +1916,7 @@ if test "x${hasQD}" = "xyes"; then
     AH_TEMPLATE(HAVE_QUAD_PRINT, [has printf "%qd"])
 fi
 rm -f ./hasqd.* ./hasqd
-					
+
 #--------------------------------------------------------------------
 # quad real support
 
@@ -1827,11 +1934,11 @@ if test "x${doQReal}" = "xyes"; then
     else
         AC_MSG_ERROR([can't find ${GMP_INCLUDE_DIR}/gmp.h. Please attach --with-gmp=<DIR> or --with-gmp-lib=<DIR>.])
     fi
-    
+
     if ! test -d "$GMP_LIB_DIR"; then
       AC_MSG_ERROR([$GMP_LIB_DIR not found. Please attach --with-gmp=<DIR> or --with-gmp-lib=<DIR>.])
     fi
-    
+
     gmpLibs=`ls ${GMP_LIB_DIR}/libgmp.* 2> /dev/null`
     if test "x${gmpLibs}" = "x"; then
         AC_MSG_ERROR([can't find ${GMP_LIB_DIR}/libgmp.*. Please attach --with-gmp=<DIR> or --with-gmp-lib=<DIR>.])
@@ -1986,7 +2093,10 @@ AC_SUBST(omniQRealFillGap)
 #--------------------------------------------------------------------
 # Export Omni Config Variable
 
-if test "${prefix}" = "NONE" -o "${prefix}" = ""; then
+PWD=`pwd`
+if test "${prefix}" = ${PWD}; then
+    AC_MSG_ERROR("${PWD}" is not specified in --prefix=)
+elif test "${prefix}" = "NONE" -o "${prefix}" = ""; then
     OMNI_HOME=/usr/local
 else
     OMNI_HOME=${prefix}
@@ -2134,7 +2244,7 @@ if test -z "${MAKE}"; then
     MAKE=make
 fi
 
-API_FLAVOR=NATA_API_POSIX
+API_FLAVOR=OMNI_API_POSIX
 TARGET_ARCH=POSIX
 case $OS in
 sunos*)
@@ -2160,7 +2270,7 @@ cygwin*)
 mingw32ce)
     OS=windowsce
     TARGET_ARCH=WINDOWS
-    API_FLAVOR=NATA_API_WIN32API;;
+    API_FLAVOR=OMNI_API_WIN32API;;
 mingw32*)
     case $CPU in
     x86_64*)
@@ -2172,7 +2282,7 @@ mingw32*)
     esac
     OS_LIBS="-lpthread -loleaut32 -lws2_32 -lwinmm"
     TARGET_ARCH=WINDOWS
-    API_FLAVOR=NATA_API_WIN32API;;
+    API_FLAVOR=OMNI_API_WIN32API;;
 esac
 
 OS_CXXFLAGS=${OS_CFLAGS}
@@ -2184,8 +2294,8 @@ AC_SUBST(OS_LDFLAGS)
 AC_SUBST(OS_LIBS)
 
 changequote(<<, >>)
-CPUDEF=NATA_CPU_`echo $CPU | tr '[a-z]' '[A-Z]'`
-OSDEF=NATA_OS_`echo $OS | tr '[a-z]' '[A-Z]'`
+CPUDEF=OMNI_CPU_`echo $CPU | tr '[a-z]' '[A-Z]'`
+OSDEF=OMNI_OS_`echo $OS | tr '[a-z]' '[A-Z]'`
 changequote([, ])
 AC_SUBST(CPUDEF)
 AC_SUBST(OSDEF)
@@ -2228,17 +2338,22 @@ unset program_transform_name
 
 #--------------------------------------------------------------------
 # Set version file
-VERSIONTXT="./Driver/etc/version"
-
-# If possible, set more information
 if test -d .git || test -f .git; then
-    which git 1>/dev/null 2>/dev/null
-    if test $? -eq 0; then
-        VERSION_INFO=`git log --date=short --pretty=format:"Last Commit Day:%ad, Hash Value:%h" -1`
-        echo -n Version:AC_PACKAGE_VERSION, ${VERSION_INFO} > ${VERSIONTXT}
+  which git 1>/dev/null 2>/dev/null
+  if test $? -eq 0; then
+    VERSION_INFO=`git log --date=short --pretty=format:"Git Hash:%h" -1`
+    if test "${NIGHTLY_BUILD}" != ""; then
+      echo -n Version:AC_PACKAGE_VERSION-${NIGHTLY_BUILD}, ${VERSION_INFO} > ./Driver/etc/version
     else
-        echo -n Version:AC_PACKAGE_VERSION > ${VERSIONTXT}
+      echo -n Version:AC_PACKAGE_VERSION, ${VERSION_INFO} > ./Driver/etc/version
     fi
+  else
+    echo -n Version:AC_PACKAGE_VERSION > ./Driver/etc/version
+  fi
+#else
+# Stable and nightly build version don't have ".git",
+# and already have "./Driver/etc/version".
+# Thus, do nothing.
 fi
 
 # check use one-sided
@@ -2266,11 +2381,15 @@ fi
 if test x${use_tca} = xyes; then
   ONESIDED_LIB="$ONESIDED_LIB + TCA"
 fi
-  
+
 AC_SUBST(ONESIDED_LIB)
-			      
+OMNI_X2X_FONESIDED_OPT=""
+if test x$isOnesided = xyes; then
+  OMNI_X2X_FONESIDED_OPT="-enable-Fonesided"
+fi
+AC_SUBST(OMNI_X2X_FONESIDED_OPT)
 #--------------------------------------------------------------------
-AC_CONFIG_FILES(XcodeML-Common/Makefile)
+# AC_CONFIG_FILES(XcodeML-Common/Makefile)
 AC_CONFIG_FILES(C-FrontEnd/src/Makefile)
 AC_CONFIG_FILES(C-BackEnd/Makefile)
 AC_CONFIG_FILES(F-FrontEnd/src/Makefile)
@@ -2319,6 +2438,7 @@ AC_CONFIG_FILES(libtlog/src_mpi/Makefile)
 AC_CONFIG_FILES(libtlog/src_mpi/bin/tlogview)
 AC_CONFIG_FILES(libacc/src/Makefile)
 AC_CONFIG_FILES(libacc/include/Makefile)
+AC_CONFIG_FILES(interfaces/Makefile)
 
 # --------------------------------------------------------------------
 AC_CONFIG_FILES(Makefile)
@@ -2359,6 +2479,7 @@ cat << EOF
         please rerun ./configure MPI_CC=...
 
   Options:
+    GNU Intrinsic extension      : $dognuext
     BLAS Library                 : $output_libblas
     OpenACC                      : $doOpenAcc
     Onesided                     : $isOnesided
@@ -2381,5 +2502,9 @@ fi
 
 if test x${domod2xmod} = xyes; then
   echo "    Translate .mod to .xmod      : $domod2xmod"
+fi
+
+if test x${doshared} = xyes; then
+  echo "    Shared library               : $doshared"
 fi
 echo "=================================================="

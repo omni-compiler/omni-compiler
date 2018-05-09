@@ -753,6 +753,42 @@ int _XMP_calc_template_par_triplet(_XMP_template_t *template, int template_index
   return _XMP_N_INT_TRUE;
 }
 
+// should return long long int?
+/*long long*/ int xmpc_ltog(int local_idx, _XMP_template_t *template, int template_index, int offset)
+{
+  /*long long*/ int global_index = 0;
+  
+  _XMP_template_chunk_t *chunk = &(template->chunk[template_index]);
+  _XMP_nodes_info_t *n_info = chunk->onto_nodes_info;
+  long long base = template->info[template_index].ser_lower;
+
+  switch(chunk->dist_manner){
+  case _XMP_N_DIST_DUPLICATION:
+    global_index = local_idx;
+    break;
+  case _XMP_N_DIST_BLOCK:
+    global_index = base + n_info->rank * chunk->par_chunk_width + local_idx;
+    break;
+  case _XMP_N_DIST_CYCLIC:
+    global_index = base + n_info->rank + n_info->size * local_idx;
+    break;
+  case _XMP_N_DIST_BLOCK_CYCLIC:
+    {
+      int w = chunk->par_width;
+      global_index =  base + n_info->rank * w
+	          + (local_idx/w) * w * n_info->size + local_idx%w;
+    }
+    break;
+  case _XMP_N_DIST_GBLOCK:
+    global_index = local_idx + chunk->mapping_array[n_info->rank];
+  default:
+    _XMP_fatal("_XMP_: unknown chunk dist_manner");
+  }
+
+  return global_index - offset;
+    
+}
+
 
 /* long long int _XMP_L2G_GBLOCK(int local_idx, _XMP_template_t *template, int template_index) */
 /* { */

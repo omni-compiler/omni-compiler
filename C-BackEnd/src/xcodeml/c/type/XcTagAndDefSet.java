@@ -1,9 +1,3 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package xcodeml.c.type;
 
 import java.util.Iterator;
@@ -15,7 +9,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 
-import xcodeml.XmException;
+import xcodeml.util.XmException;
 
 /**
  * Set of dependency of tagname and typedef name.

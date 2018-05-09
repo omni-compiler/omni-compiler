@@ -1,23 +1,18 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package xcodeml.c.decompile;
 
-import xcodeml.XmException;
+import xcodeml.util.XmException;
 import xcodeml.c.obj.XcNode;
 import xcodeml.c.type.XcIdent;
 import xcodeml.c.util.XmcWriter;
 
 /**
  * Internal object represents following elements:
- *   pragma, text
+ *   pragma, text, statement
  */
 public class XcDirectiveObj extends XcStmtObj implements XcDecAndDefObj
 {
     private String _line;
+    private XcStmtObj _stmt = null;
 
     /**
      * Creates XcDirectiveObj.
@@ -62,6 +57,12 @@ public class XcDirectiveObj extends XcStmtObj implements XcDecAndDefObj
            }catch(XmException xme){
                throw new RuntimeException(xme.getMessage());
            }
+       }else if(child instanceof XcStmtObj){
+           if(_stmt == null){
+               _stmt = (XcStmtObj)child;
+           }else {
+               throw new IllegalArgumentException(child.getClass().getName());
+           }
 	}else {
 	    throw new IllegalArgumentException(child.getClass().getName());
 	}
@@ -88,6 +89,8 @@ public class XcDirectiveObj extends XcStmtObj implements XcDecAndDefObj
     public void appendCode(XmcWriter w) throws XmException
     {
         super.appendCode(w);
+        w.noLfOrLf();
         w.add(_line).lf();
+        w.add(_stmt);
     }
 }

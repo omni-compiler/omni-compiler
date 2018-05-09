@@ -1,0 +1,132 @@
+# This file is included from */Makefile files.
+
+RESULT=$(OUT:.x=.result)
+.SUFFIXES: .x .x4 .f90 .F90 .xmod .result
+
+OUT4= $(OUT:%.x=%.x4)
+OUT6= $(OUT:%.x=%.x6)
+OUT7= $(OUT:%.x=%.x7)
+OUT7g= $(OUT:%.x=%.x7g)
+RESULT4=$(RESULT:.result=.result4)
+RESULT6=$(RESULT:.result=.result6)
+RESULT7=$(RESULT:.result=.result7)
+RESULT7g=$(RESULT:.result=.result7g)
+
+.f90.x:
+	xmpf90 $(OPT) -o $@ $<
+
+.F90.x:
+	xmpf90 $(OPT) -o $@ $<
+
+.f90.x4:
+	xmpf90 $(OPT) --debug --Wx-fcoarray=4 -o $@ $<
+
+.F90.x4:
+	xmpf90 $(OPT) --debug --Wx-fcoarray=4 -o $@ $<
+
+.c.x:
+	xmpcc $(OPT) -o $@ $<
+
+
+%.result: %.x
+	export XMP_ONESIDED_HEAP_SIZE=70M; mpirun -np $(NPE) ./$<
+
+%.result4: %.x4
+	export XMP_ONESIDED_HEAP_SIZE=70M; mpirun -np $(NPE) ./$<
+
+
+%.result: %.f90
+	xmpf90 $(OPT) -o $*.x $<
+	export XMP_ONESIDED_HEAP_SIZE=70M; mpirun -np $(NPE) ./$*.x
+
+%.result: %.F90
+	xmpf90 $(OPT) -o $*.x $<
+	export XMP_ONESIDED_HEAP_SIZE=70M; mpirun -np $(NPE) ./$*.x
+
+%.result: %.c
+	xmpcc $(OPT) -o $*.x $<
+	export XMP_ONESIDED_HEAP_SIZE=70M; mpirun -np $(NPE) ./$*.x
+	cat $@
+
+
+RUN/%.x:: %.x
+	cp $< $@
+
+RUN/%.x4:: %.x4
+	cp $< $@
+
+RUN/%.x:: 
+	touch $@
+
+RUN/%.x4:: 
+	touch $@
+
+
+### compile test programs
+all:     $(OUT)
+
+all4:     $(OUT4)
+
+### execute on local environment
+run:	$(RESULT)
+
+run4:	$(RESULT4)
+
+run6:	$(RESULT6)
+
+run7:
+	@echo '*** use run7g for GASNet environment ***'
+
+run7g:	$(RESULT7g)
+
+### prepare to execute on K/FX10
+submit: all RUN RUN/go.sh $(OUT:%=RUN/%)
+	cd RUN; pjsub go.sh
+
+submit4: all4 RUN RUN/go4.sh $(OUT4:%=RUN/%)
+	cd RUN; pjsub go4.sh
+
+RUN:
+	mkdir RUN
+
+RUN/go.sh:
+	rm -rf $@
+	if [[ ${HOSTNAME} =~ ^fe??p?? ]]; then\
+	  sed "s/@OUT@/$(OUT)/" >$@ go.template;\
+	elif [[ ${HOSTNAME} =~ ^greatwave ]]; then\
+	  if test -f ./go-hokusai.template; then\
+	    sed "s/@OUT@/$(OUT)/" >$@ ./go-hokusai.template;\
+	  else\
+	    sed "s/@OUT@/$(OUT)/" >$@ ../go-hokusai.template;\
+	  fi;\
+	fi
+
+RUN/go4.sh:
+	rm -rf $@
+	if [[ ${HOSTNAME} =~ ^fe??p?? ]]; then\
+	  sed "s/@OUT@/$(OUT4)/" >$@ go.template;\
+	elif [[ ${HOSTNAME} =~ ^greatwave ]]; then\
+	  if test -f ./go-hokusai.template; then\
+	    sed "s/@OUT@/$(OUT4)/" >$@ ./go-hokusai.template;\
+	  else\
+	    sed "s/@OUT@/$(OUT4)/" >$@ ../go-hokusai.template;\
+	  fi;\
+	fi
+
+showlog:
+	cat RUN/go.sh.e* RUN/go.sh.o*
+
+### clean
+cleanlog:
+	rm -rf RUN
+
+clean: cleanlog
+	rm -f *~ *.o *.x *.result a.out
+	rm -rf __omni_tmp__/
+	rm -f omni_traverse*.o
+	rm -f $(OUT:%=RUN/%)
+	rm -f *.mod *.xmod
+	rm -f *.x4 *.result4
+	rm -f *.x6 *.result6
+	rm -f *.x7 *.result7
+	rm -f *.x7g *.result7g

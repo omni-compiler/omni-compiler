@@ -1,12 +1,6 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package exc.object;
 
-import xcodeml.XmException;
+import xcodeml.util.XmException;
 
 /**
  * Pragma parser which processes pragma statement in XcodeML.

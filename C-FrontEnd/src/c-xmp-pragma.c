@@ -2,7 +2,6 @@
 #include <ctype.h>
 #include <string.h>
 #include <limits.h>
-
 #include "c-expr.h"
 #include "c-pragma.h"
 #include "c-parser.h"
@@ -47,6 +46,8 @@ static CExpr* parse_TASKS_clause();
 static CExpr* parse_LOOP_clause();
 static CExpr* parse_REFLECT_clause();
 static CExpr* parse_REDUCTION_clause();
+static CExpr* parse_EXPAND_list();
+static CExpr *parse_loop_opt();
 static CExpr* parse_BARRIER_clause();
 static CExpr* parse_BCAST_clause();
 static CExpr* parse_GMOVE_clause();
@@ -68,19 +69,28 @@ static CExpr* parse_REFLECT_DO_clause();
 static CExpr* parse_task_ON_ref();
 
 static CExpr* parse_COL2_name_list();
-static CExpr* parse_XMP_subscript_list();
-static CExpr* parse_XMP_size_list();
-static CExpr* parse_XMP_range_list();
+static CExpr* parse_XMP_subscript_list_round();
+static CExpr* parse_XMP_subscript_list_square();
+static CExpr* parse_XMP_size_list_round();
+static CExpr* parse_XMP_size_list_square();
+static CExpr* parse_XMP_range_list_round();
+static CExpr* parse_XMP_range_list_square();
 static CExpr* parse_ON_ref();
-static CExpr* parse_XMP_dist_fmt_list();
+static CExpr* parse_XMP_dist_fmt_list_round();
+static CExpr* parse_XMP_dist_fmt_list_square();
+static CExpr *parse_XMP_align_source_list(void);
+static CExpr *parse_XMP_align_subscript_list_round(void);
+static CExpr *parse_XMP_align_subscript_list_square(void);
 static CExpr* parse_Reduction_opt();
 static CExpr* parse_XMP_opt();
 static CExpr* parse_ACC_or_HOST_clause();
 static CExpr* parse_PROFILE_clause();
 static void parse_ASYNC_ACC_or_HOST_PROFILE(CExpr**, CExpr**, CExpr**);
-static CExpr *parse_XMP_loop_subscript_list();
-
+static CExpr *parse_XMP_loop_subscript_list_round();
+static CExpr *parse_XMP_loop_subscript_list_square();
+static CExpr *parse_XMP_shadow_width_list();
 static CExpr* _xmp_pg_list(int omp_code,CExpr* args);
+
 static int pg_XMP_pragma;
 CExpr* pg_XMP_list;
 int XMP_has_err = 0;
@@ -183,6 +193,11 @@ int parse_XMP_pragma()
     pg_get_token();
     pg_XMP_list = parse_REFLECT_clause();
   }
+  else if (PG_IS_IDENT("reduce_shadow")) {
+    pg_XMP_pragma = XMP_REDUCE_SHADOW;
+    pg_get_token();
+    pg_XMP_list = parse_REFLECT_clause();
+  }
   else if (PG_IS_IDENT("barrier")) {
     pg_XMP_pragma = XMP_BARRIER;
     pg_get_token();
@@ -277,11 +292,16 @@ CExpr* parse_NODES_clause()
   } 
 
   // parse (<nodes-size>, ...)
-  if (pg_tok != '('){
-    addError(NULL, "'(' is expected after <nodes-name>");
+  if (pg_tok != '(' && pg_tok != '['){
+    addError(NULL, "'(' or '[' is expected after <nodes-name>");
     goto err;
-  } 
-  nodesSizeList = parse_XMP_size_list();
+  }
+  else if(pg_tok == '('){
+    nodesSizeList = parse_XMP_size_list_round();
+  }
+  else{  // '['
+    nodesSizeList = parse_XMP_size_list_square();
+  }
   
   // parse { <empty> | =* | =<nodes-ref> }
   if (pg_tok == '=') {
@@ -319,12 +339,16 @@ CExpr *parse_TEMPLATE_clause()
   } 
   
   // parse (<template-spec>, ...)
-  if (pg_tok != '(') {
-    XMP_Error0("'(' is expected after <template-name>");
+  if (pg_tok != '(' && pg_tok != '[') {
+    XMP_Error0("'(' or '[' is expected after <template-name>");
     goto err;
   }
-  else 
-    templateSpecList = parse_XMP_range_list();
+  else if(pg_tok == '('){
+    templateSpecList = parse_XMP_range_list_round();
+  }
+  else{ // '['
+    templateSpecList = parse_XMP_range_list_square();
+  }
   
   if(templateNameList == NULL) 
     templateNameList = parse_COL2_name_list();
@@ -348,12 +372,15 @@ CExpr* parse_DISTRIBUTE_clause()
   } 
 
   // parse (<dist-format>, ...)
-  if (pg_tok != '('){
-    XMP_Error0("'(' is expected after <template-name>");
+  if(pg_tok != '(' && pg_tok != '['){
+    XMP_Error0("'(' or '[' is expected after <template-name>");
     goto err;
   }
+
+  if(pg_tok == '(')
+    distFormatList = parse_XMP_dist_fmt_list_round();
   else
-    distFormatList = parse_XMP_dist_fmt_list();
+    distFormatList = parse_XMP_dist_fmt_list_square();
     
   if(PG_IS_IDENT("onto")){
     pg_get_token();
@@ -381,9 +408,6 @@ CExpr* parse_DISTRIBUTE_clause()
   XMP_has_err = 1;
   return NULL;
 }
-
-CExpr *parse_XMP_align_source_list(void);
-CExpr *parse_XMP_align_subscript_list(void);
 
 CExpr* parse_ALIGN_clause()
 {
@@ -420,7 +444,14 @@ CExpr* parse_ALIGN_clause()
     goto err;
   }
 
-  alignSubscriptList = parse_XMP_align_subscript_list();
+  if(pg_tok != '(' && pg_tok != '[') {
+    addFatal(NULL,"parse_XMP_align_subscript_list: first token= '(' or '['");
+  }
+  
+  if(pg_tok == '(')
+    alignSubscriptList = parse_XMP_align_subscript_list_round();
+  else
+    alignSubscriptList = parse_XMP_align_subscript_list_square();
 
   if (arrayNameList == NULL) 
     arrayNameList = parse_COL2_name_list();
@@ -431,8 +462,6 @@ CExpr* parse_ALIGN_clause()
   XMP_has_err = 1;
   return NULL;
 }
-
-CExpr *parse_XMP_shadow_width_list();
 
 CExpr* parse_SHADOW_clause()
 {
@@ -519,14 +548,16 @@ CExpr* parse_TASK_clause()
 CExpr* parse_LOOP_clause()
 {
   CExpr *subscriptList = NULL;
-  CExpr *onRef, *reductionOpt, *opt;
+  CExpr *onRef, *reductionOpt, *opt, *loopOpt;
 
   if(pg_tok == '(')
-    subscriptList = parse_XMP_loop_subscript_list();
+    subscriptList = parse_XMP_loop_subscript_list_round();
+  else if(pg_tok == '[')
+    subscriptList = parse_XMP_loop_subscript_list_square();
 
   if(PG_IS_IDENT("on"))
     pg_get_token();
-  else {
+  else{
     XMP_Error0("'on' is missing");
     goto err;
   }
@@ -539,9 +570,11 @@ CExpr* parse_LOOP_clause()
   CExpr *async, *profile, *acc_or_host; // async and acc_or_host is not used
   parse_ASYNC_ACC_or_HOST_PROFILE(&async, &acc_or_host, &profile);
 
-  return XMP_LIST5(subscriptList,onRef,reductionOpt,opt,profile);
+  loopOpt = parse_loop_opt();
 
-  err:
+  return XMP_LIST6(subscriptList,onRef,reductionOpt,opt,profile, loopOpt);
+
+ err:
   XMP_has_err = 1;
   return NULL;
 }
@@ -614,88 +647,141 @@ CExpr *parse_XMP_shadow_width_list()
     return NULL;
 }
 
-CExpr *parse_XMP_align_subscript_list()
+static CExpr *parse_XMP_align_subscript_list_round()
 {
-    CExpr *list_var, *list_expr;
-    CExpr *v, *var, *expr;
-
-    list_var = EMPTY_LIST;
-    list_expr = EMPTY_LIST;
-
-    if(pg_tok != '(') {
-      addFatal(NULL,"parse_XMP_align_subscript_list: first token= '('");
+  CExpr *list_var  = EMPTY_LIST;
+  CExpr *list_expr = EMPTY_LIST;
+  CExpr *v, *var, *expr;
+  
+  pg_get_token();
+  while(1){
+    v = NULL;
+    switch(pg_tok){
+    case ')':  goto err;
+    case ',':  goto err;
+    case ':':
+      break;
+    case '*':
+      var = (CExpr *)allocExprOfStringConst(EC_STRING_CONST, "* @{ASTERISK}@", CT_UNDEF);
+      expr = (CExpr*)allocExprOfNumberConst2(0, BT_INT);
+      pg_get_token();
+      goto next;
+    default:
+      v = pg_parse_expr();
     }
-
-    pg_get_token();
-
-    while(1){
-	v = NULL;
-	switch(pg_tok){
-	case ')':  goto err;
-	case ',':  goto err;
-	case ':':
-	    break;
-	case '*':
-	  var = (CExpr *)allocExprOfStringConst(EC_STRING_CONST, "* @{ASTERISK}@", CT_UNDEF);
-	  expr = (CExpr*)allocExprOfNumberConst2(0, BT_INT);
-	  pg_get_token();
-	  goto next;
-	default:
-	    v = pg_parse_expr();
-	}
-
-	switch (EXPR_CODE(v)){
-	case EC_PLUS:
-	  var = EXPR_B(v)->e_nodes[0];
-	  expr = EXPR_B(v)->e_nodes[1];
-	  break;
-
-	case EC_MINUS:
-	  var = EXPR_B(v)->e_nodes[0];
-	  expr = exprUnary(EC_UNARY_MINUS, EXPR_B(v)->e_nodes[1]);
-	  break;
-
-	case EC_IDENT:
-	  var = v;
-	  expr = (CExpr*)allocExprOfNumberConst2(0, BT_INT);
-	  break;
-
-	default:
-	  goto err;
-	}
-
-    next:
-
-	list_var = exprListAdd(list_var, var);
-	list_expr = exprListAdd(list_expr, expr);
-
-	if (pg_tok == ')'){
-	    pg_get_token();
-	    break;
-	}
-
-	if (pg_tok == ',') pg_get_token();
-	else goto err;
+    
+    switch (EXPR_CODE(v)){
+    case EC_PLUS:
+      var = EXPR_B(v)->e_nodes[0];
+      expr = EXPR_B(v)->e_nodes[1];
+      break;
+      
+    case EC_MINUS:
+      var = EXPR_B(v)->e_nodes[0];
+      expr = exprUnary(EC_UNARY_MINUS, EXPR_B(v)->e_nodes[1]);
+      break;
+      
+    case EC_IDENT:
+      var = v;
+      expr = (CExpr*)allocExprOfNumberConst2(0, BT_INT);
+      break;
+      
+    default:
+      goto err;
     }
+    
+  next:
+    list_var = exprListAdd(list_var, var);
+    list_expr = exprListAdd(list_expr, expr);
+    
+    if (pg_tok == ')'){
+      pg_get_token();
+      break;
+    }
+    
+    if (pg_tok == ',') pg_get_token();
+    else goto err;
+  }
 
-    return XMP_LIST2(list_var, list_expr);
-
-  err:
-    XMP_Error0("Syntax error in scripts of XMP directive");
-    XMP_has_err = 1;
-    return NULL;
+  v = (CExpr *)allocExprOfStringConst(EC_STRING_CONST, "ROUND", CT_UNDEF);
+  return exprListAdd(XMP_LIST2(list_var, list_expr), v);
+  
+ err:
+  XMP_Error0("Syntax error in scripts of XMP directive");
+  XMP_has_err = 1;
+  return NULL;
 }
 
-
-CExpr *parse_XMP_subscript_list()
+static CExpr *parse_XMP_align_subscript_list_square()
 {
-    CExpr* list;
-    CExpr *v1,*v2,*v3;
+  CExpr *list_var  = EMPTY_LIST;
+  CExpr *list_expr = EMPTY_LIST;
+  CExpr *v, *var, *expr;
 
-    list = EMPTY_LIST;
-    if(pg_tok != '(') {
-	addFatal(NULL,"parse_XMP_subscript_list: first token= '('");
+  pg_get_token();
+  while(1){
+    v = NULL;
+    switch(pg_tok){
+    case ']': goto err;
+    case ':': break;
+    case '*':
+      var = (CExpr *)allocExprOfStringConst(EC_STRING_CONST, "* @{ASTERISK}@", CT_UNDEF);
+      expr = (CExpr*)allocExprOfNumberConst2(0, BT_INT);
+      pg_get_token();
+      goto next;
+    default:
+      v = pg_parse_expr();
     }
+
+    switch (EXPR_CODE(v)){
+    case EC_PLUS:
+      var  = EXPR_B(v)->e_nodes[0];
+      expr = EXPR_B(v)->e_nodes[1];
+      break;
+
+    case EC_MINUS:
+      var = EXPR_B(v)->e_nodes[0];
+      expr = exprUnary(EC_UNARY_MINUS, EXPR_B(v)->e_nodes[1]);
+      break;
+
+    case EC_IDENT:
+      var = v;
+      expr = (CExpr*)allocExprOfNumberConst2(0, BT_INT);
+      break;
+
+    default:
+      goto err;
+    }
+
+  next:
+    list_var  = exprListAdd(list_var, var);
+    list_expr = exprListAdd(list_expr, expr);
+
+    if (pg_tok == ']'){
+      pg_get_token();
+      if (pg_tok == '['){
+	pg_get_token();
+	continue;
+      }
+      else
+	break;
+    }
+    else goto err;
+  }
+
+  v = (CExpr *)allocExprOfStringConst(EC_STRING_CONST, "SQUARE", CT_UNDEF);
+  return exprListAdd(XMP_LIST2(list_var, list_expr), v);
+
+ err:
+  XMP_Error0("Syntax error in scripts of XMP directive");
+  XMP_has_err = 1;
+  return NULL;
+}
+
+CExpr *parse_XMP_subscript_list_round()
+{
+    CExpr* list = EMPTY_LIST;
+    CExpr *v1,*v2,*v3;
 
     pg_get_token();
     while(1){
@@ -703,12 +789,11 @@ CExpr *parse_XMP_subscript_list()
 	switch(pg_tok){
 	case ')':  goto err;
 	case ',':  goto err;
-	case ':':
-	    break;
+	case ':':  break;
 	case '*':
 	  list = exprListAdd(list, NULL);
 	  pg_get_token();
-	  goto next2;
+	  goto last;
 	default:
 	    v1 = pg_parse_expr();
 	}
@@ -738,7 +823,7 @@ CExpr *parse_XMP_subscript_list()
 	if (v3 == NULL) v3 = (CExpr*)allocExprOfNumberConst2(1, BT_INT);
 	list = exprListAdd(list, XMP_LIST3(v1,v2,v3));
 
-      next2:
+      last:
 	if(pg_tok == ')'){
 	    pg_get_token();
 	    break;
@@ -747,7 +832,9 @@ CExpr *parse_XMP_subscript_list()
 	else goto err;
     }
 
-    return list;
+
+    CExpr *v = (CExpr *)allocExprOfStringConst(EC_STRING_CONST, "ROUND", CT_UNDEF);
+    return exprListAdd(list, v);
 
   err:
     XMP_Error0("Syntax error in scripts of XMP directive");
@@ -755,170 +842,342 @@ CExpr *parse_XMP_subscript_list()
     return NULL;
 }
 
-
-CExpr *parse_XMP_size_list()
+CExpr *parse_XMP_subscript_list_square()
 {
-    CExpr* list;
-    CExpr *v;
+  CExpr* list = EMPTY_LIST;
+  CExpr *v1,*v2,*v3;
 
-    list = EMPTY_LIST;
-    if(pg_tok != '(') {
-	addFatal(NULL,"parse_XMP_size_list: first token= '('");
+  pg_get_token();
+  while(1){
+    v1 = v2 = v3 = NULL;
+    switch(pg_tok){
+    case ']':  goto err;
+    case '[':  goto err;
+    case ':':  break;
+    case '*':
+      list = exprListAdd(list, NULL);
+      pg_get_token();
+      goto last;
+    default:
+      v1 = pg_parse_expr();
+    }
+
+    if(pg_tok != ':'){ // scalar
+      v2 = (CExpr*)allocExprOfNumberConst2(1, BT_INT);
+      v3 = (CExpr*)allocExprOfNumberConst2(1, BT_INT);
+      goto next;
     }
 
     pg_get_token();
-    while(1){
-	v = NULL;
-	switch(pg_tok){
-	case ')':
-	case ',':
-	case ':':
-	  goto err;
-	case '*':
-	  //v = (CExpr *)allocExprOfStringConst(EC_STRING_CONST, "* @{ASTERISK}@", CT_UNDEF);
-	  v = NULL;
-	  pg_get_token();
-	  break;
-	default:
-	    v = pg_parse_expr();
-	}
-	
-	list = exprListAdd(list, v);
-	if(pg_tok == ')'){
-	    pg_get_token();
-	    break;
-	}
-	if(pg_tok == ',')  pg_get_token();
-	else goto err;
+    switch(pg_tok){
+    case ']': goto next;
+    case ':': break;
+    default:
+      v2 = pg_parse_expr();
     }
 
-    return list;
+    if(pg_tok != ':') goto next;
+    pg_get_token();
+    v3 = (pg_tok != ':')? pg_parse_expr() : (CExpr*)allocExprOfNumberConst2(1, BT_INT);
 
-  err:
-    XMP_Error0("Syntax error in scripts of XMP directive");
-    XMP_has_err = 1;
-    return NULL;
+  next:
+    if(v3 == NULL) v3 = (CExpr*)allocExprOfNumberConst2(1, BT_INT);
+    list = exprListAdd(list, XMP_LIST3(v1,v2,v3));
+
+  last:
+    if(pg_tok != ']') goto err;
+    
+    pg_get_token();
+    if(pg_tok == '[')  pg_get_token();
+    else               break;
+  }
+
+  CExpr *v = (CExpr *)allocExprOfStringConst(EC_STRING_CONST, "SQUARE", CT_UNDEF);
+  return exprListAdd(list, v);
+
+ err:
+  XMP_Error0("Syntax error in scripts of XMP directive");
+  XMP_has_err = 1;
+  return NULL;
 }
 
-
-CExpr *parse_XMP_range_list()
+CExpr *parse_XMP_size_list_round()
 {
-    CExpr* list;
-    CExpr *v1,*v2;
+  CExpr *list = EMPTY_LIST;
+  CExpr *v;
 
-    list = EMPTY_LIST;
-    if(pg_tok != '(') {
-	addFatal(NULL,"parse_XMP_range_list: first token= '('");
+  pg_get_token();
+  while(1){
+    v = NULL;
+    switch(pg_tok){
+    case ')':
+    case ',':
+    case ':':
+      goto err;
+    case '*':
+      //v = (CExpr *)allocExprOfStringConst(EC_STRING_CONST, "* @{ASTERISK}@", CT_UNDEF);
+      v = NULL;
+      pg_get_token();
+      break;
+    default:
+      v = pg_parse_expr();
     }
 
-    pg_get_token();
-    while(1){
-	v1 = v2 = NULL;
-	switch(pg_tok){
-	case ')':
-	case ',':
-	  goto err;
-	case ':':
-	  pg_get_token();
-	  goto next;
-	default:
-	    v1 = pg_parse_expr();
-	}
-	
-	if(pg_tok != ':'){
-	  v2 = v1;
-	  v1 = (CExpr*)allocExprOfNumberConst2(1, BT_INT);
-	  goto next;
-	}
+    list = exprListAdd(list, v);
+    if(pg_tok == ')'){
+      pg_get_token();
+      break;
+    }
+    if(pg_tok == ',')  pg_get_token();
+    else goto err;
+  }
 
+  v = (CExpr *)allocExprOfStringConst(EC_STRING_CONST, "ROUND", CT_UNDEF);
+  return exprListAdd(list, v);
+
+ err:
+  XMP_Error0("Syntax error in scripts of XMP directive");
+  XMP_has_err = 1;
+  return NULL;
+}
+
+CExpr *parse_XMP_size_list_square()
+{
+  CExpr *list = EMPTY_LIST;
+  CExpr *v;
+
+  pg_get_token();
+  while(1){
+    v = NULL;
+    switch(pg_tok){
+    case ']':
+    case ',':
+    case ':':
+      goto err;
+    case '*':
+      v = NULL;
+      pg_get_token();
+      break;
+    default:
+      v = pg_parse_expr();
+    }
+
+    list = exprListAdd(list, v);
+    if(pg_tok == ']'){
+      pg_get_token();
+    }
+    if(pg_tok == '[')  pg_get_token();
+    else break;
+  }
+
+  v = (CExpr *)allocExprOfStringConst(EC_STRING_CONST, "SQUARE", CT_UNDEF);
+  return exprListAdd(list, v);
+
+ err:
+  XMP_Error0("Syntax error in scripts of XMP directive");
+  XMP_has_err = 1;
+  return NULL;
+}
+
+CExpr *parse_XMP_range_list_round()
+{
+  CExpr* list = EMPTY_LIST;
+  CExpr *v1,*v2;
+  
+  pg_get_token();
+  while(1){
+    v1 = v2 = NULL;
+    switch(pg_tok){
+    case ')':
+    case ',':
+      goto err;
+    case ':':
+      pg_get_token();
+      goto next;
+    default:
+      v1 = pg_parse_expr();
+    }
+      
+    if(pg_tok != ':'){
+      v2 = v1;
+      v1 = (CExpr*)allocExprOfNumberConst2(1, BT_INT);
+      goto next;
+    }
+      
+    pg_get_token();
+    if(pg_tok == ':')
+      goto err;
+    else
+      v2 = pg_parse_expr();
+    
+  next:
+    if (v1 == NULL && v2 == NULL)
+      list = exprListAdd(list, NULL);
+    else
+      list = exprListAdd(list, XMP_LIST2(v1,v2));
+    
+    if(pg_tok == ')'){
+      pg_get_token();
+      break;
+    }
+    if(pg_tok == ',')  pg_get_token();
+    else goto err;
+  }
+
+  CExpr *v = (CExpr *)allocExprOfStringConst(EC_STRING_CONST, "ROUND", CT_UNDEF);
+  return exprListAdd(list, v);
+
+ err:
+  XMP_Error0("Syntax error in scripts of XMP directive");
+  XMP_has_err = 1;
+  return NULL;
+}
+
+CExpr *parse_XMP_range_list_square()
+{
+  CExpr* list = EMPTY_LIST;
+  CExpr *v1,*v2;
+
+  pg_get_token();
+  while(1){
+    v1 = v2 = NULL;
+    switch(pg_tok){
+    case ']': goto err;
+    case '[': goto err;
+    case ':':
+      pg_get_token();
+      goto next;
+    default:
+      v1 = pg_parse_expr();
+    }
+
+    if(pg_tok != ':'){
+      v2 = v1;
+      v1 = (CExpr*)allocExprOfNumberConst2(0, BT_INT);
+      goto next;
+    }
+
+    // if pg_tok == ':'
+    pg_get_token();
+    if(pg_tok == ':')
+      goto err;
+    else
+      v2 = pg_parse_expr();
+
+  next:
+    if (v1 == NULL && v2 == NULL)
+      list = exprListAdd(list, NULL);
+    else
+      list = exprListAdd(list, XMP_LIST2(v1,v2));
+
+    if(pg_tok == ']'){
+      pg_get_token();
+      if(pg_tok == '[')
 	pg_get_token();
-	switch(pg_tok){
-	case ')':
-	case ',':
-	  v2 = v1;
-	  v1 = (CExpr*)allocExprOfNumberConst2(1, BT_INT);
-	  goto next;
-	case ':':
-	  goto err;
-	default:
-	    v2 = pg_parse_expr();
-	}
-
-      next:
-	if (v1 == NULL && v2 == NULL)
-	  list = exprListAdd(list, NULL);
-	else
-	  list = exprListAdd(list, XMP_LIST2(v1,v2));
-
-	if(pg_tok == ')'){
-	    pg_get_token();
-	    break;
-	}
-	if(pg_tok == ',')  pg_get_token();
-	else goto err;
+      else
+	break;
     }
+    else
+      goto err;
+  }
 
-    return list;
+  CExpr *v = (CExpr *)allocExprOfStringConst(EC_STRING_CONST, "SQUARE", CT_UNDEF);
+  return exprListAdd(list, v);
 
-  err:
-    XMP_Error0("Syntax error in scripts of XMP directive");
-    XMP_has_err = 1;
-    return NULL;
+ err:
+  XMP_Error0("Syntax error in scripts of XMP directive");
+  XMP_has_err = 1;
+  return NULL;
 }
 
-
-CExpr *parse_XMP_loop_subscript_list()
+CExpr *parse_XMP_loop_subscript_list_round()
 {
-    CExpr* list;
-    CExpr *v;
+  CExpr* list = EMPTY_LIST;
+  CExpr *v;
 
-    list = EMPTY_LIST;
-
-    if (pg_tok != '('){
-	addFatal(NULL,"parse_XMP_loop_subscript_list: first token != '['");
+  pg_get_token();
+  while (1){
+    switch (pg_tok){
+    case ')':  goto err;
+    case ',':  goto err;
+    case ':':
+      v = (CExpr *)allocExprOfStringConst(EC_STRING_CONST, ": @{COLON}@", CT_UNDEF);
+      pg_get_token();
+      break;
+    case '*':
+      v = (CExpr *)allocExprOfStringConst(EC_STRING_CONST, "* @{ASTERISK}@", CT_UNDEF);
+      pg_get_token();
+      break;
+	  
+    default:
+      v = pg_parse_expr(); break;
     }
-
-    pg_get_token();
-
-    while (1){
-
-	switch (pg_tok){
-	case ')':  goto err;
-	case ',':  goto err;
-	case ':':
-	  v = (CExpr *)allocExprOfStringConst(EC_STRING_CONST, ": @{COLON}@", CT_UNDEF);
-	  pg_get_token();
-	  break;
-	case '*':
-	  v = (CExpr *)allocExprOfStringConst(EC_STRING_CONST, "* @{ASTERISK}@", CT_UNDEF);
-	  pg_get_token();
-	  break;
-
-	default:
-	  v = pg_parse_expr(); break;
-	}
-	
-	list = exprListAdd(list, v);
-
-	if (pg_tok == ')'){
-	    pg_get_token();
-	    break;
-	}
-
-	if (pg_tok == ',') pg_get_token();
-	else goto err;
+    
+    list = exprListAdd(list, v);
+    
+    if (pg_tok == ')'){
+      pg_get_token();
+      break;
     }
+    
+    if (pg_tok == ',') pg_get_token();
+    else goto err;
+  }
 
-    return list;
-
-  err:
-
-    XMP_Error0("Syntax error in scripts of XMP directive");
-    XMP_has_err = 1;
-
-    return NULL;
+  v = (CExpr *)allocExprOfStringConst(EC_STRING_CONST, "ROUND", CT_UNDEF);
+  return exprListAdd(list, v);
+   
+ err:
+  XMP_Error0("Syntax error in scripts of XMP directive");
+  XMP_has_err = 1;
+  return NULL;
 }
 
+CExpr *parse_XMP_loop_subscript_list_square()
+{
+  CExpr* list = EMPTY_LIST;
+  CExpr *v;
+
+  pg_get_token();
+  while(1){
+    switch (pg_tok){
+    case ']':  goto err;
+    case ',':  goto err;
+    case ':':
+      v = (CExpr *)allocExprOfStringConst(EC_STRING_CONST, ": @{COLON}@", CT_UNDEF);
+      pg_get_token();
+      break;
+    case '*':
+      v = (CExpr *)allocExprOfStringConst(EC_STRING_CONST, "* @{ASTERISK}@", CT_UNDEF);
+      pg_get_token();
+      break;
+      
+    default:
+      v = pg_parse_expr(); break;
+    }
+    
+    list = exprListAdd(list, v);
+    
+    if(pg_tok == ']'){
+      pg_get_token();
+      if(pg_tok == '['){
+	pg_get_token();
+	continue;
+      }
+      else
+	break;
+    }
+    else goto err;
+  }
+
+  v = (CExpr *)allocExprOfStringConst(EC_STRING_CONST, "SQUARE", CT_UNDEF);
+  return exprListAdd(list, v);
+
+ err:
+  XMP_Error0("Syntax error in scripts of XMP directive");
+  XMP_has_err = 1;
+  return NULL;
+}
 
 CExpr *parse_XMP_align_source_list()
 {
@@ -1016,85 +1275,177 @@ CExpr *parse_XMP_C_subscript_list()
 }
 #endif
 
-CExpr *parse_XMP_dist_fmt_list()
+CExpr *parse_XMP_dist_fmt_list_round()
 {
-    CExpr* list;
-    CExpr *v, *width;
+  CExpr* list = EMPTY_LIST;
+  CExpr *v, *width;
 
-    list = EMPTY_LIST;
-    if(pg_tok != '(') {
-	addFatal(NULL,"parse_XMP_dist_fmt_list: first token= '('");
+  pg_get_token();
+  while(1){
+    // parse <dist-format> := { * | block(n) | cyclic(n) }
+    width = NULL;
+    if (pg_tok == '*') {
+      pg_get_token();
+      v = XMP_PG_LIST(XMP_DIST_DUPLICATION,NULL);
     }
-    
-    pg_get_token();
-    while(1){
-	// parse <dist-format> := { * | block(n) | cyclic(n) }
-	width = NULL;
-	if (pg_tok == '*') {
-	    pg_get_token();
-	    v = XMP_PG_LIST(XMP_DIST_DUPLICATION,NULL);
-	} else if (PG_IS_IDENT("block")) {
-	    pg_get_token();
-	    if (pg_tok == '(') {
-		pg_get_token();
-		width = pg_parse_expr();
-		if (pg_tok != ')') {
-		    XMP_Error0("')' is needed after <block-width>");
-		    goto err;
-		} 
-		pg_get_token();
-	    }
-	    v = XMP_PG_LIST(XMP_DIST_BLOCK,width);
-	} else if (PG_IS_IDENT("cyclic")) {
-	    pg_get_token();
-	    if (pg_tok == '(') {
-		pg_get_token();
-		width = pg_parse_expr();
-		if (pg_tok != ')') {
-		    XMP_Error0("')' is needed after <cyclic-width>");
-		    goto err;
-		} 
-		pg_get_token();
-	    }
-	    if (!width) v = XMP_PG_LIST(XMP_DIST_CYCLIC,width);
-	    else v = XMP_PG_LIST(XMP_DIST_BLOCK_CYCLIC,width);
-	} else if (PG_IS_IDENT("gblock")) {
-	    pg_get_token();
-	    if (pg_tok == '(') {
-		pg_get_token();
-		if (pg_tok == '*'){
-		  width = NULL;
-		  pg_get_token();
-		}
-		else
-		  width = pg_parse_expr();
-		if (pg_tok != ')') {
-		    XMP_Error0("')' is needed after <mapping-array>");
-		    goto err;
-		} 
-		pg_get_token();
-	    }
-	    v = XMP_PG_LIST(XMP_DIST_GBLOCK,width);
-	} else goto syntax_err;
-
-	list = exprListAdd(list, v);
-
-	if(pg_tok == ')'){
-	    pg_get_token();
-	    break;
-	} else if(pg_tok == ','){
-	    pg_get_token();
-	    continue;
-	} else goto syntax_err;
+    else if (PG_IS_IDENT("block")) {
+      pg_get_token();
+      if (pg_tok == '(') {
+	pg_get_token();
+	width = pg_parse_expr();
+	if (pg_tok != ')') {
+	  XMP_Error0("')' is needed after <block-width>");
+	  goto err;
+	} 
+	pg_get_token();
+      }
+      v = XMP_PG_LIST(XMP_DIST_BLOCK,width);
+    }
+    else if (PG_IS_IDENT("cyclic")) {
+      pg_get_token();
+      if (pg_tok == '(') {
+	pg_get_token();
+	width = pg_parse_expr();
+	if (pg_tok != ')') {
+	  XMP_Error0("')' is needed after <cyclic-width>");
+	  goto err;
+	} 
+	pg_get_token();
+      }
+      if (!width) v = XMP_PG_LIST(XMP_DIST_CYCLIC,width);
+      else v = XMP_PG_LIST(XMP_DIST_BLOCK_CYCLIC,width);
+    }
+    else if (PG_IS_IDENT("gblock")) {
+      pg_get_token();
+      if (pg_tok == '(') {
+	pg_get_token();
+	if (pg_tok == '*'){
+	  width = NULL;
+	  pg_get_token();
+	}
+	else
+	  width = pg_parse_expr();
 	
+	if (pg_tok != ')') {
+	  XMP_Error0("')' is needed after <mapping-array>");
+	  goto err;
+	} 
+	pg_get_token();
+      }
+      v = XMP_PG_LIST(XMP_DIST_GBLOCK,width);
     }
-    return list;
+    else goto syntax_err;
 
-  syntax_err:
-    XMP_Error0("syntax error in distribution description");
-  err:
-    XMP_has_err = 1;
-    return NULL;
+    list = exprListAdd(list, v);
+    
+    if(pg_tok == ')'){
+      pg_get_token();
+      break;
+    }
+    else if(pg_tok == ','){
+      pg_get_token();
+      continue;
+    }
+    else goto syntax_err;
+	
+  }
+
+  v = (CExpr *)allocExprOfStringConst(EC_STRING_CONST, "ROUND", CT_UNDEF);
+  return exprListAdd(list, v);
+
+ syntax_err:
+  XMP_Error0("syntax error in distribution description");
+ err:
+  XMP_has_err = 1;
+  return NULL;
+}
+
+CExpr *parse_XMP_dist_fmt_list_square()
+{
+  CExpr* list = EMPTY_LIST;
+  CExpr *v, *width;
+
+  pg_get_token();
+  while(1){
+    // parse <dist-format> := { * | block(n) | cyclic(n) }
+    width = NULL;
+    if(pg_tok == '*'){
+      pg_get_token();
+      v = XMP_PG_LIST(XMP_DIST_DUPLICATION,NULL);
+    }
+    else if (PG_IS_IDENT("block")) {
+      pg_get_token();
+      if(pg_tok == '('){
+	pg_get_token();
+	width = pg_parse_expr();
+	if(pg_tok != ')'){
+	  XMP_Error0("')' is needed after <block-width>");
+	  goto err;
+	}
+	pg_get_token();
+      }
+      v = XMP_PG_LIST(XMP_DIST_BLOCK,width);
+    }
+    else if (PG_IS_IDENT("cyclic")) {
+      pg_get_token();
+      if(pg_tok == '('){
+	pg_get_token();
+	width = pg_parse_expr();
+	if(pg_tok != ')'){
+	  XMP_Error0("')' is needed after <cyclic-width>");
+	  goto err;
+	}
+	pg_get_token();
+      }
+      if (!width) v = XMP_PG_LIST(XMP_DIST_CYCLIC,width);
+      else v = XMP_PG_LIST(XMP_DIST_BLOCK_CYCLIC,width);
+    }
+    else if (PG_IS_IDENT("gblock")) {
+      pg_get_token();
+      if (pg_tok == '(') {
+	pg_get_token();
+	if (pg_tok == '*'){
+	  width = NULL;
+	  pg_get_token();
+	}
+	else
+	  width = pg_parse_expr();
+
+	if (pg_tok != ')') {
+	  XMP_Error0("')' is needed after <mapping-array>");
+	  goto err;
+	}
+	pg_get_token();
+      }
+      v = XMP_PG_LIST(XMP_DIST_GBLOCK,width);
+    }
+    else
+      goto syntax_err;
+
+    list = exprListAdd(list, v);
+
+    if(pg_tok == ']'){
+      pg_get_token();
+      if(pg_tok == '['){
+	pg_get_token();
+	continue;
+      }
+      else
+	break;
+    }
+    else
+      goto syntax_err;
+  }
+
+  v = (CExpr *)allocExprOfStringConst(EC_STRING_CONST, "SQUARE", CT_UNDEF);
+  return exprListAdd(list, v);
+
+ syntax_err:
+  XMP_Error0("syntax error in distribution description");
+  
+ err:
+  XMP_has_err = 1;
+  return NULL;
 }
 
 CExpr *parse_COL2_name_list()
@@ -1249,12 +1600,18 @@ CExpr *parse_ON_ref()
 	pg_get_token();
     }
 
-    if(pg_tok != '('){
-	XMP_Error0("syntax error in reference object by 'on'");
-	XMP_has_err = 1;
-	return NULL;
+    if(pg_tok == '('){
+      subscript = parse_XMP_loop_subscript_list_round();
     }
-    subscript = parse_XMP_loop_subscript_list();
+    else if(pg_tok == '['){
+      subscript = parse_XMP_loop_subscript_list_square();
+    }
+    else{
+      XMP_Error0("syntax error in reference object by 'on'");
+      XMP_has_err = 1;
+      return NULL;
+    }
+
     return XMP_LIST2(ident,subscript);
 }
 
@@ -1267,9 +1624,12 @@ CExpr *parse_task_ON_ref()
 	ident = pg_tok_val;
 	pg_get_token();
     }
-
     if (pg_tok == '('){
-      subscript = parse_XMP_subscript_list();
+      subscript = parse_XMP_subscript_list_round();
+      return XMP_LIST2(ident,subscript);
+    }
+    else if (pg_tok == '['){
+      subscript = parse_XMP_subscript_list_square();
       return XMP_LIST2(ident,subscript);
     }
     else if (pg_tok == 0){
@@ -1459,6 +1819,127 @@ CExpr *parse_Reduction_ref()
 static CExpr *parse_XMP_opt()
 {
   return (CExpr *)allocExprOfNull();
+}
+
+static CExpr* parse_EXPAND_list()
+{
+  CExpr *list = EMPTY_LIST;
+  CExpr *v1, *v2;
+  int unbound_flag;
+
+  while(1){
+
+    v1 = v2 = NULL;
+    unbound_flag = 0;
+
+    if (pg_tok == '/'){
+      pg_get_token();
+      if (!PG_IS_IDENT("unbound")) goto err;
+      pg_get_token();
+      if (pg_tok != '/') goto err;
+
+      unbound_flag = 1;
+      pg_get_token();
+    }
+
+    switch (pg_tok){
+    case ')':
+    case ',':
+    case ':':
+      goto err;
+    default:
+      v1 = pg_parse_expr();
+    }
+	
+    if (pg_tok != ':'){
+      v2 = v1;
+      goto next;
+    }
+
+    pg_get_token();
+
+    switch (pg_tok){
+    case ')':
+    case ',':
+    case ':':
+      goto err;
+    default:
+      v2 = pg_parse_expr();
+    }
+
+  next:
+    list = exprListAdd(list, XMP_LIST3(v1, v2, (CExpr*)allocExprOfNumberConst2(unbound_flag, BT_INT)));
+
+    if (pg_tok == ')'){
+      break;
+    }
+
+    if (pg_tok == ',')  pg_get_token();
+    else goto err;
+
+  }
+
+  return list;
+
+ err:
+  XMP_Error0("syntax error in the EXPAND clause");
+  XMP_has_err = 1;
+  return NULL;
+}
+
+static CExpr *parse_loop_opt()
+{
+  int expand_type;
+  CExpr* async = NULL;
+  CExpr *expandList = NULL;
+    
+  if (PG_IS_IDENT("expand")){
+    expand_type = XMP_LOOP_EXPAND;
+  }
+  else if (PG_IS_IDENT("margin")){
+    expand_type = XMP_LOOP_MARGIN;
+  }
+  else if (PG_IS_IDENT("peel_and_wait")){
+    expand_type = XMP_LOOP_PEEL_AND_WAIT;
+  }
+  else {
+    return EMPTY_LIST;
+  }
+  
+  pg_get_token();
+
+  if (pg_tok != '(') goto err;
+  pg_get_token();
+
+  if (expand_type == XMP_LOOP_PEEL_AND_WAIT){
+    async = pg_parse_expr();
+
+    if (pg_tok != ',') goto err;
+    pg_get_token();
+
+    expandList = parse_EXPAND_list();
+
+    if (pg_tok != ')') goto err;
+    pg_get_token();
+
+    return XMP_LIST3((CExpr*)allocExprOfNumberConst2(expand_type, BT_INT),
+		     async, expandList);
+  }
+  else { // EXPAND or MARGIN
+    expandList = parse_EXPAND_list();
+
+    if (pg_tok != ')') goto err;
+    pg_get_token();
+
+    return XMP_LIST2((CExpr*)allocExprOfNumberConst2(expand_type, BT_INT),
+		     expandList);
+  }
+
+ err:
+  XMP_Error0("syntax error in loop clause");
+  XMP_has_err = 1;
+  return NULL;
+
 }
 
 static CExpr *parse_TASKS_clause()
@@ -1661,7 +2142,6 @@ CExpr* parse_ARRAY_clause() {
     if (PG_IS_IDENT("on")){
       pg_get_token();
 	
-      //onRef = parse_ON_ref();
       onRef = parse_task_ON_ref();
       opt = parse_XMP_opt();
     
@@ -1892,7 +2372,7 @@ static CExpr* parse_ASYNC_clause()
   }
 
  err:
-    XMP_Error0("syntax error in the REFLECT directive");
+    XMP_Error0("syntax error in an ASYNC clause");
     XMP_has_err = 1;
     return NULL;
 }
@@ -1915,8 +2395,11 @@ static CExpr* parse_TEMPLATE_FIX_clause()
   CExpr *templateSpecList = NULL;
 
   // parse (<dist-format>, ...)
-  if (pg_tok == '('){
-    distFormatList = parse_XMP_dist_fmt_list();
+  if(pg_tok == '('){
+    distFormatList = parse_XMP_dist_fmt_list_round();
+  }
+  else if(pg_tok == '['){
+    distFormatList = parse_XMP_dist_fmt_list_square();
   }
 
   // parse <template-name>
@@ -1930,8 +2413,11 @@ static CExpr* parse_TEMPLATE_FIX_clause()
   }
 
   // parse (<template-spec>, ...)
-  if (pg_tok == '('){
-    templateSpecList = parse_XMP_range_list();
+  if(pg_tok == '('){
+    templateSpecList = parse_XMP_range_list_round();
+  }
+  else if(pg_tok == '['){
+    templateSpecList = parse_XMP_range_list_square();
   }
 
   return XMP_LIST3(distFormatList, templateNameList, templateSpecList);

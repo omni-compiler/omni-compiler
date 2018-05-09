@@ -1,9 +1,3 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package exc.block;
 
 import xcodeml.util.XmLog;
@@ -116,11 +110,11 @@ public class Bcons
     }
     
     /** create Fortran 'where' statement block */
-    public static Block Fwhere(BasicBlock cond, BlockList then_part, BlockList else_part)
+    public static Block Fwhere(BasicBlock cond, BlockList then_part, BlockList else_part, String construct_name)
     {
-        return IF(Xcode.F_WHERE_STATEMENT, cond, then_part, else_part, null);
+        return IF(Xcode.F_WHERE_STATEMENT, cond, then_part, else_part, construct_name);
     }
-    
+
     /** create 'for' statement block */
     public static Block FOR(BasicBlock init, BasicBlock cond, BasicBlock iter, BlockList body, String construct_name)
     {
@@ -516,7 +510,7 @@ public class Bcons
             
         case F_WHERE_STATEMENT: /* (F_WHERE_STATMENT () cond then-part else-part) */
             return Fwhere(BasicBlock.Cond(v.getArg(1)),
-			  buildList(v.getArg(2)), buildList(v.getArg(3)));
+			  buildList(v.getArg(2)), buildList(v.getArg(3)), getArg0Name(v));
             
         case F_DO_STATEMENT: /* (F_DO_STATEMENT construct_name var index_range body) */
             return Fdo(v);

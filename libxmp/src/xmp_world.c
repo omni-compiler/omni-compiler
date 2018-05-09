@@ -26,13 +26,16 @@ void _XMP_init_world(int *argc, char ***argv) {
   MPI_Barrier(MPI_COMM_WORLD);
 }
 
-void _XMP_finalize_world(void) {
+void _XMP_finalize_world(bool isFinalize) {
   MPI_Barrier(MPI_COMM_WORLD);
 
   int flag = 0;
   MPI_Finalized(&flag);
   if (!flag) {
-    MPI_Finalize();
+    _XMP_nodes_t *n =  _XMP_get_execution_nodes();
+    _XMP_finalize_nodes(n);
+    if(isFinalize)
+      MPI_Finalize();
   }
 }
 

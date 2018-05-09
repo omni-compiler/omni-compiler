@@ -1,14 +1,8 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package xcodeml.c.decompile;
 
 import java.math.BigInteger;
 
-import xcodeml.XmException;
+import xcodeml.util.XmException;
 import xcodeml.c.obj.XcNode;
 import xcodeml.c.type.XcBaseType;
 import xcodeml.c.type.XcBaseTypeEnum;
@@ -172,14 +166,14 @@ public abstract class XcConstObj extends XcObj implements XcExprObj
             if(hvalue.startsWith("0x")) {
                 _highStr = hvalue.substring(2, hvalue.length());
             } else {
-                throw new XmBindingException(null, "invalid hex integer value '" + hvalue + "'");
+                throw new XmBindingException("invalid hex integer value '" + hvalue + "'");
             }
 
             if(lvalue.startsWith("0x")) {
                 _lowStr = "00000000" + lvalue.substring(2, lvalue.length());
                 _lowStr = _lowStr.substring(_lowStr.length() - 8, _lowStr.length());
             } else {
-                throw new XmBindingException(null, "invalid hex integer value '" + hvalue + "'");
+                throw new XmBindingException("invalid hex integer value '" + hvalue + "'");
             }
         }
 
@@ -300,3 +294,4 @@ public abstract class XcConstObj extends XcObj implements XcExprObj
         }
     }
 }
+

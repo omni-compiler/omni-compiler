@@ -7,6 +7,9 @@
 #if defined(OMNI_TARGET_CPU_KCOMPUTER) && defined(K_RDMA_REFLECT)
 #include <mpi-ext.h>
 #endif
+#if defined(_XMP_XACC)
+#include "xacc_internal.h"
+#endif
 
 #define _XMP_comm_t void
 
@@ -119,9 +122,13 @@ typedef struct _XMP_template_type {
 #endif
 } _XMP_template_t;
 
-// schedule of reflect comm.
+// schedule of shadow comm.
 typedef struct _XMP_reflect_sched_type {
 
+  int reflect_is_initialized;
+  int reduce_is_initialized;
+  int prev_pcopy_sched_type;
+  
   int lo_width, hi_width;
   int is_periodic;
 
@@ -129,6 +136,7 @@ typedef struct _XMP_reflect_sched_type {
   MPI_Datatype datatype_hi;
 
   MPI_Request req[4];
+  MPI_Request req_reduce[4];
 
   void *lo_send_buf, *lo_recv_buf;
   void *hi_send_buf, *hi_recv_buf;
@@ -142,17 +150,37 @@ typedef struct _XMP_reflect_sched_type {
   int lo_rank, hi_rank;
 
 #if defined(_XMP_XACC)
+#if defined(_XMP_TCA)
+  void *dev_addr;
   void *lo_send_host_buf, *lo_recv_host_buf;
   void *hi_send_host_buf, *hi_recv_host_buf;
   void *lo_async_id;
   void *hi_async_id;
-#endif
-  
-#if defined(_XMP_TCA)
   off_t lo_src_offset, lo_dst_offset;
   off_t hi_src_offset, hi_dst_offset;
   void *lo_send_handle, *lo_recv_handle;
   void *hi_send_handle, *hi_recv_handle;
+#else
+  void *lo_send_host_buf, *lo_recv_host_buf;
+  void *hi_send_host_buf, *hi_recv_host_buf;
+  _XACC_queue_t lo_async_id;
+  _XACC_queue_t hi_async_id;
+  _XACC_memory_t dev_mem;
+
+  //offset of array_dev_mem
+  size_t lo_send_offset;
+  size_t lo_recv_offset;
+  size_t hi_send_offset;
+  size_t hi_recv_offset;
+  _XACC_memory_t lo_send_buf_mem;
+  _XACC_memory_t lo_recv_buf_mem;
+  _XACC_memory_t hi_send_buf_mem;
+  _XACC_memory_t hi_recv_buf_mem;
+  size_t lo_send_buf_offset;
+  size_t lo_recv_buf_offset;
+  size_t hi_send_buf_offset;
+  size_t hi_recv_buf_offset;
+#endif
 #endif
 } _XMP_reflect_sched_t;
 
@@ -164,6 +192,7 @@ typedef struct _XMP_async_reflect_type {
 
   MPI_Datatype *datatype;
   MPI_Request *reqs;
+  MPI_Request *reqs_reduce;
   int nreqs;
 
 } _XMP_async_reflect_t;
@@ -348,6 +377,7 @@ typedef struct xmp_coarray{
   char **addr_dev;
   char *real_addr_dev;
   MPI_Win win_acc;
+  _XMP_nodes_t *nodes; //nodes associated with window. it is not the same as _coarrayInfo_t.nodes in xmpf_coarray_alloc.c
   //#endif
 #endif
 }_XMP_coarray_t;
@@ -440,9 +470,11 @@ typedef struct _XMP_async_comm {
   int   nreqs;
   int   nnodes;
   _Bool is_used;
+  int type;
   MPI_Request *reqs;
   _XMP_nodes_t **node;
   _XMP_async_gmove_t *gmove;
+  _XMP_array_t *a;
   struct _XMP_async_comm *next;
 } _XMP_async_comm_t;
 

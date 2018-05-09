@@ -180,6 +180,7 @@ void _XMP_init_array_desc_NOT_ALIGNED(_XMP_array_t **adesc, _XMP_template_t *tem
     //ai->shadow_size_hi  = 0;
 
     ai->reflect_sched = NULL;
+    ai->reflect_acc_sched = NULL;
     ai->shadow_comm = NULL;
     ai->shadow_comm_size = 1;
     ai->shadow_comm_rank = _XMP_N_INVALID_RANK;
@@ -984,7 +985,6 @@ unsigned long long _XMP_get_array_total_elmts(_XMP_array_t *array) {
 
 void _XMP_align_array_noalloc(_XMP_array_t *a, int adim, int tdim, long long align_subscript, 
 			     int *temp0, unsigned long long *acc0){
-  _XMP_ASSERT(a->dim == 1);
 
   a->is_allocated = false;
 

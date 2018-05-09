@@ -1,9 +1,4 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
+/* -*- Mode: java; c-basic-offset:2 ; indent-tabs-mode:nil ; -*- */
 package exc.util;
 
 import java.io.*;
@@ -11,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import exc.object.XobjectFile;
+import exc.object.IXobject;
 
 import exc.openacc.ACC;
 import exc.openacc.AccDevice;
@@ -27,14 +23,13 @@ import exc.xcodeml.XcodeMLtools;
 import exc.xcodeml.XcodeMLtools_F;
 import exc.xcodeml.XcodeMLtools_Fmod;
 import exc.xcodeml.XcodeMLtools_C;
-import xcodeml.IXobject;
-import xcodeml.XmLanguage;
-import xcodeml.binding.XmXcodeProgram;
+
 import xcodeml.util.*;
 
 import exc.xcodeml.XmXobjectToXcodeTranslator;
 import exc.xcodeml.XmfXobjectToXcodeTranslator;
 import exc.xcodeml.XmcXobjectToXcodeTranslator;
+
 import org.w3c.dom.Document;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.TransformerConfigurationException;
@@ -43,11 +38,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import xcodeml.XmException;
 
-/**
- * OpenMP-supported XcodeML to XcodeML translator
- */
 public class omompx
 {
   private static void error(String s)
@@ -79,6 +70,9 @@ public class omompx
       "  -M dir       specify where to search for .xmod files",
       "  -max_assumed_shape=N  set max number of assumed-shape arrays of a proedure (for Fortran).",
       "  -decomp      output decompiled source code.",
+      "  -silent      no output.",
+      "  -rename_main=NAME",
+      "               rename the main function NAME.",
       "",
       " Debug Options:",
       "  -d           enable output debug message.",
@@ -91,8 +85,9 @@ public class omompx
       "  -tlog-all           : output results in tlog format for all directives.",
       "  -tlog-selective     : output results in tlog format for selected directives.",
       "",
-      "  -enable-threads  enable 'threads' clause",
-      "  -enable-gpu      enable xmp-dev directive/clauses"
+      "  -enable-threads     : enable 'threads' clause",
+      "  -enable-gpu         : enable xmp-dev directive/clauses",
+      "  -enable-Fonesided   : enable one-sided functions (Only Fortran)"
     };
         
     for(String line : lines) {
@@ -103,29 +98,31 @@ public class omompx
     
   public static void main(String[] args) throws Exception
   {
-    String inXmlFile = null;
-    String outXmlFile = null;
-    String lang = "C";
-    boolean openMP = false;
-    boolean openACC = false;
-    boolean coarray = true;
-    boolean xcalableMP = false;
-    boolean xcalableMPthreads = false;
-    boolean xcalableMPGPU = false;
-    boolean xmpf = false;
-    boolean async = false;
-    boolean xcalableACC = false;
-    boolean xmpt = false;
-    boolean outputXcode = false;
-    boolean outputDecomp = false;
-    boolean dump = false;
-    boolean all_profile = false;
-    boolean selective_profile = false;
-    boolean doScalasca = false;
-    boolean doTlog = false;
-    int maxColumns = 0;
-    String coarray_suboption = "";            // HIDDEN
-    boolean coarray_noUseStmt = false;     // TEMPORARY
+    String inXmlFile           = null;
+    String outXmlFile          = null;
+    String lang                = "C";
+    boolean openMP             = false;
+    boolean openACC            = false;
+    boolean coarray            = true;
+    boolean xcalableMP         = false;
+    boolean xcalableMPthreads  = false;
+    boolean xcalableMPGPU      = false;
+    boolean xmpf               = false;
+    boolean async              = false;
+    boolean xcalableACC        = false;
+    boolean xmpt               = false;
+    boolean outputXcode        = false;
+    boolean outputDecomp       = false;
+    boolean dump               = false;
+    boolean all_profile        = false;
+    boolean selective_profile  = false;
+    boolean doScalasca         = false;
+    boolean doTlog             = false;
+    boolean silent             = false;
+    boolean Fonesided          = false;
+    int maxColumns             = 0;
+    String coarray_suboption   = "";        // HIDDEN
+    boolean coarray_noUseStmt  = false;     // TEMPORARY
     int accDefaultVectorLength = 0;
     boolean accDisableReadOnlyDataCache = false;
         
@@ -165,6 +162,8 @@ public class omompx
         xcalableMPthreads = true;
       } else if(arg.equals("-enable-gpu")) {
         xcalableMPGPU = true;
+      } else if(arg.equals("-enable-Fonesided")) {
+        Fonesided = true;
       } else if(arg.equals("-fxmpf")) {
         xmpf = true;
       } else if(arg.equals("-fasync")) {
@@ -182,6 +181,11 @@ public class omompx
         outputXcode = true;
       } else if(arg.equals("-decomp")) {
         outputDecomp = true;
+      } else if(arg.equals("-silent")){
+        silent = true;
+      } else if(arg.startsWith("-rename_main=")) {
+        String main_name = arg.substring(arg.indexOf("=") + 1);
+        XmOption.setMainName(main_name);
       } else if(arg.equals("-dump")) {
         dump = true;
         outputXcode = true;
@@ -238,7 +242,7 @@ public class omompx
         ACC.platform = ACC.Platform.valueOf(n);
       } else if (arg.startsWith("-device=")){
         String n = arg.substring("-device=".length());
-        ACC.device = AccDevice.valueOf(n);
+        ACC.device = AccDevice.getDevice(n);
       } else if(arg.startsWith("-")){
         error("unknown option " + arg);
       } else if(inXmlFile == null) {
@@ -248,31 +252,20 @@ public class omompx
       }
     }
         
-    if (all_profile == true || selective_profile == true) {
-      if (doScalasca == false && doTlog == false) {
-        doScalasca = true;
-      }
-    }
+    doScalasca = (all_profile == true || selective_profile == true) 
+      && (doScalasca == false && doTlog == false);
 
     Reader reader = null;
-    Writer xmlWriter = null;
-    Writer xcodeWriter = null;
-    Writer decompWriter = null;
-    File dir = null;
-        
+    File dir      = null;
     if(inXmlFile == null) {
       reader = new InputStreamReader(System.in);
-    } else {
+    }
+    else {
       reader = new BufferedReader(new FileReader(inXmlFile));
       dir = new File(inXmlFile).getParentFile();
     }
-        
-    if(outXmlFile == null) {
-      xmlWriter = new OutputStreamWriter(System.out);
-    } else {
-      xmlWriter = new BufferedWriter(new FileWriter(outXmlFile));
-    }
-    
+
+    Writer xcodeWriter = null;
     if(dump || outputXcode) {
       if(dump) {
         xcodeWriter = new OutputStreamWriter(System.out);
@@ -280,8 +273,7 @@ public class omompx
         xcodeWriter = new BufferedWriter(new FileWriter(inXmlFile + ".x"));
       }
     }
-    
-    XmToolFactory toolFactory = new XmToolFactory(lang);
+   
     XmOption.setLanguage(XmLanguage.valueOf(lang));
     XmOption.setIsOpenMP(openMP);
     XmOption.setIsCoarray(coarray);
@@ -291,40 +283,33 @@ public class omompx
     XmOption.setIsXcalableMPthreads(xcalableMPthreads);
     XmOption.setIsXcalableMPGPU(xcalableMPGPU);
     XmOption.setTlogMPIisEnable(doTlog);
+    XmOption.setFonesided(Fonesided);
     XmOption.setCoarrayNoUseStatement(coarray_noUseStmt);   // TEMPORARY
     XmOption.setIsXcalableACC(xcalableACC);
-
-    XobjectFile xobjFile;
-    String srcPath = inXmlFile;
-    XcodeMLtools tools = null;
-    if (XmOption.getLanguage() == XmLanguage.F) {
-      tools = new XcodeMLtools_F();
-    } else {
-      tools = new XcodeMLtools_C();
-    }
-
+    
     // read XcodeML
-    xobjFile = tools.read(reader);
-    if (inXmlFile != null) {
-      reader.close();
-    }
-        
+    XcodeMLtools tools = 
+      (XmOption.getLanguage() == XmLanguage.F)? 
+      new XcodeMLtools_F() : new XcodeMLtools_C();
+    XobjectFile xobjFile = tools.read(reader);
+    
+    if (inXmlFile != null) reader.close();
+    if (xobjFile == null)  System.exit(1);
+
+    String srcPath  = inXmlFile;
     String baseName = null;
     if(dump || srcPath == null || srcPath.indexOf("<") >= 0 ) {
       srcPath = null;
-    } else {
+    }
+    else {
       String fileName = new File(srcPath).getName();
-      //      int idx = fileName.indexOf(".");
       int idx = fileName.lastIndexOf(".");
       if(idx < 0) {
         XmLog.fatal("invalid source file name : " + fileName);
       }
       baseName = fileName.substring(0, idx);
     }
-        
-    if(xobjFile == null)
-      System.exit(1);
-        
+
     // Output Xcode
     if(xcodeWriter != null) {
       xobjFile.Output(xcodeWriter);
@@ -335,9 +320,9 @@ public class omompx
         
     // XcalableMP translation
     if(xcalableMP) {
-      XMPglobalDecl globalDecl = new XMPglobalDecl(xobjFile);
+      XMPglobalDecl globalDecl   = new XMPglobalDecl(xobjFile);
       XMPtranslate xmpTranslator = new XMPtranslate(globalDecl);
-      XMPrealloc xmpReallocator = new XMPrealloc(globalDecl);
+      XMPrealloc xmpReallocator  = new XMPrealloc(globalDecl);
 
       // For profile                                                                            
       if(all_profile){
@@ -362,16 +347,18 @@ public class omompx
       if(all_profile || selective_profile){
         if (doScalasca == true) {
           xobjFile.addHeaderLine("# include \"xmp_scalasca.h\"");
-        }else if (doTlog == true) {
+        }
+        else if (doTlog == true) {
           xobjFile.addHeaderLine("# include \"xmp_tlog.h\"");
         }
       }
+      
       if(openACC){
         if(xobjFile.findIdent("acc_init", IXobject.FINDKIND_ANY) == null){
           xobjFile.addHeaderLine("# include \"openacc.h\"");
         }
       }
-      xmpTranslator.finalize();
+      xmpTranslator.finish();
 
       if(xcodeWriter != null) {
         xobjFile.Output(xcodeWriter);
@@ -412,8 +399,8 @@ public class omompx
         new exc.xmpF.XMPtransCoarray(xobjFile, 2, coarray_suboption,
                                      xmpf_onlyCafMode);
       xobjFile.iterateDef(caf_translator2);
-      if(exc.xmpF.XMP.hasErrors())
-        System.exit(1);
+      
+      if(exc.xmpF.XMP.hasErrors()) System.exit(1);
       caf_translator2.finish();
 
       if(xcodeWriter != null) {
@@ -429,11 +416,12 @@ public class omompx
 
     if (xmpf && !xmpf_onlyCafMode) {
       // XMP Fortran
-      exc.xmpF.XMPtranslate
-        xmp_translator = new exc.xmpF.XMPtranslate(xobjFile);
+      exc.xmpF.XMPtranslate xmp_translator = new exc.xmpF.XMPtranslate(xobjFile);
       xobjFile.iterateDef(xmp_translator);
+      
       if(exc.xmpF.XMP.hasErrors())
         System.exit(1);
+      
       xmp_translator.finish();
 
       if(xcodeWriter != null) {
@@ -441,9 +429,8 @@ public class omompx
         xcodeWriter.flush();
       }
     }
-
+    
     // OpenMP translation
-//    OMP.debugFlag = true;
     if(openMP) {
       OMPtranslate omp_translator = new OMPtranslate(xobjFile);
       xobjFile.iterateDef(omp_translator);
@@ -464,7 +451,7 @@ public class omompx
         switch(ACC.platform){
           case CUDA:
           case OpenCL:
-            ACC.device = AccDevice.Fermi;
+            ACC.device = AccDevice.getDevice("Fermi");
             break;
         }
       }
@@ -492,51 +479,43 @@ public class omompx
     if(!dump && outputXcode) {
       xcodeWriter.close();
     }
-        
-    // translate Xcode to XcodeML
-    XmXcodeProgram xmprog = null;
-    Document xcodeDoc = null;
-    XmXobjectToXcodeTranslator xc2xcodeTranslator = null;
-    
-    // create transformer from Xobject to XcodeML DOM.
-    if (lang.equals("F")) {
-      xc2xcodeTranslator = new XmfXobjectToXcodeTranslator();
-    } else {
-      xc2xcodeTranslator = new XmcXobjectToXcodeTranslator();
-    }
 
-    xcodeDoc = xc2xcodeTranslator.write(xobjFile);
+    // translate Xcode to XcodeML
+    // create transformer from Xobject to XcodeML DOM.
+    XmXobjectToXcodeTranslator xc2xcodeTranslator = null;
+    if (lang.equals("F"))
+      xc2xcodeTranslator = new XmfXobjectToXcodeTranslator();
+    else
+      xc2xcodeTranslator = new XmcXobjectToXcodeTranslator();
+    
+    Document xcodeDoc = xc2xcodeTranslator.write(xobjFile);
 
     // transformation from DOM to the file. It means to output DOM to the file.
-    Transformer transformer = null;
-    try {
-      transformer = TransformerFactory.newInstance().newTransformer();
-    } catch(TransformerConfigurationException e) {
-      throw new XmException(e);
-    }
-
-    transformer.setOutputProperty(OutputKeys.METHOD, "xml");
-
-    try {
-      transformer.transform(new DOMSource(xcodeDoc), new StreamResult(xmlWriter));
-      // transformer.transform(new DOMSource(xcodeDoc), new StreamResult(new OutputStreamWriter(System.out)));
-    } catch(TransformerException e) {
-      throw new XmException(e);
-    }
-
-    if (!dump && !outputDecomp) {
-      xmprog = null;
-    }
+    if(silent == false){
+      try {
+        Transformer transformer = TransformerFactory.newInstance().newTransformer();
+        transformer.setOutputProperty(OutputKeys.METHOD, "xml");
+        Writer xmlWriter = null;
+        if (outXmlFile == null)
+          xmlWriter = new OutputStreamWriter(System.out);
+        else
+          xmlWriter = new BufferedWriter(new FileWriter(outXmlFile));
         
-    xmlWriter.flush();
+        transformer.transform(new DOMSource(xcodeDoc), new StreamResult(xmlWriter));
+        xmlWriter.flush();
         
-    if(outXmlFile != null) {
-      xmlWriter.close();
-      xmlWriter = null;
+        if(outXmlFile != null) {
+          xmlWriter.close();
+          xmlWriter = null;
+        }
+      } catch(TransformerException e) {
+        throw new XmException(e);
+      }
     }
-        
+    
     // Decompile
     XmDecompilerContext context = null;
+    XmToolFactory toolFactory = new XmToolFactory(lang);
     if(lang.equals("F")) {
       context = toolFactory.createDecompilerContext();
       if(maxColumns > 0)
@@ -544,24 +523,19 @@ public class omompx
     }
         
     if(outputDecomp) {
+      Writer decompWriter = null;
       if(dump || srcPath == null) {
         decompWriter = new OutputStreamWriter(System.out);
       } 
       else { // set decompile writer
         String newFileName = baseName + "." + (XmOption.isLanguageC() ? "c" : "F90");
-        String newFileName2 = baseName + "." + (XmOption.isLanguageC() ? "c" : "f90");
         File newFile = new File(dir, newFileName);
-        File newFile2 = new File(dir, newFileName2);
                 
         if(newFile.exists())
           newFile.renameTo(new File(dir, newFileName + ".i"));
-        if(newFile2.exists())
-          newFile2.renameTo(new File(dir, newFileName2 + ".i"));
                 
         decompWriter = new BufferedWriter(new FileWriter(newFile));
       }
-            
-      XmDecompiler decompiler = toolFactory.createDecompiler();
 
       if (xcodeDoc == null) {
         javax.xml.parsers.DocumentBuilderFactory docFactory = 
@@ -569,9 +543,9 @@ public class omompx
         javax.xml.parsers.DocumentBuilder builder = docFactory.newDocumentBuilder();
         xcodeDoc = builder.parse(outXmlFile);
       }
+      
+      XmDecompiler decompiler = toolFactory.createDecompiler();
       decompiler.decompile(context, xcodeDoc, decompWriter);
-      // for collect-init
-      //decompWriter.write(xobjFile.getTailText());
       decompWriter.flush();
     
       if(!dump && outputDecomp) {

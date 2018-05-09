@@ -2,26 +2,16 @@ package exc.xcodeml;
 
 import static xcodeml.util.XmLog.fatal;
 import static xcodeml.util.XmLog.fatal_dump;
+import xcodeml.util.ILineNo;
 
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
-import xcodeml.ILineNo;
-import exc.object.BasicType;
-import exc.object.Ident;
-import exc.object.StorageClass;
-import exc.object.Xcode;
-import exc.object.Xcons;
-import exc.object.XobjList;
-import exc.object.XobjInt;
-import exc.object.XobjString;
-import exc.object.Xobject;
-import exc.object.XobjectDef;
-import exc.object.XobjectDefEnv;
-import exc.object.Xtype;
-import exc.object.CompositeType;
-import exc.object.StructType;
+import exc.object.*;
 
+/**
+ * convert Xobject/C to XcodeML(DOM)/C
+ */
 public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
     private XcodeMLNameTable_C nameTable = new XcodeMLNameTable_C();
 
@@ -1083,19 +1073,21 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
 
             Xobject clause = xobj.getArg(1);
             if (clause != null){
-        	if(clause instanceof XobjList){
+        	if(clause.Opcode() == Xcode.LIST){
         	    //clause list
         	    Element f1 = createElement("list");
 
         	    for(Xobject a : (XobjList)clause){
-        		if(a instanceof XobjList){
+        		if(a.Opcode() == Xcode.LIST){
         		    //clause name
         		    Element g = createElement("list");
-        		    addChildNode(g, trans(a.getArg(0).getString()));
+        		    Element g0 = createElement("string");
+        		    addChildNode(g0, trans(a.getArg(0).getString()));
+                            addChildNode(g, g0);
 
         		    Xobject vars = a.getArgOrNull(1);
         		    if (vars != null){
-        			if (vars instanceof XobjList){
+        			if (vars.Opcode() == Xcode.LIST){
         			    Element g1 = createElement("list");
         			    for (Xobject b : (XobjList)vars){
         				addChildNode(g1, transACCPragmaVarOrArray(b));
@@ -1145,9 +1137,9 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             break;
         case INDEX_RANGE:
             e = addChildNodes(createElement(name),
-                              trans(xobj.getArg(0)),
-                              trans(xobj.getArg(1)),
-                              trans(xobj.getArg(2)));
+                    addChildNode(createElement("base"),   trans(xobj.getArg(0))),
+                    addChildNode(createElement("length"), trans(xobj.getArg(1))),
+                    addChildNode(createElement("step"),   trans(xobj.getArg(2))));
             break;
         case LOWER_BOUND:
         case UPPER_BOUND:

@@ -1,14 +1,7 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package xcodeml.c.decompile;
 
 import xcodeml.c.obj.XcNode;
 import xcodeml.c.type.XcType;
-
 
 /**
  * Internal object represents following elements:

@@ -91,6 +91,7 @@ public class XMPobjectsRef {
       }
       Xobject subscriptList = decl.getArg(1);
       if (subscriptList != null){
+	normalize_subscriptList(subscriptList);
 	subscripts = XMPdimInfo.parseSubscripts(subscriptList);
 
 	if (!subscriptList.isEmptyList() && subscripts.size() != refObject.getDim()){
@@ -335,4 +336,73 @@ public class XMPobjectsRef {
     return new_obj;
   }
 
+  private void normalize_subscriptList(Xobject subscriptList){
+
+    if (subscriptList.isEmptyList()) return;
+
+    int refIndex        = 0;
+    String kind_bracket = subscriptList.getTail().getString();
+    boolean isSquare    = kind_bracket.equals("SQUARE");
+    subscriptList.removeLastArgs(); // Remove information of ROUND or SQUARE
+    if (isSquare) ((XobjList)subscriptList).reverse();
+
+    for (XobjArgs i = subscriptList.getArgs(); i != null; i = i.nextArgs()) {
+
+      XobjList t = (XobjList)i.getArg();
+      if (t == null || t.getArgs() == null) {
+	;
+      }
+      else {
+	Xobject lower  = null;
+	Xobject upper  = null;
+	Xobject stride = null;
+            
+	// lower
+	if (t.getArg(0) == null || (t.getArg(0) instanceof XobjList && t.getArg(0).getArgs() == null)) {
+	  lower = refObject.getLowerAt(refIndex);
+	}
+	else {
+	  lower = t.getArg(0);
+	  if (refObject.getKind() == XMPobject.NODES && isSquare == true)
+	    lower = Xcons.binaryOp(Xcode.PLUS_EXPR, lower, Xcons.IntConstant(1));
+	}
+	t.setArg(0, lower);
+
+	// upper
+	if (t.getArg(1) == null || (t.getArg(1) instanceof XobjList && t.getArg(1).getArgs() == null)) {
+	  upper = refObject.getUpperAt(refIndex);
+	}
+	else {
+	  // if (refObject.getKind() == XMPobject.NODES && isSquare == true){
+	  //   upper = Xcons.binaryOp(Xcode.PLUS_EXPR, t.getArg(0), t.getArg(1));
+	  // }
+	  // else if(refObject.getKind() == XMPobject.TEMPLATE && isSquare == true){
+	  //   upper = Xcons.binaryOp(Xcode.PLUS_EXPR, lower, t.getArg(1));
+	  //   upper = Xcons.binaryOp(Xcode.MINUS_EXPR, upper, Xcons.IntConstant(1));
+	  // }
+	  if (isSquare == true){
+	    upper = Xcons.binaryOp(Xcode.PLUS_EXPR, lower, t.getArg(1));
+	    upper = Xcons.binaryOp(Xcode.MINUS_EXPR, upper, Xcons.IntConstant(1));
+	  }
+	  else
+	    upper = t.getArg(1);
+	}
+	t.setArg(1, upper);
+            
+	// stride
+	if (t.getArg(2) == null || t.getArg(2).equals(Xcons.IntConstant(1))){
+	  stride = Xcons.IntConstant(1);
+	}
+	else {
+	  stride = t.getArg(2);
+	}
+	t.setArg(2, stride);
+
+      }
+
+      refIndex++;
+    }
+
+  }
+  
 }
