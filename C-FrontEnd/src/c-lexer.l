@@ -34,6 +34,11 @@ PRIVATE_STATIC int              s_preLexCode = 0;
 //! symbol type of pre-called yylex
 PRIVATE_STATIC int              s_preSymType = 0;
 
+//! linemarker
+PRIVATE_STATIC int              linemarker_lineno = 0;
+PRIVATE_STATIC char             linemarker_fileName[MAXPATHLEN] = "";
+
+
 PRIVATE_STATIC void         lexError();
 PRIVATE_STATIC CExpr*       lexAllocTypeQual(CTypeQualEnum typeQual);
 PRIVATE_STATIC CExpr*       lexAllocTypeSpec(CTypeSpecEnum typeQual);
@@ -42,7 +47,7 @@ PRIVATE_STATIC CExpr*       lexAllocFuncID();
 PRIVATE_STATIC CExpr*       lexAllocNumberConst(CBasicTypeEnum bt, CCardinalEnum c);
 PRIVATE_STATIC CExpr*       lexAllocCharConst(CCharTypeEnum t);
 PRIVATE_STATIC CExpr*       lexAllocStringConst(CCharTypeEnum t);
-PRIVATE_STATIC void         lexParseLineDirective(int skipDirectiveKeyword);
+PRIVATE_STATIC int          lexParseLineDirective(int skipDirectiveKeyword);
 PRIVATE_STATIC void         comment();
 PRIVATE_STATIC void         count();
 PRIVATE_STATIC void         setFileName();
@@ -340,7 +345,15 @@ L\"(\\.|[^\\"])*\"      { count(); yylval.expr = lexAllocStringConst(CT_WIDE);  
                                             yylval.expr = lexParsePragma(converted_yytext, &token); count();
                                             free(converted_yytext);
                                             return token; }
-^[ \t]*"#"[ \t]*[0-9]+([ \t]+[^\r\n]*)?\r?\n  { lexParseLineDirective(0); }
+
+^[ \t]*"#"[ \t]*[0-9]+([ \t]+[^\r\n]*)?\r?\n  { int flag; CExpr *ret;
+                                                flag = lexParseLineDirective(0); count();
+                                                ret = lexLinemarker("", DT_LINEMARKER, &flag);
+                                                 if (flag){
+                                                    putLineMarker(ret);
+						 }
+                                              }
+
 ^[ \t]*"#"[ \t]*"line"[ \t]+[0-9]+([ \t]+[^\r\n]*)?\r?\n  { lexParseLineDirective(1); }
 
                         /* ------ ignoring character ------ */
@@ -358,9 +371,11 @@ yywrap()
 }
 
 
-PRIVATE_STATIC void
+PRIVATE_STATIC int
 lexParseLineDirective(int skipDirectiveKeyword)
 {
+    int ret = 0;
+
     #define WHILE_SPC(p) \
         while(*p && (*p == ' ' || *p == '\t' || *p == '\r' || *p == '\n'))
     #define WHILE_WORD(p) \
@@ -385,12 +400,15 @@ lexParseLineDirective(int skipDirectiveKeyword)
     WHILE_WORD(p) s_charBuf[0][i++] = *(p++);
 
     s_charBuf[0][i] = 0;
-    s_lineno = atoi(s_charBuf[0]);
+    int lineno = atoi(s_charBuf[0]);
+    if (linemarker_lineno != lineno) ret = 1;
+    s_lineno = lineno;
+    linemarker_lineno = lineno;
     setLineNumInfo();
 
     WHILE_SPC(p) ++p;
     if(*p == 0)
-        return;
+        return ret;
 
     // read file name
     s_charBuf[0][0] = 0;
@@ -406,13 +424,17 @@ lexParseLineDirective(int skipDirectiveKeyword)
     }
 
     s_charBuf[0][i] = 0;
+    if (strcmp(linemarker_fileName, s_charBuf[0])) ret = 1;
     strcpy(s_fileName, s_charBuf[0]);
+    strcpy(linemarker_fileName, s_charBuf[0]);
     setFileName();
 
     if(s_isSourceSet == 0) {
         s_isSourceSet = 1;
         strcpy(s_sourceFileName, s_fileName);
     }
+
+    return ret;
 }
 
 

@@ -218,6 +218,12 @@ voutxTag(FILE *fp, int indent, CExpr *expr, const char *tag, int xattrFlag,
         outxEscapedStr(fp, file);
         fputs("\"", fp);
 
+	if (((CExprOfDirective *)expr)->e_direcType == DT_LINEMARKER){
+	  fprintf(fp, " flag=\"");
+	  outxEscapedStr(fp, ((CExprOfDirective *)expr)->e_direcArgs);
+	  fputs("\"", fp);
+	}
+	
         if(s_rawlineNo)
             fprintf(fp, " rawlineno=\"%d\"", lni->ln_rawLineNum);
 #ifdef XCODEML_DEBUG
@@ -1953,6 +1959,7 @@ outx_DIRECTIVE(FILE *fp, int indent, CExprOfDirective *directive)
 {
     const char *textTag = "text";
     const char *pragmaTag = "pragma";
+    const char *linemarkerTag = "linemarker";
 
     if(strcmp(directive->e_direcName, "#pragma") == 0) {
         outxTagForStmt(fp, indent, (CExpr*)directive, pragmaTag,
@@ -1962,6 +1969,10 @@ outx_DIRECTIVE(FILE *fp, int indent, CExprOfDirective *directive)
     } 
     else if(strcmp(directive->e_direcName, "omp") == 0){
 	abort(); /* not yet */
+    }
+    else if (directive->e_direcType == DT_LINEMARKER){
+        outxTagForStmt(fp, indent, (CExpr*)directive, linemarkerTag,
+		       XATTR_NOCONTENT, NULL);
     } else {
         outxTagForStmt(fp, indent, (CExpr*)directive, textTag,
             XATTR_NORETURN, NULL);
@@ -2365,7 +2376,6 @@ outx_POINTS_AT(FILE *fp, int indent, CExprOfBinaryNode *pointsAt)
 /* } */
 
 extern unsigned int s_arrayToPointer;
-extern unsigned int s_useXMP;
 
 void
 outx_ARRAY_REF(FILE *fp, int indent, CExprOfBinaryNode *aryRef)
@@ -2397,8 +2407,8 @@ outx_ARRAY_REF(FILE *fp, int indent, CExprOfBinaryNode *aryRef)
       tmp_aryRef = EXPR_B(tmp_aryRef->e_nodes[0]);
     }
 
-    if (!s_useXMP && (s_arrayToPointer || EXPR_CODE(tmp_aryRef) != EC_IDENT ||
-		      EXPRS_TYPE(EXPR_SYMBOL(tmp_aryRef))->e_tdKind != TD_ARRAY)){
+    if (s_arrayToPointer || EXPR_CODE(tmp_aryRef) != EC_IDENT ||
+	EXPRS_TYPE(EXPR_SYMBOL(tmp_aryRef))->e_tdKind != TD_ARRAY){
 
       int pref = (pec != EC_ADDR_OF);
       int indent1 = pref ? indent: indent - 1;

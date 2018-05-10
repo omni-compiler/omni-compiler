@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /**
  * \file c-expr.h
  * - defines AST element types.
@@ -435,6 +436,7 @@ typedef enum {
     DT_IDENT,
     DT_WARNING,
     DT_ERROR,
+    DT_LINEMARKER,
     DT_END
 } CDirectiveTypeEnum;
 
@@ -1714,6 +1716,23 @@ extern int              s_pragmaPackEnabled;
 extern int              s_pragmaPackAlign;
 //! temporary char buffer
 extern char             s_charBuf[2][MAX_NAME_SIZ];
+
+/* 
+ * for LineMarker 
+ */
+#define MAX_LINE_MARKERS 100
+#define MAX_LINE_MARKERS_STACK 50
+
+extern CExpr *lineMarkers[];
+extern int lineMarkers_top;
+extern int lineMarkers_stack[];
+extern int lineMarkers_stack_top;
+
+void putLineMarker(CExpr *ln);
+void pushLineMarkers(void);
+void popLineMarkers(void);
+CExpr* exprListJoin_LM(CExpr *exprHead, CExpr *exprTail);
+CExpr* exprList1_LM(CExprCodeEnum c, CExpr* e1);
 
 #endif /*  _C_EXPR_H_ */
 

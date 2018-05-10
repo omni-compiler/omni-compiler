@@ -148,9 +148,9 @@ start:
 
 ext_defs:
       ext_def
-            { STAT_TRACE(("{ext_defs#1}")); $$ = exprList1(EC_EXT_DEFS, $1); }
+            { STAT_TRACE(("{ext_defs#1}")); $$ = exprList1_LM(EC_EXT_DEFS, $1); }
     | ext_defs ext_def
-            { STAT_TRACE(("{ext_defs#2}")); $$ = exprListJoin($1, $2); }
+            { STAT_TRACE(("{ext_defs#2}")); $$ = exprListJoin_LM($1, $2); }
     ;
 
 ext_def:
@@ -1503,68 +1503,68 @@ stmts_and_decls:
 
 stmts_decls_labels_es:
       stmt
-            { STAT_TRACE(("{stmts_decls_labels_es#1}")); $$ = exprList1(EC_STMTS_AND_DECLS, $1); }
+            { STAT_TRACE(("{stmts_decls_labels_es#1}")); $$ = exprList1_LM(EC_STMTS_AND_DECLS, $1); }
     | stmts_decls_labels_es stmt
-            { STAT_TRACE(("{stmts_decls_labels_es#2}")); $$ = exprListJoin($1, $2); }
+            { STAT_TRACE(("{stmts_decls_labels_es#2}")); $$ = exprListJoin_LM($1, $2); }
     | stmts_decls_labels_ed stmt
-            { STAT_TRACE(("{stmts_decls_labels_es#3}")); $$ = exprListJoin($1, $2); }
+            { STAT_TRACE(("{stmts_decls_labels_es#3}")); $$ = exprListJoin_LM($1, $2); }
     | stmts_decls_labels_el stmt
-            { STAT_TRACE(("{stmts_decls_labels_es#4}")); $$ = exprListJoin($1, $2); }
+            { STAT_TRACE(("{stmts_decls_labels_es#4}")); $$ = exprListJoin_LM($1, $2); }
     | stmts_decls_labels_ep stmt
-            { STAT_TRACE(("{stmts_decls_labels_es#5}")); $$ = exprListJoin($1, $2); }
+            { STAT_TRACE(("{stmts_decls_labels_es#5}")); $$ = exprListJoin_LM($1, $2); }
     | stmts_decls_labels_error stmt
-            { STAT_TRACE(("{stmts_decls_labels_es#6}")); $$ = exprListJoin($1, $2); }
+            { STAT_TRACE(("{stmts_decls_labels_es#6}")); $$ = exprListJoin_LM($1, $2); }
     ;
 
 stmts_decls_labels_ed:
       decl
-            { STAT_TRACE(("{stmts_decls_labels_ed#1}")); $$ = exprList1(EC_STMTS_AND_DECLS, $1); }
+            { STAT_TRACE(("{stmts_decls_labels_ed#1}")); $$ = exprList1_LM(EC_STMTS_AND_DECLS, $1); }
     | stmts_decls_labels_es decl
-            { STAT_TRACE(("{stmts_decls_labels_ed#2}")); $$ = exprListJoin($1, $2); }
+            { STAT_TRACE(("{stmts_decls_labels_ed#2}")); $$ = exprListJoin_LM($1, $2); }
     | stmts_decls_labels_ed decl
-            { STAT_TRACE(("{stmts_decls_labels_ed#3}")); $$ = exprListJoin($1, $2); }
+            { STAT_TRACE(("{stmts_decls_labels_ed#3}")); $$ = exprListJoin_LM($1, $2); }
     /* no stmts_decls_labels_el */
     | stmts_decls_labels_ep decl
-            { STAT_TRACE(("{stmts_decls_labels_ed#4}")); $$ = exprListJoin($1, $2); }
+            { STAT_TRACE(("{stmts_decls_labels_ed#4}")); $$ = exprListJoin_LM($1, $2); }
     | stmts_decls_labels_error decl
-            { STAT_TRACE(("{stmts_decls_labels_ed#5}")); $$ = exprListJoin($1, $2); }
+            { STAT_TRACE(("{stmts_decls_labels_ed#5}")); $$ = exprListJoin_LM($1, $2); }
     ;
 
 stmts_decls_labels_el:
       label
-            { STAT_TRACE(("{stmts_decls_labels_el#1}")); $$ = exprList1(EC_STMTS_AND_DECLS, $1); }
+            { STAT_TRACE(("{stmts_decls_labels_el#1}")); $$ = exprList1_LM(EC_STMTS_AND_DECLS, $1); }
     | stmts_decls_labels_es label
-            { STAT_TRACE(("{stmts_decls_labels_el#2}")); $$ = exprListJoin($1, $2); }
+            { STAT_TRACE(("{stmts_decls_labels_el#2}")); $$ = exprListJoin_LM($1, $2); }
     | stmts_decls_labels_ed label
-            { STAT_TRACE(("{stmts_decls_labels_el#3}")); $$ = exprListJoin($1, $2); }
+            { STAT_TRACE(("{stmts_decls_labels_el#3}")); $$ = exprListJoin_LM($1, $2); }
     | stmts_decls_labels_el label
-            { STAT_TRACE(("{stmts_decls_labels_el#4}")); $$ = exprListJoin($1, $2); }
+            { STAT_TRACE(("{stmts_decls_labels_el#4}")); $$ = exprListJoin_LM($1, $2); }
     | stmts_decls_labels_ep label
-            { STAT_TRACE(("{stmts_decls_labels_el#5}")); $$ = exprListJoin($1, $2); }
+            { STAT_TRACE(("{stmts_decls_labels_el#5}")); $$ = exprListJoin_LM($1, $2); }
     | stmts_decls_labels_error label
-            { STAT_TRACE(("{stmts_decls_labels_el#6}")); $$ = exprListJoin($1, $2); }
+            { STAT_TRACE(("{stmts_decls_labels_el#6}")); $$ = exprListJoin_LM($1, $2); }
     ;
 
 stmts_decls_labels_ep:
       directive
-            { STAT_TRACE(("{stmts_decls_labels_ep#1}")); $$ = exprList1(EC_STMTS_AND_DECLS, $1); }
+            { STAT_TRACE(("{stmts_decls_labels_ep#1}")); $$ = exprList1_LM(EC_STMTS_AND_DECLS, $1); }
     | stmts_decls_labels_es directive
-            { STAT_TRACE(("{stmts_decls_labels_ep#2}")); $$ = exprListJoin($1, $2); }
+            { STAT_TRACE(("{stmts_decls_labels_ep#2}")); $$ = exprListJoin_LM($1, $2); }
     | stmts_decls_labels_ed directive
-            { STAT_TRACE(("{stmts_decls_labels_ep#3}")); $$ = exprListJoin($1, $2); }
+            { STAT_TRACE(("{stmts_decls_labels_ep#3}")); $$ = exprListJoin_LM($1, $2); }
     | stmts_decls_labels_el directive
-            { STAT_TRACE(("{stmts_decls_labels_ep#4}")); $$ = exprListJoin($1, $2); }
+            { STAT_TRACE(("{stmts_decls_labels_ep#4}")); $$ = exprListJoin_LM($1, $2); }
     | stmts_decls_labels_ep directive
-            { STAT_TRACE(("{stmts_decls_labels_ep#5}")); $$ = exprListJoin($1, $2); }
+            { STAT_TRACE(("{stmts_decls_labels_ep#5}")); $$ = exprListJoin_LM($1, $2); }
     | stmts_decls_labels_error directive
-            { STAT_TRACE(("{stmts_decls_labels_ep#6}")); $$ = exprListJoin($1, $2); }
+            { STAT_TRACE(("{stmts_decls_labels_ep#6}")); $$ = exprListJoin_LM($1, $2); }
     ;
 
 stmts_decls_labels_error:
       stmts_decls_labels errstmt
-            { STAT_TRACE(("{stmts_decls_labels_error#2}")); $$ = exprListJoin($1, $2); }
+            { STAT_TRACE(("{stmts_decls_labels_error#2}")); $$ = exprListJoin_LM($1, $2); }
     | errstmt
-            { STAT_TRACE(("{stmts_decls_labels_error#1}")); $$ = exprList1(EC_STMTS_AND_DECLS, $1); }
+            { STAT_TRACE(("{stmts_decls_labels_error#1}")); $$ = exprList1_LM(EC_STMTS_AND_DECLS, $1); }
     ;
 
 stmts_decls_labels:

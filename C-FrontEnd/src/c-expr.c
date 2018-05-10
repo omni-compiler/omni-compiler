@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /**
  * \file c-expr.c
  */
@@ -28,6 +29,14 @@ char                    s_charBuf[2][MAX_NAME_SIZ];
 int                     s_pragmaPackEnabled = 0;
 int                     s_pragmaPackAlign = 0;
 
+/*
+ * for LinerMarker 
+ */
+
+CExpr *lineMarkers[MAX_LINE_MARKERS];
+int lineMarkers_top = 0;
+int lineMarkers_stack[MAX_LINE_MARKERS_STACK];
+int lineMarkers_stack_top = 0;
 
 #ifdef CEXPR_DEBUG_GCCATTR
 /**
@@ -215,7 +224,7 @@ exprError()
 
 /**
  * \brief
- * judge it is necessary to skip error of expr
+ * Test it is necessary to skip error of expr
  *
  * @return
  *      0:no, 1:yes
@@ -776,6 +785,9 @@ void
 pushSymbolTableToExpr(CExpr *expr)
 {
     int isGlobal = 0;
+
+    pushLineMarkers();
+
     if(CCOL_DL_SIZE(&s_symTabStack) == 0) {
         CCOL_DL_CONS(&s_symTabStack, s_defaultSymTab);
         isGlobal = 1;
@@ -837,6 +849,9 @@ pushSymbolTable()
 CLineNumInfo
 popSymbolTable()
 {
+
+    popLineMarkers();
+
     if(s_debugSymbol) {
         DBGPRINTC(ESQ_RED, ("\n--- Before popSymbolTable ---\n"));
         dumpSymbolTable(stdout);
@@ -3606,7 +3621,7 @@ getMemberDeclsExpr(CExprOfTypeDesc *td)
 
 /**
  * \brief
- * judge expr is related to symbol table and
+ * Test expr is related to symbol table and
  * symbol table has symbols.
  *
  * @param expr
@@ -3633,7 +3648,7 @@ hasSymbols(CExpr *expr)
 
 /**
  * \brief
- * judge expr has EC_DECL or EC_DATA_DEF
+ * Test expr has EC_DECL or EC_DATA_DEF
  *
  * @param expr 
  *      target node
@@ -3699,7 +3714,7 @@ exprSubArrayDimension(CExpr *el, CExpr *eu, CExpr *es)
 
 /**
  * \brief
- * judege expr is subarray-ref
+ * Test expr is subarray-ref
  *
  * @param expr
  *      target node
@@ -3840,7 +3855,7 @@ getFileNameByFileId(int fileId)
 
 /**
  * \brief
- * judge expr has children nodes
+ * Test expr has children nodes
  *
  * @param expr
  *      taget node
@@ -3878,7 +3893,7 @@ hasChildren(CExpr *expr)
 
 /**
  * \brief
- * judge expr is statement node exclude label statement
+ * Test expr is statement node exclude label statement
  *
  * @param expr
  *      taget node
@@ -3911,7 +3926,7 @@ isStatement(CExpr *expr)
 
 /**
  * \brief
- * judge expr is statement node or external definition/declaration node
+ * Test expr is statement node or external definition/declaration node
  *
  * @param expr
  *      taget node
@@ -4046,7 +4061,7 @@ getLastExprStmt(CExpr *stmts)
 
 /**
  * \brief
- * judge expr is child node of ec node
+ * Test expr is child node of ec node
  *
  * @param expr
  *      target node
@@ -4089,7 +4104,7 @@ isExprCodeChildOf(CExpr *expr, CExprCodeEnum ec, CExpr *parentExpr,
 
 /**
  * \brief
- * judge expr is child node of ec node
+ * Test expr is child node of ec node
  *
  * @param expr
  *      target node
@@ -4205,7 +4220,7 @@ reorderSymbol(CExprOfSymbol *sym)
 
 /**
  * \brief
- * judge e can be logical expression
+ * Test e can be logical expression
  *
  * @param e
  *      target node
@@ -4237,7 +4252,7 @@ isLogicalExpr(CExpr *e)
 
 /**
  * \brief
- * jugde expr is coarray assign node
+ * Test expr is coarray assign node
  *
  * @param expr
  *      target node
@@ -4324,4 +4339,65 @@ printErrors(FILE *fp)
     }
 }
 
+
+/**
+ * \brief
+ * For LineMarker
+ *
+ */
+void 
+putLineMarker(CExpr *ln)
+{
+    lineMarkers[lineMarkers_top++] = ln;
+}
+
+void
+pushLineMarkers()
+{
+    lineMarkers_stack[lineMarkers_stack_top++] = lineMarkers_top;
+}
+
+void
+popLineMarkers()
+{
+    if(lineMarkers_stack_top > 0){
+        lineMarkers_top = lineMarkers_stack[--lineMarkers_stack_top];
+    }
+}
+
+CExpr*
+exprListJoin_LM(CExpr *exprHead, CExpr *exprTail)
+{
+    CExpr* e;
+    int i, bottom;
+    
+    bottom = 0;
+    if(lineMarkers_stack_top > 0)
+        bottom = lineMarkers_stack[--lineMarkers_stack_top-1];
+    e = exprHead;
+    for(i = bottom; i < lineMarkers_top ; i++)
+        e = exprListJoin(e, lineMarkers[i]);
+    lineMarkers_top = bottom;
+    return exprListJoin(e,exprTail);
+}
+
+CExpr*
+exprList1_LM(CExprCodeEnum c, CExpr* e1)
+{
+    CExpr* e;
+    int i, bottom;
+    
+    bottom = 0;
+    if(lineMarkers_stack_top > 0)
+        bottom = lineMarkers_stack[--lineMarkers_stack_top-1];
+    e = NULL;
+    for(i = bottom; i < lineMarkers_top ; i++){
+        if(e == NULL) e =     exprList1(c, lineMarkers[i]);
+        else e = exprListJoin(e, lineMarkers[i]);
+    }
+    lineMarkers_top = bottom;
+    if(e == NULL) e = exprList1(c, e1);
+    else e = exprListJoin(e, e1);
+    return e;
+}
 

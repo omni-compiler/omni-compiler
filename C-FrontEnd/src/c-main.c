@@ -52,6 +52,7 @@ main(int argc, char** argv)
     CExpr *expr = execParse(fpIn);
     if (s_dispParseTree & 0x1)
         dispParseTree(stderr, expr, "execParse");
+    dispParseTree(stderr, expr, "execParse");
 
     if(s_inFile)
         fclose(fpIn);
