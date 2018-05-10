@@ -230,15 +230,10 @@ int xmp_array_lead_dim(xmp_desc_t d, int size[])
   return 0;
 }
 
-int xmp_array_gtol(xmp_desc_t d, int g_idx[], int l_idx[])
+int xmp_array_gtol(xmp_desc_t d, int dim, int g_idx, int *l_idx)
 {
-  _XMP_array_t *a = (_XMP_array_t *)d;
-
-  int ndims, rank;
-  xmp_array_ndims(d, &ndims);
-  for(int i=0;i<ndims;i++){
-    _XMP_align_local_idx((long long int)g_idx[i], &l_idx[i], a, i, &rank);
-  }
+  int rank;
+  _XMP_align_local_idx((long long int)g_idx, l_idx, d, dim-1, &rank);
 
   return 0;
 }

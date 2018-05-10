@@ -1,9 +1,3 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 /**
  * \file F-intrinsics-types.h
  */
@@ -14,9 +8,6 @@
 
 typedef enum {
     INTR_TYPE_NONE = 0,
-
-
-
     INTR_TYPE_INT,
     INTR_TYPE_REAL,
     INTR_TYPE_DREAL,
@@ -26,15 +17,9 @@ typedef enum {
     INTR_TYPE_ALL_COMPLEX,
     INTR_TYPE_CHAR,
     INTR_TYPE_LOGICAL,
-
-
     INTR_TYPE_ANY,
-
     INTR_TYPE_NUMERICS,         /* INTR_TYPE_INT, INTR_TYPE_REAL or INTR_TYPE_DREAL. */
     INTR_TYPE_ALL_NUMERICS,     /* INTR_TYPE_INT, INTR_TYPE_REAL, INTR_TYPE_DREAL or INTR_TYPE_COMPLEX. */
-
-
-
     INTR_TYPE_INT_ARRAY,
     INTR_TYPE_REAL_ARRAY,
     INTR_TYPE_DREAL_ARRAY,
@@ -44,14 +29,10 @@ typedef enum {
     INTR_TYPE_ALL_COMPLEX_ARRAY,
     INTR_TYPE_CHAR_ARRAY,
     INTR_TYPE_LOGICAL_ARRAY,
-
     INTR_TYPE_ANY_ARRAY,
-
     INTR_TYPE_NUMERICS_ARRAY,
     INTR_TYPE_ALL_NUMERICS_ARRAY,
 
-
-
     /* for Array reduction functions. */
     INTR_TYPE_INT_DYNAMIC_ARRAY,
     INTR_TYPE_REAL_DYNAMIC_ARRAY,
@@ -62,14 +43,10 @@ typedef enum {
     INTR_TYPE_ALL_COMPLEX_DYNAMIC_ARRAY,
     INTR_TYPE_CHAR_DYNAMIC_ARRAY,
     INTR_TYPE_LOGICAL_DYNAMIC_ARRAY,
-
     INTR_TYPE_ANY_DYNAMIC_ARRAY,
-
     INTR_TYPE_NUMERICS_DYNAMIC_ARRAY,
     INTR_TYPE_ALL_NUMERICS_DYNAMIC_ARRAY,
 
-
-
     /* for coarray functions. */
     INTR_TYPE_COARRAY_ANY,
     INTR_TYPE_COARRAY_INT,
@@ -80,23 +57,18 @@ typedef enum {
     INTR_TYPE_SCALAR_COARRAY_REAL,
     INTR_TYPE_SCALAR_COARRAY_LOGICAL,
 
-
-
     /*
      * for ASSOCIATED().
      * Check if argument can be Pointer ASSIGNed to the previous argument
      */
     INTR_TYPE_PASSIGNABLE,
 
-
     /* Others. */
     INTR_TYPE_POINTER,
     INTR_TYPE_TARGET,
-
     INTR_TYPE_ANY_ARRAY_ALLOCATABLE,
     INTR_TYPE_ANY_OPTIONAL,
 
-
     /* For NULL(void) */
     INTR_TYPE_LHS
 
@@ -184,7 +156,6 @@ typedef enum {
     INTR_SELECTED_CHAR_KIND,
 
     /* 7. Logical function */
-
     INTR_LOGICAL,
 
     /* F90 numeric inquiry functions. */
@@ -286,14 +257,12 @@ typedef enum {
     INTR_IMAGE_INDEX,
     INTR_LCOBOUND,
     INTR_UCOBOUND,
-
     INTR_ATOMIC_DEFINE,
     INTR_ATOMIC_REF,
 
     /* F03 intrinsic subroutins */
     INTR_IS_IOSTAT_END,
     INTR_IS_IOSTAT_EOR,
-
     INTR_EXTENDS_TYPE_OF,
     INTR_SAME_TYPE_AS,
     INTR_MOVE_ALLOC,
@@ -305,7 +274,6 @@ typedef enum {
     INTR_GET_ENVIRONMENT_VARIABLE,
     INTR_GAMMA,
     INTR_LOGGAMMA,
-
     INTR_COARRAY_MALLOC_BYTES,       // hidden interface
     INTR_COARRAY_ALLOCATED_BYTES,    // hidden interface
     INTR_COARRAY_GARBAGE_BYTES,      // hidden interface

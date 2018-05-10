@@ -1119,7 +1119,7 @@ intrinsic_entry intrinsic_table[] = {
 
     { INTR_ARRAY_LEAD_DIM,         INTR_NAME_GENERIC,      "xmp_array_lead_dim",          0,      {INTR_TYPE_ANY, INTR_TYPE_INT_ARRAY},       INTR_TYPE_INT, 2, -8, LANGSPEC_NONSTD, INTR_CLASS_N },
 
-    { INTR_ARRAY_GTOL,         INTR_NAME_GENERIC,      "xmp_array_gtol",          0,      {INTR_TYPE_ANY, INTR_TYPE_INT_ARRAY, INTR_TYPE_INT_ARRAY},       INTR_TYPE_INT, 3, -8, LANGSPEC_NONSTD, INTR_CLASS_N },
+    { INTR_ARRAY_GTOL,         INTR_NAME_GENERIC,      "xmp_array_gtol",          0,      {INTR_TYPE_ANY, INTR_TYPE_INT, INTR_TYPE_INT, INTR_TYPE_INT},       INTR_TYPE_INT, 4, -8, LANGSPEC_NONSTD, INTR_CLASS_N },
 
     { INTR_ALIGN_AXIS,         INTR_NAME_GENERIC,      "xmp_align_axis",          0,      {INTR_TYPE_ANY, INTR_TYPE_INT, INTR_TYPE_INT},       INTR_TYPE_INT, 3, -8, LANGSPEC_NONSTD, INTR_CLASS_N },
 

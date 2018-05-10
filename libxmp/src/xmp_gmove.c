@@ -2974,10 +2974,12 @@ get_commbuf_size(_XMP_comm_set_t *comm_set[][_XMP_N_MAX_DIM], int ndims, int cou
 }
 
 
-unsigned long long _XMP_gtol_calc_offset(_XMP_array_t *a, int g_idx[]){
-
-  int l_idx[a->dim];
-  xmp_array_gtol(a, g_idx, l_idx);
+unsigned long long _XMP_gtol_calc_offset(_XMP_array_t *a, int g_idx[])
+{
+  int ndims = a->dim;
+  int l_idx[ndims];
+  for(int i=0;i<ndims;i++)
+    xmp_array_gtol(a, i+1, g_idx[i], &l_idx[i]);
 
   //xmp_dbg_printf("g0 = %d, g1 = %d, l0 = %d, l1 = %d\n", g_idx[0], g_idx[1], l_idx[0], l_idx[1]);
 
@@ -3448,10 +3450,11 @@ static void _XMP_set_comm_list(_XMP_array_t *a, _XMP_gmv_section_t *sec,
 			       int gidx[], long len[], int st[]){
 
   int lidx[_XMP_N_MAX_DIM];
-
   int ndims = a->dim;
 
-  xmp_array_gtol(a, gidx, lidx);
+  for(int i=0;i<ndims;i++)
+    xmp_array_gtol(a, i+1, gidx[i], &lidx[i]);
+
   sec->ndims = ndims;
 
   if (a->order == MPI_ORDER_FORTRAN){
