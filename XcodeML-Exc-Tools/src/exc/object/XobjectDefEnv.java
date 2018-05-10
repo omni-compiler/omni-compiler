@@ -3,10 +3,9 @@ package exc.object;
 import java.util.LinkedList;
 import java.util.Iterator;
 import java.util.List;
-
 import exc.util.XobjectVisitable;
 import exc.util.XobjectVisitor;
-
+import xcodeml.util.IXobject;
 import xcodeml.util.ILineNo;
 
 public class XobjectDefEnv extends PropObject

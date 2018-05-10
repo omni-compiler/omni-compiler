@@ -13,6 +13,12 @@ See docs/STATUS-XMP.md, docs/STATUS-CAF.md, and docs/STATUS-ACC.md
 ----- 
 # Quick Reference for XMP
 ## How to install
+    Please visit Official site (http://omni-compiler.org).
+       or
+    run the following command.
+    $ git clone --recursive https://github.com/omni-compiler/omni-compiler.git
+
+## How to install
     $ ./configure --prefix=(INSTALL PATH)
     $ make
     $ make install

@@ -1,6 +1,6 @@
 .PHONY: all install clean
 
-FC      = ../../F-FrontEnd/src/F_Front
+FC      = ../../xcodeml-tools/F-FrontEnd/src/F_Front
 SOURCES = omp_lib_kind.f90 omp_lib.f90
 INSTALL = @INSTALL@
 MKDIR_P = @MKDIR_P@

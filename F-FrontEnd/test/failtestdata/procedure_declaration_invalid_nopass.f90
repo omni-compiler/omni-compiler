@@ -1,3 +1,0 @@
-      MODULE m
-        PROCEDURE(REAL), NOPASS , POINTER :: f
-      END MODULE m

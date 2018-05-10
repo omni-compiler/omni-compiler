@@ -3,7 +3,7 @@ package exc.openmp;
 import xcodeml.util.XmException;
 import xcodeml.util.XmLog;
 import xcodeml.util.XmOption;
-import exc.object.IXobject;
+import xcodeml.util.IXobject;
 import exc.object.ExternalPragmaParser;
 import exc.object.Ident;
 import exc.object.PragmaParser;

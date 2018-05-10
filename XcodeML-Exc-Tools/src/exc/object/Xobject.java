@@ -5,6 +5,7 @@ import exc.util.XobjectVisitable;
 import exc.util.XobjectVisitor;
 import xcodeml.util.XmException;
 import xcodeml.util.XmOption;
+import xcodeml.util.IXobject;
 
 /**
  * Abstract class of expression tree objects in Xobject.

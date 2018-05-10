@@ -7,6 +7,7 @@ import exc.util.XobjectVisitor;
 import xcodeml.util.ILineNo;
 import xcodeml.util.XmLog;
 import xcodeml.util.XmOption;
+import xcodeml.util.IXobject;
 
 /**
  * Definition in Xobject File iterator for definitions in Xobject file

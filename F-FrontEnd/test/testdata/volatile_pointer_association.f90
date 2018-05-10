@@ -1,5 +1,0 @@
-      PROGRAM MAIN
-        INTEGER, DIMENSION(:,:), POINTER, VOLATILE :: a
-        INTEGER, DIMENSION(3,3), TARGET, VOLATILE :: b
-        a => b
-      END PROGRAM MAIN

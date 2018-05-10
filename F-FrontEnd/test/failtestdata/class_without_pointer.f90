@@ -1,2 +1,0 @@
-      CLASS(*) :: v
-      END

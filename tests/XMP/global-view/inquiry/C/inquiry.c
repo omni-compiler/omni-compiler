@@ -155,7 +155,9 @@ int main()
     check(ival, 0, &error);
     ierr=xmp_array_ushadow(xmp_desc_of(a), 3, &ival);
     check(ival, 2, &error);
-    ierr=xmp_array_gtol(xmp_desc_of(a), gidx, lidx);
+    ierr=xmp_array_gtol(xmp_desc_of(a), 1, gidx[0], &lidx[0]);
+    ierr=xmp_array_gtol(xmp_desc_of(a), 2, gidx[1], &lidx[1]);
+    ierr=xmp_array_gtol(xmp_desc_of(a), 3, gidx[2], &lidx[2]);
     check(lidx[0], 1, &error);
     check(lidx[1], 1, &error);
     check(lidx[2], 4, &error);
