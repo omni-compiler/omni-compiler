@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import exc.object.XobjectFile;
-import exc.object.IXobject;
 
 import exc.openacc.ACC;
 import exc.openacc.AccDevice;

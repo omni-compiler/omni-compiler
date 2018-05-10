@@ -1,3 +1,0 @@
-!aaaaa
-!bbbbb
-         integer a
