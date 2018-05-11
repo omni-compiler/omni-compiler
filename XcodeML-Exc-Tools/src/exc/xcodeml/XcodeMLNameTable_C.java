@@ -105,6 +105,7 @@ public class XcodeMLNameTable_C extends XcodeMLNameTable {
 		new XcodeMLName(Xcode.MEMBER_ARRAY_ADDR, "memberArrayAddr"),
 
 		new XcodeMLName(Xcode.PRAGMA_LINE, "pragma"),
+		new XcodeMLName(Xcode.LINEMARKER, "linemarker"),
 		new XcodeMLName(Xcode.TEXT, "text"),
 
 		new XcodeMLName(Xcode.BUILTIN_OP, "builtin_op"),

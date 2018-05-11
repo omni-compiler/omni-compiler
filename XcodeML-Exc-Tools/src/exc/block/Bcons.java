@@ -502,7 +502,8 @@ public class Bcons
         case PRAGMA_LINE:
 	    return PRAGMA(Xcode.PRAGMA_LINE, v.getArg(0).getString(), null, null);
         case TEXT:
-            return new SimpleBlock(statement_list_code(), BasicBlock.Statement(v));
+	case LINEMARKER:
+	    return new SimpleBlock(statement_list_code(), BasicBlock.Statement(v));
             
         case F_IF_STATEMENT: /* (F_IF_STATMENT construct_name cond then-part else-part) */
             return IF(code, BasicBlock.Cond(v.getArg(1)),

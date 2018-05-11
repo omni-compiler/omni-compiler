@@ -71,6 +71,7 @@ public class XcodeMLtools_C extends XcodeMLtools {
     case FUNCTION_DECL:
     case GCC_ASM_DEFINITION:
     case PRAGMA_LINE:
+    case LINEMARKER:
     case TEXT:
     case ACC_PRAGMA:
     case XMP_PRAGMA:
@@ -217,6 +218,13 @@ public class XcodeMLtools_C extends XcodeMLtools {
       setCommonAttributes(n, x);
       return x;
     }
+
+    case LINEMARKER:
+      String linemarkerFlag = getAttr(n, "flag");
+      x = Xcons.List(code,
+		     new XobjString(Xcode.STRING, linemarkerFlag));
+      setCommonAttributes(n, x);
+      return x;
 
     case STRING_CONSTANT:
       return Xcons.StringConstant(getContentText(n));
