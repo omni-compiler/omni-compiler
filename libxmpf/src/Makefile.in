@@ -151,5 +151,6 @@ install: $(LIBXMPF) $(XMPF_COARRAY_DECL)
 clean:
 	rm -f xmpf_coarray_put_wrap.f90 xmpf_coarray_get_wrap.f90 \
 	      xmpf_coarray_alloc_wrap.f90 xmpf_coarray_reduction.F90
-	rm -rf $(WORKDIR) *~ *.o $(LIBXMPF) *.mod
+	rm -rf $(WORKDIR) *~ *.o $(LIBXMPF) *.mod *.a
+
 
