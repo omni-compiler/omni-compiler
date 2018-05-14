@@ -7,6 +7,17 @@ AC_CONFIG_SRCDIR([include/exc_platform.h])
 AC_CONFIG_HEADER([include/config.h])
 
 #--------------------------------------------------------------------
+# Check xcodeml-tools
+if test ! -f "xcodeml-tools/configure"; then
+   echo "---------------------------------------------------------"
+   echo "Not found xcodeml-tools/configure. The xcodeml-tools is a submodule of omni-compiler."
+   echo "Please run the following command."
+   echo "$ git submodule update -i"
+   echo "---------------------------------------------------------"
+   exit
+fi
+
+#--------------------------------------------------------------------
 # Save environmental variables set by user before AC_PROG_CC and so on.
 userCFLAGS=${CFLAGS}
 userFCFLAGS=${FCFLAGS}
