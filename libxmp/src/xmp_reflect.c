@@ -121,7 +121,7 @@ void _XMP_reflect__(_XMP_array_t *a)
 
   int is_ordinal = 1;
 
-  //_XMP_RETURN_IF_SINGLE;
+  _XMP_RETURN_IF_SINGLE;
   if (!a->is_allocated){
     _xmp_set_reflect_flag = 0;
     return;
@@ -254,8 +254,6 @@ static void _XMP_reflect_normal_sched_dim(_XMP_array_t *adesc, int target_dim,
   int target_tdim = ai->align_template_index;
   _XMP_nodes_info_t *ni = adesc->align_template->chunk[target_tdim].onto_nodes_info;
 
-  if (ni->size == 1 && !is_periodic) return;
-  
   int ndims = adesc->dim;
 
   // 0-origin
@@ -482,8 +480,6 @@ void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
 
   int target_tdim = ai->align_template_index;
   _XMP_nodes_info_t *ni = adesc->align_template->chunk[target_tdim].onto_nodes_info;
-
-  if (ni->size == 1 && !is_periodic) return;
 
   int ndims = adesc->dim;
 
@@ -942,7 +938,7 @@ void _XMP_reflect_async__(_XMP_array_t *a, int async_id){
 
   int is_ordinal = 1;
 
-  //_XMP_RETURN_IF_SINGLE;
+  _XMP_RETURN_IF_SINGLE;
   if (!a->is_allocated){
     _xmp_set_reflect_flag = 0;
     return;
@@ -1197,9 +1193,7 @@ static void _XMP_reflect_sched_dir(_XMP_array_t *adesc, int ishadow[],
     int tdim = ai->align_template_index;
     _XMP_nodes_info_t *ni = adesc->align_template->chunk[tdim].onto_nodes_info;
     
-    if (ni->size == 1 && !is_periodic_dim[i]) continue;
-
-  // 0-origin
+    // 0-origin
     int my_pos = ni->rank;
     int lb_pos = _XMP_get_owner_pos(adesc, i, ai->ser_lower);
     int ub_pos = _XMP_get_owner_pos(adesc, i, ai->ser_upper);
