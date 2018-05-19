@@ -63,7 +63,7 @@ openmp.x: openmp.c
 	$(XCC) -c -o $@ $<
 
 run:
-	$(XRUN) -n 4 ./array_ubound_global.x
+	$(XRUN) -n 4 ./array_lbound_global.x
 	$(XRUN) -n 4 ./macro_in_pragma.x
 	$(XRUN) -n 2 ./38.x
 	XMP_NODE_SIZE0=2 XMP_NODE_SIZE1=2 $(XRUN) -n 8 ./dnodes.x

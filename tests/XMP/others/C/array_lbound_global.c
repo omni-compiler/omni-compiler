@@ -10,7 +10,7 @@ int main()
 {
   int me = xmpc_node_num(), flag = 0, global_i;
   int dim = 1;
-  
+
   xmp_array_lbound_global(xmp_desc_of(a), dim, &global_i);
   
   if(me == 0 || me == 1){
@@ -25,7 +25,7 @@ int main()
   }
 
   dim = 2;
-  xmp_array_ubound_global(xmp_desc_of(a), dim, &global_i);
+  xmp_array_lbound_global(xmp_desc_of(a), dim, &global_i);
 
   if(me == 0 || me == 2){
     if(global_i != 0){
@@ -39,10 +39,14 @@ int main()
   }
 #pragma xmp reduction(+:flag)
 
-  if(flag == 0 && me == 0)
-    printf("PASS\n"); return 0;
+  if(flag == 0){
+    if(me == 0)
+      printf("PASS\n");
+    return 0;
+  }
 
-  printf("Errorn");
+  if(me == 0)
+    printf("Error\n");
   
   return 1;
 }
