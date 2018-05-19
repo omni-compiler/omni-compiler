@@ -12,10 +12,10 @@ int* b;
 void test(int* b){
 #pragma xmp align b[i] with t[i]
 	
-#pragma xmp loop(i) on t[i]
+#pragma xmp loop (i) on t[i]
   for(int i=0;i<10;i++)
     printf("[%d] b[%d] = %d\n", xmpc_node_num(), i, b[i]);
-
+  
 }
 
 int main()
@@ -30,12 +30,12 @@ int main()
 #pragma xmp loop(i) on t[i]
   for(int i=0;i<10;i++)
     printf("[%d] b[%d] = %d\n", xmpc_node_num(), i, b[i]);
-		
+
   sleep(1);
   printf("\n");
   sleep(1);
 
   test(b);
-	
+
   return 0;
 } 

@@ -753,9 +753,9 @@ int _XMP_calc_template_par_triplet(_XMP_template_t *template, int template_index
 /*long long*/ int xmpc_ltog(int local_idx, _XMP_template_t *template, int dim, int offset)
 {
   /*long long*/ int global_index = 0;
-  _XMP_template_chunk_t *chunk   = &(template->chunk[dim-1]);
+  _XMP_template_chunk_t *chunk   = &(template->chunk[dim]);
   _XMP_nodes_info_t *n_info      = chunk->onto_nodes_info;
-  long long base                 = template->info[dim-1].ser_lower;
+  long long base                 = template->info[dim].ser_lower;
 
   switch(chunk->dist_manner){
   case _XMP_N_DIST_DUPLICATION:

@@ -623,7 +623,7 @@ void xmp_array_ubound_global(xmp_desc_t d, int dim, int *global_i)
   int local_i        = 0;
   _XMP_array_t *a    = (_XMP_array_t *)d;
   _XMP_template_t *t = a->align_template;
-  int template_dim   = a->info[dim-1].align_template_index + 1;
+  int template_dim   = a->info[dim-1].align_template_index;
   int offset         = 0; // fix me
   *global_i = xmpc_ltog(local_i, t, template_dim, offset);
 }
