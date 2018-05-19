@@ -11,7 +11,7 @@ int main()
   int me = xmpc_node_num(), flag = 0, global_i;
   int dim = 1;
   
-  xmp_array_ubound_global(xmp_desc_of(a), dim, &global_i);
+  xmp_array_lbound_global(xmp_desc_of(a), dim, &global_i);
   
   if(me == 0 || me == 1){
     if(global_i != 0){
