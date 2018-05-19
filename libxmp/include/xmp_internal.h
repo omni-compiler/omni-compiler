@@ -90,7 +90,7 @@ extern void _XMP_init_array_comm2(_XMP_array_t *array, int args[]);
 extern void _XMP_alloc_array(void **array_addr, _XMP_array_t *array_desc, int is_coarray, ...);
 extern void _XMP_alloc_array2(void **array_addr, _XMP_array_t *array_desc, int is_coarray, unsigned long long *acc[]);
 extern void _XMP_dealloc_array(_XMP_array_t *array_desc);
-
+  
 // xmp_array_section.c
 extern void _XMP_normalize_array_section(_XMP_gmv_desc_t *gmv_desc, int idim, int *lower, int *upper, int *stride);
 /* // FIXME make these static */
@@ -344,6 +344,7 @@ extern void _XMP_init_shadow(_XMP_array_t *array, ...);
 extern void _XMP_sort(_XMP_array_t *a_desc, _XMP_array_t *b_desc, int is_up);
 
 // xmp_template.c
+extern int xmpc_ltog(int local_idx, _XMP_template_t *template, int template_index, int offset);
 extern _XMP_template_t *_XMP_create_template_desc(int dim, _Bool is_fixed);
 extern int _XMP_check_template_ref_inclusion(int ref_lower, int ref_upper, int ref_stride,
                                              _XMP_template_t *t, int index);

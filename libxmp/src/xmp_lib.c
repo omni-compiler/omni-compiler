@@ -3,6 +3,7 @@
 #include "xmp_internal.h"
 #include "xmp.h"
 #include <stddef.h>
+
 extern void _XMP_align_local_idx(long long int global_idx, int *local_idx,
                                  _XMP_array_t *array, int array_axis, int *rank);
 extern void _XMP_init_shadow_dim(_XMP_array_t *array, int i, int type, int lo, int hi);
@@ -590,11 +591,8 @@ void *xmp_malloc(xmp_desc_t d, ...)
 	_XMP_fatal("unknown distribution manner");
 	return NULL;
       }
-
       _XMP_init_shadow_dim(a, i, ai->shadow_type, ai->shadow_size_lo, ai->shadow_size_hi);
-
     }
-
   }
 
   va_end(args);
@@ -618,4 +616,14 @@ void xmp_free(xmp_desc_t d){
 void xmp_exit(int status){
   _XMP_finalize(true);
   exit(status);
+}
+
+void xmp_array_ubound_global(xmp_desc_t d, int dim, int *global_i)
+{
+  int local_i        = 0;
+  _XMP_array_t *a    = (_XMP_array_t *)d;
+  _XMP_template_t *t = a->align_template;
+  int template_dim   = a->info[dim-1].align_template_index + 1;
+  int offset         = 0; // fix me
+  *global_i = xmpc_ltog(local_i, t, template_dim, offset);
 }

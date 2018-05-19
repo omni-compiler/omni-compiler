@@ -750,13 +750,12 @@ int _XMP_calc_template_par_triplet(_XMP_template_t *template, int template_index
 }
 
 // should return long long int?
-/*long long*/ int xmpc_ltog(int local_idx, _XMP_template_t *template, int template_index, int offset)
+/*long long*/ int xmpc_ltog(int local_idx, _XMP_template_t *template, int dim, int offset)
 {
   /*long long*/ int global_index = 0;
-  
-  _XMP_template_chunk_t *chunk = &(template->chunk[template_index]);
-  _XMP_nodes_info_t *n_info = chunk->onto_nodes_info;
-  long long base = template->info[template_index].ser_lower;
+  _XMP_template_chunk_t *chunk   = &(template->chunk[dim-1]);
+  _XMP_nodes_info_t *n_info      = chunk->onto_nodes_info;
+  long long base                 = template->info[dim-1].ser_lower;
 
   switch(chunk->dist_manner){
   case _XMP_N_DIST_DUPLICATION:

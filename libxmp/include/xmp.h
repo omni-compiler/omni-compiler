@@ -104,6 +104,7 @@ extern void     xmp_sort_down(xmp_desc_t a_desc, xmp_desc_t b_desc);
 extern void    *xmp_malloc(xmp_desc_t d, ...);
 extern void     xmp_free(xmp_desc_t d);
 extern void     xmp_exit(int status);
+extern void     xmp_array_ubound_global(xmp_desc_t d, int dim, int *global_i);
 extern void     xmp_atomic_define(int, int);
 extern void     xmp_atomic_ref(int*, int);
 
