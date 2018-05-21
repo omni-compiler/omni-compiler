@@ -21,7 +21,7 @@ integer gidx(3)=(/4,4,4/), lidx(3)
 !$xmp align a(i0,i1,i2) with t(i2,i0,i1)
 !$xmp align a1(i0) with t1(i0)
 !$xmp align b(i0) with t(i0,*,*)
-!$xmp shadow a(1:2,0,0)
+!$xmp shadow a(0,0,1:2)
 
 error=0
 ierr=xmp_align_template(xmp_desc_of(a), dt)
@@ -147,16 +147,16 @@ if (irank==11) then
   call check(ival, 9, error)
   ierr=xmp_array_ubound(xmp_desc_of(a), 3, ival)
   call check(ival, 16, error)
-  ierr=xmp_array_lshadow(xmp_desc_of(a), 1, ival)
+  ierr=xmp_array_lshadow(xmp_desc_of(a), 3, ival)
   call check(ival, 1, error)
-  ierr=xmp_array_ushadow(xmp_desc_of(a), 1, ival)
+  ierr=xmp_array_ushadow(xmp_desc_of(a), 3, ival)
   call check(ival, 2, error)
   ierr=xmp_array_gtol(xmp_desc_of(a), 1, gidx(1), lidx(1))
   ierr=xmp_array_gtol(xmp_desc_of(a), 2, gidx(2), lidx(2))
   ierr=xmp_array_gtol(xmp_desc_of(a), 3, gidx(3), lidx(3))
   call check(lidx(1), 1, error)
   call check(lidx(2), 1, error)
-  call check(lidx(3), 3, error)
+  call check(lidx(3), 4, error)
 
   if ( error .eq. 0 ) then
      write(*,*) "PASS"
