@@ -183,7 +183,9 @@ void xmpf_array_init_shadow__(_XMP_array_t **a_desc, int *i_dim,
   }
   else if (*lshadow > 0 || *ushadow > 0){
 
-    _XMP_ASSERT(ai->align_manner == _XMP_N_ALIGN_BLOCK || ai->align_manner == _XMP_N_ALIGN_GBLOCK);
+    if (ai->align_manner != _XMP_N_ALIGN_BLOCK && ai->align_manner != _XMP_N_ALIGN_GBLOCK){
+      return; // shadow ignored.
+    }
 
     ai->shadow_type = _XMP_N_SHADOW_NORMAL;
     ai->shadow_size_lo = *lshadow;
