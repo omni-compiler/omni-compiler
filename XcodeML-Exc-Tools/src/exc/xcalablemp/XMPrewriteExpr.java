@@ -1614,7 +1614,8 @@ public class XMPrewriteExpr {
     Xobject arrayAddr = myExpr.getArg(0);
 
     // for this moment, structure members shouldn't be aligned.
-    if (arrayAddr.Opcode() != Xcode.ARRAY_ADDR) return myExpr;
+    if (arrayAddr.Opcode() != Xcode.ARRAY_ADDR &&
+	arrayAddr.Opcode() != Xcode.VAR) return myExpr;
 
     String arrayName = arrayAddr.getSym();
 
