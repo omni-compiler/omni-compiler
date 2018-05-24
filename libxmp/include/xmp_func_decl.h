@@ -261,7 +261,7 @@ extern void _XMP_finalize_nodes(void *nodes);
 
 // xmpc_task.c
 extern void xmpc_create_task_nodes(void **n, void *rp);
-extern _Bool xmpc_test_task_on_nodes(void *ref_nodes);
+extern _Bool xmpc_test_task_on_nodes(void *ref_nodes, void *rp);
 extern _Bool xmpc_test_task_nocomm(void *rp);
 extern void xmpc_end_task(void);
 extern void xmpc_finalize_task_nodes(void *n);

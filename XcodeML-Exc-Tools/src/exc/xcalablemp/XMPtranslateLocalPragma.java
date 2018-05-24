@@ -849,7 +849,7 @@ public class XMPtranslateLocalPragma {
     Xobject cond = null;
     if (!nocomm_flag){
       f = _globalDecl.declExternFunc("xmpc_test_task_on_nodes", Xtype.intType);
-      cond = f.Call(Xcons.List(taskNodesDescId.Ref()));
+      cond = f.Call(Xcons.List(taskNodesDescId.Ref(), on_ref.getDescId().Ref()));
     }
     else {
       f = _globalDecl.declExternFunc("xmpc_test_task_nocomm", Xtype.intType);
