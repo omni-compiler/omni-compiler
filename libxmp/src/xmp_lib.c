@@ -542,24 +542,21 @@ void *xmp_malloc(xmp_desc_t d, ...)
   _XMP_template_t *t = a->align_template;
   if (!t->is_fixed) _XMP_fatal("target template is not fixed");
   a->is_allocated = t->is_owner;
-
   int is_star[_XMP_N_MAX_DIM] = { 0 };
   unsigned long long *acc[_XMP_N_MAX_DIM] = { NULL };
 
   va_list args;
   va_start(args, d);
   for (int i = 0; i < a->dim; i++){
-    int ii = a->dim - i - 1;
     int size = va_arg(args, int);
-    _XMP_array_info_t *ai = &(a->info[ii]);
-    int tdim = ai->align_template_index;
+    _XMP_array_info_t *ai = &(a->info[i]);
+    int tdim      = ai->align_template_index;
     ai->ser_upper = size - 1;
-    ai->ser_size = size;
-
-    acc[ii] = ai->acc;
+    ai->ser_size  = size;
+    acc[i]        = ai->acc;
     
     if (tdim == _XMP_N_NO_ALIGN_TEMPLATE){
-      _XMP_align_array_NOT_ALIGNED(a, ii);
+      _XMP_align_array_NOT_ALIGNED(a, i);
     }
     else {
       _XMP_template_info_t *info = &(t->info[tdim]);
@@ -571,25 +568,25 @@ void *xmp_malloc(xmp_desc_t d, ...)
 
       switch (t->chunk[tdim].dist_manner){
       case _XMP_N_DIST_DUPLICATION:
-	_XMP_align_array_DUPLICATION(a, ii, ai->align_template_index, ai->align_subscript);
+	_XMP_align_array_DUPLICATION(a, i, tdim, ai->align_subscript);
 	break;
       case _XMP_N_DIST_BLOCK:
-	_XMP_align_array_BLOCK(a, ii, ai->align_template_index, ai->align_subscript, ai->temp0);
+	_XMP_align_array_BLOCK(a, i, tdim, ai->align_subscript, ai->temp0);
 	break;
       case _XMP_N_DIST_CYCLIC:
-	_XMP_align_array_CYCLIC(a, ii, ai->align_template_index, ai->align_subscript, ai->temp0);
+	_XMP_align_array_CYCLIC(a, i, tdim, ai->align_subscript, ai->temp0);
 	break;
       case _XMP_N_DIST_BLOCK_CYCLIC:
-	_XMP_align_array_BLOCK_CYCLIC(a, ii, ai->align_template_index, ai->align_subscript, ai->temp0);
+	_XMP_align_array_BLOCK_CYCLIC(a, i, tdim, ai->align_subscript, ai->temp0);
 	break;
       case _XMP_N_DIST_GBLOCK:
-	_XMP_align_array_GBLOCK(a, ii, ai->align_template_index, ai->align_subscript, ai->temp0);
+	_XMP_align_array_GBLOCK(a, i, tdim, ai->align_subscript, ai->temp0);
 	break;
       default:
 	_XMP_fatal("unknown distribution manner");
 	return NULL;
       }
-      _XMP_init_shadow_dim(a, ii, ai->shadow_type, ai->shadow_size_lo, ai->shadow_size_hi);
+      _XMP_init_shadow_dim(a, i, ai->shadow_type, ai->shadow_size_lo, ai->shadow_size_hi);
     }
   }
 
