@@ -197,6 +197,13 @@ typedef void (*xmpt_event_single_desc_begin_async_t) (
   xmpt_tool_data_t* data       /* pointer to store tool specific data */
 );
 
+typedef void (*xmpt_event_task_begin_t) (
+  xmp_desc_t desc,            /* descriptor for either nodes, template or array */
+  xmpt_subscript_t subsc,     /* subscript specification */
+  int is_active,              /* flag whether or not the node joins to execute the task. */
+  xmpt_tool_data_t* data      /* pointer to store tool specific data */
+);
+
 typedef void (*xmpt_event_gmove_begin_t) (
   xmp_desc_t lhs_array_desc,   /* descriptor for lhs of array assignment */
   xmpt_subscript_t lhs_subsc,  /* subscript for lhs */
