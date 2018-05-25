@@ -28,7 +28,7 @@ program main
 !$xmp template_fix (gblock(m1),gblock(m2)) t(N,N)
   allocate(a(N,N))
 
-!$xmp loop (i,j) on t(i,j)
+!$xmp loop on t(i,j)
   do j=1, N
      do i=1, N
         a(i,j) = xmp_node_num()
@@ -36,7 +36,7 @@ program main
   enddo
          
   s = 0
-!$xmp loop (i,j) on t(i,j) reduction(+:s)
+!$xmp loop on t(i,j) reduction(+:s)
   do j=1, N
      do i=1, N
         s = s+a(i,j)

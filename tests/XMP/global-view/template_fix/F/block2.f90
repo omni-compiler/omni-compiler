@@ -11,7 +11,7 @@ program main
 
   allocate(a(x_min:x_max))
 
-  !$xmp loop (i) on t(i)
+  !$xmp loop on t(i)
   do i = x_min, x_max
     a(i) = i
   end do

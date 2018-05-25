@@ -15,21 +15,21 @@ program test
   !$xmp array on t
   a = 1
 
-  !$xmp loop (i,j) on t(i,j) expand(-1,-1)
+  !$xmp loop on t(i,j) expand(-1,-1)
   do j = 1, 8
      do i = 1, 8
         b(i,j) = 1
      end do
   end do
 
-  !$xmp loop (i,j) on t(i,j) margin(-1,-1)
+  !$xmp loop on t(i,j) margin(-1,-1)
   do j = 1, 8
      do i = 1, 8
         b(i,j) = 1
      end do
   end do
   
-  !$xmp loop (i,j) on t(i,j) reduction(+:result)
+  !$xmp loop on t(i,j) reduction(+:result)
   do j = 1, 8
      do i = 1, 8
         if (a(i,j) /= b(i,j)) result = 1

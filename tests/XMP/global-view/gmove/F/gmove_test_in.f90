@@ -28,7 +28,7 @@ module mod0_gmove_test_in
 contains
 
   subroutine init_a
-!$xmp loop (i,j,k) on t1(i,j,k)
+!$xmp loop on t1(i,j,k)
     do k = 1, N
        do j = 1, N
           do i = 1, N
@@ -39,7 +39,7 @@ contains
   end subroutine init_a
 
   subroutine init_b
-!$xmp loop (i,j,k) on t2(i,j,k)
+!$xmp loop on t2(i,j,k)
     do k = 1, N
        do j = 1, N
           do i = 1, N
@@ -117,7 +117,7 @@ integer :: result = 0
 
 !$xmp barrier
 
-!$xmp loop (i,j,k) on t1(i,j,k) reduction (+:result)
+!$xmp loop on t1(i,j,k) reduction (+:result)
   do k = 5, N-1
      do j = N/2+1, N
         do i = 1, N/4
@@ -164,7 +164,7 @@ integer :: result = 0
 
 !$xmp barrier
 
-!$xmp loop (i,j,k) on t1(i,j,k) reduction(+:result)
+!$xmp loop on t1(i,j,k) reduction(+:result)
   do k = 5, N-1
      do j = N/2+1, N
         do i = 1, N/4

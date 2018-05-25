@@ -12,7 +12,7 @@ contains
 !$xmp array on t(:,:)
     x1 = 1.0
 
-!$xmp loop (i,j) on t(i,j)
+!$xmp loop on t(i,j)
     do j = 1, 100
        do i = 1, 100
           x2(i,j) = 1.0
@@ -31,7 +31,7 @@ contains
 
     integer :: result = 0
 
-!$xmp loop (i,j) on t(i,j)
+!$xmp loop on t(i,j)
     do j = 1, 100
        do i = 1, 100
           if (x1(i,j) /= v) result = -1
@@ -48,7 +48,7 @@ contains
     endif
 !$xmp end task
 
-!$xmp loop (i,j) on t(i,j)
+!$xmp loop on t(i,j)
     do j = 1, 100
        do i = 1, 100
           if (x2(i,j) /= v) result = -1
@@ -137,7 +137,7 @@ program test
 !$xmp array on t(:,:)
       x1 = 2.0
 
-!$xmp loop (i,j) on t(i,j)
+!$xmp loop on t(i,j)
       do j = 1, 100
          do i = 1, 100
             x2(i,j) = 2.0
@@ -159,7 +159,7 @@ subroutine sub3(x1, x2, y1, y2)
 !$xmp array on t(:,:)
   x1 = 3.0
 
-!$xmp loop (i,j) on t(i,j)
+!$xmp loop on t(i,j)
   do j = 1, 100
      do i = 1, 100
         x2(i,j) = 3.0

@@ -7,14 +7,14 @@
   integer :: a(n2,n2)
 !$xmp align a(i,j) with t2(i,j)
 
-!$xmp loop (i,j) on t2(i,j)
+!$xmp loop on t2(i,j)
   do j=1,n2
     do i=1,n2
       a(i,j)=0
     end do
   end do
 
-!$xmp loop (i,j) on t1(i,j)
+!$xmp loop on t1(i,j)
   do j=1,n1
     jj=2*j
     do i=1,n1
@@ -24,7 +24,7 @@
   end do
 
 ierr=0
-!$xmp loop (i,j) on t2(i,j)
+!$xmp loop on t2(i,j)
   do j=2,n2,2
     do i=2,n2,2
      ierr=ierr+abs(a(i,j)-i-j)

@@ -43,7 +43,7 @@ subroutine gmove_in
 use subm0_gmove_inout_3
 integer :: result = 0
 
-!$xmp loop (i,j,k) on t1(i,j,k)
+!$xmp loop on t1(i,j,k)
   do k = 1, N
      do j = 1, N
         do i = 1, N
@@ -52,7 +52,7 @@ integer :: result = 0
      end do
   end do
 
-!$xmp loop (i,j,k) on t2(i,j,k)
+!$xmp loop on t2(i,j,k)
   do k = 1, N
      do j = 1, N
         do i = 1, N
@@ -74,7 +74,7 @@ integer :: result = 0
 
 !$xmp barrier
 
-!$xmp loop (i,j,k) on t1(i,j,k) reduction(+:result)
+!$xmp loop on t1(i,j,k) reduction(+:result)
   do k = 1, N
      do j = 1, N
         do i = 1, N
@@ -102,7 +102,7 @@ subroutine gmove_in_async
 use subm0_gmove_inout_3
 integer :: result = 0
 
-!$xmp loop (i,j,k) on t1(i,j,k)
+!$xmp loop on t1(i,j,k)
   do k = 1, N
      do j = 1, N
         do i = 1, N
@@ -111,7 +111,7 @@ integer :: result = 0
      end do
   end do
 
-!$xmp loop (i,j,k) on t2(i,j,k)
+!$xmp loop on t2(i,j,k)
   do k = 1, N
      do j = 1, N
         do i = 1, N
@@ -135,7 +135,7 @@ integer :: result = 0
 
 !$xmp barrier
 
-!$xmp loop (i,j,k) on t1(i,j,k) reduction(+:result)
+!$xmp loop on t1(i,j,k) reduction(+:result)
   do k = 1, N
      do j = 1, N
         do i = 1, N
@@ -163,7 +163,7 @@ subroutine gmove_out
 use subm0_gmove_inout_3
 integer :: result = 0
 
-!$xmp loop (i,j,k) on t1(i,j,k)
+!$xmp loop on t1(i,j,k)
   do k = 1, N
      do j = 1, N
         do i = 1, N
@@ -172,7 +172,7 @@ integer :: result = 0
      end do
   end do
 
-!$xmp loop (i,j,k) on t2(i,j,k)
+!$xmp loop on t2(i,j,k)
   do k = 1, N
      do j = 1, N
         do i = 1, N
@@ -194,7 +194,7 @@ integer :: result = 0
 
 !$xmp barrier
 
-!$xmp loop (i,j,k) on t1(i,j,k) reduction(+:result)
+!$xmp loop on t1(i,j,k) reduction(+:result)
   do k = 1, N
      do j = 1, N
         do i = 1, N
@@ -222,7 +222,7 @@ subroutine gmove_out_async
 use subm0_gmove_inout_3
 integer :: result = 0
 
-!$xmp loop (i,j,k) on t1(i,j,k)
+!$xmp loop on t1(i,j,k)
   do k = 1, N
      do j = 1, N
         do i = 1, N
@@ -231,7 +231,7 @@ integer :: result = 0
      end do
   end do
 
-!$xmp loop (i,j,k) on t2(i,j,k)
+!$xmp loop on t2(i,j,k)
   do k = 1, N
      do j = 1, N
         do i = 1, N
@@ -255,7 +255,7 @@ integer :: result = 0
 
 !$xmp barrier
 
-!$xmp loop (i,j,k) on t1(i,j,k) reduction(+:result)
+!$xmp loop on t1(i,j,k) reduction(+:result)
   do k = 1, N
      do j = 1, N
         do i = 1, N

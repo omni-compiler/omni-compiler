@@ -15,7 +15,7 @@ program main
 !$xmp align b(i,j) with t2(i,j)
 !$xmp align c(i,j) with t3(i,j)
 
-!$xmp loop (i,j) on t1(i,j)
+!$xmp loop on t1(i,j)
   do j=1, N
      do i=1, N
         if(i.eq.j .and. mod(i,100).eq.0) then
@@ -26,7 +26,7 @@ program main
      enddo
   enddo
   
-!$xmp loop (i,j) on t2(i,j)
+!$xmp loop on t2(i,j)
   do j=1, N
      do i=1, N
         if(mod(j,2).eq.0) then
@@ -45,7 +45,7 @@ program main
      enddo
   enddo
 
-!$xmp loop (i,j) on t3(i,j)
+!$xmp loop on t3(i,j)
   do j=1, N
      do i=1, N
         if(mod(j,2).eq.0) then
@@ -76,21 +76,21 @@ program main
   sb = 1.0
   sc = 1.0
   
-!$xmp loop (i,j) on t1(i,j) reduction(*:sa)
+!$xmp loop on t1(i,j) reduction(*:sa)
   do j=1, N
      do i=1, N
         sa = sa*a(i,j)
      enddo
   enddo
   
-!$xmp loop (i,j) on t2(i,j) reduction(*:sb)
+!$xmp loop on t2(i,j) reduction(*:sb)
   do j=1, N
      do i=1, N
         sb = sb*b(i,j)
      enddo
   enddo
   
-!$xmp loop (i,j) on t3(i,j) reduction(*:sc)
+!$xmp loop on t3(i,j) reduction(*:sc)
   do j=1, N
      do i=1, N
         sc = sc*c(i,j)

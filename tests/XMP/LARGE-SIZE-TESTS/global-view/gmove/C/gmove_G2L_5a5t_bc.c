@@ -15,7 +15,7 @@ int main(){
 
   int i0,i1,i2,i3,i4,b[N][N][N][N][N],ierr=0;
 
-#pragma xmp loop (i0,i1,i2,i3,i4) on tx(i0,i1,i2,i3,i4)
+#pragma xmp loop on tx(i0,i1,i2,i3,i4)
   for (i4=0;i4<n;i4++){
     for (i3=0;i3<n;i3++){
       for (i2=0;i2<n;i2++){

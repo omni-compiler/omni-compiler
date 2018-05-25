@@ -17,17 +17,17 @@ program main
 !$xmp align b(i) with t2(*,i,*)
 !$xmp align c(i) with t3(*,*,i)
 
-!$xmp loop (i) on t1(i,:,:)
+!$xmp loop on t1(i,:,:)
   do i=1, N
      a(i) = xmp_node_num()
   enddo
 
-!$xmp loop (i) on t2(:,i,:)
+!$xmp loop on t2(:,i,:)
   do i=1, N
      b(i) = dble(xmp_node_num())
   enddo
 
-!$xmp loop (i) on t3(:,:,i)
+!$xmp loop on t3(:,:,i)
   do i=1, N
      c(i) = real(xmp_node_num())
   enddo
@@ -36,17 +36,17 @@ program main
   sb = 0.0
   sc = 0.0
 
-!$xmp loop (i) on t1(i,:,:) reduction(+: sa)
+!$xmp loop on t1(i,:,:) reduction(+: sa)
   do i=1, N
      sa = sa+a(i)
   enddo
       
-!$xmp loop (i) on t2(:,i,:) reduction(+: sb)
+!$xmp loop on t2(:,i,:) reduction(+: sb)
   do i=1, N
      sb = sb+b(i)
   enddo
 
-!$xmp loop (i) on t3(:,:,i) reduction(+: sc)
+!$xmp loop on t3(:,:,i) reduction(+: sc)
   do i=1, N
      sc = sc+c(i)
   enddo

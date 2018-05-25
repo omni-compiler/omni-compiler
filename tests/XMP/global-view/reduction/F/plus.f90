@@ -16,7 +16,7 @@ program main
   sb = 0.0
   sc = 0.0
 
-!$xmp loop (i) on t(i)
+!$xmp loop on t(i)
   do i=1, N
      a(i) = 1
      b(i) = 0.5

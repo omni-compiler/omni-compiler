@@ -23,7 +23,7 @@ program main
 
   ! FIRST MAX
   sa = 0
-  !$xmp loop (i) on t(i) reduction(firstmax:sa/ia/)
+  !$xmp loop on t(i) reduction(firstmax:sa/ia/)
   do i=1, 10
      if(sa .lt. a(i)) then
         ia = i
@@ -42,7 +42,7 @@ program main
   
   ! LAST MAX
    sa = 0
-  !$xmp loop (i) on t(i) reduction(lastmax:sa/ia/)
+  !$xmp loop on t(i) reduction(lastmax:sa/ia/)
   do i=1, 10
      if(sa .lt. a(i)) then
         ia = i
@@ -62,7 +62,7 @@ program main
 
   ! FIRST MIN
   sa = 10
-  !$xmp loop (i) on t(i) reduction(firstmin:sa/ia/)
+  !$xmp loop on t(i) reduction(firstmin:sa/ia/)
   do i=1, 10
      if(sa .gt. a(i)) then
         ia = i
@@ -82,7 +82,7 @@ program main
   
   ! LAST MIN
   sa = 10
-  !$xmp loop (i) on t(i) reduction(lastmin:sa/ia/)
+  !$xmp loop on t(i) reduction(lastmin:sa/ia/)
   do i=1, 10
      if(sa .gt. a(i)) then
         ia = i

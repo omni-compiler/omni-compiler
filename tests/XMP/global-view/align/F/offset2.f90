@@ -7,7 +7,7 @@ program main
   real a2(16,16)
 !$xmp align a2(i,j) with t2(i,j+3)
 
-!$xmp loop (i,j) on t2(i,j+3)
+!$xmp loop on t2(i,j+3)
   do j=1, 16
    do i=1, 16
      a2(i,j) = 0.

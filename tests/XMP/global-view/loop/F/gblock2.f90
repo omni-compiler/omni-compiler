@@ -17,7 +17,7 @@ program main
   sb = 0.0
   sc = 0.0
       
-!$xmp loop (i,j) on t(i,j)
+!$xmp loop on t(i,j)
   do j=1, N
      do i=1, N
         a(i,j) = 1
@@ -26,7 +26,7 @@ program main
      enddo
   enddo
   
-!$xmp loop (i,j) on t(i,j)
+!$xmp loop on t(i,j)
   do j=1, N
      do i=1, N
         sa = sa + a(i,j)

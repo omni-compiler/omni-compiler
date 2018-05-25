@@ -36,19 +36,19 @@ program main
      end do
   end do
 
-  !$xmp loop (i,j) on tp(i,j)
+  !$xmp loop on tp(i,j)
   do i=1,10
      do j=1,10
         a(i,j)=(i-1)*10+(j-1)
      end do
   end do
 
-  !$xmp loop (i) on tq(i)
+  !$xmp loop on tq(i)
   do i=1,100
      v(i)=0
   end do
 
-  !$xmp loop (i,j) on  tp(i,j)
+  !$xmp loop on  tp(i,j)
   do i=1,10
      do j=1,10
         if(mod(j-1,2).eq.0) then
@@ -61,7 +61,7 @@ program main
 
   call xmp_pack(xmp_desc_of(v),xmp_desc_of(a),xmp_desc_of(mask))
 
-  !$xmp loop (i) on tq(i)
+  !$xmp loop on tq(i)
   do i=1,100
      if(v(i).ne.vdash(i)) then
         answer = -1
@@ -79,7 +79,7 @@ program main
   write(*,*) "PASS"
   !$xmp end task
 
-  !$xmp loop (i,j) on  tp(i,j)
+  !$xmp loop on  tp(i,j)
   do j=1,10
      do i=1,10
         a(i,j)=0
@@ -88,7 +88,7 @@ program main
 
   call xmp_unpack(xmp_desc_of(a),xmp_desc_of(v),xmp_desc_of(mask))
 
-  !$xmp loop (i,j) on tp(i,j)
+  !$xmp loop on tp(i,j)
   do i=1,10
      do j=1,10
         if(a(i,j).ne.adash(i,j)) then

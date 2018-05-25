@@ -405,6 +405,47 @@ public class XMPutil {
     return true;
   }
 
+  public static Xobject getVar(Xobject obj)
+  {
+    topdownXobjectIterator iter = obj.topdownIterator();
+    for(iter.init(); !iter.end(); iter.next()){
+      Xobject expr = iter.getXobject();
+      Xcode code   = expr.Opcode();
+      if(code == Xcode.VAR){
+	return expr;
+      }
+    }
+    
+    return obj;
+  }
+
+  private static boolean is_F_colon(Xobject obj)
+  {
+    if(!(obj instanceof XobjList))
+      return false;
+
+    if(obj.Nargs() != 3)
+      return false;
+
+    if(obj.getArg(0) == null && obj.getArg(1) == null && obj.getArg(2) == null)
+      return true;
+    else
+      return false;
+  }
+  
+  public static XobjList getLoopIterListFromOnRef(XobjList loopIterList)
+  {
+    XobjList newLoopIterList = Xcons.List();
+    for(int i=0;i<loopIterList.Nargs();i++){
+      Xobject obj = loopIterList.getArg(i);
+      if(obj != null)
+        if(!obj.equals(Xcons.StringConstant(XMP.COLON)) && !obj.equals(Xcons.StringConstant(XMP.ASTERISK)) && !is_F_colon(obj))
+	  newLoopIterList.add(getVar(obj));
+    }
+
+    return newLoopIterList;
+  }
+  
   public static Boolean is_AllConstant(XMPnodes n)
   {
     for(int i=0;i<n.getDim();i++)

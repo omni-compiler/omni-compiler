@@ -11,7 +11,7 @@ program test
 
   integer :: result = 0
 
-!$xmp loop (i,j) on t(i,j)
+!$xmp loop on t(i,j)
   do j = 1, 4
      do i = 1, 4
         a(i,j) = i * 10 + j

@@ -12,7 +12,7 @@
 
   integer :: ierr = 0
 
-!$xmp loop (i) on t(i)
+!$xmp loop on t(i)
   do i = 1, 18
      do j = 1, 8
         b(i,j) = i * 10 + j
@@ -24,7 +24,7 @@
 
 !$xmp wait_async(10)
 
-!$xmp loop (j) on t(j) reduction(+:ierr)
+!$xmp loop on t(j) reduction(+:ierr)
   do j = 1, 8
      do i = 1, 8
         if (a(i,j) /= i * 10 + j) ierr = 1

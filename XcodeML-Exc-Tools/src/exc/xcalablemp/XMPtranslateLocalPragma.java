@@ -625,19 +625,6 @@ public class XMPtranslateLocalPragma {
     }
   }
 
-  private XobjList getLoopIterListFromOnRef(XobjList loopIterList) throws XMPexception {
-    XobjList newLoopIterList = Xcons.List();
-
-    for(int i=0;i<loopIterList.Nargs();i++){
-      Xobject tmp = loopIterList.getArg(i);
-      if(tmp != null)
-	if(! tmp.equals(Xcons.StringConstant(XMP.COLON)) && ! tmp.equals(Xcons.StringConstant(XMP.ASTERISK)))
-	  newLoopIterList.add(tmp);
-    }
-
-    return newLoopIterList;
-  }
-		
   private void translateGpuLoop(PragmaBlock pb) throws XMPexception {
     XobjList loopDecl  = (XobjList)pb.getClauses();
     BlockList loopBody = pb.getBody();
@@ -657,7 +644,7 @@ public class XMPtranslateLocalPragma {
     XobjList onRefIterList  = (XobjList)onRef.getArg(1);
     
     if(loopIterList == null || loopIterList.Nargs() == 0)
-      loopIterList = getLoopIterListFromOnRef(onRefIterList);
+      loopIterList = XMPutil.getLoopIterListFromOnRef(onRefIterList);
 
     translateMultipleLoop(pb, schedBaseBlock, loopIterList);
     
@@ -839,9 +826,8 @@ public class XMPtranslateLocalPragma {
       if(isSquare) onRefIterList.reverse();
     }
     
-    if(loopIterList == null || loopIterList.Nargs() == 0){
-      loopIterList = getLoopIterListFromOnRef(onRefIterList);
-    }
+    if(loopIterList == null || loopIterList.Nargs() == 0)
+      loopIterList = XMPutil.getLoopIterListFromOnRef(onRefIterList);
 
     translateMultipleLoop(pb, schedBaseBlock, loopIterList);
 

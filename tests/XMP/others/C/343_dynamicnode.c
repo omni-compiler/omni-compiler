@@ -31,14 +31,14 @@ int main(void){
   int flag = TRUE;
 
   /* Initialise array */
-#pragma xmp loop (j, i) on t(j, i) 
+#pragma xmp loop on t(j, i) 
   for(i=0; i<ARRAY_SIZE; i++)
     for(j=0; j<ARRAY_SIZE; j++)
       a[i][j] = i * ARRAY_SIZE + j;
 
 #pragma xmp reflect (a)
 
-#pragma xmp loop (j,i) on t(j,i)
+#pragma xmp loop on t(j,i)
   for(i=0; i<ARRAY_SIZE; i++){
     for(j=0; j<ARRAY_SIZE; j++){
       

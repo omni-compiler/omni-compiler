@@ -13,7 +13,7 @@
 
   a=max+int
   b=0.0
-!$xmp loop (i,j) on tt(j,i) reduction(+:b)
+!$xmp loop on tt(j,i) reduction(+:b)
   do i=2,9
      do j=2,17
         do k=2,9

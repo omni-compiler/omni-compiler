@@ -20,7 +20,7 @@ integer a(n,n,n,n),b(n,n,n,n)
 
 irank=xmp_node_num()
 
-!$xmp loop (i0,i1,i2,i3) on tx(i0,i1,i2,i3)
+!$xmp loop on tx(i0,i1,i2,i3)
 do i3=1,n
   do i2=1,n
     do i1=1,n
@@ -31,7 +31,7 @@ do i3=1,n
   end do
 end do
 
-!$xmp loop (i1,i2,i3) on tx(*,i1,i2,i3)
+!$xmp loop on tx(*,i1,i2,i3)
 do i3=1,n
   do i2=1,n
     do i1=1,n
@@ -46,7 +46,7 @@ end do
 b(2:n,2:n,2:n,2:n)=a(2:n,2:n,2:n,2:n)
 
 ierr=0
-!$xmp loop (i1,i2,i3) on tx(*,i1,i2,i3)
+!$xmp loop on tx(*,i1,i2,i3)
 do i3=2,n
   do i2=2,n
     do i1=2,n
@@ -75,7 +75,7 @@ integer a(n,n,n,n),b(n,n,n,n)
 !$xmp align a(i0,i1,i2,i3) with tx(i0,i1,i2,i3)
 !$xmp align b(*,i1,i2,*) with tx(*,i1,i2,*)
 
-!$xmp loop (i0,i1,i2,i3) on tx(i0,i1,i2,i3)
+!$xmp loop on tx(i0,i1,i2,i3)
 do i3=1,n
   do i2=1,n
     do i1=1,n
@@ -87,7 +87,7 @@ do i3=1,n
 end do
 
 do i3=1,n
-!$xmp loop (i1,i2) on tx(*,i1,i2,*)
+!$xmp loop on tx(*,i1,i2,*)
   do i2=1,n
     do i1=1,n
       do i0=1,n
@@ -102,7 +102,7 @@ b(1:n,1:n,1:n,1:n)=a(1:n,1:n,1:n,1:n)
 
 ierr=0
 do i3=1,n
-!$xmp loop (i1,i2) on tx(*,i1,i2,*)
+!$xmp loop on tx(*,i1,i2,*)
   do i2=1,n
     do i1=1,n
       do i0=1,n

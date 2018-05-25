@@ -16,7 +16,7 @@
   p(2:mimax-1,2:mjmax-1,2:mkmax-1)= 1.0
 
   nerr=0
-  !$xmp loop (i,j,k) on t(i,j,k)
+  !$xmp loop on t(i,j,k)
   do k=1,3
      do j=1,3
         do i=1,3

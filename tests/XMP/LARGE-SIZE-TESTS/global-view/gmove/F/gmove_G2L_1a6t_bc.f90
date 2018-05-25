@@ -7,7 +7,7 @@ integer xmp_node_num
 !$xmp distribute tx(cyclic(2),cyclic(2),cyclic(2),cyclic(2),cyclic(2),cyclic(2)) onto p
 !$xmp align a(*,*,*,*,*,i5) with tx(*,*,*,*,*,i5)
 
-!$xmp loop (i5) on tx(*,*,*,*,*,i5)
+!$xmp loop on tx(*,*,*,*,*,i5)
 do i5=1,n
   do i4=1,n
     do i3=1,n

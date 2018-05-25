@@ -25,42 +25,42 @@ program main
   sb = 0.0
   sc = 0.0
 
-!$xmp loop (i,j) on t1(i,j)
+!$xmp loop on t1(i,j)
   do j=1, N
      do i=1, N
         a(i,j) = 1
      enddo
   enddo
 
-!$xmp loop (i,j) on t2(i,j)
+!$xmp loop on t2(i,j)
   do j=1, N
      do i=1, N
         b(i,j) = 0.5
      enddo
   enddo
 
-!$xmp loop (i,j) on t3(i,j)
+!$xmp loop on t3(i,j)
   do j=1, N
      do i=1, N
         c(i,j) = 0.25
      enddo
   enddo
 
-!$xmp loop (i,j) on t1(i,j)
+!$xmp loop on t1(i,j)
   do j=1, N
      do i=1, N
         sa = sa+a(i,j)
      enddo
   enddo
 
-!$xmp loop (i,j) on t2(i,j)
+!$xmp loop on t2(i,j)
   do j=1, N
      do i=1, N
         sb = sb+b(i,j)
      enddo
   enddo
 
-!$xmp loop (i,j) on t3(i,j)
+!$xmp loop on t3(i,j)
   do j=1, N
      do i=1, N
         sc = sc+c(i,j)

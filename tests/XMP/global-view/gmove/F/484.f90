@@ -19,7 +19,7 @@ program test
 !$xmp gmove
   a(2:4) = b(2:4)
 
-!$xmp loop (i) on t(i) reduction (+:result)
+!$xmp loop on t(i) reduction (+:result)
   do i = 2, 4
      if (a(i) /= i) then
         result = 1

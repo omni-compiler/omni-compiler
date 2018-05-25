@@ -51,7 +51,7 @@ program test
 
   !$xmp wait_async (10)
 
-  !$xmp loop (i,j) on t(i,j) reduction(+:result)
+  !$xmp loop on t(i,j) reduction(+:result)
   do j = 1, n
      do i = 1, n
         if (a(i,j) /= b(i,j)) then

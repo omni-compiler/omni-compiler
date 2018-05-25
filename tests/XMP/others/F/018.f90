@@ -5,7 +5,7 @@
       real a(100)
 !$xmp align a(i) with t(i)
 
-!$xmp loop (i) on t(i)
+!$xmp loop on t(i)
       do i = 1, 100
          a(i) = i
       end do

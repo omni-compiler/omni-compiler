@@ -48,12 +48,12 @@ integer :: result = 0
 
   use mod0_gmove_inout_1
 
-!$xmp loop (i) on t1(i)
+!$xmp loop on t1(i)
   do i = 1, N
      a(i) = 777
   end do
 
-!$xmp loop (i) on t2(i)
+!$xmp loop on t2(i)
   do i = 1, N
      b(i) = i
   end do
@@ -65,7 +65,7 @@ integer :: result = 0
   a = b
 #endif
 
-!$xmp loop (i) on t1(i) reduction(+:result)
+!$xmp loop on t1(i) reduction(+:result)
   do i = 1, N
      if (a(i) /= i) then
         result = 1
@@ -90,12 +90,12 @@ integer :: result = 0
 
   use mod0_gmove_inout_1
 
-!$xmp loop (i) on t1(i)
+!$xmp loop on t1(i)
   do i = 1, N
      a(i) = 777
   end do
 
-!$xmp loop (i) on t2(i)
+!$xmp loop on t2(i)
   do i = 1, N
      b(i) = i
   end do
@@ -109,7 +109,7 @@ integer :: result = 0
 
 !$xmp wait_async(10)
 
-!$xmp loop (i) on t1(i) reduction(+:result)
+!$xmp loop on t1(i) reduction(+:result)
   do i = 1, N
      if (a(i) /= i) then
         result = 1
@@ -134,12 +134,12 @@ integer :: result = 0
 
   use mod0_gmove_inout_1
 
-!$xmp loop (i) on t1(i)
+!$xmp loop on t1(i)
   do i = 1, N
      a(i) = 777
   end do
 
-!$xmp loop (i) on t2(i)
+!$xmp loop on t2(i)
   do i = 1, N
      b(i) = i
   end do
@@ -151,7 +151,7 @@ integer :: result = 0
   a = b
 #endif
 
-!$xmp loop (i) on t1(i) reduction(+:result)
+!$xmp loop on t1(i) reduction(+:result)
   do i = 1, N
      if (a(i) /= i) then
         result = 1
@@ -176,12 +176,12 @@ integer :: result = 0
 
   use mod0_gmove_inout_1
 
-!$xmp loop (i) on t1(i)
+!$xmp loop on t1(i)
   do i = 1, N
      a(i) = 777
   end do
 
-!$xmp loop (i) on t2(i)
+!$xmp loop on t2(i)
   do i = 1, N
      b(i) = i
   end do
@@ -195,7 +195,7 @@ integer :: result = 0
 
 !$xmp wait_async(10)
 
-!$xmp loop (i) on t1(i) reduction(+:result)
+!$xmp loop on t1(i) reduction(+:result)
   do i = 1, N
      if (a(i) /= i) then
         result = 1

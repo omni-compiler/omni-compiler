@@ -21,7 +21,7 @@ int main(){
       for(i3=0;i3<n;i3++){
         for(i2=0;i2<n;i2++){
           for(i1=0;i1<n;i1++){
-#pragma xmp loop (i0) on tx(*,*,*,*,*,i0)
+#pragma xmp loop on tx(*,*,*,*,*,i0)
             for(i0=0;i0<n;i0++){
               a[i5][i4][i3][i2][i1][i0]=i5+i4+i3+i2+i0+i1+1;
             }

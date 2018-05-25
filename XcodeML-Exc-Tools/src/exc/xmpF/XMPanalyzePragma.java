@@ -6,6 +6,7 @@ import exc.object.*;
 import exc.block.*;
 import java.util.*;
 import xcodeml.util.XmOption;
+import exc.xcalablemp.*;
 
 /**
  * process analyze XcalableMP pragma
@@ -387,7 +388,6 @@ public class XMPanalyzePragma
 
   }
 
-
   /* 
    * analyze Loop directive:
    *  loopDecl = (on_ref | ...)
@@ -397,53 +397,49 @@ public class XMPanalyzePragma
 
     // get block to schedule
     Vector<XMPdimInfo> dims = new Vector<XMPdimInfo>();
-    
+
     // schedule loop
     XobjList loopIterList = (XobjList)loopDecl.getArg(0);
+    
     if (loopIterList == null || loopIterList.Nargs() == 0) {
+      XobjList onRef          = (XobjList)loopDecl.getArg(1);
+      XobjList onRefIterList  = (XobjList)onRef.getArg(1);
+      loopIterList = XMPutil.getLoopIterListFromOnRef(onRefIterList);
+    }
+    
+    while(true){
       ForBlock loopBlock = getOutermostLoopBlock(loopBody);
-      if(loopBlock == null){
-    	  XMP.errorAt(pb,"loop is not found after loop directive");
-    	  return;
-      }
-      dims.add(XMPdimInfo.loopInfo(loopBlock));
-      loopBody = loopBlock.getBody();
-    } else {
-      while(true){
-    	  ForBlock loopBlock = getOutermostLoopBlock(loopBody);
-    	  if(loopBlock == null) break;
-    	  boolean is_found = false;
-    	  for(Xobject x: loopIterList){
-    		  if(x.Opcode() == Xcode.LIST) x = x.getArg(0);
-    		  if(isEqualVar(loopBlock.getInductionVar(),x)){
-    			  is_found = true;
-    			  break;
-    		  }
-    	  }
-    	  if(is_found)
-    		  dims.add(XMPdimInfo.loopInfo(loopBlock));
-    	  loopBody = loopBlock.getBody();
-      }
-
-      /* check loopIterList */
+      if(loopBlock == null) break;
+      boolean is_found = false;
       for(Xobject x: loopIterList){
-    	  if(x.Opcode() == Xcode.LIST){
-    		  if(x.getArgOrNull(1) != null ||
-    		     x.getArgOrNull(2) != null){
-    			  XMP.errorAt(pb,"bad syntax in loop directive");
-    		  }
-    		  x = x.getArg(0);
-    	  }
-    	  boolean is_found = false;
-    	  for(XMPdimInfo d_info: dims){
-    		  if(isEqualVar(d_info.getLoopVar(),x)){
-    			  is_found = true;
-    			  break;
-    		  }
-    	  }
-    	  if(!is_found)
-    		  XMP.errorAt(pb,"loop index is not found in loop varaibles");
+	if(x.Opcode() == Xcode.LIST) x = x.getArg(0);
+	if(isEqualVar(loopBlock.getInductionVar(),x)){
+	  is_found = true;
+	  break;
+	}
       }
+      if(is_found)
+	dims.add(XMPdimInfo.loopInfo(loopBlock));
+      loopBody = loopBlock.getBody();
+    }
+    
+    /* check loopIterList */
+    for(Xobject x: loopIterList){
+      if(x.Opcode() == Xcode.LIST){
+	if(x.getArgOrNull(1) != null || x.getArgOrNull(2) != null){
+	  XMP.errorAt(pb,"bad syntax in loop directive");
+	}
+	x = x.getArg(0);
+      }
+      boolean is_found = false;
+      for(XMPdimInfo d_info: dims){
+	if(isEqualVar(d_info.getLoopVar(),x)){
+	  is_found = true;
+	  break;
+	}
+      }
+      if(!is_found)
+	XMP.errorAt(pb,"loop index is not found in loop varaibles");
     }
     
     XMPobjectsRef on_ref = XMPobjectsRef.parseDecl(loopDecl.getArg(1),env,pb);
@@ -1082,12 +1078,6 @@ public class XMPanalyzePragma
   }
 
   private boolean convertGmoveToArray(PragmaBlock pb, Xobject left, Xobject right){
-
-    // boolean lhs_is_scalar = isScalar(left);
-    // boolean rhs_is_scalar = isScalar(right);
-
-    // if (!lhs_is_scalar && rhs_is_scalar){
-
       pb.setPragma("ARRAY");
 
       Xobject onRef = Xcons.List();
@@ -1125,25 +1115,8 @@ public class XMPanalyzePragma
       Xobject decl = Xcons.List(onRef);
       pb.setClauses(decl);
 
-    // }
-    // else { // lhs_is_scalar || !rhs_is_scalar){
-    //   return false;
-    // }
-
     return true;
-
   }
-
-  // private boolean isScalar(Xobject x){
-  //   if (x.Opcode() == Xcode.F_ARRAY_REF){
-  //     for (XobjArgs args = x.getArg(1).getArgs(); args != null;
-  // 	   args = args.nextArgs()){
-  // 	if (args.getArg().Opcode() != Xcode.F_ARRAY_INDEX) return false;
-  //     }
-  //   }
-  //   return true;
-  // }
-
 
   private Block analyzeArray(PragmaBlock pb){
 

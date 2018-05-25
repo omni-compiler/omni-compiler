@@ -22,17 +22,17 @@ program main
   call random_number( tmp )
   random_array(:) = int(tmp(:) * 10000)
 
-!$xmp loop (i) on t1(i,:,:)
+!$xmp loop on t1(i,:,:)
   do i=1, N
      a(i) = random_array(i)
   enddo
 
-!$xmp loop (i) on t2(:,i,:)
+!$xmp loop on t2(:,i,:)
   do i=1, N
      b(i) = dble(random_array(i))
   enddo
 
-!$xmp loop (i) on t3(:,:,i)
+!$xmp loop on t3(:,:,i)
   do i=1, N
      c(i) = real(random_array(i))
   enddo
@@ -46,17 +46,17 @@ program main
   sb = 10000.0
   sc = 10000.0
 
-!$xmp loop (i) on t1(i,:,:) reduction(min: sa)
+!$xmp loop on t1(i,:,:) reduction(min: sa)
   do i=1, N
      sa = min(sa, a(i))
   enddo
 
-!$xmp loop (i) on t2(:,i,:) reduction(min: sb)
+!$xmp loop on t2(:,i,:) reduction(min: sb)
   do i=1, N
      sb = min(sb, b(i))
   enddo
 
-!$xmp loop (i) on t3(:,:,i) reduction(min: sc)
+!$xmp loop on t3(:,:,i) reduction(min: sc)
   do i=1, N
      sc = min(sc, c(i))
   enddo

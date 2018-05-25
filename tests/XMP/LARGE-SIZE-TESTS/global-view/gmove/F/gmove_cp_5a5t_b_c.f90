@@ -11,7 +11,7 @@ integer xmp_node_num
 !$xmp align a(i0,i1,i2,i3,i4) with tx(i0,i1,i2,i3,i4)
 !$xmp align b(i0,i1,i2,i3,i4) with ty(i0,i1,i2,i3,i4)
 
-!$xmp loop (i0,i1,i2,i3,i4) on tx(i0,i1,i2,i3,i4)
+!$xmp loop on tx(i0,i1,i2,i3,i4)
 do i4=1,n
   do i3=1,n
     do i2=1,n
@@ -24,7 +24,7 @@ do i4=1,n
   end do
 end do
 
-!$xmp loop (i0,i1,i2,i3,i4) on ty(i0,i1,i2,i3,i4)
+!$xmp loop on ty(i0,i1,i2,i3,i4)
 do i4=1,n
   do i3=1,n
     do i2=1,n
@@ -41,7 +41,7 @@ end do
 b(2:5,2:5,2:5,2:5,2:5)=a(5:8,5:8,5:8,5:8,5:8)
 
 ierr=0
-!$xmp loop (i0,i1,i2,i3,i4) on ty(i0,i1,i2,i3,i4)
+!$xmp loop on ty(i0,i1,i2,i3,i4)
 do i4=2,5
   do i3=2,5
     do i2=2,5

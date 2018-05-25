@@ -16,7 +16,7 @@ int main(){
 
   int i0,i1,i2,i3,i4,ierr;
 
-#pragma xmp loop (i0,i1,i2,i3,i4) on tx(i0,i1,i2,i3,i4)
+#pragma xmp loop on tx(i0,i1,i2,i3,i4)
   for(i0=0;i0<n;i0++){
     for(i1=0;i1<n;i1++){
       for(i2=0;i2<n;i2++){
@@ -29,7 +29,7 @@ int main(){
     }
   }
 
-#pragma xmp loop (i1,i3,i4) on tx(*,i1,*,i3,i4)
+#pragma xmp loop on tx(*,i1,*,i3,i4)
   for(i0=0;i0<n;i0++){
     for(i1=0;i1<n;i1++){
       for(i2=0;i2<n;i2++){
@@ -46,7 +46,7 @@ int main(){
   b[1:n-1][1:n-1][1:n-1][1:n-1][1:n-1]=a[1:n-1][1:n-1][1:n-1][1:n-1][1:n-1];
 
   ierr=0;
-#pragma xmp loop (i1,i3,i4) on tx(*,i1,*,i3,i4)
+#pragma xmp loop on tx(*,i1,*,i3,i4)
   for(i0=1;i0<n;i0++){
     for(i1=1;i1<n;i1++){
       for(i2=1;i2<n;i2++){

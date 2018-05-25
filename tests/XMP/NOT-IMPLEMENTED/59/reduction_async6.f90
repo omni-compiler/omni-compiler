@@ -22,13 +22,13 @@
      $           mod(random_array(i)/100, 10000)
          enddo
 
-!$xmp loop (i) on t(i)
+!$xmp loop on t(i)
          do i=1, N
             a(i) = random_array(i)
          enddo
          
          sa = 0
-!$xmp loop (i) on t(i)
+!$xmp loop on t(i)
          do i=1, N
             sa = ieor(sa, a(i))
          enddo

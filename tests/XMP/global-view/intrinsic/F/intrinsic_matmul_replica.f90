@@ -47,21 +47,21 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
 !$xmp align b(i,j) with ty(i,j)
 !$xmp align x(*,j) with tz(*,j)
 
-!$xmp loop (i,j) on tx(i,j)
+!$xmp loop on tx(i,j)
   do j=1,n2
     do i=1,n1
       a(i,j)=(i-1)*n1+j
     end do
   end do
 
-!$xmp loop (i,j) on ty(i,j)
+!$xmp loop on ty(i,j)
   do j=1,n3
     do i=1,n2
       b(i,j)=(j-1)*n3+i
     end do
   end do
 
-!$xmp loop (j) on tz(*,j)
+!$xmp loop on tz(*,j)
   do j=1,n3
     do i=1,n1
       x(i,j)=0
@@ -78,7 +78,7 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
   rn4=rn2*(rn2+1)*(2*rn2+1)/6.0
   rn5=rn2*(rn2+1)/2.0
 
-!$xmp loop (j) on tz(*,j)
+!$xmp loop on tz(*,j)
   do j=1,n3
     do i=1,n1
       ra=(i-1)*rn1
@@ -112,14 +112,14 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
 !$xmp align b(i,j) with ty(i,j)
 !$xmp align x(i,*) with tz(i,*)
 
-!$xmp loop (i,j) on tx(i,j)
+!$xmp loop on tx(i,j)
   do j=1,n2
     do i=1,n1
       a(i,j)=(i-1)*n1+j
     end do
   end do
 
-!$xmp loop (i,j) on ty(i,j)
+!$xmp loop on ty(i,j)
   do j=1,n3
     do i=1,n2
       b(i,j)=(j-1)*n3+i
@@ -127,7 +127,7 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
   end do
 
   do j=1,n3
-!$xmp loop (i) on tz(i,*)
+!$xmp loop on tz(i,*)
     do i=1,n1
       x(i,j)=0
     end do
@@ -144,7 +144,7 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
   rn5=rn2*(rn2+1)/2.0
 
   do j=1,n3
-!$xmp loop (i) on tz(i,*)
+!$xmp loop on tz(i,*)
     do i=1,n1
       ra=(i-1)*rn1
       rb=(j-1)*rn3
@@ -177,21 +177,21 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
 !$xmp align b(*,j) with ty(*,j)
 !$xmp align x(i,j) with tz(i,j)
 
-!$xmp loop (i,j) on tx(i,j)
+!$xmp loop on tx(i,j)
   do j=1,n2
     do i=1,n1
       a(i,j)=(i-1)*n1+j
     end do
   end do
 
-!$xmp loop (j) on ty(*,j)
+!$xmp loop on ty(*,j)
   do j=1,n3
     do i=1,n2
       b(i,j)=(j-1)*n3+i
     end do
   end do
 
-!$xmp loop (i,j) on tz(i,j)
+!$xmp loop on tz(i,j)
   do j=1,n3
     do i=1,n1
       x(i,j)=0
@@ -208,7 +208,7 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
   rn4=rn2*(rn2+1)*(2*rn2+1)/6.0
   rn5=rn2*(rn2+1)/2.0
 
-!$xmp loop (i,j) on tz(i,j)
+!$xmp loop on tz(i,j)
   do j=1,n3
     do i=1,n1
       ra=(i-1)*rn1
@@ -240,21 +240,21 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
 !$xmp align b(*,j) with ty(*,j)
 !$xmp align x(*,j) with tz(*,j)
 
-!$xmp loop (i,j) on tx(i,j)
+!$xmp loop on tx(i,j)
   do j=1,n2
     do i=1,n1
       a(i,j)=(i-1)*n1+j
     end do
   end do
 
-!$xmp loop (j) on ty(*,j)
+!$xmp loop on ty(*,j)
   do j=1,n3
     do i=1,n2
       b(i,j)=(j-1)*n3+i
     end do
   end do
 
-!$xmp loop (j) on tz(*,j)
+!$xmp loop on tz(*,j)
   do j=1,n3
     do i=1,n1
       x(i,j)=0
@@ -271,7 +271,7 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
   rn4=rn2*(rn2+1)*(2*rn2+1)/6.0
   rn5=rn2*(rn2+1)/2.0
 
-!$xmp loop (j) on tz(*,j)
+!$xmp loop on tz(*,j)
   do j=1,n3
     do i=1,n1
       ra=(i-1)*rn1
@@ -305,14 +305,14 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
 !$xmp align b(*,j) with ty(*,j)
 !$xmp align x(i,*) with tz(i,*)
 
-!$xmp loop (i,j) on tx(i,j)
+!$xmp loop on tx(i,j)
   do j=1,n2
     do i=1,n1
       a(i,j)=(i-1)*n1+j
     end do
   end do
 
-!$xmp loop (j) on ty(*,j)
+!$xmp loop on ty(*,j)
   do j=1,n3
     do i=1,n2
       b(i,j)=(j-1)*n3+i
@@ -320,7 +320,7 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
   end do
 
   do j=1,n3
-!$xmp loop (i) on tz(i,*)
+!$xmp loop on tz(i,*)
     do i=1,n1
       x(i,j)=0
     end do
@@ -337,7 +337,7 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
   rn5=rn2*(rn2+1)/2.0
 
   do j=1,n3
-!$xmp loop (i) on tz(i,*)
+!$xmp loop on tz(i,*)
     do i=1,n1
       ra=(i-1)*rn1
       rb=(j-1)*rn3
@@ -370,7 +370,7 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
 !$xmp align b(i,*) with ty(i,*)
 !$xmp align x(i,j) with tz(i,j)
 
-!$xmp loop (i,j) on tx(i,j)
+!$xmp loop on tx(i,j)
   do j=1,n2
     do i=1,n1
       a(i,j)=(i-1)*n1+j
@@ -378,13 +378,13 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
   end do
 
   do j=1,n3
-!$xmp loop (i) on ty(i,*)
+!$xmp loop on ty(i,*)
     do i=1,n2
       b(i,j)=(j-1)*n3+i
     end do
   end do
 
-!$xmp loop (i,j) on tz(i,j)
+!$xmp loop on tz(i,j)
   do j=1,n3
     do i=1,n1
       x(i,j)=0
@@ -401,7 +401,7 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
   rn4=rn2*(rn2+1)*(2*rn2+1)/6.0
   rn5=rn2*(rn2+1)/2.0
 
-!$xmp loop (i,j) on tz(i,j)
+!$xmp loop on tz(i,j)
   do j=1,n3
     do i=1,n1
       ra=(i-1)*rn1
@@ -433,7 +433,7 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
 !$xmp align b(i,*) with ty(i,*)
 !$xmp align x(*,j) with tz(*,j)
 
-!$xmp loop (i,j) on tx(i,j)
+!$xmp loop on tx(i,j)
   do j=1,n2
     do i=1,n1
       a(i,j)=(i-1)*n1+j
@@ -441,13 +441,13 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
   end do
 
   do j=1,n3
-!$xmp loop (i) on ty(i,*)
+!$xmp loop on ty(i,*)
     do i=1,n2
       b(i,j)=(j-1)*n3+i
     end do
   end do
 
-!$xmp loop (j) on tz(*,j)
+!$xmp loop on tz(*,j)
   do j=1,n3
     do i=1,n1
       x(i,j)=0
@@ -464,7 +464,7 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
   rn4=rn2*(rn2+1)*(2*rn2+1)/6.0
   rn5=rn2*(rn2+1)/2.0
 
-!$xmp loop (j) on tz(*,j)
+!$xmp loop on tz(*,j)
   do j=1,n3
     do i=1,n1
       ra=(i-1)*rn1
@@ -498,7 +498,7 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
 !$xmp align b(i,*) with ty(i,*)
 !$xmp align x(i,*) with tz(i,*)
 
-!$xmp loop (i,j) on tx(i,j)
+!$xmp loop on tx(i,j)
   do j=1,n2
     do i=1,n1
       a(i,j)=(i-1)*n1+j
@@ -506,14 +506,14 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
   end do
 
   do j=1,n3
-!$xmp loop (i) on ty(i,*)
+!$xmp loop on ty(i,*)
     do i=1,n2
       b(i,j)=(j-1)*n3+i
     end do
   end do
 
   do j=1,n3
-!$xmp loop (i) on tz(i,*)
+!$xmp loop on tz(i,*)
     do i=1,n1
       x(i,j)=0
     end do
@@ -530,7 +530,7 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
   rn5=rn2*(rn2+1)/2.0
 
   do j=1,n3
-!$xmp loop (i) on tz(i,*)
+!$xmp loop on tz(i,*)
     do i=1,n1
       ra=(i-1)*rn1
       rb=(j-1)*rn3
@@ -563,21 +563,21 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
 !$xmp align b(i,j) with ty(i,j)
 !$xmp align x(i,j) with tz(i,j)
 
-!$xmp loop (j) on tx(*,j)
+!$xmp loop on tx(*,j)
   do j=1,n2
     do i=1,n1
       a(i,j)=(i-1)*n1+j
     end do
   end do
 
-!$xmp loop (i,j) on ty(i,j)
+!$xmp loop on ty(i,j)
   do j=1,n3
     do i=1,n2
       b(i,j)=(j-1)*n3+i
     end do
   end do
 
-!$xmp loop (i,j) on tz(i,j)
+!$xmp loop on tz(i,j)
   do j=1,n3
     do i=1,n1
       x(i,j)=0
@@ -594,7 +594,7 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
   rn4=rn2*(rn2+1)*(2*rn2+1)/6.0
   rn5=rn2*(rn2+1)/2.0
 
-!$xmp loop (i,j) on tz(i,j)
+!$xmp loop on tz(i,j)
   do j=1,n3
     do i=1,n1
       ra=(i-1)*rn1
@@ -626,21 +626,21 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
 !$xmp align b(i,j) with ty(i,j)
 !$xmp align x(*,j) with tz(*,j)
 
-!$xmp loop (j) on tx(*,j)
+!$xmp loop on tx(*,j)
   do j=1,n2
     do i=1,n1
       a(i,j)=(i-1)*n1+j
     end do
   end do
 
-!$xmp loop (i,j) on ty(i,j)
+!$xmp loop on ty(i,j)
   do j=1,n3
     do i=1,n2
       b(i,j)=(j-1)*n3+i
     end do
   end do
 
-!$xmp loop (j) on tz(*,j)
+!$xmp loop on tz(*,j)
   do j=1,n3
     do i=1,n1
       x(i,j)=0
@@ -657,7 +657,7 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
   rn4=rn2*(rn2+1)*(2*rn2+1)/6.0
   rn5=rn2*(rn2+1)/2.0
 
-!$xmp loop (j) on tz(*,j)
+!$xmp loop on tz(*,j)
   do j=1,n3
     do i=1,n1
       ra=(i-1)*rn1
@@ -691,14 +691,14 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
 !$xmp align b(i,j) with ty(i,j)
 !$xmp align x(i,*) with tz(i,*)
 
-!$xmp loop (j) on tx(*,j)
+!$xmp loop on tx(*,j)
   do j=1,n2
     do i=1,n1
       a(i,j)=(i-1)*n1+j
     end do
   end do
 
-!$xmp loop (i,j) on ty(i,j)
+!$xmp loop on ty(i,j)
   do j=1,n3
     do i=1,n2
       b(i,j)=(j-1)*n3+i
@@ -706,7 +706,7 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
   end do
 
   do j=1,n3
-!$xmp loop (i) on tz(i,*)
+!$xmp loop on tz(i,*)
     do i=1,n1
       x(i,j)=0
     end do
@@ -723,7 +723,7 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
   rn5=rn2*(rn2+1)/2.0
 
   do j=1,n3
-!$xmp loop (i) on tz(i,*)
+!$xmp loop on tz(i,*)
     do i=1,n1
       ra=(i-1)*rn1
       rb=(j-1)*rn3
@@ -756,21 +756,21 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
 !$xmp align b(*,j) with ty(*,j)
 !$xmp align x(i,j) with tz(i,j)
 
-!$xmp loop (j) on tx(*,j)
+!$xmp loop on tx(*,j)
   do j=1,n2
     do i=1,n1
       a(i,j)=(i-1)*n1+j
     end do
   end do
 
-!$xmp loop (j) on ty(*,j)
+!$xmp loop on ty(*,j)
   do j=1,n3
     do i=1,n2
       b(i,j)=(j-1)*n3+i
     end do
   end do
 
-!$xmp loop (i,j) on tz(i,j)
+!$xmp loop on tz(i,j)
   do j=1,n3
     do i=1,n1
       x(i,j)=0
@@ -787,7 +787,7 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
   rn4=rn2*(rn2+1)*(2*rn2+1)/6.0
   rn5=rn2*(rn2+1)/2.0
 
-!$xmp loop (i,j) on tz(i,j)
+!$xmp loop on tz(i,j)
   do j=1,n3
     do i=1,n1
       ra=(i-1)*rn1
@@ -819,21 +819,21 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
 !$xmp align b(*,j) with ty(*,j)
 !$xmp align x(*,j) with tz(*,j)
 
-!$xmp loop (j) on tx(*,j)
+!$xmp loop on tx(*,j)
   do j=1,n2
     do i=1,n1
       a(i,j)=(i-1)*n1+j
     end do
   end do
 
-!$xmp loop (j) on ty(*,j)
+!$xmp loop on ty(*,j)
   do j=1,n3
     do i=1,n2
       b(i,j)=(j-1)*n3+i
     end do
   end do
 
-!$xmp loop (j) on tz(*,j)
+!$xmp loop on tz(*,j)
   do j=1,n3
     do i=1,n1
       x(i,j)=0
@@ -850,7 +850,7 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
   rn4=rn2*(rn2+1)*(2*rn2+1)/6.0
   rn5=rn2*(rn2+1)/2.0
 
-!$xmp loop (j) on tz(*,j)
+!$xmp loop on tz(*,j)
   do j=1,n3
     do i=1,n1
       ra=(i-1)*rn1
@@ -884,14 +884,14 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
 !$xmp align b(*,j) with ty(*,j)
 !$xmp align x(i,*) with tz(i,*)
 
-!$xmp loop (j) on tx(*,j)
+!$xmp loop on tx(*,j)
   do j=1,n2
     do i=1,n1
       a(i,j)=(i-1)*n1+j
     end do
   end do
 
-!$xmp loop (j) on ty(*,j)
+!$xmp loop on ty(*,j)
   do j=1,n3
     do i=1,n2
       b(i,j)=(j-1)*n3+i
@@ -899,7 +899,7 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
   end do
 
   do j=1,n3
-!$xmp loop (i) on tz(i,*)
+!$xmp loop on tz(i,*)
     do i=1,n1
       x(i,j)=0
     end do
@@ -916,7 +916,7 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
   rn5=rn2*(rn2+1)/2.0
 
   do j=1,n3
-!$xmp loop (i) on tz(i,*)
+!$xmp loop on tz(i,*)
     do i=1,n1
       ra=(i-1)*rn1
       rb=(j-1)*rn3
@@ -949,7 +949,7 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
 !$xmp align b(i,*) with ty(i,*)
 !$xmp align x(i,j) with tz(i,j)
 
-!$xmp loop (j) on tx(*,j)
+!$xmp loop on tx(*,j)
   do j=1,n2
     do i=1,n1
       a(i,j)=(i-1)*n1+j
@@ -957,13 +957,13 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
   end do
 
   do j=1,n3
-!$xmp loop (i) on ty(i,*)
+!$xmp loop on ty(i,*)
     do i=1,n2
       b(i,j)=(j-1)*n3+i
     end do
   end do
 
-!$xmp loop (i,j) on tz(i,j)
+!$xmp loop on tz(i,j)
   do j=1,n3
     do i=1,n1
       x(i,j)=0
@@ -980,7 +980,7 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
   rn4=rn2*(rn2+1)*(2*rn2+1)/6.0
   rn5=rn2*(rn2+1)/2.0
 
-!$xmp loop (i,j) on tz(i,j)
+!$xmp loop on tz(i,j)
   do j=1,n3
     do i=1,n1
       ra=(i-1)*rn1
@@ -1012,7 +1012,7 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
 !$xmp align b(i,*) with ty(i,*)
 !$xmp align x(*,j) with tz(*,j)
 
-!$xmp loop (j) on tx(*,j)
+!$xmp loop on tx(*,j)
   do j=1,n2
     do i=1,n1
       a(i,j)=(i-1)*n1+j
@@ -1020,13 +1020,13 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
   end do
 
   do j=1,n3
-!$xmp loop (i) on ty(i,*)
+!$xmp loop on ty(i,*)
     do i=1,n2
       b(i,j)=(j-1)*n3+i
     end do
   end do
 
-!$xmp loop (j) on tz(*,j)
+!$xmp loop on tz(*,j)
   do j=1,n3
     do i=1,n1
       x(i,j)=0
@@ -1043,7 +1043,7 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
   rn4=rn2*(rn2+1)*(2*rn2+1)/6.0
   rn5=rn2*(rn2+1)/2.0
 
-!$xmp loop (j) on tz(*,j)
+!$xmp loop on tz(*,j)
   do j=1,n3
     do i=1,n1
       ra=(i-1)*rn1
@@ -1077,7 +1077,7 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
 !$xmp align b(i,*) with ty(i,*)
 !$xmp align x(i,*) with tz(i,*)
 
-!$xmp loop (j) on tx(*,j)
+!$xmp loop on tx(*,j)
   do j=1,n2
     do i=1,n1
       a(i,j)=(i-1)*n1+j
@@ -1085,14 +1085,14 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
   end do
 
   do j=1,n3
-!$xmp loop (i) on ty(i,*)
+!$xmp loop on ty(i,*)
     do i=1,n2
       b(i,j)=(j-1)*n3+i
     end do
   end do
 
   do j=1,n3
-!$xmp loop (i) on tz(i,*)
+!$xmp loop on tz(i,*)
     do i=1,n1
       x(i,j)=0
     end do
@@ -1109,7 +1109,7 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
   rn5=rn2*(rn2+1)/2.0
 
   do j=1,n3
-!$xmp loop (i) on tz(i,*)
+!$xmp loop on tz(i,*)
     do i=1,n1
       ra=(i-1)*rn1
       rb=(j-1)*rn3
@@ -1143,20 +1143,20 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
 !$xmp align x(i,j) with tz(i,j)
 
   do j=1,n2
-!$xmp loop (i) on tx(i,*)
+!$xmp loop on tx(i,*)
     do i=1,n1
       a(i,j)=(i-1)*n1+j
     end do
   end do
 
-!$xmp loop (i,j) on ty(i,j)
+!$xmp loop on ty(i,j)
   do j=1,n3
     do i=1,n2
       b(i,j)=(j-1)*n3+i
     end do
   end do
 
-!$xmp loop (i,j) on tz(i,j)
+!$xmp loop on tz(i,j)
   do j=1,n3
     do i=1,n1
       x(i,j)=0
@@ -1173,7 +1173,7 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
   rn4=rn2*(rn2+1)*(2*rn2+1)/6.0
   rn5=rn2*(rn2+1)/2.0
 
-!$xmp loop (i,j) on tz(i,j)
+!$xmp loop on tz(i,j)
   do j=1,n3
     do i=1,n1
       ra=(i-1)*rn1
@@ -1206,20 +1206,20 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
 !$xmp align x(*,j) with tz(*,j)
 
   do j=1,n2
-!$xmp loop (i) on tx(i,*)
+!$xmp loop on tx(i,*)
     do i=1,n1
       a(i,j)=(i-1)*n1+j
     end do
   end do
 
-!$xmp loop (i,j) on ty(i,j)
+!$xmp loop on ty(i,j)
   do j=1,n3
     do i=1,n2
       b(i,j)=(j-1)*n3+i
     end do
   end do
 
-!$xmp loop (j) on tz(*,j)
+!$xmp loop on tz(*,j)
   do j=1,n3
     do i=1,n1
       x(i,j)=0
@@ -1236,7 +1236,7 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
   rn4=rn2*(rn2+1)*(2*rn2+1)/6.0
   rn5=rn2*(rn2+1)/2.0
 
-!$xmp loop (j) on tz(*,j)
+!$xmp loop on tz(*,j)
   do j=1,n3
     do i=1,n1
       ra=(i-1)*rn1
@@ -1271,13 +1271,13 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
 !$xmp align x(i,*) with tz(i,*)
 
   do j=1,n2
-!$xmp loop (i) on tx(i,*)
+!$xmp loop on tx(i,*)
     do i=1,n1
       a(i,j)=(i-1)*n1+j
     end do
   end do
 
-!$xmp loop (i,j) on ty(i,j)
+!$xmp loop on ty(i,j)
   do j=1,n3
     do i=1,n2
       b(i,j)=(j-1)*n3+i
@@ -1285,7 +1285,7 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
   end do
 
   do j=1,n3
-!$xmp loop (i) on tz(i,*)
+!$xmp loop on tz(i,*)
     do i=1,n1
       x(i,j)=0
     end do
@@ -1302,7 +1302,7 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
   rn5=rn2*(rn2+1)/2.0
 
   do j=1,n3
-!$xmp loop (i) on tz(i,*)
+!$xmp loop on tz(i,*)
     do i=1,n1
       ra=(i-1)*rn1
       rb=(j-1)*rn3
@@ -1336,20 +1336,20 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
 !$xmp align x(i,j) with tz(i,j)
 
   do j=1,n2
-!$xmp loop (i) on tx(i,*)
+!$xmp loop on tx(i,*)
     do i=1,n1
       a(i,j)=(i-1)*n1+j
     end do
   end do
 
-!$xmp loop (j) on ty(*,j)
+!$xmp loop on ty(*,j)
   do j=1,n3
     do i=1,n2
       b(i,j)=(j-1)*n3+i
     end do
   end do
 
-!$xmp loop (i,j) on tz(i,j)
+!$xmp loop on tz(i,j)
   do j=1,n3
     do i=1,n1
       x(i,j)=0
@@ -1366,7 +1366,7 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
   rn4=rn2*(rn2+1)*(2*rn2+1)/6.0
   rn5=rn2*(rn2+1)/2.0
 
-!$xmp loop (i,j) on tz(i,j)
+!$xmp loop on tz(i,j)
   do j=1,n3
     do i=1,n1
       ra=(i-1)*rn1
@@ -1399,20 +1399,20 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
 !$xmp align x(*,j) with tz(*,j)
 
   do j=1,n2
-!$xmp loop (i) on tx(i,*)
+!$xmp loop on tx(i,*)
     do i=1,n1
       a(i,j)=(i-1)*n1+j
     end do
   end do
 
-!$xmp loop (j) on ty(*,j)
+!$xmp loop on ty(*,j)
   do j=1,n3
     do i=1,n2
       b(i,j)=(j-1)*n3+i
     end do
   end do
 
-!$xmp loop (j) on tz(*,j)
+!$xmp loop on tz(*,j)
   do j=1,n3
     do i=1,n1
       x(i,j)=0
@@ -1429,7 +1429,7 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
   rn4=rn2*(rn2+1)*(2*rn2+1)/6.0
   rn5=rn2*(rn2+1)/2.0
 
-!$xmp loop (j) on tz(*,j)
+!$xmp loop on tz(*,j)
   do j=1,n3
     do i=1,n1
       ra=(i-1)*rn1
@@ -1464,13 +1464,13 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
 !$xmp align x(i,*) with tz(i,*)
 
   do j=1,n2
-!$xmp loop (i) on tx(i,*)
+!$xmp loop on tx(i,*)
     do i=1,n1
       a(i,j)=(i-1)*n1+j
     end do
   end do
 
-!$xmp loop (j) on ty(*,j)
+!$xmp loop on ty(*,j)
   do j=1,n3
     do i=1,n2
       b(i,j)=(j-1)*n3+i
@@ -1478,7 +1478,7 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
   end do
 
   do j=1,n3
-!$xmp loop (i) on tz(i,*)
+!$xmp loop on tz(i,*)
     do i=1,n1
       x(i,j)=0
     end do
@@ -1495,7 +1495,7 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
   rn5=rn2*(rn2+1)/2.0
 
   do j=1,n3
-!$xmp loop (i) on tz(i,*)
+!$xmp loop on tz(i,*)
     do i=1,n1
       ra=(i-1)*rn1
       rb=(j-1)*rn3
@@ -1529,20 +1529,20 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
 !$xmp align x(i,j) with tz(i,j)
 
   do j=1,n2
-!$xmp loop (i) on tx(i,*)
+!$xmp loop on tx(i,*)
     do i=1,n1
       a(i,j)=(i-1)*n1+j
     end do
   end do
 
   do j=1,n3
-!$xmp loop (i) on ty(i,*)
+!$xmp loop on ty(i,*)
     do i=1,n2
       b(i,j)=(j-1)*n3+i
     end do
   end do
 
-!$xmp loop (i,j) on tz(i,j)
+!$xmp loop on tz(i,j)
   do j=1,n3
     do i=1,n1
       x(i,j)=0
@@ -1559,7 +1559,7 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
   rn4=rn2*(rn2+1)*(2*rn2+1)/6.0
   rn5=rn2*(rn2+1)/2.0
 
-!$xmp loop (i,j) on tz(i,j)
+!$xmp loop on tz(i,j)
   do j=1,n3
     do i=1,n1
       ra=(i-1)*rn1
@@ -1592,20 +1592,20 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
 !$xmp align x(*,j) with tz(*,j)
 
   do j=1,n2
-!$xmp loop (i) on tx(i,*)
+!$xmp loop on tx(i,*)
     do i=1,n1
       a(i,j)=(i-1)*n1+j
     end do
   end do
 
   do j=1,n3
-!$xmp loop (i) on ty(i,*)
+!$xmp loop on ty(i,*)
     do i=1,n2
       b(i,j)=(j-1)*n3+i
     end do
   end do
 
-!$xmp loop (j) on tz(*,j)
+!$xmp loop on tz(*,j)
   do j=1,n3
     do i=1,n1
       x(i,j)=0
@@ -1622,7 +1622,7 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
   rn4=rn2*(rn2+1)*(2*rn2+1)/6.0
   rn5=rn2*(rn2+1)/2.0
 
-!$xmp loop (j) on tz(*,j)
+!$xmp loop on tz(*,j)
   do j=1,n3
     do i=1,n1
       ra=(i-1)*rn1
@@ -1657,21 +1657,21 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
 !$xmp align x(i,*) with tz(i,*)
 
   do j=1,n2
-!$xmp loop (i) on tx(i,*)
+!$xmp loop on tx(i,*)
     do i=1,n1
       a(i,j)=(i-1)*n1+j
     end do
   end do
 
   do j=1,n3
-!$xmp loop (i) on ty(i,*)
+!$xmp loop on ty(i,*)
     do i=1,n2
       b(i,j)=(j-1)*n3+i
     end do
   end do
 
   do j=1,n3
-!$xmp loop (i) on tz(i,*)
+!$xmp loop on tz(i,*)
     do i=1,n1
       x(i,j)=0
     end do
@@ -1688,7 +1688,7 @@ integer a(n1,n2),b(n2,n3),x(n1,n3)
   rn5=rn2*(rn2+1)/2.0
 
   do j=1,n3
-!$xmp loop (i) on tz(i,*)
+!$xmp loop on tz(i,*)
     do i=1,n1
       ra=(i-1)*rn1
       rb=(j-1)*rn3

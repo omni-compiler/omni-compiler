@@ -13,7 +13,7 @@ contains
     !$xmp align  ue_t(*,k) with t(k)
     !$xmp shadow ue_t(0,1)
 
-    !$xmp loop (iz) on t(iz)
+    !$xmp loop on t(iz)
     do iz=1,32
        do itb=1,16
           ue_t(itb,iz)=(0.0d0,0.0d0)

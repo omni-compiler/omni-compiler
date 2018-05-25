@@ -13,7 +13,7 @@ program main
   call random_number(tmp)
   random_array(:) = int(tmp(:) * 10000)
 
-!$xmp loop (i,j) on t(i,j)
+!$xmp loop on t(i,j)
   do j=1, N
      do i=1, N
         l = (j-1)*N+i
@@ -27,7 +27,7 @@ program main
   enddo
 
   sa = 0
-!$xmp loop (i,j) on t(i,j) reduction(ieor: sa)
+!$xmp loop on t(i,j) reduction(ieor: sa)
   do j=1, N
      do i=1, N
         sa = ieor(sa, a(i,j))

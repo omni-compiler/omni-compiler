@@ -10,7 +10,7 @@ integer a(n,n,n,n,n,n,n),b(n,n,n,n,n,n,n)
 
 irank=xmp_node_num()
 
-!$xmp loop (i0,i1,i2,i3,i4,i5,i6) on tx(i0,i1,i2,i3,i4,i5,i6)
+!$xmp loop on tx(i0,i1,i2,i3,i4,i5,i6)
 do i6=1,n
   do i5=1,n
     do i4=1,n
@@ -27,7 +27,7 @@ do i6=1,n
   end do
 end do
 
-!$xmp loop (i1,i2,i3,i4,i5,i6) on tx(*,i1,i2,i3,i4,i5,i6)
+!$xmp loop on tx(*,i1,i2,i3,i4,i5,i6)
 do i6=1,n
   do i5=1,n
     do i4=1,n
@@ -48,7 +48,7 @@ end do
 b(2:n,2:n,2:n,2:n,2:n,2:n,2:n)=a(2:n,2:n,2:n,2:n,2:n,2:n,2:n)
 
 ierr=0
-!$xmp loop (i1,i2,i3,i4,i5,i6) on tx(*,i1,i2,i3,i4,i5,i6)
+!$xmp loop on tx(*,i1,i2,i3,i4,i5,i6)
 do i6=2,n
   do i5=2,n
     do i4=2,n

@@ -11,7 +11,7 @@ program main
 !$xmp align b(i) with t(i)
 !$xmp align c(i) with t(i)
 
-!$xmp loop (i) on t(i)
+!$xmp loop on t(i)
   do i=1, N
      if(mod(i,100).eq.0) then
         a(i) = 2
@@ -32,7 +32,7 @@ program main
   sb = 1.0
   sc = 1.0
 
-!$xmp loop (i) on t(i) reduction(*: sa, sb, sc)
+!$xmp loop on t(i) reduction(*: sa, sb, sc)
   do i=1, N
      sa = sa*a(i)
      sb = sb*b(i)

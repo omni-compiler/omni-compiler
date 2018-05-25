@@ -19,7 +19,7 @@ program main
      end do
   end do
 
-!$xmp loop (i,j) on t(i,j)
+!$xmp loop on t(i,j)
   do j=1, N
      do i=1, N
         l = (j-1)*N+i
@@ -41,7 +41,7 @@ program main
   sb = 10000.0
   sc = 10000.0
 
-!$xmp loop (i,j) on t(i,j) reduction(min: sa, sb, sc)
+!$xmp loop on t(i,j) reduction(min: sa, sb, sc)
   do j=1, N
      do i=1, N
         sa = min(sa, a(i,j))

@@ -9,21 +9,21 @@ program main
   !$xmp align idx2(i,j) with t(i,j)
   integer:: i,j,answer=0
 
-  !$xmp loop (i,j) on t(i,j)
+  !$xmp loop on t(i,j)
   do i=1,4
      do j=1,4
         a(i,j)=i*4+j
      end do
   end do
 
-  !$xmp loop (i,j) on t(i,j)
+  !$xmp loop on t(i,j)
   do i=1,4
      do j=1,4
         x(i,j)=0
      end do
   end do
 
-  !$xmp loop (i,j) on t(i,j)
+  !$xmp loop on t(i,j)
   do i=1,4
      do j=1,4
         idx1(i,j)=i
@@ -34,7 +34,7 @@ program main
   call &
        xmp_scatter(xmp_desc_of(x),xmp_desc_of(a),xmp_desc_of(idx1),xmp_desc_of(idx2))
 
-  !$xmp loop (i,j) on t(i,j)
+  !$xmp loop on t(i,j)
   do i=1,4
      do j=1,4
         if(x(i,j).ne.a(i,j)) then

@@ -22,14 +22,14 @@ integer xmp_node_num
 !$xmp align a(i,*) with tx(i)
 !$xmp align b(*,i) with ty(i)
 
-!$xmp loop (i) on tx(i)
+!$xmp loop on tx(i)
 do j=1,n
   do i=1,n
     a(i,j)=i+j
   end do
 end do
 
-!$xmp loop (j) on ty(j)
+!$xmp loop on ty(j)
 do j=1,n
   do i=1,n
     b(i,j)=0
@@ -40,7 +40,7 @@ end do
 b(1:n,1:n)=a(1:n,1:n)
 
 ierr=0
-!$xmp loop (i) on ty(i)
+!$xmp loop on ty(i)
 do j=1,n
   do i=1,n
     ierr=ierr+abs(b(j,i)-i-j)

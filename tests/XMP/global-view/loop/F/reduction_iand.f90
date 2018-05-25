@@ -12,7 +12,7 @@ program main
   call random_number( tmp )
   random_array(:) = int(tmp(:) * 10000)
 
-!$xmp loop (i) on t(i)
+!$xmp loop on t(i)
   do i=1, N
      a(i) = random_array(i)
   enddo
@@ -23,7 +23,7 @@ program main
   enddo
 
   sa = -1
-!$xmp loop (i) on t(i) reduction(iand: sa)
+!$xmp loop on t(i) reduction(iand: sa)
   do i=1, N
      sa = iand(sa, a(i))
   enddo

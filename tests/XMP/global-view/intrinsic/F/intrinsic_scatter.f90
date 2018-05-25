@@ -77,7 +77,7 @@ program main
 
   call xmp_scatter(xmp_desc_of(x),xmp_desc_of(a),xmp_desc_of(idx))
 
-  !$xmp loop (i) on t(i)
+  !$xmp loop on t(i)
   do i=1,16
      if(x(i).ne.xdash(i)) then 
         answer = -1

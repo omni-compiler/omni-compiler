@@ -24,7 +24,7 @@ integer a(n,n,n),b(n,n,n)
 !$xmp align a(i,j,k) with tx(i,j,k)
 !$xmp align b(i,j,k) with tx(i,j,k)
 
-!$xmp loop (i,j,k) on tx(i,j,k)
+!$xmp loop on tx(i,j,k)
 do k=1,n
   do j=1,n
     do i=1,n
@@ -33,7 +33,7 @@ do k=1,n
   end do
 end do
 
-!$xmp loop (i,j,k) on tx(i,j,k)
+!$xmp loop on tx(i,j,k)
 do k=1,n
   do j=1,n
     do i=1,n
@@ -46,7 +46,7 @@ end do
 b(1:n,1:n,1)=a(1,1:n,1:n)
 
 ierr=0
-!$xmp loop (i,j,k) on tx(i,j,k)
+!$xmp loop on tx(i,j,k)
 do k=1,1
   do j=1,n
     do i=1,n
@@ -74,7 +74,7 @@ integer xmp_node_num
 !$xmp align a(i,j,k) with tx(i,j,k)
 !$xmp align b(i,j,k) with tx(i,j,k)
 
-!$xmp loop (i,j,k) on tx(i,j,k)
+!$xmp loop on tx(i,j,k)
 do k=1,n
   do j=1,n
     do i=1,n
@@ -83,7 +83,7 @@ do k=1,n
   end do
 end do
 
-!$xmp loop (i,j,k) on tx(i,j,k)
+!$xmp loop on tx(i,j,k)
 do k=1,n
   do j=1,n
     do i=1,n
@@ -96,7 +96,7 @@ end do
 b(1,1:n,1:n)=a(1:n,1,1:n)
 
 ierr=0
-!$xmp loop (i,j,k) on tx(i,j,k)
+!$xmp loop on tx(i,j,k)
 do k=1,n
   do j=1,n
     do i=1,1
@@ -124,7 +124,7 @@ integer xmp_node_num
 !$xmp align a(i,j,k) with tx(i,j,k)
 !$xmp align b(i,j,k) with tx(i,j,k)
 
-!$xmp loop (i,j,k) on tx(i,j,k)
+!$xmp loop on tx(i,j,k)
 do k=1,n
   do j=1,n
     do i=1,n
@@ -133,7 +133,7 @@ do k=1,n
   end do
 end do
 
-!$xmp loop (i,j,k) on tx(i,j,k)
+!$xmp loop on tx(i,j,k)
 do k=1,n
   do j=1,n
     do i=1,n
@@ -146,7 +146,7 @@ end do
 b(1:n,1:n,1:n)=a(1:n,1:n,1:n)
 
 ierr=0
-!$xmp loop (i,j,k) on tx(i,j,k)
+!$xmp loop on tx(i,j,k)
 do k=1,n
   do j=1,n
     do i=1,n
@@ -174,7 +174,7 @@ integer xmp_node_num
 !$xmp align a(i,j,k) with tx(i,j,k)
 !$xmp align b(i,j,k) with tx(i,j,k)
 
-!$xmp loop (i,j,k) on tx(i,j,k)
+!$xmp loop on tx(i,j,k)
 do k=1,n
   do j=1,n
     do i=1,n
@@ -183,7 +183,7 @@ do k=1,n
   end do
 end do
 
-!$xmp loop (i,j,k) on tx(i,j,k)
+!$xmp loop on tx(i,j,k)
 do k=1,n
   do j=1,n
     do i=1,n
@@ -196,7 +196,7 @@ end do
 b(1:n,1:n,1:n)=a(1:n,1:n,1:n)
 
 ierr=0
-!$xmp loop (i,j,k) on tx(i,j,k)
+!$xmp loop on tx(i,j,k)
 do k=1,n
   do j=1,n
     do i=1,n
@@ -224,7 +224,7 @@ integer xmp_node_num
 !$xmp align a(i,j,k) with tx(i,j,k)
 !$xmp align b(i,j,k) with tx(i,j,k)
 
-!$xmp loop (i,j,k) on tx(i,j,k)
+!$xmp loop on tx(i,j,k)
 do k=1,n
   do j=1,n
     do i=1,n
@@ -233,7 +233,7 @@ do k=1,n
   end do
 end do
 
-!$xmp loop (i,j,k) on tx(i,j,k)
+!$xmp loop on tx(i,j,k)
 do k=1,n
   do j=1,n
     do i=1,n
@@ -246,7 +246,7 @@ end do
 b(1:n,1:n,1:n)=a(1:n,1:n,1:n)
 
 ierr=0
-!$xmp loop (i,j,k) on tx(i,j,k)
+!$xmp loop on tx(i,j,k)
 do k=1,n
   do j=1,n
     do i=1,n
@@ -274,7 +274,7 @@ integer xmp_node_num
 !$xmp align a(i,j,k) with tx(i,j,k)
 !$xmp align b(i,j,k) with tx(i,j,k)
 
-!$xmp loop (i,j,k) on tx(i,j,k)
+!$xmp loop on tx(i,j,k)
 do k=1,n
   do j=1,n
     do i=1,n
@@ -283,7 +283,7 @@ do k=1,n
   end do
 end do
 
-!$xmp loop (i,j,k) on tx(i,j,k)
+!$xmp loop on tx(i,j,k)
 do k=1,n
   do j=1,n
     do i=1,n
@@ -296,7 +296,7 @@ end do
 b(1:n,1:n,1:n)=a(1:n,1:n,1:n)
 
 ierr=0
-!$xmp loop (i,j,k) on tx(i,j,k)
+!$xmp loop on tx(i,j,k)
 do k=1,n
   do j=1,n
     do i=1,n
@@ -324,7 +324,7 @@ integer xmp_node_num
 !$xmp align a(i,j,k) with tx(i,j,k)
 !$xmp align b(i,j,k) with tx(i,j,k)
 
-!$xmp loop (i,j,k) on tx(i,j,k)
+!$xmp loop on tx(i,j,k)
 do k=1,n
   do j=1,n
     do i=1,n
@@ -333,7 +333,7 @@ do k=1,n
   end do
 end do
 
-!$xmp loop (i,j,k) on tx(i,j,k)
+!$xmp loop on tx(i,j,k)
 do k=1,n
   do j=1,n
     do i=1,n
@@ -346,7 +346,7 @@ end do
 b(1:n,1:n,1:n)=a(1:n,1:n,1:n)
 
 ierr=0
-!$xmp loop (i,j,k) on tx(i,j,k)
+!$xmp loop on tx(i,j,k)
 do k=1,n
   do j=1,n
     do i=1,n
@@ -377,7 +377,7 @@ integer my(2)=(/2,6/)
 !$xmp align a(i,j,k) with tx(i,j,k)
 !$xmp align b(i,j,k) with ty(i,j,k)
 
-!$xmp loop (i,j,k) on tx(i,j,k)
+!$xmp loop on tx(i,j,k)
 do k=1,n
   do j=1,n
     do i=1,n
@@ -386,7 +386,7 @@ do k=1,n
   end do
 end do
 
-!$xmp loop (i,j,k) on ty(i,j,k)
+!$xmp loop on ty(i,j,k)
 do k=1,n
   do j=1,n
     do i=1,n
@@ -399,7 +399,7 @@ end do
 b(1:n,1:n,1:n)=a(1:n,1:n,1:n)
 
 ierr=0
-!$xmp loop (i,j,k) on ty(i,j,k)
+!$xmp loop on ty(i,j,k)
 do k=1,n
   do j=1,n
     do i=1,n

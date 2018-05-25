@@ -12,12 +12,12 @@ int main()
   int sum = 0;
   char str[] = "test: '//' and '/* ... */' are not comment sign in string literal\n";
   
-#pragma xmp loop (i) on t(i)
+#pragma xmp loop on t(i)
   for(i=0;i<N;i++){
     array[i] = i*i;
   }
 
-#pragma xmp loop (i) on t(i) reduction(+:sum)
+#pragma xmp loop on t(i) reduction(+:sum)
   for(i=0;i<N;i++){
     sum += array[i];
   }

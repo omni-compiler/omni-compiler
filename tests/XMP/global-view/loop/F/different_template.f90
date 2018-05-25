@@ -8,7 +8,7 @@ program main
   real*4 a(10)
 !$xmp align a(i) with t0(i)
 
-!$xmp loop (i) on t1(i)
+!$xmp loop on t1(i)
   do i=1, 10
      a(i) = i
   end do

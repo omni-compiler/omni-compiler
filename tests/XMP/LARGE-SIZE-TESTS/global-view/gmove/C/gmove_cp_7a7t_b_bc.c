@@ -18,7 +18,7 @@ int main(){
 
   int i0,i1,i2,i3,i4,i5,i6,ierr=0;
 
-#pragma xmp loop (i0,i1,i2,i3,i4,i5,i6) on tx(i0,i1,i2,i3,i4,i5,i6)
+#pragma xmp loop on tx(i0,i1,i2,i3,i4,i5,i6)
   for (i6=0;i6<n;i6++){
     for (i5=0;i5<n;i5++){
       for (i4=0;i4<n;i4++){
@@ -35,7 +35,7 @@ int main(){
     }
   }
 
-#pragma xmp loop (i0,i1,i2,i3,i4,i5,i6) on ty(i0,i1,i2,i3,i4,i5,i6)
+#pragma xmp loop on ty(i0,i1,i2,i3,i4,i5,i6)
   for (i6=0;i6<n;i6++){
     for (i5=0;i5<n;i5++){
       for (i4=0;i4<n;i4++){
@@ -55,7 +55,7 @@ int main(){
 #pragma xmp gmove
   b[1:4][1:4][1:4][1:4][1:4][1:4][1:4]=a[4:4][4:4][4:4][4:4][4:4][4:4][4:4];
 
-#pragma xmp loop (i0,i1,i2,i3,i4,i5,i6) on ty(i0,i1,i2,i3,i4,i5,i6)
+#pragma xmp loop on ty(i0,i1,i2,i3,i4,i5,i6)
   for (i6=1;i6<5;i6++){
     for (i5=1;i5<5;i5++){
       for (i4=1;i4<5;i4++){

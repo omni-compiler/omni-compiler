@@ -33,14 +33,14 @@ integer m(2)=(/2,2/)
 !$xmp align a(i,*) with tx(i)
 !$xmp align b(i) with ty(i)
 
-!$xmp loop (i) on tx(i)
+!$xmp loop on tx(i)
 do j=1,n
   do i=1,n
     a(i,j)=i+j
   end do
 end do
 
-!$xmp loop (i) on ty(i)
+!$xmp loop on ty(i)
 do i=1,n
   b(i)=0
 end do
@@ -49,7 +49,7 @@ end do
 b(2:n)=a(1,2:n)
 
 ierr=0
-!$xmp loop (i) on ty(i)
+!$xmp loop on ty(i)
 do i=2,n
   ierr=ierr+abs(b(i)-i-1)
 end do
@@ -76,14 +76,14 @@ integer m(4)=(/1,1,1,1/)
 !$xmp align a(i,*) with tx(i)
 !$xmp align b(i) with ty(i)
 
-!$xmp loop (i) on tx(i)
+!$xmp loop on tx(i)
 do j=1,n
   do i=1,n
     a(i,j)=i+j
   end do
 end do
 
-!$xmp loop (i) on ty(i)
+!$xmp loop on ty(i)
 do i=1,n
   b(i)=0
 end do
@@ -92,7 +92,7 @@ end do
 b(2:n)=a(1,2:n)
 
 ierr=0
-!$xmp loop (i) on ty(i)
+!$xmp loop on ty(i)
 do i=2,n
   ierr=ierr+abs(b(i)-i-1)
 end do
@@ -119,14 +119,14 @@ integer m(4)=(/1,1,1,1/)
 !$xmp align a(i,*) with tx(i)
 !$xmp align b(i) with ty(i)
 
-!$xmp loop (i) on tx(i)
+!$xmp loop on tx(i)
 do j=1,n
   do i=1,n
     a(i,j)=i+j
   end do
 end do
 
-!$xmp loop (i) on ty(i)
+!$xmp loop on ty(i)
 do i=1,n
   b(i)=0
 end do
@@ -135,7 +135,7 @@ end do
 b(2:n)=a(2:n,1)
 
 ierr=0
-!$xmp loop (i) on ty(i)
+!$xmp loop on ty(i)
 do i=2,n
   ierr=ierr+abs(b(i)-i-1)
 end do
@@ -159,14 +159,14 @@ integer xmp_node_num
 !$xmp align a(i,j) with tx(i,j)
 !$xmp align b(i,j) with tx(i,j)
 
-!$xmp loop (i,j) on tx(i,j)
+!$xmp loop on tx(i,j)
 do j=1,n
   do i=1,n
     a(i,j)=i+j
   end do
 end do
 
-!$xmp loop (i,j) on tx(i,j)
+!$xmp loop on tx(i,j)
 do j=1,n
   do i=1,n
     b(i,j)=0
@@ -177,7 +177,7 @@ end do
 b(1:n,1)=a(1,1:n)
 
 ierr=0
-!$xmp loop (i,j) on tx(i,j)
+!$xmp loop on tx(i,j)
 do j=1,1
   do i=1,n
     ierr=ierr+abs(b(i,j)-i-1)
@@ -207,14 +207,14 @@ integer xmp_node_num
 !$xmp align a(i,*) with tx(i)
 !$xmp align b(i,j) with ty(i,j)
 
-!$xmp loop (i) on tx(i)
+!$xmp loop on tx(i)
 do j=1,n
   do i=1,n
     a(i,j)=i+j
   end do
 end do
 
-!$xmp loop (i,j) on ty(i,j)
+!$xmp loop on ty(i,j)
 do j=1,n
   do i=1,n
     b(i,j)=0
@@ -225,7 +225,7 @@ end do
 b(2:n,2:n)=a(2:n,2:n)
 
 ierr=0
-!$xmp loop (i,j) on ty(i,j)
+!$xmp loop on ty(i,j)
 do j=2,n
   do i=2,n
     ierr=ierr+abs(b(i,j)-a(i,j))
@@ -251,14 +251,14 @@ integer xmp_node_num
 !$xmp align a(i,j) with tx(i,j)
 !$xmp align b(i,j) with tx(i,j)
 
-!$xmp loop (i,j) on tx(i,j)
+!$xmp loop on tx(i,j)
 do j=1,n
   do i=1,n
     a(i,j)=i+j
   end do
 end do
 
-!$xmp loop (i,j) on tx(i,j)
+!$xmp loop on tx(i,j)
 do j=1,n
   do i=1,n
     b(i,j)=0
@@ -269,7 +269,7 @@ end do
 b(1:n,1:n)=a(1:n,1:n)
 
 ierr=0
-!$xmp loop (i,j) on tx(i,j)
+!$xmp loop on tx(i,j)
 do j=1,n
   do i=1,n
     ierr=ierr+abs(b(i,j)-a(i,j))
@@ -295,14 +295,14 @@ integer xmp_node_num
 !$xmp align a(i,j) with tx(i,j)
 !$xmp align b(i,j) with tx(i,j)
 
-!$xmp loop (i,j) on tx(i,j)
+!$xmp loop on tx(i,j)
 do j=1,n
   do i=1,n
     a(i,j)=i+j
   end do
 end do
 
-!$xmp loop (i,j) on tx(i,j)
+!$xmp loop on tx(i,j)
 do j=1,n
   do i=1,n
     b(i,j)=0
@@ -313,7 +313,7 @@ end do
 b(1:n,1:n)=a(1:n,1:n)
 
 ierr=0
-!$xmp loop (i,j) on tx(i,j)
+!$xmp loop on tx(i,j)
 do j=1,n
   do i=1,n
     ierr=ierr+abs(b(i,j)-a(i,j))
@@ -339,14 +339,14 @@ integer xmp_node_num
 !$xmp align a(i,j) with tx(i,j)
 !$xmp align b(i,j) with tx(i,j)
 
-!$xmp loop (i,j) on tx(i,j)
+!$xmp loop on tx(i,j)
 do j=1,n
   do i=1,n
     a(i,j)=i+j
   end do
 end do
 
-!$xmp loop (i,j) on tx(i,j)
+!$xmp loop on tx(i,j)
 do j=1,n
   do i=1,n
     b(i,j)=0
@@ -357,7 +357,7 @@ end do
 b(1:n,1:n)=a(1:n,1:n)
 
 ierr=0
-!$xmp loop (i,j) on tx(i,j)
+!$xmp loop on tx(i,j)
 do j=1,n
   do i=1,n
     ierr=ierr+abs(b(i,j)-a(i,j))
@@ -383,14 +383,14 @@ integer xmp_node_num
 !$xmp align a(i,j) with tx(i,j)
 !$xmp align b(i,j) with tx(i,j)
 
-!$xmp loop (i,j) on tx(i,j)
+!$xmp loop on tx(i,j)
 do j=1,n
   do i=1,n
     a(i,j)=i+j
   end do
 end do
 
-!$xmp loop (i,j) on tx(i,j)
+!$xmp loop on tx(i,j)
 do j=1,n
   do i=1,n
     b(i,j)=0
@@ -401,7 +401,7 @@ end do
 b(1:n,1:n)=a(1:n,1:n)
 
 ierr=0
-!$xmp loop (i,j) on tx(i,j)
+!$xmp loop on tx(i,j)
 do j=1,n
   do i=1,n
     ierr=ierr+abs(b(i,j)-a(i,j))
@@ -427,14 +427,14 @@ integer xmp_node_num
 !$xmp align a(i,j) with tx(i,j)
 !$xmp align b(i,j) with tx(i,j)
 
-!$xmp loop (i,j) on tx(i,j)
+!$xmp loop on tx(i,j)
 do j=1,n
   do i=1,n
     a(i,j)=i+j
   end do
 end do
 
-!$xmp loop (i,j) on tx(i,j)
+!$xmp loop on tx(i,j)
 do j=1,n
   do i=1,n
     b(i,j)=0
@@ -445,7 +445,7 @@ end do
 b(1:n,1:n)=a(1:n,1:n)
 
 ierr=0
-!$xmp loop (i,j) on tx(i,j)
+!$xmp loop on tx(i,j)
 do j=1,n
   do i=1,n
     ierr=ierr+abs(b(i,j)-a(i,j))
@@ -474,14 +474,14 @@ integer my(2)=(/2,6/)
 !$xmp align a(i,j) with tx(j,i)
 !$xmp align b(i,j) with tx(j,i)
 
-!$xmp loop (i,j) on tx(j,i)
+!$xmp loop on tx(j,i)
 do j=1,n
   do i=1,n
     a(i,j)=i+j
   end do
 end do
 
-!$xmp loop (i,j) on ty(j,i)
+!$xmp loop on ty(j,i)
 do j=1,n
   do i=1,n
     b(i,j)=0
@@ -492,7 +492,7 @@ end do
 b(1:n,1:n)=a(1:n,1:n)
 
 ierr=0
-!$xmp loop (i,j) on ty(j,i)
+!$xmp loop on ty(j,i)
 do j=1,n
   do i=1,n
     ierr=ierr+abs(b(i,j)-a(i,j))
@@ -521,14 +521,14 @@ integer my(2)=(/2,6/)
 !$xmp align a(i,j) with tx(i,j)
 !$xmp align b(i,j) with tx(i,j)
 
-!$xmp loop (i,j) on tx(i,j)
+!$xmp loop on tx(i,j)
 do j=1,n
   do i=1,n
     a(i,j)=i+j
   end do
 end do
 
-!$xmp loop (i,j) on ty(i,j)
+!$xmp loop on ty(i,j)
 do j=1,n
   do i=1,n
     b(i,j)=0
@@ -539,7 +539,7 @@ end do
 b(1:n,1:n)=a(1:n,1:n)
 
 ierr=0
-!$xmp loop (i,j) on ty(i,j)
+!$xmp loop on ty(i,j)
 do j=1,n
   do i=1,n
     ierr=ierr+abs(b(i,j)-a(i,j))
@@ -566,14 +566,14 @@ integer xmp_node_num
 !$xmp align a(i,j) with tx(i,j)
 !$xmp align b(i,j) with tx(i,j)
 
-!$xmp loop (i,j) on tx(i,j)
+!$xmp loop on tx(i,j)
 do j=1,n
   do i=1,n
     a(i,j)=i+j
   end do
 end do
 
-!$xmp loop (i,j) on tx(i,j)
+!$xmp loop on tx(i,j)
 do j=1,n
   do i=1,n
     b(i,j)=0
@@ -584,7 +584,7 @@ end do
 b(2:n,2:n)=a(2:n,2:n)
 
 ierr=0
-!$xmp loop (i,j) on tx(i,j)
+!$xmp loop on tx(i,j)
 do j=2,n
   do i=2,n
     ierr=ierr+abs(b(i,j)-a(i,j))

@@ -13,7 +13,7 @@ program test
 
   integer :: result = 0
 
-!$xmp loop (i) on t(i)
+!$xmp loop on t(i)
   do i = 1, 64
      a(i) = i
   end do
@@ -26,7 +26,7 @@ program test
 
 !$xmp reflect (a) width(/periodic/1:1)
 
-!$xmp loop (i) on t(i) reduction(+:result)
+!$xmp loop on t(i) reduction(+:result)
   do i = 1, 64
 
      if (a(i-1) /= b(i-1)) then

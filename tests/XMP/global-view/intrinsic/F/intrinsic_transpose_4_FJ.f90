@@ -31,7 +31,7 @@ subroutine test_transpose_004()
 
   b = -2
   a = -1
-!$xmp loop (j) on t(j)
+!$xmp loop on t(j)
   do j=1, 16
    do i=1, 16
      a(i,j) = (j-1)*16+i
@@ -41,7 +41,7 @@ subroutine test_transpose_004()
   call xmp_transpose(b, a, 0)
 
   error = 0
-!$xmp loop (j) on t(j) reduction(+: error)
+!$xmp loop on t(j) reduction(+: error)
   do j=1, 16
      do i=1, 16
         if(b(i,j) .ne.  (i-1)*16+j) error = error+1
@@ -66,7 +66,7 @@ subroutine test_transpose_005()
 
   b = -2
   a = -1
-!$xmp loop (i) on t(i+1)
+!$xmp loop on t(i+1)
   do j=1, 16
    do i=1, 16
      a(i,j) = (j-1)*16+i
@@ -76,7 +76,7 @@ subroutine test_transpose_005()
   call xmp_transpose(b, a, 0)
 
   error = 0
-!$xmp loop (j) on t(j+1) reduction(+: error)
+!$xmp loop on t(j+1) reduction(+: error)
   do j=1, 16
      do i=1, 16
         if(b(i,j) .ne.  (i-1)*16+j) error = error+1
@@ -99,7 +99,7 @@ subroutine test_transpose_006()
 
   b = -2
   a = -1
-!$xmp loop (j) on t(j)
+!$xmp loop on t(j)
   do j=1, 16
    do i=1, 16
      a(i,j) = (j-1)*16+i
@@ -109,7 +109,7 @@ subroutine test_transpose_006()
   call xmp_transpose(b, a, 0)
 
   error = 0
-!$xmp loop (i) on t(i) reduction(+: error)
+!$xmp loop on t(i) reduction(+: error)
   do j=1, 16
      do i=1, 16
         if(b(i,j) .ne.  (i-1)*16+j) error = error+1
@@ -132,7 +132,7 @@ subroutine test_transpose_007()
 
   b = -2
   a = -1
-!$xmp loop (i) on t(i)
+!$xmp loop on t(i)
   do j=1, 16
    do i=1, 16
      a(i,j) = (j-1)*16+i
@@ -142,7 +142,7 @@ subroutine test_transpose_007()
   call xmp_transpose(b, a, 0)
 
   error = 0
-!$xmp loop (j) on t(j) reduction(+: error)
+!$xmp loop on t(j) reduction(+: error)
   do j=1, 16
      do i=1, 16
         if(b(i,j) .ne.  (i-1)*16+j) error = error+1
@@ -165,7 +165,7 @@ subroutine test_transpose_008()
 
   b = -2
   a = -1
-!$xmp loop (j) on t(j)
+!$xmp loop on t(j)
   do j=1, 16
    do i=1, 16
      a(i,j) = (j-1)*16+i
@@ -175,7 +175,7 @@ subroutine test_transpose_008()
   call xmp_transpose(b, a, 0)
 
   error = 0
-!$xmp loop (i) on t(i) reduction(+: error)
+!$xmp loop on t(i) reduction(+: error)
   do j=1, 16
      do i=1, 16
         if(b(i,j) .ne.  (i-1)*16+j) error = error+1
@@ -198,7 +198,7 @@ subroutine test_transpose_009()
 
   b = -2
   a = -1
-!$xmp loop (i) on t(i)
+!$xmp loop on t(i)
   do j=1, 16
    do i=1, 16
      a(i,j) = (j-1)*16+i
@@ -208,7 +208,7 @@ subroutine test_transpose_009()
   call xmp_transpose(b, a, 0)
 
   error = 0
-!$xmp loop (j) on t(j) reduction(+: error)
+!$xmp loop on t(j) reduction(+: error)
   do j=1, 16
      do i=1, 16
         if(b(i,j) .ne.  (i-1)*16+j) error = error+1
@@ -231,7 +231,7 @@ subroutine test_transpose_010()
 
   b = -2
   a = -1
-!$xmp loop (j) on t(j)
+!$xmp loop on t(j)
   do j=1, 16
    do i=1, 16
      a(i,j) = (j-1)*16+i
@@ -241,7 +241,7 @@ subroutine test_transpose_010()
   call xmp_transpose(b, a, 0)
 
   error = 0
-!$xmp loop (i) on t(i) reduction(+: error)
+!$xmp loop on t(i) reduction(+: error)
   do j=1, 16
      do i=1, 16
         if(b(i,j) .ne.  (i-1)*16+j) error = error+1
@@ -264,7 +264,7 @@ end subroutine
 !
 !  b = -2
 !  a = -1
-!!$xmp loop (i) on t(i)
+!!$xmp loop on t(i)
 !  do j=1, 16
 !   do i=1, 16
 !     a(i,j) = (j-1)*16+i
@@ -274,7 +274,7 @@ end subroutine
 !  call xmp_transpose(b, a, 0)
 !
 !  error = 0
-!!$xmp loop (j) on t(j) reduction(+: error)
+!!$xmp loop on t(j) reduction(+: error)
 !  do j=1, 16
 !     do i=1, 16
 !        if(b(i,j) .ne.  (i-1)*16+j) error = error+1
@@ -298,7 +298,7 @@ end subroutine
 !
 !  b = -2
 !  a = -1
-!!$xmp loop (j) on t(j)
+!!$xmp loop on t(j)
 !  do j=1, 16
 !   do i=1, 16
 !     a(i,j) = (j-1)*16+i
@@ -308,7 +308,7 @@ end subroutine
 !  call xmp_transpose(b, a, 0)
 !
 !  error = 0
-!!$xmp loop (i) on t(i) reduction(+: error)
+!!$xmp loop on t(i) reduction(+: error)
 !  do j=1, 16
 !     do i=1, 16
 !        if(b(i,j) .ne.  (i-1)*16+j) error = error+1
@@ -334,7 +334,7 @@ subroutine test_transpose_013()
 
   b = -2
   a = -1
-!$xmp loop (j) on ta(j)
+!$xmp loop on ta(j)
   do j=1, N
    do i=1, M
      a(i,j) = -1*((j-1)*M+i)
@@ -344,7 +344,7 @@ subroutine test_transpose_013()
   call xmp_transpose(b, a, 0)
 
   error = 0
-!$xmp loop (j) on tb(j) reduction(+: error)
+!$xmp loop on tb(j) reduction(+: error)
   do j=1, M
      do i=1, N
         if(b(i,j) .ne.  -1*((i-1)*M+j)) error = error+1
@@ -371,7 +371,7 @@ subroutine test_transpose_014()
 
   b = -2
   a = -1
-!$xmp loop (i) on ta(i)
+!$xmp loop on ta(i)
   do j=1, N
    do i=1, M
      a(i,j) = -1*((j-1)*M+i)
@@ -381,7 +381,7 @@ subroutine test_transpose_014()
   call xmp_transpose(b, a, 0)
 
   error = 0
-!$xmp loop (j) on tb(j) reduction(+: error)
+!$xmp loop on tb(j) reduction(+: error)
   do j=1, M
      do i=1, N
         if(b(i,j) .ne.  -1*((i-1)*M+j)) error = error+1
@@ -408,7 +408,7 @@ subroutine test_transpose_015()
 
   b = -2
   a = -1
-!$xmp loop (j) on ta(j)
+!$xmp loop on ta(j)
   do j=1, N
    do i=1, M
      a(i,j) = -1*((j-1)*M+i)
@@ -418,7 +418,7 @@ subroutine test_transpose_015()
   call xmp_transpose(b, a, 0)
 
   error = 0
-!$xmp loop (i) on tb(i) reduction(+: error)
+!$xmp loop on tb(i) reduction(+: error)
   do j=1, M
      do i=1, N
         if(b(i,j) .ne.  -1*((i-1)*M+j)) error = error+1
@@ -446,7 +446,7 @@ end subroutine
 !
 !  b = -2
 !  a = -1
-!!$xmp loop (i) on ta(i)
+!!$xmp loop on ta(i)
 !  do j=1, N
 !   do i=1, M
 !     a(i,j) = -1*((j-1)*M+i)
@@ -456,7 +456,7 @@ end subroutine
 !  call xmp_transpose(b, a, 0)
 !
 !  error = 0
-!!$xmp loop (i) on tb(i) reduction(+: error)
+!!$xmp loop on tb(i) reduction(+: error)
 !  do j=1, M
 !     do i=1, N
 !        if(b(i,j) .ne.  -1*((i-1)*M+j)) error = error+1
@@ -482,7 +482,7 @@ subroutine test_transpose_021()
 
   b = -2
   a = -1
-!$xmp loop (j) on ta(j+2)
+!$xmp loop on ta(j+2)
   do j=1, N
    do i=1, M
      a(i,j) = -1*((j-1)*M+i)
@@ -492,7 +492,7 @@ subroutine test_transpose_021()
   call xmp_transpose(b, a, 0)
 
   error = 0
-!$xmp loop (j) on tb(j+4) reduction(+: error)
+!$xmp loop on tb(j+4) reduction(+: error)
   do j=1, M
      do i=1, N
         if(b(i,j) .ne.  -1*((i-1)*M+j)) error = error+1
@@ -519,7 +519,7 @@ subroutine test_transpose_022()
 
   b = -2
   a = -1
-!$xmp loop (i) on ta(i+2)
+!$xmp loop on ta(i+2)
   do j=1, N
    do i=1, M
      a(i,j) = -1*((j-1)*M+i)
@@ -529,7 +529,7 @@ subroutine test_transpose_022()
   call xmp_transpose(b, a, 0)
 
   error = 0
-!$xmp loop (j) on tb(j+4) reduction(+: error)
+!$xmp loop on tb(j+4) reduction(+: error)
   do j=1, M
      do i=1, N
         if(b(i,j) .ne.  -1*((i-1)*M+j)) error = error+1
@@ -556,7 +556,7 @@ end subroutine
 !
 !  b = -2
 !  a = -1
-!!$xmp loop (j) on ta(j+3)
+!!$xmp loop on ta(j+3)
 !  do j=1, N
 !   do i=1, M
 !     a(i,j) = -1*((j-1)*M+i)
@@ -566,7 +566,7 @@ end subroutine
 !  call xmp_transpose(b, a, 0)
 !
 !  error = 0
-!!$xmp loop (i) on tb(i+7) reduction(+: error)
+!!$xmp loop on tb(i+7) reduction(+: error)
 !  do j=1, M
 !     do i=1, N
 !        if(b(i,j) .ne.  -1*((i-1)*M+j)) error = error+1

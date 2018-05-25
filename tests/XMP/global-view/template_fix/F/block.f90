@@ -11,13 +11,13 @@ program main
 !$xmp template_fix (block) t(N)
   allocate(a(N))
 
-!$xmp loop (i) on t(i)
+!$xmp loop on t(i)
   do i=1, N
      a(i) = i
   enddo
          
   s = 0
-!$xmp loop (i) on t(i) reduction(+:s)
+!$xmp loop on t(i) reduction(+:s)
   do i=1, N
      s = s+a(i)
   enddo

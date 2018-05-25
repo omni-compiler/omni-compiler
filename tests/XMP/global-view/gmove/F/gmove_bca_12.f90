@@ -21,7 +21,7 @@ integer a(n,n,n),b(n,n,n)
 !$xmp align a(i0,i1,i2) with tx(i0,i1,i2)
 !$xmp align b(*,i2,i1) with ty(*,i1,i2)
 
-!$xmp loop (i0,i1,i2) on tx(i0,i1,i2)
+!$xmp loop on tx(i0,i1,i2)
 do i2=1,n
   do i1=1,n
     do i0=1,n
@@ -30,7 +30,7 @@ do i2=1,n
   end do
 end do
 
-!$xmp loop (i2,i1) on ty(*,i1,i2)
+!$xmp loop on ty(*,i1,i2)
 do i2=1,n
   do i1=1,n
     do i0=1,n
@@ -43,7 +43,7 @@ end do
 b(1:n,1:n,1:n)=a(1:n,1:n,1:n)
 
 ierr=0
-!$xmp loop (i2,i1) on ty(*,i1,i2)
+!$xmp loop on ty(*,i1,i2)
 do i2=1,n
   do i1=1,n
     do i0=1,n
@@ -72,7 +72,7 @@ integer a(n,n,n),b(n,n,n)
 !$xmp align b(*,i2,i1) with ty(*,i1,i2)
 !$xmp shadow b(0,0,1)
 
-!$xmp loop (i0,i1,i2) on tx(i0,i1,i2)
+!$xmp loop on tx(i0,i1,i2)
 do i2=1,n
   do i1=1,n
     do i0=1,n
@@ -81,7 +81,7 @@ do i2=1,n
   end do
 end do
 
-!$xmp loop (i2,i1) on ty(*,i1,i2)
+!$xmp loop on ty(*,i1,i2)
 do i2=1,n
   do i1=1,n
     do i0=1,n
@@ -94,7 +94,7 @@ end do
 b(1:n,1:n,1:n)=a(1:n,1:n,1:n)
 
 ierr=0
-!$xmp loop (i2,i1) on ty(*,i1,i2)
+!$xmp loop on ty(*,i1,i2)
 do i2=1,n
   do i1=1,n
     do i0=1,n
@@ -123,7 +123,7 @@ integer m1(2)=(/3,13/),m2(3)=(/6,5,5/)
 !$xmp align a(i0,i1,i2) with tx(i0,i1,i2)
 !$xmp align b(*,i2,i1) with ty(*,i1,i2)
 
-!$xmp loop (i0,i1,i2) on tx(i0,i1,i2)
+!$xmp loop on tx(i0,i1,i2)
 do i2=1,n
   do i1=1,n
     do i0=1,n
@@ -132,7 +132,7 @@ do i2=1,n
   end do
 end do
 
-!$xmp loop (i2,i1) on ty(*,i1,i2)
+!$xmp loop on ty(*,i1,i2)
 do i2=1,n
   do i1=1,n
     do i0=1,n
@@ -145,7 +145,7 @@ end do
 b(1:n,1:n,1:n)=a(1:n,1:n,1:n)
 
 ierr=0
-!$xmp loop (i2,i1) on ty(*,i1,i2)
+!$xmp loop on ty(*,i1,i2)
 do i2=1,n
   do i1=1,n
     do i0=1,n
@@ -176,7 +176,7 @@ integer xmp_node_num
 !$xmp align b(*,i2,i1) with ty(*,i1,i2)
 !$xmp shadow b(0,0,1)
 
-!$xmp loop (i0,i1,i2) on tx(i0,i1,i2)
+!$xmp loop on tx(i0,i1,i2)
 do i2=1,n
   do i1=1,n
     do i0=1,n
@@ -185,7 +185,7 @@ do i2=1,n
   end do
 end do
 
-!$xmp loop (i2,i1) on ty(*,i1,i2)
+!$xmp loop on ty(*,i1,i2)
 do i2=1,n
   do i1=1,n
     do i0=1,n
@@ -198,7 +198,7 @@ end do
 b(1:n,1:n,1:n)=a(1:n,1:n,1:n)
 
 ierr=0
-!$xmp loop (i2,i1) on ty(*,i1,i2)
+!$xmp loop on ty(*,i1,i2)
 do i2=1,n
   do i1=1,n
     do i0=1,n

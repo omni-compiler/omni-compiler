@@ -19,14 +19,14 @@ program test
 
   !$xmp reflect (a) width(/periodic/1,/periodic/1)
 
-  !$xmp loop (i,j) on t(i,j) expand(/unbound/1,/unbound/1)
+  !$xmp loop on t(i,j) expand(/unbound/1,/unbound/1)
   do j = 1, 8
      do i = 1, 8
         b(i,j) = 1
      end do
   end do
   
-  !$xmp loop (i,j) on t(i,j) expand(/unbound/1,/unbound/1) reduction(+:result)
+  !$xmp loop on t(i,j) expand(/unbound/1,/unbound/1) reduction(+:result)
   do j = 1, 8
      do i = 1, 8
         if (a(i,j) /= b(i,j)) result = 1

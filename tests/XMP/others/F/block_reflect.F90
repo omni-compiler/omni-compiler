@@ -25,7 +25,7 @@ block
 
   allocate (a(N))
 
-!$xmp loop (i) on t(i)
+!$xmp loop on t(i)
   do i = 1, N
      a(i) = i
   end do
@@ -33,7 +33,7 @@ block
 !$xmp reflect (a) width (/periodic/1:1) async (100)
 !$xmp wait_async (100)
 
-!$xmp loop (i) on t(i)
+!$xmp loop on t(i)
   do i = 1, N
      im1 = i - 1
      if (a(i-1) /= mod(im1-1+N, N)+1) then

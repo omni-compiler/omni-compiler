@@ -17,7 +17,7 @@ integer xmp_node_num
 !$xmp distribute tx(cyclic(2),cyclic(2)) onto p
 !$xmp align a(*,i1) with tx(*,i1)
 
-!$xmp loop (i1) on tx(*,i1)
+!$xmp loop on tx(*,i1)
 do i1=1,n
   do i0=1,n
     a(i0,i1)=i0+i1
@@ -58,7 +58,7 @@ integer xmp_node_num
 !$xmp distribute tx(cyclic(2),cyclic(2)) onto p
 !$xmp align a(i,j) with tx(i,j)
 
-!$xmp loop (i,j) on tx(i,j)
+!$xmp loop on tx(i,j)
 do j=1,n
   do i=1,n
     a(i,j)=i+j

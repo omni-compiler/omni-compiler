@@ -26,7 +26,7 @@ subroutine test_matmul_001()
 !$xmp align b(i,j) with tb(i,j)
 !$xmp align x(i,j) with tx(i,j)
 
-!$xmp loop (i,j) on ta(i,j)
+!$xmp loop on ta(i,j)
   do j=1, 8
      do i=1, 16
         a(i,j) = (j-1)*16+i-1
@@ -38,7 +38,7 @@ subroutine test_matmul_001()
      enddo
   enddo
 
-!$xmp loop (i,j) on tb(i,j)
+!$xmp loop on tb(i,j)
   do j=1, 16
      do i=1, 8
         b(i,j) = -1*((j-1)*8+i-1)
@@ -54,7 +54,7 @@ subroutine test_matmul_001()
   call xmp_matmul(xmp_desc_of(x), xmp_desc_of(a), xmp_desc_of(b))
 
   error = 0
-!$xmp loop (i,j) on tx(i,j) reduction(+: error)
+!$xmp loop on tx(i,j) reduction(+: error)
   do j=1, 16
      do i=1, 16
         if(x(i,j) .ne. y(i,j)) error = error+1
@@ -83,7 +83,7 @@ subroutine test_matmul_002()
 !$xmp align b(i,j) with tb(i,j)
 !$xmp align x(i,j) with tx(i,j)
 
-!$xmp loop (i,j) on ta(i,j)
+!$xmp loop on ta(i,j)
   do j=1, 8
      do i=1, 16
         a(i,j) = (j-1)*16+i-1
@@ -95,7 +95,7 @@ subroutine test_matmul_002()
      enddo
   enddo
 
-!$xmp loop (i,j) on tb(i,j)
+!$xmp loop on tb(i,j)
   do j=1, 16
      do i=1, 8
         b(i,j) = -1*((j-1)*8+i-1)
@@ -111,7 +111,7 @@ subroutine test_matmul_002()
   call xmp_matmul(xmp_desc_of(x), xmp_desc_of(a), xmp_desc_of(b))
 
   error = 0
-!$xmp loop (i,j) on tx(i,j) reduction(+: error)
+!$xmp loop on tx(i,j) reduction(+: error)
   do j=1, 16
      do i=1, 16
         if(x(i,j) .ne. y(i,j)) error = error+1
@@ -140,7 +140,7 @@ subroutine test_matmul_003()
 !$xmp align b(i,j) with tb(i,j)
 !$xmp align x(i,j) with tx(i,j)
 
-!$xmp loop (i,j) on ta(i,j)
+!$xmp loop on ta(i,j)
   do j=1, 8
      do i=1, 16
         a(i,j) = (j-1)*16+i-1
@@ -152,7 +152,7 @@ subroutine test_matmul_003()
      enddo
   enddo
 
-!$xmp loop (i,j) on tb(i,j)
+!$xmp loop on tb(i,j)
   do j=1, 16
      do i=1, 8
         b(i,j) = -1*((j-1)*8+i-1)
@@ -168,7 +168,7 @@ subroutine test_matmul_003()
   call xmp_matmul(xmp_desc_of(x), xmp_desc_of(a), xmp_desc_of(b))
 
   error = 0
-!$xmp loop (i,j) on tx(i,j) reduction(+: error)
+!$xmp loop on tx(i,j) reduction(+: error)
   do j=1, 16
      do i=1, 16
         if(x(i,j) .ne. y(i,j)) error = error+1
@@ -197,7 +197,7 @@ subroutine test_matmul_008()
 !$xmp align b(i,j) with tb(i,j)
 !$xmp align x(i,j) with tx(i,j)
 
-!$xmp loop (i,j) on ta(i,j)
+!$xmp loop on ta(i,j)
   do j=1, 8
      do i=1, 16
         a(i,j) = (j-1)*16+i-1
@@ -209,7 +209,7 @@ subroutine test_matmul_008()
      enddo
   enddo
 
-!$xmp loop (i,j) on tb(i,j)
+!$xmp loop on tb(i,j)
   do j=1, 16
      do i=1, 8
         b(i,j) = -1*((j-1)*8+i-1)
@@ -225,7 +225,7 @@ subroutine test_matmul_008()
   call xmp_matmul(xmp_desc_of(x), xmp_desc_of(a), xmp_desc_of(b))
 
   error = 0
-!$xmp loop (i,j) on tx(i,j) reduction(+: error)
+!$xmp loop on tx(i,j) reduction(+: error)
   do j=1, 16
      do i=1, 16
         if(x(i,j) .ne. y(i,j)) error = error+1
@@ -257,7 +257,7 @@ subroutine test_matmul_009()
 !$xmp shadow b(1,1)
 !$xmp shadow x(1,1)
 
-!$xmp loop (i,j) on ta(i,j)
+!$xmp loop on ta(i,j)
   do j=1, 8
      do i=1, 16
         a(i,j) = (j-1)*16+i-1
@@ -269,7 +269,7 @@ subroutine test_matmul_009()
      enddo
   enddo
 
-!$xmp loop (i,j) on tb(i,j)
+!$xmp loop on tb(i,j)
   do j=1, 16
      do i=1, 8
         b(i,j) = -1*((j-1)*8+i-1)
@@ -285,7 +285,7 @@ subroutine test_matmul_009()
   call xmp_matmul(xmp_desc_of(x), xmp_desc_of(a), xmp_desc_of(b))
 
   error = 0
-!$xmp loop (i,j) on tx(i,j) reduction(+: error)
+!$xmp loop on tx(i,j) reduction(+: error)
   do j=1, 16
      do i=1, 16
         if(x(i,j) .ne. y(i,j)) error = error+1

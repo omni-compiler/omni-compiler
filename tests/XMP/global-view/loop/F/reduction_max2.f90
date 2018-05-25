@@ -19,7 +19,7 @@ program main
      end do
   end do
 
-!$xmp loop (i,j) on t(i,j)
+!$xmp loop on t(i,j)
   do j=1, N
      do i=1, N
         l = (j-1)*N+i
@@ -41,7 +41,7 @@ program main
   sb = 0.0
   sc = 0.0
 
-!$xmp loop (i,j) on t(i,j) reduction(max: sa, sb, sc)
+!$xmp loop on t(i,j) reduction(max: sa, sb, sc)
   do j=1, N
      do i=1, N
         sa = max(sa, a(i,j))

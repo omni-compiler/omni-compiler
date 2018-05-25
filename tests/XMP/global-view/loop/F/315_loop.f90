@@ -7,7 +7,7 @@ integer a(n)
 !$xmp distribute tx(cyclic(2)) onto p
 !$xmp align a(i) with tx(i+3)
 
-!$xmp loop (i) on tx(i+3)
+!$xmp loop on tx(i+3)
 do i=1,n
   a(i)=i
 end do

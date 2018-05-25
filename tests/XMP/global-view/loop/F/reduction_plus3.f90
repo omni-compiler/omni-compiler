@@ -19,7 +19,7 @@ program main
   sb = 0.0
   sc = 0.0
 
-!$xmp loop (i,j,k) on t1(i,j,k)
+!$xmp loop on t1(i,j,k)
   do k=1, N
      do j=1, N
         do i=1, N
@@ -28,7 +28,7 @@ program main
      enddo
   enddo
 
-!$xmp loop (i,j,k) on t2(i,j,k)
+!$xmp loop on t2(i,j,k)
   do k=1, N
      do j=1, N
         do i=1, N
@@ -37,7 +37,7 @@ program main
      enddo
   enddo
 
-!$xmp loop (i,j,k) on t3(i,j,k)
+!$xmp loop on t3(i,j,k)
   do k=1, N
      do j=1, N
         do i=1, N
@@ -46,7 +46,7 @@ program main
      enddo
   enddo
   
-!$xmp loop (i,j,k) on t1(i,j,k) reduction(+:sa)
+!$xmp loop on t1(i,j,k) reduction(+:sa)
   do k=1, N
      do j=1, N
         do i=1, N
@@ -55,7 +55,7 @@ program main
      enddo
   enddo
 
-!$xmp loop (i,j,k) on t2(i,j,k) reduction(+:sb)
+!$xmp loop on t2(i,j,k) reduction(+:sb)
   do k=1, N
      do j=1, N
         do i=1, N
@@ -64,7 +64,7 @@ program main
      enddo
   enddo
   
-!$xmp loop (i,j,k) on t3(i,j,k) reduction(+:sc)
+!$xmp loop on t3(i,j,k) reduction(+:sc)
   do k=1, N
      do j=1, N
         do i=1, N

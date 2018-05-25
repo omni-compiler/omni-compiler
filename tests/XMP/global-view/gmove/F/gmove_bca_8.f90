@@ -24,12 +24,12 @@ integer a(n),b(n)
 !$xmp align a(i1) with tx(*,i1,*)
 !$xmp align b(i2) with tx(*,*,i2)
 
-!$xmp loop (i1) on tx(*,i1,*)
+!$xmp loop on tx(*,i1,*)
 do i1=1,n
   a(i1)=i1
 end do
 
-!$xmp loop (i2) on tx(*,*,i2)
+!$xmp loop on tx(*,*,i2)
 do i2=1,n
   b(i2)=0
 end do
@@ -39,7 +39,7 @@ b(1:n)=a(1:n)
 
 myrank=xmp_node_num()
 ierr=0
-!$xmp loop (i2) on tx(*,*,i2)
+!$xmp loop on tx(*,*,i2)
 do i2=1,n
   ierr=ierr+abs(b(i2)-i2)
 end do
@@ -66,14 +66,14 @@ integer a(n,n),b(n,n)
 !$xmp align a(i0,i1) with tx(i0,i1)
 !$xmp align b(*,i1) with ty(*,i1)
 
-!$xmp loop (i0,i1) on tx(i0,i1)
+!$xmp loop on tx(i0,i1)
 do i1=1,n
   do i0=1,n
     a(i0,i1)=i0+i1
   end do
 end do
 
-!$xmp loop (i1) on ty(*,i1)
+!$xmp loop on ty(*,i1)
 do i1=1,n
   do i0=1,n
     b(i0,i1)=0
@@ -84,7 +84,7 @@ end do
 b(1:n,1:n)=a(1:n,1:n)
 
 ierr=0
-!$xmp loop (i1) on ty(*,i1)
+!$xmp loop on ty(*,i1)
 do i1=1,n
   do i0=1,n
     ierr=ierr+abs(b(i0,i1)-i0-i1)
@@ -108,14 +108,14 @@ integer a(n,n),b(n,n)
 !$xmp align a(i0,i1) with tx(i0,i1,*)
 !$xmp align b(i1,i2) with tx(*,i1,i2)
 
-!$xmp loop (i0,i1) on tx(i0,i1,*)
+!$xmp loop on tx(i0,i1,*)
 do i1=1,n
   do i0=1,n
     a(i0,i1)=i0+i1
   end do
 end do
 
-!$xmp loop (i1,i2) on tx(*,i1,i2)
+!$xmp loop on tx(*,i1,i2)
 do i2=1,n
   do i1=1,n
     b(i1,i2)=0
@@ -127,7 +127,7 @@ b(:,:)=a(:,:)
 
 myrank=xmp_node_num()
 ierr=0
-!$xmp loop (i1,i2) on tx(*,i1,i2)
+!$xmp loop on tx(*,i1,i2)
 do i2=1,n
   do i1=1,n
     ierr=ierr+abs(b(i1,i2)-i1-i2)
@@ -152,7 +152,7 @@ integer a(n,n,n),b(n,n,n)
 !$xmp align a(i0,i1,i2) with tx(i0,i1,i2)
 !$xmp align b(*,i1,i2) with tx(*,i1,i2)
 
-!$xmp loop (i0,i1,i2) on tx(i0,i1,i2)
+!$xmp loop on tx(i0,i1,i2)
 do i2=1,n
   do i1=1,n
     do i0=1,n
@@ -161,7 +161,7 @@ do i2=1,n
   end do
 end do
 
-!$xmp loop (i1,i2) on tx(*,i1,i2)
+!$xmp loop on tx(*,i1,i2)
 do i2=1,n
   do i1=1,n
     do i0=1,n
@@ -174,7 +174,7 @@ end do
 b(:,:,:)=a(:,:,:)
 
 ierr=0
-!$xmp loop (i1,i2) on tx(*,i1,i2)
+!$xmp loop on tx(*,i1,i2)
 do i2=1,n
   do i1=1,n
     do i0=1,n
@@ -201,7 +201,7 @@ integer a(n,n,n),b(n,n,n)
 !$xmp align a(i0,i1,i2) with tx(i0,i1,i2)
 !$xmp align b(*,i1,i2) with tx(*,i1,i2)
 
-!$xmp loop (i0,i1,i2) on tx(i0,i1,i2)
+!$xmp loop on tx(i0,i1,i2)
 do i2=1,n
   do i1=1,n
     do i0=1,n
@@ -210,7 +210,7 @@ do i2=1,n
   end do
 end do
 
-!$xmp loop (i1,i2) on tx(*,i1,i2)
+!$xmp loop on tx(*,i1,i2)
 do i2=1,n
   do i1=1,n
     do i0=1,n
@@ -223,7 +223,7 @@ end do
 b(1:n,1:n,1:n)=a(1:n,1:n,1:n)
 
 ierr=0
-!$xmp loop (i1,i2) on tx(*,i1,i2)
+!$xmp loop on tx(*,i1,i2)
 do i2=1,n
   do i1=1,n
     do i0=1,n
@@ -250,7 +250,7 @@ integer a(n,n,n),b(n,n,n)
 !$xmp align a(i0,i1,i2) with tx(i0,i1,i2)
 !$xmp align b(*,i1,i2) with tx(*,i1,i2)
 
-!$xmp loop (i0,i1,i2) on tx(i0,i1,i2)
+!$xmp loop on tx(i0,i1,i2)
 do i2=1,n
   do i1=1,n
     do i0=1,n
@@ -259,7 +259,7 @@ do i2=1,n
   end do
 end do
 
-!$xmp loop (i1,i2) on tx(*,i1,i2)
+!$xmp loop on tx(*,i1,i2)
 do i2=1,n
   do i1=1,n
     do i0=1,n
@@ -272,7 +272,7 @@ end do
 b(:,:,:)=a(:,:,:)
 
 ierr=0
-!$xmp loop (i1,i2) on tx(*,i1,i2)
+!$xmp loop on tx(*,i1,i2)
 do i2=1,n
   do i1=1,n
     do i0=1,n
@@ -299,7 +299,7 @@ integer a(n,n,n),b(n,n,n)
 !$xmp align a(i0,i1,i2) with tx(i0,i1,i2)
 !$xmp align b(*,i1,i2) with tx(*,i1,i2)
 
-!$xmp loop (i0,i1,i2) on tx(i0,i1,i2)
+!$xmp loop on tx(i0,i1,i2)
 do i2=1,n
   do i1=1,n
     do i0=1,n
@@ -308,7 +308,7 @@ do i2=1,n
   end do
 end do
 
-!$xmp loop (i1,i2) on tx(*,i1,i2)
+!$xmp loop on tx(*,i1,i2)
 do i2=1,n
   do i1=1,n
     do i0=1,n
@@ -321,7 +321,7 @@ end do
 b(2:n,2:n,2:n)=a(2:n,2:n,2:n)
 
 ierr=0
-!$xmp loop (i1,i2) on tx(*,i1,i2)
+!$xmp loop on tx(*,i1,i2)
 do i2=2,n
   do i1=2,n
     do i0=2,n
@@ -350,7 +350,7 @@ integer a(n,n,n),b(n,n,n)
 !$xmp align a(*,i1,i3) with tx(*,i1,*,i3)
 !$xmp align b(i0,i2,*) with ty(i0,*,i2,*)
 
-!$xmp loop (i1,i3) on tx(*,i1,*,i3)
+!$xmp loop on tx(*,i1,*,i3)
 do i3=1,n
   do i1=1,n
     do i0=1,n
@@ -360,7 +360,7 @@ do i3=1,n
 end do
 
 do i3=1,n
-!$xmp loop (i0,i2) on ty(i0,*,i2,*)
+!$xmp loop on ty(i0,*,i2,*)
   do i2=1,n
     do i0=1,n
       b(i0,i1,i2)=0
@@ -373,7 +373,7 @@ b(1:n,1:n,1:n)=a(1:n,1:n,1:n)
 
 ierr=0
 do i3=1,n
-!$xmp loop (i0,i2) on ty(i0,*,i2,*)
+!$xmp loop on ty(i0,*,i2,*)
   do i2=1,n
     do i0=1,n
       ierr=ierr+abs(b(i0,i2,i3)-i0-i2-i3)

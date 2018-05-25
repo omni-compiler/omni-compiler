@@ -26,12 +26,12 @@ integer xmp_node_num
 !$xmp align a(i) with tx(i)
 !$xmp align b(i) with tx(i)
 
-!$xmp loop (i) on tx(i)
+!$xmp loop on tx(i)
 do i=1,n
   a(i)=i
 end do
 
-!$xmp loop (i) on tx(i)
+!$xmp loop on tx(i)
 do i=1,n
   b(i)=0
 end do
@@ -40,7 +40,7 @@ end do
 b(1:n)=a(1:n)
 
 ierr=0
-!$xmp loop (i) on tx(i)
+!$xmp loop on tx(i)
 do i=1,n
   ierr=ierr+abs(b(i)-a(i))
 end do
@@ -63,12 +63,12 @@ integer a(n),b(n)
 !$xmp align a(i) with tx(i+4)
 !$xmp align b(i) with tx(i+4)
 
-!$xmp loop (i) on tx(i+4)
+!$xmp loop on tx(i+4)
 do i=1,n
   a(i)=i
 end do
 
-!$xmp loop (i) on tx(i+4)
+!$xmp loop on tx(i+4)
 do i=1,n
   b(i)=0
 end do
@@ -77,7 +77,7 @@ end do
 b(2:n)=a(2:n)
 
 ierr=0
-!$xmp loop (i) on tx(i+4)
+!$xmp loop on tx(i+4)
 do i=2,n
   ierr=ierr+abs(b(i)-a(i))
 end do
@@ -100,12 +100,12 @@ integer a(n),b(n)
 !$xmp align a(i) with tx(i)
 !$xmp align b(i) with tx(i)
 
-!$xmp loop (i) on tx(i)
+!$xmp loop on tx(i)
 do i=1,n
   a(i)=i
 end do
 
-!$xmp loop (i) on tx(i)
+!$xmp loop on tx(i)
 do i=1,n
   b(i)=0
 end do
@@ -114,7 +114,7 @@ end do
 b(1:n)=a(1:n)
 
 ierr=0
-!$xmp loop (i) on tx(i)
+!$xmp loop on tx(i)
 do i=1,n
   ierr=ierr+abs(b(i)-a(i))
 end do
@@ -137,12 +137,12 @@ integer a(n),b(n)
 !$xmp align a(i) with tx(i)
 !$xmp align b(i) with tx(i)
 
-!$xmp loop (i) on tx(i)
+!$xmp loop on tx(i)
 do i=1,n
   a(i)=i
 end do
 
-!$xmp loop (i) on tx(i)
+!$xmp loop on tx(i)
 do i=1,n
   b(i)=0
 end do
@@ -151,7 +151,7 @@ end do
 b(1:n)=a(1:n)
 
 ierr=0
-!$xmp loop (i) on tx(i)
+!$xmp loop on tx(i)
 do i=1,n
   ierr=ierr+abs(b(i)-a(i))
 end do
@@ -174,12 +174,12 @@ integer a(n),b(n)
 !$xmp align a(i) with tx(i+3)
 !$xmp align b(i) with tx(i+3)
 
-!$xmp loop (i) on tx(i+3)
+!$xmp loop on tx(i+3)
 do i=1,n
   a(i)=i
 end do
 
-!$xmp loop (i) on tx(i+3)
+!$xmp loop on tx(i+3)
 do i=1,n
   b(i)=0
 end do
@@ -188,7 +188,7 @@ end do
 b(2:n)=a(2:n)
 
 ierr=0
-!$xmp loop (i) on tx(i+3)
+!$xmp loop on tx(i+3)
 do i=2,n
   ierr=ierr+abs(b(i)-a(i))
 end do
@@ -211,12 +211,12 @@ integer a(n),b(n)
 !$xmp align a(i) with tx(i)
 !$xmp align b(i) with tx(i)
 
-!$xmp loop (i) on tx(i)
+!$xmp loop on tx(i)
 do i=1,n
   a(i)=i
 end do
 
-!$xmp loop (i) on tx(i)
+!$xmp loop on tx(i)
 do i=1,n
   b(i)=0
 end do
@@ -225,7 +225,7 @@ end do
 b(1:n)=a(1:n)
 
 ierr=0
-!$xmp loop (i) on tx(i)
+!$xmp loop on tx(i)
 do j=1,n
   do i=1,n
     ierr=ierr+abs(b(i)-a(i))
@@ -250,12 +250,12 @@ integer a(n),b(n)
 !$xmp align a(i) with tx(i)
 !$xmp align b(i) with tx(i)
 
-!$xmp loop (i) on tx(i)
+!$xmp loop on tx(i)
 do i=1,n
   a(i)=i
 end do
 
-!$xmp loop (i) on tx(i)
+!$xmp loop on tx(i)
 do i=1,n
   b(i)=0
 end do
@@ -264,7 +264,7 @@ end do
 b(1:n)=a(1:n)
 
 ierr=0
-!$xmp loop (i) on tx(i)
+!$xmp loop on tx(i)
 do j=1,n
   do i=1,n
     ierr=ierr+abs(b(i)-a(i))
@@ -289,12 +289,12 @@ integer a(n),b(n)
 !$xmp align a(i) with tx(i+3)
 !$xmp align b(i) with tx(i+3)
 
-!$xmp loop (i) on tx(i+3)
+!$xmp loop on tx(i+3)
 do i=1,n
   a(i)=i
 end do
 
-!$xmp loop (i) on tx(i+3)
+!$xmp loop on tx(i+3)
 do i=1,n
   b(i)=0
 end do
@@ -303,7 +303,7 @@ end do
 b(2:n)=a(2:n)
 
 ierr=0
-!$xmp loop (i) on tx(i+3)
+!$xmp loop on tx(i+3)
 do i=2,n
   ierr=ierr+abs(b(i)-a(i))
 end do
@@ -330,12 +330,12 @@ integer my(2)=(/2,6/)
 !$xmp align a(i) with tx(i)
 !$xmp align b(i) with ty(i)
 
-!$xmp loop (i) on tx(i)
+!$xmp loop on tx(i)
 do i=1,n
   a(i)=i
 end do
 
-!$xmp loop (i) on ty(i)
+!$xmp loop on ty(i)
 do i=1,n
   b(i)=0
 end do
@@ -344,7 +344,7 @@ end do
 b(:)=a(:)
 
 ierr=0
-!$xmp loop (i) on ty(i)
+!$xmp loop on ty(i)
 do i=1,n
   ierr=ierr+abs(b(i)-i)
 end do

@@ -8,7 +8,7 @@ program main
 !$xmp align a(i,j) with t1(i,j)
 
   sa = 1
-!$xmp loop (i,j) on t1(i,j)
+!$xmp loop on t1(i,j)
   do j=1, N
      do i=1, N
         if(i.eq.j .and. mod(i,100).eq.0) then
@@ -19,7 +19,7 @@ program main
      enddo
   enddo
 
-!$xmp loop (i,j) on t1(i,j)
+!$xmp loop on t1(i,j)
   do j=1, N
      do i=1, N
         sa = sa*a(i,j)

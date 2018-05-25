@@ -11,7 +11,7 @@ program test
 
   integer :: result = 0
 
-!$xmp loop (i,j,k) on t(i,j,k)
+!$xmp loop on t(i,j,k)
   do k = 1, 64
      do j = 1, 64
         do i = 1, 64
@@ -31,7 +31,7 @@ program test
 !$xmp reflect (c) width(/periodic/1:1, /periodic/1:1, /periodic/1:1) async(100)
 !$xmp wait_async(100)
 
-!$xmp loop (i,j,k) on t(i,j,k) reduction(+:result)
+!$xmp loop on t(i,j,k) reduction(+:result)
   do k = 1, 64
   do j = 1, 64
   do i = 1, 64

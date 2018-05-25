@@ -21,17 +21,17 @@ program main
   call random_number(tmp)
   random_array(:) = int(tmp(:) * 10000)
 
-!$xmp loop (i) on t1(i,:,:)
+!$xmp loop on t1(i,:,:)
   do i=1, N
      a(i) = random_array(i)
   enddo
 
-!$xmp loop (i) on t2(:,i,:)
+!$xmp loop on t2(:,i,:)
   do i=1, N
      b(i) = dble(random_array(i))
   enddo
 
-!$xmp loop (i) on t3(:,:,i)
+!$xmp loop on t3(:,:,i)
   do i=1, N
      c(i) = real(random_array(i))
   enddo
@@ -45,17 +45,17 @@ program main
   sb = 0.0
   sc = 0.0
 
-!$xmp loop (i) on t1(i,:,:) reduction(max: sa)
+!$xmp loop on t1(i,:,:) reduction(max: sa)
   do i=1, N
      sa = max(sa, a(i))
   enddo
 
-!$xmp loop (i) on t2(:,i,:) reduction(max: sb)
+!$xmp loop on t2(:,i,:) reduction(max: sb)
   do i=1, N
      sb = max(sb, b(i))
   enddo
 
-!$xmp loop (i) on t3(:,:,i) reduction(max: sc)
+!$xmp loop on t3(:,:,i) reduction(max: sc)
   do i=1, N
      sc = max(sc, c(i))
   enddo
