@@ -19,7 +19,7 @@ double a[n];
  int i,/*j,*/ierr;
   double b[N],err;
 
-#pragma xmp loop (i) on tx[i]
+#pragma xmp loop on tx[i]
   for(i=0;i<n;i++){
     a[i]=i+1;
   }

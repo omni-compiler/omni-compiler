@@ -20,7 +20,7 @@ int a[n][n][n],b[n][n][n];
 
   int i0,i1,i2,ierr;
 
-#pragma xmp loop (i0,i1,i2) on tx[i2][i1][i0]
+#pragma xmp loop on tx[i2][i1][i0]
   for(i0=0;i0<n;i0++){
     for(i1=0;i1<n;i1++){
       for(i2=0;i2<n;i2++){
@@ -29,7 +29,7 @@ int a[n][n][n],b[n][n][n];
     }
   }
 
-#pragma xmp loop (i2,i1) on ty[i2][i1][*]
+#pragma xmp loop on ty[i2][i1][*]
   for(i0=0;i0<n;i0++){
     for(i1=0;i1<n;i1++){
       for(i2=0;i2<n;i2++){
@@ -43,7 +43,7 @@ int a[n][n][n],b[n][n][n];
 
   ierr=0;
   for(i0=0;i0<n;i0++){
-#pragma xmp loop (i2,i1) on ty[i2][i1][*]
+#pragma xmp loop on ty[i2][i1][*]
     for(i1=0;i1<n;i1++){
       for(i2=0;i2<n;i2++){
         ierr=ierr+abs(b[i0][i2][i1]-i0-i1-i2-1);
@@ -72,7 +72,7 @@ int m1[2]={3,13}, m2[3]={5,7,4};
 
   int i0,i1,i2,ierr;
 
-#pragma xmp loop (i0,i1,i2) on tx[i2][i1][i0]
+#pragma xmp loop on tx[i2][i1][i0]
   for(i0=0;i0<n;i0++){
     for(i1=0;i1<n;i1++){
       for(i2=0;i2<n;i2++){
@@ -81,7 +81,7 @@ int m1[2]={3,13}, m2[3]={5,7,4};
     }
   }
 
-#pragma xmp loop (i2,i1) on ty[i2][i1][*]
+#pragma xmp loop on ty[i2][i1][*]
   for(i0=0;i0<n;i0++){
     for(i1=0;i1<n;i1++){
       for(i2=0;i2<n;i2++){
@@ -95,7 +95,7 @@ int m1[2]={3,13}, m2[3]={5,7,4};
 
   ierr=0;
   for(i0=0;i0<n;i0++){
-#pragma xmp loop (i2,i1) on ty[i2][i1][*]
+#pragma xmp loop on ty[i2][i1][*]
     for(i1=0;i1<n;i1++){
       for(i2=0;i2<n;i2++){
         ierr=ierr+abs(b[i0][i2][i1]-i0-i1-i2-1);
@@ -125,7 +125,7 @@ int m1[2]={3,13}, m2[3]={5,7,4};
 
   int i0,i1,i2,ierr;
 
-#pragma xmp loop (i0,i1,i2) on tx[i2][i1][i0]
+#pragma xmp loop on tx[i2][i1][i0]
   for(i0=0;i0<n;i0++){
     for(i1=0;i1<n;i1++){
       for(i2=0;i2<n;i2++){
@@ -134,7 +134,7 @@ int m1[2]={3,13}, m2[3]={5,7,4};
     }
   }
 
-#pragma xmp loop (i2,i1) on ty[i2][i1][*]
+#pragma xmp loop on ty[i2][i1][*]
   for(i0=0;i0<n;i0++){
     for(i1=0;i1<n;i1++){
       for(i2=0;i2<n;i2++){
@@ -148,7 +148,7 @@ int m1[2]={3,13}, m2[3]={5,7,4};
 
   ierr=0;
   for(i0=0;i0<n;i0++){
-#pragma xmp loop (i2,i1) on ty[i2][i1][*]
+#pragma xmp loop on ty[i2][i1][*]
     for(i1=0;i1<n;i1++){
       for(i2=0;i2<n;i2++){
         ierr=ierr+abs(b[i0][i2][i1]-i0-i1-i2-1);

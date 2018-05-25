@@ -41,7 +41,7 @@ int main(){
 #pragma xmp wait_async (10)
   int result = 0;
   
-#pragma xmp loop (i,j) on t[i][j] reduction(+:result)
+#pragma xmp loop on t[i][j] reduction(+:result)
   for (int i = 0; i < n; i++){
     for (int j = 0; j < n; j++){
       if (a[i][j] != b[i][j]) result = 1;

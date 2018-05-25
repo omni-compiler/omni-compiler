@@ -11,7 +11,7 @@ int i,j,m,result=0;
 
 int main(void)
 {
-#pragma xmp loop (j,i) on t1[i][j]
+#pragma xmp loop on t1[i][j]
   for(i=0;i<N;i++){
     for(j=0;j<N;j++){
       if((i==j)&&(i%100==0)){
@@ -22,7 +22,7 @@ int main(void)
     }
   }
 
-#pragma xmp loop (j,i) on t1[i][j]
+#pragma xmp loop on t1[i][j]
   for(i=0;i<N;i++)
     for(j=0;j<N;j++)
       sa = sa*a[i][j];

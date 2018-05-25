@@ -16,11 +16,11 @@ int main(void)
   for(i=0;i<N;i++)
     random_array[i] = rand();
     
-#pragma xmp loop (i) on t[i]
+#pragma xmp loop on t[i]
   for(i=0;i<N;i++)
     a[i] = random_array[i];
 
-#pragma xmp loop (i) on t[i] reduction(|:ans_val)
+#pragma xmp loop on t[i] reduction(|:ans_val)
   for(i=0;i<N;i++)
     ans_val = ans_val|a[i];
 

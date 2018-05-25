@@ -14,11 +14,11 @@ int main(void)
 #pragma xmp template_fix[block] t[N]
   a = (int *)xmp_malloc(xmp_desc_of(a), N);
 
-#pragma xmp loop (i) on t[i]
+#pragma xmp loop on t[i]
   for(i=0;i<N;i++)
     a[i] = i;
   
-#pragma xmp loop (i) on t[i] reduction(+:s)
+#pragma xmp loop on t[i] reduction(+:s)
   for(i=0;i<N;i++)
     s += a[i];
 

@@ -45,7 +45,7 @@ int main(void)
     }
   }
 
-#pragma xmp loop (i) on t1[:][:][i] reduction(firstmax:sa/ia/)
+#pragma xmp loop on t1[:][:][i] reduction(firstmax:sa/ia/)
   for(i=0;i<N;i++){
     if(sa < a[i]){
       ia = i;
@@ -53,7 +53,7 @@ int main(void)
     } 
   }
 
-#pragma xmp loop (i) on t2[:][i][:] reduction(firstmax:sb/ib/)
+#pragma xmp loop on t2[:][i][:] reduction(firstmax:sb/ib/)
   for(i=0;i<N;i++){
     if(sb < b[i]){
       ib = i;
@@ -61,7 +61,7 @@ int main(void)
     } 
   }
   
-#pragma xmp loop (i) on t3[i][:][:] reduction(firstmax:sc/ic/)
+#pragma xmp loop on t3[i][:][:] reduction(firstmax:sc/ic/)
   for(i=0;i<N;i++){
     if(sc < c[i]){
       ic = i;

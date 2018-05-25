@@ -16,7 +16,7 @@ int i,j,result=0;
 
 int main(void)
 {
-#pragma xmp loop (j,i) on t[i][j]
+#pragma xmp loop on t[i][j]
   for(i=0;i<N;i++){
     for(j=0;j<N;j++){
       a[i][j] = 1;
@@ -25,7 +25,7 @@ int main(void)
     }
   }
 
-#pragma xmp loop (j,i) on t[i][j]
+#pragma xmp loop on t[i][j]
   for(i=0;i<N;i++){
     for(j=0;j<N;j++){
       sa += a[i][j];

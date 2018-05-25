@@ -19,34 +19,34 @@ int i,j, result = 0;
 
 int main(void)
 {
-#pragma xmp loop (j,i) on t1[i][j]
+#pragma xmp loop on t1[i][j]
   for(i=0;i<N;i++)
     for(j=0;j<N;j++)
       a[i][j] = 1;
    
-#pragma xmp loop (j,i) on t2[i][j]
+#pragma xmp loop on t2[i][j]
   for(i=0;i<N;i++)
     for(j=0;j<N;j++)
       b[i][j] = 0.5;
 
-#pragma xmp loop (j,i) on t3[i][j]
+#pragma xmp loop on t3[i][j]
   for(i=0;i<N;i++)
     for(j=0;j<N;j++)
       c[i][j] = 0.25;
 
-#pragma xmp loop (j,i) on t1[i][j]
+#pragma xmp loop on t1[i][j]
   for(i=0;i<N;i++)
     for(j=0;j<N;j++)
       sa = sa+a[i][j];
 #pragma xmp reduction (+:sa)
 
-#pragma xmp loop (j,i) on t2[i][j]
+#pragma xmp loop on t2[i][j]
   for(i=0;i<N;i++)
     for(j=0;j<N;j++)
       sb = sb+b[i][j];
 #pragma xmp reduction (+:sb)
 
-#pragma xmp loop (j,i) on t3[i][j]
+#pragma xmp loop on t3[i][j]
   for(i=0;i<N;i++)
     for(j=0;j<N;j++)
       sc = sc+c[i][j];

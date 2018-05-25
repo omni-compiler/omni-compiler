@@ -15,7 +15,7 @@ int i,result=0;
 
 int main(void)
 {
-#pragma xmp loop (i) on t[i]
+#pragma xmp loop on t[i]
   for(i=0;i<N;i++){
     if((i+1)%100 == 0){
       a[i] = 2;

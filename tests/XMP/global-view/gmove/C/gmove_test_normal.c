@@ -24,7 +24,7 @@ int x[N][N][N];
 int s;
 
 void init_a(){
-#pragma xmp loop (i,j,k) on t1[k][j][i]
+#pragma xmp loop on t1[k][j][i]
   for (int i = 0; i < N; i++){
     for (int j = 0; j < N; j++){
       for (int k = 0; k < N; k++){
@@ -35,7 +35,7 @@ void init_a(){
 }
 
 void init_b(){
-#pragma xmp loop (i,j,k) on t2[k][j][i]
+#pragma xmp loop on t2[k][j][i]
   for (int i = 0; i < N; i++){
     for (int j = 0; j < N; j++){
       for (int k = 0; k < N; k++){
@@ -85,7 +85,7 @@ void gmove_gs_gs(){
 
 #pragma xmp barrier
 
-#pragma xmp loop (i,j,k) on t1[k][j][i] reduction (+:result)
+#pragma xmp loop on t1[k][j][i] reduction (+:result)
   for (int i = 0; i < N/4; i++){
     for (int j = N/2; j < N; j++){
       for (int k = 4; k < N-1; k++){
@@ -126,7 +126,7 @@ void gmove_gs_ge(){
 
 #pragma xmp barrier
 
-#pragma xmp loop (i,j,k) on t1[k][j][i] reduction(+:result)
+#pragma xmp loop on t1[k][j][i] reduction(+:result)
   for (int i = 0; i < N/4; i++){
     for (int j = N/2; j < N; j++){
       for (int k = 4; k < N-1; k++){
@@ -194,7 +194,7 @@ void gmove_gs_ls(){
 
 #pragma xmp barrier
 
-#pragma xmp loop (i,j,k) on t1[k][j][i] reduction(+:result)
+#pragma xmp loop on t1[k][j][i] reduction(+:result)
   for (int i = 0; i < N/4; i++){
     for (int j = N/2; j < N; j++){
       for (int k = 4; k < N-1; k++){
@@ -235,7 +235,7 @@ void gmove_gs_ls(){
 
 /* #pragma xmp barrier */
 
-/* #pragma xmp loop (i,j,k) on t1(i,j,k) reduction(+:result) */
+/* #pragma xmp loop on t1(i,j,k) reduction(+:result) */
 /*   for (int i = 0; i < N/4; i++){ */
 /*     for (int j = N/2; j < N; j++){ */
 /*       for (int k = 4; k < N-1; k++){ */
@@ -303,7 +303,7 @@ void gmove_ge_le(){
 
 /* #pragma xmp barrier */
 
-/* #pragma xmp loop (i,j,k) on t1(i,j,k) reduction(+:result) */
+/* #pragma xmp loop on t1(i,j,k) reduction(+:result) */
 /*   for (int i = 0; i < N/4; i++){ */
 /*     for (int j = N/2; j < N; j++){ */
 /*       for (int k = 4; k < N-1; k++){ */

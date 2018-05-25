@@ -19,15 +19,15 @@ int ans=0, result=0;
 
 int main(void)
 {
-#pragma xmp loop (i) on t1[:][:][i]
+#pragma xmp loop on t1[:][:][i]
   for(int i=0;i<N;i++)
     a[i] = xmp_node_num();
 
-#pragma xmp loop (i) on t2[:][i][:]
+#pragma xmp loop on t2[:][i][:]
   for(int i=0;i<N;i++)
     b[i] = (double)xmp_node_num();
 
-#pragma xmp loop (i) on t3[i][:][:]
+#pragma xmp loop on t3[i][:][:]
   for(int i=0;i<N;i++)
     c[i] = (float)xmp_node_num();
 

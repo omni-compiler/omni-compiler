@@ -8,7 +8,7 @@ int a[n][n];
 #pragma xmp align a[i][j] with t[i][j]
 
 int main(){
-#pragma xmp loop (i,j) on t[i][j]
+#pragma xmp loop on t[i][j]
   for(int j=0; j<n; j++)
     for(int i=0; i<n; i++)
       a[i][j]=i;

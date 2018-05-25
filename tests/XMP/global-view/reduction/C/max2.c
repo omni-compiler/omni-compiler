@@ -16,7 +16,7 @@ int main(void)
   for(i=0;i<N*N;i++)
     random_array[i] = rand();
     
-#pragma xmp loop (j,i) on t[i][j]
+#pragma xmp loop on t[i][j]
   for(i=0;i<N;i++){
     for(j=0;j<N;j++){
       l = j*N+i;
@@ -26,7 +26,7 @@ int main(void)
     }
   }
 
-#pragma xmp loop (j,i) on t[i][j]
+#pragma xmp loop on t[i][j]
   for(i=0;i<N;i++){
     for(j=0;j<N;j++){
       if(a[i][j]>sa){

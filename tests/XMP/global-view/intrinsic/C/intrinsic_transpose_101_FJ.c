@@ -17,14 +17,14 @@ int main(){
 #pragma xmp align b[i][j] with ta[i][j]
 
   /* init */
-#pragma xmp loop (i,j) on ta[i][j]
+#pragma xmp loop on ta[i][j]
   for(i=0;i<4;i++){
     for(j=0;j<4;j++){
       b[i][j] = -2;
     }
   }
 
-#pragma xmp loop (i,j) on ta[i][j]
+#pragma xmp loop on ta[i][j]
   for(i=0;i<4;i++){
     for(j=0;j<4;j++){
       a[i][j] = -1;
@@ -40,7 +40,7 @@ int main(){
   }
 
 
-#pragma xmp loop (i,j) on ta[i][j]
+#pragma xmp loop on ta[i][j]
   for(i=0;i<4;i++){
     for(j=0;j<4;j++){
       a[i][j] = i*(j-1);
@@ -52,7 +52,7 @@ int main(){
 
   error = 0;
 
-#pragma xmp loop (i,j) on ta[i][j] reduction(+:ierr)
+#pragma xmp loop on ta[i][j] reduction(+:ierr)
   for(i=0;i<4;i++){
     for(j=0;j<4;j++){
       if (b[i][j] != j*(i-1)){

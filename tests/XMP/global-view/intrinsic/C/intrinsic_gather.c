@@ -80,7 +80,7 @@ int main()
 
 
   int result = 0;
-#pragma xmp loop (i) on t[i]
+#pragma xmp loop on t[i]
   for(i=0;i<16;i++)
     if(x[i]!=xdash[i])
       result =-1;

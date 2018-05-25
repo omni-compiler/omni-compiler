@@ -9,16 +9,16 @@ int flag = 0;
 
 int main(int argc, char** argv)
 {
-#pragma xmp loop (i,j) on t[i][j]
+#pragma xmp loop on t[i][j]
   for(int i=0;i<4;i++)
     for(int j=0;j<4;j++)
       b[i][j] = a[i][j] = i * 4 + j; 
   
 #pragma xmp reflect (a) width (/periodic/1, /periodic/1)
     
-#pragma xmp loop (i) on t[i][*]
+#pragma xmp loop on t[i][*]
   for(int i=0;i<4;i++){
-#pragma xmp loop (j) on t[*][j]
+#pragma xmp loop on t[*][j]
     for(int j=0;j<4;j++)
       if(b[i][j] != a[i][j])
 	flag = 1;

@@ -19,14 +19,14 @@ double a[n][n],b[n][n];
   int i,j,ierr;
   double err;
 
-#pragma xmp loop (i,j) on tx[j][i]
+#pragma xmp loop on tx[j][i]
   for(i=0;i<n;i++){
     for(j=0;j<n;j++){
       a[i][j]=i+j+2;
     }
   }
 
-#pragma xmp loop (i,j) on tx[j][i]
+#pragma xmp loop on tx[j][i]
   for(i=0;i<n;i++){
     for(j=0;j<n;j++){
       b[i][j]=0;
@@ -37,7 +37,7 @@ double a[n][n],b[n][n];
   b[1:4][1:4]=a[4:4][4:4];
 
   err=0.0;
-#pragma xmp loop (i,j) on tx[j][i]
+#pragma xmp loop on tx[j][i]
   for(i=1;i<5;i++){
     for(j=1;j<5;j++){
       err=err+fabs(b[i][j]-(i+4+j+4));
@@ -65,14 +65,14 @@ int a[n][n],b[n][n];
 
   int i0,i1,ierr=0;
 
-#pragma xmp loop (i0,i1) on tx[i1][i0]
+#pragma xmp loop on tx[i1][i0]
   for (i1=0;i1<n;i1++){
     for (i0=0;i0<n;i0++){
       a[i0][i1]=(i0+1)+(i1+1);
     }
   }
 
-#pragma xmp loop (i0,i1) on ty[i1][i0]
+#pragma xmp loop on ty[i1][i0]
   for (i1=0;i1<n;i1++){
     for (i0=0;i0<n;i0++){
       b[i0][i1]=0;
@@ -82,7 +82,7 @@ int a[n][n],b[n][n];
 #pragma xmp gmove
   b[1:4][1:4]=a[4:4][4:4];
 
-#pragma xmp loop (i0,i1) on ty[i1][i0]
+#pragma xmp loop on ty[i1][i0]
   for (i1=1;i1<5;i1++){
     for (i0=1;i0<5;i0++){
       ierr=ierr+abs(b[i0][i1]-(i0+4)-(i1+4));
@@ -108,14 +108,14 @@ double a[n][n],b[n][n];
   int i,j,ierr;
   double err;
 
-#pragma xmp loop (i,j) on tx[j][i]
+#pragma xmp loop on tx[j][i]
   for(i=0;i<n;i++){
     for(j=0;j<n;j++){
       a[i][j]=i+j+2;
     }
   }
 
-#pragma xmp loop (i,j) on tx[j][i]
+#pragma xmp loop on tx[j][i]
   for(i=0;i<n;i++){
     for(j=0;j<n;j++){
       b[i][j]=0;
@@ -126,7 +126,7 @@ double a[n][n],b[n][n];
   b[0:4][0:4]=a[4:4][4:4];
 
   err=0.0;
-#pragma xmp loop (i,j) on tx[j][i]
+#pragma xmp loop on tx[j][i]
   for(i=0;i<4;i++){
     for(j=0;j<4;j++){
       err=err+fabs(b[i][j]-(i+5+j+5));
@@ -153,14 +153,14 @@ double a[n][n],b[n][n];
   int i,j,ierr;
   double err;
 
-#pragma xmp loop (i,j) on tx[j][i]
+#pragma xmp loop on tx[j][i]
   for(i=0;i<n;i++){
     for(j=0;j<n;j++){
       a[i][j]=i+j+2;
     }
   }
 
-#pragma xmp loop (i,j) on tx[j][i]
+#pragma xmp loop on tx[j][i]
   for(i=0;i<n;i++){
     for(j=0;j<n;j++){
       b[i][j]=0;
@@ -171,7 +171,7 @@ double a[n][n],b[n][n];
   b[0:4][0:4]=a[4:4][4:4];
 
   err=0.0;
-#pragma xmp loop (i,j) on tx[j][i]
+#pragma xmp loop on tx[j][i]
   for(i=0;i<4;i++){
     for(j=0;j<4;j++){
       err=err+fabs(b[i][j]-(i+5+j+5));

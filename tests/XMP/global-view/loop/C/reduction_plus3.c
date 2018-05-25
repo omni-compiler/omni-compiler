@@ -19,37 +19,37 @@ int i,j,k,result=0;
 
 int main(void)
 {
-#pragma xmp loop (k,j,i) on t1[i][j][k]
+#pragma xmp loop on t1[i][j][k]
   for(i=0;i<N;i++)
     for(j=0;j<N;j++)
       for(k=0;k<N;k++)
 	a[i][j][k] = 1;
 
-#pragma xmp loop (k,j,i) on t2[i][j][k]
+#pragma xmp loop on t2[i][j][k]
   for(i=0;i<N;i++)
     for(j=0;j<N;j++)
       for(k=0;k<N;k++)
 	b[i][j][k] = 0.5;
    
-#pragma xmp loop (k,j,i) on t3[i][j][k] 
+#pragma xmp loop on t3[i][j][k] 
   for(i=0;i<N;i++)
     for(j=0;j<N;j++)
       for(k=0;k<N;k++)
 	c[i][j][k] = 0.25;
 
-#pragma xmp loop (k,j,i) on t1[i][j][k] reduction(+:sa)
+#pragma xmp loop on t1[i][j][k] reduction(+:sa)
   for(i=0;i<N;i++)
     for(j=0;j<N;j++)
 	for(k=0;k<N;k++)
 	  sa = sa+a[i][j][k];
 
-#pragma xmp loop (k,j,i) on t2[i][j][k] reduction(+:sb)
+#pragma xmp loop on t2[i][j][k] reduction(+:sb)
   for(i=0;i<N;i++)
     for(j=0;j<N;j++)
       for(k=0;k<N;k++)
 	sb = sb+b[i][j][k];
 
-#pragma xmp loop (k,j,i) on t3[i][j][k] reduction(+:sc)
+#pragma xmp loop on t3[i][j][k] reduction(+:sc)
   for(i=0;i<N;i++)
     for(j=0;j<N;j++)
       for(k=0;k<N;k++)

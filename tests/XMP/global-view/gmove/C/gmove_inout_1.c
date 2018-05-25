@@ -25,12 +25,12 @@ void gmove_in(){
 
   int result = 0;
 
-#pragma xmp loop (i) on t1[i]
+#pragma xmp loop on t1[i]
   for (int i = 0; i < N; i++){
     a[i] = 777;
   }
 
-#pragma xmp loop (i) on t2[i]
+#pragma xmp loop on t2[i]
   for (int i = 0; i < N; i++){
     b[i] = i;
   }
@@ -42,7 +42,7 @@ void gmove_in(){
   a[:] = b[:];
 #endif
 
-#pragma xmp loop (i) on t1[i] reduction(+:result)
+#pragma xmp loop on t1[i] reduction(+:result)
   for (int i = 0; i < N; i++){
     if (a[i] != i){
       result = 1;
@@ -66,12 +66,12 @@ void gmove_in_async(){
 
   int result = 0;
 
-#pragma xmp loop (i) on t1[i]
+#pragma xmp loop on t1[i]
   for (int i = 0; i < N; i++){
      a[i] = 777;
   }
 
-#pragma xmp loop (i) on t2[i]
+#pragma xmp loop on t2[i]
   for (int i = 0; i < N; i++){
     b[i] = i;
   }
@@ -85,7 +85,7 @@ void gmove_in_async(){
 
 #pragma xmp wait_async(10)
 
-#pragma xmp loop (i) on t1[i] reduction(+:result)
+#pragma xmp loop on t1[i] reduction(+:result)
   for (int i = 0; i < N; i++){
     if (a[i] != i){
       result = 1;
@@ -109,12 +109,12 @@ void gmove_out(){
 
   int result = 0;
 
-#pragma xmp loop (i) on t1[i]
+#pragma xmp loop on t1[i]
   for (int i = 0; i < N; i++){
     a[i] = 777;
   }
 
-#pragma xmp loop (i) on t2[i]
+#pragma xmp loop on t2[i]
   for (int i = 0; i < N; i++){
     b[i] = i;
   }
@@ -126,7 +126,7 @@ void gmove_out(){
   a[:] = b[:];
 #endif
 
-#pragma xmp loop (i) on t1[i] reduction(+:result)
+#pragma xmp loop on t1[i] reduction(+:result)
   for (int i = 0; i < N; i++){
     if (a[i] != i){
       result = 1;
@@ -150,12 +150,12 @@ void gmove_out_async(){
 
   int result = 0;
 
-#pragma xmp loop (i) on t1[i]
+#pragma xmp loop on t1[i]
   for (int i = 0; i < N; i++){
     a[i] = 777;
   }
 
-#pragma xmp loop (i) on t2[i]
+#pragma xmp loop on t2[i]
   for (int i = 0; i < N; i++){
     b[i] = i;
   }
@@ -169,7 +169,7 @@ void gmove_out_async(){
 
 #pragma xmp wait_async(10)
 
-#pragma xmp loop (i) on t1[i] reduction(+:result)
+#pragma xmp loop on t1[i] reduction(+:result)
   for (int i = 0; i < N; i++){
     if (a[i] != i){
       result = 1;

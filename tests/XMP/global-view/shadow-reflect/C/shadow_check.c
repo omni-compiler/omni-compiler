@@ -42,7 +42,7 @@ int main(void)
 	}
     }
 
-#pragma xmp loop (j, i) on t[j][i]
+#pragma xmp loop on t[j][i]
     for(int i = 0; i < n; i++){
 	for(int j = 0; j < n; j++){
 	    a[i][j] = 1;

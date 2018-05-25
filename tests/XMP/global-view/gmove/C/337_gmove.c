@@ -20,7 +20,7 @@ int main(){
   int i0,i1,ierr;//,irank;
   //  irank=xmp_node_num();
 
-#pragma xmp loop (i0,i1) on tx[i0][i1]
+#pragma xmp loop on tx[i0][i1]
   for(i0=0;i0<n;i0++){
     for(i1=0;i1<n;i1++){
       a[i0][i1]=i0+i1+1;
@@ -28,7 +28,7 @@ int main(){
   }
 
   for(i0=0;i0<n;i0++){
-#pragma xmp loop (i1) on tx[*][i1]
+#pragma xmp loop on tx[*][i1]
     for(i1=0;i1<n;i1++){
       b[i0][i1]=0;
     }
@@ -39,7 +39,7 @@ int main(){
 
   ierr=0;
   for(i0=0;i0<2;i0++){
-#pragma xmp loop (i1) on tx[*][i1]
+#pragma xmp loop on tx[*][i1]
     for(i1=0;i1<n;i1++){
       ierr=ierr+abs(b[i0][i1]-i0-i1-1);
     }

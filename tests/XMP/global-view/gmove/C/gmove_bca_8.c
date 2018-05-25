@@ -22,7 +22,7 @@ int a[n][n],b[n][n];
 
   int i0,i1,i2,ierr;
 
-#pragma xmp loop (i0) on tx[*][*][i0]
+#pragma xmp loop on tx[*][*][i0]
   for(i0=0;i0<n;i0++){
     for(i2=0;i2<n;i2++){
       a[i0][i2]=i0+i2+1;
@@ -30,7 +30,7 @@ int a[n][n],b[n][n];
   }
 
   for(i1=0;i1<n;i1++){
-#pragma xmp loop (i2) on ty[i2][*][*]
+#pragma xmp loop on ty[i2][*][*]
     for(i2=0;i2<n;i2++){
       b[i1][i2]=0;
     }
@@ -41,7 +41,7 @@ int a[n][n],b[n][n];
 
   ierr=0;
   for(i1=0;i1<n;i1++){
-#pragma xmp loop (i2) on ty[i2][*][*]
+#pragma xmp loop on ty[i2][*][*]
     for(i2=0;i2<n;i2++){
       ierr=ierr+abs(b[i1][i2]-i1-i2-1);
     }
@@ -65,14 +65,14 @@ int a[n][n],b[n][n];
 
   int i0,i1,i2,ierr;
 
-#pragma xmp loop (i0,i1) on tx[*][i1][i0]
+#pragma xmp loop on tx[*][i1][i0]
   for(i0=0;i0<n;i0++){
     for(i1=0;i1<n;i1++){
       a[i0][i1]=i0+i1+1;
     }
   }
 
-#pragma xmp loop (i1,i2) on tx[i2][i1][*]
+#pragma xmp loop on tx[i2][i1][*]
   for(i1=0;i1<n;i1++){
     for(i2=0;i2<n;i2++){
       b[i1][i2]=0;
@@ -83,7 +83,7 @@ int a[n][n],b[n][n];
   b[:][:]=a[:][:];
 
   ierr=0;
-#pragma xmp loop (i1,i2) on tx[i2][i1][*]
+#pragma xmp loop on tx[i2][i1][*]
   for(i1=0;i1<n;i1++){
     for(i2=0;i2<n;i2++){
       ierr=ierr+abs(b[i1][i2]-i1-i2-1);
@@ -108,7 +108,7 @@ int a[n][n][n],b[n][n][n];
 
   int i0,i1,i2,ierr;
 
-#pragma xmp loop (i0,i1,i2) on tx[i2][i1][i0]
+#pragma xmp loop on tx[i2][i1][i0]
   for(i0=0;i0<n;i0++){
     for(i1=0;i1<n;i1++){
       for(i2=0;i2<n;i2++){
@@ -117,7 +117,7 @@ int a[n][n][n],b[n][n][n];
     }
   }
 
-#pragma xmp loop (i1,i2) on tx[i2][i1][*]
+#pragma xmp loop on tx[i2][i1][*]
   for(i0=0;i0<n;i0++){
     for(i1=0;i1<n;i1++){
       for(i2=0;i2<n;i2++){
@@ -130,7 +130,7 @@ int a[n][n][n],b[n][n][n];
   b[:][:][:]=a[:][:][:];
 
   ierr=0;
-#pragma xmp loop (i1,i2) on tx[i2][i1][*]
+#pragma xmp loop on tx[i2][i1][*]
   for(i0=0;i0<n;i0++){
     for(i1=0;i1<n;i1++){
       for(i2=0;i2<n;i2++){
@@ -157,7 +157,7 @@ int a[n][n][n],b[n][n][n];
 
   int i0,i1,i2,ierr;
 
-#pragma xmp loop (i0,i1,i2) on tx[i2][i1][i0]
+#pragma xmp loop on tx[i2][i1][i0]
   for(i0=0;i0<n;i0++){
     for(i1=0;i1<n;i1++){
       for(i2=0;i2<n;i2++){
@@ -166,7 +166,7 @@ int a[n][n][n],b[n][n][n];
     }
   }
 
-#pragma xmp loop (i1,i2) on tx[i2][i1][*]
+#pragma xmp loop on tx[i2][i1][*]
   for(i0=0;i0<n;i0++){
     for(i1=0;i1<n;i1++){
       for(i2=0;i2<n;i2++){
@@ -179,7 +179,7 @@ int a[n][n][n],b[n][n][n];
   b[0:n][0:n][0:n]=a[0:n][0:n][0:n];
 
   ierr=0;
-#pragma xmp loop (i1,i2) on tx[i2][i1][*]
+#pragma xmp loop on tx[i2][i1][*]
   for(i0=0;i0<n;i0++){
     for(i1=0;i1<n;i1++){
       for(i2=0;i2<n;i2++){
@@ -211,7 +211,7 @@ int a[n][n][n],b[n][n][n];
 
   int i0,i1,i2,ierr;
 
-#pragma xmp loop (i0,i1,i2) on tx[i2][i1][i0]
+#pragma xmp loop on tx[i2][i1][i0]
   for(i0=0;i0<n;i0++){
     for(i1=0;i1<n;i1++){
       for(i2=0;i2<n;i2++){
@@ -220,7 +220,7 @@ int a[n][n][n],b[n][n][n];
     }
   }
 
-#pragma xmp loop (i1,i2) on ty[i2][i1][*]
+#pragma xmp loop on ty[i2][i1][*]
   for(i0=0;i0<n;i0++){
     for(i1=0;i1<n;i1++){
       for(i2=0;i2<n;i2++){
@@ -233,7 +233,7 @@ int a[n][n][n],b[n][n][n];
   b[0:n][0:n][0:n]=a[0:n][0:n][0:n];
 
   ierr=0;
-#pragma xmp loop (i1,i2) on ty[i2][i1][*]
+#pragma xmp loop on ty[i2][i1][*]
   for(i0=0;i0<n;i0++){
     for(i1=0;i1<n;i1++){
       for(i2=0;i2<n;i2++){
@@ -263,7 +263,7 @@ int a[n][n][n],b[n][n][n];
   int i0,i1,i2,i3,ierr;
 
   for(i0=0;i0<n;i0++){
-#pragma xmp loop (i1,i3) on tx[i3][*][i1][*]
+#pragma xmp loop on tx[i3][*][i1][*]
     for(i1=0;i1<n;i1++){
       for(i3=0;i3<n;i3++){
         a[i0][i1][i3]=i0+i1+i3+1;
@@ -271,7 +271,7 @@ int a[n][n][n],b[n][n][n];
     }
   }
 
-#pragma xmp loop (i0,i2) on ty[*][i2][*][i0]
+#pragma xmp loop on ty[*][i2][*][i0]
   for(i0=0;i0<n;i0++){
     for(i2=0;i2<n;i2++){
       for(i3=0;i3<n;i3++){
@@ -284,7 +284,7 @@ int a[n][n][n],b[n][n][n];
   b[0:n][0:n][0:n]=a[0:n][0:n][0:n];
 
   ierr=0;
-#pragma xmp loop (i0,i2) on ty[*][i2][*][i0]
+#pragma xmp loop on ty[*][i2][*][i0]
   for(i0=0;i0<n;i0++){
     for(i2=0;i2<n;i2++){
       for(i3=0;i3<n;i3++){

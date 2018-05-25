@@ -17,7 +17,7 @@ int a[64][64][64], b[64][64][64], c[64][64][64];
 
 int main(void){
 
-#pragma xmp loop (i,j,k) on t[i][j][k]
+#pragma xmp loop on t[i][j][k]
   for (int i = 0; i < 64; i++){
     for (int j = 0; j < 64; j++){
       for (int k = 0; k < 64; k++){
@@ -39,7 +39,7 @@ int main(void){
 
   int result = 0;
 
-#pragma xmp loop (i,j,k) on t[i][j][k] reduction(+:result)
+#pragma xmp loop on t[i][j][k] reduction(+:result)
   for (int i = 0; i < 64; i++){
   for (int j = 0; j < 64; j++){
   for (int k = 0; k < 64; k++){

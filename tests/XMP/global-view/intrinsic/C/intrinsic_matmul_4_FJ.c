@@ -23,7 +23,7 @@ int test_matmul_001(){
 #pragma xmp align b[i][j] with tb[j][i]
 #pragma xmp align x[i][j] with tx[j][i]
 
-#pragma xmp loop (j,i) on ta[i][j]
+#pragma xmp loop on ta[i][j]
    for(j=0; j<16; j++){
       for(i=0; i<8; i++){
          a[j][i] = i+8*j;
@@ -35,7 +35,7 @@ int test_matmul_001(){
       }
    }
 
-#pragma xmp loop (i,j) on tb[j][i]
+#pragma xmp loop on tb[j][i]
    for(i=0; i<8; i++){
       for(j=0; j<16; j++){
          b[i][j] = -1*(j+16*i);
@@ -59,7 +59,7 @@ int test_matmul_001(){
    xmp_matmul(xmp_desc_of(x), xmp_desc_of(a), xmp_desc_of(b));
 
    error = 0;
-#pragma xmp loop (j,i) on tx(j,i) reduction(+: error)
+#pragma xmp loop on tx(j,i) reduction(+: error)
    for(j=0; j<16; j++){
       for(i=0; i<16; i++){
          if(x[j][i] != y[j][i]) error++;
@@ -88,7 +88,7 @@ int test_matmul_002(){
 #pragma xmp align b[i][j] with tb[j][i]
 #pragma xmp align x[i][j] with tx[j][i]
 
-#pragma xmp loop (j,i) on ta[i][j]
+#pragma xmp loop on ta[i][j]
    for(j=0; j<16; j++){
       for(i=0; i<8; i++){
          a[j][i] = i+8*j;
@@ -100,7 +100,7 @@ int test_matmul_002(){
       }
    }
 
-#pragma xmp loop (i,j) on tb[j][i]
+#pragma xmp loop on tb[j][i]
    for(i=0; i<8; i++){
       for(j=0; j<16; j++){
          b[i][j] = -1*(j+16*i);
@@ -124,7 +124,7 @@ int test_matmul_002(){
    xmp_matmul(xmp_desc_of(x), xmp_desc_of(a), xmp_desc_of(b));
 
    error = 0;
-#pragma xmp loop (j,i) on tx[i][j] reduction(+: error)
+#pragma xmp loop on tx[i][j] reduction(+: error)
    for(j=0; j<16; j++){
       for(i=0; i<16; i++){
          if(fabs(x[j][i]-y[j][i]) > 0.00000001) error++;
@@ -154,7 +154,7 @@ int test_matmul_003(){
 #pragma xmp align b[i][j] with tb[j][i]
 #pragma xmp align x[i][j] with tx[j][i]
 
-#pragma xmp loop (j,i) on ta[i][j]
+#pragma xmp loop on ta[i][j]
    for(j=0; j<16; j++){
       for(i=0; i<8; i++){
          a[j][i] = i+8*j;
@@ -166,7 +166,7 @@ int test_matmul_003(){
       }
    }
 
-#pragma xmp loop (i,j) on tb[j][i]
+#pragma xmp loop on tb[j][i]
    for(i=0; i<8; i++){
       for(j=0; j<16; j++){
          b[i][j] = -1*(j+16*i);
@@ -190,7 +190,7 @@ int test_matmul_003(){
    xmp_matmul(xmp_desc_of(x), xmp_desc_of(a), xmp_desc_of(b));
 
    error = 0;
-#pragma xmp loop (j,i) on tx[i][j] reduction(+: error)
+#pragma xmp loop on tx[i][j] reduction(+: error)
    for(j=0; j<16; j++){
       for(i=0; i<16; i++){
          if(x[j][i] != y[j][i]) error++;
@@ -219,7 +219,7 @@ int test_matmul_004(){
 #pragma xmp align b[i][j] with tb[j][i]
 #pragma xmp align x[i][j] with tx[j][i]
 
-#pragma xmp loop (j,i) on ta[i][j]
+#pragma xmp loop on ta[i][j]
    for(j=0; j<20; j++){
       for(i=0; i<8; i++){
          a[j][i] = i+8*j;
@@ -231,7 +231,7 @@ int test_matmul_004(){
       }
    }
 
-#pragma xmp loop (i,j) on tb[j][i]
+#pragma xmp loop on tb[j][i]
    for(i=0; i<8; i++){
       for(j=0; j<16; j++){
          b[i][j] = -1*(j+16*i);
@@ -255,7 +255,7 @@ int test_matmul_004(){
    xmp_matmul(xmp_desc_of(x), xmp_desc_of(a), xmp_desc_of(b));
 
    error = 0;
-#pragma xmp loop (j,i) on tx[i][j] reduction(+: error)
+#pragma xmp loop on tx[i][j] reduction(+: error)
    for(j=0; j<20; j++){
       for(i=0; i<16; i++){
          if(x[j][i] != y[j][i]){
@@ -289,7 +289,7 @@ int test_matmul_005(){
 #pragma xmp shadow b[1][1]
 #pragma xmp shadow x[1][1]
 
-#pragma xmp loop (j,i) on ta[i][j]
+#pragma xmp loop on ta[i][j]
    for(j=0; j<20; j++){
       for(i=0; i<8; i++){
          a[j][i] = i+8*j;
@@ -301,7 +301,7 @@ int test_matmul_005(){
       }
    }
 
-#pragma xmp loop (i,j) on tb[j][i]
+#pragma xmp loop on tb[j][i]
    for(i=0; i<8; i++){
       for(j=0; j<16; j++){
          b[i][j] = -1*(j+16*i);
@@ -325,7 +325,7 @@ int test_matmul_005(){
    xmp_matmul(xmp_desc_of(x), xmp_desc_of(a), xmp_desc_of(b));
 
    error = 0;
-#pragma xmp loop (j,i) on tx[i][j] reduction(+: error)
+#pragma xmp loop on tx[i][j] reduction(+: error)
    for(j=0; j<20; j++){
       for(i=0; i<16; i++){
          if(x[j][i] != y[j][i]){

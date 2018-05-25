@@ -15,12 +15,12 @@ int main()
 {
   int i,j;
 
-#pragma xmp loop (i,j) on t[j][i]
+#pragma xmp loop on t[j][i]
   for(i=0;i<4;i++)
     for(j=0;j<4;j++)
       a[i][j]=i*4+j;
 
-#pragma xmp loop (i,j) on t[j][i]
+#pragma xmp loop on t[j][i]
   for(i=0;i<4;i++)
     for(j=0;j<4;j++)
       {
@@ -28,7 +28,7 @@ int main()
 	idx1[i][j]=j;
       }
 
-#pragma xmp loop (i,j) on t[j][i]
+#pragma xmp loop on t[j][i]
   for(i=0;i<4;i++)
     for(j=0;j<4;j++)
       x[i][j]=0;
@@ -37,7 +37,7 @@ int main()
 
 
   int result = 0;
-#pragma xmp loop (i,j) on t[j][i]
+#pragma xmp loop on t[j][i]
   for(i=0;i<4;i++)
     for(j=0;j<4;j++)
       if(x[i][j]!=a[i][j])

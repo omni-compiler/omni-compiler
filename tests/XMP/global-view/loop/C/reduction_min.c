@@ -40,17 +40,17 @@ int main(void)
     if(random_array[i]<ans_val)
       ans_val=random_array[i];
 
-#pragma xmp loop (i) on t1[:][:][i] reduction(min:sa)
+#pragma xmp loop on t1[:][:][i] reduction(min:sa)
   for(i=0;i<N;i++)
     if(a[i]<sa)
       sa=a[i];
 
-#pragma xmp loop (i) on t2[:][i][:] reduction(min:sb)
+#pragma xmp loop on t2[:][i][:] reduction(min:sb)
   for(i=0;i<N;i++)
     if(b[i]<sb)
       sb=b[i];
 
-#pragma xmp loop (i) on t3[i][:][:] reduction(min:sc)
+#pragma xmp loop on t3[i][:][:] reduction(min:sc)
   for(i=0;i<N;i++)
     if(c[i]<sc)
       sc=c[i];

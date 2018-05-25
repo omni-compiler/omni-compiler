@@ -22,7 +22,7 @@ int main(){
 
 #pragma xmp reflect (a) width(/periodic/1,/periodic/1)
 
-#pragma xmp loop (i,j) on t(i,j)
+#pragma xmp loop on t(i,j)
   for (int i = 0; i < 8; i++){
     for (int j = 0; j < 8; j++){
       a[i][j] = 2;
@@ -43,14 +43,14 @@ int main(){
 
 #pragma xmp reflect (b) width(/periodic/1,/periodic/1) async(10)
 
-#pragma xmp loop (i,j) on t(i,j) peel_and_wait(10, -1,-1)
+#pragma xmp loop on t(i,j) peel_and_wait(10, -1,-1)
   for (int i = 0; i < 8; i++){
     for (int j = 0; j < 8; j++){
       b[i][j] = 2;
     }
   }
   
-#pragma xmp loop (i,j) on t(i,j) reduction(+:result) expand(/unbound/1,/unbound/1)
+#pragma xmp loop on t(i,j) reduction(+:result) expand(/unbound/1,/unbound/1)
   for (int i = 0; i < 8; i++){
     for (int j = 0; j < 8; j++){
       if (a[i][j] != b[i][j]) result = 1;

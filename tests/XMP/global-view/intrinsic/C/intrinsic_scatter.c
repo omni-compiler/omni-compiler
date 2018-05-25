@@ -79,7 +79,7 @@ int main()
 
   xmp_scatter(xmp_desc_of(x),xmp_desc_of(a),xmp_desc_of(idx));
 
-#pragma xmp loop (i) on t[i]
+#pragma xmp loop on t[i]
   for(i=1;i<16;i++)
     if(x[i]!=xdash[i])
       result =-1;

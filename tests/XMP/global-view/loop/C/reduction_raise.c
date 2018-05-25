@@ -16,14 +16,14 @@ int main(void)
   for(i=0;i<N;i++)
     random_array[i] = rand();
 
-#pragma xmp loop (i) on t[i]
+#pragma xmp loop on t[i]
   for(i=0;i<N;i++)
     a[i] = random_array[i];
 
   for(i=0;i<N;i++)
     ans_val = ans_val^random_array[i];
 
-#pragma xmp loop (i) on t[i] reduction(^:sa)
+#pragma xmp loop on t[i] reduction(^:sa)
   for(i=0;i<N;i++)
     sa = sa^a[i];
 

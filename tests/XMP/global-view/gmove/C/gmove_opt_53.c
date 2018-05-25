@@ -19,7 +19,7 @@ int x[N], b[NPCOL][N];
 
 int main()
 {
-#pragma xmp loop (j,i) on t_b[i][j]
+#pragma xmp loop on t_b[i][j]
   for(int i=0;i<NPCOL;i++)
     for(int j=0;j<N;j++)
       b[i][j] = i*N+j;

@@ -18,7 +18,7 @@ void mult(int b[N], int factor)
 {
 #pragma xmp align b[i] with t[i]
   int i;
-#pragma xmp loop (i) on t[i]
+#pragma xmp loop on t[i]
   for(i=0;i<N;i++){
     b[i] *= factor;
   }
@@ -35,7 +35,7 @@ int func()
   int i;
   int c[N];
 #pragma xmp align c[i] with t[i]
-#pragma xmp loop (i) on t[i]
+#pragma xmp loop on t[i]
   for(i=0;i<N;i++){
     c[i] = 0;
   }
@@ -51,7 +51,7 @@ int func()
 int main()
 {
   int i, v;
-#pragma xmp loop (i) on t[i]
+#pragma xmp loop on t[i]
   for(i=0;i<N;i++){
     a[i] = i;
   }
@@ -59,7 +59,7 @@ int main()
   mult(a, 3);
 
   long long sum = 0;
-#pragma xmp loop (i) on t[i] reduction(+:sum)
+#pragma xmp loop on t[i] reduction(+:sum)
   for(i=0;i<N;i++){
     sum += a[i];
   }

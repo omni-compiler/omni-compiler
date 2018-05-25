@@ -33,7 +33,7 @@ int main()
       else
 	adash[i][j]=0;
 
-#pragma xmp loop (i,j) on tp[j][i]
+#pragma xmp loop on tp[j][i]
   for(i=0;i<10;i++)
     for(j=0;j<10;j++)
       {
@@ -43,14 +43,14 @@ int main()
 	  mask[i][j]=0;
       }
 
-#pragma xmp loop (i,j) on tp[j][i]
+#pragma xmp loop on tp[j][i]
   for(i=0;i<10;i++)
     for(j=0;j<10;j++)
       {
 	a[i][j]=i*10+j;
       }
 
-#pragma xmp loop (i) on tq[i]
+#pragma xmp loop on tq[i]
   for(i=0;i<100;i++)
     {
       v[i]=0;
@@ -58,7 +58,7 @@ int main()
   xmp_pack(xmp_desc_of(v),xmp_desc_of(a),xmp_desc_of(mask));
 
 
-#pragma xmp loop (i,j) on tp[j][i]
+#pragma xmp loop on tp[j][i]
   for(i=0;i<10;i++)
     for(j=0;j<10;j++)
       {
@@ -72,7 +72,7 @@ int main()
   xmp_unpack(xmp_desc_of(a),xmp_desc_of(v),xmp_desc_of(mask));
 
   int result = 0;
-#pragma xmp loop (i) on tq[i]
+#pragma xmp loop on tq[i]
   for(i=0;i<100;i++)
     if(v[i]!=vdash[i])
       result =-1;
@@ -90,7 +90,7 @@ int main()
     }
   }
 
-#pragma xmp loop (i,j) on tp[j][i]
+#pragma xmp loop on tp[j][i]
   for(i=0;i<10;i++)
     for(j=0;j<10;j++)
       if(a[i][j]!=adash[i][j])

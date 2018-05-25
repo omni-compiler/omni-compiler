@@ -27,7 +27,7 @@ void foo()
 #pragma xmp reflect (a) width (/periodic/1:1) async (100)
 #pragma xmp wait_async (100)
 
-#pragma xmp loop (i) on t[i]
+#pragma xmp loop on t[i]
   for (int i = 0; i < N; i++){
     if(a[i-1] != (i-1+N)%N){
       printf("ERROR Lower in %d (%06d) (%06d)\n", (int)i, a[i-1], (int)(i-1+N)%N);

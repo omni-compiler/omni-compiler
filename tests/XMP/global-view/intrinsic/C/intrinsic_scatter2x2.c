@@ -15,12 +15,12 @@ int main()
 {
   int i,j;
 
-#pragma xmp loop (i,j) on t[j][i]
+#pragma xmp loop on t[j][i]
   for(i=0;i<4;i++)
     for(j=0;j<4;j++)
       a[i][j]=4*i+j;
 
-#pragma xmp loop (i,j) on t[j][i]
+#pragma xmp loop on t[j][i]
   for(i=0;i<4;i++)
     for(j=0;j<4;j++)
       {
@@ -29,7 +29,7 @@ int main()
       }
 
 
-#pragma xmp loop (i,j) on t[j][i]
+#pragma xmp loop on t[j][i]
   for(i=0;i<4;i++)
     for(j=0;j<4;j++)
       x[i][j]=0;
@@ -37,7 +37,7 @@ int main()
   xmp_scatter(xmp_desc_of(x),xmp_desc_of(a),xmp_desc_of(idx0),xmp_desc_of(idx1));
 
   int result = 0;
-#pragma xmp loop (i,j) on t[j][i]
+#pragma xmp loop on t[j][i]
   for(i=0;i<4;i++)
     for(j=0;j<4;j++)
       if(x[i][j]!=a[i][j])

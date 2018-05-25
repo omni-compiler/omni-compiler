@@ -10,12 +10,12 @@ int a[N][N];
 
 int main(){
 
-#pragma xmp loop (i,j) on t[i][j]
+#pragma xmp loop on t[i][j]
   for(int i=0;i<N;i++)
     for(int j=0;j<N;j++)
       a[i][j] = N * i + j;
   
-#pragma xmp loop (i,j) on t[i][j]
+#pragma xmp loop on t[i][j]
   for(int i=0;i<N;i++){
     for(int j=0;j<N;j++){
       int v = a[i][j];
@@ -26,7 +26,7 @@ int main(){
     }
   }
 
-#pragma xmp loop (j,i) on t[i][j]
+#pragma xmp loop on t[i][j]
   for(int i=0;i<N;i++){
     for(int j=0;j<N;j++){
       int v = a[i][j];

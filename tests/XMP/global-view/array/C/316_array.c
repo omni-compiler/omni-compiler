@@ -12,12 +12,12 @@ int a[n];
 int main(){
 
 int i, ierr=0;
-#pragma xmp loop (i) on tx[i]
+#pragma xmp loop on tx[i]
   for(i=0; i<n; i++){
     a[i]=i;
   }
 
-#pragma xmp loop (i) on tx[i]
+#pragma xmp loop on tx[i]
   for(i=0; i<n; i++){
     ierr = ierr + abs(a[i]-i);
   }

@@ -7,13 +7,13 @@ import java.util.*;
 import xcodeml.util.XmOption;
 
 public class XMPtranslateLocalPragma {
-  private XMPglobalDecl		_globalDecl;
-  private boolean		_all_profile = false;
-  private boolean		_selective_profile = false;
-  private boolean		doScalasca = false;
-  private boolean		doTlog = false;
-  private XobjectDef		currentDef;
-  private XMPgenSym             tmpSym;
+  private XMPglobalDecl	_globalDecl;
+  private boolean	_all_profile       = false;
+  private boolean	_selective_profile = false;
+  private boolean	doScalasca         = false;
+  private boolean	doTlog             = false;
+  private XobjectDef	currentDef;
+  private XMPgenSym     tmpSym;
 
   public XMPtranslateLocalPragma(XMPglobalDecl globalDecl) {
     _globalDecl = globalDecl;
@@ -625,29 +625,42 @@ public class XMPtranslateLocalPragma {
     }
   }
 
-  private void translateGpuLoop(PragmaBlock pb) throws XMPexception {
-    XobjList loopDecl = (XobjList)pb.getClauses();
-    BlockList loopBody = pb.getBody();
+  private XobjList getLoopIterListFromOnRef(XobjList loopIterList) throws XMPexception {
+    XobjList newLoopIterList = Xcons.List();
 
+    for(int i=0;i<loopIterList.Nargs();i++){
+      Xobject tmp = loopIterList.getArg(i);
+      if(tmp != null)
+	if(! tmp.equals(Xcons.StringConstant(XMP.COLON)) && ! tmp.equals(Xcons.StringConstant(XMP.ASTERISK)))
+	  newLoopIterList.add(tmp);
+    }
+
+    return newLoopIterList;
+  }
+		
+  private void translateGpuLoop(PragmaBlock pb) throws XMPexception {
+    XobjList loopDecl  = (XobjList)pb.getClauses();
+    BlockList loopBody = pb.getBody();
+    
     if (!XmOption.isXcalableMPGPU()) {
       XMP.warning("use -enable-gpu option to use 'acc loop' directive");
       pb.replace(Bcons.COMPOUND(loopBody));
       return;
     }
-
+    
     // get block to schedule
     CforBlock schedBaseBlock = getOutermostLoopBlock(loopBody);
-
+    
     // analyze loop
-    XobjList loopIterList = (XobjList)loopDecl.getArg(0);
-    if (loopIterList == null || loopIterList.Nargs() == 0) {
-      loopIterList = Xcons.List(Xcons.String(schedBaseBlock.getInductionVar().getName()));
-      loopDecl.setArg(0, loopIterList);
-      translateFollowingLoop(pb, schedBaseBlock);
-    } else {
-      translateMultipleLoop(pb, schedBaseBlock);
-    }
+    XobjList loopIterList   = (XobjList)loopDecl.getArg(0);
+    XobjList onRef          = (XobjList)loopDecl.getArg(1);
+    XobjList onRefIterList  = (XobjList)onRef.getArg(1);
+    
+    if(loopIterList == null || loopIterList.Nargs() == 0)
+      loopIterList = getLoopIterListFromOnRef(onRefIterList);
 
+    translateMultipleLoop(pb, schedBaseBlock, loopIterList);
+    
     // translate
     // FIXME implement reduction
     Block newLoopBlock = translateGpuClause(pb, null, schedBaseBlock);
@@ -786,8 +799,7 @@ public class XMPtranslateLocalPragma {
   private void translateLoop(PragmaBlock pb, boolean isFromTranslateLoop) throws XMPexception {
     XobjList loopDecl  = (XobjList)pb.getClauses();
     BlockList loopBody = pb.getBody();
-
-    Block newBlock = null;
+    Block newBlock     = null;
     XobjList expandOpt = (XobjList)loopDecl.getArg(5);
 
     if (expandOpt == null || expandOpt.hasNullArg() || expandOpt.isEmptyList()){
@@ -827,14 +839,11 @@ public class XMPtranslateLocalPragma {
       if(isSquare) onRefIterList.reverse();
     }
     
-    if (loopIterList == null || loopIterList.Nargs() == 0) {
-      loopIterList = Xcons.List(Xcons.String(schedBaseBlock.getInductionVar().getName()));
-      loopDecl.setArg(0, loopIterList);
-      translateFollowingLoop(pb, schedBaseBlock);
+    if(loopIterList == null || loopIterList.Nargs() == 0){
+      loopIterList = getLoopIterListFromOnRef(onRefIterList);
     }
-    else {
-      translateMultipleLoop(pb, schedBaseBlock);
-    }
+
+    translateMultipleLoop(pb, schedBaseBlock, loopIterList);
 
     // translate reduction clause
     XobjList reductionRefList = (XobjList)loopDecl.getArg(2);
@@ -844,7 +853,7 @@ public class XMPtranslateLocalPragma {
         schedVarList = Xcons.List(Xcons.String(schedBaseBlock.getInductionVar().getSym()));
       }
       else {
-        schedVarList = (XobjList)loopDecl.getArg(0).copy();
+	schedVarList = (XobjList)loopIterList.copy();
       }
 
       BlockList reductionBody = createReductionClauseBody(pb, reductionRefList, schedBaseBlock);
@@ -1209,7 +1218,6 @@ public class XMPtranslateLocalPragma {
     XobjList onRef         = (XobjList)loopDecl.getArg(1);
     String onRefObjName    = onRef.getArg(0).getString();
     XobjList subscriptList = (XobjList)onRef.getArg(1);
-
     XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
     XMPobject onRefObj = _globalDecl.getXMPobject(onRefObjName, pb);
     if (onRefObj == null) {
@@ -1257,7 +1265,8 @@ public class XMPtranslateLocalPragma {
       return Bcons.COMPOUND(reductionBody);
     }
   }
-
+  
+  /*
   private void translateFollowingLoop(PragmaBlock pb, CforBlock schedBaseBlock) throws XMPexception {
     XobjList loopDecl              = (XobjList)pb.getClauses();
     ArrayList<String> iteraterList = new ArrayList<String>();  // Not used
@@ -1267,14 +1276,13 @@ public class XMPtranslateLocalPragma {
     if(isOmitSchedLoopFunc[0] == false)
       insertScheduleIndexFunction(pb, schedBaseBlock, schedBaseBlock, iteraterList);
   }
-
-  private void translateMultipleLoop(PragmaBlock pb, CforBlock schedBaseBlock) throws XMPexception {
+  */
+  
+  private void translateMultipleLoop(PragmaBlock pb, CforBlock schedBaseBlock,
+				       XobjList loopVarList) throws XMPexception {
     // start translation
     XobjList loopDecl  = (XobjList)pb.getClauses();
     BlockList loopBody = pb.getBody();
-
-    // iterate index variable list
-    XobjList loopVarList = (XobjList)loopDecl.getArg(0);
 
     Vector<CforBlock> loopVector = new Vector<CforBlock>(XMPutil.countElmts(loopVarList));
     int num = 0;

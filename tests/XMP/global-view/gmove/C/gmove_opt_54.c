@@ -18,7 +18,7 @@ int A[N][N], sol[N];
 
 int main()
 {
-#pragma xmp loop (i,j) on t[j][i]
+#pragma xmp loop on t[j][i]
   for(int j=0;j<N;j++)
     for(int i=0;i<N;i++)
       A[j][i] = j * N + i;

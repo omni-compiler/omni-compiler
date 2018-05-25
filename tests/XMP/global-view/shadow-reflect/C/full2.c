@@ -14,7 +14,7 @@ int result = 0;
 
 int main(){
 
-#pragma xmp loop (i,j) on t[i][j]
+#pragma xmp loop on t[i][j]
   for (int i = 0; i < 4; i++){
     for (int j = 0; j < 4; j++){
       a[i][j] = i * 10 + j;

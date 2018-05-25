@@ -16,7 +16,7 @@ int main(){
 
   int result = 0;
 
-#pragma xmp loop (i) on t(i)
+#pragma xmp loop on t(i)
   for (int i = 0; i < 64; i++){
     a[i] = i;
   }
@@ -29,7 +29,7 @@ int main(){
 
 #pragma xmp reflect (a) width(/periodic/1:1)
 
-#pragma xmp loop (i) on t(i) reduction(+:result)
+#pragma xmp loop on t(i) reduction(+:result)
   for (int i = 0; i < 64; i++){
 
     if (a[i-1] != b[i]){

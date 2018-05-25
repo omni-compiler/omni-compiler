@@ -12,7 +12,7 @@ int* b;
 void test(int* b){
 #pragma xmp align b[i] with t[i]
 	
-#pragma xmp loop (i) on t[i]
+#pragma xmp loop on t[i]
   for(int i=0;i<10;i++)
     printf("[%d] b[%d] = %d\n", xmpc_node_num(), i, b[i]);
   
@@ -23,11 +23,11 @@ int main()
 #pragma xmp template_fix[block] t[10]
   b = (int*)xmp_malloc(xmp_desc_of(b), 10);
 	
-#pragma xmp loop (i) on t[i]
+#pragma xmp loop on t[i]
   for(int i=0;i<10;i++)
     b[i] = i;
 	
-#pragma xmp loop(i) on t[i]
+#pragma xmp loop on t[i]
   for(int i=0;i<10;i++)
     printf("[%d] b[%d] = %d\n", xmpc_node_num(), i, b[i]);
 

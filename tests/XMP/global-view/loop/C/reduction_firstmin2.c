@@ -26,7 +26,7 @@ int main(void)
   for(i=0;i<N*N;i++)
     random_array[i] = rand();
 
-#pragma xmp loop (j,i) on t1[:][i][j]
+#pragma xmp loop on t1[:][i][j]
   for(i=0;i<N;i++){
     for(j=0;j<N;j++){
       m = i*N+j;
@@ -34,7 +34,7 @@ int main(void)
     }
   }
   
-#pragma xmp loop (j,i) on t2[i][j][:]
+#pragma xmp loop on t2[i][j][:]
   for(i=0;i<N;i++){
     for(j=0;j<N;j++){
       m = i*N+j;
@@ -42,7 +42,7 @@ int main(void)
     }
   }
 
-#pragma xmp loop (j,i) on t3[i][:][j]
+#pragma xmp loop on t3[i][:][j]
   for(i=0;i<N;i++){
     for(j=0;j<N;j++){
       m = i*N+j;
@@ -61,7 +61,7 @@ int main(void)
     }
   }
 
-#pragma xmp loop (j,i) on t1[:][i][j] reduction(firstmin:sa/ia,ja/)
+#pragma xmp loop on t1[:][i][j] reduction(firstmin:sa/ia,ja/)
   for(i=0;i<N;i++){
     for(j=0;j<N;j++){
       if(sa > a[i][j]){
@@ -72,7 +72,7 @@ int main(void)
     } 
   }
 
-#pragma xmp loop (j,i) on t2[i][j][:] reduction(firstmin:sb/ib,jb/)
+#pragma xmp loop on t2[i][j][:] reduction(firstmin:sb/ib,jb/)
   for(i=0;i<N;i++){
     for(j=0;j<N;j++){
       if(sb > b[i][j]){
@@ -83,7 +83,7 @@ int main(void)
     } 
   }
 
-#pragma xmp loop (j,i) on t3[i][:][j] reduction(firstmin:sc/ic,jc/)
+#pragma xmp loop on t3[i][:][j] reduction(firstmin:sc/ic,jc/)
   for(i=0;i<N;i++){
     for(j=0;j<N;j++){
       if(sc > c[i][j]){

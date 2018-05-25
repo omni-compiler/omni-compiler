@@ -20,7 +20,7 @@ void foo()
 
   a = (int (*)[NSIZE])xmp_malloc(xmp_desc_of(a), NSIZE, NSIZE);
 
-#pragma xmp loop (i,j) on t[j][i]
+#pragma xmp loop on t[j][i]
   for (int i = 0; i < N; i++){
     for (int j = 0; j < N; j++){
       a[i][j] = i * 1000 + j;
@@ -30,7 +30,7 @@ void foo()
 #pragma xmp reflect (a) width (/periodic/1:1,/periodic/1:1) async (100)
 #pragma xmp wait_async (100)
 
-#pragma xmp loop (i,j) on t[j][i]
+#pragma xmp loop on t[j][i]
   for (int i = 0; i < N; i++){
     for (int j = 0; j < N; j++){
       if (a[i-1][j] != (i - 1 + N) % N * 1000 + j){

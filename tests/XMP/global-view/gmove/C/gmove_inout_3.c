@@ -29,7 +29,7 @@ void gmove_in(){
 
   int result = 0;
 
-#pragma xmp loop (i,j,k) on t1[k][j][i]
+#pragma xmp loop on t1[k][j][i]
   for (int i = 0; i < N; i++){
     for (int j = 0; j < N; j++){
       for (int k = 0; k < N; k++){
@@ -38,7 +38,7 @@ void gmove_in(){
     }
   }
 
-#pragma xmp loop (i,j,k) on t2[k][j][i]
+#pragma xmp loop on t2[k][j][i]
   for (int i = 0; i < N; i++){
     for (int j = 0; j < N; j++){
       for (int k = 0; k < N; k++){
@@ -59,7 +59,7 @@ void gmove_in(){
 
 #pragma xmp barrier
 
-#pragma xmp loop (i,j,k) on t1[k][j][i] reduction(+:result)
+#pragma xmp loop on t1[k][j][i] reduction(+:result)
   for (int i = 0; i < N; i++){
     for (int j = 0; j < N; j++){
       for (int k = 0; k < N; k++){
@@ -87,7 +87,7 @@ void gmove_in_async(){
 
   int result = 0;
 
-#pragma xmp loop (i,j,k) on t1[k][j][i]
+#pragma xmp loop on t1[k][j][i]
   for (int i = 0; i < N; i++){
     for (int j = 0; j < N; j++){
       for (int k = 0; k < N; k++){
@@ -96,7 +96,7 @@ void gmove_in_async(){
     }
   }
 
-#pragma xmp loop (i,j,k) on t2[k][j][i]
+#pragma xmp loop on t2[k][j][i]
   for (int i = 0; i < N; i++){
     for (int j = 0; j < N; j++){
       for (int k = 0; k < N; k++){
@@ -119,7 +119,7 @@ void gmove_in_async(){
 
 #pragma xmp barrier
 
-#pragma xmp loop (i,j,k) on t1[k][j][i] reduction(+:result)
+#pragma xmp loop on t1[k][j][i] reduction(+:result)
   for (int i = 0; i < N; i++){
     for (int j = 0; j < N; j++){
       for (int k = 0; k < N; k++){
@@ -147,7 +147,7 @@ void gmove_out(){
 
   int result = 0;
 
-#pragma xmp loop (i,j,k) on t1[k][j][i]
+#pragma xmp loop on t1[k][j][i]
   for (int i = 0; i < N; i++){
     for (int j = 0; j < N; j++){
       for (int k = 0; k < N; k++){
@@ -156,7 +156,7 @@ void gmove_out(){
     }
   }
 
-#pragma xmp loop (i,j,k) on t2[k][j][i]
+#pragma xmp loop on t2[k][j][i]
   for (int i = 0; i < N; i++){
     for (int j = 0; j < N; j++){
       for (int k = 0; k < N; k++){
@@ -177,7 +177,7 @@ void gmove_out(){
 
 #pragma xmp barrier
 
-#pragma xmp loop (i,j,k) on t1[k][j][i] reduction(+:result)
+#pragma xmp loop on t1[k][j][i] reduction(+:result)
   for (int i = 0; i < N; i++){
     for (int j = 0; j < N; j++){
       for (int k = 0; k < N; k++){
@@ -205,7 +205,7 @@ void gmove_out_async(){
 
   int result = 0;
 
-#pragma xmp loop (i,j,k) on t1[k][j][i]
+#pragma xmp loop on t1[k][j][i]
   for (int i = 0; i < N; i++){
     for (int j = 0; j < N; j++){
       for (int k = 0; k < N; k++){
@@ -214,7 +214,7 @@ void gmove_out_async(){
     }
   }
 
-#pragma xmp loop (i,j,k) on t2[k][j][i]
+#pragma xmp loop on t2[k][j][i]
   for (int i = 0; i < N; i++){
     for (int j = 0; j < N; j++){
       for (int k = 0; k < N; k++){
@@ -237,7 +237,7 @@ void gmove_out_async(){
 
 #pragma xmp barrier
 
-#pragma xmp loop (i,j,k) on t1[k][j][i] reduction(+:result)
+#pragma xmp loop on t1[k][j][i] reduction(+:result)
   for (int i = 0; i < N; i++){
     for (int j = 0; j < N; j++){
       for (int k = 0; k < N; k++){

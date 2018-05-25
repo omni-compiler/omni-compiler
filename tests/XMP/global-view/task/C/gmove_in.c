@@ -14,7 +14,7 @@ int main(int argc, char** argv)
 #pragma xmp distribute t[block][block] onto p
 #pragma xmp align a[i][j] with t[i][j]
   
-#pragma xmp loop(i,j) on t[i][j]
+#pragma xmp loop on t[i][j]
   for(int i=0;i<3;i++)
     for(int j=0;j<3;j++)
       a[i][j] = j*2+i; 

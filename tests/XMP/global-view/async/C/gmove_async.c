@@ -13,7 +13,7 @@
 
 int main(void){
 
-#pragma xmp loop (j) on t[j]
+#pragma xmp loop on t[j]
   for (int j = 0; j < 8; j++){
     for (int i = 0; i < 8; i++){
       b[i][j] = i * 10 + j;
@@ -27,7 +27,7 @@ int main(void){
 
   int ierr = 0;
 
-#pragma xmp loop (i) on t[i] reduction(+:ierr)
+#pragma xmp loop on t[i] reduction(+:ierr)
   for (int i = 0; i < 8; i++){
     for (int j = 0; j < 8; j++){
       if (a[i][j] != i * 10 + j) ierr++;

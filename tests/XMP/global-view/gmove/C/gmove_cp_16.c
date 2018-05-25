@@ -20,7 +20,7 @@ int a[n][n][n][n],b[n][n][n][n];
 
   int i0,i1,i2,i3,ierr=0;
 
-#pragma xmp loop (i0,i1,i2,i3) on tx[i3][i2][i1][i0]
+#pragma xmp loop on tx[i3][i2][i1][i0]
   for (i3=0;i3<n;i3++){
     for (i2=0;i2<n;i2++){
       for (i1=0;i1<n;i1++){
@@ -31,7 +31,7 @@ int a[n][n][n][n],b[n][n][n][n];
     }
   }
 
-#pragma xmp loop (i0,i1,i2,i3) on ty[i3][i2][i1][i0]
+#pragma xmp loop on ty[i3][i2][i1][i0]
   for (i3=0;i3<n;i3++){
     for (i2=0;i2<n;i2++){
       for (i1=0;i1<n;i1++){
@@ -45,7 +45,7 @@ int a[n][n][n][n],b[n][n][n][n];
 #pragma xmp gmove
   b[1:4][1:4][1:4][1:4]=a[4:4][4:4][4:4][4:4];
 
-#pragma xmp loop (i0,i1,i2,i3) on ty[i3][i2][i1][i0]
+#pragma xmp loop on ty[i3][i2][i1][i0]
   for (i3=1;i3<5;i3++){
     for (i2=1;i2<5;i2++){
       for (i1=1;i1<5;i1++){
