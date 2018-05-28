@@ -1760,8 +1760,8 @@ void _XMP_reflect_pack_dim(_XMP_array_t *a, int i, int *lwidth, int *uwidth, int
 			   int shadow_comm_type)
 {
 
-  char *pack_dst_lo, *pack_src_lo;
-  char *pack_dst_hi, *pack_src_hi;
+  char *pack_dst_lo, *pack_src_lo; int dst_lo;
+  char *pack_dst_hi, *pack_src_hi; int dst_hi;
   
   if (shadow_comm_type == _XMP_COMM_REFLECT){
     if (a->order == MPI_ORDER_FORTRAN){ /* for XMP/F */
@@ -1781,28 +1781,32 @@ void _XMP_reflect_pack_dim(_XMP_array_t *a, int i, int *lwidth, int *uwidth, int
   if (shadow_comm_type == _XMP_COMM_REDUCE_SHADOW){
     pack_dst_lo = (char *)reflect->lo_recv_buf;
     pack_src_lo = (char *)reflect->lo_recv_array;
+    dst_lo = reflect->lo_rank;
     pack_dst_hi = (char *)reflect->hi_recv_buf;
     pack_src_hi = (char *)reflect->hi_recv_array;
+    dst_hi = reflect->hi_rank;
   }
   else {
     pack_dst_lo = (char *)reflect->lo_send_buf;
     pack_src_lo = (char *)reflect->lo_send_array;
+    dst_lo = reflect->hi_rank;
     pack_dst_hi = (char *)reflect->hi_send_buf;
     pack_src_hi = (char *)reflect->hi_send_array;
+    dst_hi = reflect->lo_rank;
   }
 
   
   if (ai->shadow_type == _XMP_N_SHADOW_NORMAL){
 
     // for lower reflect
-    if (lwidth[i] && reflect->hi_rank != MPI_PROC_NULL){
+    if (lwidth[i] && dst_lo != MPI_PROC_NULL){
       _XMP_pack_vector(pack_dst_lo, pack_src_lo,
 		       reflect->count, lwidth[i] * reflect->blocklength,
 		       reflect->stride);
     }
 
     // for upper reflect
-    if (uwidth[i] && reflect->lo_rank != MPI_PROC_NULL){
+    if (uwidth[i] && dst_hi != MPI_PROC_NULL){
       _XMP_pack_vector(pack_dst_hi, pack_src_hi,
 		       reflect->count, uwidth[i] * reflect->blocklength,
 		       reflect->stride);
