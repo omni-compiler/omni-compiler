@@ -1,5 +1,10 @@
 Omni Compiler Software RELEASE NOTES
 
+# ver. 1.3.1    2018/06/04
+* Remove XcodeML-tools as a separate project (https://github.com/omni-compiler/xcodeml-tools)
+* Be able to omit iteration list of loop directive for nest loop statement
+* Fixed lots of bugs.
+
 # ver. 1.3.0    2018/03/30
 * XcalableACC official release.
 * Remove round brackets tests in XMP/C.
