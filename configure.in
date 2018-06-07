@@ -18,6 +18,22 @@ if test ! -f "xcodeml-tools/configure"; then
 fi
 
 #--------------------------------------------------------------------
+# See http://unix.stackexchange.com/questions/101080/realpath-command-not-found
+realpath ()
+{
+    f=$@;
+    if test -d "$f"; then
+        base="";
+        dir="$f";
+    else
+        base="/$(basename "$f")";
+        dir=$(dirname "$f");
+    fi;
+    dir=$(cd "$dir" && /bin/pwd);
+    echo "$dir$base"
+}
+
+#--------------------------------------------------------------------
 # Save environmental variables set by user before AC_PROG_CC and so on.
 userCFLAGS=${CFLAGS}
 userFCFLAGS=${FCFLAGS}
@@ -1344,6 +1360,12 @@ if test "" != "${userMPI_FCLIBS}"; then
     MPI_FCLIBS="${userMPI_FCLIBS}"
 fi
 
+# Basic compiler
+CC=$(realpath `which $CC`)
+FC=$(realpath `which $FC`)
+AC_SUBST(CC)
+AC_SUBST(FC)
+
 # OpenMP
 AC_SUBST(OPENMP_OPT_C)
 AC_SUBST(OPENMP_OPT_F)
@@ -1353,6 +1375,8 @@ AC_SUBST(XMPC_DEF)
 AC_SUBST(XMPF_DEF)
 
 # MPI C
+MPI_CC=$(realpath `which $MPI_CC`)
+MPI_CPP=$(realpath `which $MPI_CPP`)
 AC_SUBST(MPI_CC)
 AC_SUBST(MPI_CPP)
 AC_SUBST(MPI_CPPFLAGS)
@@ -1360,6 +1384,8 @@ AC_SUBST(MPI_CFLAGS)
 AC_SUBST(MPI_CLIBS)
 
 # MPI F
+MPI_FC=$(realpath `which $MPI_FC`)
+MPI_FPP=$(realpath `which $MPI_FPP`)
 AC_SUBST(MPI_FC)
 AC_SUBST(MPI_FPP)
 AC_SUBST(MPI_FPPFLAGS)
@@ -1483,6 +1509,9 @@ if test $? -ne 0; then
     AC_MSG_ERROR([JAR is not found.])
 fi
 
+JAVA=$(realpath `which $JAVA`)
+JAVAC=$(realpath `which $JAVAC`)
+JAR=$(realpath `which $JAR`)
 AC_SUBST(JAVA)
 AC_SUBST(JAVAC)
 AC_SUBST(JAR)
@@ -2211,23 +2240,23 @@ cat << EOF
   PREFIX : ${prefix}
 
   Local Compilers:
-    C compiler (CC)                      : `which $CC`
+    C compiler (CC)                      : $CC
     C compiler flags (CFLAGS)            : $CFLAGS
-    Fortran compiler (FC)                : `which $FC`
+    Fortran compiler (FC)                : $FC
     Fortran compiler flags (FCFLAGS)     : $FCFLAGS
-    Java application launcher (JAVA)     : `which "$JAVA"`
-    Java compiler (JAVAC)                : `which $JAVAC`
-    Java Archive Tool (JAR)              : `which $JAR`
+    Java application launcher (JAVA)     : $JAVA
+    Java compiler (JAVAC)                : $JAVAC
+    Java Archive Tool (JAR)              : $JAR
 
   Native Compilers:
-    C preprocessor (MPI_CPP)                    : `which $MPI_CPP`
+    C preprocessor (MPI_CPP)                    : $MPI_CPP
     C preprocessor flags (MPI_CPPFLAGS)         : $MPI_CPPFLAGS
-    C compiler (MPI_CC)                         : `which $MPI_CC`
+    C compiler (MPI_CC)                         : $MPI_CC
     C compiler flags (MPI_CFLAGS)               : $MPI_CFLAGS
     C compiler linker flags (MPI_CLIBS)         : $MPI_CLIBS
-    Fortran preprocessor (MPI_FPP)              : `which $MPI_FPP`
+    Fortran preprocessor (MPI_FPP)              : $MPI_FPP
     Fortran preprocessor flags (MPI_FPPFLAGS)   : $MPI_FPPFLAGS
-    Fortran compiler (MPI_FC)                   : `which $MPI_FC`
+    Fortran compiler (MPI_FC)                   : $MPI_FC
     Fortran compiler flags (MPI_FCFLAGS)        : $MPI_FCFLAGS
     Fortran compiler linker flags (MPI_FCLIBS)  : $MPI_FCLIBS
     MPI Version                                 : ${MPI_VERSION}.${MPI_SUBVERSION}
