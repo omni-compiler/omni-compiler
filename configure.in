@@ -2198,6 +2198,9 @@ echo "Run configure script in xcodeml-tools."
 cd xcodeml-tools
 echo ./configure ${OPTIONS} CC="${CC}" CFLAGS="${CFLAGS}"
 ./configure ${OPTIONS} CC="${CC}" CFLAGS="${CFLAGS}"
+if test $? -ne 0; then
+   exit 1
+fi
 # --------------------------------------------------------------------
 # Output
 
