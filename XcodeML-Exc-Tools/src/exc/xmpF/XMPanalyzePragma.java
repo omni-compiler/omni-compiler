@@ -540,73 +540,121 @@ public class XMPanalyzePragma
     // System.out.println("("+expandOpt.getArg(1).getArg(0).getArg(0).getInt()+" : "+expandOpt.getArg(1).getArg(0).getArg(1).getInt()+" ,"
     // 		       +expandOpt.getArg(1).getArg(1).getArg(0).getInt()+" : "+expandOpt.getArg(1).getArg(1).getArg(1).getInt()+")");
 
-    PragmaBlock pb1, pb2;
-    XobjList expandOpt1 = null, expandOpt2 = null;
+    PragmaBlock pb_lower, pb_upper;
+    XobjList expandOpt_lower = null, expandOpt_upper = null;
 
     for (int i = 0; i < expandOpt.getArg(1).Nargs(); i++){
 
-      Xobject expandWidth = expandOpt.getArg(1).getArg(i);
-      Xobject lower = expandWidth.getArg(0);
-      Xobject upper = expandWidth.getArg(1);
-
-      Xobject stride = expandWidth.getArg(2);
+      Xobject expandWidth1 = expandOpt.getArg(1).getArg(i);
+      Xobject lower1 = expandWidth1.getArg(0);
+      Xobject upper1 = expandWidth1.getArg(1);
+ 
+      Xobject stride = expandWidth1.getArg(2);
       if (stride.isIntConstant() && stride.getInt() == -1) continue;
 
-      if (!lower.isZeroConstant() && !upper.isZeroConstant()){
+      if (!lower1.isZeroConstant() && !upper1.isZeroConstant()){
 
 	flag = true;
 
-	// PragmaBlock pb1, pb2;
-	// XobjList expandOpt1, expandOpt2;
-	
 	// for lower margin
-	pb1 = (PragmaBlock)pb.copy();
-	expandOpt1 = (XobjList)pb1.getClauses().getArg(2);
+	pb_lower = (PragmaBlock)pb.copy();
+	expandOpt_lower = (XobjList)pb_lower.getClauses().getArg(2);
+	if (!expandOpt.getArg(2).isEmptyList()) expandOpt_lower.setArg(0, Xcons.IntConstant(XMP.LOOP_MARGIN_LOWER));
 
-	for (int j = 0; j < expandOpt1.getArg(1).Nargs(); j++){
-	  Xobject expandWidth1 = expandOpt1.getArg(1).getArg(j);
+	for (int j = 0; j < expandOpt_lower.getArg(1).Nargs(); j++){
+	  Xobject expandWidth_lower = expandOpt_lower.getArg(1).getArg(j);
+
+	  Xobject expandWidth2 = null;
+	  Xobject lower2 = null;
+	  Xobject upper2 = null;
+
+	  if (!expandOpt.getArg(2).isEmptyList()){
+	    expandWidth2 = expandOpt.getArg(2).getArg(j);
+	    lower2 = expandWidth2.getArg(0);
+	    upper2 = expandWidth2.getArg(1);
+	  }
+
 	  if (j == i){
-	    expandWidth1.setArg(0, lower);
-	    expandWidth1.setArg(1, Xcons.IntConstant(0));
+	    expandWidth_lower.setArg(0, lower1);
+	    if (expandWidth2 != null){
+	      expandWidth_lower.setArg(1, lower2);
+	    }
+	    else {
+	      expandWidth_lower.setArg(1, Xcons.IntConstant(0));
+	    }
 	  }
 	  else if (j > i){
-	    expandWidth1.setArg(2, Xcons.IntConstant(-1)); // edge of margin
+	    expandWidth_lower.setArg(2, Xcons.IntConstant(-1)); // edge of margin
 	  }
 	  else { // j < i
-	    expandWidth1.setArg(0, Xcons.IntConstant(0));
-	    expandWidth1.setArg(1, Xcons.IntConstant(0));
+	    if (expandWidth2 != null){
+	      expandWidth_lower.setArg(0, lower2);
+	      expandWidth_lower.setArg(1, upper2);
+	      expandWidth_lower.setArg(2, Xcons.IntConstant(-1)); // edge of margin
+	    }
+	    else {
+	      expandWidth_lower.setArg(0, Xcons.IntConstant(0));
+	      expandWidth_lower.setArg(1, Xcons.IntConstant(0));
+	    }
 	  }
 	}
 
-	// System.out.println(" ("+expandOpt1.getArg(1).getArg(0).getArg(0).getInt()+" : "+expandOpt1.getArg(1).getArg(0).getArg(1).getInt()+" ,"
-	// 		   +expandOpt1.getArg(1).getArg(1).getArg(0).getInt()+" : "+expandOpt1.getArg(1).getArg(1).getArg(1).getInt()+")");
+	// System.out.println(" ("+expandOpt_lower.getArg(1).getArg(0).getArg(0).getInt()+" : "
+	// 		   +expandOpt_lower.getArg(1).getArg(0).getArg(1).getInt()+" ,"
+	// 		   +expandOpt_lower.getArg(1).getArg(1).getArg(0).getInt()+" : "
+	// 		   +expandOpt_lower.getArg(1).getArg(1).getArg(1).getInt()+")");
 
-	loops.add(pb1);
+	loops.add(pb_lower);
 			     
 	// for upper margin
-	pb2 = (PragmaBlock)pb.copy();
-	expandOpt2 = (XobjList)pb2.getClauses().getArg(2);
+	pb_upper = (PragmaBlock)pb.copy();
+	expandOpt_upper = (XobjList)pb_upper.getClauses().getArg(2);
+	if (!expandOpt.getArg(2).isEmptyList()) expandOpt_upper.setArg(0, Xcons.IntConstant(XMP.LOOP_MARGIN_UPPER));
 
-	for (int j = 0; j < expandOpt1.getArg(1).Nargs(); j++){
-	  Xobject expandWidth2 = expandOpt2.getArg(1).getArg(j);
+	for (int j = 0; j < expandOpt_upper.getArg(1).Nargs(); j++){
+	  Xobject expandWidth_upper = expandOpt_upper.getArg(1).getArg(j);
+
+	  Xobject expandWidth2 = null;
+	  Xobject lower2 = null;
+	  Xobject upper2 = null;
+
+	  if (!expandOpt.getArg(2).isEmptyList()){
+	    expandWidth2 = expandOpt.getArg(2).getArg(j);
+	    lower2 = expandWidth2.getArg(0);
+	    upper2 = expandWidth2.getArg(1);
+	  }
+
 	  if (j == i){
-	    expandWidth2.setArg(0, Xcons.IntConstant(0));
-	    expandWidth2.setArg(1, upper);
+	    if (expandWidth2 != null){
+	      expandWidth_upper.setArg(0, upper2);
+	    }
+	    else {
+	      expandWidth_upper.setArg(0, Xcons.IntConstant(0));
+	    }
+	    expandWidth_upper.setArg(1, upper1);
 	  }
 	  else if (j > i){
-	    expandWidth2.setArg(2, Xcons.IntConstant(-1)); // edge of margin
+	    expandWidth_upper.setArg(2, Xcons.IntConstant(-1)); // edge of margin
 	  }
 	  else { // j < i
-	    expandWidth2.setArg(0, Xcons.IntConstant(0));
-	    expandWidth2.setArg(1, Xcons.IntConstant(0));
+	    if (expandWidth2 != null){
+	      expandWidth_upper.setArg(0, lower2);
+	      expandWidth_upper.setArg(1, upper2);
+	      expandWidth_upper.setArg(2, Xcons.IntConstant(-1)); // edge of margin
+	    }
+	    else {
+	      expandWidth_upper.setArg(0, Xcons.IntConstant(0));
+	      expandWidth_upper.setArg(1, Xcons.IntConstant(0));
+	    }
 	  }	    
 	}
 
-      // System.out.println(" ("+expandOpt2.getArg(1).getArg(0).getArg(0).getInt()+" : "+expandOpt2.getArg(1).getArg(0).getArg(1).getInt()+" ,"
-      // 			 +expandOpt2.getArg(1).getArg(1).getArg(0).getInt()+" : "+expandOpt2.getArg(1).getArg(1).getArg(1).getInt()+")");
-
+       // System.out.println(" ("+expandOpt_upper.getArg(1).getArg(0).getArg(0).getInt()+" : "
+       // 			  +expandOpt_upper.getArg(1).getArg(0).getArg(1).getInt()+" ,"
+       // 			  +expandOpt_upper.getArg(1).getArg(1).getArg(0).getInt()+" : "
+       // 			  +expandOpt_upper.getArg(1).getArg(1).getArg(1).getInt()+")");
     
-	loops.add(pb2);
+	loops.add(pb_upper);
 
       }
 

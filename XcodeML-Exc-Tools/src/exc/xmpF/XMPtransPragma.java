@@ -315,7 +315,9 @@ public class XMPtransPragma
       }
 
       int loopType;
-      if (origLoopType == XMP.LOOP_MARGIN && unboundFlag.getInt() == -1){
+      if ((origLoopType == XMP.LOOP_MARGIN ||
+	   origLoopType == XMP.LOOP_MARGIN_LOWER ||
+	   origLoopType == XMP.LOOP_MARGIN_UPPER) && unboundFlag.getInt() == -1){
 	loopType = XMP.LOOP_EXPAND;
       }
       else {

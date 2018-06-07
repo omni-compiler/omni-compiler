@@ -64,6 +64,9 @@ void xmpf_loop_sched__(int *lb, int *ub, int *st, int *r_idx, _XMP_object_ref_t 
     ; /* the nest is not aligned with any dimension of the template. */
   }
 
+  int orig_lb = *lb;
+  int orig_ub = *ub;
+    
   if (*expand_type == _XMP_LOOP_NONE){
     //xmpf_dbg_printf("%d : %d\n", *lb, *ub);
     return;
@@ -83,6 +86,7 @@ void xmpf_loop_sched__(int *lb, int *ub, int *st, int *r_idx, _XMP_object_ref_t 
       if (*lwidth > 0){
 	(*lb) -= (*lwidth);
 	(*ub) = (*lb) + (*lwidth) - 1;
+	//(*ub) = (*lb) + (*lwidth);
       }
       else if (*lwidth < 0){
 	(*ub) = (*lb) - (*lwidth) - 1;
@@ -91,6 +95,7 @@ void xmpf_loop_sched__(int *lb, int *ub, int *st, int *r_idx, _XMP_object_ref_t 
       else if (*uwidth > 0){
 	(*ub) += (*uwidth);
 	(*lb) = (*ub) - (*uwidth) + 1;
+	//(*lb) = (*ub) - (*uwidth);
       }
       else if (*uwidth < 0){
 	(*lb) = (*ub) + (*uwidth) + 1;
@@ -100,7 +105,72 @@ void xmpf_loop_sched__(int *lb, int *ub, int *st, int *r_idx, _XMP_object_ref_t 
     }
 
   }
+  else if (*expand_type == _XMP_LOOP_MARGIN_LOWER){
 
+    if ((*lb) <= (*ub)){ // iterates at least once
+
+      // _lwidth >= _uwidth
+      int _lwidth = *lwidth;
+      int _uwidth = *uwidth;
+      if (_lwidth < _uwidth){
+	_lwidth = *uwidth;
+	_uwidth = *lwidth;
+      }
+      
+      if (_lwidth >= 0){
+	(*lb) = orig_lb - _lwidth;
+	// (*ub)
+      }
+      else if (_lwidth < 0){
+	// (*lb)
+	(*ub) = orig_lb - _lwidth - 1;
+      }
+
+      if (*uwidth > 0){
+	(*lb) = orig_lb - (*uwidth);
+	// (*ub)
+      }
+      else if (*uwidth <= 0){
+	// (*lb)
+	(*ub) = orig_lb - (*uwidth) - 1;
+      }
+
+    }
+  }
+  else if (*expand_type == _XMP_LOOP_MARGIN_UPPER){
+
+    if ((*lb) <= (*ub)){ // iterates at least once
+
+      // _lwidth <= _uwidth
+      int _lwidth = *lwidth;
+      int _uwidth = *uwidth;
+      if (_lwidth > _uwidth){
+	_lwidth = *uwidth;
+	_uwidth = *lwidth;
+      }
+
+      if (_lwidth > 0){
+	// (*lb)
+	(*ub) = orig_ub + _lwidth;
+      }
+      else if (_lwidth <= 0){
+	(*lb) = orig_ub + _lwidth + 1;
+	// (*ub)
+      }
+
+      if (*uwidth >= 0){
+	// (*lb)
+	(*ub) = orig_ub + (*uwidth);
+      }
+      else if (*uwidth < 0){
+	(*lb) = orig_ub + (*uwidth) + 1;
+	// (*ub)
+      }
+
+    }
+
+  }  
+    
   if (*unbound_flag == 0){
 
     _XMP_template_t *t_desc = rp->t_desc;

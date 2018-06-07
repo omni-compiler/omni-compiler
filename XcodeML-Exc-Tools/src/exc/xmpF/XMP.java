@@ -45,6 +45,9 @@ public class XMP {
   public final static int LOOP_MARGIN           = 411;
   public final static int LOOP_PEEL_AND_WAIT    = 412;
   public final static int LOOP_NONE             = 413;
+
+  public final static int LOOP_MARGIN_LOWER     = 414;
+  public final static int LOOP_MARGIN_UPPER     = 415;
     
   public final static int MAX_DIM		= 15;
   public       static int MAX_ASSUMED_SHAPE     = 16;

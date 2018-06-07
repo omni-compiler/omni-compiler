@@ -76,6 +76,9 @@
 #define _XMP_LOOP_PEEL_AND_WAIT                 412
 #define _XMP_LOOP_NONE                          413
 
+#define _XMP_LOOP_MARGIN_LOWER                  414
+#define _XMP_LOOP_MARGIN_UPPER                  415
+
 // defined in exc.object.BasicType + 500
 #define _XMP_N_TYPE_BOOL			502
 #define _XMP_N_TYPE_CHAR			503
