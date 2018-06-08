@@ -9,6 +9,10 @@ MKDIR_P      = @MKDIR_P@
 INSTALL      = @INSTALL@
 OM_EXC_TOOLS = build/om-exc-tools.jar
 SOURCE       = $(wildcard src/exc/*/*.java)
+SOURCE_AUTO  = src/exc/xcalablemp/XMPcoarrayLibs_auto.java
+SRCIPT       = $(SOURCE_AUTO).sh
+SCRIPT_SRC  = ../libxmpf/src/xmpf_coarray_decl.F90
+SCRIPT_INC  = ../libxmpf/include
 
 XCODE_JAVA   = src/exc/object/Xcode.java
 XCODE_DEF    = ./Xcode.def
@@ -24,6 +28,9 @@ $(OM_EXC_TOOLS): $(SOURCE) $(XCODE_JAVA)
 	$(JAVAC) $(JAVAC_OPT) src/exc/*/*.java -classpath src:../xcodeml-tools/XcodeML-Common/build/om-common.jar
 	$(MKDIR_P) build
 	cd src; $(JAR) $(JAR_OPT) cf ../$@ ./exc/*/*.class
+
+$(SOURCE_AUTO): $(SCRIPT) $(SCRIPT_SRC) $(SCRIPT_INC)
+	$(SCRIPT) $(SCRIPT_SRC) $(SCRIPT_INC) >$@
 
 clean:
 	rm -f $(OM_EXC_TOOLS) src/exc/*/*.class src/xcodeml/util/*.class
