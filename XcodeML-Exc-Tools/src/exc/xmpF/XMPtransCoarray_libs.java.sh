@@ -1,8 +1,8 @@
 #!/bin/bash
 
-CallingClassName="XfDecompileDomVisitor"
+CallingClassName="XMPtransCoarray"
 CallingFile=${CallingClassName}.java
-ClassName=${CallingClassName}_coarrayLibs
+ClassName=${CallingClassName}_libs
 
 AdditionalFunctionNames="sizeof "
 
