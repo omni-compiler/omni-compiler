@@ -3,6 +3,7 @@ package exc.xmpF;
 import exc.object.*;
 import exc.block.*;
 import java.util.*;
+import xcodeml.util.XmOption;
 
 /**
  * XcalableMP AST translator (for Coarray)
@@ -32,6 +33,11 @@ public class XMPtransCoarray implements XobjectDefVisitor
     this.pass = pass;
     _set_version(suboption);
     this.onlyCafMode = onlyCafMode;
+    if (XmOption.getCoarrayEntryNames().isEmpty()) {
+      String[] names = exc.xmpF.XMPtransCoarray_libs.EntryNameArray;
+      for (String name: names)
+        XmOption.addToCoarrayEntryNames(name);    
+    }
     pastRuns = new ArrayList<XMPtransCoarrayRun>();
   }
 

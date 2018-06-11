@@ -68,16 +68,8 @@ function output_header {
 //    '$CallingFile'
 //
 
-package xcodeml.f.decompile;
+package exc.xmpF;
 import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.Arrays;
-
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-
 import java.io.*;
 
 public class '$2'
