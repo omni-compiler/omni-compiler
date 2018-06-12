@@ -120,7 +120,8 @@ public class omompx
     boolean Fonesided          = false;
     int maxColumns             = 0;
     String coarray_suboption   = "";        // HIDDEN
-    boolean coarray_noUseStmt  = false;     // TEMPORARY
+    //    boolean coarray_noUseStmt  = false;     // TEMPORARY
+    boolean coarray_useStmt    = true;     // TEMPORARY
     int accDefaultVectorLength = 0;
     boolean accDisableReadOnlyDataCache = false;
         
@@ -146,11 +147,11 @@ public class omompx
         coarray = true;
       } else if(arg.equals("-fnocoarray")) {
         coarray = false;
-        coarray_noUseStmt = true;
+        coarray_useStmt = false;
       } else if(arg.startsWith("-fcoarray=")) {                  // HIDDEN
         coarray_suboption += arg.substring(arg.indexOf("=")+1);
       } else if(arg.equals("-fcoarray-no-use-statement")) {       // TEMPORARY
-        coarray_noUseStmt = true;
+        coarray_useStmt = false;
       } else if(arg.equals("-facc")) {
         openACC = true; 
       } else if(arg.equals("-fxmp")) {
@@ -279,7 +280,8 @@ public class omompx
     XmOption.setIsXcalableMPGPU(xcalableMPGPU);
     XmOption.setTlogMPIisEnable(doTlog);
     XmOption.setFonesided(Fonesided);
-    XmOption.setCoarrayNoUseStatement(coarray_noUseStmt);   // TEMPORARY
+    //    XmOption.setCoarrayNoUseStatement(coarray_noUseStmt);   // TEMPORARY
+    XmOption.setCoarrayUseStatement(coarray_useStmt);
     XmOption.setIsXcalableACC(xcalableACC);
     
     // read XcodeML
