@@ -268,6 +268,8 @@ public class XMPtransPragma
       XMPtemplate t = on_ref.getTemplate();
       int t_idx = on_ref.getLoopOnIndex(k);
 
+      if (t.getDistMannerAt(t_idx) == XMPtemplate.DUPLICATION) continue;
+      
       XMPdimInfo d_info = info.getLoopDimInfo(k);
       Ident local_loop_var = d_info.getLoopLocalVar();
 
