@@ -692,6 +692,7 @@ public class XMPanalyzePragma
     PragmaBlock pb1 = (PragmaBlock)pb.copy();
     pb1.getClauses().getArg(2).setArg(0, Xcons.IntConstant(XMP.LOOP_MARGIN));
     pb1.getClauses().getArg(2).setArg(1, pb.getClauses().getArg(2).getArg(2));
+    pb1.getClauses().getArg(2).setArg(2, Xcons.List());
     bl.add(pb1);
 
     return Bcons.COMPOUND(bl);
