@@ -26,6 +26,8 @@ STOP_BACKEND=false
 STOP_COMPILE=false
 DISABLE_LDG=false
 DEFAULT_VECLEN=""
+ENABLE_TARGET=false
+ENABLE_SPECIFY_CC=false;
 
 ### Set options ###
 # e.g.) ompcc -I/usr/lib a.c b.c c.o --tmp --Wlfoo lib.a -DTEST -lm -o a.out
@@ -58,6 +60,10 @@ linker_add_opt=()
 ompcc_set_parameters ${@+"$@"}
 omni_c_check_file_exist
 
+[ $ENABLE_SPECIFY_CC = true ] && OMNI_CPP_CMD=$SPECIFIED_CC
+[ $ENABLE_SPECIFY_CC = true ] && OMNI_CC_CMD=$SPECIFIED_CC
+[ $ENABLE_SPECIFY_CC = true ] && OMNI_LINKER_CMD=$SPECIFIED_CC
+
 ### Create temporal directory ###
 [ "$ENABLE_DEBUG" = true ] && TEMP_DIR=$DEBUG_TEMP_DIR
 # Note that if TEMP_DIR exists, the TEMP_DIR is not deleted (KAGEMAI #379)
@@ -73,7 +79,11 @@ omni_set_trap
 if [ "$ENABLE_ACC" = true ]; then
     OMNI_CPP_OPT="$OMNI_CPP_OPT ${OPENACC_DEF}"
 else
-    OMNI_CPP_OPT="$OMNI_CPP_OPT ${OPENMP_DEF}"
+    if [ "$ENABLE_TARGET" = true ]; then
+	OMNI_CPP_OPT="$OMNI_CPP_OPT"
+    else
+	OMNI_CPP_OPT="$OMNI_CPP_OPT ${OPENMP_DEF}"
+    fi
 fi
 for c_file in "${c_files[@]}"; do
     C_FILE=("${c_file}")
@@ -121,7 +131,7 @@ if [ "$ENABLE_ACC" = true ]; then
     OMNI_CX2X_OPT="$OMNI_CX2X_OPT -platform=$OPENACC_PLATFORM"
     OMNI_CX2X_OPT="$OMNI_CX2X_OPT -device=$OPENACC_DEVICE"
 else
-    OMNI_CX2X_OPT="$OMNI_CX2X_OPT -fopenmp"
+    [ "$ENABLE_TARGET" = false ] && OMNI_CX2X_OPT="$OMNI_CX2X_OPT -fopenmp"
 fi
 for c_file in "${c_files[@]}"; do
     C_FILE=("${c_file}")
@@ -153,7 +163,11 @@ fi
 if [ "$ENABLE_ACC" = true ]; then
     OMNI_CC_OPT="$OMNI_CC_OPT ${OPENACC_DEF}"
 else
-    OMNI_CC_OPT="$OMNI_CC_OPT ${OPENMP_DEF}"
+    if [ "$ENABLE_TARGET" = true ]; then
+	OMNI_CC_OPT="-c -fopenmp -fopenmp-targets=nvptx64-nvidia-cuda"
+    else
+	OMNI_CC_OPT="$OMNI_CC_OPT ${OPENMP_DEF}"
+    fi
 fi
 for c_file in "${c_files[@]}"; do
     C_FILE=("${c_file}")
@@ -216,8 +230,12 @@ if [ "$ENABLE_ACC" = true ]; then
     fi
     obj_files+=("$TRAVERSE_FILE_O")
 else
-    OMNI_LINKER_OPT="$OMNI_LINKER_OPT -lompc_mutex_pthread -lpthread -ltlog"
-    obj_files+=("$OMPC_MAIN_O")
+    if [ "$ENABLE_TARGET" = false ]; then
+      OMNI_LINKER_OPT="$OMNI_LINKER_OPT -lompc_mutex_pthread -lpthread -ltlog"
+      obj_files+=("$OMPC_MAIN_O")
+    else
+      OMNI_LINKER_OPT=" -fopenmp -fopenmp-targets=nvptx64-nvidia-cuda"
+    fi
 fi
 
 if [ "$target" != "sxace-nec-superux" -a "${output_file}" != "" ]; then
