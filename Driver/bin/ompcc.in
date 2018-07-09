@@ -176,8 +176,12 @@ for c_file in "${c_files[@]}"; do
     FILE_O=${TEMP_DIR}/"${FILE_NAME}".o
     FILE_USER_O=`basename "${C_FILE}" .c`.o
 
-    omni_exec $OMNI_CC_CMD $OMNI_CC_OPT "${native_add_opt[@]}" "${other_args[@]}" "${FILE_C}" -o "${FILE_O}"
-
+    if [ "$ENABLE_TARGET" = true ]; then
+      omni_exec $OMNI_CC_CMD $OMNI_CC_OPT "${native_add_opt[@]}" "${other_args[@]}" "${FILE_C}"
+    else
+      omni_exec $OMNI_CC_CMD $OMNI_CC_OPT "${native_add_opt[@]}" "${other_args[@]}" "${FILE_C}" -o "${FILE_O}"
+    fi
+    
     ### GPU Compiler ###
     if [ "$OPENACC_PLATFORM" = "CUDA" ]; then
 	FILE_CU=${TEMP_DIR}/"${FILE_NAME}"_pp.cu
@@ -197,7 +201,7 @@ for c_file in "${c_files[@]}"; do
     if [ "$ENABLE_LINKER" = false -a "${output_file}" != "" ]; then
         omni_exec mv "${FILE_O}" "${output_file}"  # only a single file is created.
     else
-        omni_exec cp "${FILE_O}" "${FILE_USER_O}"
+        [ "$ENABLE_TARGET" = false ] && omni_exec cp "${FILE_O}" "${FILE_USER_O}"
     fi
 done
 [ "$STOP_COMPILE" = true ] && exit 0;
@@ -209,7 +213,11 @@ done
 for c_file in "${c_files[@]}"; do
     C_FILE=("${c_file}")
     FILE_NAME=`omni_c_norm_file_name "${C_FILE}"`     # ./hoge/fuga.c -> hoge_2f_fuga_2f_a
-    FILE_O=${TEMP_DIR}/"${FILE_NAME}".o
+    if [ "$ENABLE_TARGET" = true ]; then
+	FILE_O="${FILE_NAME}".o
+    else
+	FILE_O=${TEMP_DIR}/"${FILE_NAME}".o
+    fi
     obj_files+=("${FILE_O}")
 done
 if [ "$ENABLE_ACC" = true ]; then
