@@ -1295,19 +1295,18 @@ else
     fi
     case $chk in
 	gcc* | Apple* | *ICC*)
-	    CFLAGS="${CFLAGS} -std=gnu99 -Wall -Wpointer-arith"
-	    ;;
+	    CFLAGS="${CFLAGS} -std=gnu99 -Wall -Wpointer-arith" ;;
         Cray* | cc*)
-            CFLAGS=""
-            ;;
+            CFLAGS="" ;;
+       clang*)
+	   CFLAGS="-O2 -g" ;;
 	*)
 	    chk2=`${CC} --version 2> /dev/null | head -n2 | tail -n1`
 	    case $chk2 in
 		pgcc*)
-		    CFLAGS="${CFLAGS} -c99"
-		    ;;
+		    CFLAGS="${CFLAGS} -c99" ;;
 		*)
-		    AC_MSG_ERROR([No supported C compiler was found.]);;
+		    AC_MSG_ERROR([No supported C compiler was found.]) ;;
 	    esac ;;
     esac
 fi
