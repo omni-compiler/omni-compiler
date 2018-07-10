@@ -3,7 +3,7 @@
 NPE=3
 
 OUT_darg= dummyarg-1.x dummyarg-2.x dummyarg-3.x
-OUT_host= host2.x host1.x
+OUT_host= host1.x  # host2.x:doubtful
 OUT_module= mod1.x modalloc.x nestModule.x
 OUT_epi= autosyncall1.x finalize.x
 OUT_bug= $(BUG403) $(BUG451) $(BUG457) $(BUG458) $(BUG459) $(BUG460) $(BUG472) $(BUG006) $(ISSUE064) $(BUG085)
