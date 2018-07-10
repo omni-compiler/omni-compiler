@@ -74,6 +74,7 @@ public class XcodeMLtools_C extends XcodeMLtools {
     case LINEMARKER:
     case TEXT:
     case ACC_PRAGMA:
+    case OMP_PRAGMA:
     case XMP_PRAGMA:
     case CPP_CLASS_DECL:
     case CPP_DECL_NAMESPACE:
