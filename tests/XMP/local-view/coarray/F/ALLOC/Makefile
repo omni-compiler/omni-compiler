@@ -7,7 +7,10 @@ $NPE=8
 
 OUT_decl= decl3.x 
 # decl1.x scalar coarray cannot be allocatable in Ver.4
-OUT_size= size1.x size1-2.x #sample #size1-err
+OUT_size= #size1.x  issue 582\
+	#size1-2.x  issue 582\
+	#sample #size1-err
+
 #OUT_rt  =  inquiry
 OUT_NG =  allo2NG.x
 
