@@ -2032,7 +2032,8 @@ public class XMPrewriteExpr {
   }
   
   public static void rewriteArrayRefInLoop(Xobject expr, XMPglobalDecl globalDecl,
-                                           Block block, BlockList loopBody, XobjList loopIterList) throws XMPexception {
+                                           Block block, BlockList loopBody,
+					   XobjList loopIterList, XobjList onRef) throws XMPexception {
 
     if (expr == null) return;
     HashMap<XMPalignedArray,Boolean> alignedMultiArrayDeclared = new HashMap<XMPalignedArray,Boolean>();
@@ -2065,7 +2066,8 @@ public class XMPrewriteExpr {
               XobjList arrayRefList = XMPrewriteExpr.normArrayRefList((XobjList)myExpr.getArg(1), alignedArray);
               if (alignedArray.checkRealloc() || (alignedArray.isLocal() && !alignedArray.isParameter()) ||
 		  alignedArray.isParameter()){
-                newExpr = XMPrewriteExpr.rewriteAlignedArrayExprInLoop(arrayRefList, alignedArray, loopIterList);
+                newExpr = XMPrewriteExpr.rewriteAlignedArrayExprInLoop(arrayRefList, alignedArray,
+								       loopIterList, onRef, block, globalDecl);
               } else {
                 newExpr = Xcons.arrayRef(myExpr.Type(), arrayAddr, arrayRefList);
               }
@@ -2087,7 +2089,8 @@ public class XMPrewriteExpr {
 		  XobjList arrayRefList = XMPrewriteExpr.normArrayRefList(Xcons.List(offset), alignedArray);
 		  if (alignedArray.checkRealloc() || (alignedArray.isLocal() && !alignedArray.isParameter()) ||
 		      alignedArray.isParameter()){
-		    Xobject newExpr = XMPrewriteExpr.rewriteAlignedArrayExprInLoop(arrayRefList, alignedArray, loopIterList);
+		    Xobject newExpr = XMPrewriteExpr.rewriteAlignedArrayExprInLoop(arrayRefList, alignedArray,
+										   loopIterList, onRef, block, globalDecl);
 		    newExpr.setIsRewrittedByXmp(true);
 		    iter.setXobject(newExpr);
 		  }
@@ -2098,7 +2101,7 @@ public class XMPrewriteExpr {
 		}
 	      }
 	    }
-	    break;
+	    break; 
 	  }
 
         default:
@@ -2107,7 +2110,8 @@ public class XMPrewriteExpr {
   }
 
   private static Xobject rewriteAlignedArrayExprInLoop(XobjList refExprList, XMPalignedArray alignedArray,
-						       XobjList loopIterList) throws XMPexception {
+						       XobjList loopIterList, XobjList onRef,
+						       Block block, XMPglobalDecl globalDecl) throws XMPexception {
     int arrayDimCount = 0;
     XobjList args;
 
@@ -2115,8 +2119,7 @@ public class XMPrewriteExpr {
 
     if (refExprList != null) {
       for (Xobject x : refExprList) {
-	//if (containsOneOf(x, loopIterList, 0) == 1){
-	if (true){
+	if (matchDistIndex(alignedArray, arrayDimCount, x, loopIterList, onRef, block, globalDecl, 0) == 1){
 	  args.add(x);
 	}
 	else { // if x contains zero or more than one loop index.
@@ -2129,84 +2132,83 @@ public class XMPrewriteExpr {
     return XMPrewriteExpr.createRewriteAlignedArrayFunc(alignedArray, arrayDimCount, args, true);
   }
 
-  // public static int containsOneOf(Xobject x, XobjList list, int cnt){
+  public static int matchDistIndex(XMPalignedArray a, int dim_i, Xobject x,
+				   XobjList loopIterList, XobjList onRef, Block block, XMPglobalDecl globalDecl, int cnt){
 
-  //   switch (x.Opcode()){
+    switch (x.Opcode()){
 
-  //   case VAR:
+    case VAR:
 
-  //     for (Xobject y : list){
-
-
-	
-  //   // localIndexOffset = null;
-  //   // int loop_idx = -1;
-  //   // XMPobjectsRef on_ref = null;
-  //   // Ident local_loop_var = null;
-
-  //   // // find the loop variable v
-  //   // for (Block b = bb.getParent(); b != null; b = b.getParentBlock()){
-  //   //   XMPinfo info = (XMPinfo)b.getProp(XMP.prop);
-  //   //   if (info == null) continue;
-  //   //   if (info.pragma != XMPpragma.LOOP) continue;
-
-  //   //   for (int k = 0; k < info.getLoopDim(); k++){
-  //   // 	if (v.equals(info.getLoopVar(k))){
-  //   // 	  loop_idx = k;
-  //   // 	  on_ref = info.getOnRef();
-  //   // 	  local_loop_var = info.getLoopDimInfo(k).getLoopLocalVar();
-  //   // 	  break;
-  //   // 	}
-  //   //   }
-  //   //   if (loop_idx >= 0) break;
-  //   // }
-
-  //   // if (XMP.debugFlag) 
-  //   //   System.out.println("convertLocalIndex v="+v+" loop_idx="+loop_idx);
-
-  //   // if (loop_idx < 0 || local_loop_var == null) return null; // not found
-
-  //   // if (on_ref.getRefObject().getKind() != XMPobject.TEMPLATE) 
-  //   //   return null;
-    
-  //   // XMPtemplate on_tmpl = on_ref.getTemplate();
-  //   // XMPtemplate a_tmpl = a.getAlignTemplate();
-  //   // if (on_tmpl != a_tmpl || !on_tmpl.getName().equals(a_tmpl.getName())){
-  //   //   return null; // different template
-  //   // }
-    
-  //   // if (XMP.debugFlag) System.out.println("same template");
-
-  //   // int a_tmpl_idx = a.getAlignSubscriptIndexAt(dim_i);
-  //   // int on_tmpl_idx = on_ref.getLoopOnIndex(loop_idx);
-
-  //   // if (XMP.debugFlag) 
-  //   //   System.out.println("template index a_tmpl_idx="+a_tmpl_idx+
-  //   // 			 ", on_tmp_idx="+on_tmpl_idx);
-
-  //   // if (a_tmpl_idx != on_tmpl_idx) return null;
-
-  // 	if (x.equals(y)){
-  // 	  cnt++;
-  // 	  break;
-  // 	}
-  //     }
-  //     break;
+      if (a.getAlignMannerAt(dim_i) == XMPalignedArray.NOT_ALIGNED) return 0;
       
-  //   case PLUS_EXPR:
-  //     cnt = containsOneOf(x.right(), list, cnt);
-  //     // fall through
+      String onRefObjName = onRef.getArg(0).getString();
+      XMPobject onRefObj  = globalDecl.getXMPobject(onRefObjName, block);
+      if (onRefObj == null) return 0;
 
-  //   case MINUS_EXPR:
-  //     // how to deal with the case for a(1 - (2 - i)) ???
-  //     cnt = containsOneOf(x.left(), list, cnt);
-  //     break;
+      if (onRefObj.getKind() != XMPobject.TEMPLATE) return 0;
 
-  //   }
+      XMPtemplate onRefTemplate = (XMPtemplate)onRefObj;
+      if (!onRefTemplate.isDistributed()) return 0;
+
+      int loop_idx = -1;
+
+      for (int k = 0; k < loopIterList.Nargs(); k++){
+	if (x.equals(loopIterList.getArg(k))){
+	  loop_idx = k;
+	  break;
+	}
+      }
+      
+      // if (XMP.debugFlag) 
+      // 	System.out.println("convertLocalIndex v="+v+" loop_idx="+loop_idx);
+
+      if (loop_idx < 0) return 0; // not found
+
+      XMPtemplate a_tmpl = a.getAlignTemplate();
+      if (onRefTemplate != a_tmpl && !onRefTemplate.getName().equals(a_tmpl.getName())){
+	return 0; // different template
+      }
     
-  //   return cnt;
+      //if (XMP.debugFlag) System.out.println("same template");
 
-  // }
+      int a_tmpl_idx = a.getAlignSubscriptIndexAt(dim_i);
+
+      int on_tmpl_idx = -1;
+
+      for (int k = 0; k < onRef.getArg(1).Nargs(); k++){
+	Xobject on_ref_sub = onRef.getArg(1).getArg(k);
+	if (on_ref_sub != null && x.equals(on_ref_sub)) {
+	  on_tmpl_idx = k;
+	  break;
+	}
+      }
+
+      if (on_tmpl_idx < 0) return 0; // not found
+
+      // if (XMP.debugFlag) 
+      // 	System.out.println("template index a_tmpl_idx="+a_tmpl_idx+
+      // 			   ", on_tmp_idx="+on_tmpl_idx);
+
+      if (a_tmpl_idx != on_tmpl_idx) return 0;
+
+      cnt++;
+
+      break;
+      
+    case PLUS_EXPR:
+      cnt = matchDistIndex(a, dim_i, x.right(), loopIterList, onRef, block, globalDecl, cnt);
+      // fall through
+
+    case MINUS_EXPR:
+      // how to deal with the case for a(1 - (2 - i)) ???
+      cnt = matchDistIndex(a, dim_i, x.left(), loopIterList, onRef, block, globalDecl, cnt);
+      break;
+
+    }
+    
+    return cnt;
+
+  }
   
   public static void rewriteLoopIndexInLoop(Xobject expr, String loopIndexName, XMPtemplate templateObj,
                                             int templateIndex, XMPglobalDecl globalDecl, Block block) throws XMPexception {
