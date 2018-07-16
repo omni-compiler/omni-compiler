@@ -133,6 +133,8 @@ if [ "$ENABLE_ACC" = true ]; then
 else
     [ "$ENABLE_TARGET" = false ] && OMNI_CX2X_OPT="$OMNI_CX2X_OPT -fopenmp"
 fi
+
+[ "$ENABLE_TARGET" = true ] && xcode_translator_add_opt+=("-fopenmp-target")
 for c_file in "${c_files[@]}"; do
     C_FILE=("${c_file}")
     FILE_NAME=`omni_c_norm_file_name "${C_FILE}"`     # ./hoge/fuga.c -> hoge_2f_fuga_2f_a
