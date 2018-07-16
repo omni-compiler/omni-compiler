@@ -47,7 +47,6 @@ run: $(EXES)
 	$(XRUN) -n 4 ./margin.x
 	$(XRUN) -n 4 ./expand_margin.x
 	$(XRUN) -n 4 ./peel_and_wait.x
-	$(XRUN) -n 4 ./issue27.x
 
 RUN:
 	mkdir RUN

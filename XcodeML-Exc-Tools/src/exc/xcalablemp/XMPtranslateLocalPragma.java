@@ -879,7 +879,7 @@ public class XMPtranslateLocalPragma {
     // rewrite array refs in loop
     topdownXobjectIterator iter = new topdownXobjectIterator(getLoopBody(schedBaseBlock).toXobject());
     for (iter.init(); !iter.end(); iter.next()) {
-      XMPrewriteExpr.rewriteArrayRefInLoop(iter.getXobject(), _globalDecl, schedBaseBlock, loopBody, loopIterList, onRef);
+      XMPrewriteExpr.rewriteArrayRefInLoop(iter.getXobject(), _globalDecl, schedBaseBlock, loopBody, loopIterList);
     }
 
     // replace pragma
