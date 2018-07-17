@@ -129,7 +129,7 @@ public class XMPalignedArray {
   }
 
   public void setAlignMannerAt(int manner, int index) {
-    _alignMannerVector.setElementAt(new Integer(manner), index);
+    _alignMannerVector.setElementAt(manner, index);
   }
 
   public int getAlignMannerAt(int index) {
@@ -175,7 +175,7 @@ public class XMPalignedArray {
   }
 
   public void setAlignSubscriptIndexAt(int alignSubscriptIndex, int alignSourceIndex) {
-    _alignSubscriptIndexVector.setElementAt(new Integer(alignSubscriptIndex), alignSourceIndex);
+    _alignSubscriptIndexVector.setElementAt(alignSubscriptIndex, alignSourceIndex);
   }
 
   public Integer getAlignSubscriptIndexAt(int alignSourceIndex) {

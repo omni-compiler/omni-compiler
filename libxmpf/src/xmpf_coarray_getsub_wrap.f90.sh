@@ -27,7 +27,10 @@ print_subroutine_scalar() {
     echo   '!-----------------------------------------------------------------------'
     echo   '      integer(8), intent(in) :: descptr'
     echo   '      integer, intent(in) :: coindex'
-    echo   "      ${typekind}, intent(inout) :: mold   !! 'inout' to avoid excessive code motion"
+#################################3
+###    echo   "      ${typekind}, intent(inout) :: mold   !! 'inout' to avoid excessive code motion"
+#################################3
+    echo   "      ${typekind}, intent(in) :: mold"
     echo   "      ${typekind}, intent(out) :: dst"
     echo   ''
 
@@ -75,7 +78,7 @@ print_subroutine_array() {
     done
     echo ')'
 
-    echo -n "      ${typekind}, intent(in) :: dst("
+    echo -n "      ${typekind}, intent(out) :: dst("
     sep=''
     for i in `seq 1 ${DIM}`; do
         echo -n "${sep}:"

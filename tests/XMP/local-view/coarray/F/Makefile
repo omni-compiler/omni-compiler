@@ -1,5 +1,5 @@
-DIRS=LIB GET PUT SCOPE CFOLD MIX ALLOC STRUCT
-DIRS_SUBMIT=LIB GET PUT SCOPE CFOLD MIX ALLOC STRUCT
+DIRS=LIB GET PUT SCOPE CFOLD MIX ALLOC STRUCT NONBLK
+DIRS_SUBMIT=LIB GET PUT SCOPE CFOLD MIX ALLOC STRUCT NONBLK
 
 # To make all executable files, type:
 #   make [OPT=--debug] [all|all4|all6|all7|all7g]
@@ -9,11 +9,14 @@ DIRS_SUBMIT=LIB GET PUT SCOPE CFOLD MIX ALLOC STRUCT
 #   Restriction: only for FJRDMA and MPI3.
 # Ver.6 initializes procedure-local coarray objects at the first entrance
 #   of the procedure. Restriction: only for FJRDMA and MPI3 and only for
-#   execution with whole images.
+#   execution with whole images. ..suspended
 # Ver.7 (for FJRDMA and MPI3) and Ver.7g (for GASNet) use the ENTRY 
 #   statement and initializes procedure-local coarray objects before 
-#   execution of the program.
+#   execution of the program.  ..suspended
 # For more infos., see the blue note and comment in XMPtransCoarrayRun.java
+#
+# New directory NONBLK for developping Runtime Non-blocking Optimization.
+#
 
 MAKEDEF = "ONESIDED_LAYER=`./find_layer.sh`" "EXEC_FC=`./find_exec_fc.sh`" "FX10=`./ask_config.sh FX10`" "FX100=`./ask_config.sh FX100`"
 

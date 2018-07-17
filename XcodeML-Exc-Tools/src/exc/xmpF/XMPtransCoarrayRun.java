@@ -1971,9 +1971,11 @@ public class XMPtransCoarrayRun
           continue;
 
         if (_hasGETfuncAsRHS(assignExpr)) {
-          // found -- convert the statement
+          // found statement "expr = COARRAYGET_GENERIC_NAME()"
+          // try optimization
           Xobject callExpr = convGETfuncStmtToCallStmt(assignExpr);
-          s.setExpr(callExpr);
+          if (callExpr != null)    // succeeded
+            s.setExpr(callExpr);
         }
       }
     }
@@ -1987,6 +1989,13 @@ public class XMPtransCoarrayRun
     Xobject rhs = assignExpr.getArg(1);
     Xobject actualArgs = rhs.getArg(1);
     String subrName = XMPcoindexObj.COARRAYGETSUB_GENERIC_NAME;
+
+    // check if it has consistent type and kind
+    // assuming that the last argument is the mold variable
+    Xobject mold = ((XobjList)actualArgs).getTail();
+    Ftype lhsFtype = new Ftype(lhs);
+    if (!lhsFtype.sameTypeAndKind(mold))
+      return null;
 
     actualArgs.add(lhs);
 

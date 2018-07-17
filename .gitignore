@@ -5,6 +5,8 @@
 *.xmod
 *.so
 *.hex
+*.smod
+*.xsmod
 a.out
 Xcode.java
 
@@ -81,6 +83,8 @@ libxmpf/include/xmp_coarray_reduction.h
 libxmpf/include/xmp_coarray_getsub.h
 libxmpf/src/Makefile
 libxmpf/src/include_work/
+
+tests/XMP/others/F/__omni_tmp__018.f90
 
 # Other
 __omni_tmp__/

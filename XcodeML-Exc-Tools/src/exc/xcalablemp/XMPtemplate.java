@@ -95,7 +95,7 @@ public class XMPtemplate extends XMPobject {
   }
 
   public void setDistMannerAt(int manner, int index) {
-    _distMannerVector.setElementAt(new Integer(manner), index);
+    _distMannerVector.setElementAt(manner, index);
   }
 
   public int getDistMannerAt(int index) throws XMPexception {
