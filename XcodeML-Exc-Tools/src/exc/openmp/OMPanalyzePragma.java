@@ -265,6 +265,8 @@ public class OMPanalyzePragma
         case THREADPRIVATE:
             omp_env.declThreadPrivate(def.getDef().getDef(), pb, pb.getClauses());
             break;
+	case TARGET_ENTER_DATA:
+	    break;
         default:
             OMP.fatal("unknown OpenMP pramga = " + p);
             break;
