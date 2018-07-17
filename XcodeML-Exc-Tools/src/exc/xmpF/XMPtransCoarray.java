@@ -14,10 +14,7 @@ public class XMPtransCoarray implements XobjectDefVisitor
   private int pass;
   private int version = 3;             // default (useMalloc=true)
   private Boolean useMalloc = true;    // default (use RA or RS method for mamory allocation)
-  ////////////////////////////////////////
-  ///  private int optLevel = 1;            // default
-  private int optLevel = 0;            // default
-  ////////////////////////////////////////
+  private int optLevel = 1;            // default
   private Boolean onlyCafMode;
 
   private ArrayList<XMPtransCoarrayRun> pastRuns;
