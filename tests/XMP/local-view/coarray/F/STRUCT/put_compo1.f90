@@ -30,12 +30,12 @@
 
     !---------------------------- execution
     if (me==3) then
-       cs1[2]%r(7) = 1.0d0       !! type match:    r8 = r8
-       cs1[2]%r(8) = 1.0         !! type mismatch: r8 = r4
-       cs1[2]%g0(1)%r(2) = 1.0   !! type match:    r4 = r4
-       cs1[2]%g0(1)%r(2) = 1.0_8 !! type mismatch: r4 = r8
+       cs1[2]%r(7) = 1.0d0       !! type match:    r8[] = r8
+       cs1[2]%r(8) = 1.0         !! type mismatch: r8[] = r4
+       cs1[2]%g0(1)%r(2) = 1.0   !! type match:    r4[] = r4
+       cs1[2]%g0(1)%r(2) = 1.0_8 !! type mismatch: r4[] = r8
        zz = cs1[2]%r(9)
-       zz = rrr1[2]
+       zz = rrr1[2]              !!! type mismatch: r8 = r4[]
        n = cs1[2]%g0(1)%n(3)
        cs1[2]%g0(1)%n(3) = 1.0
        cs1[2]%r(9) = cs1%a(10) * cs1%r(2)   !! (10*3) * (1/(3*2)) = 5.0d0
