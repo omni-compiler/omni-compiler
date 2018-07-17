@@ -852,8 +852,14 @@ public class XMPcoindexObj {
   public static Boolean isGETfunc(Xobject xobj) {
     if (xobj.Opcode() == Xcode.FUNCTION_CALL) {
 
-      if (COARRAYGET_GENERIC_NAME.equals(xobj.getName()))
-        return true;
+      try {
+        if (COARRAYGET_GENERIC_NAME.equals(xobj.getName()))
+          return true;
+      }
+      catch (UnsupportedOperationException e) {
+        return false;
+      }
+
     }
     return false;
   }
