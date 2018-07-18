@@ -4,7 +4,7 @@ NPE=3
 
 OUT_debug = 
 OUT_basic = struct_align.x put_compo1.x 
-OUT_lev1  = lev1-2.x
+OUT_lev1  = #lev1-2.x   ###OK on -O0
 
 # On K with Ver.3, after correct execution:
 #jwe0019i-u The program was terminated abnormally with signal number SIGBUS.

@@ -556,10 +556,6 @@ void _putVectorIter_bufferPack(void *descPtr, char *baseAddr, int bytes, int coi
 {
   assert(rank >= 1);
 
-  //  _XMPCO_debugPrint("==PUT VECTOR-ITER Packing-buffer, recursive call (rank=%d)\n"
-  //                          "  contiguity=%d, baseAddr=%p, rhs=%p\n",
-  //                          rank, contiguity, baseAddr, rhs);
-
   if (contiguity == rank) {     // the collapsed coarray is fully contiguous.
     _init_localBuf(descPtr, baseAddr, coindex);
     _putVectorIter_bufferPack_1(rhs, bytes,

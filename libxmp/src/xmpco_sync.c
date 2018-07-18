@@ -12,13 +12,7 @@ void XMPCO_sync_all()
 {
   int stat = 0;
 
-  ////////////////////////////////////
-  _XMPCO_debugPrint("GACHACHA\n");
-  ////////////////////////////////////
   if (_XMPCO_is_subset_exec()) {
-  ////////////////////////////////////
-  _XMPCO_debugPrint("GACHA consume\n");
-  ////////////////////////////////////
     XMPCO_sync_all_withComm(_XMPCO_consume_comm_current());
     _XMPCO_debugPrint("SYNCALL on subset(%d images) done\n",
                       _XMPCO_get_currentNumImages());
