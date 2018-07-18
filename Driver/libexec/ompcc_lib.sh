@@ -41,7 +41,7 @@ Omni OpenACC Options
   --device=DEVICE         : Specify device [ccXX (XX is compute capability) | Fermi (=cc20) | Kepler (=cc35)] (default: $OPENACC_DEVICE)
 
 Omni OpenMP Options
-  -fopenmp-target         : enable OpenMP target function.
+  -fopenmp-only-target    : enable OpenMP only target function.
 EOF
 }
 
@@ -152,7 +152,7 @@ function ompcc_set_parameters()
 	    -acc|--openacc)
 		[ ${ENABLE_ACC} = "0" ] && omni_error_exit "warning: $1 option is unavailable, rebuild the compiler with ./configure --enable-openacc"
 		ENABLE_ACC=true;;
-	    -fopenmp-target)
+	    -fopenmp-only-target)
 		ENABLE_TARGET=true;;
 	    --no-ldg)
 		DISABLE_LDG=true;;

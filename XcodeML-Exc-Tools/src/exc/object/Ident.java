@@ -292,6 +292,7 @@ public class Ident extends Xobject
     }
 
     /** @deprecated setIsDeclared() */
+    @Deprecated
     public void Declared()
     {
         declared = true;

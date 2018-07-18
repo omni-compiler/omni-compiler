@@ -3777,7 +3777,7 @@ public class XMPtranslateLocalPragma {
         execFuncArgs = Xcons.List(_globalDecl.getWorldDescId().Ref());
       }
 
-      return new XMPquadruplet<String, Boolean, XobjList, XMPobject>(execFuncSuffix, new Boolean(splitComm), execFuncArgs, null);
+      return new XMPquadruplet<String, Boolean, XobjList, XMPobject>(execFuncSuffix, splitComm, execFuncArgs, null);
     }
     else {
       // execute on <object-ref>
@@ -3812,7 +3812,7 @@ public class XMPtranslateLocalPragma {
 
       // create arguments
       if (onRef.getArg(1) == null || onRef.getArg(1).getArgs() == null){
-        return new XMPquadruplet<String, Boolean, XobjList, XMPobject>(new String("NODES_ENTIRE"), new Boolean(false), Xcons.List(ontoNodesRef), onRefObject);
+        return new XMPquadruplet<String, Boolean, XobjList, XMPobject>(new String("NODES_ENTIRE"), false, Xcons.List(ontoNodesRef), onRefObject);
       }
       else {
         boolean splitComm   = false;
@@ -3906,12 +3906,11 @@ public class XMPtranslateLocalPragma {
               throw new XMPexception("unknown object type");
           }
 
-          return new XMPquadruplet<String, Boolean, XobjList, XMPobject>(execFuncSuffix, new Boolean(splitComm), execFuncArgs, onRefObject);
+          return new XMPquadruplet<String, Boolean, XobjList, XMPobject>(execFuncSuffix, splitComm, execFuncArgs, onRefObject);
         }
         else
-          return new XMPquadruplet<String, Boolean, XobjList, XMPobject>(new String("NODES_ENTIRE"),
-                                                              new Boolean(splitComm), Xcons.List(ontoNodesRef),
-                                                              onRefObject);
+          return new XMPquadruplet<String, Boolean, XobjList, XMPobject>(new String("NODES_ENTIRE"), splitComm,
+									 Xcons.List(ontoNodesRef), onRefObject);
       }
     }
   }
