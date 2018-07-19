@@ -25,7 +25,7 @@ public class OMPtransPragma
   public String parallelTaskFunc;
   public String parallelTaskIfFunc;
 
-  public String ompTargetAlloc;
+  public String ompTargetEnterData;
 
   public String defaultShedFunc;
   public String blockShedFunc;
@@ -84,7 +84,8 @@ public class OMPtransPragma
   public String setBoundsFuncPrefix;
   public String saveArrayFunc;
   public String loadArrayFunc;
-  
+
+  public final static String ASTERISK = "* @{ASTERISK}@";
   public final String FallocatedFunc = "allocated";
   public final String Fsize = "size";
   public final String FlboundFunc = "lbound";
@@ -123,7 +124,7 @@ public class OMPtransPragma
       doParallelFunc           = "ompc_do_parallel";
       doParallelIfFunc         = "ompc_do_parallel_if";
 
-      ompTargetAlloc           = "omp_target_alloc";
+      ompTargetEnterData = "_OMP_target_enter_data";
       
       defaultShedFunc      = "ompc_default_sched";
       blockShedFunc        = "ompc_static_bsched";
@@ -264,29 +265,30 @@ public class OMPtransPragma
 
     public Ident OMPfuncIdent(String name)
     {
-        if(name == null)
-            throw new IllegalArgumentException("may be generating unsupported function call");
-        
-        Xtype t;
-        if(XmOption.isLanguageC()) {
-            if(name == getThdprvFunc || name == allocShared || name == allocaFunc || name == ompTargetAlloc)
-                t = Xtype.Function(Xtype.Pointer(Xtype.voidType));
-            else
-                t = Xtype.Function(Xtype.intType);
-        } else {
-            if(name == getMaxThreadsFunc || name == getThreadNumFunc ||
-                name == getNumThreadsFunc || name == sectionIdFunc)
-                t = Xtype.FintFunctionType;
-            else if(name == isLastFunc || name == isMasterFunc ||
-                name == doSingleFunc ||
+      if(name == null)
+        throw new IllegalArgumentException("may be generating unsupported function call");
+      
+      Xtype t;
+      if(XmOption.isLanguageC()) {
+        if(name == getThdprvFunc || name == allocShared || name == allocaFunc)
+          t = Xtype.Function(Xtype.Pointer(Xtype.voidType));
+        else if(name == ompTargetEnterData)
+          t = Xtype.Function(Xtype.voidType);
+        else
+          t = Xtype.Function(Xtype.intType);
+      } else {
+        if(name == getMaxThreadsFunc || name == getThreadNumFunc ||
+           name == getNumThreadsFunc || name == sectionIdFunc)
+          t = Xtype.FintFunctionType;
+        else if(name == isLastFunc || name == isMasterFunc || name == doSingleFunc ||
                 name == staticShedNextFunc || name == dynamicShedNextFunc ||
                 name == guidedShedNextFunc || name == runtimeShedNextFunc ||
                 name == affinityShedNextFunc)
-                t = Xtype.FlogicalFunctionType;
-            else
-                t = Xtype.FsubroutineType;
-        }
-        return current_def.declExternIdent(name, t);
+          t = Xtype.FlogicalFunctionType;
+        else
+          t = Xtype.FsubroutineType;
+      }
+      return current_def.declExternIdent(name, t);
     }
 
     public Ident OMPFintrinsicIdent(String name)
@@ -374,29 +376,119 @@ public class OMPtransPragma
 
   public Block transTargetEnterData(PragmaBlock b, OMPinfo i)
   {
-    XobjList clause    = (XobjList)b.getClauses().getArg(0);
-    XobjList arrayList = (XobjList)clause.getArg(1);
+    XobjList clause    = (XobjList)b.getClauses();
     BlockList ret_body = Bcons.emptyBody();
+    int arrayNum = 0;
     
-    for(int j=0;j<arrayList.Nargs();j++){
-      Xobject x = arrayList.getArg(j);
-      Ident var = null;
-      Xobject sizeExpr = null;
-      if(x.Opcode() == Xcode.VAR){
-        var = b.findVarIdent(x.getName());
-        ArrayType at = (ArrayType)var.Type();
-        sizeExpr = Xcons.IntConstant((int)at.getArraySize());
-        sizeExpr = Xcons.binaryOp(Xcode.MUL_EXPR, sizeExpr, Xcons.SizeOf(at.getArrayElementType()));
-      }
-      else if(x.Opcode() == Xcode.LIST){
-        var = b.findVarIdent(x.getArg(0).getName());
-        ArrayType at = (ArrayType)var.Type();
-        sizeExpr = x.getArg(1).getArg(1);
-        sizeExpr = Xcons.binaryOp(Xcode.MUL_EXPR, sizeExpr, Xcons.SizeOf(at.getArrayElementType()));
+    for(int j=0;j<clause.Nargs();j++){
+       Xobject expr = clause.getArg(j);
+       if(expr.getArg(0).getString().equals("TARGET_DATA_MAP"))
+          arrayNum = expr.getArg(1).Nargs();
+    }
+
+    for(int j=0;j<arrayNum;j++){
+      Ident arrayId    = null;
+      boolean isShadow = false;
+      boolean isLayout = false;
+      boolean isDevice = false;
+      for(int k=0;k<clause.Nargs();k++){
+        Xobject expr  = clause.getArg(k);
+        XobjList body = (XobjList)expr.getArg(1);
+        String s      = expr.getArg(0).getString();
+        if(s.equals("TARGET_DATA_MAP")){
+          Xobject x = body.getArg(j);
+          if(x.Opcode() == Xcode.VAR)        // Only array name
+            arrayId = b.findVarIdent(x.getName());
+          else if(x.Opcode() == Xcode.LIST)  // sub-array
+            arrayId = b.findVarIdent(x.getArg(0).getName());
+        }
+        else if(s.equals("TARGET_LAYOUT")){
+          isLayout = true;
+        }
+        else if(s.equals("TARGET_SHADOW")){
+          isShadow = true;
+        }
+        else if(s.equals("TARGET_DEVICE")){
+          isDevice = true;
+        }
+        else{
+          throw new IllegalArgumentException("Invalid argument in openmp enter data directive");
+        }
+      } // end k
+
+      if(isLayout == false) return null;
+      
+      XobjList args        = Xcons.List();
+      Xobject arrayAddr    = arrayId.getAddr();
+      Xtype arrayType      = arrayId.Type();
+      Xobject sizeofExpr   = Xcons.SizeOf(arrayType.getArrayElementType());
+      int arrayDim         = arrayType.getNumDimensions();
+      Xobject arrayDimExpr = Xcons.IntConstant(arrayDim);
+      args.add(arrayAddr);
+      args.add(sizeofExpr);
+      args.add(arrayDimExpr);
+      
+      for(int k=0; k<arrayDim; k++, arrayType=arrayType.getRef()){
+        Xobject startExpr = Xcons.IntConstant(0);
+        Xobject endExpr   = Xcons.IntConstant((int)arrayType.getArraySize());
+        args.add(startExpr);
+        args.add(endExpr);
       }
 
-      Xobject args = Xcons.List(sizeExpr);
-      ret_body.add(Bcons.Statement(OMPfuncIdent("omp_target_alloc").Call(args)));
+      if(isShadow){
+        args.add(Xcons.IntConstant(1));
+        for(int k=0;k<clause.Nargs();k++){
+          Xobject expr = clause.getArg(k);
+          String kind  = expr.getArg(0).getString();
+          if(kind.equals("TARGET_SHADOW")){
+            for(int m=0;m<arrayDim;m++){
+              args.add(expr.getArg(m+1).getArg(0));
+              args.add(expr.getArg(m+1).getArg(1));
+            }
+          }
+        }
+      }
+      else{
+        args.add(Xcons.IntConstant(0));
+      }
+
+      if(isLayout){
+         for(int k=0;k<clause.Nargs();k++){
+           Xobject expr = clause.getArg(k);
+           String kind  = expr.getArg(0).getString();
+           if(kind.equals("TARGET_LAYOUT")){
+             for(int m=0;m<arrayDim;m++){
+               Xobject var = expr.getArg(1).getArg(m);
+               String dist = var.getName();
+               if(dist.equals("block"))
+                 args.add(Xcons.IntConstant(0));
+               else if(dist.equals(ASTERISK))
+                 args.add(Xcons.IntConstant(1));
+               else
+                 throw new IllegalArgumentException("Invalid argument in layout clause");
+              }
+           }
+         }
+      }
+
+      if(isDevice){
+        for(int k=0;k<clause.Nargs();k++){
+          Xobject expr = clause.getArg(k);
+          String kind  = expr.getArg(0).getString();
+          if(kind.equals("TARGET_DEVICE")){
+            int dims = expr.Nargs() - 1;
+            if(dims != arrayDim)
+              throw new IllegalArgumentException("Invalid dimension in device clause");
+            
+            args.add(Xcons.IntConstant(dims));
+            for(int m=0;m<arrayDim;m++){
+                args.add(expr.getArg(m+1).getArg(0));
+                args.add(expr.getArg(m+1).getArg(1));
+            }
+          }
+        }
+      }
+      ret_body.add(Bcons.Statement(OMPfuncIdent(ompTargetEnterData).Call(args)));
     }
     
     return Bcons.COMPOUND(ret_body);
