@@ -86,6 +86,7 @@ public class OMPtransPragma
   public String loadArrayFunc;
 
   public final static String ASTERISK = "* @{ASTERISK}@";
+  public final static int OMP_DATA_MAP_TO = 0;
   public final String FallocatedFunc = "allocated";
   public final String Fsize = "size";
   public final String FlboundFunc = "lbound";
@@ -379,12 +380,17 @@ public class OMPtransPragma
     XobjList clause    = (XobjList)b.getClauses();
     BlockList ret_body = Bcons.emptyBody();
     int arrayNum = 0;
-    
+    int mapKind = -1;
+
     for(int j=0;j<clause.Nargs();j++){
        Xobject expr = clause.getArg(j);
-       if(expr.getArg(0).getString().equals("TARGET_DATA_MAP"))
-          arrayNum = expr.getArg(1).Nargs();
+       if(expr.getArg(0).getString().equals("TARGET_DATA_MAP")){
+          arrayNum = expr.getArg(1).Nargs() - 1;
+          String s = expr.getArg(1).getArg(0).getName();
+          if(s.equals("to")) mapKind = OMP_DATA_MAP_TO;
+       }
     }
+
 
     for(int j=0;j<arrayNum;j++){
       Ident arrayId    = null;
@@ -396,7 +402,7 @@ public class OMPtransPragma
         XobjList body = (XobjList)expr.getArg(1);
         String s      = expr.getArg(0).getString();
         if(s.equals("TARGET_DATA_MAP")){
-          Xobject x = body.getArg(j);
+          Xobject x = body.getArg(j+1);
           if(x.Opcode() == Xcode.VAR)        // Only array name
             arrayId = b.findVarIdent(x.getName());
           else if(x.Opcode() == Xcode.LIST)  // sub-array
@@ -424,6 +430,8 @@ public class OMPtransPragma
       Xobject sizeofExpr   = Xcons.SizeOf(arrayType.getArrayElementType());
       int arrayDim         = arrayType.getNumDimensions();
       Xobject arrayDimExpr = Xcons.IntConstant(arrayDim);
+
+      args.add(Xcons.IntConstant(mapKind));
       args.add(arrayAddr);
       args.add(sizeofExpr);
       args.add(arrayDimExpr);

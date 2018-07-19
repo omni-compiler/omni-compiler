@@ -427,7 +427,7 @@ public class omompx
     // OpenMP translation
     if(openMP || openMPonlyTarget) {
       if(openMPonlyTarget)
-        xobjFile.addHeaderLine("#include \"omni_omp_target.h\"");
+        xobjFile.addHeaderLine("#include \"ompc_target.h\"");
       
       OMPtranslate omp_translator = new OMPtranslate(xobjFile);
       xobjFile.iterateDef(omp_translator);
