@@ -23,7 +23,7 @@ run:
 	$(XRUN) -n 4 ./shadow_check.x
 	$(XRUN) -n 16 ./reduce_shadow.x
 	$(XRUN) -n 4 ./separated_nested_loop.x
-#	$(XRUN) -n 1 ./40.x
+	$(XRUN) -n 1 ./issue40.x
 
 RUN:
 	mkdir RUN
