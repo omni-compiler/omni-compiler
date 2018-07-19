@@ -37,7 +37,7 @@ void _XMP_reduce_shadow__(_XMP_array_t *a)
     reqs = &async->reqs[async->nreqs];
   }
   
-  _XMP_RETURN_IF_SINGLE;
+  //_XMP_RETURN_IF_SINGLE;
   if (!a->is_allocated){
     _xmp_set_reduce_shadow_flag = 0;
     return;
@@ -83,7 +83,8 @@ void _XMP_reduce_shadow__(_XMP_array_t *a)
 	
 	_XMP_reflect_pack_dim(a, i, _xmp_lwidth, _xmp_uwidth, _xmp_is_periodic, _XMP_COMM_REDUCE_SHADOW);
 
-	MPI_Startall(4, shadow_sched->req_reduce);
+	if (shadow_sched->req_reduce[0] != MPI_REQUEST_NULL) // if req[0] isn't null, any others shouldn't be null.
+	  MPI_Startall(4, shadow_sched->req_reduce);
 
 	if (xmp_is_async()){
 	  if (async->nreqs + nreqs + 4 > _XMP_MAX_ASYNC_REQS){
