@@ -5,10 +5,10 @@ module keys
   integer, parameter :: n = 1024
   integer, allocatable :: m(:)
 
-!$xmp nodes p(*)
+!$xmp nodes pp(*)
 
 !$xmp template t0(n)
-!$xmp distribute t0(block) onto p
+!$xmp distribute t0(block) onto pp
 
   integer a0(n)
 !$xmp align a0(i) with t0(i)
@@ -56,7 +56,7 @@ subroutine int_block
   use keys
 
 !$xmp template t1(n)
-!$xmp distribute t1(block) onto p
+!$xmp distribute t1(block) onto pp
 
   integer a1(n)
 !$xmp align a1(i) with t0(i)
@@ -117,7 +117,7 @@ subroutine real_gblock
   use keys
 
 !$xmp template t1(n)
-!$xmp distribute t1(gblock(m)) onto p
+!$xmp distribute t1(gblock(m)) onto pp
 
   real b1(n)
 !$xmp align b1(i) with t1(i)
@@ -176,7 +176,7 @@ subroutine real8_cyclic
   use keys
 
 !$xmp template t1(n)
-!$xmp distribute t1(cyclic(4)) onto p
+!$xmp distribute t1(cyclic(4)) onto pp
 
   real(8) c1(n)
 !$xmp align c1(i) with t1(i)
