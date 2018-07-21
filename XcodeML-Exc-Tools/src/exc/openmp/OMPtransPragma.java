@@ -86,6 +86,9 @@ public class OMPtransPragma
   public String loadArrayFunc;
 
   public final static String ASTERISK = "* @{ASTERISK}@";
+  public final static int _M_ASTERISK = -1;
+  public final static int _M_NOT_SPECIFIED = -2;
+  public final static int _M_DATA_MAP_BLOCK = 0;
   public final static int OMP_DATA_MAP_TO = 0;
   public final String FallocatedFunc = "allocated";
   public final String Fsize = "size";
@@ -391,7 +394,6 @@ public class OMPtransPragma
        }
     }
 
-
     for(int j=0;j<arrayNum;j++){
       Ident arrayId    = null;
       boolean isShadow = false;
@@ -422,8 +424,6 @@ public class OMPtransPragma
         }
       } // end k
 
-      if(isLayout == false) return null;
-      
       XobjList args        = Xcons.List();
       Xobject arrayAddr    = arrayId.getAddr();
       Xtype arrayType      = arrayId.Type();
@@ -449,6 +449,8 @@ public class OMPtransPragma
           Xobject expr = clause.getArg(k);
           String kind  = expr.getArg(0).getString();
           if(kind.equals("TARGET_SHADOW")){
+            if(expr.Nargs()-1 != arrayDim)
+              throw new IllegalArgumentException("Invalid argument in shadow clause");
             for(int m=0;m<arrayDim;m++){
               args.add(expr.getArg(m+1).getArg(0));
               args.add(expr.getArg(m+1).getArg(1));
@@ -469,33 +471,47 @@ public class OMPtransPragma
                Xobject var = expr.getArg(1).getArg(m);
                String dist = var.getName();
                if(dist.equals("block"))
-                 args.add(Xcons.IntConstant(0));
+                 args.add(Xcons.IntConstant(_M_DATA_MAP_BLOCK));
                else if(dist.equals(ASTERISK))
-                 args.add(Xcons.IntConstant(1));
+                 args.add(Xcons.IntConstant(_M_ASTERISK));
                else
                  throw new IllegalArgumentException("Invalid argument in layout clause");
               }
            }
          }
       }
-
+      else{
+        args.add(Xcons.IntConstant(_M_NOT_SPECIFIED));
+      }
+      
       if(isDevice){
         for(int k=0;k<clause.Nargs();k++){
           Xobject expr = clause.getArg(k);
           String kind  = expr.getArg(0).getString();
           if(kind.equals("TARGET_DEVICE")){
             int dims = expr.Nargs() - 1;
-            if(dims != arrayDim)
+            if(dims != arrayDim && isLayout)
               throw new IllegalArgumentException("Invalid dimension in device clause");
-            
+
             args.add(Xcons.IntConstant(dims));
-            for(int m=0;m<arrayDim;m++){
-                args.add(expr.getArg(m+1).getArg(0));
-                args.add(expr.getArg(m+1).getArg(1));
+            for(int m=0;m<dims;m++){
+              Xobject startDevice = expr.getArg(m+1).getArg(0);
+              if(startDevice.getName().equals(ASTERISK)){
+                args.add(Xcons.IntConstant(_M_ASTERISK));
+              }
+              else{
+                Xobject lenDevice = expr.getArg(m+1).getArg(1);
+                args.add(startDevice);
+                args.add(lenDevice);
+              }
             }
           }
         }
       }
+      else{
+         args.add(Xcons.IntConstant(_M_NOT_SPECIFIED));
+      }
+      
       ret_body.add(Bcons.Statement(OMPfuncIdent(ompTargetEnterData).Call(args)));
     }
     
