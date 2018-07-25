@@ -146,9 +146,19 @@ public class XMPtransPragma
       epilog.add(Xcons.List(Xcode.F_CONTINUE_STATEMENT));
     }
     if(table != null){
+      // First, outputs all nodes
       for(XMPobject o: table.getXMPobjects()){
-	o.buildConstructor(prolog,env,block);
-	o.buildDestructor(epilog,env,block);
+	if (o.getKind() == XMPobject.NODES){
+	  o.buildConstructor(prolog,env,block);
+	  o.buildDestructor(epilog,env,block);
+	}
+      }
+      // Second, outputs all templates
+      for(XMPobject o: table.getXMPobjects()){
+	if (o.getKind() == XMPobject.TEMPLATE){
+	  o.buildConstructor(prolog,env,block);
+	  o.buildDestructor(epilog,env,block);
+	}
       }
       for(XMParray a: table.getXMParrays()){
 	a.buildConstructor(prolog,env,block);

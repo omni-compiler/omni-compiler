@@ -1,7 +1,7 @@
 XFC     = xmpf90
 XRUN    = mpiexec
 TESTS = $(wildcard *.f90)
-EXES  = offset.x offset2.x test.x
+EXES  = offset.x offset2.x test.x 580.x
 OBJS  = $(TESTS:.f90=.o)
 
 .PHONY: clean all default run submit showlog cleanlog
@@ -23,6 +23,7 @@ run: $(EXES)
 	$(XRUN) -n 2 ./offset.x
 	$(XRUN) -n 4 ./offset2.x
 	$(XRUN) -n 2 ./test.x
+	$(XRUN) -n 2 ./580.x
 
 RUN:
 	mkdir RUN
