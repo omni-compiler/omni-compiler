@@ -177,6 +177,8 @@ public class XMPrewriteExpr
     }
   }
 
+  private final static String XMP_REPLACED_GLOBAL = "XMP_REPLACED_GLOBAL";
+    
   /*
    * rewrite expression
    */
@@ -201,6 +203,7 @@ public class XMPrewriteExpr
           ((XobjString)x).setName(array.getLocalName());
           x.setType(array.getLocalType());
           x.setProp(XMP.arrayProp,array);
+	  x.setProp(XMP_REPLACED_GLOBAL, true);
 	  break;
 	}
       case F_ARRAY_REF:
@@ -209,32 +212,71 @@ public class XMPrewriteExpr
 	  if(a.Opcode() != Xcode.F_VAR_REF)
 	    XMP.fatal("not F_VAR_REF for F_ARRAY_REF");
 	  a = a.getArg(0);
-	  XMParray array = (XMParray) a.getProp(XMP.arrayProp);
-	  if(array == null) break;
 
-	  int dim_i = 0;
-	  boolean no_leading_scalar_in_subscripts = true;
-	  for(XobjArgs args = x.getArg(1).getArgs(); args != null;
-	      args = args.nextArgs()){
+	  if (a.Opcode() != Xcode.VAR) break;
+	  Ident id = env.findVarIdent(a.getName(), bb.getParent());
+	  XMParray globalAlias = null;
+	  if (id != null) globalAlias = (XMParray)id.getProp(XMP.globalAlias);
+	  Object isReplacedGlobal = a.getProp(XMP_REPLACED_GLOBAL);
 
-	    // check subscripts
-	    // if (array.isDistributed(dim_i) &&
-	    // 	args.getArg().Opcode() == Xcode.F_ARRAY_INDEX){
-	    //   no_leading_scalar_in_subscripts = false;
-	    // }
-	    // else if (array.isDistributed(dim_i) &&
-	    // 	     args.getArg().Opcode() == Xcode.F_INDEX_RANGE &&
-	    // 	     !no_leading_scalar_in_subscripts){
-	    //   XMP.errorAt(block, "':' must not be lead by any int-expr in a subscript list of a global array.");
-	    // }
+	  if (globalAlias != null &&
+	      (isReplacedGlobal == null || !(boolean)isReplacedGlobal)){ // local alias
 
-	    Xobject index_calc = 
-	      arrayIndexCalc(array,dim_i++,args.getArg(),bb,block);
-	    if(index_calc != null) args.setArg(index_calc);
+	    if (globalAlias == null) break;
+
+	    FindexRange origIndexRange = (FindexRange)id.getProp(XMP.origIndexRange);
+
+	    int i = 0;
+	    for (XobjArgs args = x.getArg(1).getArgs(); args != null;
+		 args = args.nextArgs()){
+
+	      Xobject origLB = origIndexRange.getLbound(i);
+	      
+	      Xobject index = Xcons.binaryOp(Xcode.MINUS_EXPR,
+					     args.getArg().getArg(0),
+					     origLB);
+
+	      if (!globalAlias.isDistributed(i)){
+		index = Xcons.binaryOp(Xcode.PLUS_EXPR,
+				       index, globalAlias.getLowerAt(i));
+	      }
+
+	      args.getArg().setArg(0, index);
+	    }
+
 	  }
+	  else {
+
+	    XMParray array = (XMParray) a.getProp(XMP.arrayProp);
+	    if(array == null) break;
+
+	    int dim_i = 0;
+	    boolean no_leading_scalar_in_subscripts = true;
+	    for(XobjArgs args = x.getArg(1).getArgs(); args != null;
+		args = args.nextArgs()){
+
+	      // check subscripts
+	      // if (array.isDistributed(dim_i) &&
+	      // 	args.getArg().Opcode() == Xcode.F_ARRAY_INDEX){
+	      //   no_leading_scalar_in_subscripts = false;
+	      // }
+	      // else if (array.isDistributed(dim_i) &&
+	      // 	     args.getArg().Opcode() == Xcode.F_INDEX_RANGE &&
+	      // 	     !no_leading_scalar_in_subscripts){
+	      //   XMP.errorAt(block, "':' must not be lead by any int-expr in a subscript list of a global array.");
+	      // }
+
+	      Xobject index_calc = 
+		arrayIndexCalc(array,dim_i++,args.getArg(),bb,block);
+	      if(index_calc != null) args.setArg(index_calc);
+	    }
 	  
-	  if(array.isLinearized())
-	    x.setArg(1,array.convertLinearIndex(x.getArg(1)));
+	    if(array.isLinearized())
+	      x.setArg(1,array.convertLinearIndex(x.getArg(1)));
+
+	    //x.setProp(XMP.RWprotected, true);
+	    
+	  }
 
 	  break;
 	}

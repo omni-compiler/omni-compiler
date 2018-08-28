@@ -488,16 +488,18 @@ public class XMPtransCoarrayRun
 
     /* divide coarrays into localCoarrays and moduleCoarrays
      */
-    for (Xobject obj: (XobjList)idList) {
-      Ident ident = (Ident)obj;
-      if (ident.wasCoarray()) {
-        // found it is a coarray or a variable converted from a coarray
-        XMPcoarray coarray = new XMPcoarray(ident, def, getFblock(), env);
-        coarray.setUseMallocWithHint(useMalloc);
-        if (coarray.isUseAssociated())
-          moduleCoarrays.add(coarray);
-        else
-          localCoarrays.add(coarray);
+    if (idList != null){
+      for (Xobject obj: (XobjList)idList) {
+	Ident ident = (Ident)obj;
+	if (ident.wasCoarray()) {
+	  // found it is a coarray or a variable converted from a coarray
+	  XMPcoarray coarray = new XMPcoarray(ident, def, getFblock(), env);
+	  coarray.setUseMallocWithHint(useMalloc);
+	  if (coarray.isUseAssociated())
+	    moduleCoarrays.add(coarray);
+	  else
+	    localCoarrays.add(coarray);
+	}
       }
     }
 

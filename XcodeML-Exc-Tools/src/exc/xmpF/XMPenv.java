@@ -294,6 +294,7 @@ out:{
       for(XobjectDef def = current_def.getDef(); def != null;
 	  def = def.getParent()){
         Xobject id_list = def.getDef().getArg(1);
+	if (id_list == null) continue;
         for(Xobject i: (XobjList)id_list){
 	  if(i.getName().equals(name)){
 	    id = (Ident)i;

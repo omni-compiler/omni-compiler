@@ -144,6 +144,10 @@ public class XMParray {
     return dims.elementAt(index).a_dim_size_var;
   }
 
+  public Xobject getLowerAt(int index){
+    return dims.elementAt(index).getLower();
+  }    
+    
   public Ident getArrayId() {
     return arrayId;
   }
@@ -716,6 +720,11 @@ public class XMParray {
 	    alloc_args.add(Xcons.FindexRange(info.getLower(),
 					     info.getArraySizeVar().Ref()));
 	}
+      }
+
+      if (localId.isCoarray()){
+	Xobject coShape = Xcons.List(Xcode.F_CO_SHAPE, localId.Type().getCodimensions());
+	alloc_args.add(coShape);
       }
       
       // allocatable
