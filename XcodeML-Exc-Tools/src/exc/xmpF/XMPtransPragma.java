@@ -785,9 +785,68 @@ public class XMPtransPragma
 
     Ident f = env.declInternIdent(isAcc? XMP.bcast_acc_f : XMP.bcast_f, Xtype.FsubroutineType);
 
-    for(Ident id: info.getInfoVarIdents()){
-      Xtype type = id.Type();
+    // for(Ident id: info.getInfoVarIdents()){
+    //   Xtype type = id.Type();
+    //   Xobject size_expr = Xcons.IntConstant(1);
+
+    //   if (type.isFarray()){
+    // 	if (type.isFassumedSize()){
+    // 	  XMP.fatal("assumed-size array cannot be the target of bcast.");
+    // 	}
+        
+    // 	if (!type.isFassumedShape() && !type.isFallocatable()){
+    // 	  for (Xobject s: type.getFarraySizeExpr()){
+    // 	    Xobject size;
+    // 	    if (s.Opcode() == Xcode.F_INDEX_RANGE){
+    // 	      Xobject lb = s.getArg(0);
+    // 	      Xobject ub = s.getArg(1);
+    // 	      size = Xcons.binaryOp(Xcode.MINUS_EXPR, ub, lb);
+    // 	      size = Xcons.binaryOp(Xcode.PLUS_EXPR, size, Xcons.IntConstant(1));
+    // 	    }
+    // 	    else {
+    // 	      size = s;
+    // 	    }
+
+    // 	    size_expr = Xcons.binaryOp(Xcode.MUL_EXPR, size_expr, size);
+    // 	  }
+    // 	}
+    // 	else {
+    // 	  Ident size_func = env.declIntrinsicIdent("size", Xtype.FintFunctionType);
+    // 	  size_expr = size_func.Call(Xcons.List(id.Ref()));
+    // 	}
+    // 	type = type.getRef();
+    //   }
+
+    //   if(!type.isBasic()){
+    // 	XMP.fatal("bcast for non-basic type ="+type);
+    //   }
+
+    //   if(type.getFlen() != null)
+    //     size_expr = Xcons.binaryOp(Xcode.MUL_EXPR, size_expr, type.getFlen());
+
+    //   Xobject args = Xcons.List(id.Ref(), size_expr, XMP.typeIntConstant(type), from_ref_arg, on_ref_arg);
+
+    //   ret_body.add(f.callSubroutine(args));
+    // }
+
+    for (Xobject v: info.getInfoVars()){
+
+      Xtype type = null;
       Xobject size_expr = Xcons.IntConstant(1);
+
+      if (v.isVariable()){
+
+	Ident id = env.findVarIdent(v.getName(), pb);
+	if (id == null){
+	  XMP.errorAt(pb,"variable '"+v.getName()+"' in bcast is not found");
+	}
+
+	type = id.Type();
+
+      }
+      else {
+	type = v.Type();
+      }
 
       if (type.isFarray()){
 	if (type.isFassumedSize()){
@@ -806,27 +865,28 @@ public class XMPtransPragma
 	    else {
 	      size = s;
 	    }
-
+	    
 	    size_expr = Xcons.binaryOp(Xcode.MUL_EXPR, size_expr, size);
 	  }
 	}
 	else {
 	  Ident size_func = env.declIntrinsicIdent("size", Xtype.FintFunctionType);
-	  size_expr = size_func.Call(Xcons.List(id.Ref()));
+	  size_expr = size_func.Call(Xcons.List(v));
 	}
 	type = type.getRef();
       }
 
-      if(!type.isBasic()){
+      if (!type.isBasic()){
 	XMP.fatal("bcast for non-basic type ="+type);
       }
 
-      if(type.getFlen() != null)
-        size_expr = Xcons.binaryOp(Xcode.MUL_EXPR, size_expr, type.getFlen());
+      if (type.getFlen() != null)
+	size_expr = Xcons.binaryOp(Xcode.MUL_EXPR, size_expr, type.getFlen());
 
-      Xobject args = Xcons.List(id.Ref(), size_expr, XMP.typeIntConstant(type), from_ref_arg, on_ref_arg);
+      Xobject args = Xcons.List(v, size_expr, XMP.typeIntConstant(type), from_ref_arg, on_ref_arg);
 
       ret_body.add(f.callSubroutine(args));
+	
     }
 
     if (info.getAsyncId() != null){
@@ -845,10 +905,10 @@ public class XMPtransPragma
       ret_body.add(g.callSubroutine(Xcons.List(from_ref.getDescId())));
     }
 
-    if(isAcc) {
+    if (isAcc) {
       XobjList vars = Xcons.List();
-      for (Ident id : info.getInfoVarIdents()) {
-        vars.add(id.Ref());
+      for (Xobject v : info.getInfoVars()) {
+        vars.add(v);
       }
       ret_body = Bcons.blockList(buildAccHostData(vars, ret_body));
     }
