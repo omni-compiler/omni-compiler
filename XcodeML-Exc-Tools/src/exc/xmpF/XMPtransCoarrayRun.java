@@ -805,7 +805,7 @@ public class XMPtransCoarrayRun
     --------------------------------------------
       subroutine EX1
         real :: V1(1:10,1:20)                                        ! f. f1.
-        common /xmpf_COARRAY_EX1/ V1                                 ! f4.
+        common /xmpf_COARRAY_EX1/ V1                                 ! c4.
         integer(8) :: descptr_V1                                     ! a.
         common /xmpf_descptr_EX1/ descptr_V1                         ! a1.
         ...
@@ -924,7 +924,7 @@ public class XMPtransCoarrayRun
       // f1. remove SAVE attributes from declarations of coarrays
       removeSaveAttr(staticLocalCoarrays);
       if (version == 4) {
-        // f4. generate common block for data
+        // c4. generate common block for data
         genCommonBlockForStaticCoarrays(staticLocalCoarrays);
       }
     }
