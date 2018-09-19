@@ -18,6 +18,7 @@ public class XMPinfo
 
   XMPobjectsRef on_ref;
   Vector<Ident> info_vars;
+  Vector<Xobject> info_vars2;
   Xobject async_id;
   Vector<Xobject> waitAsyncIds;
 
@@ -73,6 +74,8 @@ public class XMPinfo
   public XMPobjectsRef getOnRef() { return on_ref; }
 
   public Vector<Ident> getInfoVarIdents() { return info_vars; }
+
+  public Vector<Xobject> getInfoVars() { return info_vars2; }
 
   public void setAsyncId(Xobject async_id) { this.async_id = async_id; }
 
@@ -132,10 +135,10 @@ public class XMPinfo
   }
 
   public void setBcastInfo(XMPobjectsRef from, XMPobjectsRef on,
-			   Vector<Ident> vars){
+			   Vector<Xobject> vars){
     bcast_from = from;
     on_ref = on;
-    info_vars = vars;
+    info_vars2 = vars;
   }
 
   public int getReductionOp() { return reduction_op; }

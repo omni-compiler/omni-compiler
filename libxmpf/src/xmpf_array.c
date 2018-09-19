@@ -6,7 +6,7 @@
 
 void _XMP_setup_reduce_type(MPI_Datatype *mpi_datatype, size_t *datatype_size, int datatype);
 
-void xmpf_array_alloc__(_XMP_array_t **a_desc, int *n_dim, int *type,
+void xmpf_array_alloc__(_XMP_array_t **a_desc, int *n_dim, int *type, size_t *type_size,
 			_XMP_template_t **t_desc)
 {
   _XMP_array_t *a = _XMP_alloc(sizeof(_XMP_array_t) + sizeof(_XMP_array_info_t) * (*n_dim - 1));
@@ -19,9 +19,15 @@ void xmpf_array_alloc__(_XMP_array_t **a_desc, int *n_dim, int *type,
   a->is_align_comm_member = false;
   a->dim = *n_dim;
   a->type = *type;
-  a->type_size = _XMP_get_datatype_size(a->type);
-  size_t dummy;
+  if (a->type != _XMP_N_TYPE_NONBASIC){
+    a->type_size = _XMP_get_datatype_size(a->type);
+    size_t dummy;
   _XMP_setup_reduce_type(&a->mpi_type, &dummy, *type);
+  }
+  else {
+    a->mpi_type = MPI_BYTE;
+    a->type_size = *type_size;
+  }
   a->order = MPI_ORDER_FORTRAN;
   a->array_addr_p = NULL;
   a->total_elmts = 0;
