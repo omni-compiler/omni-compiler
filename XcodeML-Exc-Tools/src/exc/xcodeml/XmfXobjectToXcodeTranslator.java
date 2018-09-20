@@ -626,9 +626,15 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             Xobject code = xobj.getArgOrNull(0);
             Xobject msg = xobj.getArgOrNull(1);
             if (code != null) {
-                addAttributes(e,
-                              "code", code.getString());
-            }
+	      if (code.Opcode() == Xcode.STRING)
+		addAttributes(e,
+			      "code", code.getString());
+	      else {
+		Element e1 = createElement("code");
+		addChildNode(e1, trans(code));
+		addChildNode(e, e1);
+	      }
+	    }
             if (msg != null) {
 	      if (msg.Opcode() == Xcode.F_CHARACTER_CONSTATNT)
 		addAttributes(e,
