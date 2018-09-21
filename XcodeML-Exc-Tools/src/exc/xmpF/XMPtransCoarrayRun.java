@@ -485,6 +485,8 @@ public class XMPtransCoarrayRun
     localCoarrays = new ArrayList<XMPcoarray>();
     moduleCoarrays = new ArrayList<XMPcoarray>();
     Xobject idList = def.getFuncIdList();
+    if (idList == null)
+      idList = new XobjList(Xcode.ID_LIST);
 
     /* divide coarrays into localCoarrays and moduleCoarrays
      */
@@ -1330,6 +1332,16 @@ public class XMPtransCoarrayRun
 
         if (allocated(V3)) write(*,*) "yes"       ! keep 'allocated' ! l2.
     --------------------------------------------
+
+    common and special handling for the COARRAY directive
+    (for the coarray pass that executes after the XMP pass)
+    --------------------------------------------
+        call xmpf_coarray_set_nodes ( a , XMP_DESC_p )
+    --------------------------------------------
+    output (commonly)
+    --------------------------------------------
+        call xmpf_coarray_set_nodes ( xmpf_descptr_a , XMP_DESC_p )  ! r1.
+    --------------------------------------------
   */
   private void transExecPart() {
 
@@ -1354,6 +1366,9 @@ public class XMPtransCoarrayRun
 
     // l2. fake intrinsic 'allocatable' (allocatable coarrays only)
     replaceIntrinsicCalls2(visibleCoarrays);
+
+    // r1. replace argument of runtime call
+    replaceArgumentOfRuntimeCall(visibleCoarrays);
 
     // i. initialization/finalization for auto-syncall and auto-deallocate
     //    and initialization of descPtr (only Ver.6)
@@ -2690,6 +2705,13 @@ public class XMPtransCoarrayRun
     }
 
     Xobject tag;
+    /////////////////////////////////
+    ////  for issue #586
+    ////   The trigger of the auto-deallocation should be not an allocate statement
+    ////   but the declaration of the allocatable coarray.
+    //System.out.println("@@@@ "+(coarray.wasMovedFromModule())+(coarray.def != def)+
+    //             (coarray.usesMalloc()));
+    /////////////////////////////////
     if (coarray.wasMovedFromModule() || coarray.def != def ||
         !coarray.usesMalloc()) {
       // coarray is originally defined in a use-associated module or
@@ -2999,6 +3021,42 @@ public class XMPtransCoarrayRun
         _replaceAllocatedWithAssociated(xobj, coarrays);
     }
   }
+
+
+  //-----------------------------------------------------
+  //  TRANSLATION r1.
+  //  - replace argument of runtime call for COARRAY directive
+  //-----------------------------------------------------
+  //
+  private void replaceArgumentOfRuntimeCall(ArrayList<XMPcoarray> coarrays) {
+    XobjectIterator xi = new topdownXobjectIterator(def.getFuncBody());
+    for (xi.init(); !xi.end(); xi.next()) {
+      Xobject xobj = xi.getXobject();
+      if (xobj == null)
+        continue;
+      if (xobj.Opcode() != Xcode.FUNCTION_CALL ||
+          xobj.getArg(0).Opcode() == Xcode.MEMBER_REF)
+        continue;
+
+      /*  Replace coarray argument with the descriptor
+       *  if the function name is xmpf_coarray_set_nodes.
+       */
+      String fname = xobj.getArg(0).getString();
+      if (fname.equals(XMPcoarray.SET_NODES_NAME)) {
+        for (XobjArgs args = ((XobjList)xobj.getArg(1)).getArgs();
+             args != null; args = args.nextArgs()) {
+          Xobject arg = args.getArg();
+          XMPcoarray coarray = _findCoarrayInCoarrays(arg, coarrays);
+          if (coarray != null) {
+            // found the argument to be replaced
+            Ident descPtr = coarray.getDescPointerId();
+            args.setArg(descPtr);
+          }
+        }
+      }
+    }
+  }
+
 
 
   // not used currently.

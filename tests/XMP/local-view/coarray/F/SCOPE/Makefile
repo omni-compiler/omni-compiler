@@ -1,4 +1,3 @@
-OPT= --debug
 #OPT= -g --debug --verbose
 NPE=3
 
@@ -6,7 +5,10 @@ OUT_darg= dummyarg-1.x dummyarg-2.x dummyarg-3.x
 OUT_host= host1.x  # host2.x:doubtful
 OUT_module= mod1.x modalloc.x nestModule.x
 OUT_epi= autosyncall1.x finalize.x
+OUT_block= block.x block_rename_coarray.x
+
 OUT_bug= $(BUG403) $(BUG451) $(BUG457) $(BUG458) $(BUG459) $(BUG460) $(BUG472) $(BUG006) $(ISSUE064) $(BUG085)
+
 BUG403= bug403.x bug403OK.x   #403 Problem FuncDefBlock.Finalize()
 	                      # To avoid this problem, the current implementation
 	                      # does not allow to use both CAF and XMP together.
@@ -18,7 +20,7 @@ BUG460= sakagami460-join.x sakagami460-2.x #bug460-3.x (err in SX because of bug
 BUG472= bug472.x bug472G1.x bug472G2.x bb472.x bb472G1.x bb472G2.x
 BUG006= bug006.x bug006OK.x
 BUG085= bug085cat.x bug085.x
-ISSUE064= nested_common_name.x nested_common_name-1.x nested_common_name-1-0-0.x nested_common_name-1-0.x nested_common_name-2.x nested_common_name-3.x block_rename_coarray.x
+ISSUE064= nested_common_name.x nested_common_name-1.x nested_common_name-1-0-0.x nested_common_name-1-0.x nested_common_name-2.x nested_common_name-3.x
 
 SPECIALS= # bug460get.x bug460put.x
 
@@ -30,7 +32,7 @@ OUT_MFILE=mf_use2.x
 
 #host3 host2-1 ... problem in gfortran?
 
-OUT= $(OUT_bug) $(OUT_host) $(OUT_module) $(OUT_epi) $(OUT_darg) #$(OUT_MFILE)
+OUT= $(OUT_block) $(OUT_bug) $(OUT_host) $(OUT_module) $(OUT_epi) $(OUT_darg) #$(OUT_MFILE)
 
 include ../Makefile.common
 

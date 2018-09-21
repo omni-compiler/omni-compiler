@@ -378,6 +378,30 @@ public class omompx
         new exc.xmpF.XMPtransCoarray(xobjFile, 4, coarray_suboption,
                                      xmpf_onlyCafMode);
       xobjFile.iterateDef(caf_translator4);
+    }
+
+    if (xmpf && xmpf_onlyCafMode) {
+      System.out.println("<ONLY-CAF MODE> XMP/F gloval-view translator is " +
+                         "bypassed for " + xobjFile.getSourceFileName() + ".");
+    }
+
+    if (xmpf && !xmpf_onlyCafMode) {
+      // XMP Fortran
+      exc.xmpF.XMPtranslate xmp_translator = new exc.xmpF.XMPtranslate(xobjFile);
+      xobjFile.iterateDef(xmp_translator);
+      
+      if(exc.xmpF.XMP.hasErrors())
+        System.exit(1);
+      
+      xmp_translator.finish();
+
+      if(xcodeWriter != null) {
+        xobjFile.Output(xcodeWriter);
+        xcodeWriter.flush();
+      }
+    }
+    
+    if (xmpf && (!xmpf_skipCafMode && XmOption.isCoarray())) {
 
       // Coarray Fortran pass#1
       exc.xmpF.XMPtransCoarray caf_translator1 =
@@ -403,27 +427,6 @@ public class omompx
       }
     }
 
-    if (xmpf && xmpf_onlyCafMode) {
-      System.out.println("<ONLY-CAF MODE> XMP/F gloval-view translator is " +
-                         "bypassed for " + xobjFile.getSourceFileName() + ".");
-    }
-
-    if (xmpf && !xmpf_onlyCafMode) {
-      // XMP Fortran
-      exc.xmpF.XMPtranslate xmp_translator = new exc.xmpF.XMPtranslate(xobjFile);
-      xobjFile.iterateDef(xmp_translator);
-      
-      if(exc.xmpF.XMP.hasErrors())
-        System.exit(1);
-      
-      xmp_translator.finish();
-
-      if(xcodeWriter != null) {
-        xobjFile.Output(xcodeWriter);
-        xcodeWriter.flush();
-      }
-    }
-    
     // OpenMP translation
     if(openMP || openMPonlyTarget) {
       if(openMPonlyTarget)

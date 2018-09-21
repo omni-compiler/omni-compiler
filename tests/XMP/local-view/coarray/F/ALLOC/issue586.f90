@@ -1,18 +1,25 @@
-program main
-  real :: a(100)[*]
+subroutine memory_leak(x)
+  real x(2)
+  real, allocatable:: a(:)[:]
+  allocate (a(10000)[*])
+  return
+end subroutine memory_leak
+
+
+program leak_check
+  real x(2)
 
   nalloc0=xmpf_coarray_allocated_bytes()
   ngarbg0=xmpf_coarray_garbage_bytes()
-!!  write(*,100) this_image(), nalloc0, ngarbg0
+  !!write(*,100) this_image(), nalloc0, ngarbg0
 
-  do i=1,30
-     call sub1(a)
-  enddo
+  call memory_leak(x)
 
   nalloc1=xmpf_coarray_allocated_bytes()
-  ngarbg1=xmpf_coarray_garbage_bytes()
-!!  write(*,100) this_image(), nalloc1, ngarbg1
+  ngarbg1=xmpf_coarray_garbage_bytes() 
+  !!write(*,100) this_image(), nalloc1, ngarbg1
 
+  !!----------- check  -------------
   nerr = 0
   if (nalloc0 /= nalloc1) then
      nerr = nerr + 1
@@ -33,19 +40,6 @@ program main
      print '("[",i0,"] number of NGs: ",i0)', this_image(), nerr
   end if
 
-
 100 format("[",i0,"] allocated:",i0,", garbage:",i0)
 
 end program
-
-subroutine sub1(x)
-  real :: x(100)[*]
-  real, save :: b(20,4)[*]
-  real, allocatable :: c(:)[:], d(:,:)[:], e(:)[:] 
-
-  allocate(c(50)[*], d(20,4)[*], e(60)[*])
-
-  deallocate(c,e)
-
-  return
-end subroutine
