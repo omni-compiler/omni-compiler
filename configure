@@ -1531,7 +1531,7 @@ Optional Packages:
   --with-gpucc=CMD            GPU C compiler (default: nvcc)
   --with-gpu-cflags=CFLAGS    GPU C compiler flags (default: -arch=sm_20 -O3 -Wno-deprecated-gpu-targets)
   --with-cuda=DIR             CUDA installation path (default: /usr/local/cuda)
-  --with-opencl=DIR           OpenCL installation path (default: /usr/local/cuda)
+  --with-opencl=DIR           OpenCL installation path for PEZY-SC2 (default: /usr/local/cuda)
   --with-libxml2=DIR          specify prefix directory for installed libxml2 package (default: /usr)
                               Equivalent to --with-libxml2-include=PATH/include plus --with-libxml2-lib=PATH/lib64
   --with-libxml2-include=DIR  specify directory for installed libxml2 include files
@@ -10548,7 +10548,7 @@ fi
 
     chk=`${MPI_CC} --version | head -n1`
     case $chk in
-       gcc* | Apple* | cc* | *mpc-gcc_620* )
+       gcc* | Apple* | cc* | *mpc-gcc_* )
 	    # OpenMP
 	    OPENMP_OPT_C="-fopenmp"
 

@@ -161,7 +161,7 @@ AC_ARG_WITH(cuda,
 
 # specify OpenCL path
 AC_ARG_WITH(opencl,
-	    [  --with-opencl=DIR           OpenCL installation path (default: /usr/local/cuda)],
+	    [  --with-opencl=DIR           OpenCL installation path for PEZY-SC2 (default: /usr/local/cuda)],
 	    [OPENCL_PREFIX="${withval}"; use_opencl=yes], [use_opencl=no])
 
 # set cuda default path
