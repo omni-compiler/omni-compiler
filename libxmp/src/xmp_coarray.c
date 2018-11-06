@@ -1570,7 +1570,8 @@ void _XMP_coarray_contiguous_put(const int target_rank, _XMP_coarray_t *dst_desc
 
     cosubsc.ndims = ((_XMP_coarray_t*)dst_desc)->image_dims;
     cosubsc.omit = 0;
-    int j = target_image - 1;
+    //int j = target_image - 1;
+    int j = target_rank;
     for (int i =  cosubsc.ndims - 1; i >= 0; i--){
       int k = j / ((_XMP_coarray_t*)dst_desc)->distance_of_image_elmts[i];
       j -= k * ((_XMP_coarray_t*)dst_desc)->distance_of_image_elmts[i];
@@ -1656,7 +1657,8 @@ void _XMP_coarray_contiguous_get(const int target_rank, _XMP_coarray_t *dst_desc
 
     cosubsc.ndims = ((_XMP_coarray_t*)src_desc)->image_dims;
     cosubsc.omit = 0;
-    int j = target_image - 1;
+    //int j = target_image - 1;
+    int j = target_rank;
     for (int i =  cosubsc.ndims - 1; i >= 0; i--){
       int k = j / ((_XMP_coarray_t*)src_desc)->distance_of_image_elmts[i];
       j -= k * ((_XMP_coarray_t*)src_desc)->distance_of_image_elmts[i];

@@ -10,7 +10,7 @@ _Bool xmpc_test_task_on_nodes(_XMP_nodes_t *n, _XMP_object_ref_t *r_desc)
 {
   int is_active = _XMP_test_task_on_nodes(n);
 #ifdef _XMPT
-  xmpt_tool_data_t *data = &((*n)->xmpt_data); *data=NULL;
+  xmpt_tool_data_t *data = &(n->xmpt_data); *data=NULL;
   xmp_desc_t on = r_desc->ref_kind == XMP_OBJ_REF_NODES ?
     (xmp_desc_t)r_desc->n_desc : (xmp_desc_t)r_desc->t_desc;
   struct _xmpt_subscript_t on_subsc;
@@ -31,7 +31,12 @@ _Bool xmpc_test_task_nocomm(_XMP_object_ref_t *r_desc)
 {
   int is_active = _XMP_test_task_nocomm(r_desc);
 #ifdef _XMPT
-  xmpt_tool_data_t *data = &((*n)->xmpt_data); *data=NULL;
+
+  xmpt_tool_data_t *data = r_desc->ref_kind == XMP_OBJ_REF_NODES ?
+    ((_XMP_nodes_t*)r_desc->n_desc)->xmpt_data :
+    ((_XMP_template_t*)r_desc->t_desc)->xmpt_data; *data=NULL;
+
+  //xmpt_tool_data_t *data = &((*n)->xmpt_data); *data=NULL;
   xmp_desc_t on = r_desc->ref_kind == XMP_OBJ_REF_NODES ?
     (xmp_desc_t)r_desc->n_desc : (xmp_desc_t)r_desc->t_desc;
   struct _xmpt_subscript_t on_subsc;
@@ -48,10 +53,12 @@ _Bool xmpc_test_task_nocomm(_XMP_object_ref_t *r_desc)
 }
 
 
-void xmpc_end_task(void)
+void xmpc_end_task(_XMP_object_ref_t *r_desc)
 {
 #ifdef _XMPT
-  xmpt_tool_data_t *data = &(n->xmpt_data);
+  xmpt_tool_data_t *data = r_desc->ref_kind == XMP_OBJ_REF_NODES ?
+    ((_XMP_nodes_t*)r_desc->n_desc)->xmpt_data :
+    ((_XMP_template_t*)r_desc->t_desc)->xmpt_data;
   if (xmpt_enabled && xmpt_callback[xmpt_event_task_end])
     (*(xmpt_event_end_t)xmpt_callback[xmpt_event_task_end])(data);
 #endif

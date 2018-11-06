@@ -860,7 +860,7 @@ public class XMPtranslateLocalPragma {
       
     if (!nocomm_flag){
       f = _globalDecl.declExternFunc("xmpc_end_task", Xtype.voidType);
-      pb.getBody().add(f.Call(Xcons.List()));
+      pb.getBody().add(f.Call(Xcons.List(on_ref.getDescId().Ref())));
     }
 
     if (!tasksFlag){
