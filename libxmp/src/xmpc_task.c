@@ -20,7 +20,8 @@ _Bool xmpc_test_task_on_nodes(_XMP_nodes_t *n, _XMP_object_ref_t *r_desc)
 	on,
 	&on_subsc,
 	is_active,
-	data);
+	data,
+	__builtin_extract_return_addr(__builtin_return_address(0)));
   }
 #endif
   return is_active;
@@ -46,7 +47,8 @@ _Bool xmpc_test_task_nocomm(_XMP_object_ref_t *r_desc)
 	on,
 	&on_subsc,
 	is_active,
-	data);
+	data,
+	__builtin_extract_return_addr(__builtin_return_address(0)));
   }
 #endif
   return is_active;
@@ -60,7 +62,9 @@ void xmpc_end_task(_XMP_object_ref_t *r_desc)
     ((_XMP_nodes_t*)r_desc->n_desc)->xmpt_data :
     ((_XMP_template_t*)r_desc->t_desc)->xmpt_data;
   if (xmpt_enabled && xmpt_callback[xmpt_event_task_end])
-    (*(xmpt_event_end_t)xmpt_callback[xmpt_event_task_end])(data);
+    (*(xmpt_event_end_t)xmpt_callback[xmpt_event_task_end])(
+        data,
+	__builtin_extract_return_addr(__builtin_return_address(0)));
 #endif
   _XMP_end_task();
 }

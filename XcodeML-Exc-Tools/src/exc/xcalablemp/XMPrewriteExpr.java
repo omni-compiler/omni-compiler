@@ -2855,6 +2855,9 @@ public class XMPrewriteExpr {
     boolean isArray;
 
     if (expr.Opcode() == Xcode.SUB_ARRAY_REF || expr.Opcode() == Xcode.ARRAY_REF){
+      if (expr.getArg(0).Opcode() == Xcode.MEMBER_ARRAY_REF){
+	return null;
+      }
       localName = expr.getArg(0).getName();
       isArray = true;
     }

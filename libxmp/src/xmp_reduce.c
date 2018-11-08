@@ -728,7 +728,8 @@ void _XMP_reduction(void *data_addr, int count, int datatype, int op,
 	on,
 	&on_subsc,
         async_id,
-	&data);
+	&data,
+	__builtin_extract_return_addr(__builtin_return_address(0)));
     }
   }
   else {
@@ -736,7 +737,8 @@ void _XMP_reduction(void *data_addr, int count, int datatype, int op,
       (*(xmpt_event_single_desc_begin_t)xmpt_callback[xmpt_event_reduction_begin])(
 	on,
 	&on_subsc,
-	&data);
+	&data,
+	__builtin_extract_return_addr(__builtin_return_address(0)));
     }
   }
 #endif
@@ -779,7 +781,9 @@ void _XMP_reduction(void *data_addr, int count, int datatype, int op,
 
 #ifdef _XMPT
   if (xmpt_enabled && xmpt_callback[xmpt_event_reduction_end])
-    (*(xmpt_event_end_t)xmpt_callback[xmpt_event_reduction_end])(&data);
+    (*(xmpt_event_end_t)xmpt_callback[xmpt_event_reduction_end])(
+      &data,
+      __builtin_extract_return_addr(__builtin_return_address(0)));
 #endif
 
 }

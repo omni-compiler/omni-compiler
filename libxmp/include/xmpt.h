@@ -185,23 +185,26 @@ typedef enum xmpt_event_e {
 //
 
 typedef void (*xmpt_event_single_desc_begin_t) (
-  xmp_desc_t desc,            /* descriptor for either nodes, template or array */
-  xmpt_subscript_t subsc,     /* subscript specification */
-  xmpt_tool_data_t* data      /* pointer to store tool specific data */
+  xmp_desc_t desc,             /* descriptor for either nodes, template or array */
+  xmpt_subscript_t subsc,      /* subscript specification */
+  xmpt_tool_data_t* data,      /* pointer to store tool specific data */
+  const void *codeptr_ra       /* return address of the call to the runtime routine */
 );
 
 typedef void (*xmpt_event_single_desc_begin_async_t) (
   xmp_desc_t desc,             /* descriptor for either nodes, template or array */
   xmpt_subscript_t subsc,      /* subscript specification */
   xmpt_async_id_t async_id,    /* async-id */
-  xmpt_tool_data_t* data       /* pointer to store tool specific data */
+  xmpt_tool_data_t* data,      /* pointer to store tool specific data */
+  const void *codeptr_ra       /* return address of the call to the runtime routine */
 );
 
 typedef void (*xmpt_event_task_begin_t) (
-  xmp_desc_t desc,            /* descriptor for either nodes, template or array */
-  xmpt_subscript_t subsc,     /* subscript specification */
-  int is_active,              /* flag whether or not the node joins to execute the task. */
-  xmpt_tool_data_t* data      /* pointer to store tool specific data */
+  xmp_desc_t desc,             /* descriptor for either nodes, template or array */
+  xmpt_subscript_t subsc,      /* subscript specification */
+  int is_active,               /* flag whether or not the node joins to execute the task. */
+  xmpt_tool_data_t* data,      /* pointer to store tool specific data */
+  const void *codeptr_ra       /* return address of the call to the runtime routine */
 );
 
 typedef void (*xmpt_event_gmove_begin_t) (
@@ -210,7 +213,8 @@ typedef void (*xmpt_event_gmove_begin_t) (
   xmp_desc_t rhs_array_desc,   /* descriptor for rhs of array assignment */
   xmpt_subscript_t rhs_subsc,  /* subscript for rhs */
   xmpt_gmove_kind_t kind,      /* in/out/collective */
-  xmpt_tool_data_t* data       /* pointer to store tool specific data */
+  xmpt_tool_data_t* data,      /* pointer to store tool specific data */
+  const void *codeptr_ra       /* return address of the call to the runtime routine */
 );
 
 typedef void (*xmpt_event_gmove_begin_async_t) (
@@ -220,7 +224,8 @@ typedef void (*xmpt_event_gmove_begin_async_t) (
   xmpt_subscript_t rhs_subsc,  /* subscript for rhs */
   xmpt_gmove_kind_t kind,      /* in/out/collective */
   xmpt_async_id_t async_id,    /* async-id */
-  xmpt_tool_data_t* data       /* pointer to store tool specific data */
+  xmpt_tool_data_t* data,      /* pointer to store tool specific data */
+  const void *codeptr_ra       /* return address of the call to the runtime routine */
 );
 
 typedef void (*xmpt_event_bcast_begin_t) (
@@ -230,7 +235,8 @@ typedef void (*xmpt_event_bcast_begin_t) (
   xmpt_subscript_t from_subsc, /* subscript specification */
   xmp_desc_t on_desc,          /* descriptor for either nodes, template or array */
   xmpt_subscript_t on_subsc,   /* subscript specification */
-  xmpt_tool_data_t* data       /* pointer to store tool specific data */
+  xmpt_tool_data_t* data,      /* pointer to store tool specific data */
+  const void *codeptr_ra       /* return address of the call to the runtime routine */
 );
 
 typedef void (*xmpt_event_bcast_begin_async_t) (
@@ -241,7 +247,8 @@ typedef void (*xmpt_event_bcast_begin_async_t) (
   xmp_desc_t on_desc,          /* descriptor for either nodes, template or array */
   xmpt_subscript_t on_subsc,   /* subscript specification */
   xmpt_async_id_t async_id,    /* async-id */
-  xmpt_tool_data_t* data       /* pointer to store tool specific data */
+  xmpt_tool_data_t* data,      /* pointer to store tool specific data */
+  const void *codeptr_ra       /* return address of the call to the runtime routine */
 );
 
 typedef void (*xmpt_event_wait_async_begin_t) (
@@ -250,22 +257,26 @@ typedef void (*xmpt_event_wait_async_begin_t) (
   //  xmpt_subscript_t from_subsc, /* subscript specification */
   xmp_desc_t on_desc,          /* descriptor for either nodes, template or array */
   xmpt_subscript_t on_subsc,   /* subscript specification */
-  xmpt_tool_data_t* data       /* pointer to store tool specific data */
+  xmpt_tool_data_t* data,      /* pointer to store tool specific data */
+  const void *codeptr_ra       /* return address of the call to the runtime routine */
 );
 
 typedef void (*xmpt_event_end_t) (
-  xmpt_tool_data_t* data       /* pointer to store tool specific data */
+  xmpt_tool_data_t* data,      /* pointer to store tool specific data */
+  const void *codeptr_ra       /* return address of the call to the runtime routine */
 );
 
 typedef void (*xmpt_event_array_begin_t) (
   xmp_desc_t array_desc,       /* descriptor for array to be assigned */
   xmp_desc_t template_desc,    /* descriptor for template-ref */
   xmpt_subscript_t subsc,      /* subscript specification */
-  xmpt_tool_data_t* data       /* pointer to store tool specific data */
+  xmpt_tool_data_t* data,      /* pointer to store tool specific data */
+  const void *codeptr_ra       /* return address of the call to the runtime routine */
 );
 
 typedef void (*xmpt_event_begin_t) (
-  xmpt_tool_data_t* data       /* pointer to store tool specific data */
+  xmpt_tool_data_t* data,      /* pointer to store tool specific data */
+  const void *codeptr_ra       /* return address of the call to the runtime routine */
 );
 
 //
@@ -276,19 +287,22 @@ typedef void (*xmpt_event_coarray_remote_t)(
   xmpt_coarray_id_t c,
   xmpt_subscript_t subsc,
   xmpt_subscript_t cosubsc,
-  xmpt_tool_data_t* data
+  xmpt_tool_data_t* data,
+  const void *codeptr_ra       /* return address of the call to the runtime routine */
 );
 
 typedef void (*xmpt_event_coarray_local_t)(
   xmpt_coarray_id_t c,
   xmpt_subscript_t subsc,
-  xmpt_tool_data_t* data
+  xmpt_tool_data_t* data,
+  const void *codeptr_ra       /* return address of the call to the runtime routine */
 );
 
 typedef void (*xmpt_event_sync_images_begin_t)(
   int num,
   int *images,
-  xmpt_tool_data_t* data
+  xmpt_tool_data_t* data,
+  const void *codeptr_ra       /* return address of the call to the runtime routine */
 );
 
 typedef void (*xmpt_callback_t);

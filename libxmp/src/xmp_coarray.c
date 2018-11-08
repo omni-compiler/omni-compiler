@@ -1175,7 +1175,8 @@ void _XMP_coarray_put(void *remote_coarray, void *local_array, void *local_coarr
       cosubsc.marker[i] = 0;
     }
     (*(xmpt_event_coarray_remote_t)xmpt_callback[xmpt_event_coarray_remote_write])(
-     (xmpt_coarray_id_t)remote_coarray, &subsc, &cosubsc, &data);
+      (xmpt_coarray_id_t)remote_coarray, &subsc, &cosubsc, &data,
+      __builtin_extract_return_addr(__builtin_return_address(0)));
   }
 #endif
 
@@ -1258,7 +1259,8 @@ void _XMP_coarray_get(void *remote_coarray, void *local_array, void *local_coarr
       cosubsc.marker[i] = 0;
     }
     (*(xmpt_event_coarray_remote_t)xmpt_callback[xmpt_event_coarray_remote_read])(
-     (xmpt_coarray_id_t)remote_coarray, &subsc, &cosubsc, &data);
+      (xmpt_coarray_id_t)remote_coarray, &subsc, &cosubsc, &data,
+      __builtin_extract_return_addr(__builtin_return_address(0)));
   }
 #endif
 
@@ -1429,7 +1431,8 @@ void xmp_sync_memory(const int* status)
   xmpt_tool_data_t data = NULL;
   if (xmpt_enabled && xmpt_callback[xmpt_event_sync_memory_begin])
     (*(xmpt_event_begin_t)xmpt_callback[xmpt_event_sync_memory_begin])(
-     &data);
+      &data,
+      __builtin_extract_return_addr(__builtin_return_address(0)));
 #endif
 
 #ifdef _XMP_GASNET
@@ -1445,7 +1448,8 @@ void xmp_sync_memory(const int* status)
 #ifdef _XMPT
   if (xmpt_enabled && xmpt_callback[xmpt_event_sync_memory_end])
     (*(xmpt_event_end_t)xmpt_callback[xmpt_event_sync_memory_end])(
-     &data);
+      &data,
+      __builtin_extract_return_addr(__builtin_return_address(0)));
 #endif
 }
 
@@ -1459,7 +1463,8 @@ void xmp_sync_all(const int* status)
   xmpt_tool_data_t data = NULL;
   if (xmpt_enabled && xmpt_callback[xmpt_event_sync_all_begin])
     (*(xmpt_event_begin_t)xmpt_callback[xmpt_event_sync_all_begin])(
-     &data);
+      &data,
+      __builtin_extract_return_addr(__builtin_return_address(0)));
 #endif
 
 #ifdef _XMP_GASNET
@@ -1473,7 +1478,8 @@ void xmp_sync_all(const int* status)
 #ifdef _XMPT
   if (xmpt_enabled && xmpt_callback[xmpt_event_sync_all_end])
     (*(xmpt_event_end_t)xmpt_callback[xmpt_event_sync_all_end])(
-     &data);
+      &data,
+      __builtin_extract_return_addr(__builtin_return_address(0)));
 #endif
 }
 
@@ -1487,7 +1493,8 @@ void xmp_sync_images(const int num, int* image_set, int* status)
   xmpt_tool_data_t data = NULL;
   if (xmpt_enabled && xmpt_callback[xmpt_event_sync_images_begin])
     (*(xmpt_event_sync_images_begin_t)xmpt_callback[xmpt_event_sync_images_begin])(
-     num, image_set, &data);
+      num, image_set, &data,
+      __builtin_extract_return_addr(__builtin_return_address(0)));
 #endif
 
 #ifdef _XMP_GASNET
@@ -1501,7 +1508,8 @@ void xmp_sync_images(const int num, int* image_set, int* status)
 #ifdef _XMPT
   if (xmpt_enabled && xmpt_callback[xmpt_event_sync_images_end])
     (*(xmpt_event_end_t)xmpt_callback[xmpt_event_sync_images_end])(
-     &data);
+      &data,
+      __builtin_extract_return_addr(__builtin_return_address(0)));
 #endif
 }
 
@@ -1581,7 +1589,8 @@ void _XMP_coarray_contiguous_put(const int target_rank, _XMP_coarray_t *dst_desc
     }
 
     (*(xmpt_event_coarray_remote_t)xmpt_callback[xmpt_event_coarray_remote_write])(
-     (xmpt_coarray_id_t)dst_desc, &subsc, &cosubsc, &data);
+      (xmpt_coarray_id_t)dst_desc, &subsc, &cosubsc, &data,
+      __builtin_extract_return_addr(__builtin_return_address(0)));
   }
 #endif
 
@@ -1668,7 +1677,8 @@ void _XMP_coarray_contiguous_get(const int target_rank, _XMP_coarray_t *dst_desc
     }
 
     (*(xmpt_event_coarray_remote_t)xmpt_callback[xmpt_event_coarray_remote_read])(
-     (xmpt_coarray_id_t)src_desc, &subsc, &cosubsc, &data);
+      (xmpt_coarray_id_t)src_desc, &subsc, &cosubsc, &data,
+      __builtin_extract_return_addr(__builtin_return_address(0)));
   }
 #endif
 

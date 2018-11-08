@@ -129,7 +129,8 @@ void _XMP_wait_async__(int async_id, _XMP_object_ref_t *r_desc)
       (xmpt_async_id_t)async_id,
       on_desc,
       &on_subsc,
-      &data);
+      &data,
+      __builtin_extract_return_addr(__builtin_return_address(0)));
   }
 #endif
   
@@ -175,7 +176,9 @@ void _XMP_wait_async__(int async_id, _XMP_object_ref_t *r_desc)
 
 #ifdef _XMPT
   if (xmpt_enabled && xmpt_callback[xmpt_event_wait_async_end])
-    (*(xmpt_event_end_t)xmpt_callback[xmpt_event_wait_async_end])(&data);
+    (*(xmpt_event_end_t)xmpt_callback[xmpt_event_wait_async_end])(
+      &data,
+      __builtin_extract_return_addr(__builtin_return_address(0)));
 #endif
 
 }

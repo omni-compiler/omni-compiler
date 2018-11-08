@@ -362,7 +362,7 @@ _XMP_nodes_t *_XMP_init_nodes_struct_GLOBAL(int dim, int *dim_size, int is_stati
     is_static = _XMP_N_INT_TRUE;
     for(int i=0;i<dim;i++){
       if(dim_size[i] == -1){
-	char name[20];
+	char name[25];
 	sprintf(name, "XMP_NODE_SIZE%d", i);
 	char *size = getenv(name);
 

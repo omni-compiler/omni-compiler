@@ -149,7 +149,8 @@ void _XMP_loop_begin(void *desc, xmpt_tool_data_t *data, ...){
     }
     va_end(args);
     (*(xmpt_event_single_desc_begin_t)xmpt_callback[xmpt_event_loop_begin])(
-     desc, &subsc, data);
+      desc, &subsc, data,
+      __builtin_extract_return_addr(__builtin_return_address(0)));
   }
 
 }
@@ -158,7 +159,8 @@ void _XMP_loop_end(xmpt_tool_data_t *data){
 
   if (xmpt_enabled && xmpt_callback[xmpt_event_loop_end]){
     (*(xmpt_event_end_t)xmpt_callback[xmpt_event_loop_end])(
-     data);
+      data,
+      __builtin_extract_return_addr(__builtin_return_address(0)));
   }
 
 }
@@ -179,7 +181,8 @@ void _XMP_coarray_local_read(void *local_coarray, ...){
     }
     va_end(args);
     (*(xmpt_event_coarray_local_t)xmpt_callback[xmpt_event_coarray_local_read])(
-     (xmpt_coarray_id_t)local_coarray, &subsc, data);
+      (xmpt_coarray_id_t)local_coarray, &subsc, data,
+      __builtin_extract_return_addr(__builtin_return_address(0)));
   }
 }
 
@@ -199,7 +202,8 @@ void _XMP_coarray_local_write(void *local_coarray, ...){
     }
     va_end(args);
     (*(xmpt_event_coarray_local_t)xmpt_callback[xmpt_event_coarray_local_write])(
-     (xmpt_coarray_id_t)local_coarray, &subsc, data);
+      (xmpt_coarray_id_t)local_coarray, &subsc, data,
+      __builtin_extract_return_addr(__builtin_return_address(0)));
   }
 }
 

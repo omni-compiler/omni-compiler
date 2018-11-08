@@ -148,7 +148,8 @@ void _XMP_reflect__(_XMP_array_t *a)
       subsc.marker[i] = _xmp_is_periodic[i];
     }
     (*(xmpt_event_single_desc_begin_t)xmpt_callback[xmpt_event_reflect_begin])(
-      a, &subsc, &data);
+      a, &subsc, &data,
+      __builtin_extract_return_addr(__builtin_return_address(0)));
   }
 #endif
   
@@ -251,7 +252,8 @@ void _XMP_reflect__(_XMP_array_t *a)
 #ifdef _XMPT
   if (xmpt_enabled && xmpt_callback[xmpt_event_reflect_end])
     (*(xmpt_event_end_t)xmpt_callback[xmpt_event_reflect_end])(
-     &data);
+      &data,
+      __builtin_extract_return_addr(__builtin_return_address(0)));
 #endif
 
 }
@@ -990,7 +992,8 @@ void _XMP_reflect_async__(_XMP_array_t *a, int async_id){
       subsc.marker[i] = _xmp_is_periodic[i];
     }
     (*(xmpt_event_single_desc_begin_async_t)xmpt_callback[xmpt_event_reflect_begin_async])(
-      a, &subsc, (xmpt_async_id_t)async_id, &data);
+      a, &subsc, (xmpt_async_id_t)async_id, &data,
+      __builtin_extract_return_addr(__builtin_return_address(0)));
   }
 #endif
 
@@ -1021,7 +1024,8 @@ void _XMP_reflect_async__(_XMP_array_t *a, int async_id){
 #ifdef _XMPT
   if (xmpt_enabled && xmpt_callback[xmpt_event_reflect_end])
     (*(xmpt_event_end_t)xmpt_callback[xmpt_event_reflect_end])(
-      &data);
+      &data,
+      __builtin_extract_return_addr(__builtin_return_address(0)));
 #endif
 
 }
@@ -1368,7 +1372,8 @@ void _XMP_reflect__(_XMP_array_t *a)
       subsc.marker[i] = _xmp_is_periodic[i];
     }
     (*(xmpt_event_single_desc_begin_t)xmpt_callback[xmpt_event_reflect_begin])(
-      a, &subsc, &data);
+      a, &subsc, &data,
+      __builtin_extract_return_addr(__builtin_return_address(0)));
   }
 #endif
 
@@ -1425,7 +1430,8 @@ void _XMP_reflect__(_XMP_array_t *a)
 #ifdef _XMPT
   if (xmpt_enabled && xmpt_callback[xmpt_event_reflect_end])
     (*(xmpt_event_end_t)xmpt_callback[xmpt_event_reflect_end])(
-      &data);
+      &data,
+      __builtin_extract_return_addr(__builtin_return_address(0)));
 #endif
 
 }
@@ -1714,7 +1720,8 @@ void _XMP_reflect_async__(_XMP_array_t *a, int async_id)
       subsc.marker[i] = _xmp_is_periodic[i];
     }
     (*(xmpt_event_single_desc_begin_async_t)xmpt_callback[xmpt_event_reflect_begin_async])(
-      a, subsc, (xmpt_async_id_t)async_id, &data);
+      a, subsc, (xmpt_async_id_t)async_id, &data,
+      __builtin_extract_return_addr(__builtin_return_address(0)));
   }
 #endif
 
@@ -1740,7 +1747,8 @@ void _XMP_reflect_async__(_XMP_array_t *a, int async_id)
 #ifdef _XMPT
   if (xmpt_enabled && xmpt_callback[xmpt_event_reflect_end])
     (*(xmpt_event_end_t)xmpt_callback[xmpt_event_reflect_end])(
-      &data);
+      &data,
+      __builtin_extract_return_addr(__builtin_return_address(0)));
 #endif
 
 }

@@ -474,7 +474,8 @@ void _XMP_bcast(void *data_addr, int count, int size,
 	on,
 	&on_subsc,
         async_id,
-	&data);
+	&data,
+      __builtin_extract_return_addr(__builtin_return_address(0)));
     }
   }
   else {
@@ -486,7 +487,8 @@ void _XMP_bcast(void *data_addr, int count, int size,
 	&from_subsc,
 	on,
 	&on_subsc,
-	&data);
+	&data,
+	__builtin_extract_return_addr(__builtin_return_address(0)));
     }
   }
 #endif
@@ -498,7 +500,9 @@ void _XMP_bcast(void *data_addr, int count, int size,
 
 #ifdef _XMPT
   if (xmpt_enabled && xmpt_callback[xmpt_event_bcast_end])
-    (*(xmpt_event_end_t)xmpt_callback[xmpt_event_bcast_end])(&data);
+    (*(xmpt_event_end_t)xmpt_callback[xmpt_event_bcast_end])(
+      &data,
+      __builtin_extract_return_addr(__builtin_return_address(0)));
 #endif
 
 }
