@@ -1203,6 +1203,7 @@ AC_SUBST(ARFLAGS)
 # XMPT
 if test "x${doxmpt}" = "xyes"; then
    OMNI_X2X_FLAGS="${OMNI_X2X_FLAGS} -fxmpt"
+   OMNI_LNK_CFLAGS="$OMNI_LNK_CFLAGS -ldl"
 fi
 
 #--------------------------------------------------------------------
