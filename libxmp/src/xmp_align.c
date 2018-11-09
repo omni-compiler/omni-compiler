@@ -108,6 +108,15 @@ void _XMP_init_array_desc(_XMP_array_t **array, _XMP_template_t *template, int d
   va_end(args);
 
   *array = a;
+
+#ifdef _XMPT
+  if (xmpt_enabled && xmpt_callback[xmpt_event_array_desc_begin])
+    (*(xmpt_event_desc_t)xmpt_callback[xmpt_event_array_desc_begin])(
+      a,
+      &a->xmpt_array_data,
+      __builtin_extract_return_addr(__builtin_return_address(0)));
+#endif
+  
 }
 
 // NOTE: adesc created by this function is NOT complete. For use only in gmove_1to1.
@@ -196,6 +205,15 @@ void _XMP_init_array_desc_NOT_ALIGNED(_XMP_array_t **adesc, _XMP_template_t *tem
 
 void _XMP_finalize_array_desc(_XMP_array_t *array)
 {
+
+#ifdef _XMPT
+  if (xmpt_enabled && xmpt_callback[xmpt_event_array_desc_end])
+    (*(xmpt_event_desc_t)xmpt_callback[xmpt_event_array_desc_end])(
+      array,
+      &array->xmpt_array_data,
+      __builtin_extract_return_addr(__builtin_return_address(0)));
+#endif
+  
   int dim = array->dim;
 
   for(int i=0;i<dim;i++){

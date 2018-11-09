@@ -184,6 +184,12 @@ typedef enum xmpt_event_e {
 // Type signatures for callbacks of XMP runtimes
 //
 
+typedef void (*xmpt_event_desc_t) (
+  xmp_desc_t desc,             /* descriptor for either nodes, template or array */
+  xmpt_tool_data_t* data,      /* pointer to store tool specific data */
+  const void *codeptr_ra       /* return address of the call to the runtime routine */
+);
+
 typedef void (*xmpt_event_single_desc_begin_t) (
   xmp_desc_t desc,             /* descriptor for either nodes, template or array */
   xmpt_subscript_t subsc,      /* subscript specification */

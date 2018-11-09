@@ -389,7 +389,7 @@ _XMP_nodes_t *_XMP_init_nodes_struct_GLOBAL(int dim, int *dim_size, int is_stati
     n->info[i].multiplier = n->info[i-1].multiplier * dim_size[i-1];
 
   n->subcomm = create_subcomm(n);
-  
+
   return n;
 }
 
@@ -416,6 +416,14 @@ _XMP_nodes_t *_XMP_init_nodes_struct_EXEC(int dim, int *dim_size, int is_static)
   for(int i=1;i<dim;i++)
     n->info[i].multiplier = n->info[i-1].multiplier * dim_size[i-1];
   
+#ifdef _XMPT
+  if (xmpt_enabled && xmpt_callback[xmpt_event_nodes_desc_begin])
+    (*(xmpt_event_desc_t)xmpt_callback[xmpt_event_nodes_desc_begin])(
+      n,
+      &n->xmpt_nodes_data,
+      __builtin_extract_return_addr(__builtin_return_address(0)));
+#endif
+
   return n;
 }
 
@@ -596,6 +604,15 @@ void _XMP_init_nodes_STATIC_GLOBAL(_XMP_nodes_t **nodes, int dim, ...)
     *rank_p = n->info[i].rank;
   }
   va_end(args);
+
+#ifdef _XMPT
+  if (xmpt_enabled && xmpt_callback[xmpt_event_nodes_desc_begin])
+    (*(xmpt_event_desc_t)xmpt_callback[xmpt_event_nodes_desc_begin])(
+      n,
+      &n->xmpt_nodes_data,
+      __builtin_extract_return_addr(__builtin_return_address(0)));
+#endif
+
 }
 
 void _XMP_init_nodes_DYNAMIC_GLOBAL(_XMP_nodes_t **nodes, int dim, ...)
@@ -633,6 +650,15 @@ void _XMP_init_nodes_DYNAMIC_GLOBAL(_XMP_nodes_t **nodes, int dim, ...)
     *rank_p = n->info[i].rank;
   }
   va_end(args);
+
+#ifdef _XMPT
+  if (xmpt_enabled && xmpt_callback[xmpt_event_nodes_desc_begin])
+    (*(xmpt_event_desc_t)xmpt_callback[xmpt_event_nodes_desc_begin])(
+      n,
+      &n->xmpt_nodes_data,
+      __builtin_extract_return_addr(__builtin_return_address(0)));
+#endif
+
 }
 
 void _XMP_init_nodes_STATIC_EXEC(_XMP_nodes_t **nodes, int dim, ...) {
@@ -656,6 +682,15 @@ void _XMP_init_nodes_STATIC_EXEC(_XMP_nodes_t **nodes, int dim, ...) {
     *rank_p = n->info[i].rank;
   }
   va_end(args);
+
+#ifdef _XMPT
+  if (xmpt_enabled && xmpt_callback[xmpt_event_nodes_desc_begin])
+    (*(xmpt_event_desc_t)xmpt_callback[xmpt_event_nodes_desc_begin])(
+      n,
+      &n->xmpt_nodes_data,
+      __builtin_extract_return_addr(__builtin_return_address(0)));
+#endif
+
 }
 
 void _XMP_init_nodes_DYNAMIC_EXEC(_XMP_nodes_t **nodes, int dim, ...) {
@@ -681,6 +716,15 @@ void _XMP_init_nodes_DYNAMIC_EXEC(_XMP_nodes_t **nodes, int dim, ...) {
     *rank_p = n->info[i].rank;
   }
   va_end(args);
+
+#ifdef _XMPT
+  if (xmpt_enabled && xmpt_callback[xmpt_event_nodes_desc_begin])
+    (*(xmpt_event_desc_t)xmpt_callback[xmpt_event_nodes_desc_begin])(
+      n,
+      &n->xmpt_nodes_data,
+      __builtin_extract_return_addr(__builtin_return_address(0)));
+#endif
+
 }
 
 void _XMP_init_nodes_STATIC_NODES_NUMBER(_XMP_nodes_t **nodes, int dim,
@@ -707,6 +751,15 @@ void _XMP_init_nodes_STATIC_NODES_NUMBER(_XMP_nodes_t **nodes, int dim,
     *rank_p = n->info[i].rank;
   }
   va_end(args);
+
+#ifdef _XMPT
+  if (xmpt_enabled && xmpt_callback[xmpt_event_nodes_desc_begin])
+    (*(xmpt_event_desc_t)xmpt_callback[xmpt_event_nodes_desc_begin])(
+      n,
+      &n->xmpt_nodes_data,
+      __builtin_extract_return_addr(__builtin_return_address(0)));
+#endif
+
 }
 
 void _XMP_init_nodes_DYNAMIC_NODES_NUMBER(_XMP_nodes_t **nodes, int dim,
@@ -736,6 +789,15 @@ void _XMP_init_nodes_DYNAMIC_NODES_NUMBER(_XMP_nodes_t **nodes, int dim,
     *rank_p = n->info[i].rank;
   }
   va_end(args);
+
+#ifdef _XMPT
+  if (xmpt_enabled && xmpt_callback[xmpt_event_nodes_desc_begin])
+    (*(xmpt_event_desc_t)xmpt_callback[xmpt_event_nodes_desc_begin])(
+      n,
+      &n->xmpt_nodes_data,
+      __builtin_extract_return_addr(__builtin_return_address(0)));
+#endif
+
 }
 
 void _XMP_init_nodes_STATIC_NODES_NAMED(_XMP_nodes_t **nodes, int dim, _XMP_nodes_t *ref_nodes, ...)
@@ -775,6 +837,15 @@ void _XMP_init_nodes_STATIC_NODES_NAMED(_XMP_nodes_t **nodes, int dim, _XMP_node
     *rank_p = n->info[i].rank;
   }
   va_end(args);
+
+#ifdef _XMPT
+  if (xmpt_enabled && xmpt_callback[xmpt_event_nodes_desc_begin])
+    (*(xmpt_event_desc_t)xmpt_callback[xmpt_event_nodes_desc_begin])(
+      n,
+      &n->xmpt_nodes_data,
+      __builtin_extract_return_addr(__builtin_return_address(0)));
+#endif
+
 }
 
 void _XMP_init_nodes_DYNAMIC_NODES_NAMED(_XMP_nodes_t **nodes, int dim, _XMP_nodes_t *ref_nodes, ...)
@@ -815,10 +886,28 @@ void _XMP_init_nodes_DYNAMIC_NODES_NAMED(_XMP_nodes_t **nodes, int dim, _XMP_nod
     *rank_p = n->info[i].rank;
   }
   va_end(args);
+
+#ifdef _XMPT
+  if (xmpt_enabled && xmpt_callback[xmpt_event_nodes_desc_begin])
+    (*(xmpt_event_desc_t)xmpt_callback[xmpt_event_nodes_desc_begin])(
+      n,
+      &n->xmpt_nodes_data,
+      __builtin_extract_return_addr(__builtin_return_address(0)));
+#endif
+
 }
 
 void _XMP_finalize_nodes(_XMP_nodes_t *nodes)
 {
+
+#ifdef _XMPT
+  if (xmpt_enabled && xmpt_callback[xmpt_event_nodes_desc_end])
+    (*(xmpt_event_desc_t)xmpt_callback[xmpt_event_nodes_desc_end])(
+      nodes,
+      &nodes->xmpt_nodes_data,
+      __builtin_extract_return_addr(__builtin_return_address(0)));
+#endif
+  
   if(!nodes->use_subcomm)
     _XMP_finalize_comm(nodes->comm);
 

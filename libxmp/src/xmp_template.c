@@ -282,12 +282,28 @@ void _XMP_init_template_FIXED(_XMP_template_t **template, int dim, ...)
 
   _XMP_calc_template_size(t);
 
+#ifdef _XMPT
+  if (xmpt_enabled && xmpt_callback[xmpt_event_template_desc_begin])
+    (*(xmpt_event_desc_t)xmpt_callback[xmpt_event_template_desc_begin])(
+      t,
+      &t->xmpt_template_data,
+      __builtin_extract_return_addr(__builtin_return_address(0)));
+#endif
+
   *template = t;
 }
 
 void _XMP_init_template_UNFIXED(_XMP_template_t **template, int dim)
 {
   *template = _XMP_create_template_desc(dim, false);
+
+#ifdef _XMPT
+  if (xmpt_enabled && xmpt_callback[xmpt_event_template_desc_begin])
+    (*(xmpt_event_desc_t)xmpt_callback[xmpt_event_template_desc_begin])(
+      *template,
+      &(*template)->xmpt_template_data,
+      __builtin_extract_return_addr(__builtin_return_address(0)));
+#endif
 }
 
 void _XMP_set_template_size(_XMP_template_t *t, int dim, ...) {
@@ -304,6 +320,14 @@ void _XMP_set_template_size(_XMP_template_t *t, int dim, ...) {
   t->is_fixed = true;
   _XMP_calc_template_size(t);
 
+#ifdef _XMPT
+  if (xmpt_enabled && xmpt_callback[xmpt_event_template_fix])
+    (*(xmpt_event_desc_t)xmpt_callback[xmpt_event_template_fix])(
+      t,
+      &t->xmpt_template_data,
+      __builtin_extract_return_addr(__builtin_return_address(0)));
+#endif
+
 }
 
 void _XMP_init_template_chunk(_XMP_template_t *template, _XMP_nodes_t *nodes)
@@ -315,6 +339,15 @@ void _XMP_init_template_chunk(_XMP_template_t *template, _XMP_nodes_t *nodes)
 }
 
 void _XMP_finalize_template(_XMP_template_t *template) {
+
+#ifdef _XMPT
+  if (xmpt_enabled && xmpt_callback[xmpt_event_template_desc_end])
+    (*(xmpt_event_desc_t)xmpt_callback[xmpt_event_template_desc_end])(
+      template,
+      &template->xmpt_template_data,
+      __builtin_extract_return_addr(__builtin_return_address(0)));
+#endif
+
   if (template->is_distributed) {
     for (int i = 0; i < template->dim; i++){
       _XMP_template_chunk_t *chunk = &(template->chunk[i]);
