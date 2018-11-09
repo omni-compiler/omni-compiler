@@ -391,7 +391,7 @@ public class XMPtemplate extends XMPobject {
         throw new XMPexception("wrong template dimension indicated, too many");
 
       XobjList distManner = (XobjList)i.getArg();
-      setupDistribution(distManner, templateObject, templateDimIdx, nodesDimIdx, globalDecl, isLocalPragma, false, pb);
+      setupDistribution(distManner, templateObject, templateDimIdx, nodesDimIdx, globalDecl, isLocalPragma, false, pb, 0);
 
       int distMannerValue = distManner.getArg(0).getInt();
       switch (distMannerValue) {
@@ -424,7 +424,7 @@ public class XMPtemplate extends XMPobject {
   private static Block setupDistribution(XobjList distManner, XMPtemplate templateObject,
 					 int templateDimIdx, int nodesDimIdx,
 					 XMPglobalDecl globalDecl, boolean isLocalPragma, boolean isTFIX,
-					 PragmaBlock pb) throws XMPexception {
+					 PragmaBlock pb, int tempNum) throws XMPexception {
     XobjList funcArgs = null;
     int distMannerValue = distManner.getArg(0).getInt();
     String distMannerName = getDistMannerString(distMannerValue);
@@ -460,10 +460,10 @@ public class XMPtemplate extends XMPobject {
           mappingArrayArg = Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0));
           templateObject.setDistributionIsFixed(false);
         }
-        
+
         if (templateObject.isFixed() || isTFIX){
           Ident gtolTemp0Id = null;
-          String tempName = XMP.GTOL_PREFIX_ + "temp0_" + templateObject.getName() + "_" + templateDimIdx;
+          String tempName = XMP.GTOL_PREFIX_ + "temp" + String.valueOf(tempNum) + "_" + templateObject.getName() + "_" + templateDimIdx;
           if (isLocalPragma) {
             Block parentBlock = pb.getParentBlock();
             gtolTemp0Id = XMPlocalDecl.addObjectId2(tempName, Xtype.intType, parentBlock);
@@ -480,7 +480,7 @@ public class XMPtemplate extends XMPobject {
                                 Xcons.IntConstant(nodesDimIdx),
                                 mappingArrayArg, gtolTemp0Id.getAddr());
         }
-        
+
         templateObject.setOntoNodesIndexAt(nodesDimIdx, templateDimIdx);
         templateObject.setWidthAt(mappingArray, templateDimIdx);
         break;
@@ -488,7 +488,11 @@ public class XMPtemplate extends XMPobject {
       throw new XMPexception("unknown distribute manner");
     }
 
-    if (templateObject.isFixed()){
+    if (isTFIX){
+      Ident funcId = globalDecl.declExternFunc("_XMP_dist_template_" + distMannerName);
+      return Bcons.Statement(funcId.Call(funcArgs));
+    }
+     else if (templateObject.isFixed()){
       if (isLocalPragma) {
 	Block parentBlock = pb.getParentBlock();
 	if (templateObject.isStaticDesc()){
@@ -505,10 +509,6 @@ public class XMPtemplate extends XMPobject {
 	globalDecl.addGlobalInitFuncCall("_XMP_dist_template_" + distMannerName, funcArgs);
       }
 
-    }
-    else if (isTFIX){
-      Ident funcId = globalDecl.declExternFunc("_XMP_dist_template_" + distMannerName);
-      return Bcons.Statement(funcId.Call(funcArgs));
     }
 
     templateObject.setDistMannerAt(distMannerValue, templateDimIdx);
@@ -531,16 +531,28 @@ public class XMPtemplate extends XMPobject {
     if (tObject.isFixed() && tObject.distributionIsFixed()) 
       throw new XMPexception("template '" + tName + "' is already fixed");
 
-    String kind_bracket = tfixDecl.getTail().getTail().getString();
-    boolean isSquare    = kind_bracket.equals("SQUARE");
-    tfixDecl.getArg(0).removeLastArgs(); // Remove information of ROUND or SQUARE
-    tfixDecl.getArg(2).removeLastArgs(); // Remove information of ROUND or SQUARE
-    if(isSquare) ((XobjList)tfixDecl.getArg(0)).reverse();
-    if(isSquare) ((XobjList)tfixDecl.getArg(2)).reverse();
-    if(isSquare) ((XobjList)tObject.getDecl().getArg(1)).reverse();
+    XobjList dist = (XobjList)tfixDecl.getArg(0);
+    boolean isSquareDist     = false;
+    boolean isSquareTemplate = false;
+    if(dist.isEmpty() == false){
+      String kind_bracket = dist.getTail().getString();
+      isSquareDist        = kind_bracket.equals("SQUARE");
+      dist.removeLastArgs(); // Remove information of ROUND or SQUARE
+      if(isSquareDist) dist.reverse();
+    }
+
+    XobjList t = (XobjList)tfixDecl.getArg(2);
+    if(t.isEmpty() == false){
+      String kind_bracket = t.getTail().getString();
+      isSquareTemplate    = kind_bracket.equals("SQUARE");
+      t.removeLastArgs(); // Remove information of ROUND or SQUARE
+      if(isSquareTemplate) t.reverse();
+    }
+
+    if(isSquareTemplate) ((XobjList)tObject.getDecl().getArg(1)).reverse();
     
     XobjArgs sizeArgs_decl = tObject.getDecl().getArg(1).getArgs();
-    XobjArgs sizeArgs_tfix = tfixDecl.getArg(2).getArgs();    
+    XobjArgs sizeArgs_tfix = t.getArgs();    
     
     if (tObject.getDistDecl() == null)
       throw new XMPexception("template '" + tName + "' is not distributed");
@@ -564,11 +576,14 @@ public class XMPtemplate extends XMPobject {
     //
 
     // check rank matching
-    for (i = sizeArgs_decl, j = sizeArgs_tfix;
-	 i != null || j != null;
-	 i = i.nextArgs(), j = j.nextArgs()){
-      if (i == null || j == null){
-	throw new XMPexception("the number of <template-spec> is different from that in the declaration");
+
+    if(sizeArgs_tfix != null){
+      for (i = sizeArgs_decl, j = sizeArgs_tfix;
+	   i != null || j != null;
+	   i = i.nextArgs(), j = j.nextArgs()){
+	if (i == null || j == null){
+	  throw new XMPexception("the number of <template-spec> is different from that in the declaration");
+	}
       }
     }
 
@@ -578,7 +593,7 @@ public class XMPtemplate extends XMPobject {
       Xobject tSpec  = i.getArg();
       Xobject tLower = tSpec.left();
       Xobject tUpper;
-      if(isSquare){
+      if(isSquareTemplate){
         Xobject tmp = Xcons.binaryOp(Xcode.PLUS_EXPR, tLower, tSpec.right());
         tUpper = Xcons.binaryOp(Xcode.MINUS_EXPR, tmp, Xcons.IntConstant(1));
       }
@@ -641,10 +656,9 @@ public class XMPtemplate extends XMPobject {
 	
       XobjList distManner = (XobjList)i.getArg();
       int distMannerValue = distManner.getArg(0).getInt();
-
-      Block b = XMPtemplate.setupDistribution(distManner, tObject, tDimIdx, nDimIdx, globalDecl, true, true, pb);
+      Block b = setupDistribution(distManner, tObject, tDimIdx, nDimIdx, globalDecl, true, true, pb, 1);
       tFixFuncBody.add(b);
-
+      
       switch (distMannerValue) {
       case XMPtemplate.BLOCK:
       case XMPtemplate.CYCLIC:
@@ -652,20 +666,20 @@ public class XMPtemplate extends XMPobject {
       case XMPtemplate.GBLOCK:
 	if (nDimIdx == nDim)
 	  throw new XMPexception("the number of <dist-format> (except '*') should be the same with the nodes dimension");
-
+	
 	nDimIdx++;
 	break;
       default:
       }
-
+      
       tDimIdx++;
     }
-
+    
     // check nodes, template dimension
-    if (nDimIdx != nDim)
+    if(nDimIdx != nDim)
       throw new XMPexception("the number of <dist-format> (except '*') should be the same with the nodes dimension");
 
-    if (tDimIdx != tDim)
+    if(tDimIdx != tDim)
       throw new XMPexception("wrong template dimension indicated, too few");
 
     tObject.setIsFixed();
