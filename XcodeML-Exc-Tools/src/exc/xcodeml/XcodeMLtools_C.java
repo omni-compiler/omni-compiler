@@ -710,10 +710,10 @@ public class XcodeMLtools_C extends XcodeMLtools {
     String argTypeName = getAttr(argNode, "type");
     Xtype argType = getType(argTypeName);
 
-    if (argType instanceof ArrayType &&
-	((ArrayType) argType).getArraySizeExpr() != null) {
-      argType = Xtype.voidPtrType;
-    }
+    //    if (argType instanceof ArrayType &&
+    //	((ArrayType) argType).getArraySizeExpr() != null) {
+    //      argType = Xtype.voidPtrType;
+    //    }
 
     XobjList child = Xcons.List(Xcode.TYPE_NAME, argType);
     XobjList objList = Xcons.List(code, type);

@@ -14,8 +14,18 @@ program main
 !!  write(*,100) this_image(), nalloc1, ngarbg1
 
   nerr = 0
-  if (nalloc0 /= nalloc1) nerr = nerr + 1
-  if (ngarbg0 /= ngarbg1) nerr = nerr + 1
+  if (nalloc0 /= nalloc1) then
+     nerr = nerr + 1
+     print '("[",i0,"] NG nalloc0=",i0," nalloc1=",i0)', &
+          this_image(), nalloc0, nalloc1
+  endif
+  if (ngarbg0 /= ngarbg1) then
+     nerr = nerr + 1
+     print '("[",i0,"] NG ngarbg0=",i0," ngarbg1=",i0)', &
+          this_image(), ngarbg0, ngarbg1
+  endif
+
+  sync all
 
   if (nerr==0) then 
      print '("[",i0,"] OK")', this_image()

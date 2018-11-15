@@ -878,16 +878,17 @@ public class XMPanalyzePragma
     //   return;
     // }
 
-    Vector<Ident> bcast_vars = new Vector<Ident>();
+    Vector<Xobject> bcast_vars = new Vector<Xobject>();
     for(Xobject v: bcastNameList){
-      if(!v.isVariable()){
-	XMP.errorAt(pb,"not variable in bcast variable list");
-      }
-      Ident id = env.findVarIdent(v.getName(),pb);
-      if(id == null){
-	XMP.errorAt(pb,"variable '"+v.getName()+"' in reduction is not found");
-      }
-      bcast_vars.add(id);
+      // if(!v.isVariable()){
+      // 	XMP.errorAt(pb,"not variable in bcast variable list");
+      // }
+      // Ident id = env.findVarIdent(v.getName(),pb);
+      // if(id == null){
+      // 	XMP.errorAt(pb,"variable '"+v.getName()+"' in bcast is not found");
+      // }
+      // bcast_vars.add(id);
+      bcast_vars.add(v); // not analyzed here
     }
     
     info.setBcastInfo(XMPobjectsRef.parseDecl(fromRef,env,pb),

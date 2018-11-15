@@ -19,6 +19,7 @@ run: full.x
 	$(XRUN) -n 4 ./full2.x
 	$(XRUN) -n 4 ./full3.x
 	$(XRUN) -n 16 ./reduce_shadow.x
+#	$(XRUN) -n 4 ./issue41.x
 #	$(XRUN) -n 1 ./40.x
 
 RUN:

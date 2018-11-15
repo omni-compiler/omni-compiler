@@ -29,7 +29,7 @@ public class XMPcoarray {
   final static String SET_CODIMENSION_NAME = "xmpf_coarray_set_codim";
   final static String SET_VARNAME_NAME = "xmpf_coarray_set_varname";
   final static String GET_DESCR_ID_NAME = "xmpf_get_descr_id";
-  final static String SET_NODES_NAME = "xmpf_coarray_set_nodes";    // for COARRAY directive
+  public final static String SET_NODES_NAME = "xmpf_coarray_set_nodes";    // for COARRAY directive
   final static String SET_IMAGE_NODES_NAME = "xmpf_coarray_set_image_nodes";  // for IMAGE directive
 
   final static String COUNT_SIZE_NAME = "xmpf_coarray_count_size";
@@ -730,11 +730,22 @@ public class XMPcoarray {
 
   public Xobject makeStmt_setMappingNodes(Block block)
   {
-    // descPtrId must be declarad previously in the coarray pass
     if (descPtrId == null)
       descPtrId = env.findVarIdent(getDescPointerName(), block);
 
-    Xobject args = Xcons.List(descPtrId, nodesDescId);
+    Xobject args;
+
+    // case: Coarray pass has executed before XMP pass
+    //       descPtrId is already declared.
+    if (descPtrId != null) {
+      args = Xcons.List(descPtrId, nodesDescId);
+    }
+    // case: Coarray pass will execute after XMP pass
+    //       The 1st argument will be replaced in the coarray pass.
+    else {
+      args = Xcons.List(getIdent(), nodesDescId);
+    }
+
     Ident subr = env.findVarIdent(SET_NODES_NAME, null);
     if (subr == null) {
       subr = (block == null ) ?
@@ -1713,9 +1724,16 @@ public class XMPcoarray {
   private Ident _getNodesDescIdByName(String nodesName,
                                       XMPenv env, FunctionBlock fblock) {
     if (nodesName != null) {
+      ////////////////////////////////
+      //System.out.println("@@ nodesName='"+nodesName+"'");
+      ////////////////////////////////
       XMPnodes nodes = env.findXMPnodes(nodesName, (ident.getDeclaredBlock() != null) ?
                                                     ident.getDeclaredBlock().getParent() : fblock);
-      return nodes.getDescId();
+      ////////////////////////////////
+      //System.out.println("   nodes="+nodes);
+      ////////////////////////////////
+      if (nodes != null)
+        return nodes.getDescId();
     }
     return null;
   }

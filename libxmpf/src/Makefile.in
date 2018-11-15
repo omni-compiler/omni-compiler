@@ -17,6 +17,11 @@ LIBDIR       = @OMNI_HOME@/lib
 INCDIR       = @OMNI_HOME@/include
 WORKDIR      = ./include_work
 LIBXMPF      = libxmpf.a
+LIBS         = $(LIBXMPF)
+SOFLAGS      = -shared
+PICFLAGS     = -fPIC
+TMP_DIR      = .libs
+
 LIBXMPF_TRAVERSE = libxmpf_traverse.a
 HEADERS   = $(XMPF_INC_DIR)/xmpf_internal.h \
 	    $(XMPF_INC_DIR)/xmpf_internal_coarray.h \
@@ -48,6 +53,11 @@ IS_FX100         = @FX100@
 IS_XACC          = @XACC@
 IS_CUDA          = @CUDA@
 IS_OPENCL        = @OPENCL@
+ENABLE_SHARED    = @SHARED@
+
+ifeq ($(ENABLE_SHARED), $(TRUE))
+	LIBS := $(LIBS) $(LIBXMPF:.a=.so)
+endif
 
 ifeq ($(IS_KCOMPUTER), $(TRUE))
         CFLAGS += -D_KCOMPUTER
@@ -111,7 +121,7 @@ endif
 %.F90: %.F90.sh
 	bash $< $(TARGET) > $@
 
-all: $(LIBXMPF) $(LIBXMPF_TRAVERSE)
+all: $(LIBS) $(LIBXMPF_TRAVERSE)
 
 $(LIBXMPF): $(OBJECTS)
 	rm -f $@
@@ -143,14 +153,29 @@ $(XMPF_COARRAY_DECL) xmpf_coarray_decl.o: xmpf_coarray_decl.F90
 	$(INSTALL) ../include/$(COARRAY_SYNC_H) $(WORKDIR)/xmp_coarray_sync.h
 	$(FC) $(FCFLAGS) -c -I $(WORKDIR) $<
 
-install: $(LIBXMPF) $(XMPF_COARRAY_DECL)
+
+$(LIBXMPF:.a=.so): $(addprefix $(TMP_DIR)/, $(OBJECTS))
+	rm -f $@
+	$(CC) $(SOFLAGS) $(PICFLAGS) $^ -o $@
+
+$(TMP_DIR)/%.o : %.c
+	@$(MKDIR_P) $(TMP_DIR)
+	$(CC) $(CFLAGS) -c $< $(PICFLAGS) -o $@
+
+$(TMP_DIR)/%.o : %.f90
+	@$(MKDIR_P) $(TMP_DIR)
+	$(FC) $(FCFLAGS) -c $< $(PICFLAGS) -o $@
+
+$(TMP_DIR)/%.o : %.F90
+	@$(MKDIR_P) $(TMP_DIR)
+	$(FC) $(FCFLAGS) -c $< $(PICFLAGS) -I $(WORKDIR) -o $@
+
+install: $(LIBS) $(XMPF_COARRAY_DECL)
 	$(MKDIR_P) $(DESTDIR)$(LIBDIR) $(DESTDIR)$(INCDIR)
-	$(INSTALL) $(LIBXMPF) $(LIBXMPF_TRAVERSE) $(DESTDIR)$(LIBDIR)
+	$(INSTALL) $(LIBS) $(LIBXMPF_TRAVERSE) $(DESTDIR)$(LIBDIR)
 	$(INSTALL) $(XMPF_COARRAY_DECL) $(DESTDIR)$(INCDIR)
 
 clean:
 	rm -f xmpf_coarray_put_wrap.f90 xmpf_coarray_get_wrap.f90 \
 	      xmpf_coarray_alloc_wrap.f90 xmpf_coarray_reduction.F90
-	rm -rf $(WORKDIR) *~ *.o $(LIBXMPF) *.mod *.a
-
-
+	rm -rf $(WORKDIR) *~ *.o $(LIBS) *.mod *.a $(TMP_DIR)

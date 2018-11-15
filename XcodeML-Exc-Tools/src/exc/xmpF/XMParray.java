@@ -605,8 +605,31 @@ public class XMParray {
     Xobject args;
     
     f = env.declInternIdent(XMP.array_alloc_f,Xtype.FsubroutineType, block);
+
+    Xobject type_size = null;
+    if (!elementType.isBasic()){
+
+      env.useModule("iso_c_binding");
+      env.findModule("iso_c_binding"); // import
+      XobjString modName = Xcons.Symbol(Xcode.IDENT, "iso_c_binding");
+      Xobject use = Xcons.List(Xcode.F_USE_DECL, modName, Xcons.IntConstant(0));
+      env.getCurrentDef().getDef().getFuncDecls().add(use);
+
+      Ident g = env.FintrinsicIdent(Xtype.FintFunctionType, "c_sizeof");
+      XobjList subs = Xcons.List();
+      for (int i = 0; i < dims.size(); i++){
+	XMPdimInfo info = dims.elementAt(i);
+	Xobject lower = info.getLower();
+	subs.add(lower);
+      }
+      type_size = g.Call(Xcons.List(Xcons.FarrayRef(arrayId.Ref(), subs)));
+    }
+    else {
+      type_size = Xcons.IntConstant(0);
+    }
+    
     args = Xcons.List(descId.Ref(),Xcons.IntConstant(dims.size()),
-		      XMP.typeIntConstant(elementType),
+		      XMP.typeIntConstant(elementType), type_size,
 		      template.getDescId().Ref());
     b.add(f.callSubroutine(args));
 

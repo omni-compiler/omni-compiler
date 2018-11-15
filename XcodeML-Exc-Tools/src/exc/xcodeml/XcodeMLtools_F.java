@@ -712,7 +712,15 @@ public class XcodeMLtools_F extends XcodeMLtools {
     case F_ERROR_STOP_STATEMENT:
       {
 	t = getAttr(n, "code");
-	Xobject cd = (t == null ? null : Xcons.String(t));
+	Xobject cd = null;
+	if (t != null){
+	  cd = Xcons.String(t);
+	}
+	else {
+	  cd = toXobject(getContent(getElement(n, "code")));
+	}
+	//Xobject cd = (t == null ? null : Xcons.String(t));
+
 	t = getAttr(n, "message");
 	Xobject mes = null;
 	if (t != null){
@@ -722,6 +730,7 @@ public class XcodeMLtools_F extends XcodeMLtools {
 	  mes = toXobject(getContent(getElement(n, "message")));
 	}
 	//	Xobject mes = (t == null ? null : Xcons.FcharacterConstant(Xtype.FcharacterType, t, null));
+
 	return setCommonAttributes(n, Xcons.List(code, type, cd, mes));
       }
 

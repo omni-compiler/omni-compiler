@@ -935,6 +935,26 @@ public class Xcons
         return x;
     }
     
+    public static Xobject FarrayRef(Xobject var, XobjList indices)
+    {
+        Xobject x = Xcons.List(Xcode.F_ARRAY_REF, var.Type().getRef(),
+            Xcons.List(Xcode.F_VAR_REF, var));
+        Xobject l = Xcons.List();
+        
+        if(var.Type().isFarray()) {
+            int n = var.Type().getNumDimensions() - indices.Nargs();
+            for(int i = 0; i < n; ++i)
+                l.add(Xcons.FindexRangeOfAssumedShape());
+        }
+        
+        for(Xobject i : indices) {
+            l.add(Xcons.List(Xcode.F_ARRAY_INDEX, i));
+        }
+        
+        x.add(l);
+        return x;
+    }
+
     public static Xobject Fallocate(Xobject var, Xobject ... indices)
     {
         XobjList l = Xcons.List(indices);

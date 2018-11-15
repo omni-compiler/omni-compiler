@@ -1,5 +1,10 @@
 Omni Compiler Software RELEASE NOTES
 
+# ver. 1.3.2    2018/11/08
+* Add Python module for Fortran.
+* Add some benchmarks in samples/XMP.
+* Fixed lots of bugs.
+
 # ver. 1.3.1    2018/06/04
 * Remove XcodeML-tools as a separate project (https://github.com/omni-compiler/xcodeml-tools)
 * Be able to omit iteration list of loop directive for nest loop statement
@@ -13,12 +18,12 @@ Omni Compiler Software RELEASE NOTES
 * Fixed lots of bugs.
 
 # ver. 1.2.3    2018/01/15
-* Python module supports master-worker pattern
+* Python module for C supports master-worker pattern
 * Improve performance of XMP/C on for-loop statement.
 * Fixed lots of bugs.
 
 # ver. 1.2.2    2017/12/04
-* Add Python module.
+* Add Python module for C.
 * Support KNL : "./configure --target=KNL-linux-gnu".
 * Improve performance of XMP/C on for-loop statement.
 * Fixed lots of bugs.

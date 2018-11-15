@@ -427,7 +427,6 @@ void xmpc_loop_sched(int ser_init, int ser_cond, int ser_step,
   // offset is not supported yet in XMP/C>
   int off = 0;
   //int off = rp->REF_OFFSET[*r_idx];
-
   switch (t_desc->chunk[t_idx].dist_manner){
 
   case _XMP_N_DIST_DUPLICATION:
@@ -461,7 +460,7 @@ void xmpc_loop_sched(int ser_init, int ser_cond, int ser_step,
     break;
 
   default:
-    _XMP_fatal("xmpc_sched_loop_template: unknown chunk dist_manner");
+    _XMP_fatal("xmpc_loop_sched: unknown chunk dist_manner");
 
   }
 

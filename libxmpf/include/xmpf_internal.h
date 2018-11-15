@@ -69,7 +69,7 @@ extern int _XMP_world_size;
 extern int _XMP_world_rank;
 
 /* From xmp_align.c */
-void xmpf_array_alloc__(_XMP_array_t **a_desc, int *n_dim, int *type, _XMP_template_t **t_desc);
+void xmpf_array_alloc__(_XMP_array_t **a_desc, int *n_dim, int *type, size_t *datatype, _XMP_template_t **t_desc);
 void xmpf_array_dealloc__(_XMP_array_t **a_desc);
 void xmpf_align_info__(_XMP_array_t **a_desc, int *a_idx,
 		       int *lower, int *upper, int *t_idx, int *off);
