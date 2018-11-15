@@ -326,7 +326,7 @@ public class XMPanalyzePragma
     if (!lType.isFassumedShape()){
       XMP.errorAt(pb, "local alias must be declared as an assumed-shape array.");
       return;
-    }      
+    }
 
     if (gType.getNumDimensions() != lType.getNumDimensions()){
       XMP.errorAt(pb, "The rank is different between the global array and the local alias");
@@ -363,7 +363,9 @@ public class XMPanalyzePragma
     Xobject[] sizeExprs = new Xobject[arrayDim];
     for (int i = 0; i < arrayDim; i++)
       sizeExprs[i] = Xcons.FindexRangeOfAssumedShape();
-    ((FarrayType)lArrayId.Type()).setFarraySizeExpr(sizeExprs);
+    //((FarrayType)lArrayId.Type()).setFarraySizeExpr(sizeExprs);
+    lType.setFarraySizeExpr(sizeExprs);
+    lType.setIsFallocatable(true);
 
     gObject.setLocalId(lArrayId);
     lArrayId.setProp(XMP.globalAlias, gObject);
