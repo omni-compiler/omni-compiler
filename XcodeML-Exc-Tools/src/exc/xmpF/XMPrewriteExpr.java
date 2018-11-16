@@ -231,17 +231,46 @@ public class XMPrewriteExpr
 		 args = args.nextArgs()){
 
 	      Xobject origLB = origIndexRange.getLbound(i);
-	      
-	      Xobject index = Xcons.binaryOp(Xcode.MINUS_EXPR,
-					     args.getArg().getArg(0),
-					     origLB);
 
-	      if (!globalAlias.isDistributed(i)){
-		index = Xcons.binaryOp(Xcode.PLUS_EXPR,
-				       index, globalAlias.getLowerAt(i));
+	      Xobject index = null;
+	      switch (args.getArg().Opcode()){
+	      case F_INDEX_RANGE:
+		  index = args.getArg();
+		  Xobject lb = index.getArg(0);
+		  if (lb != null){
+		    lb = Xcons.binaryOp(Xcode.MINUS_EXPR,
+					lb, origLB);
+		    if (!globalAlias.isDistributed(i)){
+		      lb = Xcons.binaryOp(Xcode.PLUS_EXPR,
+					  lb, globalAlias.getLowerAt(i));
+		    }
+		    index.setArg(0, lb);
+		  }
+		  Xobject ub = index.getArg(1);
+		  if (ub != null){
+		    ub = Xcons.binaryOp(Xcode.MINUS_EXPR,
+					ub, origLB);
+		    if (!globalAlias.isDistributed(i)){
+		      ub = Xcons.binaryOp(Xcode.PLUS_EXPR,
+					  ub, globalAlias.getLowerAt(i));
+		    }
+		    index.setArg(1, ub);
+		  }
+		  args.setArg(index);
+		  break;
+	      case F_ARRAY_INDEX:
+	      default:
+		  index = Xcons.binaryOp(Xcode.MINUS_EXPR,
+					 args.getArg().getArg(0),
+					 origLB);
+		  if (!globalAlias.isDistributed(i)){
+		      index = Xcons.binaryOp(Xcode.PLUS_EXPR,
+					     index, globalAlias.getLowerAt(i));
+		  }
+		  args.getArg().setArg(0, index);
+		  break;
 	      }
 
-	      args.getArg().setArg(0, index);
 	    }
 
 	  }
