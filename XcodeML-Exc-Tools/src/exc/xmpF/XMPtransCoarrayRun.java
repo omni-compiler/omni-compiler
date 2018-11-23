@@ -3327,8 +3327,10 @@ public class XMPtransCoarrayRun
     if (_isIntrinsic(fname) && _isCoarrayInCoarrays(arg1, candidates)) {
       XMPcoarray coarray = _findCoarrayInCoarrays(arg1, candidates);
       if (coarray.usesMalloc()) {
-        XobjString associated = Xcons.Symbol(Xcode.IDENT, "associated");
-        xobj.setArg(0, associated);
+        //XobjString associated = Xcons.Symbol(Xcode.IDENT, "associated");
+        //xobj.setArg(0, associated);
+	Ident associated = env.FintrinsicIdent(Xtype.FlogicalFunctionType, "associated");
+	xobj.setArg(0, associated.Ref());
       }
     }
   }
