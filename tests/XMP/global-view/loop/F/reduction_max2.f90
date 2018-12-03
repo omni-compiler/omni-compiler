@@ -2,6 +2,8 @@ program main
   include 'xmp_lib.h'
   integer,parameter:: N=10
   integer random_array(N*N), ans_val, result
+  integer :: seedsize
+  integer,allocatable :: seed(:)
   integer a(N,N), sa
   real*8  b(N,N), sb
   real*4  c(N,N), sc
@@ -11,6 +13,11 @@ program main
 !$xmp distribute t(block,block) onto p
   
   result = 0
+  call random_seed(size=seedsize)
+  allocate(seed(seedsize))
+  call random_seed(get=seed)
+!$xmp bcast (seed)
+  call random_seed(put=seed)
   call random_number(tmp)
   do j=1, N
      do i=1, N

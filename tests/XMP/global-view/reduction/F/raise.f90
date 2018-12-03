@@ -2,12 +2,19 @@ program main
   include 'xmp_lib.h'
   integer,parameter:: N=10
   integer random_array(N), ans_val, val, result
+  integer :: seedsize
+  integer,allocatable :: seed(:)
   real tmp(N)
 !$xmp nodes p(*)
 !$xmp template t(N)
 !$xmp distribute t(block) onto p
 
   result = 0
+  call random_seed(size=seedsize)
+  allocate(seed(seedsize))
+  call random_seed(get=seed)
+!$xmp bcast (seed)
+  call random_seed(put=seed)
   call random_number(tmp)
   random_array(:) = int(tmp(:) * 10000)
 

@@ -134,7 +134,8 @@ public class XMPrewriteExpr
     BlockIterator biter = new topdownBlockIterator(funcBlock);
     for (biter.init(); !biter.end(); biter.next()){
       if (biter.getBlock().Opcode() == Xcode.F_BLOCK_STATEMENT ||
-          biter.getBlock().Opcode() == Xcode.FUNCTION_DEFINITION){
+          biter.getBlock().Opcode() == Xcode.FUNCTION_DEFINITION ||
+	  biter.getBlock().Opcode() == Xcode.F_MODULE_DEFINITION){
         Xobject decl_list = biter.getBlock().getBody().getDecls();
         Xobject id_list = biter.getBlock().getBody().getIdentList();
         Xtype f_type = biter.getBlock().Opcode() == Xcode.FUNCTION_DEFINITION ?
