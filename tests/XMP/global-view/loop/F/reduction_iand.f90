@@ -2,6 +2,8 @@ program main
   include 'xmp_lib.h'
   integer,parameter:: N=10
   integer random_array(N), ans_val
+  integer :: seedsize
+  integer,allocatable :: seed(:)
   integer a(N), sa, result
   real tmp(N)
 !$xmp nodes p(*)
@@ -9,6 +11,11 @@ program main
 !$xmp distribute t(cyclic) onto p
 !$xmp align a(i) with t(i)
 
+  call random_seed(size=seedsize)
+  allocate(seed(seedsize))
+  call random_seed(get=seed)
+!$xmp bcast (seed)
+  call random_seed(put=seed)
   call random_number( tmp )
   random_array(:) = int(tmp(:) * 10000)
 
