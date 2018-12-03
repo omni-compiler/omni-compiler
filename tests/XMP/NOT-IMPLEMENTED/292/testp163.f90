@@ -14,11 +14,18 @@ program main
   real*4  c(N), sc
   integer ia, ib, ic, ii, result
   real tmp(N)
+  integer :: seedsize
+  integer,allocatable :: seed(:)
 !$xmp align a(i) with t1(i,*,*)
 !$xmp align b(i) with t2(*,i,*)
 !$xmp align c(i) with t3(*,*,i)
   
   result = 0
+  call random_seed(size=seedsize)
+  allocate(seed(seedsize))
+  call random_seed(get=seed)
+!$xmp bcast (seed)
+  call random_seed(put=seed)
   call random_number(tmp)
   random_array(:) = int(tmp(:) * 10000)
 
