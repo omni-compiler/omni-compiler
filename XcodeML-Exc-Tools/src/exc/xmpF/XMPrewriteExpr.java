@@ -202,7 +202,13 @@ public class XMPrewriteExpr
 	  
 	  // replace with local decl
           ((XobjString)x).setName(array.getLocalName());
-          x.setType(array.getLocalType());
+	  if (array.getLocalId().getFdeclaredModule() != null &&
+	      array.getLocalId().getProp(XMP.globalAlias) != null){
+	    x.setType(array.getLocalType().copy());
+	  }
+	  else {
+	    x.setType(array.getLocalType());
+	  }
           x.setProp(XMP.arrayProp,array);
 	  x.setProp(XMP_REPLACED_GLOBAL, true);
 	  break;
