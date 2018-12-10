@@ -70,7 +70,6 @@ public class XMPtranslate implements XobjectDefVisitor
     BlockList newFuncBody = Bcons.emptyBody();
 
     newFuncBody.add(Ident.FidentNotExternal("xmpf_init_all_", Xtype.FsubroutineType).callSubroutine(null));
-    newFuncBody.add(Ident.FidentNotExternal("xmpf_traverse_module", Xtype.FsubroutineType).callSubroutine(null));
 
     if(XmOption.isFonesided()){
       newFuncBody.add(Ident.FidentNotExternal("xmpf_traverse_countcoarray", Xtype.FsubroutineType).callSubroutine(null));
@@ -78,6 +77,8 @@ public class XMPtranslate implements XobjectDefVisitor
       newFuncBody.add(Ident.FidentNotExternal("xmpf_traverse_initcoarray", Xtype.FsubroutineType).callSubroutine(null));
       newFuncBody.add(Ident.FidentNotExternal("xmpf_sync_all_auto", Xtype.FsubroutineType).callSubroutine(null));
     }
+
+    newFuncBody.add(Ident.FidentNotExternal("xmpf_traverse_module", Xtype.FsubroutineType).callSubroutine(null));
 
     newFuncBody.add(Ident.FidentNotExternal("xmpf_main", Xtype.FsubroutineType).callSubroutine(null));
     newFuncBody.add(Ident.FidentNotExternal("xmpf_finalize_all_", Xtype.FsubroutineType).callSubroutine(null));
