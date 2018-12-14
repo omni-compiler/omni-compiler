@@ -326,7 +326,7 @@ public class XMPanalyzePragma
     if (!lType.isFassumedShape()){
       XMP.errorAt(pb, "local alias must be declared as an assumed-shape array.");
       return;
-    }      
+    }
 
     if (gType.getNumDimensions() != lType.getNumDimensions()){
       XMP.errorAt(pb, "The rank is different between the global array and the local alias");
@@ -341,17 +341,34 @@ public class XMPanalyzePragma
     // replace name
 
     Ident origLocalId = gObject.getLocalId();
-    Xtype localType = origLocalId.Type();
-    StorageClass sclass = origLocalId.getStorageClass();
+    // Xtype localType = origLocalId.Type();
+    // if (lArrayId.isCoarray()){
+    //   localType.setIsFallocatable(true);
+    //   //localType.setIsFpointer(true);
+    // }
+    // StorageClass sclass = origLocalId.getStorageClass();
 
-    env.removeIdent(lName, pb);
+    // env.removeIdent(lName, pb);
     env.removeIdent(origLocalId.getName(), pb);
 
-    Ident newLocalId = env.declIdent(lName, localType, false, pb);
-    newLocalId.setStorageClass(sclass);
-    newLocalId.setValue(Xcons.Symbol(Xcode.VAR, localType, lName));
+    // Ident newLocalId = env.declIdent(lName, localType, false, pb);
+    // newLocalId.setStorageClass(sclass);
+    // newLocalId.setValue(Xcons.Symbol(Xcode.VAR, localType, lName));
 
-    gObject.setLocalId(newLocalId);
+    // gObject.setLocalId(newLocalId);
+
+    lArrayId.setProp(XMP.origIndexRange, ((FarrayType)lArrayId.Type()).getFindexRange());
+
+    int arrayDim = lType.getNumDimensions();
+    Xobject[] sizeExprs = new Xobject[arrayDim];
+    for (int i = 0; i < arrayDim; i++)
+      sizeExprs[i] = Xcons.FindexRangeOfAssumedShape();
+    //((FarrayType)lArrayId.Type()).setFarraySizeExpr(sizeExprs);
+    lType.setFarraySizeExpr(sizeExprs);
+    lType.setIsFallocatable(true);
+
+    gObject.setLocalId(lArrayId);
+    lArrayId.setProp(XMP.globalAlias, gObject);
 
   }
 

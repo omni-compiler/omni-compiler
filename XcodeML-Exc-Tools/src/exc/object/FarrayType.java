@@ -45,7 +45,7 @@ public class FarrayType extends Xtype
         return sizeExprs;
     }
 
-    public void setFarraySizeExpr(Xobject[] sizeEexprs)
+    public void setFarraySizeExpr(Xobject[] sizeExprs)
     {
         this.sizeExprs = sizeExprs;
     }

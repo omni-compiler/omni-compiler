@@ -490,16 +490,18 @@ public class XMPtransCoarrayRun
 
     /* divide coarrays into localCoarrays and moduleCoarrays
      */
-    for (Xobject obj: (XobjList)idList) {
-      Ident ident = (Ident)obj;
-      if (ident.wasCoarray()) {
-        // found it is a coarray or a variable converted from a coarray
-        XMPcoarray coarray = new XMPcoarray(ident, def, getFblock(), env);
-        coarray.setUseMallocWithHint(useMalloc);
-        if (coarray.isUseAssociated())
-          moduleCoarrays.add(coarray);
-        else
-          localCoarrays.add(coarray);
+    if (idList != null){
+      for (Xobject obj: (XobjList)idList) {
+	Ident ident = (Ident)obj;
+	if (ident.wasCoarray()) {
+	  // found it is a coarray or a variable converted from a coarray
+	  XMPcoarray coarray = new XMPcoarray(ident, def, getFblock(), env);
+	  coarray.setUseMallocWithHint(useMalloc);
+	  if (coarray.isUseAssociated())
+	    moduleCoarrays.add(coarray);
+	  else
+	    localCoarrays.add(coarray);
+	}
       }
     }
 
@@ -3325,8 +3327,10 @@ public class XMPtransCoarrayRun
     if (_isIntrinsic(fname) && _isCoarrayInCoarrays(arg1, candidates)) {
       XMPcoarray coarray = _findCoarrayInCoarrays(arg1, candidates);
       if (coarray.usesMalloc()) {
-        XobjString associated = Xcons.Symbol(Xcode.IDENT, "associated");
-        xobj.setArg(0, associated);
+        //XobjString associated = Xcons.Symbol(Xcode.IDENT, "associated");
+        //xobj.setArg(0, associated);
+	Ident associated = env.FintrinsicIdent(Xtype.FlogicalFunctionType, "associated");
+	xobj.setArg(0, associated.Ref());
       }
     }
   }
