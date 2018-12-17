@@ -3622,6 +3622,7 @@ public class XMPtranslateLocalPragma {
 
       subscripts.setArg(alignSubscriptIndex, triplet);
     }
+    subscripts.add(Xcons.StringConstant("ROUND"));
     onRef.add(subscripts);
 
     Xobject args = Xcons.List(onRef);
