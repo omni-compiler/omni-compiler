@@ -223,6 +223,17 @@ int _XMP_calc_gmove_array_owner_linear_rank_SCALAR(_XMP_array_t *array, int *ref
   return _XMP_calc_linear_rank_on_target_nodes(array_nodes, rank_array, _XMP_get_execution_nodes());
 }
 
+int xmp_calc_gmove_array_owner_linear_rank_scalar_(_XMP_array_t **a, int *ref_index) {
+  _XMP_array_t *array = *a;
+  _XMP_nodes_t *array_nodes = array->array_nodes;
+  int array_nodes_dim = array_nodes->dim;
+  int rank_array[array_nodes_dim];
+
+  _XMP_calc_gmove_rank_array_SCALAR(array, ref_index, rank_array);
+
+  return _XMP_calc_linear_rank_on_target_nodes(array_nodes, rank_array, _XMP_get_execution_nodes());
+}
+
 static _XMP_nodes_ref_t *_XMP_create_gmove_nodes_ref_SCALAR(_XMP_array_t *array, int *ref_index) {
   _XMP_nodes_t *array_nodes = array->array_nodes;
   int array_nodes_dim = array_nodes->dim;
