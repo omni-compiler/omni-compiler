@@ -1681,7 +1681,13 @@ public class XMPtranslateLocalPragma {
       if(! XMPutil.is_Constant(t.getWidthAt(i), i))                return false;
     
     int templateSize = XMPutil.foldIntConstant(t.getSizeAt(i)).getInt();
-    int forUpperSize = XMPutil.foldIntConstant(forBlock.getUpperBound()).getInt();
+    Xobject forUpperObj = XMPutil.foldIntConstant(forBlock.getUpperBound());
+    int forUpperSize = -1;
+    if(forUpperObj.Opcode() == Xcode.INT_CONSTANT)
+      forUpperSize = forUpperObj.getInt();
+    else if(forUpperObj.Opcode() == Xcode.LONGLONG_CONSTANT)
+      forUpperSize = (int)forUpperObj.getLongLow();
+
     if(templateSize != forUpperSize)
       return false;
 
