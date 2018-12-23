@@ -284,7 +284,8 @@ public class BlockList
 
       XobjArgs b = decls.getArgs();
       while (b != null){
-	if (b.getArg().getArg(0).getName().equals(name)){
+	if (b.getArg().Opcode() == Xcode.VAR_DECL &&
+	    b.getArg().getArg(0).getName().equals(name)){
 	  decls.removeArgs(b);
       	  f2 = true;
       	  break;
