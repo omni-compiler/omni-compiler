@@ -130,6 +130,11 @@ public class XMPglobalDecl {
     _globalDestructorFuncBody.add(Xcons.List(Xcode.EXPR_STATEMENT, funcId.Call(args)));
   }
 
+  public void insertGlobalFinalizeFuncCall(String funcName, Xobject args) {
+    Ident funcId = declExternFunc(funcName);
+    _globalDestructorFuncBody.insert(Xcons.List(Xcode.EXPR_STATEMENT, funcId.Call(args)));
+  }
+
   public Ident declGlobalIdent(String name, Xtype t) {
     return _env.declGlobalIdent(name, t);
   }

@@ -34,7 +34,7 @@ public class XMPrealloc implements XobjectDefVisitor {
   private void alignArrayRealloc(XobjectDef def) throws XMPexception {
     if(def.isVarDecl() == false) return;
       
-    String varName = def.getName();
+    String varName               = def.getName();
     XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(varName);
     if(alignedArray == null)     return;
     if(alignedArray.isPointer()) return;
@@ -50,8 +50,11 @@ public class XMPrealloc implements XobjectDefVisitor {
       
       if(alignedArray.getAddrId().getStorageClass() == StorageClass.EXTERN)
         _globalDecl.addGlobalInitFuncCall("_XMP_alloc_array_EXTERN", allocFuncArgs);
-      else
-        _globalDecl.addGlobalInitFuncCall("_XMP_alloc_array", allocFuncArgs);
+      else{
+        _globalDecl.addGlobalInitFuncCall("_XMP_alloc_array",             allocFuncArgs);
+	_globalDecl.insertGlobalFinalizeFuncCall("_XMP_finalize_array_desc", Xcons.List(alignedArray.getDescId().Ref()));
+	_globalDecl.insertGlobalFinalizeFuncCall("_XMP_dealloc_array",       Xcons.List(alignedArray.getDescId().Ref()));
+      }
       
       def.setDef(Xcons.List(Xcode.TEXT, Xcons.String("/* array '" + varName + "' is removed by XMP align directive */")));
     }

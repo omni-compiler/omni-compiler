@@ -292,7 +292,8 @@ public class XMPtemplate extends XMPobject {
     if (templateIsFixed)
       templateObject.createSizeVector();
 
-    String constructorName = new String("_XMP_init_template_");
+    String constructorName   = new String("_XMP_init_template_");
+    String deconstructorName = new String("_XMP_finalize_template");
     if (templateIsFixed) {
       templateObject.setIsFixed();
       constructorName += "FIXED";
@@ -313,10 +314,11 @@ public class XMPtemplate extends XMPobject {
       }
 
       if (!isStaticDesc)
-	XMPlocalDecl.insertDestructorCall2("_XMP_finalize_template", Xcons.List(templateDescId.Ref()), globalDecl, parentBlock);
+	XMPlocalDecl.insertDestructorCall2(deconstructorName, Xcons.List(templateDescId.Ref()), globalDecl, parentBlock);
 
     } else {
       globalDecl.addGlobalInitFuncCall(constructorName, templateArgs);
+      globalDecl.addGlobalFinalizeFuncCall(deconstructorName, Xcons.List(templateDescId.Ref()));
     }
   }
 
