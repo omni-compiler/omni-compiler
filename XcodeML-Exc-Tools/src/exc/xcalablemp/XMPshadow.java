@@ -117,6 +117,7 @@ public class XMPshadow {
 
             shadowFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(XMPshadow.SHADOW_FULL)));
             alignedArray.setShadowAt(new XMPshadow(XMPshadow.SHADOW_FULL, null, null), arrayIndex);
+	    alignedArray.setOptimized(false);
             break;
           }
         default:

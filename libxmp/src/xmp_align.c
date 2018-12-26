@@ -183,11 +183,8 @@ void _XMP_init_array_desc_NOT_ALIGNED(_XMP_array_t **adesc, _XMP_template_t *tem
     ai->align_template_index = _XMP_N_NO_ALIGN_TEMPLATE;
 
   }
-
   *adesc = a;
-
 }
-
 
 void _XMP_finalize_array_desc(_XMP_array_t *array)
 {

@@ -144,8 +144,7 @@ public class XMPnodes extends XMPobject {
     }
 
     // add constructor call
-    String initFuncName = null;
-    initFuncName = new String("_XMP_init_nodes_" + allocType + "_" + inheritInfo.getFirst());
+    String initFuncName = new String("_XMP_init_nodes_" + allocType + "_" + inheritInfo.getFirst());
 
     if (isLocalPragma) {
       if (isStaticDesc){
@@ -162,6 +161,7 @@ public class XMPnodes extends XMPobject {
     }
     else {
       globalDecl.addGlobalInitFuncCall(initFuncName, nodesArgs);
+      globalDecl.addGlobalFinalizeFuncCall("_XMP_finalize_nodes", Xcons.List(nodesDescId.Ref()));
     }
   }
 

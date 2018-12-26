@@ -18,6 +18,7 @@ run:
 	$(XRUN) -n 8 ./ordinal_reflect.x
 	$(XRUN) -n 4 ./full2.x
 	$(XRUN) -n 4 ./full3.x
+	$(XRUN) -n 4 ./full4.x
 	$(XRUN) -n 4 ./loop.x
 	$(XRUN) -n 2 ./basic.x
 	$(XRUN) -n 4 ./shadow_check.x
