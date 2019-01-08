@@ -115,12 +115,13 @@ typedef struct _XMP_template_type {
   _XMP_template_chunk_t *chunk;
   // ----------------------------------
 
-  _XMP_template_info_t info[1];
-
 #ifdef _XMPT
   void *xmpt_data;
   void *xmpt_template_data;
 #endif
+
+  _XMP_template_info_t info[1];
+
 } _XMP_template_t;
 
 // schedule of shadow comm.
