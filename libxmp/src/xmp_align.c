@@ -931,7 +931,8 @@ void _XMP_init_array_nodes(_XMP_array_t *array)
   int template_dim = align_template->dim;
   int align_template_shrink[template_dim];
   int align_template_num = 0;
-  long long align_template_lower[template_dim], align_template_upper[template_dim], align_template_stride[template_dim];
+  long long align_template_lower[template_dim], align_template_upper[template_dim],
+            align_template_stride[template_dim];
   
   for(int i=0;i<template_dim;i++)
     align_template_shrink[i] = 1;

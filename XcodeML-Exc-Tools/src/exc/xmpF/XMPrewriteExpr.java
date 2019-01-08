@@ -278,6 +278,8 @@ public class XMPrewriteExpr
 		  break;
 	      }
 
+	      i++;
+	      
 	    }
 
 	  }
