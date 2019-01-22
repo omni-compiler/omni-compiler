@@ -91,7 +91,10 @@ public class XMPtranslateGlobalPragma {
     XobjList alignNameList         = (XobjList)alignDecl.getArg(0);
     XobjList alignSubscriptList    = (XobjList)alignDecl.getArg(3);
     XobjList alignSubscriptVarList = (XobjList)alignSubscriptList.left();
-  
+    Xobject  structVar             = null;
+    if(alignDecl.Nargs() == 5)
+      structVar = alignDecl.getArg(4).getArg(0);
+
     String kind_bracket = alignSubscriptList.getTail().getString();
     boolean isSquare    = kind_bracket.equals("SQUARE");
     alignSubscriptList.removeLastArgs(); // Remove information of ROUND or SQUARE
@@ -102,7 +105,7 @@ public class XMPtranslateGlobalPragma {
     while (iter.hasNext()) {
       Xobject x = iter.next();
       alignDeclCopy.setArg(0, x);
-      XMPalignedArray.translateAlign(alignDeclCopy, _globalDecl, false, null);
+      XMPalignedArray.translateAlign(alignDeclCopy, _globalDecl, false, null, structVar);
     }
   }
 

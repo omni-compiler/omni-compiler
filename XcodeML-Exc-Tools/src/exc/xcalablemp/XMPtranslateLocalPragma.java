@@ -376,7 +376,7 @@ public class XMPtranslateLocalPragma {
     while (iter.hasNext()) {
       Xobject x = iter.next();
       alignDeclCopy.setArg(0, x);
-      XMPalignedArray.translateAlign(alignDeclCopy, _globalDecl, true, pb);
+      XMPalignedArray.translateAlign(alignDeclCopy, _globalDecl, true, pb, null);
     }
   }
 

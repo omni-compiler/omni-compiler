@@ -150,6 +150,10 @@ public class XMPglobalDecl {
   public Ident findVarIdent(String name) {
     return _env.findVarIdent(name);
   }
+  
+  public Ident findIdent(String name) {
+    return _env.findIdent(name);
+  }
 
   public Block createFuncCallBlock(String funcName, XobjList funcArgs) {
     Ident funcId = declExternFunc(funcName);
