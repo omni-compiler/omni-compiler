@@ -27,7 +27,7 @@ public class ACC {
 
   public static int version = 20;
   // public static Platform platform = Platform.CUDA;
-  public static Platform platform = Platform.outputACC;
+  // public static Platform platform = Platform.outputACC;
   public static AccDevice device = AccDevice.NONE;
 
   public static void exitByError() {
