@@ -118,6 +118,8 @@ class ACCgpuDecompileWriter extends PrintWriter {
                 case OpenCL:
                   println("__kernel");
                   break;
+                case outputACC:
+                  break;
               }
             } else {
               println("extern \"C\"");
@@ -962,6 +964,8 @@ class ACCgpuDecompileWriter extends PrintWriter {
           break;
         case OpenCL:
           print("__local ");
+          break;
+        case outputACC:
           break;
       }
     }
