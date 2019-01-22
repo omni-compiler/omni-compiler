@@ -47,13 +47,13 @@ class ACCgpuDecompiler {
     try{
       String filename = ACCutil.removeExtension(env.getSourceFileName());
       switch(ACC.platform){
-        case CUDA:
+        case outputACC:
           filename += CUDA_SRC_EXTENSION;
           break;
         case OpenCL:
           filename += OPENCL_SRC_EXTENSION;
           break;
-        case outputACC:
+        case CUDA:
           filename += OPENACC_SRC_EXTENSION;
           break;
         default:
