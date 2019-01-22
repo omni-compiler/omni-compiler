@@ -13,7 +13,7 @@ import exc.object.*;
 
 class ACCgpuDecompiler {
   private static final int BUFFER_SIZE = 4096;
-  private final String CUDA_SRC_EXTENSION = ".cu";
+  private final String CUDA_SRC_EXTENSION = ".acc";
   private final String OPENCL_SRC_EXTENSION = ".cl";
   private final String OPENACC_SRC_EXTENSION = ".acc";
   public static final String GPU_FUNC_CONF = "OEPNACC_GPU_FUNC_CONF_PROP";
