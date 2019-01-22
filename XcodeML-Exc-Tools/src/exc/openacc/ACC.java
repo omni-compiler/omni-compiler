@@ -26,8 +26,8 @@ public class ACC {
   public static final String FIND_DATA_FUNC_NAME = "_ACC_find_data";
 
   public static int version = 20;
-  // public static Platform platform = Platform.CUDA;
   public static Platform platform = Platform.outputACC;
+  // public static Platform platform = Platform.CUDA;
   public static AccDevice device = AccDevice.NONE;
 
   public static void exitByError() {
