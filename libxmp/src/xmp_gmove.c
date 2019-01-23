@@ -194,14 +194,14 @@ void _XMP_gtol_array_ref_triplet(_XMP_array_t *array,
   }
 }
 
-static void _XMP_calc_gmove_rank_array_SCALAR(_XMP_array_t *array, int *ref_index, int *rank_array) {
+void _XMP_calc_gmove_rank_array_SCALAR(_XMP_array_t *array, int *ref_index, int *rank_array) {
   _XMP_template_t *template = array->align_template;
 
   int array_dim = array->dim;
   for (int i = 0; i < array_dim; i++) {
     _XMP_array_info_t *ai = &(array->info[i]);
     int template_index = ai->align_template_index;
-    if (template_index != _XMP_N_NO_ALIGN_TEMPLATE) {
+     if (template_index != _XMP_N_NO_ALIGN_TEMPLATE) {
       _XMP_template_chunk_t *chunk = &(template->chunk[ai->align_template_index]);
       int onto_nodes_index = chunk->onto_nodes_index;
       _XMP_ASSERT(array_nodes_index != _XMP_N_NO_ONTO_NODES);
