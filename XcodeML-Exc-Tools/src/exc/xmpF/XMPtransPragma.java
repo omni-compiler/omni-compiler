@@ -1102,23 +1102,26 @@ public class XMPtransPragma
  	for(Xobject e: (XobjList) x.getArg(1)){
  	  switch(e.Opcode()){
 	  case F_ARRAY_INDEX:
-	    args = Xcons.List(descId.Ref(),Xcons.IntConstant(idx),
+	    args = Xcons.List(descId.Ref(), Xcons.IntConstant(idx),
 			      Xcons.IntConstant(GMOVE_INDEX),
 			      e.getArg(0),
-			      Xcons.IntConstant(0),Xcons.IntConstant(0));
+			      Xcons.IntConstant(0), Xcons.IntConstant(0));
 	    break;
 	  case F_INDEX_RANGE:
 	    if(e.getArg(0) == null && e.getArg(1) == null){
-	      args = Xcons.List(descId.Ref(),Xcons.IntConstant(idx),
+	      args = Xcons.List(descId.Ref(), Xcons.IntConstant(idx),
 				Xcons.IntConstant(GMOVE_ALL),
 				Xcons.IntConstant(0),
-				Xcons.IntConstant(0),Xcons.IntConstant(0));
+				Xcons.IntConstant(0), Xcons.IntConstant(0));
 	    } else {
+	      Xobject ubound = e.getArg(1);
+	      if (ubound == null) ubound = env.declInternIdent("xmp_ubound", Xtype.FintFunctionType).
+				      Call(Xcons.List(array.getDescId().Ref(), Xcons.IntConstant(idx)));
 	      Xobject stride = e.getArg(2);
-	      if(stride == null) stride = Xcons.IntConstant(1);
-	      args = Xcons.List(descId.Ref(),Xcons.IntConstant(idx),
+	      if (stride == null) stride = Xcons.IntConstant(1);
+	      args = Xcons.List(descId.Ref(), Xcons.IntConstant(idx),
 				Xcons.IntConstant(GMOVE_RANGE),
-				e.getArg(0),e.getArg(1),stride);
+				e.getArg(0), ubound, stride);
 	    }
 	    break;
 	  default:
