@@ -624,3 +624,47 @@ void xmp_array_ubound_global(xmp_desc_t d, int dim, int *global_i)
   _XMP_array_t *a = (_XMP_array_t *)d;
   *global_i = a->info[dim-1].par_upper;
 }
+
+
+void _XMP_calc_gmove_rank_array_SCALAR(xmp_desc_t array, int *ref_index, int *rank_array);
+
+int xmp_array_owner_rank(xmp_desc_t d, int *ref_index, int *owners){
+
+  int num = 0;
+  
+  _XMP_array_t *array = (_XMP_array_t *)d;
+  _XMP_nodes_t *nodes = array->align_template->onto_nodes;
+  int nodes_dim = nodes->dim;
+  int rank_array[_XMP_N_MAX_DIM];
+  int lb[_XMP_N_MAX_DIM] = {0}, ub[_XMP_N_MAX_DIM];;
+
+  for (int i = 0; i < nodes_dim; i++) rank_array[i] = -1;
+  for (int i = 0; i < _XMP_N_MAX_DIM; i++) ub[i] = 1;
+
+  _XMP_calc_gmove_rank_array_SCALAR(array, ref_index, rank_array);
+
+  for (int i = 0; i < nodes_dim; i++){
+    //    printf("%d : %d\n", i, rank_array[i]);
+    if (rank_array[i] == -1){
+      //lb[i] = 0;
+      ub[i] = nodes->info[i].size;
+    }
+    else {
+      lb[i] = rank_array[i];
+      ub[i] = rank_array[i] + 1;
+    }
+  }
+
+  //printf("(%d, %d) => %d %d %d %d\n", ref_index[0], ref_index[1], lb[0], ub[0], lb[1], ub[1]);
+  
+  for (rank_array[0] = lb[0]; rank_array[0] < ub[0]; rank_array[0]++)
+  for (rank_array[1] = lb[1]; rank_array[1] < ub[1]; rank_array[1]++)
+  for (rank_array[2] = lb[2]; rank_array[2] < ub[2]; rank_array[2]++)
+  for (rank_array[3] = lb[3]; rank_array[3] < ub[3]; rank_array[3]++)
+  for (rank_array[4] = lb[4]; rank_array[4] < ub[4]; rank_array[4]++)
+  for (rank_array[5] = lb[5]; rank_array[5] < ub[5]; rank_array[5]++)
+  for (rank_array[6] = lb[6]; rank_array[6] < ub[6]; rank_array[6]++)
+    owners[num++] = _XMP_calc_linear_rank_on_target_nodes(nodes, rank_array, _XMP_get_execution_nodes());
+
+  return num;
+}

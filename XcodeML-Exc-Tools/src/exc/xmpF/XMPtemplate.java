@@ -148,6 +148,7 @@ package exc.xmpF;
        XMP.errorAt(pb,"XMP object '"+_name+"' is already declared");
        return;
      }
+     env.removeIdent(_name, pb);
 
      // declare template desciptor
      _descId =  env.declObjectId(XMP.DESC_PREFIX_ + _name, pb);
