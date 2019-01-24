@@ -98,17 +98,17 @@ public class XMPtemplate extends XMPobject {
     _distMannerVector.setElementAt(manner, index);
   }
 
-  public int getDistMannerAt(int index) throws XMPexception {
-    if (!_isDistributed) {
-      throw new XMPexception("template " + getName() + " is not distributed");
-    }
+  public int getDistMannerAt(int index) {
+    if (!_isDistributed)
+      XMP.fatal("template " + getName() + " is not distributed");
 
     return _distMannerVector.get(index).intValue();
   }
 
-  public String getDistMannerStringAt(int index) throws XMPexception {
+  public String getDistMannerStringAt(int index) {
     if (!_isDistributed) {
-      throw new XMPexception("template " + getName() + " is not distributed");
+      XMP.fatal("template " + getName() + " is not distributed");
+      return null;
     } else {
       return getDistMannerString(getDistMannerAt(index));
     }
@@ -132,11 +132,11 @@ public class XMPtemplate extends XMPobject {
     _widthVector.setElementAt(width, index);
   }
 
-  public Xobject getWidthAt(int index) throws XMPexception {
+  public Xobject getWidthAt(int index) {
     return _widthVector.get(index);
   }
 
-  public static String getDistMannerString(int manner) throws XMPexception {
+  public static String getDistMannerString(int manner) {
     switch (manner) {
       case DUPLICATION:
         return new String("DUPLICATION");
@@ -149,7 +149,8 @@ public class XMPtemplate extends XMPobject {
       case GBLOCK:
         return new String("GBLOCK");
       default:
-        throw new XMPexception("unknown distribute manner");
+        XMP.fatal("unknown distribute manner");
+	return null;
     }
   }
 
