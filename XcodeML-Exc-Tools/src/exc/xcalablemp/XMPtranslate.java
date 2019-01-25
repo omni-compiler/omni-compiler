@@ -213,12 +213,24 @@ public class XMPtranslate implements XobjectDefVisitor {
       for (iter2.init(); !iter2.end(); iter2.next()){
 	Xobject x = iter2.getXobject();
 	if (x != null && x.Opcode() == Xcode.SUB_ARRAY_REF){
-	  String arrayName = x.getArg(0).getSym();
-	  Ident arrayId = null;
+	  Xobject arrayAddr   = x.getArg(0);
+          Boolean isStructure = (arrayAddr.Opcode() == Xcode.MEMBER_ARRAY_REF);
+	  String arrayName    = (isStructure)? arrayAddr.getArg(1).getSym() : arrayAddr.getSym();
+	  Ident arrayId       = null;
 
-	  if (block.getBody() != null) arrayId = block.getBody().findLocalIdent(arrayName);
-	  if (arrayId == null) arrayId = block.findVarIdent(arrayName);
-	  if (arrayId == null) arrayId = _globalDecl.findVarIdent(arrayName);
+	  if(! isStructure){
+	    if (block.getBody() != null) arrayId = block.getBody().findLocalIdent(arrayName);
+	    if (arrayId == null) arrayId = block.findVarIdent(arrayName);
+	    if (arrayId == null) arrayId = _globalDecl.findVarIdent(arrayName);
+	  }
+	  else{
+	    if (arrayId == null) {
+	      String structName = arrayAddr.getArg(0).getArg(0).getSym();
+	      String memberName = XMP.STRUCT + structName + "_" + arrayName;
+	      XMPalignedArray alignedArray =  _globalDecl.getXMPalignedArray(memberName);
+	      arrayId = alignedArray.getArrayId();
+	    }
+	  }
 	  if (arrayId == null) continue;
 
 	  Xtype arrayType = arrayId.Type();
