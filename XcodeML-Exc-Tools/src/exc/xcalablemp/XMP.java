@@ -27,7 +27,8 @@ public class XMP {
   public final static String GTOL_STRUCT_PREFIX_        = "_XMP_STRUCT_GTOL_";
   public final static String ASTERISK			= "* @{ASTERISK}@";
   public final static String COLON			= ": @{COLON}@";
-
+  public final static String STRUCT                     = "_XMP_STRUCT_";
+  
   private static boolean errorFlag			= false;
 
   public static Xobject createBasicTypeConstantObj(Xtype type) {

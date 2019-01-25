@@ -68,6 +68,11 @@ public class Ident extends Xobject
     private Ident origId          = null;
     private Vector<Ident> accIdVector = null;
     private XMPtemplate templateObj   = null;
+    private XobjList alignSourceList        = null;
+    private XobjList alignSubscriptVarList  = null;
+    private XobjList alignSubscriptExprList = null;
+    private PragmaBlock pb     = null;
+    private Block parentBlock  = null;
   
     // constructor
     public Ident(String name, StorageClass stg_class, Xtype type, Xobject v,
@@ -310,6 +315,56 @@ public class Ident extends Xobject
     public Vector<Ident> getAccIdVector()
     {
         return this.accIdVector;
+    }
+
+    public void setParentBlock(Block arg)
+    {
+        this.parentBlock = arg;
+    }
+
+    public Block getParentBlock()
+    {
+        return this.parentBlock;
+    }
+  
+    public void setPragmaBlock(PragmaBlock arg)
+    {
+        this.pb = arg;
+    }
+
+    public PragmaBlock getPragmaBlock()
+    {
+        return this.pb;
+    }
+  
+    public void setAlignSubscriptExprList(XobjList arg)
+    {
+        this.alignSubscriptExprList = arg;
+    }
+
+    public XobjList getAlignSubscriptExprList()
+    {
+        return this.alignSubscriptExprList;
+    }
+  
+    public void setAlignSubscriptVarList(XobjList arg)
+    {
+        this.alignSubscriptVarList = arg;
+    }
+
+    public XobjList getAlignSubscriptVarList()
+    {
+        return this.alignSubscriptVarList;
+    }
+  
+    public void setAlignSourceList(XobjList arg)
+    {
+        this.alignSourceList = arg;
+    }
+
+    public XobjList getAlignSourceList()
+    {
+        return this.alignSourceList;
     }
   
     public void setOrigId(Ident id){

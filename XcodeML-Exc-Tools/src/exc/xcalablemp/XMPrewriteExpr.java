@@ -1862,14 +1862,9 @@ public class XMPrewriteExpr {
       switch (myExpr.Opcode()) {
         case ARRAY_REF:
           {
-	    Boolean isStructure = (myExpr.getArg(0).Opcode() == Xcode.MEMBER_ARRAY_REF);
             Xobject arrayAddr = myExpr.getArg(0);
-            String arrayName = (isStructure)? "test_a" : arrayAddr.getSym();
-	    XMPalignedArray alignedArray;
-	    if(isStructure)
-	      alignedArray = globalDecl.getXMPalignedArray("test_a");
-	    else
-	      alignedArray = globalDecl.getXMPalignedArray(arrayName, block);
+            String arrayName = arrayAddr.getSym();
+	    XMPalignedArray alignedArray = globalDecl.getXMPalignedArray(arrayName, block);
 
             if (alignedArray != null) {
               if(alignedArray.canOptimized() && alignedMultiArrayDeclared.get(alignedArray) == null){
@@ -1957,17 +1952,12 @@ public class XMPrewriteExpr {
         continue;
       }
       else if(myExpr.Opcode() == Xcode.ARRAY_REF){
-	Boolean isStructure = (myExpr.getArg(0).Opcode() == Xcode.MEMBER_ARRAY_REF);
-	String arrayName = (isStructure)? myExpr.getArg(0).getArg(1).getSym() : myExpr.getArg(0).getSym();
+	String arrayName = myExpr.getArg(0).getSym();
 	
         if(arrayName.startsWith(XMP.MULTI_ADDR_PREFIX_))
           arrayName = arrayName.substring(XMP.MULTI_ADDR_PREFIX_.length());
 
-        XMPalignedArray alignedArray;
-	if(isStructure)
-	  alignedArray = globalDecl.getXMPalignedArray("test_a"); // Support only global variable
-	else
-	  alignedArray = globalDecl.getXMPalignedArray(arrayName, block);
+        XMPalignedArray alignedArray = globalDecl.getXMPalignedArray(arrayName, block);
 
         if (alignedArray == null)
           rewriteLoopIndexVar(templateObj, templateIndex, loopIndexName, myExpr, globalDecl);
@@ -2538,16 +2528,16 @@ public class XMPrewriteExpr {
     if (isStruct) {
       XobjList memberList = varId.Type().getMemberList();
       for(Xobject x: memberList){
-	Ident id = (Ident)x;
-	if(id.isMemberAligned()){
-	  String orgName    = id.getName().replaceAll("^" + XMP.ADDR_PREFIX_, ""); // __XMP_ADDR_a -> a
+	Ident arrayId = (Ident)x;
+	if(arrayId.isMemberAligned()){
+	  String orgName    = arrayId.getName().replaceAll("^" + XMP.ADDR_PREFIX_, ""); // __XMP_ADDR_a -> a
 	  String newName    = varName + "_" + orgName;
 	  Ident arrayDescId = _globalDecl.declStaticIdent(XMP.DESC_STRUCT_PREFIX_ + newName, Xtype.voidPtrType);
-	  XobjList initArrayDescFuncArgs = id.getDescFuncArgs();
+	  XobjList initArrayDescFuncArgs = arrayId.getDescFuncArgs();
 	  initArrayDescFuncArgs.insert((Xobject)arrayDescId.getAddr());
 	  _globalDecl.addGlobalInitFuncCall("_XMP_init_array_desc", initArrayDescFuncArgs);
 
-	  Ident origArrayId   = id.getOrigId();
+	  Ident origArrayId   = arrayId.getOrigId();
 	  Xtype origArrayType = origArrayId.Type();
 	  int arrayDim        = origArrayType.getNumDimensions();
 	  Vector<Ident> accIdVector = new Vector<Ident>(arrayDim);
@@ -2558,14 +2548,29 @@ public class XMPrewriteExpr {
 	    accIdVector.add(accId);
 	  }
 	  Xtype arrayElmtType     = origArrayType.getArrayElementType();
-	  XMPtemplate templateObj = id.getTemplateObj();
-	  String arrayName = varName + "." + orgName;  // varName + "_" + orgName may conflict with a user variable.
+	  XMPtemplate templateObj = arrayId.getTemplateObj();
+	  String arrayName = XMP.STRUCT + varName + "_" + orgName;  // Only "varName + \"_\" + orgName" may conflict with a user variable.
 	  XMPalignedArray alignedArray = new XMPalignedArray(arrayName, arrayElmtType, (ArrayType)origArrayType, arrayDim,
-							     accIdVector, origArrayId, arrayDescId, id, templateObj);
+							     accIdVector, origArrayId, arrayDescId, arrayId, templateObj);
 	  _globalDecl.putXMPalignedArray(alignedArray);
+
+	  XobjList alignSourceList        = arrayId.getAlignSourceList();
+	  XobjList alignSubscriptVarList  = arrayId.getAlignSubscriptVarList();
+	  XobjList alignSubscriptExprList = arrayId.getAlignSubscriptExprList();
+	  PragmaBlock pb    = arrayId.getPragmaBlock();
+	  Block parentBlock = arrayId.getParentBlock();
+	  Boolean isLocalPragma = false; // fix me
+	  Boolean isPointer     = false; // fix me
+	  Boolean isParameter   = false; // fix me
+	  Boolean isStaticDesc  = false; // fix me
+
+	  XMPalignedArray.createAlignFunctionCalls(alignedArray, _globalDecl, alignSourceList, alignSubscriptVarList,
+						   alignSubscriptExprList, templateObj, pb, parentBlock, origArrayId, arrayDim,
+	  					   orgName, arrayDescId, isLocalPragma, isPointer, isParameter, isStaticDesc);
 	}
       }
     }
+    
     if (isCoarray) {
       XobjList codimensions = (XobjList)varId.getCodimensions();
 

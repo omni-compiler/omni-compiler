@@ -31,16 +31,16 @@ public class XMPrealloc implements XobjectDefVisitor {
     }
   }
 
-  private void insertReallocFunction(XobjectDef def, String varName, String structName) throws XMPexception {
+  private void insertReallocFunction(XobjectDef def, String varName, Ident structId) throws XMPexception {
     XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(varName);
     if(alignedArray == null)     return;
     if(alignedArray.isPointer()) return;
 
-    Boolean isStruct = (structName != null);
+    Boolean isStruct = (structId != null);
     if(alignedArray.realloc()){
       XobjList allocFuncArgs = null;
       if(isStruct){
-	Xobject x = Xcons.memberAddr(_globalDecl.findIdent(structName).getAddr(), XMP.ADDR_PREFIX_ + varName);
+	Xobject x = Xcons.memberAddr(structId.getAddr(), alignedArray.getAddrId().getName());
 	allocFuncArgs = Xcons.List(Xcons.Cast(Xtype.Pointer(Xtype.voidPtrType), x), alignedArray.getDescId().Ref());
       }
       else
@@ -80,15 +80,20 @@ public class XMPrealloc implements XobjectDefVisitor {
   
   private void alignArrayRealloc(XobjectDef def) throws XMPexception {
     if(def.isVarDecl() == false) return;
-      
+
     String varName   = def.getName();
-    Boolean isStruct = (_globalDecl.findIdent(varName).Type().getKind() == Xtype.STRUCT);
+    Ident varId      = _globalDecl.findIdent(varName);
+    Boolean isStruct = (varId.Type().getKind() == Xtype.STRUCT);
     if(isStruct){
       String structName   = varName;
       XobjList memberList = _globalDecl.findIdent(varName).Type().getMemberList();
       for(Xobject x : memberList){
-	String memberName = x.getName().replaceAll("^"+XMP.ADDR_PREFIX_, "");
-	insertReallocFunction(def, memberName, structName);
+	Ident arrayId = (Ident)x;
+	if(arrayId.isMemberAligned()){
+	  String orgName = x.getName().replaceAll("^"+XMP.ADDR_PREFIX_, "");
+	  String arrayName = XMP.STRUCT + varName + "_" + orgName;
+	  insertReallocFunction(def, arrayName, varId);
+	}
       }
     }
     else
