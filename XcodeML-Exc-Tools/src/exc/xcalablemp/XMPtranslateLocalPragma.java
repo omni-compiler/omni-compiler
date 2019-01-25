@@ -3074,14 +3074,13 @@ public class XMPtranslateLocalPragma {
     Xobject a;
     Ident f;
     Xobject args;
-    Boolean isStructure = (x.getArg(0).Opcode() == Xcode.MEMBER_ARRAY_REF);
    
     switch (x.Opcode()){
     case ARRAY_REF:
     case SUB_ARRAY_REF:
-      a = x.getArg(0);
       arrayName = getArrayName(x);
-
+      a = x.getArg(0);
+      Boolean isStructure = (a.Opcode() == Xcode.MEMBER_ARRAY_REF);
       if(isStructure)
 	array = _globalDecl.getXMPalignedArray(arrayName);
       else
