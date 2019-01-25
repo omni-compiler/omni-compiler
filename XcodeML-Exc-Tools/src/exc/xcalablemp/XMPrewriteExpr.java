@@ -1865,17 +1865,13 @@ public class XMPrewriteExpr {
 	{
 	  Xobject arrayAddr   = myExpr.getArg(0);
 	  Boolean isStructure = (arrayAddr.Opcode() == Xcode.MEMBER_ARRAY_REF);
-	  String arrayName    = (isStructure)? arrayAddr.getArg(1).getSym() : arrayAddr.getSym();
+	  String arrayName    = XMPutil.getArrayName(myExpr);
 	  XMPalignedArray alignedArray;
 	  
-	  if(isStructure){
-	    String structName = arrayAddr.getArg(0).getArg(0).getSym();
-	    String memberName = XMP.STRUCT + structName + "_" + arrayName;
-	    alignedArray = globalDecl.getXMPalignedArray(memberName);
-	  }
-	  else{
+	  if(isStructure)
+	    alignedArray = globalDecl.getXMPalignedArray(arrayName);
+	  else
 	    alignedArray = globalDecl.getXMPalignedArray(arrayName, block);
-	  }
 
 	  if (alignedArray != null) {
 	    if(alignedArray.canOptimized() && alignedMultiArrayDeclared.get(alignedArray) == null){
@@ -1968,17 +1964,7 @@ public class XMPrewriteExpr {
       }
       else if(myExpr.Opcode() == Xcode.ARRAY_REF){
 	Boolean isStructure = (myExpr.getArg(0).Opcode() == Xcode.MEMBER_ARRAY_REF);
-	Xobject arrayAddr   = myExpr.getArg(0);
-	String arrayName;
-	
-	if(isStructure){
-	  String structName = arrayAddr.getArg(0).getArg(0).getSym();
-	  String memberName = arrayAddr.getArg(1).getSym();
-	  arrayName =  XMP.STRUCT + structName + "_" + memberName;
-	}
-	else{
-	  arrayName = arrayAddr.getSym();
-	}
+	String arrayName    = XMPutil.getArrayName(myExpr);
 	
         if(arrayName.startsWith(XMP.MULTI_ADDR_PREFIX_))
           arrayName = arrayName.substring(XMP.MULTI_ADDR_PREFIX_.length());

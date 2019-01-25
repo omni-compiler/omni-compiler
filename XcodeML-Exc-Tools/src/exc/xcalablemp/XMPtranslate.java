@@ -213,9 +213,8 @@ public class XMPtranslate implements XobjectDefVisitor {
       for (iter2.init(); !iter2.end(); iter2.next()){
 	Xobject x = iter2.getXobject();
 	if (x != null && x.Opcode() == Xcode.SUB_ARRAY_REF){
-	  Xobject arrayAddr   = x.getArg(0);
-          Boolean isStructure = (arrayAddr.Opcode() == Xcode.MEMBER_ARRAY_REF);
-	  String arrayName    = (isStructure)? arrayAddr.getArg(1).getSym() : arrayAddr.getSym();
+          Boolean isStructure = (x.getArg(0).Opcode() == Xcode.MEMBER_ARRAY_REF);
+	  String arrayName    = XMPutil.getArrayName(x);
 	  Ident arrayId       = null;
 
 	  if(! isStructure){
@@ -225,9 +224,7 @@ public class XMPtranslate implements XobjectDefVisitor {
 	  }
 	  else{
 	    if (arrayId == null) {
-	      String structName = arrayAddr.getArg(0).getArg(0).getSym();
-	      String memberName = XMP.STRUCT + structName + "_" + arrayName;
-	      XMPalignedArray alignedArray =  _globalDecl.getXMPalignedArray(memberName);
+	      XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName);
 	      arrayId = alignedArray.getArrayId();
 	    }
 	  }

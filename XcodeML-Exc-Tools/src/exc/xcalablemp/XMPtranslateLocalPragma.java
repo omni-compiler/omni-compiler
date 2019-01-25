@@ -3078,7 +3078,7 @@ public class XMPtranslateLocalPragma {
     switch (x.Opcode()){
     case ARRAY_REF:
     case SUB_ARRAY_REF:
-      arrayName = getArrayName(x);
+      arrayName = XMPutil.getArrayName(x);
       a = x.getArg(0);
       Boolean isStructure = (a.Opcode() == Xcode.MEMBER_ARRAY_REF);
       if(isStructure)
@@ -3304,44 +3304,18 @@ public class XMPtranslateLocalPragma {
     }
   }
 
-  private String getArrayName(Xobject expr) throws XMPexception {
-    if ((expr.Opcode() == Xcode.ARRAY_REF) ||
-        (expr.Opcode() == Xcode.SUB_ARRAY_REF)) {
-      Xobject arrayAddr = expr.getArg(0);
-      Boolean isStructure = (arrayAddr.Opcode() == Xcode.MEMBER_ARRAY_REF);
-      if(isStructure){
-	String structName = arrayAddr.getArg(0).getArg(0).getSym();
-	String arrayName  = arrayAddr.getArg(1).getSym();
-	return XMP.STRUCT + structName + "_" + arrayName;
-      }
-      else{
-	return arrayAddr.getSym();
-      }
-    }
-    else {
-      throw new XMPexception("cannot find array ref");
-    }
-  }
-
   private XobjList getArrayAccList(PragmaBlock pb, Xobject expr) throws XMPexception
   {
     XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
     XobjList accList = Xcons.List();
-    Xobject arrayAddr   = expr.getArg(0);
-    Boolean isStructure = (arrayAddr.Opcode() == Xcode.MEMBER_ARRAY_REF);
+    Boolean isStructure = (expr.getArg(0).Opcode() == Xcode.MEMBER_ARRAY_REF);
     
-    String arrayName;
+    String arrayName = XMPutil.getArrayName(expr);
     XMPalignedArray alignedArray;
-    if(isStructure){
-      arrayName  = arrayAddr.getArg(1).getSym();
-      String structName = arrayAddr.getArg(0).getArg(0).getSym();
-      String memberName = XMP.STRUCT + structName + "_" + arrayName;
-      alignedArray =  _globalDecl.getXMPalignedArray(memberName);
-    }
-    else{
-      arrayName = arrayAddr.getSym();
+    if(isStructure)
+      alignedArray = _globalDecl.getXMPalignedArray(arrayName);
+    else
       alignedArray = _globalDecl.getXMPalignedArray(arrayName, pb);
-    }
     
     if (alignedArray == null) {
       Ident arrayId = pb.findVarIdent(arrayName);
@@ -3372,19 +3346,13 @@ public class XMPtranslateLocalPragma {
     XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
     Xobject arrayAddr = expr.getArg(0);
     Boolean isStructure = (arrayAddr.Opcode() == Xcode.MEMBER_ARRAY_REF);
-    String arrayName;
+    String arrayName = XMPutil.getArrayName(expr);
     XMPalignedArray alignedArray;
     
-    if(isStructure){
-      arrayName  = arrayAddr.getArg(1).getSym();
-      String structName = arrayAddr.getArg(0).getArg(0).getSym();
-      String memberName = XMP.STRUCT + structName + "_" + arrayName;
-      alignedArray =  _globalDecl.getXMPalignedArray(memberName);
-    }
-    else{
-      arrayName = arrayAddr.getSym();
+    if(isStructure)
+      alignedArray =  _globalDecl.getXMPalignedArray(arrayName);
+    else
       alignedArray = _globalDecl.getXMPalignedArray(arrayName, pb);
-    }
     
     XobjList arrayRefs = (XobjList)expr.getArg(1);
     XobjList castedArrayRefs = Xcons.List();
@@ -3673,7 +3641,7 @@ public class XMPtranslateLocalPragma {
       throw new XMPexception("ARRAY not followed by array ref.");
     }
 
-    String arrayName = getArrayName(left);
+    String arrayName = XMPutil.getArrayName(left);
     XMPalignedArray array = _globalDecl.getXMPalignedArray(arrayName, pb);
     Xtype arrayType = null;
     if (array != null){
@@ -3766,7 +3734,7 @@ public class XMPtranslateLocalPragma {
       if (x.Opcode() != Xcode.SUB_ARRAY_REF) continue;
 
       int k = 0;
-      String arrayName1 = getArrayName(x);
+      String arrayName1 = XMPutil.getArrayName(x);
       XMPalignedArray array1 = _globalDecl.getXMPalignedArray(arrayName1, pb);
       Xtype arrayType1 = null;
       if (array1 != null){
@@ -4195,7 +4163,5 @@ public class XMPtranslateLocalPragma {
     bl.add(pb1);
 
     return Bcons.COMPOUND(bl);
-
   }
-
 }

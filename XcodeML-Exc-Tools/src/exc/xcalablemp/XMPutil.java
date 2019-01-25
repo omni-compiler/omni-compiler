@@ -469,5 +469,25 @@ public class XMPutil {
 
     return true;
   }
+
+  public static String getArrayName(Xobject expr) {
+    if ((expr.Opcode() == Xcode.ARRAY_REF) ||
+        (expr.Opcode() == Xcode.SUB_ARRAY_REF)) {
+      Xobject arrayAddr = expr.getArg(0);
+      Boolean isStructure = (arrayAddr.Opcode() == Xcode.MEMBER_ARRAY_REF);
+      if(isStructure){
+        String structName = arrayAddr.getArg(0).getArg(0).getSym();
+        String arrayName  = arrayAddr.getArg(1).getSym();
+      	return XMP.STRUCT + structName + "_" + arrayName;
+      }
+      else{
+        return arrayAddr.getSym();
+      }
+    }
+    else {
+      XMP.fatal("cannot find array ref");
+      return null;
+    }
+  }
 }
   
