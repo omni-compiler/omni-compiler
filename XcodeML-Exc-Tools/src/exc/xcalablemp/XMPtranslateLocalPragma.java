@@ -843,7 +843,6 @@ public class XMPtranslateLocalPragma {
       }
 
       BlockList reductionBody = createReductionClauseBody(pb, reductionRefList, schedBaseBlock);
-      // schedBaseBlock.add(createReductionClauseBlock(pb, reductionBody, schedVarList)); #418
       schedBaseBlock.getParentBlock().add(createReductionClauseBlock(pb, reductionBody, schedVarList));
     }
 
@@ -878,10 +877,9 @@ public class XMPtranslateLocalPragma {
 
     // rewrite array refs in loop
     topdownXobjectIterator iter = new topdownXobjectIterator(getLoopBody(schedBaseBlock).toXobject());
-    for (iter.init(); !iter.end(); iter.next()) {
+    for (iter.init(); !iter.end(); iter.next())
       XMPrewriteExpr.rewriteArrayRefInLoop(iter.getXobject(), _globalDecl, schedBaseBlock, loopBody, loopIterList);
-    }
-
+    
     // replace pragma
     Block loopFuncCallBlock = Bcons.COMPOUND(loopBody);
     pb.replace(loopFuncCallBlock);
@@ -1251,19 +1249,7 @@ public class XMPtranslateLocalPragma {
       return Bcons.COMPOUND(reductionBody);
     }
   }
-  
-  /*
-  private void translateFollowingLoop(PragmaBlock pb, CforBlock schedBaseBlock) throws XMPexception {
-    XobjList loopDecl              = (XobjList)pb.getClauses();
-    ArrayList<String> iteraterList = new ArrayList<String>();  // Not used
-    boolean[] isOmitSchedLoopFunc  = new boolean[1];    // Initialize false automatically
     
-    isOmitSchedLoopFunc[0] = scheduleLoop(pb, schedBaseBlock, schedBaseBlock, iteraterList);
-    if(isOmitSchedLoopFunc[0] == false)
-      insertScheduleIndexFunction(pb, schedBaseBlock, schedBaseBlock, iteraterList);
-  }
-  */
-  
   private void translateMultipleLoop(PragmaBlock pb, CforBlock schedBaseBlock,
 				       XobjList loopVarList) throws XMPexception {
     // start translation
@@ -1547,9 +1533,8 @@ public class XMPtranslateLocalPragma {
     Xobject onRef       = loopDecl.getArg(1);
     String onRefObjName = onRef.getArg(0).getString();
     XMPobject onRefObj  = _globalDecl.getXMPobject(onRefObjName, schedBaseBlock);
-    if (onRefObj == null) {
+    if (onRefObj == null)
       throw new XMPexception("cannot find '" + onRefObjName + "' nodes/template");
-    }
 
     switch (onRefObj.getKind()) {
       case XMPobject.TEMPLATE:
@@ -1719,9 +1704,8 @@ public class XMPtranslateLocalPragma {
     int targetIndex          = 0;
     
     for (XobjArgs i = templateSubscriptList.getArgs(); i != null; i = i.nextArgs()) {
-      if (templateIndex >= templateDim) {
+      if (templateIndex >= templateDim)
         throw new XMPexception("wrong template dimensions, too many");
-      }
 
       if (i.getArg() != null){
 	String s = i.getArg().getString();
@@ -1736,17 +1720,14 @@ public class XMPtranslateLocalPragma {
 	  targetIndex      = templateIndex;
 	}
       }
-
       templateIndex++;
     }
 
-    if(templateIndexArg == null) {
+    if(templateIndexArg == null)
       throw new XMPexception("cannot find index '" + loopIndexName + "' reference in <on-ref>");
-    }
 
-    if(templateIndex != templateDim) {
+    if(templateIndex != templateDim)
       throw new XMPexception("wrong template dimensions, too few");
-    }
 
     boolean isOmitSchedLoopFunc = true;
     Xobject parallelInit;

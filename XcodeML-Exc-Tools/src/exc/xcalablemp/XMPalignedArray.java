@@ -37,9 +37,11 @@ public class XMPalignedArray {
   private boolean               _isLocal;
   private boolean               _isPointer;
 
-  private boolean               _isStaticDesc = false;
-  private Ident                 _flagId = null;
-  private boolean               _canOptimized = false;
+  private boolean               _isStaticDesc    = false;
+  private Ident                 _flagId          = null;
+  private boolean               _canOptimized    = false;
+  private boolean               _isStructure     = false;
+  private Xobject               _structMemberObj = null;
 
   public void setMultiArrayId(Ident id)
   {
@@ -78,7 +80,7 @@ public class XMPalignedArray {
 	return -1;
     }
   }
-
+  
   public XMPalignedArray(String name, Xtype type, ArrayType arrayType,
                          int dim, Vector<Ident> accIdVector,
                          Ident arrayId, Ident descId, Ident addrId,
@@ -113,6 +115,26 @@ public class XMPalignedArray {
     _isPointer = false;
   }
 
+  public XMPalignedArray(String name, Xtype type, ArrayType arrayType,
+                         int dim, Vector<Ident> accIdVector,
+                         Ident arrayId, Ident descId, Ident addrId,
+                         XMPtemplate alignTemplate, Xobject structMemberObj){
+    this(name, type, arrayType, dim, accIdVector,
+         arrayId, descId, addrId, alignTemplate);
+    _structMemberObj = structMemberObj;
+    _isStructure     = true;
+  }
+
+
+  public boolean isStructure()
+  {
+    return _isStructure;
+  }
+
+  public Xobject getStructMemberObj(){
+    return _structMemberObj;
+  }
+  
   public String getName() {
     return _name;
   }
