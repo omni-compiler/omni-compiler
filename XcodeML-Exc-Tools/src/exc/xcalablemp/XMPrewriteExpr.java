@@ -976,7 +976,7 @@ public class XMPrewriteExpr {
     Xobject left        = assignStmt.left();
     assert left.Opcode() == Xcode.SUB_ARRAY_REF;
     
-    String arrayName = left.getArg(0).getSym();
+    String arrayName = XMPutil.getArrayName(left);
     Ident arrayId    = block.findVarIdent(arrayName);
     Xtype arrayType  = (arrayId != null)? arrayId.Type() : null;
     if (arrayType == null)

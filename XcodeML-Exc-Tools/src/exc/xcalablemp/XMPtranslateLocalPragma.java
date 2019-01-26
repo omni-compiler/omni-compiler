@@ -3642,7 +3642,13 @@ public class XMPtranslateLocalPragma {
     }
 
     String arrayName = XMPutil.getArrayName(left);
-    XMPalignedArray array = _globalDecl.getXMPalignedArray(arrayName, pb);
+    Boolean isStructure = (left.getArg(0).Opcode() == Xcode.MEMBER_ARRAY_REF);
+    XMPalignedArray array;
+    if(isStructure)
+      array = _globalDecl.getXMPalignedArray(arrayName);
+    else
+      array = _globalDecl.getXMPalignedArray(arrayName, pb);
+
     Xtype arrayType = null;
     if (array != null){
       arrayType = array.getArrayType();
@@ -3653,7 +3659,7 @@ public class XMPtranslateLocalPragma {
 	arrayType = arrayId.Type();
       }
     }
-	
+
     if (arrayType == null) throw new XMPexception("array should be declared statically");
 
     Xtype elemType = arrayType.getArrayElementType();
@@ -3735,7 +3741,11 @@ public class XMPtranslateLocalPragma {
 
       int k = 0;
       String arrayName1 = XMPutil.getArrayName(x);
-      XMPalignedArray array1 = _globalDecl.getXMPalignedArray(arrayName1, pb);
+      XMPalignedArray array1;
+      if(isStructure)
+	array1 = _globalDecl.getXMPalignedArray(arrayName1);
+      else
+	array1 = _globalDecl.getXMPalignedArray(arrayName1, pb);
       Xtype arrayType1 = null;
       if (array1 != null){
 	arrayType1 = array1.getArrayType();
