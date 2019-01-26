@@ -50,22 +50,18 @@ public class XMPshadow {
     }
     
     String arrayName  = shadowDecl.getArg(0).getString();
-    createShadowFunctions(arrayName, shadowDecl, globalDecl, isLocalPragma, pb, false);
+    createShadowFunctions(arrayName, shadowDecl, globalDecl, isLocalPragma, pb);
   }
   
   public static void createShadowFunctions(String arrayName, XobjList shadowDecl, XMPglobalDecl globalDecl,
-					   boolean isLocalPragma, PragmaBlock pb, boolean isStruct) { 
+					   boolean isLocalPragma, PragmaBlock pb) { 
     XMPsymbolTable localXMPsymbolTable = null;
     Block parentBlock   = null;
     Boolean isParameter = false;
     if (isLocalPragma)
       parentBlock = pb.getParentBlock();
 
-    XMPalignedArray alignedArray;
-    if(isStruct)
-      alignedArray = globalDecl.getXMPalignedArray(arrayName);
-    else
-      alignedArray = globalDecl.getXMPalignedArray(arrayName, pb);
+    XMPalignedArray alignedArray = globalDecl.getXMPalignedArray(arrayName, pb);
 
     if (alignedArray == null)
       XMP.fatal("the aligned array '" + arrayName + "' is not found");
@@ -170,18 +166,16 @@ public class XMPshadow {
       Xobject arrayAddr = iter.getArg();
       boolean isStructure = (arrayAddr.isVariable() == false);
       String arrayName;
-      XMPalignedArray alignedArray;
       if(isStructure){
 	String structName = arrayAddr.getArg(0).getSym();
-        String memberName  = arrayAddr.getArg(1).getSym();
+        String memberName = arrayAddr.getArg(1).getSym();
       	arrayName = XMP.STRUCT + structName + "_" + memberName;
-	alignedArray = globalDecl.getXMPalignedArray(arrayName);
       }
       else{
 	arrayName = arrayAddr.getString();
-	alignedArray = globalDecl.getXMPalignedArray(arrayName, pb);
       }
-
+      XMPalignedArray alignedArray = globalDecl.getXMPalignedArray(arrayName, pb);
+	
       if (alignedArray == null)
         throw new XMPexception("the aligned array '" + arrayName + "' is not found");
       else if (!alignedArray.hasShadow())
@@ -232,7 +226,7 @@ public class XMPshadow {
 	Ident funcId = globalDecl.declExternFunc(isAcc? "_XMP_reflect_acc__" : "_XMP_reflect__");
 	XobjList funcArgs = Xcons.List(alignedArray.getDescId().Ref());
         if(isAcc){
-          Xobject addrRef = alignedArray.getAddrId().Ref();
+          Xobject addrRef = alignedArray.getAddrObj();
           funcArgs.cons(addrRef);
           accUseDeviceClauseArgs.add(addrRef);
         }
@@ -318,7 +312,7 @@ public class XMPshadow {
 	Ident funcId = globalDecl.declExternFunc(isAcc? "_XMP_reduce_shadow_acc__" : "_XMP_reduce_shadow__");
 	XobjList funcArgs = Xcons.List(alignedArray.getDescId().Ref());
         if(isAcc){
-          Xobject addrRef = alignedArray.getAddrId().Ref();
+          Xobject addrRef = alignedArray.getAddrObj();
           funcArgs.cons(addrRef);
           accUseDeviceClauseArgs.add(addrRef);
         }

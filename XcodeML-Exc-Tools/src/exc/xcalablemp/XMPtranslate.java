@@ -223,10 +223,8 @@ public class XMPtranslate implements XobjectDefVisitor {
 	    if (arrayId == null) arrayId = _globalDecl.findVarIdent(arrayName);
 	  }
 	  else{
-	    if (arrayId == null) {
-	      XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName);
-	      arrayId = alignedArray.getArrayId();
-	    }
+	    XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName);
+	    arrayId = alignedArray.getArrayId();
 	  }
 	  if (arrayId == null) continue;
 

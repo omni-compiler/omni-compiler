@@ -2213,7 +2213,6 @@ public class XMPtranslateLocalPragma {
 	  
 	  // FIXME not good implementation
 	  XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
-	  //XMPalignedArray specAlignedArray   = _globalDecl.getXMPalignedArray(specName, pb);
 	  if(specAlignedArray == null){
 	    specRef = specId.Ref();
 	    count = Xcons.LongLongConstant(0, XMPutil.getArrayElmtCount(arraySpecType));
@@ -3083,19 +3082,14 @@ public class XMPtranslateLocalPragma {
     case SUB_ARRAY_REF:
       arrayName = XMPutil.getArrayName(x);
       a = x.getArg(0);
-      Boolean isStructure = (a.Opcode() == Xcode.MEMBER_ARRAY_REF);
-      if(isStructure)
-	array = _globalDecl.getXMPalignedArray(arrayName);
-      else
-	array = _globalDecl.getXMPalignedArray(arrayName, pb);
-
+      array = _globalDecl.getXMPalignedArray(arrayName, pb);
       type = (array != null) ? array.getArrayType() : a.Type();
       int n = type.getNumDimensions();
       
       if (array != null){ // global
 	f = _globalDecl.declExternFunc(isACC? "xmpc_gmv_g_alloc_acc" : "xmpc_gmv_g_alloc", Xtype.FsubroutineType);
 	args = Xcons.List(descId.getAddr(), array.getDescId().Ref());
-	if(isACC) args.add(array.getAddrId().Ref());
+	if(isACC) args.add(array.getAddrObj());
 	bb.add(f.callSubroutine(args));
 
 	XobjList subscripts = (XobjList)x.getArg(1);
@@ -3212,14 +3206,10 @@ public class XMPtranslateLocalPragma {
 	  bb.add(f.callSubroutine(args));
 	}
       }
-
       break;
-
     case VAR:
-
       arrayName = x.getName();
       array = _globalDecl.getXMPalignedArray(arrayName, pb);
-
       if (array != null){ // name of a global array
     	f = _globalDecl.declExternFunc("xmpc_gmv_g_alloc", Xtype.FsubroutineType);
     	args = Xcons.List(descId.getAddr(), array.getDescId().Ref());
@@ -3311,19 +3301,12 @@ public class XMPtranslateLocalPragma {
   {
     XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
     XobjList accList = Xcons.List();
-    Boolean isStructure = (expr.getArg(0).Opcode() == Xcode.MEMBER_ARRAY_REF);
     
     String arrayName = XMPutil.getArrayName(expr);
-    XMPalignedArray alignedArray;
-    if(isStructure)
-      alignedArray = _globalDecl.getXMPalignedArray(arrayName);
-    else
-      alignedArray = _globalDecl.getXMPalignedArray(arrayName, pb);
-    
+    XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, pb);
     if (alignedArray == null) {
       Ident arrayId = pb.findVarIdent(arrayName);
       Xtype arrayType = arrayId.Type();
-
       int arrayDim = arrayType.getNumDimensions();
       if (arrayDim > XMP.MAX_DIM) {
         throw new XMPexception("array dimension should be less than " + (XMP.MAX_DIM + 1));
@@ -3348,15 +3331,8 @@ public class XMPtranslateLocalPragma {
                                                                   Xobject expr, XobjList accList) throws XMPexception {
     XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
     Xobject arrayAddr = expr.getArg(0);
-    Boolean isStructure = (arrayAddr.Opcode() == Xcode.MEMBER_ARRAY_REF);
     String arrayName = XMPutil.getArrayName(expr);
-    XMPalignedArray alignedArray;
-    
-    if(isStructure)
-      alignedArray =  _globalDecl.getXMPalignedArray(arrayName);
-    else
-      alignedArray = _globalDecl.getXMPalignedArray(arrayName, pb);
-    
+    XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, pb);
     XobjList arrayRefs = (XobjList)expr.getArg(1);
     XobjList castedArrayRefs = Xcons.List();
 
@@ -3645,12 +3621,7 @@ public class XMPtranslateLocalPragma {
     }
 
     String arrayName = XMPutil.getArrayName(left);
-    Boolean isStructure = (left.getArg(0).Opcode() == Xcode.MEMBER_ARRAY_REF);
-    XMPalignedArray array;
-    if(isStructure)
-      array = _globalDecl.getXMPalignedArray(arrayName);
-    else
-      array = _globalDecl.getXMPalignedArray(arrayName, pb);
+    XMPalignedArray array = _globalDecl.getXMPalignedArray(arrayName, pb);
 
     Xtype arrayType = null;
     if (array != null){
@@ -3744,11 +3715,7 @@ public class XMPtranslateLocalPragma {
 
       int k = 0;
       String arrayName1 = XMPutil.getArrayName(x);
-      XMPalignedArray array1;
-      if(isStructure)
-	array1 = _globalDecl.getXMPalignedArray(arrayName1);
-      else
-	array1 = _globalDecl.getXMPalignedArray(arrayName1, pb);
+      XMPalignedArray array1 = _globalDecl.getXMPalignedArray(arrayName1, pb);
       Xtype arrayType1 = null;
       if (array1 != null){
 	arrayType1 = array1.getArrayType();

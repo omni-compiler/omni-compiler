@@ -37,11 +37,11 @@ public class XMPalignedArray {
   private boolean               _isLocal;
   private boolean               _isPointer;
 
-  private boolean               _isStaticDesc    = false;
-  private Ident                 _flagId          = null;
-  private boolean               _canOptimized    = false;
-  private boolean               _isStructure     = false;
-  private Xobject               _structMemberObj = null;
+  private boolean               _isStaticDesc = false;
+  private Ident                 _flagId       = null;
+  private boolean               _canOptimized = false;
+  private boolean               _isStructure  = false;
+  private Xobject               _addrObj      = null;
 
   public void setMultiArrayId(Ident id)
   {
@@ -104,35 +104,39 @@ public class XMPalignedArray {
       _alignSubscriptExprVector.add(null);
       _alignNormExprVector.add(null);
     }
-    _arrayId = arrayId;
-    _descId = descId;
-    _addrId = addrId;
-    _hasShadow = false;
+    _arrayId        = arrayId;
+    _descId         = descId;
+    _addrId         = addrId;
+    _hasShadow      = false;
     _reallocChecked = false;
-    _alignTemplate = alignTemplate;
-    _isParameter = false;
-    _isLocal = false;
-    _isPointer = false;
+    _alignTemplate  = alignTemplate;
+    _isParameter    = false;
+    _isLocal        = false;
+    _isPointer      = false;
+    _addrObj        = addrId.Ref();
   }
 
+  // This constructor is used to define "addrObj" for structure member
   public XMPalignedArray(String name, Xtype type, ArrayType arrayType,
                          int dim, Vector<Ident> accIdVector,
                          Ident arrayId, Ident descId, Ident addrId,
-                         XMPtemplate alignTemplate, Xobject structMemberObj){
+                         XMPtemplate alignTemplate, Xobject addrObj){
     this(name, type, arrayType, dim, accIdVector,
          arrayId, descId, addrId, alignTemplate);
-    _structMemberObj = structMemberObj;
-    _isStructure     = true;
+    _addrObj = addrObj;
   }
 
-
+  public void setStructure(boolean arg)
+  {
+    _isStructure = arg;
+  }
   public boolean isStructure()
   {
     return _isStructure;
   }
 
-  public Xobject getStructMemberObj(){
-    return _structMemberObj;
+  public Xobject getAddrObj(){
+    return _addrObj;
   }
   
   public String getName() {

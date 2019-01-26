@@ -36,10 +36,10 @@ public class XMPrealloc implements XobjectDefVisitor {
     if(alignedArray == null)     return;
     if(alignedArray.isPointer()) return;
 
-    Boolean isStruct = (structId != null);
+    Boolean isStructure = (structId != null);
     if(alignedArray.realloc()){
       XobjList allocFuncArgs = null;
-      if(isStruct){
+      if(isStructure){
 	Xobject x = Xcons.memberAddr(structId.getAddr(), alignedArray.getAddrId().getName());
 	allocFuncArgs = Xcons.List(Xcons.Cast(Xtype.Pointer(Xtype.voidPtrType), x), alignedArray.getDescId().Ref());
       }
@@ -61,7 +61,7 @@ public class XMPrealloc implements XobjectDefVisitor {
         _globalDecl.insertGlobalFinalizeFuncCall("_XMP_dealloc_array",       Xcons.List(alignedArray.getDescId().Ref()));
       }
 
-      if(! isStruct)
+      if(! isStructure)
 	def.setDef(Xcons.List(Xcode.TEXT, Xcons.String("/* array '" + varName + "' is removed by XMP align directive */")));
     }
     else{
@@ -83,8 +83,8 @@ public class XMPrealloc implements XobjectDefVisitor {
 
     String varName   = def.getName();
     Ident varId      = _globalDecl.findIdent(varName);
-    Boolean isStruct = (varId.Type().getKind() == Xtype.STRUCT);
-    if(isStruct){
+    Boolean isStructure = (varId.Type().getKind() == Xtype.STRUCT);
+    if(isStructure){
       String structName   = varName;
       XobjList memberList = _globalDecl.findIdent(varName).Type().getMemberList();
       for(Xobject x : memberList){
