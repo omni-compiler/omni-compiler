@@ -1118,6 +1118,7 @@ public class XMPrewriteExpr {
     if (expr == null) {
       return null;
     }
+
     switch (expr.Opcode()) {
     case ARRAY_REF:
       return rewriteArrayRef(expr, block);
@@ -1389,7 +1390,7 @@ public class XMPrewriteExpr {
       return arrayAddr;
     }
   }
-  
+
   private Xobject rewriteVarRef(Xobject myExpr, Block block, boolean isVar) throws XMPexception {
     String varName     = myExpr.getSym();
     XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(varName, block);
@@ -1423,18 +1424,23 @@ public class XMPrewriteExpr {
       return myExpr;
     }
   }
-  
+
   private Xobject rewriteArrayRef(Xobject myExpr, Block block) throws XMPexception {
     Xobject arrayAddr = myExpr.getArg(0);
 
-    // for this moment, structure members shouldn't be aligned.
     if (arrayAddr.Opcode() != Xcode.ARRAY_ADDR &&
-	arrayAddr.Opcode() != Xcode.VAR) return myExpr;
+	arrayAddr.Opcode() != Xcode.VAR &&
+	arrayAddr.Opcode() != Xcode.MEMBER_ARRAY_REF) return myExpr;
 
-    String arrayName = arrayAddr.getSym();
+    String arrayName    = XMPutil.getArrayName(myExpr);
+    boolean isStructure = (arrayAddr.Opcode() == Xcode.MEMBER_ARRAY_REF);
+    XMPalignedArray alignedArray;
+    if(isStructure)
+      alignedArray = _globalDecl.getXMPalignedArray(arrayName);
+    else
+      alignedArray = _globalDecl.getXMPalignedArray(arrayName, block);
 
-    XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, block);
-    XMPcoarray      coarray      = _globalDecl.getXMPcoarray(arrayName, block);
+    XMPcoarray coarray = _globalDecl.getXMPcoarray(arrayName, block);
 
     if (alignedArray == null && coarray == null) {
       return myExpr;
@@ -1442,7 +1448,6 @@ public class XMPrewriteExpr {
     else if(alignedArray != null && coarray == null){  // only alignedArray
       Xobject newExpr = null;
       XobjList arrayRefList = normArrayRefList((XobjList)myExpr.getArg(1), alignedArray);
-
       if (alignedArray.checkRealloc() || (alignedArray.isLocal() && !alignedArray.isParameter()) ||
 	  alignedArray.isParameter()){
 	newExpr = rewriteAlignedArrayExpr(arrayRefList, alignedArray);
@@ -1599,7 +1604,12 @@ public class XMPrewriteExpr {
   private Xobject rewriteAlignedArrayExpr(XobjList refExprList,
                                           XMPalignedArray alignedArray) throws XMPexception {
     int arrayDimCount = 0;
-    XobjList args = Xcons.List(alignedArray.getAddrId().Ref());
+    XobjList args;
+    if(alignedArray.isStructure())
+      args = Xcons.List(alignedArray.getStructMemberObj());
+    else
+      args = Xcons.List(alignedArray.getAddrId().Ref());
+
     if (refExprList != null) {
       for (Xobject x : refExprList) {
 	args.add(getCalcIndexFuncRef(alignedArray, arrayDimCount, x));
@@ -1876,7 +1886,11 @@ public class XMPrewriteExpr {
 	  if (alignedArray != null) {
 	    if(alignedArray.canOptimized() && alignedMultiArrayDeclared.get(alignedArray) == null){
 	      Xtype newType   = createNewType(alignedArray);
-	      Xobject arrayId = Xcons.Cast(newType, alignedArray.getAddrId().Ref());
+	      Xobject arrayId;
+	      if(alignedArray.isStructure())
+		arrayId = Xcons.Cast(newType, alignedArray.getStructMemberObj());
+	      else
+		arrayId = Xcons.Cast(newType, alignedArray.getAddrId().Ref());
 	      Ident multiId   = loopBody.declLocalIdent(XMP.MULTI_ADDR_PREFIX_ + arrayName,
 							newType, StorageClass.AUTO, arrayId);
 	      alignedArray.setMultiArrayId(multiId);
@@ -2585,6 +2599,10 @@ public class XMPrewriteExpr {
 	  XMPalignedArray.createAlignFunctionCalls(alignedArray, _globalDecl, alignSourceList, alignSubscriptVarList,
 						   alignSubscriptExprList, templateObj, pb, parentBlock, origArrayId, arrayDim,
 	  					   orgName, arrayDescId, isLocalPragma, isPointer, isParameter, isStaticDesc);
+
+	  XobjList shadowDecl = arrayId.getShadowDecl();
+	  if(shadowDecl != null)
+	    XMPshadow.createShadowFunctions(arrayName, shadowDecl, _globalDecl, false, pb, true);
 	}
       }
     }

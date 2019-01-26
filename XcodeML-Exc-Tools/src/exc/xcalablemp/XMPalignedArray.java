@@ -594,6 +594,9 @@ public class XMPalignedArray {
     Boolean isStructure  = (structVar != null);
 
     if(isStructure){
+      if(isLocalPragma)
+	throw new XMPexception("structure member can be decleared in only global scope");
+      
       String structName = structVar.getString();
       Ident  structId   = globalDecl.findIdent(structName);
       if (structId == null) {

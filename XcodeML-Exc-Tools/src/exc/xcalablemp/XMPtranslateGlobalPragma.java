@@ -114,15 +114,18 @@ public class XMPtranslateGlobalPragma {
   }
 
   private void translateShadow(Xobject shadowPragma) throws XMPexception {
-    XobjList shadowDecl = (XobjList)shadowPragma.getArg(1);
+    XobjList shadowDecl     = (XobjList)shadowPragma.getArg(1);
     XobjList shadowNameList = (XobjList)shadowDecl.getArg(0);
     XobjList shadowDeclCopy = (XobjList)shadowDecl.copy();
-
+    Xobject  structVar      = null;
+    if(shadowDecl.Nargs() == 3)
+      structVar = shadowDecl.getArg(2).getArg(0);
+    
     Iterator<Xobject> iter = shadowNameList.iterator();
     while (iter.hasNext()) {
       Xobject x = iter.next();
       shadowDeclCopy.setArg(0, x);
-      XMPshadow.translateShadow(shadowDeclCopy, _globalDecl, false, null);
+      XMPshadow.translateShadow(shadowDeclCopy, _globalDecl, false, null, structVar);
     }
   }
 

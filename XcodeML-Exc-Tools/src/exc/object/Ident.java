@@ -73,6 +73,7 @@ public class Ident extends Xobject
     private XobjList alignSubscriptExprList = null;
     private PragmaBlock pb     = null;
     private Block parentBlock  = null;
+    private XobjList shadowDecl = null;
   
     // constructor
     public Ident(String name, StorageClass stg_class, Xtype type, Xobject v,
@@ -297,6 +298,16 @@ public class Ident extends Xobject
         return (Type() == null) ? false : Type().wasCoarray();
     }
 
+    public void setShadowDecl(XobjList arg)
+    {
+        this.shadowDecl = arg;
+    }
+
+    public XobjList getShadowDecl()
+    {
+      return this.shadowDecl;
+    }
+  
     public void setTemplateObj(XMPtemplate arg)
     {
         this.templateObj = arg;

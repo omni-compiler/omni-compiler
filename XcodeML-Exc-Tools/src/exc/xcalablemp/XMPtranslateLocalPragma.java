@@ -365,6 +365,9 @@ public class XMPtranslateLocalPragma {
     XobjList alignNameList         = (XobjList)alignDecl.getArg(0);
     XobjList alignSubscriptList    = (XobjList)alignDecl.getArg(3);
     XobjList alignSubscriptVarList = (XobjList)alignSubscriptList.left();
+    Xobject  structVar             = null;
+    if(alignDecl.Nargs() == 5)
+      structVar = alignDecl.getArg(4).getArg(0);
     
     String kind_bracket = alignSubscriptList.getTail().getString();
     boolean isSquare    = kind_bracket.equals("SQUARE");
@@ -376,7 +379,7 @@ public class XMPtranslateLocalPragma {
     while (iter.hasNext()) {
       Xobject x = iter.next();
       alignDeclCopy.setArg(0, x);
-      XMPalignedArray.translateAlign(alignDeclCopy, _globalDecl, true, pb, null);
+      XMPalignedArray.translateAlign(alignDeclCopy, _globalDecl, true, pb, structVar);
     }
   }
 
@@ -574,7 +577,7 @@ public class XMPtranslateLocalPragma {
     while (iter.hasNext()) {
       Xobject x = iter.next();
       shadowDeclCopy.setArg(0, x);
-      XMPshadow.translateShadow(shadowDeclCopy, _globalDecl, true, pb);
+      XMPshadow.translateShadow(shadowDeclCopy, _globalDecl, true, pb, null);
     }
   }
 
