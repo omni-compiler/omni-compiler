@@ -1,9 +1,10 @@
 package exc.object;
-import exc.block.*;
 
+import exc.block.*;
+import exc.xcalablemp.*;
+import java.util.Vector;
 import java.util.ArrayList;
 import java.util.List;
-
 import exc.util.XobjectVisitor;
 import xcodeml.util.XmLog;
 import xcodeml.util.XmOption;
@@ -61,6 +62,18 @@ public class Ident extends Xobject
     /** Codimensions for coarray (#284) */
     private Xobject codimensions;      // Codimensions might be moved into this.type like Fortran.
                                        // See exc.object.FarrayType
+    private boolean memberAligned = false;
+    private String structName     = null;
+    private XobjList descFuncArgs = null;
+    private Ident origId          = null;
+    private Vector<Ident> accIdVector = null;
+    private XMPtemplate templateObj   = null;
+    private XobjList alignSourceList        = null;
+    private XobjList alignSubscriptVarList  = null;
+    private XobjList alignSubscriptExprList = null;
+    private PragmaBlock pb     = null;
+    private Block parentBlock  = null;
+    private XobjList shadowDecl = null;
   
     // constructor
     public Ident(String name, StorageClass stg_class, Xtype type, Xobject v,
@@ -285,7 +298,119 @@ public class Ident extends Xobject
         return (Type() == null) ? false : Type().wasCoarray();
     }
 
+    public void setShadowDecl(XobjList arg)
+    {
+        this.shadowDecl = arg;
+    }
 
+    public XobjList getShadowDecl()
+    {
+      return this.shadowDecl;
+    }
+  
+    public void setTemplateObj(XMPtemplate arg)
+    {
+        this.templateObj = arg;
+    }
+
+    public XMPtemplate getTemplateObj()
+    {
+      return this.templateObj;
+    }
+  
+    public void setAccIdVector(Vector<Ident> arg)
+    {
+      this.accIdVector = arg;
+    }
+
+    public Vector<Ident> getAccIdVector()
+    {
+        return this.accIdVector;
+    }
+
+    public void setParentBlock(Block arg)
+    {
+        this.parentBlock = arg;
+    }
+
+    public Block getParentBlock()
+    {
+        return this.parentBlock;
+    }
+  
+    public void setPragmaBlock(PragmaBlock arg)
+    {
+        this.pb = arg;
+    }
+
+    public PragmaBlock getPragmaBlock()
+    {
+        return this.pb;
+    }
+  
+    public void setAlignSubscriptExprList(XobjList arg)
+    {
+        this.alignSubscriptExprList = arg;
+    }
+
+    public XobjList getAlignSubscriptExprList()
+    {
+        return this.alignSubscriptExprList;
+    }
+  
+    public void setAlignSubscriptVarList(XobjList arg)
+    {
+        this.alignSubscriptVarList = arg;
+    }
+
+    public XobjList getAlignSubscriptVarList()
+    {
+        return this.alignSubscriptVarList;
+    }
+  
+    public void setAlignSourceList(XobjList arg)
+    {
+        this.alignSourceList = arg;
+    }
+
+    public XobjList getAlignSourceList()
+    {
+        return this.alignSourceList;
+    }
+  
+    public void setOrigId(Ident id){
+      this.origId = (Ident)id.copy();
+    }
+
+    public Ident getOrigId(){
+        return this.origId;
+    }
+    
+    public void setDescFuncArgs(XobjList arg){
+        this.descFuncArgs = arg;
+    }
+
+    public XobjList getDescFuncArgs(){
+        return this.descFuncArgs;
+    }
+  
+    public void setStructName(String name){
+        this.structName = name;
+    }
+  
+    public String getStructName(){
+        return this.structName;
+    }
+  
+    public void setMemberAligned(boolean flag)
+    {
+        this.memberAligned = flag;
+    }
+  
+    public boolean isMemberAligned(){
+        return this.memberAligned;
+    }
+  
     public boolean isDeclared()
     {
         return declared;
@@ -346,34 +471,16 @@ public class Ident extends Xobject
     @Override
     public Xobject cfold(Block block)
     {
-      // System.out.println("cfold: name='"+name+"' fparam_value="+fparam_value);
-      
       if (Type().isFparameter() && fparam_value != null) {
         // I don't know why but fparam_value is always in this form.
         if (fparam_value.Nargs() == 2 && fparam_value.getArg(1) == null) {
           Xobject value = fparam_value.getArg(0);
           return value.cfold(block);
-        } else {
+        }
+	else {
           XmLog.fatal("Ident.cfold: unknown form of fparam_value");
         }
       }
-
-      // if (declared_module != null) {
-      //   XobjectDefEnv xobjDefEnv = ((FunctionBlock)block).getEnv();
-      //   XobjectFile xobjFile = (XobjectFile)xobjDefEnv;
-
-      //   if (xobjFile.findVarIdent(declared_module) == null)
-      //     XmLog.fatal("Ident.cfold: not found module name in globalSymbols: " + 
-      //                 declared_module);
-
-      //   for (XobjectDef punit: xobjFile.getDefs()) {
-      //     if (declared_module.equals(punit.getName())) {
-      //       // found the module that declares this ident
-      //       Ident ident2 = punit.getDef().findVarIdent(name);
-      //       return ident2.cfold(block);
-      //     }
-      //   }
-      //}
 
       return this.copy();
     }

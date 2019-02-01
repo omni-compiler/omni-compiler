@@ -271,6 +271,9 @@ public class XMPglobalDecl {
     a = getXMPalignedArray(name);
     if (a != null && a.getArrayId() == id) return a;
 
+    // fix me for structure member
+    if (a != null && a.isStructure()) return getXMPalignedArray(name);
+
     return null;
   }
 

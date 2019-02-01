@@ -33,28 +33,41 @@ public class XMPshadow {
 
   // FIXME incomplete, not checked
   public static void translateShadow(XobjList shadowDecl, XMPglobalDecl globalDecl,
-                                     boolean isLocalPragma, PragmaBlock pb) throws XMPexception {
-    
+                                     boolean isLocalPragma, PragmaBlock pb, Xobject structVar) throws XMPexception {
     // start translation
-    String arrayName = shadowDecl.getArg(0).getString();
+    Boolean isStructure = (structVar != null);
 
-    XMPsymbolTable localXMPsymbolTable = null;
-    Block parentBlock = null;
+    if (isStructure) {
+      String structName = structVar.getString();
+      Ident  structId   = globalDecl.findIdent(structName);
+      if (structId == null)
+        throw new XMPexception("structure '" + structName + "' is not declared");
 
-    Boolean isParameter = false;
-    if (isLocalPragma) {
-      parentBlock = pb.getParentBlock();
+      String arrayName = shadowDecl.getArg(0).getString();
+      Ident arrayId = structId.Type().getMemberList().getIdent(XMP.ADDR_PREFIX_ + arrayName);
+      arrayId.setShadowDecl(shadowDecl);
+      return;
     }
+    
+    String arrayName  = shadowDecl.getArg(0).getString();
+    createShadowFunctions(arrayName, shadowDecl, globalDecl, isLocalPragma, pb);
+  }
+  
+  public static void createShadowFunctions(String arrayName, XobjList shadowDecl, XMPglobalDecl globalDecl,
+					   boolean isLocalPragma, PragmaBlock pb) { 
+    XMPsymbolTable localXMPsymbolTable = null;
+    Block parentBlock   = null;
+    Boolean isParameter = false;
+    if (isLocalPragma)
+      parentBlock = pb.getParentBlock();
 
     XMPalignedArray alignedArray = globalDecl.getXMPalignedArray(arrayName, pb);
 
-    if (alignedArray == null) {
-      throw new XMPexception("the aligned array '" + arrayName + "' is not found");
-    }
+    if (alignedArray == null)
+      XMP.fatal("the aligned array '" + arrayName + "' is not found");
 
-    if (alignedArray.hasShadow()) {
-      throw new XMPexception("the aligned array '" + arrayName + "' has the shadow declaration already");
-    }
+    if (alignedArray.hasShadow())
+      XMP.fatal("the aligned array '" + arrayName + "' has the shadow declaration already");
     
     Boolean isPointer = (alignedArray.getArrayId().Type().getKind() == Xtype.POINTER);
 
@@ -63,12 +76,11 @@ public class XMPshadow {
     int arrayIndex = 0;
     int arrayDim = alignedArray.getDim();
     for (XobjArgs i = shadowDecl.getArg(1).getArgs(); i != null; i = i.nextArgs()) {
-      if (arrayIndex == arrayDim) {
-        throw new XMPexception("wrong shadow dimension indicated, too many");
-      }
+      if (arrayIndex == arrayDim)
+	XMP.fatal("wrong shadow dimension indicated, too many");
 
-      XobjList shadowObj = (XobjList)i.getArg();
-      XobjInt shadowType = (XobjInt)shadowObj.getArg(0);
+      XobjList shadowObj  = (XobjList)i.getArg();
+      XobjInt shadowType  = (XobjInt)shadowObj.getArg(0);
       XobjList shadowBody = (XobjList)shadowObj.getArg(1);
       switch (shadowType.getInt()) {
         case XMPshadow.SHADOW_NONE:
@@ -88,17 +100,13 @@ public class XMPshadow {
               break;
             }
 
-            if (alignedArray.getAlignMannerAt(arrayIndex) == XMPalignedArray.NOT_ALIGNED) {
-              throw new XMPexception("indicated dimension is not aligned");
-            }
-            else if (alignedArray.getAlignMannerAt(arrayIndex) == XMPalignedArray.DUPLICATION) {
-              throw new XMPexception("indicated dimension is not distributed");
-            }
-
-            if (alignedArray.getAlignMannerAt(arrayIndex) != XMPalignedArray.BLOCK &&
-		alignedArray.getAlignMannerAt(arrayIndex) != XMPalignedArray.GBLOCK) {
-              throw new XMPexception("shadow should be declared on block or gblock distbirution");
-            }
+            if (alignedArray.getAlignMannerAt(arrayIndex) == XMPalignedArray.NOT_ALIGNED)
+              XMP.fatal("indicated dimension is not aligned");
+            else if (alignedArray.getAlignMannerAt(arrayIndex) == XMPalignedArray.DUPLICATION)
+              XMP.fatal("indicated dimension is not distributed");
+	    else if (alignedArray.getAlignMannerAt(arrayIndex) != XMPalignedArray.BLOCK &&
+		     alignedArray.getAlignMannerAt(arrayIndex) != XMPalignedArray.GBLOCK)
+              XMP.fatal("shadow should be declared on block or gblock distbirution");
 
 	    shadowFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(XMPshadow.SHADOW_NORMAL)));
 	    shadowFuncArgs.add(Xcons.Cast(Xtype.intType, shadowLo));
@@ -108,12 +116,10 @@ public class XMPshadow {
           }
         case XMPshadow.SHADOW_FULL:
           {
-            if (alignedArray.getAlignMannerAt(arrayIndex) == XMPalignedArray.NOT_ALIGNED) {
-              throw new XMPexception("indicated dimension is not aligned");
-            }
-            else if (alignedArray.getAlignMannerAt(arrayIndex) == XMPalignedArray.DUPLICATION) {
-              throw new XMPexception("indicated dimension is not distributed");
-            }
+            if (alignedArray.getAlignMannerAt(arrayIndex) == XMPalignedArray.NOT_ALIGNED)
+              XMP.fatal("indicated dimension is not aligned");
+            else if (alignedArray.getAlignMannerAt(arrayIndex) == XMPalignedArray.DUPLICATION)
+              XMP.fatal("indicated dimension is not distributed");
 
             shadowFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(XMPshadow.SHADOW_FULL)));
             alignedArray.setShadowAt(new XMPshadow(XMPshadow.SHADOW_FULL, null, null), arrayIndex);
@@ -121,27 +127,24 @@ public class XMPshadow {
             break;
           }
         default:
-          throw new XMPexception("unknown shadow type");
+          XMP.fatal("unknown shadow type");
       }
-
       arrayIndex++;
     }
     
-    if (arrayIndex != arrayDim) {
-      throw new XMPexception("the number of <nodes/template-subscript> should be the same with the dimension");
-    }
+    if (arrayIndex != arrayDim)
+      XMP.fatal("the number of <nodes/template-subscript> should be the same with the dimension");
 
     String fname = isPointer ? "_XMP_init_shadow_noalloc" : "_XMP_init_shadow";
 
     if (isLocalPragma) {
-      //XMPlocalDecl.addConstructorCall("_XMP_init_shadow", shadowFuncArgs, globalDecl, pb);
       if (alignedArray.isStaticDesc()){
 	XMPlocalDecl.addConstructorCall2_staticDesc(fname, shadowFuncArgs, globalDecl, parentBlock,
 						    alignedArray.getFlagId(), false);
       }
-      else {
+      else{
 	XMPlocalDecl.addConstructorCall2(fname, shadowFuncArgs, globalDecl, parentBlock);
-      }      
+      }
     }
     else {
       globalDecl.addGlobalInitFuncCall(fname, shadowFuncArgs);
@@ -151,49 +154,35 @@ public class XMPshadow {
     alignedArray.setHasShadow();
   }
 
-  public static Block translateReflect(PragmaBlock pb, XMPglobalDecl globalDecl, boolean isAcc) throws XMPexception {
-    // start translation
-    XobjList reflectDecl = (XobjList)pb.getClauses();
+  public static Block translateReflect(PragmaBlock pb, XMPglobalDecl globalDecl, boolean isAcc) throws XMPexception
+  {
+    XobjList reflectDecl               = (XobjList)pb.getClauses();
     XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
-    BlockList reflectFuncBody = Bcons.emptyBody();
-    XobjList accUseDeviceClauseArgs = Xcons.List();
+    BlockList reflectFuncBody          = Bcons.emptyBody();
+    XobjList accUseDeviceClauseArgs    = Xcons.List();
 
     XobjList arrayList = (XobjList)reflectDecl.getArg(0);
     for (XobjArgs iter = arrayList.getArgs(); iter != null; iter = iter.nextArgs()) {
-      String arrayName = iter.getArg().getString();
-      //XMPalignedArray alignedArray = globalDecl.getXMPalignedArray(arrayName, localXMPsymbolTable);
+      Xobject arrayAddr = iter.getArg();
+      boolean isStructure = (arrayAddr.isVariable() == false);
+      String arrayName;
+      if(isStructure){
+	String structName = arrayAddr.getArg(0).getSym();
+        String memberName = arrayAddr.getArg(1).getSym();
+      	arrayName = XMP.STRUCT + structName + "_" + memberName;
+      }
+      else{
+	arrayName = arrayAddr.getString();
+      }
       XMPalignedArray alignedArray = globalDecl.getXMPalignedArray(arrayName, pb);
-      if (alignedArray == null) {
+	
+      if (alignedArray == null)
         throw new XMPexception("the aligned array '" + arrayName + "' is not found");
-      }
-
-      if (!alignedArray.hasShadow()) {
+      else if (!alignedArray.hasShadow())
         throw new XMPexception("the aligned array '" + arrayName + "' has no shadow declaration");
-      }
-
-      //createReflectNormalShadowFunc(pb, globalDecl, alignedArray, reflectFuncBody);
-
-//       int arrayDim = alignedArray.getDim();
-//       for (int i = 0; i < arrayDim; i++) {
-//         XMPshadow shadowObj = alignedArray.getShadowAt(i);
-//         switch (shadowObj.getType()) {
-//           case XMPshadow.SHADOW_NONE:
-//             break;
-//           case XMPshadow.SHADOW_NORMAL:
-//             createReflectNormalShadowFunc0(pb, globalDecl, alignedArray, i, reflectFuncBody);
-//             break;
-//           case XMPshadow.SHADOW_FULL:
-//             createReflectFullShadowFunc(pb, globalDecl, alignedArray, i, reflectFuncBody);
-//             break;
-//           default:
-//             throw new XMPexception("unknown shadow type");
-//         }
-//       }
-
+      
       Xobject asyncId = null;
-
       if (reflectDecl.Nargs() > 2){
-
 	if (reflectDecl.getArg(1) != null){
 	  XobjList widthList = (XobjList)reflectDecl.getArg(1);
 	  for (int i = 0; i < widthList.Nargs(); i++){
@@ -237,7 +226,7 @@ public class XMPshadow {
 	Ident funcId = globalDecl.declExternFunc(isAcc? "_XMP_reflect_acc__" : "_XMP_reflect__");
 	XobjList funcArgs = Xcons.List(alignedArray.getDescId().Ref());
         if(isAcc){
-          Xobject addrRef = alignedArray.getAddrId().Ref();
+          Xobject addrRef = alignedArray.getAddrObj();
           funcArgs.cons(addrRef);
           accUseDeviceClauseArgs.add(addrRef);
         }
@@ -323,7 +312,7 @@ public class XMPshadow {
 	Ident funcId = globalDecl.declExternFunc(isAcc? "_XMP_reduce_shadow_acc__" : "_XMP_reduce_shadow__");
 	XobjList funcArgs = Xcons.List(alignedArray.getDescId().Ref());
         if(isAcc){
-          Xobject addrRef = alignedArray.getAddrId().Ref();
+          Xobject addrRef = alignedArray.getAddrObj();
           funcArgs.cons(addrRef);
           accUseDeviceClauseArgs.add(addrRef);
         }
@@ -343,84 +332,6 @@ public class XMPshadow {
     return reduceShadowFuncCallBlock;
   }
     
-//   private static void createReflectNormalShadowFunc0(PragmaBlock pb, XMPglobalDecl globalDecl,
-// 						     XMPalignedArray alignedArray, int arrayIndex,
-// 						     BlockList reflectFuncBody) {
-//     String arrayName = alignedArray.getName();
-
-//     // decl buffers
-//     Ident loSendId = reflectFuncBody.declLocalIdent("_XMP_reflect_LO_SEND_" + arrayName, Xtype.voidPtrType);
-//     Ident loRecvId = reflectFuncBody.declLocalIdent("_XMP_reflect_LO_RECV_" + arrayName, Xtype.voidPtrType);
-//     Ident hiSendId = reflectFuncBody.declLocalIdent("_XMP_reflect_HI_SEND_" + arrayName, Xtype.voidPtrType);
-//     Ident hiRecvId = reflectFuncBody.declLocalIdent("_XMP_reflect_HI_RECV_" + arrayName, Xtype.voidPtrType);
-
-//     // pack shadow
-//     Ident packFuncId = globalDecl.declExternFunc("_XMP_pack_shadow_NORMAL");
-//     XobjList packFuncArgs = Xcons.List(loSendId.getAddr(), hiSendId.getAddr(), alignedArray.getAddrIdVoidRef(),
-//                                        alignedArray.getDescId().Ref(), Xcons.IntConstant(arrayIndex));
-
-//     reflectFuncBody.add(Bcons.Statement(packFuncId.Call(packFuncArgs)));
-
-//     // exchange shadow
-//     Ident exchangeFuncId = globalDecl.declExternFunc("_XMP_exchange_shadow_NORMAL");
-//     XobjList exchangeFuncArgs = Xcons.List(loRecvId.getAddr(), hiRecvId.getAddr(), loSendId.Ref(), hiSendId.Ref());
-//     exchangeFuncArgs.add(alignedArray.getDescId().Ref());
-//     exchangeFuncArgs.add(Xcons.IntConstant(arrayIndex));
-
-//     reflectFuncBody.add(Bcons.Statement(exchangeFuncId.Call(exchangeFuncArgs)));
-
-//     // unpack shadow
-//     Ident unpackFuncId = globalDecl.declExternFunc("_XMP_unpack_shadow_NORMAL");;
-//     XobjList unpackFuncArgs = Xcons.List(loRecvId.Ref(), hiRecvId.Ref(), alignedArray.getAddrIdVoidRef(),
-//                                          alignedArray.getDescId().Ref(), Xcons.IntConstant(arrayIndex));
-
-//     reflectFuncBody.add(Bcons.Statement(unpackFuncId.Call(unpackFuncArgs)));
-//   }
-
-//   // private static void createReflectNormalShadowFunc(PragmaBlock pb, XMPglobalDecl globalDecl,
-//   // 						    XMPalignedArray a, BlockList reflectFuncBody) {
-
-//   //   XMPinfo info;
-
-//   //   for (int i = 0; i < info.widthList.size(); i++){
-//   //   	Ident f = globalDecl.declExternFunc("xmpf_set_reflect_");
-//   //   	XMPdimInfo w = info.widthList.get(i);
-//   //   	Xobject args = Xcons.List(a.getDescId().Ref(), Xcons.IntConstant(i),
-//   //   				  w.getLower(), w.getUpper(), w.getStride());
-//   //   	reflectFuncBody.add(Bcons.Statement(f.Call(args)));
-//   //   }
-
-//   //   if (info.getAsyncId() != null){
-//   //   	Ident f = globalDecl.declExternFunc("xmpf_reflect_async_");
-//   //   	Xobject args = Xcons.List(a.getDescId().Ref(), info.getAsyncId());
-//   //   	reflectFuncBody.add(Bcons.Statement(f.Call(args)));
-//   //   }
-//   //   else {
-//   //   	Ident f = globalDecl.declExternFunc("xmpf_reflect_");
-//   //   	Xobject args = Xcons.List(a.getDescId().Ref());
-//   //   	reflectFuncBody.add(Bcons.Statement(f.Call(args)));
-//   //   }
-
-//   //   Ident exchangeFuncId = globalDecl.declExternFunc("_XMP_exchange_shadow_NORMAL");
-//   //   XobjList exchangeFuncArgs = Xcons.List();
-//   //   exchangeFuncArgs.add(a.getDescId().Ref());
-//   //   reflectFuncBody.add(Bcons.Statement(exchangeFuncId.Call(exchangeFuncArgs)));
-
-//   //   // Ident f = globalDecl.declExternFunc("xmpf_reflect_");
-//   //   // Xobject args = Xcons.List(a.getDescId().Ref());
-//   //   // reflectFuncBody.add(Bcons.Statement(f.Call(args)));
-
-//   // }
-
-//   private static void createReflectFullShadowFunc(PragmaBlock pb, XMPglobalDecl globalDecl,
-//                                                   XMPalignedArray alignedArray, int arrayIndex,
-//                                                   BlockList reflectFuncBody) {
-//     Ident funcId = globalDecl.declExternFunc("_XMP_reflect_shadow_FULL");
-//     XobjList funcArgs = Xcons.List(alignedArray.getAddrIdVoidRef(), alignedArray.getDescId().Ref(), Xcons.IntConstant(arrayIndex));
-
-//     reflectFuncBody.add(Bcons.Statement(funcId.Call(funcArgs)));
-//   }
-
   // FIXME implement full shadow
   public static Block translateGpuReflect(PragmaBlock pb, XMPglobalDecl globalDecl) throws XMPexception {
     // start translation
