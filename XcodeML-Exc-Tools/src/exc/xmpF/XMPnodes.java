@@ -217,7 +217,7 @@ public class XMPnodes extends XMPobject {
     if (!_is_saveDesc){
       Ident f = env.declInternIdent(XMP.nodes_dealloc_f,Xtype.FsubroutineType,block);
       Xobject args = Xcons.List(_descId.Ref());
-      body.add(f.callSubroutine(args));
+      body.insert(f.callSubroutine(args));
     }
   }
 }
