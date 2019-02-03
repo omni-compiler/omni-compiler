@@ -1106,7 +1106,7 @@ public class XMParray {
     
       f = env.declInternIdent(XMP.array_dealloc_f,Xtype.FsubroutineType, block);
       args = Xcons.List(descId.Ref());
-      body.add(f.callSubroutine(args));
+      body.insert(f.callSubroutine(args));
     }
   }
 

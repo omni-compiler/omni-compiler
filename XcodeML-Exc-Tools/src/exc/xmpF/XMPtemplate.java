@@ -340,7 +340,7 @@ package exc.xmpF;
        Ident f = env.declInternIdent(XMP.template_dealloc_f,Xtype.
 				     FsubroutineType,block);
        Xobject args = Xcons.List(_descId.Ref());
-       body.add(f.callSubroutine(args));
+       body.insert(f.callSubroutine(args));
      }
    }
 }
