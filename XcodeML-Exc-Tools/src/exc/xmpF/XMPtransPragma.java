@@ -793,50 +793,6 @@ public class XMPtransPragma
 
     Ident f = env.declInternIdent(isAcc? XMP.bcast_acc_f : XMP.bcast_f, Xtype.FsubroutineType);
 
-    // for(Ident id: info.getInfoVarIdents()){
-    //   Xtype type = id.Type();
-    //   Xobject size_expr = Xcons.IntConstant(1);
-
-    //   if (type.isFarray()){
-    // 	if (type.isFassumedSize()){
-    // 	  XMP.fatal("assumed-size array cannot be the target of bcast.");
-    // 	}
-        
-    // 	if (!type.isFassumedShape() && !type.isFallocatable()){
-    // 	  for (Xobject s: type.getFarraySizeExpr()){
-    // 	    Xobject size;
-    // 	    if (s.Opcode() == Xcode.F_INDEX_RANGE){
-    // 	      Xobject lb = s.getArg(0);
-    // 	      Xobject ub = s.getArg(1);
-    // 	      size = Xcons.binaryOp(Xcode.MINUS_EXPR, ub, lb);
-    // 	      size = Xcons.binaryOp(Xcode.PLUS_EXPR, size, Xcons.IntConstant(1));
-    // 	    }
-    // 	    else {
-    // 	      size = s;
-    // 	    }
-
-    // 	    size_expr = Xcons.binaryOp(Xcode.MUL_EXPR, size_expr, size);
-    // 	  }
-    // 	}
-    // 	else {
-    // 	  Ident size_func = env.declIntrinsicIdent("size", Xtype.FintFunctionType);
-    // 	  size_expr = size_func.Call(Xcons.List(id.Ref()));
-    // 	}
-    // 	type = type.getRef();
-    //   }
-
-    //   if(!type.isBasic()){
-    // 	XMP.fatal("bcast for non-basic type ="+type);
-    //   }
-
-    //   if(type.getFlen() != null)
-    //     size_expr = Xcons.binaryOp(Xcode.MUL_EXPR, size_expr, type.getFlen());
-
-    //   Xobject args = Xcons.List(id.Ref(), size_expr, XMP.typeIntConstant(type), from_ref_arg, on_ref_arg);
-
-    //   ret_body.add(f.callSubroutine(args));
-    // }
-
     for (Xobject v: info.getInfoVars()){
 
       Xtype type = null;
@@ -974,13 +930,11 @@ public class XMPtransPragma
     Ident g2 = env.declInternIdent(XMP.ref_dealloc_f, Xtype.FsubroutineType, pb);
 
     if (tasksFlag){
-      //parentBlock.insert(on_ref.buildConstructor(env));
       parentBlock.insert(b);
       parentBlock.add(g1.callSubroutine(Xcons.List(taskNodesDescId)));
       parentBlock.add(g2.callSubroutine(Xcons.List(on_ref.getDescId())));
     }
     else {
-      //ret_body.add(on_ref.buildConstructor(env));
       ret_body.add(b);
     }
 
@@ -988,7 +942,6 @@ public class XMPtransPragma
     if (!info.isNocomm()){
       f = env.declInternIdent(XMP.test_task_on_f,
 			      Xtype.FlogicalFunctionType, pb);
-      //Xobject cond = f.Call(Xcons.List(on_ref.getDescId().Ref()));
       cond = f.Call(Xcons.List(taskNodesDescId.Ref()));
     }
     else {

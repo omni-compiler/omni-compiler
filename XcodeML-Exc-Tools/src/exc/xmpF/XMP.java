@@ -55,9 +55,11 @@ public class XMP {
   public final static String SIZE_ARRAY_NAME    = "xmp_size_array";
   public final static String XMP_COMMON_NAME    = "XMP_COMMON";
 
-  public final static String PREFIX_		= "XMP__";
-  public final static String DESC_PREFIX_	= "XMP_DESC_";
-  public final static String SAVE_DESC_PREFIX_	= "XMP_SAVE_";    
+  public final static String PREFIX_		 = "XMP__";
+  public final static String DESC_PREFIX_ 	 = "XMP_DESC_";
+  public final static String DESC_STRUCT_PREFIX_ = "XMP_STRUCT_DESC_";
+  public final static String SAVE_DESC_PREFIX_	 = "XMP_SAVE_";
+  public final static String STRUCT_PREFIX_      = "XMP_STRUCT_";
 
   public final static String ASTERISK		= "* @{ASTERISK}@";
   public final static String COLON		= ": @{COLON}@";

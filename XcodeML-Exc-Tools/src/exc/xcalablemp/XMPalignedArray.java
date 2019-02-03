@@ -607,7 +607,7 @@ public class XMPalignedArray {
         throw new XMPexception("structure '" + structName + "' is not declared");
       }
       arrayId = structId.Type().getMemberList().getIdent(arrayName);
-      arrayId.setOrigId(arrayId);
+      arrayId.saveOrigId();
     }
     else{
       if (isLocalPragma) {

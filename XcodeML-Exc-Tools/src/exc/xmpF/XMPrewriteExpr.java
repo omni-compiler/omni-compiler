@@ -143,10 +143,31 @@ public class XMPrewriteExpr
         Xobject f_params = null;
         if(f_type != null && f_type.isFunction())
           f_params = f_type.getFuncParam();
-    
+	
         for(Xobject i: (XobjList) id_list){
           Ident id = (Ident)i;
-          XMParray array = XMParray.getArray(id);
+	  boolean isStructure = (id.Type().getKind() == Xtype.STRUCT);
+	  StorageClass sclass = id.getStorageClass();
+	  if(isStructure && sclass == StorageClass.FLOCAL){
+	    XobjList memberList = id.Type().getMemberList();
+	    for(Xobject x: memberList){
+	      Ident memberId = (Ident)x;
+	      if(memberId.isMemberAligned()){
+		Ident structVarId    = id;
+		String memberName    = memberId.getName();
+		String structVarName = structVarId.getName();
+		Block structVarBlock = env.findVarIdentBlock(structVarName, funcBlock);
+		XMParray arrayObject = new XMParray();
+		memberId.setStructId(id);
+		arrayObject.parseAlignOfStructure(structVarName, structVarId, structVarBlock,
+						  memberName, memberId, env);
+		env.declXMParray(arrayObject, structVarBlock);
+		continue;
+	      }
+	    }
+	  }
+	  
+	  XMParray array = XMParray.getArray(id);
           if(array == null) continue;
       
           // write id
@@ -157,6 +178,7 @@ public class XMPrewriteExpr
           for(Xobject decl: (XobjList) decl_list){
             if(decl.Opcode() != Xcode.VAR_DECL) continue;
             Xobject decl_id = decl.getArg(0);
+
             if(decl_id.Opcode() == Xcode.IDENT && 
                decl_id.getName().equals(a_name)){
               decl.setArg(0,Xcons.Symbol(Xcode.IDENT,xmp_type,xmp_name));
@@ -924,7 +946,6 @@ public class XMPrewriteExpr
 	if (array != null){
 	  atype = array.getType();
 	  arrayDim = array.getDim();
-	  //sizeFunc = env.declIntrinsicIdent("xmp_array_gsize", Xtype.FintFunctionType);
 	  sizeFunc = env.declExternIdent("xmp_array_gsize", Xtype.FintFunctionType);
 	  arg0 = array.getDescId().Ref();
 	}

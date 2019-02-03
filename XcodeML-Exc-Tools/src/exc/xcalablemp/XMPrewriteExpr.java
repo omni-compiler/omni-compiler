@@ -2547,7 +2547,7 @@ public class XMPrewriteExpr {
 	    accIdVector.add(accId);
 	  }
 	  Xtype arrayElmtType     = origArrayType.getArrayElementType();
-	  XMPtemplate templateObj = arrayId.getTemplateObj();
+	  XMPtemplate templateObj = (XMPtemplate)arrayId.getTemplateObj();
 	  String arrayName = XMP.STRUCT + varName + "_" + orgName;  // Only "varName + \"_\" + orgName" may conflict with a user variable.
 	  Xobject structMemberObj = Xcons.memberRef(varId.getAddr(), arrayId.getName());
 	  XMPalignedArray alignedArray = new XMPalignedArray(arrayName, arrayElmtType, (ArrayType)origArrayType, arrayDim,

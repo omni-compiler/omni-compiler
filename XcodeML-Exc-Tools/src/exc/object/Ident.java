@@ -63,18 +63,19 @@ public class Ident extends Xobject
     private Xobject codimensions;      // Codimensions might be moved into this.type like Fortran.
                                        // See exc.object.FarrayType
     private boolean memberAligned = false;
-    private String structName     = null;
+    private Ident structId        = null;
     private XobjList descFuncArgs = null;
     private Ident origId          = null;
     private Vector<Ident> accIdVector = null;
-    private XMPtemplate templateObj   = null;
+    private Object templateObj        = null;
     private XobjList alignSourceList        = null;
+    private XobjList alignScriptList        = null;
     private XobjList alignSubscriptVarList  = null;
     private XobjList alignSubscriptExprList = null;
     private PragmaBlock pb     = null;
     private Block parentBlock  = null;
     private XobjList shadowDecl = null;
-  
+
     // constructor
     public Ident(String name, StorageClass stg_class, Xtype type, Xobject v,
                  VarScope scope)
@@ -99,8 +100,8 @@ public class Ident extends Xobject
         enum_value, fparam_value, codimensions);
     }
 
-    public Ident(String name, String full_name, int access, boolean is_op, StorageClass stg_class, Xtype type, Xobject v,
-                 int optionalFlags, Xobject gccAttrs,
+    public Ident(String name, String full_name, int access, boolean is_op, StorageClass stg_class, Xtype type,
+		 Xobject v, int optionalFlags, Xobject gccAttrs,
                  int bit_field, Xobject bit_field_expr, Xobject enum_value,
                  Xobject fparam_value, Xobject codimensions)
     {
@@ -120,6 +121,7 @@ public class Ident extends Xobject
         this.fparam_value = fparam_value;
         this.codimensions = codimensions;
     }
+
   /************************
     // for upper-compatibility
     public Ident(String name, StorageClass stg_class, Xtype type, Xobject v,
@@ -152,6 +154,7 @@ public class Ident extends Xobject
       this.enum_value = enum_value;
       this.fparam_value = fparam_value;
       this.codimensions = codimensions;
+      this.type = type;
     }
   /***************************************:
     // for upper-compatibility
@@ -307,15 +310,14 @@ public class Ident extends Xobject
     {
       return this.shadowDecl;
     }
-  
-    public void setTemplateObj(XMPtemplate arg)
-    {
+
+    public void setTemplateObj(Object arg){
         this.templateObj = arg;
     }
 
-    public XMPtemplate getTemplateObj()
+    public Object getTemplateObj()
     {
-      return this.templateObj;
+        return this.templateObj;
     }
   
     public void setAccIdVector(Vector<Ident> arg)
@@ -367,6 +369,16 @@ public class Ident extends Xobject
     {
         return this.alignSubscriptVarList;
     }
+
+    public void setAlignScriptList(XobjList arg)
+    {
+        this.alignScriptList = arg;
+    }
+
+    public XobjList getAlignScriptList()
+    {
+        return this.alignScriptList;
+    }
   
     public void setAlignSourceList(XobjList arg)
     {
@@ -377,9 +389,10 @@ public class Ident extends Xobject
     {
         return this.alignSourceList;
     }
-  
-    public void setOrigId(Ident id){
-      this.origId = (Ident)id.copy();
+
+  public void saveOrigId() {
+      this.origId      = (Ident)this.copy();
+      this.origId.type = this.Type().copy();
     }
 
     public Ident getOrigId(){
@@ -393,13 +406,13 @@ public class Ident extends Xobject
     public XobjList getDescFuncArgs(){
         return this.descFuncArgs;
     }
-  
-    public void setStructName(String name){
-        this.structName = name;
+
+    public void setStructId(Ident arg){
+        this.structId = arg;
     }
-  
-    public String getStructName(){
-        return this.structName;
+
+    public Ident getStructId(){
+        return this.structId;
     }
   
     public void setMemberAligned(boolean flag)
