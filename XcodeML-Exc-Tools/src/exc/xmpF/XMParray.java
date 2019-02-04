@@ -622,6 +622,7 @@ public class XMParray {
     }
     
     this.localId.setStorageClass(arrayId.getStorageClass());
+    setArray(arrayId, this);
   }
 
   public static void analyzeShadow(Xobject a, Xobject shadow_w_list,

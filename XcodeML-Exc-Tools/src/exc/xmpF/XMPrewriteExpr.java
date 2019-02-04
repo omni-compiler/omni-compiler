@@ -101,6 +101,9 @@ public class XMPrewriteExpr
       }
     }
 
+    // rewrite id_list, decles, parameters
+    rewriteDecls(fb);
+    
     // rewrite expr
     BasicBlockExprIterator iter = new BasicBlockExprIterator(fb);
     for (iter.init(); !iter.end(); iter.next()) {
@@ -125,9 +128,6 @@ public class XMPrewriteExpr
         rewriteAccClauses((PragmaBlock)block, fb);
       }
     }
-
-    // rewrite id_list, decles, parameters
-    rewriteDecls(fb);
   }
 
   private void rewriteDecls(FunctionBlock funcBlock){
@@ -206,13 +206,36 @@ public class XMPrewriteExpr
    * rewrite expression
    */
   private void rewriteExpr(Xobject expr, BasicBlock bb, Block block){
-
     bottomupXobjectIterator iter = new bottomupXobjectIterator(expr);
     for(iter.init(); !iter.end();iter.next()){
       Xobject x = iter.getXobject();
       if (x == null)  continue;
       if (x.Opcode() == null) continue;      // #060  see [Xmp-dev:4675]
       switch (x.Opcode()) {
+      case MEMBER_REF:
+	{
+	  if(x.getArg(0).getArg(0).Opcode() != Xcode.VAR) continue;
+	  String structName = x.getArg(0).getName();
+	  Ident id = env.findVarIdent(structName, bb.getParent());
+	  if (id.Type().getKind() != Xtype.STRUCT) continue;
+	  String memberName = x.getArg(1).getName();
+	  XobjList memberList = id.Type().getMemberList();
+	  for(Xobject xx: memberList){
+	    Ident memberId = (Ident)xx;
+	    if(! memberId.isMemberAligned()) continue;
+	    Ident origId   = memberId.getOrigId();
+	    if(origId == null) continue;
+	    if(! memberName.equals(origId.getName())) continue;
+
+	    XMParray array = XMParray.getArray(origId);
+	    Xobject memberObj = x.getArg(1);
+	    memberObj.setName(array.getLocalName());
+	    memberObj.setType(array.getLocalType());
+	    memberObj.setProp(XMP.arrayProp, array);
+	    memberObj.setProp(XMP_REPLACED_GLOBAL, true);
+	  }
+	  break;
+	}
       case VAR:
 	{
 	  if(x.getProp(XMP.RWprotected) != null) break;
@@ -238,15 +261,26 @@ public class XMPrewriteExpr
       case F_ARRAY_REF:
 	{
 	  Xobject a = x.getArg(0);
-	  if(a.Opcode() != Xcode.F_VAR_REF)
+	  if (a.Opcode() != Xcode.F_VAR_REF)
 	    XMP.fatal("not F_VAR_REF for F_ARRAY_REF");
 	  a = a.getArg(0);
-
-	  if (a.Opcode() != Xcode.VAR) break;
-	  Ident id = env.findVarIdent(a.getName(), bb.getParent());
-	  XMParray globalAlias = null;
-	  if (id != null) globalAlias = (XMParray)id.getProp(XMP.globalAlias);
-	  Object isReplacedGlobal = a.getProp(XMP_REPLACED_GLOBAL);
+	  if (a.Opcode() != Xcode.VAR && a.Opcode() != Xcode.MEMBER_REF) break;
+	  if (a.Opcode() != Xcode.VAR && a.getArg(0).getArg(0).Opcode() != Xcode.VAR) break;
+	  String varName = (a.Opcode() == Xcode.VAR)? a.getName() : a.getArg(0).getName();
+	  Ident id = env.findVarIdent(varName, bb.getParent());
+	  XMParray globalAlias    = null;
+	  Object isReplacedGlobal = null;
+	  if (id != null){
+	    if (a.Opcode() == Xcode.VAR){
+	      globalAlias = (XMParray)id.getProp(XMP.globalAlias);
+	      isReplacedGlobal = a.getProp(XMP_REPLACED_GLOBAL);
+	    }
+	    else{
+	      Xobject memberObj = a.getArg(1);
+	      globalAlias = (XMParray)memberObj.getProp(XMP.globalAlias);
+	      isReplacedGlobal = memberObj.getProp(XMP_REPLACED_GLOBAL);
+	    }
+	  }
 
 	  if (globalAlias != null &&
 	      (isReplacedGlobal == null || !(boolean)isReplacedGlobal)){ // local alias
@@ -256,32 +290,25 @@ public class XMPrewriteExpr
 	    FindexRange origIndexRange = (FindexRange)id.getProp(XMP.origIndexRange);
 
 	    int i = 0;
-	    for (XobjArgs args = x.getArg(1).getArgs(); args != null;
-		 args = args.nextArgs()){
-
+	    for (XobjArgs args=x.getArg(1).getArgs(); args!=null; args=args.nextArgs()){
 	      Xobject origLB = origIndexRange.getLbound(i);
-
-	      Xobject index = null;
+	      Xobject index  = null;
 	      switch (args.getArg().Opcode()){
 	      case F_INDEX_RANGE:
 		  index = args.getArg();
 		  Xobject lb = index.getArg(0);
 		  if (lb != null){
-		    lb = Xcons.binaryOp(Xcode.MINUS_EXPR,
-					lb, origLB);
+		    lb = Xcons.binaryOp(Xcode.MINUS_EXPR, lb, origLB);
 		    if (!globalAlias.isDistributed(i)){
-		      lb = Xcons.binaryOp(Xcode.PLUS_EXPR,
-					  lb, globalAlias.getLowerAt(i));
+		      lb = Xcons.binaryOp(Xcode.PLUS_EXPR, lb, globalAlias.getLowerAt(i));
 		    }
 		    index.setArg(0, lb);
 		  }
 		  Xobject ub = index.getArg(1);
 		  if (ub != null){
-		    ub = Xcons.binaryOp(Xcode.MINUS_EXPR,
-					ub, origLB);
+		    ub = Xcons.binaryOp(Xcode.MINUS_EXPR, ub, origLB);
 		    if (!globalAlias.isDistributed(i)){
-		      ub = Xcons.binaryOp(Xcode.PLUS_EXPR,
-					  ub, globalAlias.getLowerAt(i));
+		      ub = Xcons.binaryOp(Xcode.PLUS_EXPR, ub, globalAlias.getLowerAt(i));
 		    }
 		    index.setArg(1, ub);
 		  }
@@ -290,8 +317,7 @@ public class XMPrewriteExpr
 	      case F_ARRAY_INDEX:
 	      default:
 		  index = Xcons.binaryOp(Xcode.MINUS_EXPR,
-					 args.getArg().getArg(0),
-					 origLB);
+					 args.getArg().getArg(0), origLB);
 		  if (!globalAlias.isDistributed(i)){
 		      index = Xcons.binaryOp(Xcode.PLUS_EXPR,
 					     index, globalAlias.getLowerAt(i));
@@ -299,43 +325,28 @@ public class XMPrewriteExpr
 		  args.getArg().setArg(0, index);
 		  break;
 	      }
-
 	      i++;
-	      
 	    }
-
 	  }
 	  else {
-
-	    XMParray array = (XMParray) a.getProp(XMP.arrayProp);
+	    XMParray array;
+	    if (a.Opcode() == Xcode.VAR)
+	      array = (XMParray)a.getProp(XMP.arrayProp);
+	    else{
+	      Xobject memberObj = a.getArg(1);
+	      array = (XMParray)memberObj.getProp(XMP.arrayProp);
+	    }
 	    if(array == null) break;
 
 	    int dim_i = 0;
 	    boolean no_leading_scalar_in_subscripts = true;
-	    for(XobjArgs args = x.getArg(1).getArgs(); args != null;
-		args = args.nextArgs()){
-
-	      // check subscripts
-	      // if (array.isDistributed(dim_i) &&
-	      // 	args.getArg().Opcode() == Xcode.F_ARRAY_INDEX){
-	      //   no_leading_scalar_in_subscripts = false;
-	      // }
-	      // else if (array.isDistributed(dim_i) &&
-	      // 	     args.getArg().Opcode() == Xcode.F_INDEX_RANGE &&
-	      // 	     !no_leading_scalar_in_subscripts){
-	      //   XMP.errorAt(block, "':' must not be lead by any int-expr in a subscript list of a global array.");
-	      // }
-
-	      Xobject index_calc = 
-		arrayIndexCalc(array,dim_i++,args.getArg(),bb,block);
+	    for(XobjArgs args=x.getArg(1).getArgs();args!= null;args=args.nextArgs()){
+	      Xobject index_calc = arrayIndexCalc(array,dim_i++,args.getArg(),bb,block);
 	      if(index_calc != null) args.setArg(index_calc);
 	    }
 	  
 	    if(array.isLinearized())
 	      x.setArg(1,array.convertLinearIndex(x.getArg(1)));
-
-	    //x.setProp(XMP.RWprotected, true);
-	    
 	  }
 
 	  break;
@@ -375,15 +386,6 @@ public class XMPrewriteExpr
 	    XMP.exitByError();
 
 	    break;
-
-	      //XMParray array = (XMParray) x.getArg(1).getArg(0).getProp(XMP.arrayProp);
-	      // if (array == null){
-	      // 	XMP.errorAt(block,"xmp_desc_of applied to non-global data");
-	      // 	XMP.exitByError();
-	      // }
-	      // Xobject desc = array.getDescId();
-	      // iter.setXobject(desc);
-
 	  }
 	  else if (fname.equalsIgnoreCase("xmp_transpose")){
 	    XMParray array0 = (XMParray) x.getArg(1).getArg(0).getProp(XMP.arrayProp);
