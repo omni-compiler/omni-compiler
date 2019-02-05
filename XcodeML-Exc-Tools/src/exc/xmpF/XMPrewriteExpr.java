@@ -108,7 +108,7 @@ public class XMPrewriteExpr
     BasicBlockExprIterator iter = new BasicBlockExprIterator(fb);
     for (iter.init(); !iter.end(); iter.next()) {
       Xobject expr = iter.getExpr();
-      if(expr != null)  rewriteExpr(expr,iter.getBasicBlock(),fb);
+      if(expr != null) rewriteExpr(expr,iter.getBasicBlock(),fb);
     }
     
     // rewrite OMP pragma
@@ -143,13 +143,13 @@ public class XMPrewriteExpr
         Xobject f_params = null;
         if(f_type != null && f_type.isFunction())
           f_params = f_type.getFuncParam();
-	
+
         for(Xobject i: (XobjList) id_list){
           Ident id = (Ident)i;
 	  boolean isStructure = (id.Type().getKind() == Xtype.STRUCT);
 	  StorageClass sclass = id.getStorageClass();
-	  if(isStructure && sclass == StorageClass.FLOCAL){
-	    XobjList memberList = id.Type().getMemberList();
+	  if(isStructure && (sclass == StorageClass.FLOCAL || sclass == StorageClass.FSAVE)){
+	    XobjList memberList = env.findVarIdent(id.getName(), null).Type().getMemberList();
 	    for(Xobject x: memberList){
 	      Ident memberId = (Ident)x;
 	      if(memberId.isMemberAligned()){
@@ -159,14 +159,15 @@ public class XMPrewriteExpr
 		Block structVarBlock = env.findVarIdentBlock(structVarName, funcBlock);
 		XMParray arrayObject = new XMParray();
 		memberId.setStructId(id);
+		XMPenv env2 = (XMPenv)memberId.getEnv();
 		arrayObject.parseAlignOfStructure(structVarName, structVarId, structVarBlock,
-						  memberName, memberId, env);
-		env.declXMParray(arrayObject, structVarBlock);
+						  memberName, memberId, env2);
+		env2.declXMParray(arrayObject, structVarBlock);
 		continue;
 	      }
 	    }
-	  }
-	  
+	  } // end if
+	
 	  XMParray array = XMParray.getArray(id);
           if(array == null) continue;
       
@@ -226,8 +227,8 @@ public class XMPrewriteExpr
 	    Ident origId   = memberId.getOrigId();
 	    if(origId == null) continue;
 	    if(! memberName.equals(origId.getName())) continue;
-
 	    XMParray array = XMParray.getArray(origId);
+	    if(array == null) break;
 	    Xobject memberObj = x.getArg(1);
 	    memberObj.setName(array.getLocalName());
 	    memberObj.setType(array.getLocalType());

@@ -68,6 +68,7 @@ public class Ident extends Xobject
     private Ident origId          = null;
     private Vector<Ident> accIdVector = null;
     private Object templateObj        = null;
+    private Object env                = null;
     private XobjList alignSourceList        = null;
     private XobjList alignScriptList        = null;
     private XobjList alignSubscriptVarList  = null;
@@ -813,5 +814,15 @@ public class Ident extends Xobject
     public Xobject callSubroutine(Xobject args)
     {
       return Xcons.List(Xcode.EXPR_STATEMENT,Call(args));
+    }
+
+    public Object getEnv()
+    {
+        return this.env;
+    }
+
+    public void setEnv(Object arg)
+    {
+        this.env = arg;
     }
 }

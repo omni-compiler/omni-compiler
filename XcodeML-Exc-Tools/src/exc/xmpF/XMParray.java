@@ -198,7 +198,8 @@ public class XMParray {
 					     XMPenv env, PragmaBlock pb) {
     String structName = a.getArg(0).getSym();
     String memberName = a.getArg(1).getSym();
-    Ident structId    = env.findVarIdent(structName, pb);
+    Ident structId = (pb == null)? env.findVarIdent(structName, pb) : pb.findVarIdent(structName);
+    
     if (structId == null) {
       XMP.errorAt(pb,"structure '" + structName + "' is not declared");
       return;
@@ -209,6 +210,7 @@ public class XMParray {
       return;
     }
     arrayId.saveOrigId();
+    arrayId.setEnv(env);
     Xtype type  = arrayId.Type();
     
     String templateName = templ.getString();
@@ -461,6 +463,7 @@ public class XMParray {
 
     Xtype localType = null;
     Xobject sizeExprs[];
+
     switch(sclass){
     case FPARAM: {
       if (type.isFallocatable())
@@ -538,11 +541,10 @@ public class XMParray {
     this.arrayId      = memberId.getOrigId();
     this.arrayIdBlock = structVarBlock;
     this.localId      = memberId;
-    
     this.type = this.arrayId.Type();
     if (this.type.getKind() != Xtype.F_ARRAY)
-      XMP.errorAt(structVarBlock, memberName + " is not an array");
-    
+      XMP.errorAt(this.arrayIdBlock, memberName + " is not an array");
+
     this.sclass = structVarId.getStorageClass();
     switch(this.sclass){
     case PARAM:
@@ -553,15 +555,15 @@ public class XMParray {
     case FSAVE:
       break;
     default:
-      XMP.errorAt(structVarBlock, "bad stora2ge class of XMP array");
+      XMP.errorAt(this.arrayIdBlock, "bad storage class of XMP array");
     }
     if(XMP.hasError()) return;
-    
+
     this.template = (XMPtemplate)memberId.getTemplateObj();
 
     // declare array address pointer, array descriptor
     String descIdName = XMP.DESC_STRUCT_PREFIX_ + structVarName + "_" + orgName;
-    this.descId       = env.declObjectId(descIdName, structVarBlock);
+    this.descId       = env.declObjectId(descIdName, this.arrayIdBlock);
     this.elementType  = this.type.getRef();
 
     XobjList alignSourceList     = memberId.getAlignSourceList();
@@ -603,7 +605,7 @@ public class XMParray {
       }
 
       if(idx < 0)
-        XMP.errorAt(structVarBlock, "the associated align-subscript not found:"+t.getName());
+        XMP.errorAt(this.arrayIdBlock, "the associated align-subscript not found:"+t.getName());
       else
         this.dims.elementAt(i).setAlignSubscript(idx,idxOffset);
     }
@@ -620,7 +622,7 @@ public class XMParray {
                                          Xtype.FintType,arrayIdBlock));
       dim_i++;
     }
-    
+
     this.localId.setStorageClass(arrayId.getStorageClass());
     setArray(arrayId, this);
   }
@@ -851,6 +853,7 @@ public class XMParray {
     b.add(f.callSubroutine(Xcons.List(descId.Ref())));
 
     Xobject allocate_statement = null;
+
     if(isLinearized()){
       // allocate size variable
       Xobject alloc_size = null;
@@ -858,6 +861,7 @@ public class XMParray {
 	XMPdimInfo info = dims.elementAt(i);
 	f = env.declInternIdent(XMP.array_get_local_size_f,
 			      Xtype.FsubroutineType, block);
+
 	b.add(f.callSubroutine(Xcons.List(descId.Ref(),
 					  Xcons.IntConstant(i),
 					  info.getArraySizeVar().Ref(),
@@ -927,12 +931,20 @@ public class XMParray {
       body.add(allocate_statement);
       break;
     case FSAVE:
-      Xobject cond =  
-	env.FintrinsicIdent(Xtype.FlogicalFunctionType,"allocated").
-	Call(Xcons.List(localId.Ref()));
-      body.add(Bcons.IF(Xcons.unaryOp(Xcode.LOG_NOT_EXPR,cond),
-			allocate_statement,null));
-      break;
+      {
+	Xobject target = null;
+	if (localId.isMemberAligned())
+	  target = Xcons.List(Xcode.MEMBER_REF, type, Xcons.FvarRef(localId.getStructId()),
+			      Xcons.Symbol(Xcode.IDENT, type, localId.getName()));
+	else
+	  target = localId.Ref();
+	
+	Xobject cond = env.FintrinsicIdent(Xtype.FlogicalFunctionType,"allocated").
+	  Call(Xcons.List(target));
+	body.add(Bcons.IF(Xcons.unaryOp(Xcode.LOG_NOT_EXPR,cond),
+			  allocate_statement,null));
+	break;
+      }
     }
     
     // set
