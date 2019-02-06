@@ -146,6 +146,7 @@ public class XMPrewriteExpr
 
         for(Xobject i: (XobjList) id_list){
           Ident id = (Ident)i;
+	  if(id.Type() == null) continue;  // COMMON Block
 	  boolean isStructure = (id.Type().getKind() == Xtype.STRUCT);
 	  StorageClass sclass = id.getStorageClass();
 	  if(isStructure && (sclass == StorageClass.FLOCAL || sclass == StorageClass.FSAVE)){
@@ -680,15 +681,6 @@ public class XMPrewriteExpr
     else
       localIndexOffset = Xcons.binaryOp(Xcode.PLUS_EXPR, off1, off4);
 
-    //Xobject off1 = a.getAlignSubscriptOffsetAt(dim_i);
-
-    // Xobject off2 = on_ref.getLoopOffset(loop_idx);
-    // if(off1 == null) localIndexOffset = off2;
-    // else if(off2 == null) localIndexOffset = off1;
-    // else localIndexOffset = 
-    //         Xcons.binaryOp(Xcode.PLUS_EXPR,off1,off2);
-    // localIndexOffset = off1;
-
     if(XMP.debugFlag) 
       System.out.println("check template v="+local_loop_var
 			 +" off="+localIndexOffset);
@@ -699,24 +691,18 @@ public class XMPrewriteExpr
   Xobject arrayIndexCalc(XMParray a, int dim_i, Xobject i, 
 			 BasicBlock bb, Block block){
     switch(i.Opcode()){
-    case F_ARRAY_INDEX:
-      // if not distributed, do nothing
+    case F_ARRAY_INDEX:      // if not distributed, do nothing
       if(!a.isDistributed(dim_i)){
-	// return null;
-	  Xobject x = a.convertOffset(dim_i);
-	  if (x != null)
-	      i.setArg(0,Xcons.binaryOp(Xcode.MINUS_EXPR, i.getArg(0), x));
-//  	i.setArg(0,Xcons.binaryOp(Xcode.MINUS_EXPR,
-//  				  i.getArg(0),
-//  				  a.convertOffset(dim_i)));
+	Xobject x = a.convertOffset(dim_i);
+	if (x != null)
+	  i.setArg(0,Xcons.binaryOp(Xcode.MINUS_EXPR, i.getArg(0), x));
 	return i;
       }
-
+      
       if (!a.isFullShadow(dim_i)){
-
 	Xobject e = i.getArg(0);
 	Xobject x = null;
-
+	
 	if (e.isVariable()){
 	  x = convertLocalIndex(e, dim_i, a, bb, block);
 	  if (localIndexOffset != null){
@@ -728,7 +714,7 @@ public class XMPrewriteExpr
 	  int cnt = convertLocalIndexInExpression(x, dim_i, a, bb, block, 0);
 	  if (cnt != 1) x = null;
 	}
-
+	
 	if (x != null){
 	  Xobject y = a.convertOffset(dim_i);
 	  if (y != null)
@@ -736,58 +722,8 @@ public class XMPrewriteExpr
 	  i.setArg(0, x);
 	  return i;
 	}
-
-	// // check this expression is ver+offset
-	// Xobject e = i.getArg(0);
-	// // we need normalize?
-	// Xobject v = null;
-	// Xobject offset = null;
-	// if(e.isVariable()){
-	//   v = e;
-	// } else {
-	//   switch(e.Opcode()){
-	//   case PLUS_EXPR:
-	//     if(e.left().isVariable()){
-	//       v = e.left();
-	//       offset = e.right();
-	//     } else if(e.right().isVariable()){
-	//       v = e.right();
-	//       offset = e.left();
-	//     }
-	//     break;
-	//   case MINUS_EXPR:
-	//     if(e.left().isVariable()){
-	//       v = e.left();
-	//       offset = Xcons.unaryOp(Xcode.UNARY_MINUS_EXPR,e.right());
-	//     }
-	//     break;
-	//   }
-	// }
-
-	// if (v != null){
-	//   v = convertLocalIndex(v, dim_i, a, bb, block);
-	//   if (v != null){
-	//       if (localIndexOffset != null){
-	// 	  if (offset != null)
-	// 	      offset = Xcons.binaryOp(Xcode.PLUS_EXPR,
-	// 				      localIndexOffset, offset);
-	// 	  else 
-	// 	      offset = localIndexOffset;
-	//       }
-	//       if (offset != null)
-	// 	  v = Xcons.binaryOp(Xcode.PLUS_EXPR, v, offset);
-
-	//       Xobject x = a.convertOffset(dim_i);
-	//       if (x != null)
-	// 	  v = Xcons.binaryOp(Xcode.MINUS_EXPR, v, x);
-	//       //v = Xcons.binaryOp(Xcode.MINUS_EXPR, v, a.convertOffset(dim_i));
-	//       i.setArg(0, v);
-	//       return i;
-	//   }
-	// }
-
       }
-
+      
       Xobject x = null;
       switch (a.getDistMannerAt(dim_i)){
       case XMPtemplate.BLOCK:
@@ -806,23 +742,14 @@ public class XMPrewriteExpr
 	  break;
 	}
       }
-
       i.setArg(0,x);
       return i;
-
     case F_INDEX_RANGE:
       if (!a.isDistributed(dim_i)) return i;
-
       if (is_colon(i, a, dim_i)){ // NOTE: this check is not strict.
-      	// if (a.hasShadow(dim_i) && dim_i != a.getDim() - 1){
-      	//   XMP.errorAt(block, "a subscript of the dimension having shadow must be an int-expr unless it is the last dimension.");
-      	// }
 	i.setArg(0, null); i.setArg(1, null); i.setArg(2, null);
       	return i;
       }
-
-      // what to do for other cases?
-
     default:
       XMP.errorAt(block,"bad expression in XMP array index");
       return null;
@@ -833,9 +760,7 @@ public class XMPrewriteExpr
 					    BasicBlock bb, Block block, int cnt){
 
     Xobject v;
-
     switch (x.Opcode()){
-
     case PLUS_EXPR:
 
       if (x.right().isVariable()){
