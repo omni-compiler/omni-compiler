@@ -48,13 +48,13 @@ class ACCgpuDecompiler {
       String filename = ACCutil.removeExtension(env.getSourceFileName());
       switch(ACC.platform){
         case outputACC:
-          filename += CUDA_SRC_EXTENSION;
+          filename += OPENACC_SRC_EXTENSION;
           break;
         case OpenCL:
           filename += OPENCL_SRC_EXTENSION;
           break;
         case CUDA:
-          filename += OPENACC_SRC_EXTENSION;
+          filename += CUDA_SRC_EXTENSION;
           break;
         default:
           ACC.fatal("unknown platform");
