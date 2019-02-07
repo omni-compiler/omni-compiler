@@ -55,8 +55,8 @@ public class ACC {
   }
 
   public enum Platform{
+    outputACC,
     CUDA,
     OpenCL,
-    outputACC,
   }
 }
