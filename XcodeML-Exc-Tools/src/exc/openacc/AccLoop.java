@@ -111,7 +111,7 @@ class AccLoop extends AccDirective{
         outputParallelism.add(ACCpragma.SEQ);
       }else if(innerCoarsest == ACCpragma.SEQ){
         Set<ACCpragma> restParallelism = getFullParallelism();
-        restParallelism.removeAll(outerParallelism);
+        // restParallelism.removeAll(outerParallelism);
         outputParallelism.addAll(restParallelism);
       }else{
         if(target == ACCpragma.VECTOR){
@@ -148,7 +148,7 @@ class AccLoop extends AccDirective{
       innerParallelism.addAll(getParallelismSet(info));
     }
     if(innerParallelism.size() > 1 && innerParallelism.contains(ACCpragma.AUTO)){
-      innerParallelism.remove(ACCpragma.AUTO);
+      // innerParallelism.remove(ACCpragma.AUTO);
     }
     return innerParallelism;
   }
@@ -190,7 +190,7 @@ class AccLoop extends AccDirective{
   private ACCpragma getTargetParallelism(){
     Set<ACCpragma> outerParallelism = getOuterParallelism();
     Set<ACCpragma> restParallelism = EnumSet.of(ACCpragma.GANG, ACCpragma.WORKER, ACCpragma.VECTOR);
-    restParallelism.removeAll(outerParallelism);
+    // restParallelism.removeAll(outerParallelism);
     return getCoarsestParallelism(restParallelism);
   }
 

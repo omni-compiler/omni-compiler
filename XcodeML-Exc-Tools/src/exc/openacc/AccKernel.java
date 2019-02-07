@@ -2130,7 +2130,7 @@ public class AccKernel {
       EnumSet<ACCpragma> execSet = EnumSet.copyOf(execMethodSet);
       dstArg = dstId != null? dstId.getAddr() : varId.getAddr();
       if(needsExternalReduction()){
-        // execSet.remove(ACCpragma.GANG);
+        execSet.remove(ACCpragma.GANG);
         if(dstId == null){
           ACC.fatal("dstId must be specified");
         }
