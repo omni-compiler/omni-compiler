@@ -164,6 +164,7 @@ public class XMPrewriteExpr
 		arrayObject.parseAlignOfStructure(structVarName, structVarId, structVarBlock,
 						  memberName, memberId, env2);
 		env2.declXMParray(arrayObject, structVarBlock);
+		memberId.setProp(XMP.RWprotected, arrayObject);
 		continue;
 	      }
 	    }
@@ -231,6 +232,7 @@ public class XMPrewriteExpr
 	    XMParray array = XMParray.getArray(origId);
 	    if(array == null) break;
 	    Xobject memberObj = x.getArg(1);
+	    if(memberObj.getProp(XMP.RWprotected) != null) break;
 	    memberObj.setName(array.getLocalName());
 	    memberObj.setType(array.getLocalType());
 	    memberObj.setProp(XMP.arrayProp, array);
@@ -290,7 +292,7 @@ public class XMPrewriteExpr
 	    if (globalAlias == null) break;
 
 	    FindexRange origIndexRange = (FindexRange)id.getProp(XMP.origIndexRange);
-
+	    
 	    int i = 0;
 	    for (XobjArgs args=x.getArg(1).getArgs(); args!=null; args=args.nextArgs()){
 	      Xobject origLB = origIndexRange.getLbound(i);
@@ -332,8 +334,9 @@ public class XMPrewriteExpr
 	  }
 	  else {
 	    XMParray array;
-	    if (a.Opcode() == Xcode.VAR)
+	    if (a.Opcode() == Xcode.VAR){
 	      array = (XMParray)a.getProp(XMP.arrayProp);
+	    }
 	    else{
 	      Xobject memberObj = a.getArg(1);
 	      array = (XMParray)memberObj.getProp(XMP.arrayProp);
@@ -435,24 +438,6 @@ public class XMPrewriteExpr
 	      var.setProp(XMP.arrayProp,array);
 	      iter.setXobject(var);
 	  }
-	  /*	  else {
-	      Ident local_loop_var = null;
-	      // find the loop variable x
-	      for (Block b = pragmaBlock.getParentBlock(); b != null; b = b.getParentBlock()){
-		  XMPinfo info = (XMPinfo)b.getProp(XMP.prop);
-		  if (info == null) continue;
-		  if (info.pragma != XMPpragma.LOOP) continue;
-		  for (int k = 0; k < info.getLoopDim(); k++){
-		      if (x.getName().equals(info.getLoopVar(k).getName())){
-			  local_loop_var = info.getLoopDimInfo(k).getLoopLocalVar();
-			  break;
-		      }
-		  }
-		  if (local_loop_var != null) break;
-	      }
-	      if (local_loop_var != null) iter.setXobject(local_loop_var.Ref());
-	      }*/
-
       }
       else if (x.Opcode() == Xcode.LIST){
 	  if (x.left() != null && x.left().Opcode() == Xcode.STRING &&

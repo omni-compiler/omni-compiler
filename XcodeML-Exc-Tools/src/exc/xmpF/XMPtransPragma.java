@@ -995,16 +995,15 @@ public class XMPtransPragma
   private final static int GMOVE_OUT = 402;
 
   private Block translateGmove(PragmaBlock pb, XMPinfo i) {
-
     Block b = Bcons.emptyBlock();
     BasicBlock bb = b.getBasicBlock();
 
-    Xobject left = i.getGmoveLeft();
+    Xobject left  = i.getGmoveLeft();
     Xobject right = i.getGmoveRight();
-    
+
     if (left == null && right == null) return pb.getBody().getHead();
 
-    Ident left_desc = buildGmoveDesc(left, bb, pb);
+    Ident left_desc  = buildGmoveDesc(left, bb, pb);
     Ident right_desc = buildGmoveDesc(right, bb, pb);
 
     if (i.getAsyncId() != null){
@@ -1014,8 +1013,6 @@ public class XMPtransPragma
     }
 
     Ident f = env.declInternIdent(XMP.gmove_do_f, Xtype.FsubroutineType);
-    // Xobject args = Xcons.List(left_desc.Ref(), right_desc.Ref(),
-    // 			      Xcons.IntConstant(GMOVE_COLL));
     Xobject args = Xcons.List(left_desc.Ref(), right_desc.Ref(), i.getGmoveOpt());
     bb.add(f.callSubroutine(args));
 
@@ -1043,13 +1040,20 @@ public class XMPtransPragma
     switch(x.Opcode()){
     case F_ARRAY_REF:
       Xobject a = x.getArg(0).getArg(0);
-      array = (XMParray)a.getProp(XMP.RWprotected);
+      if(a.Opcode() == Xcode.VAR)
+	array = (XMParray)a.getProp(XMP.RWprotected);
+      else if(a.Opcode() == Xcode.MEMBER_REF){
+	String structName = a.getArg(0).getName();
+        String memberName = a.getArg(1).getName();
+	Ident structId = env.findVarIdent(structName,pb);
+        Ident memberId = structId.Type().getMemberList().getIdent(XMP.PREFIX_ + memberName);
+	array = (XMParray)memberId.getProp(XMP.RWprotected);
+      }
       if(array != null){
 	f = env.declInternIdent(XMP.gmove_g_alloc_f, Xtype.FsubroutineType);
 	args = Xcons.List(descId.Ref(), array.getDescId().Ref());
 	bb.add(f.callSubroutine(args));
 	
-	// System.out.println("idx args="+x.getArg(1));
 	f = env.declInternIdent(XMP.gmove_g_dim_info_f, Xtype.FsubroutineType);
  	int idx = 0;
  	for(Xobject e: (XobjList) x.getArg(1)){

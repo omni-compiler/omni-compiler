@@ -929,10 +929,6 @@ public class XMPanalyzePragma
     Xobject nocomm = taskDecl.getArg(1);
     // Xobject taskOpt = taskDecl.getArg(1);
     
-    // if(taskOpt != null){
-    //   XMP.fatal("task opt is not supported yet, sorry!");
-    //   return;
-    // }
     info.setOnRef(XMPobjectsRef.parseDecl(onRef,env,pb));
     info.setNocomm(nocomm);
   }
@@ -942,16 +938,11 @@ public class XMPanalyzePragma
     //XMP.fatal("analyzeTasks");
   }
 
-  // private void analyzeTasks(PragmaBlock pb) {
-  //   XMP.fatal("analyzeTasks");
-  // }
-
   private void analyzeGmove(Xobject gmoveDecl, BlockList body, 
 			    XMPinfo info, PragmaBlock pb) {
     Xobject gmoveOpt = gmoveDecl.getArg(0); // NORMAL | IN | OUT
     Xobject asyncOpt = gmoveDecl.getArg(1);
     Xobject accOpt   = gmoveDecl.getArg(2);
-    //Xobject Opt = gmoveDecl.getArg(2);
 
     // check body is single statement.
     Block b = body.getHead();
@@ -962,70 +953,51 @@ public class XMPanalyzePragma
     Xobject x = s.getExpr();
     if(x.Opcode() != Xcode.F_ASSIGN_STATEMENT)
       XMP.fatal("not assignment for Gmove");
-    Xobject left = x.left();
+    Xobject left  = x.left();
     Xobject right = x.right();
     
     // opcode must be VAR or ARRAY_REF
-    boolean left_is_global = checkGmoveOperand(left, gmoveOpt.getInt() == XMP.GMOVE_OUT, pb);
-    boolean right_is_global = checkGmoveOperand(right, gmoveOpt.getInt() == XMP.GMOVE_IN, pb);
-
-    boolean left_is_scalar = isScalar(left);
+    boolean left_is_global  = checkGmoveOperand(left, gmoveOpt.getInt()  == XMP.GMOVE_OUT, pb);
+    boolean right_is_global = checkGmoveOperand(right, gmoveOpt.getInt() == XMP.GMOVE_IN,  pb);
+    boolean left_is_scalar  = isScalar(left);
     boolean right_is_scalar = isScalar(right);
 
-    if (left_is_scalar && !right_is_scalar){
-      XMP.fatal("Incompatible ranks in assignment.");
-    }
-
-    if (!right_is_global && gmoveOpt.getInt() == XMP.GMOVE_IN)
+    if (left_is_scalar && !right_is_scalar)
+      XMP.errorAt(pb, "Incompatible ranks in assignment.");
+    else if (!right_is_global && gmoveOpt.getInt() == XMP.GMOVE_IN)
       XMP.errorAt(pb, "RHS should be global in GMOVE IN.");
-
-    if (!left_is_global && gmoveOpt.getInt() == XMP.GMOVE_OUT)
+    else if (!left_is_global && gmoveOpt.getInt() == XMP.GMOVE_OUT)
       XMP.errorAt(pb, "LHS should be global in GMOVE OUT.");
 
     if (!left_is_global){
-      if (!right_is_global){
-	// local assignment
+      if (!right_is_global){ // local assignment
 	info.setGmoveOperands(null, null);
 	return;
       }
-      // else if (right_is_scalar){
-      // 	// make bcast
-      // 	info.setGmoveOperands(null, null);
-      // 	return;
-      // }
     }
     else if (left_is_global){
       if (!right_is_global){
-	if (gmoveOpt.getInt() == XMP.GMOVE_NORMAL &&
-	    !left_is_scalar &&
+	if (gmoveOpt.getInt() == XMP.GMOVE_NORMAL && !left_is_scalar &&
 	    convertGmoveToArray(pb, left, right)) return;
       }
-      // else if (right_is_scalar){
-      // 	// make bcast
-      // 	if (convertGmoveToArray(pb, left, right)) return;
-      // }
     }
 
     if(XMP.hasError()) return;
     
     info.setGmoveOperands(left,right);
-
     info.setGmoveOpt(gmoveOpt);
 
-    if (asyncOpt != null && !XmOption.isAsync()){
+    if (asyncOpt != null && !XmOption.isAsync())
       XMP.errorAt(pb, "MPI-3 is required to use the async clause on a gmove directive");
-    }
 
     info.setAsyncId(asyncOpt);
 
     info.setAcc(accOpt);
-    if (info.isAcc() && !XmOption.isXcalableACC()){
+    if (info.isAcc() && !XmOption.isXcalableACC())
       XMP.errorAt(pb, "Enable XcalableACC to use the acc clause");
-    }
   }
 
   private boolean checkGmoveOperand(Xobject x, boolean remotely_accessed, PragmaBlock pb){
-
     Ident id = null;
     XMParray array = null;
 
@@ -1035,12 +1007,29 @@ public class XMPanalyzePragma
       if(a.Opcode() != Xcode.F_VAR_REF)
 	XMP.fatal("not F_VAR_REF for F_ARRAY_REF");
       a = a.getArg(0);
-      if(a.Opcode() != Xcode.VAR)
-	XMP.fatal("not VAR for F_VAR_REF");
-      id = env.findVarIdent(a.getName(),pb);
-      if(id == null)
-	XMP.fatal("array in F_ARRAY_REF is not declared");
-      array = XMParray.getArray(id);
+      if(a.Opcode() == Xcode.VAR){
+	id = env.findVarIdent(a.getName(),pb);
+	if(id == null)
+	  XMP.fatal("array in F_ARRAY_REF is not declared");
+	array = XMParray.getArray(id);
+      }
+      else if(a.Opcode() == Xcode.MEMBER_REF){
+	String structName = a.getArg(0).getName();
+	String memberName = a.getArg(1).getName();
+	Ident structId = env.findVarIdent(structName,pb);
+	Ident memberId = structId.Type().getMemberList().getIdent(XMP.PREFIX_ + memberName);
+	if(memberId.isMemberAligned() && (XMPpragma.valueOf(pb.getPragma()) != XMPpragma.ARRAY)){
+	  Xobject memberObj = a.getArg(1);
+	  memberObj.setProp(XMP.RWprotected, "foo"); // This is a flag to remove the distributed array
+	                                             // in gmove construct from the target of rewriting
+	                                             // in XMPrewriteExpr.rewriteExpr().
+	  return true;
+	}
+      }
+      else{
+	XMP.fatal("not VAR for F_VAR_REF or MEMBER_REF");
+      }
+      
       if(array != null){
 	if (remotely_accessed && id.getStorageClass() != StorageClass.FSAVE){
 	  XMP.fatal("Current limitation: Only a SAVE or MODULE variable can be the target of gmove in/out.");
@@ -1301,9 +1290,6 @@ public class XMPanalyzePragma
 
 	  Xobject sub = subscripts1.getArg(i);
 	  if (sub.Opcode() == Xcode.F_INDEX_RANGE){
-
-	    //int tidx = array1.getAlignSubscriptIndexAt(i);
-
 	    Xobject lb, st;
 
 	    lb = ((XobjList)sub).getArg(0);
@@ -1312,8 +1298,6 @@ public class XMPanalyzePragma
 		lb = sizeExprs1[i].getArg(0);
 	      }
 	      if (lb == null){
-		// lb = env.declIntrinsicIdent("lbound", Xtype.FintFunctionType).
-		//   Call(Xcons.List(x_var, Xcons.IntConstant(i+1)));
 		lb = env.declInternIdent("xmp_lbound", Xtype.FintFunctionType).
 		  Call(Xcons.List(array1.getDescId().Ref(), Xcons.IntConstant(i+1)));
 	      }
@@ -1323,8 +1307,6 @@ public class XMPanalyzePragma
 	    if (st == null) st = Xcons.IntConstant(1);
 
 	    Xobject expr;
-	    //expr = Xcons.binaryOp(Xcode.MUL_EXPR, varList.get(k).Ref(), st);
-
 	    Ident loopVar;
 	    if (array1 != null){
 	      int tidx = array1.getAlignSubscriptIndexAt(i);
