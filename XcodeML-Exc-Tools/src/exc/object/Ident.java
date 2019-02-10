@@ -63,18 +63,7 @@ public class Ident extends Xobject
     private Xobject codimensions;      // Codimensions might be moved into this.type like Fortran.
                                        // See exc.object.FarrayType
     private boolean memberAligned = false;
-    private Ident structId        = null;
-    private XobjList descFuncArgs = null;
     private Ident origId          = null;
-    private Vector<Ident> accIdVector = null;
-    private Object env                = null;
-    private XobjList alignSourceList        = null;
-    private XobjList alignScriptList        = null;
-    private XobjList alignSubscriptVarList  = null;
-    private XobjList alignSubscriptExprList = null;
-    private PragmaBlock pb     = null;
-    private Block parentBlock  = null;
-    private XobjList shadowDecl = null;
 
     // constructor
     public Ident(String name, StorageClass stg_class, Xtype type, Xobject v,
@@ -301,86 +290,6 @@ public class Ident extends Xobject
         return (Type() == null) ? false : Type().wasCoarray();
     }
 
-    public void setShadowDecl(XobjList arg)
-    {
-        this.shadowDecl = arg;
-    }
-
-    public XobjList getShadowDecl()
-    {
-      return this.shadowDecl;
-    }
-
-    public void setAccIdVector(Vector<Ident> arg)
-    {
-      this.accIdVector = arg;
-    }
-
-    public Vector<Ident> getAccIdVector()
-    {
-        return this.accIdVector;
-    }
-
-    public void setParentBlock(Block arg)
-    {
-        this.parentBlock = arg;
-    }
-
-    public Block getParentBlock()
-    {
-        return this.parentBlock;
-    }
-  
-    public void setPragmaBlock(PragmaBlock arg)
-    {
-        this.pb = arg;
-    }
-
-    public PragmaBlock getPragmaBlock()
-    {
-        return this.pb;
-    }
-  
-    public void setAlignSubscriptExprList(XobjList arg)
-    {
-        this.alignSubscriptExprList = arg;
-    }
-
-    public XobjList getAlignSubscriptExprList()
-    {
-        return this.alignSubscriptExprList;
-    }
-  
-    public void setAlignSubscriptVarList(XobjList arg)
-    {
-        this.alignSubscriptVarList = arg;
-    }
-
-    public XobjList getAlignSubscriptVarList()
-    {
-        return this.alignSubscriptVarList;
-    }
-
-    public void setAlignScriptList(XobjList arg)
-    {
-        this.alignScriptList = arg;
-    }
-
-    public XobjList getAlignScriptList()
-    {
-        return this.alignScriptList;
-    }
-  
-    public void setAlignSourceList(XobjList arg)
-    {
-        this.alignSourceList = arg;
-    }
-
-    public XobjList getAlignSourceList()
-    {
-        return this.alignSourceList;
-    }
-
   public void saveOrigId() {
       this.origId      = (Ident)this.copy();
       this.origId.type = this.Type().copy();
@@ -390,22 +299,6 @@ public class Ident extends Xobject
         return this.origId;
     }
     
-    public void setDescFuncArgs(XobjList arg){
-        this.descFuncArgs = arg;
-    }
-
-    public XobjList getDescFuncArgs(){
-        return this.descFuncArgs;
-    }
-
-    public void setStructId(Ident arg){
-        this.structId = arg;
-    }
-
-    public Ident getStructId(){
-        return this.structId;
-    }
-  
     public void setMemberAligned(boolean flag)
     {
         this.memberAligned = flag;
@@ -804,15 +697,5 @@ public class Ident extends Xobject
     public Xobject callSubroutine(Xobject args)
     {
       return Xcons.List(Xcode.EXPR_STATEMENT,Call(args));
-    }
-
-    public Object getEnv()
-    {
-        return this.env;
-    }
-
-    public void setEnv(Object arg)
-    {
-        this.env = arg;
     }
 }

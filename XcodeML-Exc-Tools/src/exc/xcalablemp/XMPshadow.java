@@ -45,7 +45,7 @@ public class XMPshadow {
 
       String arrayName = shadowDecl.getArg(0).getString();
       Ident arrayId = structId.Type().getMemberList().getIdent(XMP.ADDR_PREFIX_ + arrayName);
-      arrayId.setShadowDecl(shadowDecl);
+      arrayId.setProp(XMP.SHADOW_DECL, shadowDecl);
       return;
     }
     

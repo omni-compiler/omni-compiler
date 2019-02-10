@@ -210,7 +210,7 @@ public class XMParray {
       return;
     }
     arrayId.saveOrigId();
-    arrayId.setEnv(env);
+    arrayId.setProp(XMP.Env, env);
     Xtype type  = arrayId.Type();
     
     String templateName = templ.getString();
@@ -292,8 +292,8 @@ public class XMParray {
     ((FarrayType)arrayId.Type()).setIsFallocatable(true);
     arrayId.setName(localName);
     arrayId.setMemberAligned(true);
-    arrayId.setAlignSourceList((XobjList)alignSourceList);
-    arrayId.setAlignScriptList((XobjList)alignScriptList);
+    arrayId.setProp(XMP.AlignSourceList, alignSourceList);
+    arrayId.setProp(XMP.AlignScriptList, alignScriptList);
   }
   
   void parseAlign(Xobject a, Xobject alignSourceList,
@@ -566,8 +566,8 @@ public class XMParray {
     this.descId       = env.declObjectId(descIdName, this.arrayIdBlock);
     this.elementType  = this.type.getRef();
 
-    XobjList alignSourceList     = memberId.getAlignSourceList();
-    XobjList alignScriptList     = memberId.getAlignScriptList();
+    XobjList alignSourceList     = (XobjList)memberId.getProp(XMP.AlignSourceList);
+    XobjList alignScriptList     = (XobjList)memberId.getProp(XMP.AlignScriptList);
     Vector<XMPdimInfo> src_dims  = XMPdimInfo.parseSubscripts(alignSourceList);
     Vector<XMPdimInfo> tmpl_dims = XMPdimInfo.parseSubscripts(alignScriptList);
 
@@ -930,7 +930,7 @@ public class XMParray {
       for(int i = 0; i < dims.size(); i++){
 	XMPdimInfo info = dims.elementAt(i);
 	f = env.declInternIdent(XMP.array_get_local_size_f,
-			      Xtype.FsubroutineType, block);
+				Xtype.FsubroutineType, block);
 	b.add(f.callSubroutine(Xcons.List(descId.Ref(),
 					  Xcons.IntConstant(i),
 					  info.getArraySizeVar().Ref(),
@@ -957,7 +957,7 @@ public class XMParray {
 
       // allocatable
       if (localId.isMemberAligned()){
-	Ident structVarId       = localId.getStructId();
+	Ident structVarId       = (Ident)localId.getProp(XMP.StructId);
 	Xobject structMemberRef = Xcons.List(Xcode.MEMBER_REF, type, Xcons.FvarRef(structVarId),
 					     Xcons.Symbol(Xcode.IDENT, type, localId.getName()));
 	allocate_statement = Xcons.FallocateByList(structMemberRef,alloc_args);
@@ -979,7 +979,7 @@ public class XMParray {
       {
 	Xobject target = null;
 	if (localId.isMemberAligned())
-	  target = Xcons.List(Xcode.MEMBER_REF, type, Xcons.FvarRef(localId.getStructId()),
+	  target = Xcons.List(Xcode.MEMBER_REF, type, Xcons.FvarRef((Ident)localId.getProp(XMP.StructId)),
 			      Xcons.Symbol(Xcode.IDENT, type, localId.getName()));
 	else
 	  target = localId.Ref();
@@ -996,7 +996,7 @@ public class XMParray {
     f = env.declInternIdent(XMP.array_set_local_array_f,Xtype.FsubroutineType, block);
     Xobject isCoarray = (sclass == StorageClass.FSAVE) ? Xcons.IntConstant(1) : Xcons.IntConstant(0);
     if (localId.isMemberAligned()){
-      Ident structVarId       = localId.getStructId();
+      Ident structVarId       = (Ident)localId.getProp(XMP.StructId);
       Xobject structMemberRef = Xcons.List(Xcode.MEMBER_REF, type, Xcons.FvarRef(structVarId),
 					   Xcons.Symbol(Xcode.IDENT, type, localId.getName()));
       body.add(f.callSubroutine(Xcons.List(descId.Ref(), structMemberRef, isCoarray)));

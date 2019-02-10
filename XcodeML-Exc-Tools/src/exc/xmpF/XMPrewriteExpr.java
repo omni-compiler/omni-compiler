@@ -159,8 +159,8 @@ public class XMPrewriteExpr
 		String structVarName = structVarId.getName();
 		Block structVarBlock = env.findVarIdentBlock(structVarName, funcBlock);
 		XMParray arrayObject = new XMParray();
-		memberId.setStructId(id);
-		XMPenv env2 = (XMPenv)memberId.getEnv();
+		memberId.setProp(XMP.StructId,id);
+		XMPenv env2 = (XMPenv)memberId.getProp(XMP.Env);
 		arrayObject.parseAlignOfStructure(structVarName, structVarId, structVarBlock,
 						  memberName, memberId, env2);
 		env2.declXMParray(arrayObject, structVarBlock);
@@ -970,9 +970,7 @@ public class XMPrewriteExpr
       if (k > XMP.MAX_ASSUMED_SHAPE){
 	XMP.fatal("too many assumed-shape arguments (MAX = " + XMP.MAX_ASSUMED_SHAPE + ").");
       }
-
     }
-
   }
 
   private boolean is_colon(Xobject i, XMParray a, int dim_i){
@@ -996,7 +994,5 @@ public class XMPrewriteExpr
     }
 
     return true;
-
   }
-
 }

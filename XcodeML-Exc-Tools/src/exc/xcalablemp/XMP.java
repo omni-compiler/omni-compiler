@@ -28,7 +28,14 @@ public class XMP {
   public final static String ASTERISK			= "* @{ASTERISK}@";
   public final static String COLON			= ": @{COLON}@";
   public final static String STRUCT                     = "_XMP_STRUCT_";
-  public final static String TEMPLATE                   = "_XMP_TEMPLATE_";
+  public final static String TEMPLATE                   = "TEMPLATE";
+  public final static String ALIGN_SOURCE_LIST          = "ALIGN_SOURCE_LIST";
+  public final static String ALIGN_SUBSCRIPT_VAR_LIST   = "ALIGN_SUBSCRIPT_VAR_LIST";
+  public final static String ALIGN_SUBSCRIPT_EXPR_LIST  = "ALIGN_SUBSCRIPT_EXPR_LIST";
+  public final static String PRAGMA_BLOCK               = "PRAGMA_BLOCK";
+  public final static String PARENT_BLOCK               = "PARENT_BLOCK";
+  public final static String SHADOW_DECL                = "SHADOW_DECL";
+  public final static String DESC_FUNC_ARGS             = "DESC_FUNC_ARGS";
   
   private static boolean errorFlag			= false;
 

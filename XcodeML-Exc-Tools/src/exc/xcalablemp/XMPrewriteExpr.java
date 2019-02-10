@@ -2532,7 +2532,7 @@ public class XMPrewriteExpr {
 	  String orgName    = arrayId.getName().replaceAll("^" + XMP.ADDR_PREFIX_, ""); // __XMP_ADDR_a -> a
 	  String newName    = varName + "_" + orgName;
 	  Ident arrayDescId = _globalDecl.declStaticIdent(XMP.DESC_STRUCT_PREFIX_ + newName, Xtype.voidPtrType);
-	  XobjList initArrayDescFuncArgs = arrayId.getDescFuncArgs();
+	  XobjList initArrayDescFuncArgs = (XobjList)arrayId.getProp(XMP.DESC_FUNC_ARGS);
 	  initArrayDescFuncArgs.insert((Xobject)arrayDescId.getAddr());
 	  _globalDecl.addGlobalInitFuncCall("_XMP_init_array_desc", initArrayDescFuncArgs);
 
@@ -2556,11 +2556,11 @@ public class XMPrewriteExpr {
 	  alignedArray.setStructure(true);
 	  _globalDecl.putXMPalignedArray(alignedArray);
 
-	  XobjList alignSourceList        = arrayId.getAlignSourceList();
-	  XobjList alignSubscriptVarList  = arrayId.getAlignSubscriptVarList();
-	  XobjList alignSubscriptExprList = arrayId.getAlignSubscriptExprList();
-	  PragmaBlock pb    = arrayId.getPragmaBlock();
-	  Block parentBlock = arrayId.getParentBlock();
+	  XobjList alignSourceList        = (XobjList)arrayId.getProp(XMP.ALIGN_SOURCE_LIST);
+	  XobjList alignSubscriptVarList  = (XobjList)arrayId.getProp(XMP.ALIGN_SUBSCRIPT_VAR_LIST);
+	  XobjList alignSubscriptExprList = (XobjList)arrayId.getProp(XMP.ALIGN_SUBSCRIPT_EXPR_LIST);
+	  PragmaBlock pb    = (PragmaBlock)arrayId.getProp(XMP.PRAGMA_BLOCK);
+	  Block parentBlock = (Block)arrayId.getProp(XMP.PARENT_BLOCK);
 	  Boolean isLocalPragma = false; // fix me
 	  Boolean isPointer     = false; // fix me
 	  Boolean isParameter   = false; // fix me
@@ -2570,7 +2570,7 @@ public class XMPrewriteExpr {
 						   alignSubscriptExprList, templateObj, pb, parentBlock, origArrayId, arrayDim,
 	  					   orgName, arrayDescId, isLocalPragma, isPointer, isParameter, isStaticDesc);
 
-	  XobjList shadowDecl = arrayId.getShadowDecl();
+	  XobjList shadowDecl = (XobjList)arrayId.getProp(XMP.SHADOW_DECL);
 	  if(shadowDecl != null)
 	    XMPshadow.createShadowFunctions(arrayName, shadowDecl, _globalDecl, false, pb);
 	}

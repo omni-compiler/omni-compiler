@@ -743,7 +743,7 @@ public class XMPalignedArray {
 					Xcons.SizeOf(arrayElmtType));
 
     if(isStructure){
-      arrayAddrId.setDescFuncArgs(initArrayDescFuncArgs);
+      arrayAddrId.setProp(XMP.DESC_FUNC_ARGS, initArrayDescFuncArgs);
       arrayAddrId.setProp(XMP.TEMPLATE, templateObj);
     }
     else{
@@ -827,11 +827,11 @@ public class XMPalignedArray {
     }
 
     if(isStructure){
-      arrayId.setAlignSourceList(alignSourceList);
-      arrayId.setAlignSubscriptVarList(alignSubscriptVarList);
-      arrayId.setAlignSubscriptExprList(alignSubscriptExprList);
-      arrayId.setPragmaBlock(pb);
-      arrayId.setParentBlock(parentBlock);
+      arrayId.setProp(XMP.ALIGN_SOURCE_LIST,         alignSourceList);
+      arrayId.setProp(XMP.ALIGN_SUBSCRIPT_VAR_LIST,  alignSubscriptVarList);
+      arrayId.setProp(XMP.ALIGN_SUBSCRIPT_EXPR_LIST, alignSubscriptExprList);
+      arrayId.setProp(XMP.PRAGMA_BLOCK, pb);
+      arrayId.setProp(XMP.PARENT_BLOCK, parentBlock);
     }
     else{
       createAlignFunctionCalls(alignedArray, globalDecl, alignSourceList, alignSubscriptVarList,
