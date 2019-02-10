@@ -639,7 +639,7 @@ public class XMParray {
       return;
     }
 
-    if(!a.isVariable()){
+    if(!a.isVariable())
       XMP.errorAt(pb,"shadow cannot applied to non-array");
 
     String name = a.getString();
