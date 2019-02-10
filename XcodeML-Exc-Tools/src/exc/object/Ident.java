@@ -67,7 +67,6 @@ public class Ident extends Xobject
     private XobjList descFuncArgs = null;
     private Ident origId          = null;
     private Vector<Ident> accIdVector = null;
-    private Object templateObj        = null;
     private Object env                = null;
     private XobjList alignSourceList        = null;
     private XobjList alignScriptList        = null;
@@ -312,15 +311,6 @@ public class Ident extends Xobject
       return this.shadowDecl;
     }
 
-    public void setTemplateObj(Object arg){
-        this.templateObj = arg;
-    }
-
-    public Object getTemplateObj()
-    {
-        return this.templateObj;
-    }
-  
     public void setAccIdVector(Vector<Ident> arg)
     {
       this.accIdVector = arg;

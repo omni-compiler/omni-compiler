@@ -215,7 +215,7 @@ public class XMParray {
     
     String templateName = templ.getString();
     XMPtemplate template = env.findXMPtemplate(templateName, pb);
-    arrayId.setTemplateObj(template);
+    arrayId.setProp(XMP.Template, template);
     
     if (template == null)
       XMP.errorAt(pb,"template '" + templateName + "' is not declared");
@@ -559,7 +559,7 @@ public class XMParray {
     }
     if(XMP.hasError()) return;
 
-    this.template = (XMPtemplate)memberId.getTemplateObj();
+    this.template = (XMPtemplate)memberId.getProp(XMP.Template);
 
     // declare array address pointer, array descriptor
     String descIdName = XMP.DESC_STRUCT_PREFIX_ + structVarName + "_" + orgName;

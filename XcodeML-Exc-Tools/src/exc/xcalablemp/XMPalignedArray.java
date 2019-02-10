@@ -744,7 +744,7 @@ public class XMPalignedArray {
 
     if(isStructure){
       arrayAddrId.setDescFuncArgs(initArrayDescFuncArgs);
-      arrayAddrId.setTemplateObj(templateObj);
+      arrayAddrId.setProp(XMP.TEMPLATE, templateObj);
     }
     else{
       Vector<Ident> accIdVector = new Vector<Ident>(arrayDim);

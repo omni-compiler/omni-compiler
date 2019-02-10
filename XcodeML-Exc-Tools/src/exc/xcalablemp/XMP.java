@@ -28,6 +28,7 @@ public class XMP {
   public final static String ASTERISK			= "* @{ASTERISK}@";
   public final static String COLON			= ": @{COLON}@";
   public final static String STRUCT                     = "_XMP_STRUCT_";
+  public final static String TEMPLATE                   = "_XMP_TEMPLATE_";
   
   private static boolean errorFlag			= false;
 
