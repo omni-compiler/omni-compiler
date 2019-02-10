@@ -8,7 +8,7 @@ program	loop
 !$xmp distribute t(block) onto p
 !$xmp align b%a(i) with t(i)
   type(b):: c
-  integer :: i, sum
+  integer :: i, sum = 0
 
 !$xmp loop on t(i)
   do i=1, 10
@@ -19,7 +19,7 @@ program	loop
   do i=1, 10
      sum = sum + c%a(i)
   end do
-
+  
   if (sum == 55) then
      if (xmp_node_num() == 1) then
         write(*,*) "OK"
