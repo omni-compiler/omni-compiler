@@ -12,10 +12,12 @@ import xcodeml.util.XmLog;
 public class XMP {
   public static boolean debugFlag = false;
 
-  final static String prop = "XMPprop";
-  final static String RWprotected = "XMPRWprotected";
-  final static String globalAlias = "XMPglobalAlias";
+  final static String prop           = "XMPprop";
+  final static String RWprotected    = "XMPRWprotected";
+  final static String globalAlias    = "XMPglobalAlias";
   final static String origIndexRange = "XMPorigIndexRange";
+  final static String Shadow_w_list  = "XMPShadow_w_list";
+  final static String HasShadow      = "XMPHasShadow";
 
   // defined in xmp_constant.h
   public final static int REDUCE_NONE		= 0;

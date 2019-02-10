@@ -742,14 +742,17 @@ public class XMPanalyzePragma
     Xobject asyncOpt = reflectDecl.getArg(2);
     Xobject accOpt = reflectDecl.getArg(3);
 
-//     if(reflectOpt != null){
-//       XMP.fatal("reflect opt is not supported yet, sorry!");
-//       return;
-//     }
-
     Vector<XMParray> reflectArrays = new Vector<XMParray>();
-    // check array
     for(Xobject x: reflectNameList){
+      if(x.Opcode() == Xcode.MEMBER_REF){
+	String structName = x.getArg(0).getName();
+	String memberName = x.getArg(1).getName();
+	Ident structId = env.findVarIdent(structName,pb);
+	Ident memberId = structId.Type().getMemberList().getIdent(XMP.PREFIX_ + memberName);
+	memberId.setProp(XMP.HasShadow, info);
+	continue;
+      }
+      
       if(!x.isVariable()){
 	XMP.errorAt(pb,"Bad array name in reflect name list");
 	continue;
@@ -769,7 +772,6 @@ public class XMPanalyzePragma
     }
 
     Vector<XMPdimInfo> widthList = new Vector<XMPdimInfo>();
-    // width list
     for (Xobject x: widthOpt){
 	XMPdimInfo width = new XMPdimInfo();
 
@@ -788,7 +790,7 @@ public class XMPanalyzePragma
       XMP.errorAt(pb, "Enable XcalableACC to use the acc clause");
     }
   }
-
+  
   void analyzeBarrier(Xobject barrierDecl, 
 		      XMPinfo info, PragmaBlock pb) {
     Xobject barrierOnRef = barrierDecl.getArg(0);

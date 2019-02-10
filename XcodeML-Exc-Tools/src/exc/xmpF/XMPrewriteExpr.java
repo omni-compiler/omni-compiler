@@ -165,7 +165,12 @@ public class XMPrewriteExpr
 						  memberName, memberId, env2);
 		env2.declXMParray(arrayObject, structVarBlock);
 		memberId.setProp(XMP.RWprotected, arrayObject);
-		continue;
+		if(memberId.getProp(XMP.Shadow_w_list) != null)
+		  arrayObject.analyzeShadowForStructure(funcBlock);
+		
+		XMPinfo info = (XMPinfo)memberId.getProp(XMP.HasShadow);
+		if(info != null)
+		  info.addReflectArray(arrayObject);
 	      }
 	    }
 	  } // end if

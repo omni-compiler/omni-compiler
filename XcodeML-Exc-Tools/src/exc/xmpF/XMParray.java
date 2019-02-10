@@ -629,10 +629,19 @@ public class XMParray {
 
   public static void analyzeShadow(Xobject a, Xobject shadow_w_list,
 				   XMPenv env, PragmaBlock pb){
-    if(!a.isVariable()){
-      XMP.errorAt(pb,"shadow cannot applied to non-array");
+    boolean isStructure  = (a.Opcode() == Xcode.LIST);
+    if (isStructure) {
+      String structName = a.getArg(0).getSym();
+      String memberName = a.getArg(1).getSym();
+      Ident structId = (pb == null)? env.findVarIdent(structName, pb) : pb.findVarIdent(structName);
+      Ident arrayId = structId.Type().getMemberList().getIdent(XMP.PREFIX_ + memberName);
+      arrayId.setProp(XMP.Shadow_w_list, shadow_w_list);
       return;
     }
+
+    if(!a.isVariable()){
+      XMP.errorAt(pb,"shadow cannot applied to non-array");
+
     String name = a.getString();
     Ident id = env.findVarIdent(name, pb);
     if(id == null){
@@ -694,31 +703,68 @@ public class XMParray {
 	  continue;
 	}
 
-	// if(d_info.hasStride()){
-	//   XMP.errorAt(pb,"bad syntax in shadow");
-	//   continue;
-	// }
-	// if(d_info.hasLower()){
-	//   if(d_info.getLower().isIntConstant())
-	//     left = d_info.getLower().getInt();
-	//   else
-	//     XMP.errorAt(pb,"shadow width(right) is not integer constant");
-	//   if(d_info.getUpper().isIntConstant())
-	//     right = d_info.getUpper().getInt();
-	//   else
-	//     XMP.errorAt(pb,"shadow width(left) is not integer constant");
-	// } else {
-	//   if(d_info.getIndex().isIntConstant())
-	//     left = right = d_info.getIndex().getInt();
-	//   else 
-	//     XMP.errorAt(pb,"shadow width is not integer constant");
-	// }
-
 	array.setShadow(left,right,i);
       }
     }
   }
 
+  public void analyzeShadowForStructure(Block b){
+    XMParray array = XMParray.getArray(this.arrayId);
+    Xobject shadow_w_list = (Xobject)this.localId.getProp(XMP.Shadow_w_list);
+    Vector<XMPdimInfo> dims = XMPdimInfo.parseSubscripts(shadow_w_list);
+    if(dims.size() != array.getDim()){
+      XMP.errorAt(b,"shadow dimension size is different from array dimension");
+      return;
+    }
+    else if (array.shadow_declared){
+      XMP.errorAt(b, "variable '" + name + "' already has shadow region");
+      return;
+    }
+    array.shadow_declared = true;
+
+    for(int i = 0; i < dims.size(); i++){
+      XMPdimInfo d_info = dims.elementAt(i);
+      int right = 0;
+      int left  = 0;
+      
+      if(d_info.isStar())
+        array.setFullShadow(i);
+      else {
+	if (d_info.isScalar()){ // scalar
+          if (d_info.getIndex().isIntConstant())
+            left = right = d_info.getIndex().getInt();
+          else
+            XMP.errorAt(b,"shadow width is not integer constant");
+        }
+	else if (!d_info.hasStride()){ // "lshadow : ushadow"
+          if (d_info.hasLower()){
+            if (d_info.getLower().isIntConstant())
+              left = d_info.getLower().getInt();
+            else
+              XMP.errorAt(b,"shadow width(left) is not integer constant");
+          }
+          else {
+            XMP.errorAt(b,"no shadow width(left) is specified.");
+          }
+          if (d_info.hasLower()){
+            if (d_info.getUpper().isIntConstant())
+              right = d_info.getUpper().getInt();
+            else
+              XMP.errorAt(b,"shadow width(right) is not integer constant");
+          }
+          else {
+            XMP.errorAt(b,"no shadow width(right) is specified.");
+          }
+        }
+        else {
+          XMP.errorAt(b,"bad syntax in shadow");
+          continue;
+        }
+        array.setShadow(left,right,i);
+      }
+    }
+  }
+  
   /* !$xmp align A(i) with t(i+off)
    *
    *  ! _xmpf_array_alloc(a_desc,#dim,type,t_desc)
@@ -729,7 +775,6 @@ public class XMParray {
    *  allocate ( A_local(0:a_1_size-1, 0:...) )
    *  ! _xmpf_array_set_local_array(a_desc,a_local)
    */
-
   public void buildConstructor(BlockList body, XMPenv env, Block block){
     if (is_saveDesc && type.isFallocatable())
       XMP.fatal("an allocatable array cannot have the save_desc attribute.");
