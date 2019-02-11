@@ -161,10 +161,11 @@ public class XMPrewriteExpr
 		XMParray arrayObject = new XMParray();
 		memberId.setProp(XMP.StructId,id);
 		XMPenv env2 = (XMPenv)memberId.getProp(XMP.Env);
-		arrayObject.parseAlignOfStructure(structVarName, structVarId, structVarBlock,
-						  memberName, memberId, env2);
+		arrayObject.parseAlignForStructure(structVarName, structVarId, structVarBlock,
+						   memberName, memberId, env2);
 		env2.declXMParray(arrayObject, structVarBlock);
 		memberId.setProp(XMP.RWprotected, arrayObject);
+		
 		if(memberId.getProp(XMP.Shadow_w_list) != null)
 		  arrayObject.analyzeShadowForStructure(funcBlock);
 		
@@ -227,22 +228,15 @@ public class XMPrewriteExpr
 	  Ident id = env.findVarIdent(structName, bb.getParent());
 	  if (id.Type().getKind() != Xtype.STRUCT) continue;
 	  String memberName = x.getArg(1).getName();
-	  XobjList memberList = id.Type().getMemberList();
-	  for(Xobject xx: memberList){
-	    Ident memberId = (Ident)xx;
-	    if(! memberId.isMemberAligned()) continue;
-	    Ident origId   = memberId.getOrigId();
-	    if(origId == null) continue;
-	    if(! memberName.equals(origId.getName())) continue;
-	    XMParray array = XMParray.getArray(origId);
-	    if(array == null) break;
-	    Xobject memberObj = x.getArg(1);
-	    if(memberObj.getProp(XMP.RWprotected) != null) break;
-	    memberObj.setName(array.getLocalName());
-	    memberObj.setType(array.getLocalType());
-	    memberObj.setProp(XMP.arrayProp, array);
-	    memberObj.setProp(XMP_REPLACED_GLOBAL, true);
-	  }
+	  Ident memberId = id.Type().getMemberList().getIdent(XMP.PREFIX_ + memberName);
+	  if(memberId == null || ! memberId.isMemberAligned()) continue;
+	  XMParray array = XMParray.getArray(memberId.getOrigId());
+	  Xobject memberObj = x.getArg(1);
+	  if(memberObj.getProp(XMP.RWprotected) != null) break;
+	  memberObj.setName(array.getLocalName());
+	  memberObj.setType(array.getLocalType());
+	  memberObj.setProp(XMP.arrayProp, array);
+	  memberObj.setProp(XMP_REPLACED_GLOBAL, true);
 	  break;
 	}
       case VAR:
@@ -417,23 +411,18 @@ public class XMPrewriteExpr
    * rewrite Pragma
    */
   private void rewriteOmpClauses(Xobject expr, PragmaBlock pragmaBlock, Block block){
-
     boolean private_done = false;
-	  
     bottomupXobjectIterator iter = new bottomupXobjectIterator(expr);
     
     for (iter.init(); !iter.end();iter.next()){
-    	
       Xobject x = iter.getXobject();
       if (x == null)  continue;
       
       if (x.Opcode() == Xcode.VAR){
-
 	  if (x.getProp(XMP.RWprotected) != null) break;
 
 	  Ident id = env.findVarIdent(x.getName(),block);
 	  if (id == null) break;
-	  
 	  XMParray array = XMParray.getArray(id);
 
 	  if (array != null){
@@ -480,14 +469,11 @@ public class XMPrewriteExpr
 	      if (!flag){
 		  itemList.add(loop_var);
 	      }
-
 	  }
       }
-
     }
 
     if (!private_done){
-
       if (!pragmaBlock.getPragma().equals("FOR")) return;
 
       // find loop variable
@@ -506,9 +492,7 @@ public class XMPrewriteExpr
       Xobject thread_private = Xcons.List(Xcons.StringConstant("DATA_PRIVATE"),
 					  Xcons.List(loop_var));
       pragmaBlock.addClauses(thread_private);
-
     }
-
   }
 
   private void rewriteAccClauses(PragmaBlock pragmaBlock, Block block) {
@@ -587,7 +571,6 @@ public class XMPrewriteExpr
         }
       } break;
       }
-
     }
   }
 
@@ -652,7 +635,6 @@ public class XMPrewriteExpr
     }
 
     Xobject off2 = a.getAlignSubscriptOffsetAt(dim_i);
-    //Xobject off3 = on_ref.getLoopOffset(loop_idx);
     Xobject off3 = on_ref.getLoopOffset(on_ref.getLoopOnIndex(loop_idx));
     Xobject off4 = null;
     if (off3 != null){
@@ -748,7 +730,6 @@ public class XMPrewriteExpr
 
   private int convertLocalIndexInExpression(Xobject x, int dim_i, XMParray a,
 					    BasicBlock bb, Block block, int cnt){
-
     Xobject v;
     switch (x.Opcode()){
     case PLUS_EXPR:
@@ -765,13 +746,9 @@ public class XMPrewriteExpr
       else {
 	cnt = convertLocalIndexInExpression(x.right(), dim_i, a, bb, block, cnt);
       }
-
       // fall through
-
     case MINUS_EXPR:
-
       // how to deal with the case for a(1 - (2 - i)) ???
-
       if (x.left().isVariable()){
 	v = convertLocalIndex(x.left(), dim_i, a, bb, block);
 	if (v != null){
@@ -786,20 +763,15 @@ public class XMPrewriteExpr
       }
 
       break;
-
     }
-    
     return cnt;
-
   }
 
   private void insertSizeArray(Statement st, FunctionBlock fb){
-
     Xobject x = st.getExpr().getArg(0);
     if (x.Opcode() != Xcode.FUNCTION_CALL) return;
 
     Ident sizeArray = env.declOrGetSizeArray(fb);
-
     String fname = x.getArg(0).Opcode() != Xcode.MEMBER_REF ?
                    x.getArg(0).getString() : null;
     Xtype ftype = x.getArg(0).Type();
@@ -810,7 +782,6 @@ public class XMPrewriteExpr
     //
     // get interface of each argument
     //
-
     XobjList param_list = null;
     if ((ftype != null) && ftype instanceof FunctionType/*not VOID type*/){
       // internal or module procedures
@@ -842,7 +813,6 @@ public class XMPrewriteExpr
     int k = 0;
     int nargs = Math.min(arg_list.Nargs(), param_list.Nargs());
     for (int i = 0; i < nargs; i++){
-
       if (!param_list.getArg(i).Type().isFassumedShape()) continue;
 	
       Xobject arg = arg_list.getArg(i);
@@ -892,12 +862,9 @@ public class XMPrewriteExpr
 					 Xcons.IntConstant(1));
 	    st.insert(Xcons.Set(lhs, rhs));
 	  }
-
 	}
-
       }
       else if (arg.Opcode() == Xcode.F_ARRAY_REF){ // array section
-
 	Xtype atype;
 	int arrayDim;
 	Ident lbFunc, ubFunc;
@@ -926,7 +893,6 @@ public class XMPrewriteExpr
 
 	XobjList subList = (XobjList)arg.getArg(1);
 	for (int j = 0; j < arrayDim; j++){
-
 	  Xobject sub = subList.getArg(j);
 	  Xobject rhs = null;
 
@@ -960,12 +926,10 @@ public class XMPrewriteExpr
 	  Xobject lhs = Xcons.FarrayRef(sizeArray.Ref(), Xcons.IntConstant(k), Xcons.IntConstant(j));
 	  st.insert(Xcons.Set(lhs, rhs));
 	}
-
       }
       else {
 	continue;
       }
-
       k++;
       if (k > XMP.MAX_ASSUMED_SHAPE){
 	XMP.fatal("too many assumed-shape arguments (MAX = " + XMP.MAX_ASSUMED_SHAPE + ").");
@@ -974,7 +938,6 @@ public class XMPrewriteExpr
   }
 
   private boolean is_colon(Xobject i, XMParray a, int dim_i){
-
     // check lower
     if (i.getArg(0) != null){
       Xobject lb = a.getType().getFarraySizeExpr()[dim_i].getArg(0);

@@ -4,7 +4,6 @@ import exc.object.*;
 import exc.util.MachineDep;
 import exc.block.*;
 import xcodeml.util.XmOption;
-
 import java.io.File;
 import java.util.*;
 
@@ -14,7 +13,6 @@ import java.util.*;
 public class XMPtransPragma
 {
   private XMPenv  env;
-    
   public XMPtransPragma() { }
 
   // pass3: do transformation for XMP pragma

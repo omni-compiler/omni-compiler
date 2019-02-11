@@ -11,34 +11,34 @@ import java.util.Iterator;
 public class XMParray {
   private final static String XMP_ARRAY_PROP = "XMP_ARRAY_PROP";
 
-  private Ident	arrayId; // global/original ident
+  private Ident	arrayId;      // global/original ident
   private Block arrayIdBlock; // Block ident found
-  private String name;   // original name
-  private Xtype	type;    // original type
+  private String name;        // original name
+  private Xtype	type;         // original type
   private Xtype elementType;
   private Ident localId; 
   private Vector<XMPdimInfo> dims;
-  private Ident	descId;  // descriptor
+  private Ident	descId;      // descriptor
   private XMPtemplate template;
   StorageClass sclass;
-  boolean is_linearized = false;
+  boolean is_linearized       = false;
   private int NthAssumedShape = -1;
-  boolean shadow_declared = false;
-  boolean is_saveDesc = false;
+  boolean shadow_declared     = false;
+  boolean is_saveDesc         = false;
 
   // null constructor
   public XMParray() { }
 
   public XMParray(XMParray orig, Ident newId, String newName, Ident newLocalId){
-    arrayId = newId;
-    name = newName;
-    type = orig.type;
+    arrayId     = newId;
+    name        = newName;
+    type        = orig.type;
     elementType = orig.elementType;
-    localId = newLocalId;
-    dims = orig.dims;
-    descId = orig.descId;
-    template = orig.template;
-    sclass = orig.sclass;
+    localId     = newLocalId;
+    dims        = orig.dims;
+    descId      = orig.descId;
+    template    = orig.template;
+    sclass      = orig.sclass;
   }    
 
   public String toString(){
@@ -48,17 +48,11 @@ public class XMParray {
     return s+"}";
   }
 
-  public String getName() {
-    return name;
-  }
+  public String getName() { return name; }
 
-  public Xtype getType() {
-    return type;
-  }
+  public Xtype getType() { return type; }
 
-  public int getDim(){
-    return dims.size();
-  }
+  public int getDim(){ return dims.size(); }
 
   public boolean isDistributed(int index){
     int idx = dims.elementAt(index).getAlignSubscriptIndex();
@@ -72,8 +66,7 @@ public class XMParray {
     return template.getDistMannerAt(idx);
   }    
 
-  public void setAlignSubscriptIndexAt(int alignSubscriptIndex, 
-				       int index) {
+  public void setAlignSubscriptIndexAt(int alignSubscriptIndex, int index) {
     dims.elementAt(index).align_subscript_index = alignSubscriptIndex;
   }
 
@@ -81,8 +74,7 @@ public class XMParray {
     return dims.elementAt(index).align_subscript_index;
   }
 
-  public void setAlignSubscriptOffsetAt(Xobject alignSubscriptOffset, 
-				      int index) {
+  public void setAlignSubscriptOffsetAt(Xobject alignSubscriptOffset, int index) {
     dims.elementAt(index).align_subscript_offset = alignSubscriptOffset;
   }
 
@@ -95,7 +87,7 @@ public class XMParray {
   }
 
   public void setShadow(int left, int right, int index) {
-    dims.elementAt(index).shadow_left = left;
+    dims.elementAt(index).shadow_left  = left;
     dims.elementAt(index).shadow_right = right;
   }
 
@@ -109,14 +101,14 @@ public class XMParray {
 
   public boolean hasShadow(int index){
     return (dims.elementAt(index).is_full_shadow ||
-	    dims.elementAt(index).shadow_left != 0 ||
+	    dims.elementAt(index).shadow_left  != 0 ||
 	    dims.elementAt(index).shadow_right != 0);
   }
 
   public boolean hasShadow(){
-    for(int i = 0; i < dims.size(); i++){
+    for(int i = 0; i < dims.size(); i++)
       if(hasShadow(i)) return true;
-    }
+    
     return false;
   }
 
@@ -136,17 +128,11 @@ public class XMParray {
     return dims.elementAt(index).getLower();
   }    
     
-  public Ident getArrayId() {
-    return arrayId;
-  }
+  public Ident getArrayId() { return arrayId; }
 
-  public Ident getDescId() {
-    return descId;
-  }
+  public Ident getDescId() { return descId; }
 
-  public XMPtemplate getAlignTemplate() {
-    return template;
-  }
+  public XMPtemplate getAlignTemplate() { return template; }
 
   public Ident getLocalId() { return localId; }
 
@@ -164,15 +150,11 @@ public class XMParray {
     id.setProp(XMP_ARRAY_PROP,array);
   }
 
-  public void setLinearized(boolean flag){
-    is_linearized = flag;
-  }
+  public void setLinearized(boolean flag){ is_linearized = flag; }
 
   public boolean isSaveDesc() { return is_saveDesc; }
 
-  public void setSaveDesc(boolean flag){
-    is_saveDesc = flag;
-  }
+  public void setSaveDesc(boolean flag){ is_saveDesc = flag; }
 
   public boolean isLinearized() { return is_linearized; }
 
@@ -184,7 +166,7 @@ public class XMParray {
 				  XMPenv env, PragmaBlock pb){
     boolean isStructure  = (a.Opcode() == Xcode.LIST);
     if (isStructure) {
-      declareArrayOfStructure(a,arrayArgs,templ,tempArgs,env,pb);
+      declareForStructure(a,arrayArgs,templ,tempArgs,env,pb);
     }
     else {
       XMParray arrayObject = new XMParray();
@@ -193,25 +175,27 @@ public class XMParray {
     }
   }
 
-  public static void declareArrayOfStructure(Xobject a, Xobject alignSourceList,
-					     Xobject templ, Xobject alignScriptList,
-					     XMPenv env, PragmaBlock pb) {
+  public static void declareForStructure(Xobject a, Xobject alignSourceList,
+					 Xobject templ, Xobject alignScriptList,
+					 XMPenv env, PragmaBlock pb) {
     String structName = a.getArg(0).getSym();
     String memberName = a.getArg(1).getSym();
     Ident structId = (pb == null)? env.findVarIdent(structName, pb) : pb.findVarIdent(structName);
-    
+
     if (structId == null) {
       XMP.errorAt(pb,"structure '" + structName + "' is not declared");
       return;
     }
+    
     Ident arrayId = structId.Type().getMemberList().getIdent(memberName);
     if (arrayId == null) {
       XMP.errorAt(pb,"structure's member '" + structName + "%" + memberName + "' is not declared");
       return;
     }
+    
     arrayId.saveOrigId();
     arrayId.setProp(XMP.Env, env);
-    Xtype type  = arrayId.Type();
+    Xtype type = arrayId.Type();
     
     String templateName = templ.getString();
     XMPtemplate template = env.findXMPtemplate(templateName, pb);
@@ -221,7 +205,7 @@ public class XMParray {
       XMP.errorAt(pb,"template '" + templateName + "' is not declared");
     
     if (!template.isDistributed() && !type.isFallocatable())
-       XMP.errorAt(pb,"template '" + templateName + "' is not distributed");
+      XMP.errorAt(pb,"template '" + templateName + "' is not distributed");
     
     if(XMP.hasError()) return;
    
@@ -232,7 +216,7 @@ public class XMParray {
       return;
     }
 
-    Vector<XMPdimInfo> src_dims = XMPdimInfo.parseSubscripts(alignSourceList);
+    Vector<XMPdimInfo> src_dims  = XMPdimInfo.parseSubscripts(alignSourceList);
     Vector<XMPdimInfo> tmpl_dims = XMPdimInfo.parseSubscripts(alignScriptList);
 
     // check src_dims
@@ -283,7 +267,7 @@ public class XMParray {
 
     if(XMP.hasError()) return;
 
-    String localName = XMP.PREFIX_ + memberName;
+    String localName    = XMP.PREFIX_ + memberName;
     Xobject sizeExprs[] = new Xobject[arrayDim];
     for(int i=0;i<arrayDim;i++)
       sizeExprs[i] = Xcons.FindexRangeOfAssumedShape();
@@ -533,15 +517,14 @@ public class XMParray {
     setArray(arrayId,this);
   }
 
-  public void parseAlignOfStructure(String structVarName, Ident structVarId, Block structVarBlock,
-				    String memberName, Ident memberId, XMPenv env)
+  public void parseAlignForStructure(String structVarName, Ident structVarId, Block structVarBlock,
+				     String memberName, Ident memberId, XMPenv env)
   {
-    String orgName    = memberId.getName().replaceAll("^" + XMP.PREFIX_, "");
-    this.name         = XMP.STRUCT_PREFIX_ + structVarName + "_" + orgName;
+    this.name         = memberId.getOrigId().getName();
     this.arrayId      = memberId.getOrigId();
     this.arrayIdBlock = structVarBlock;
     this.localId      = memberId;
-    this.type = this.arrayId.Type();
+    this.type         = this.arrayId.Type();
     if (this.type.getKind() != Xtype.F_ARRAY)
       XMP.errorAt(this.arrayIdBlock, memberName + " is not an array");
 
@@ -562,7 +545,7 @@ public class XMParray {
     this.template = (XMPtemplate)memberId.getProp(XMP.Template);
 
     // declare array address pointer, array descriptor
-    String descIdName = XMP.DESC_STRUCT_PREFIX_ + structVarName + "_" + orgName;
+    String descIdName = XMP.DESC_STRUCT_PREFIX_ + structVarName + "_" + this.name;
     this.descId       = env.declObjectId(descIdName, this.arrayIdBlock);
     this.elementType  = this.type.getRef();
 
@@ -708,9 +691,9 @@ public class XMParray {
     }
   }
 
-  public void analyzeShadowForStructure(Block b){
-    XMParray array = XMParray.getArray(this.arrayId);
-    Xobject shadow_w_list = (Xobject)this.localId.getProp(XMP.Shadow_w_list);
+  public void analyzeShadowForStructure(Block b) {
+    XMParray array          = XMParray.getArray(this.arrayId);
+    Xobject shadow_w_list   = (Xobject)this.localId.getProp(XMP.Shadow_w_list);
     Vector<XMPdimInfo> dims = XMPdimInfo.parseSubscripts(shadow_w_list);
     if(dims.size() != array.getDim()){
       XMP.errorAt(b,"shadow dimension size is different from array dimension");
