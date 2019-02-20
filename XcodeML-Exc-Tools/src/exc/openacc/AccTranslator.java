@@ -53,8 +53,8 @@ public class AccTranslator implements XobjectDefVisitor {
       return;
     }
 
-    _generator.doFuncDef(fb);
-    ACC.exitByError();
+    // _generator.doFuncDef(fb);
+    // ACC.exitByError();
     // _rewrite.doFuncDef(fb);
     // ACC.exitByError();
   }
@@ -71,8 +71,8 @@ public class AccTranslator implements XobjectDefVisitor {
       return;
     }
 
-    _generator.doNonFuncDef(x);
-    ACC.exitByError();
+    // _generator.doNonFuncDef(x);
+    // ACC.exitByError();
     // _rewrite.doNonFuncDef(x);
     // ACC.exitByError();
   }
