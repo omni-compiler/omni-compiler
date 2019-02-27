@@ -47,11 +47,11 @@ public class AccTranslator implements XobjectDefVisitor {
     _analyzer.doFuncDef(fb);
     ACC.exitByError();
 
-    if(_onlyAnalyze) {
-      _infoWriter.doFuncDef(fb);
-      ACC.exitByError();
-      return;
-    }
+    // if(_onlyAnalyze) {
+    //   _infoWriter.doFuncDef(fb);
+    //   ACC.exitByError();
+    //   return;
+    // }
 
     // _generator.doFuncDef(fb);
     // ACC.exitByError();
