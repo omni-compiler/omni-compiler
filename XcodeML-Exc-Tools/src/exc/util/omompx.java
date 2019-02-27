@@ -466,7 +466,7 @@ public class omompx
 
       //XmOption.setDebugOutput(true);
       AccTranslator accTranslator = new AccTranslator(xobjFile, false);
-      xobjFile.iterateDef(accTranslator);
+      // xobjFile.iterateDef(accTranslator);
 
       accTranslator.finish();
       
