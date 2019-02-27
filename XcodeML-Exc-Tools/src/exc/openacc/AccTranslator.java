@@ -42,9 +42,9 @@ public class AccTranslator implements XobjectDefVisitor {
   }
 
   private void doFuncDef(FunctionBlock fb){
-    _infoReader.doFuncDef(fb);
-    ACC.exitByError();
-    // _analyzer.doFuncDef(fb);
+    // _infoReader.doFuncDef(fb);
+    // ACC.exitByError();
+    // // _analyzer.doFuncDef(fb);
     // ACC.exitByError();
 
     // if(_onlyAnalyze) {
@@ -60,8 +60,8 @@ public class AccTranslator implements XobjectDefVisitor {
   }
 
   private void doNonFuncDef(Xobject x){
-    _infoReader.doNonFuncDef(x);
-    ACC.exitByError();
+    // _infoReader.doNonFuncDef(x);
+    // ACC.exitByError();
     // _analyzer.doNonFuncDef(x);
     // ACC.exitByError();
 
