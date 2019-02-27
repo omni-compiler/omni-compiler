@@ -468,7 +468,7 @@ public class omompx
       AccTranslator accTranslator = new AccTranslator(xobjFile, false);
       // xobjFile.iterateDef(accTranslator);
 
-      accTranslator.finish();
+      // accTranslator.finish();
       
       if(xcodeWriter != null) {
         xobjFile.Output(xcodeWriter);
