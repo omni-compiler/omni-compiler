@@ -65,11 +65,11 @@ public class AccTranslator implements XobjectDefVisitor {
     _analyzer.doNonFuncDef(x);
     ACC.exitByError();
 
-    if(_onlyAnalyze) {
-      _infoWriter.doNonFuncDef(x);
-      ACC.exitByError();
-      return;
-    }
+    // if(_onlyAnalyze) {
+    //   _infoWriter.doNonFuncDef(x);
+    //   ACC.exitByError();
+    //   return;
+    // }
 
     // _generator.doNonFuncDef(x);
     // ACC.exitByError();
