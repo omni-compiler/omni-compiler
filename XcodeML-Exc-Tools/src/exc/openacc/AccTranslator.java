@@ -79,8 +79,8 @@ public class AccTranslator implements XobjectDefVisitor {
 
   public void finish(){
     if(!_onlyAnalyze) {
-      // ACCgpuDecompiler gpuDecompiler = new ACCgpuDecompiler();
-      // gpuDecompiler.decompile(_globalDecl);
+      ACCgpuDecompiler gpuDecompiler = new ACCgpuDecompiler();
+      gpuDecompiler.decompile(_globalDecl);
 
       _globalDecl.setupKernelsInitAndFinalize();
       _globalDecl.setupGlobalConstructor();
