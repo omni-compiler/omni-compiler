@@ -615,6 +615,9 @@ class ACCgpuDecompileWriter extends PrintWriter {
       print("})");
       break;
 
+    case LINEMARKER:
+      break;
+
     default:
       /* fatal("print: unknown decopmile = "+v); */
       printUserCode(v);
