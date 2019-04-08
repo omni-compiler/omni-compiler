@@ -1433,6 +1433,7 @@ public class XMPrewriteExpr {
 	arrayAddr.Opcode() != Xcode.MEMBER_ARRAY_REF) return myExpr;
 
     String arrayName    = XMPutil.getArrayName(myExpr);
+    if (arrayName == null) return myExpr;
     XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName, block);
     XMPcoarray coarray = _globalDecl.getXMPcoarray(arrayName, block);
 
@@ -1865,6 +1866,7 @@ public class XMPrewriteExpr {
 	{
 	  Xobject arrayAddr   = myExpr.getArg(0);
 	  String arrayName    = XMPutil.getArrayName(myExpr);
+	  if (arrayName == null) continue;
 	  XMPalignedArray alignedArray = globalDecl.getXMPalignedArray(arrayName, block);
 
 	  if (alignedArray != null) {
@@ -1953,7 +1955,8 @@ public class XMPrewriteExpr {
         continue;
       }
       else if(myExpr.Opcode() == Xcode.ARRAY_REF){
-	String arrayName    = XMPutil.getArrayName(myExpr);
+	String arrayName = XMPutil.getArrayName(myExpr);
+	if (arrayName == null) continue;
         if(arrayName.startsWith(XMP.MULTI_ADDR_PREFIX_))
           arrayName = arrayName.substring(XMP.MULTI_ADDR_PREFIX_.length());
         XMPalignedArray alignedArray = globalDecl.getXMPalignedArray(arrayName, block);
