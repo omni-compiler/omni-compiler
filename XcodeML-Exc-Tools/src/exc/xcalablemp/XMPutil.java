@@ -477,6 +477,7 @@ public class XMPutil {
       Boolean isStructure = (arrayAddr.Opcode() == Xcode.MEMBER_ARRAY_REF);
       Boolean isArray = (arrayAddr.Opcode() == Xcode.ARRAY_ADDR);
       Boolean isPointer = (arrayAddr.Opcode() == Xcode.POINTER_REF);
+      Boolean isVar = (arrayAddr.Opcode() == Xcode.VAR);
       if (isStructure){
 
 	if (arrayAddr.getArg(0).Opcode() != Xcode.ADDR_OF ||
@@ -487,7 +488,7 @@ public class XMPutil {
 	return XMP.STRUCT + structName + "_" + arrayName;
 
       }
-      else if (isArray || isPointer){
+      else if (isArray || isPointer || isVar){
         return arrayAddr.getSym();
       }
       else {
