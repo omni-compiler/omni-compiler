@@ -475,13 +475,24 @@ public class XMPutil {
         (expr.Opcode() == Xcode.SUB_ARRAY_REF)) {
       Xobject arrayAddr = expr.getArg(0);
       Boolean isStructure = (arrayAddr.Opcode() == Xcode.MEMBER_ARRAY_REF);
-      if(isStructure){
-        String structName = arrayAddr.getArg(0).getArg(0).getSym();
-        String arrayName  = arrayAddr.getArg(1).getSym();
-      	return XMP.STRUCT + structName + "_" + arrayName;
+      Boolean isArray = (arrayAddr.Opcode() == Xcode.ARRAY_ADDR);
+      Boolean isPointer = (arrayAddr.Opcode() == Xcode.POINTER_REF);
+      Boolean isVar = (arrayAddr.Opcode() == Xcode.VAR);
+      if (isStructure){
+
+	if (arrayAddr.getArg(0).Opcode() != Xcode.ADDR_OF ||
+	    arrayAddr.getArg(0).getArg(0).Opcode() != Xcode.VAR) return null;
+
+	String structName = arrayAddr.getArg(0).getArg(0).getSym();
+	String arrayName  = arrayAddr.getArg(1).getSym();
+	return XMP.STRUCT + structName + "_" + arrayName;
+
       }
-      else{
+      else if (isArray || isPointer || isVar){
         return arrayAddr.getSym();
+      }
+      else {
+	return null;
       }
     }
     else {
