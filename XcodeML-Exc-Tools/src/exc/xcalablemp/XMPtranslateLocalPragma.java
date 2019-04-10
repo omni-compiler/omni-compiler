@@ -1611,6 +1611,8 @@ public class XMPtranslateLocalPragma {
   private static CforBlock findLoopBlock(BlockList body, String loopVarName) throws XMPexception {
     Block b = body.getHead();
     if (b != null) {
+      if (b.Opcode() == Xcode.LIST && // A linemarker is to be ignored.
+      	  b.getBasicBlock().getHead().getExpr().Opcode() == Xcode.LINEMARKER) b = b.getNext();
       switch (b.Opcode()) {
         case FOR_STATEMENT:
           {
