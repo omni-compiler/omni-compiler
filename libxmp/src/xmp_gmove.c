@@ -43,6 +43,24 @@ int n_gmv_nodes;
 int (*_alloc_size)[_XMP_N_MAX_DIM];
 int _dim_alloc_size;
 
+int xmp_gmove_sr = false;
+
+void xmp_gmove_default_(){
+  xmp_gmove_sr = false;
+}
+
+void xmp_gmove_sr_(){
+  xmp_gmove_sr = true;
+}
+
+struct _XMPTIMING
+{ double t_sched, t_pack, t_comm, t_unpack;
+  int count;
+} xmptiming_;
+
+double t0;
+#define _XMP_GMOVE_TSTART(t0)  ((t0) = MPI_Wtime())
+#define _XMP_GMOVE_TEND(t, t0) ((t) = (t) + MPI_Wtime() - (t0))
 
 void *_XMP_get_array_addr(_XMP_array_t *a, int *gidx)
 {
@@ -691,6 +709,7 @@ void _XMP_gmove_BCAST_GSCALAR(void *dst_addr, _XMP_array_t *array, int ref_index
   int type_size = array->type_size;
 
   if(_XMP_IS_SINGLE) {
+    src_addr = _XMP_get_array_addr(array, ref_index);
     memcpy(dst_addr, src_addr, type_size);
     return;
   }
@@ -3184,6 +3203,8 @@ _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_right
   // Get referenced and owned section
   //
 
+  _XMP_GMOVE_TSTART(t0);
+  
   // LHS
 
 #if XMP_DBG_OWNER_REGION
@@ -3263,6 +3284,8 @@ _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_right
     }
   }
 
+  _XMP_GMOVE_TEND(xmptiming_.t_sched, t0);
+  
   if (mode == _XMP_N_GMOVE_NORMAL){
 
     //
@@ -3301,11 +3324,15 @@ _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_right
     // Packing
     //
 
+    _XMP_GMOVE_TSTART(t0);
     (*_XMP_pack_comm_set)(sendbuf, sendbuf_size, rhs_array, send_comm_set);
+    _XMP_GMOVE_TEND(xmptiming_.t_pack, t0);
 
     //
     // communication
     //
+
+    _XMP_GMOVE_TSTART(t0);
 
 #ifdef _XMP_MPI3
     if (xmp_is_async()){
@@ -3338,33 +3365,46 @@ _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_right
     }
 #endif
 
+    if (!xmp_gmove_sr){
+
     MPI_Alltoallv(sendbuf, sendcounts, sdispls, rhs_array->mpi_type,
     		  recvbuf, recvcounts, rdispls, lhs_array->mpi_type,
     		  *gmv_comm);
 
-    /* int tag = 0; */
-    /* int i = 0; */
-    /* MPI_Request reqs[n_gmv_nodes * 2]; */
+    }
+    else {
+      
+    int tag = 0;
+    int i = 0;
+    MPI_Request reqs[n_gmv_nodes * 2];
 
-    /* for (int rank = 0; rank < n_gmv_nodes; rank++){ */
+    for (int rank = 0; rank < n_gmv_nodes; rank++){
 
-    /*   if (sendcounts[rank]){ */
-    /* 	MPI_Isend((char*)sendbuf + sdispls[rank] * rhs_array->type_size, */
-    /* 		  sendcounts[rank], rhs_array->mpi_type, rank, tag, *gmv_comm, &reqs[i++]); */
-    /*   } */
-    /*   if (recvcounts[rank]){ */
-    /* 	MPI_Irecv((char*)recvbuf + rdispls[rank] * rhs_array->type_size, */
-    /* 		  recvcounts[rank], lhs_array->mpi_type, rank, tag, *gmv_comm, &reqs[i++]); */
-    /*   } */
-    /* } */
+      xmptiming_.count += sendcounts[rank];
+      
+      if (sendcounts[rank]){
+    	MPI_Isend((char*)sendbuf + sdispls[rank] * rhs_array->type_size,
+    		  sendcounts[rank], rhs_array->mpi_type, rank, tag, *gmv_comm, &reqs[i++]);
+      }
+      if (recvcounts[rank]){
+    	MPI_Irecv((char*)recvbuf + rdispls[rank] * rhs_array->type_size,
+    		  recvcounts[rank], lhs_array->mpi_type, rank, tag, *gmv_comm, &reqs[i++]);
+      }
+    }
 
-    /* MPI_Waitall(i, reqs, MPI_STATUS_IGNORE); */
+    MPI_Waitall(i, reqs, MPI_STATUS_IGNORE);
+
+    }
+    
+    _XMP_GMOVE_TEND(xmptiming_.t_comm, t0);
 
     //
     // Unpack
     //
 
+    _XMP_GMOVE_TSTART(t0);
     (*_XMP_unpack_comm_set)(recvbuf, recvbuf_size, lhs_array, recv_comm_set);
+    _XMP_GMOVE_TEND(xmptiming_.t_unpack, t0);
 
     //
     // Deallocate temporarls
@@ -3377,6 +3417,7 @@ _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_right
 #ifdef _XMP_MPI3_ONESIDED
   else if (mode == _XMP_N_GMOVE_IN){
 
+    _XMP_GMOVE_TSTART(t0);
     _XMP_gmove_inout(gmv_desc_leftp, gmv_desc_rightp, recv_comm_set, _XMP_N_COARRAY_GET);
 
     if (xmp_is_async()){
@@ -3392,9 +3433,12 @@ _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_right
       _XMP_sync_images_EXEC(NULL);
     }
 
+    _XMP_GMOVE_TEND(xmptiming_.t_comm, t0);
+    
   }
   else { // mode == _XMP_N_GMOVE_OUT
 
+    _XMP_GMOVE_TSTART(t0);
     if (!rhs_is_scalar)
       _XMP_gmove_inout(gmv_desc_rightp, gmv_desc_leftp, send_comm_set, _XMP_N_COARRAY_PUT);
     else
@@ -3412,7 +3456,9 @@ _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_right
     else {
       _XMP_sync_images_EXEC(NULL);
     }
-
+    
+    _XMP_GMOVE_TEND(xmptiming_.t_comm, t0);
+    
   }
 #else
   else {
@@ -4077,6 +4123,8 @@ static void _XMP_gmove_inout(_XMP_gmv_desc_t *gmv_desc_org, _XMP_gmv_desc_t *gmv
       // do comms.
       _XMP_coarray_rdma_do2(rdma_type, tgt_coarray, org_addr, org_coarray,
       			    coarray_elmts, coarray_distance);
+
+      xmptiming_.count++;
 
     }
 
