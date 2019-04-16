@@ -691,6 +691,7 @@ void _XMP_gmove_BCAST_GSCALAR(void *dst_addr, _XMP_array_t *array, int ref_index
   int type_size = array->type_size;
 
   if(_XMP_IS_SINGLE) {
+    src_addr = _XMP_get_array_addr(array, ref_index);
     memcpy(dst_addr, src_addr, type_size);
     return;
   }
