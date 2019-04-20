@@ -342,6 +342,8 @@ public class XcodeMLtools_F extends XcodeMLtools {
     case FUNCTION_DEFINITION:
     case F_MODULE_DEFINITION:
     case F_BLOCK_DATA_DEFINITION:
+    case PRAGMA_LINE:
+    case COMMENT_LINE:
       xobjFile.add(xobj);
       break;
     default:
@@ -430,7 +432,8 @@ public class XcodeMLtools_F extends XcodeMLtools {
 
     case FUNCTION_DECL:
       return setCommonAttributes(n, Xcons.List(code, type, toXobject(getElement(n, "name")),
-					       null, null, toXobject(getElement(n, "declarations"))));
+					       toXobject(getElement(n, "symbols")),
+					       null, toXobject(getElement(n, "declarations"))));
 
     case STRING:
       return Xcons.String(getContentText(n));
@@ -441,8 +444,9 @@ public class XcodeMLtools_F extends XcodeMLtools {
       return getChildList(n, xlist);
 
     case PRAGMA_LINE:
-      String contentText = getContentText(n);
-      x = Xcons.List(Xcode.PRAGMA_LINE,
+    case COMMENT_LINE:
+	String contentText = getContentText(n);
+      x = Xcons.List(code,
 		     new XobjString(Xcode.STRING, contentText));
       setCommonAttributes(n, x);
       return x;
@@ -698,7 +702,7 @@ public class XcodeMLtools_F extends XcodeMLtools {
 
     case F_WHERE_STATEMENT:
       x = new XobjList(code, type);
-      x.add(null);
+      x.add(getSymbol(n, "construct_name"));
       x.add(toXobject(getContent(getElement(n, "condition"))));
       x.add(toXobject(getContent(getElement(n, "then"))));
       x.add(toXobject(getContent(getElement(n, "else"))));
@@ -708,7 +712,15 @@ public class XcodeMLtools_F extends XcodeMLtools {
     case F_ERROR_STOP_STATEMENT:
       {
 	t = getAttr(n, "code");
-	Xobject cd = (t == null ? null : Xcons.String(t));
+	Xobject cd = null;
+	if (t != null){
+	  cd = Xcons.String(t);
+	}
+	else {
+	  cd = toXobject(getContent(getElement(n, "code")));
+	}
+	//Xobject cd = (t == null ? null : Xcons.String(t));
+
 	t = getAttr(n, "message");
 	Xobject mes = null;
 	if (t != null){
@@ -718,6 +730,7 @@ public class XcodeMLtools_F extends XcodeMLtools {
 	  mes = toXobject(getContent(getElement(n, "message")));
 	}
 	//	Xobject mes = (t == null ? null : Xcons.FcharacterConstant(Xtype.FcharacterType, t, null));
+
 	return setCommonAttributes(n, Xcons.List(code, type, cd, mes));
       }
 
@@ -883,6 +896,15 @@ public class XcodeMLtools_F extends XcodeMLtools {
 						 ));
       }
 
+    case F_ASSOCIATE_STATEMENT:
+      {
+        attr = getSymbol(n, "construct_name");
+        return setCommonAttributes(n, Xcons.List(code, type, attr,
+						 toXobject(getElement(n, "symbols")),
+						 toXobject(getElement(n, "body"))
+						 ));
+      }
+      
     case F_SYNC_STAT:
       {
         attr = getSymbol(n, "kind");
@@ -929,10 +951,17 @@ public class XcodeMLtools_F extends XcodeMLtools {
                | (getAttrBool(n, "is_public" ) ? Xtype.TQ_FPUBLIC  : 0)
 	       | (getAttrBool(n, "is_protected") ? Xtype.TQ_FPROTECTED : 0);
         Node bdg = getElement(n, "binding");
+
+	Xobject name = toXobject(getElement(n, "name"));
+	if (name == null){
+	  String defined_io = getAttr(n, "is_defined_io");
+	  name = Xcons.String(defined_io);
+	}
+	
         return setCommonAttributes(n, Xcons.List(code, (Xtype)null,
                                                  getAttrIntFlag(n, "is_operator"),
                                                  getAttrIntFlag(n, "is_assignment"),
-                                                 toXobject(getElement(n, "name")),
+                                                 name,
                                                  Xcons.LongConstant(tq),
                                                  toXobject(bdg)
                                                 ));
@@ -1040,8 +1069,10 @@ public class XcodeMLtools_F extends XcodeMLtools {
 	addr.setScope(VarScope.LOCAL);
 	break;
       }
-    } else if (valueNode != null) {
-        addr = toXobject(valueNode);
+    }
+    
+    if (valueNode != null) {
+      addr = toXobject(valueNode);
     }
 
     // create ident

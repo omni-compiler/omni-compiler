@@ -1,11 +1,4 @@
 package exc.openacc;
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
-
-// package exc.xcalablemp;
 
 import exc.object.*;
 import java.io.*;
@@ -625,6 +618,9 @@ class ACCgpuDecompileWriter extends PrintWriter {
         }
       }
       print("})");
+      break;
+
+    case LINEMARKER:
       break;
 
     default:

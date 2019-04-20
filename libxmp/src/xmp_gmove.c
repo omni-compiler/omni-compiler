@@ -194,14 +194,14 @@ void _XMP_gtol_array_ref_triplet(_XMP_array_t *array,
   }
 }
 
-static void _XMP_calc_gmove_rank_array_SCALAR(_XMP_array_t *array, int *ref_index, int *rank_array) {
+void _XMP_calc_gmove_rank_array_SCALAR(_XMP_array_t *array, int *ref_index, int *rank_array) {
   _XMP_template_t *template = array->align_template;
 
   int array_dim = array->dim;
   for (int i = 0; i < array_dim; i++) {
     _XMP_array_info_t *ai = &(array->info[i]);
     int template_index = ai->align_template_index;
-    if (template_index != _XMP_N_NO_ALIGN_TEMPLATE) {
+     if (template_index != _XMP_N_NO_ALIGN_TEMPLATE) {
       _XMP_template_chunk_t *chunk = &(template->chunk[ai->align_template_index]);
       int onto_nodes_index = chunk->onto_nodes_index;
       _XMP_ASSERT(array_nodes_index != _XMP_N_NO_ONTO_NODES);
@@ -214,6 +214,17 @@ static void _XMP_calc_gmove_rank_array_SCALAR(_XMP_array_t *array, int *ref_inde
 }
 
 int _XMP_calc_gmove_array_owner_linear_rank_SCALAR(_XMP_array_t *array, int *ref_index) {
+  _XMP_nodes_t *array_nodes = array->array_nodes;
+  int array_nodes_dim = array_nodes->dim;
+  int rank_array[array_nodes_dim];
+
+  _XMP_calc_gmove_rank_array_SCALAR(array, ref_index, rank_array);
+
+  return _XMP_calc_linear_rank_on_target_nodes(array_nodes, rank_array, _XMP_get_execution_nodes());
+}
+
+int xmp_calc_gmove_array_owner_linear_rank_scalar_(_XMP_array_t **a, int *ref_index) {
+  _XMP_array_t *array = *a;
   _XMP_nodes_t *array_nodes = array->array_nodes;
   int array_nodes_dim = array_nodes->dim;
   int rank_array[array_nodes_dim];
@@ -595,8 +606,8 @@ void _XMP_sendrecv_ARRAY(int type, int type_size, MPI_Datatype *mpi_datatype,
     _XMP_free(recv_alloc);
   }
 
-  _XMP_free(dst_ref);
-  _XMP_free(src_ref);
+  _XMP_finalize_nodes_ref(dst_ref);
+  _XMP_finalize_nodes_ref(src_ref);
 }
 
 /* // ----- gmove scalar to scalar -------------------------------------------------------------------------------------------------- */
@@ -680,6 +691,7 @@ void _XMP_gmove_BCAST_GSCALAR(void *dst_addr, _XMP_array_t *array, int ref_index
   int type_size = array->type_size;
 
   if(_XMP_IS_SINGLE) {
+    src_addr = _XMP_get_array_addr(array, ref_index);
     memcpy(dst_addr, src_addr, type_size);
     return;
   }
@@ -2974,10 +2986,12 @@ get_commbuf_size(_XMP_comm_set_t *comm_set[][_XMP_N_MAX_DIM], int ndims, int cou
 }
 
 
-unsigned long long _XMP_gtol_calc_offset(_XMP_array_t *a, int g_idx[]){
-
-  int l_idx[a->dim];
-  xmp_array_gtol(a, g_idx, l_idx);
+unsigned long long _XMP_gtol_calc_offset(_XMP_array_t *a, int g_idx[])
+{
+  int ndims = a->dim;
+  int l_idx[ndims];
+  for(int i=0;i<ndims;i++)
+    xmp_array_gtol(a, i+1, g_idx[i], &l_idx[i]);
 
   //xmp_dbg_printf("g0 = %d, g1 = %d, l0 = %d, l1 = %d\n", g_idx[0], g_idx[1], l_idx[0], l_idx[1]);
 
@@ -3313,6 +3327,7 @@ _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_right
       gmove->a = lhs_array;
       gmove->comm_set = recv_comm_set;
       async->gmove = gmove;
+      async->type = _XMP_COMM_GMOVE;
 
       for (int rank = 0; rank < n_gmv_nodes; rank++){
 	for (int adim = 0; adim < n_rhs_dims; adim++){
@@ -3372,6 +3387,7 @@ _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_right
       gmove->mode = mode;
       gmove->sendbuf = _XMP_get_execution_nodes()->comm; // NOTE: the sendbuf field is used for an improper purpose.
       async->gmove = gmove;
+      async->type = _XMP_COMM_GMOVE;
     }
     else {
       _XMP_sync_images_EXEC(NULL);
@@ -3392,6 +3408,7 @@ _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_right
       gmove->mode = mode;
       gmove->sendbuf = _XMP_get_execution_nodes()->comm; // NOTE: the sendbuf field is used for an improper purpose.
       async->gmove = gmove;
+      async->type = _XMP_COMM_GMOVE;
     }
     else {
       _XMP_sync_images_EXEC(NULL);
@@ -3445,10 +3462,11 @@ static void _XMP_set_comm_list(_XMP_array_t *a, _XMP_gmv_section_t *sec,
 			       int gidx[], long len[], int st[]){
 
   int lidx[_XMP_N_MAX_DIM];
-
   int ndims = a->dim;
 
-  xmp_array_gtol(a, gidx, lidx);
+  for(int i=0;i<ndims;i++)
+    xmp_array_gtol(a, i+1, gidx[i], &lidx[i]);
+
   sec->ndims = ndims;
 
   if (a->order == MPI_ORDER_FORTRAN){

@@ -95,12 +95,13 @@ _XMP_rsd_t *intersection_rsds(_XMP_rsd_t *_rsd1, _XMP_rsd_t *_rsd2){
   }
 
   if (rsd2->l <= rsd1->u){
-    for (int i = rsd2->l; i <= rsd2->u; i += rsd2->s){
+    int min_u = MIN(rsd1->u, rsd2->u);
+    for (int i = rsd2->l; i <= min_u; i += rsd2->s){
       if ((i - rsd1->l) % rsd1->s == 0){
 	_XMP_rsd_t *rsd0 = (_XMP_rsd_t *)_XMP_alloc(sizeof(_XMP_rsd_t));
 	rsd0->l = i;
 	rsd0->s = _XMP_lcm(rsd1->s, rsd2->s);
-	int t = (MIN(rsd1->u, rsd2->u) - rsd0->l) / rsd0->s;
+	int t = (min_u - rsd0->l) / rsd0->s;
 	rsd0->u = rsd0->l + rsd0->s * t;
 	return rsd0;
       }

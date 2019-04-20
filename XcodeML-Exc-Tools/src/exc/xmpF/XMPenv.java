@@ -1,17 +1,9 @@
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
-
 package exc.xmpF;
 
 import java.io.*;
 import java.util.Vector;
-
 import exc.object.*;
 import exc.block.*;
-
 import xcodeml.util.XmOption;
 
 /** 
@@ -271,7 +263,7 @@ public class XMPenv {
   /**
    * Finalize this XMPenv. 
    */
-  public void finalize() {
+  public void finalizeEnv() {
     env.collectAllTypes();
     env.fixupTypeRef();
   }
@@ -302,11 +294,13 @@ out:{
       for(XobjectDef def = current_def.getDef(); def != null;
 	  def = def.getParent()){
         Xobject id_list = def.getDef().getArg(1);
-        for(Xobject i: (XobjList)id_list){
-	  if(i.getName().equals(name)){
-	    id = (Ident)i;
-            break out;
-	  }
+        if (id_list != null) {
+          for(Xobject i: (XobjList)id_list){
+            if(i.getName().equals(name)){
+              id = (Ident)i;
+              break out;
+            }
+          }
         }
       }
       return null;
@@ -404,18 +398,6 @@ out:{
       table = getXMPsymbolTable();
     table.putXMParray(array);
   }
-
-  /*
-   * put/get XMPcorray (not yet ...)
-   */
-//   public void putXMPcoarray(XMPcoarray array) {
-//     _globalObjectTable.putXMPcoarray(array);
-//   }
-
-//   public XMPcoarray getXMPcoarray(String name) {
-//     return _globalObjectTable.getXMPcoarray(name);
-//   }
-
 
   public Ident declOrGetSizeArray(Block b){
 

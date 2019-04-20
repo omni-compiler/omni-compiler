@@ -324,12 +324,12 @@ void _XMPCO_getVector_DMA(void *descPtr, char *baseAddr, int bytes, int coindex,
   char* desc = _XMPCO_get_descForMemoryChunk(descPtr);
   size_t offset = _XMPCO_get_offsetInMemoryChunk(descPtr, baseAddr);
 
-  _XMPCO_debugPrint("from [%d] GET_VECTOR, RDMA-DMA, %d bytes\n"
-                          "  src (RDMA): \'%s\', offset=%zd\n"
-                          "  dst (DMA) : \'%s\', offset=%zd\n",
-                          coindex, bytes,
-                          _XMPCO_get_nameOfCoarray(descPtr), offset,
-                          nameDMA, offsetDMA);
+  _XMPCO_debugPrint("=e=GET_VECTOR RDMA-DMA %d bytes\n"
+		    "  from: remote[%d] \'%s\' + %zd\n"
+		    "  to  : %s + %zd\n",
+		    bytes,
+		    coindex, _XMPCO_get_nameOfCoarray(descPtr), offset,
+		    nameDMA, offsetDMA);
 
   // ACTION
   _XMP_coarray_contiguous_get(coindex-1,
@@ -356,7 +356,7 @@ void _XMPCO_getVector_buffer(void *descPtr, char *baseAddr, int bytesRU, int coi
     _XMPCO_getVector_DMA(descPtr, src, bufSize, coindex,
                    _localBuf_desc, _localBuf_offset, _localBuf_name);
 
-    _XMPCO_debugPrint("MEMCPY %d bytes, cont\'d\n"
+    _XMPCO_debugPrint("=e=MEMCPY %d bytes, cont\'d\n"
                             "  from: \'%s\'\n"
                             "  to  : addr=%p\n",
                             bufSize,
@@ -371,7 +371,7 @@ void _XMPCO_getVector_buffer(void *descPtr, char *baseAddr, int bytesRU, int coi
   _XMPCO_getVector_DMA(descPtr, src, rest1, coindex,
                  _localBuf_desc, _localBuf_offset, _localBuf_name);
 
-  _XMPCO_debugPrint("MEMCPY %d bytes, final\n"
+  _XMPCO_debugPrint("=e=MEMCPY %d bytes, final\n"
                           "  from: \'%s\'\n"
                           "  to  : addr=%p\n",
                           rest2,

@@ -71,8 +71,10 @@ public class XcodeMLtools_C extends XcodeMLtools {
     case FUNCTION_DECL:
     case GCC_ASM_DEFINITION:
     case PRAGMA_LINE:
+    case LINEMARKER:
     case TEXT:
     case ACC_PRAGMA:
+    case OMP_PRAGMA:
     case XMP_PRAGMA:
     case CPP_CLASS_DECL:
     case CPP_DECL_NAMESPACE:
@@ -217,6 +219,13 @@ public class XcodeMLtools_C extends XcodeMLtools {
       setCommonAttributes(n, x);
       return x;
     }
+
+    case LINEMARKER:
+      String linemarkerFlag = getAttr(n, "flag");
+      x = Xcons.List(code,
+		     new XobjString(Xcode.STRING, linemarkerFlag));
+      setCommonAttributes(n, x);
+      return x;
 
     case STRING_CONSTANT:
       return Xcons.StringConstant(getContentText(n));
@@ -701,10 +710,10 @@ public class XcodeMLtools_C extends XcodeMLtools {
     String argTypeName = getAttr(argNode, "type");
     Xtype argType = getType(argTypeName);
 
-    if (argType instanceof ArrayType &&
-	((ArrayType) argType).getArraySizeExpr() != null) {
-      argType = Xtype.voidPtrType;
-    }
+    //    if (argType instanceof ArrayType &&
+    //	((ArrayType) argType).getArraySizeExpr() != null) {
+    //      argType = Xtype.voidPtrType;
+    //    }
 
     XobjList child = Xcons.List(Xcode.TYPE_NAME, argType);
     XobjList objList = Xcons.List(code, type);
@@ -714,9 +723,21 @@ public class XcodeMLtools_C extends XcodeMLtools {
 
   /** process arrayRef. */
   private XobjList enterArrayRef(Xcode code, Xtype type, Node arrayRefNode) {
-    ArrayList<Node> childNodes = collectElementsExclude(arrayRefNode,
-							"arrayAddr");
+    // ArrayList<Node> childNodes = collectElementsExclude(arrayRefNode,
+    // 							"arrayAddr");
+
+    ArrayList<Node> childNodes;
     Node arrayAddrNode = getElement(arrayRefNode, "arrayAddr");
+
+    if (arrayAddrNode != null){
+      childNodes = collectElementsExclude(arrayRefNode, "arrayAddr");
+    }
+    else { // pointer
+      childNodes = collectChildNodes(arrayRefNode);
+      arrayAddrNode = childNodes.get(0);
+      childNodes.remove(0);
+    }
+
     XobjList objList = enterAsXobjList(arrayRefNode,
 				       code,
 				       type,
@@ -744,8 +765,11 @@ public class XcodeMLtools_C extends XcodeMLtools {
       childNodes = collectElementsExclude(subArrayRefNode, "arrayAddr");
     }
     else { // pointer
-      arrayAddrNode = getElement(subArrayRefNode, "Var");
-      childNodes = collectElementsExclude(subArrayRefNode, "Var");
+      //arrayAddrNode = getElement(subArrayRefNode, "Var");
+      //childNodes = collectElementsExclude(subArrayRefNode, "Var");
+      childNodes = collectChildNodes(subArrayRefNode);
+      arrayAddrNode = childNodes.get(0);
+      childNodes.remove(0);
     }
 
     XobjList objList = enterAsXobjList(subArrayRefNode,

@@ -3,10 +3,9 @@ package exc.object;
 import java.util.LinkedList;
 import java.util.Iterator;
 import java.util.List;
-
 import exc.util.XobjectVisitable;
 import exc.util.XobjectVisitor;
-
+import xcodeml.util.IXobject;
 import xcodeml.util.ILineNo;
 
 public class XobjectDefEnv extends PropObject
@@ -87,7 +86,7 @@ public class XobjectDefEnv extends PropObject
     {
         topdownXobjectDefIterator ite = new topdownXobjectDefIterator(this);
         for(ite.init(); !ite.end(); ite.next())
-            op.doDef(ite.getDef());
+            if (!ite.getDef().isPragma()) op.doDef(ite.getDef());
     }
 
     public void iterateFuncDef(XobjectDefVisitor op)
@@ -103,7 +102,12 @@ public class XobjectDefEnv extends PropObject
     {
         return findIdent(name, kind);
     }
-    
+
+    public Ident findIdent(String name)
+    {
+        return findIdent(name, IXobject.FINDKIND_ANY);
+    }
+  
     public Ident findVarIdent(String name)
     {
         return findIdent(name, IXobject.FINDKIND_VAR);

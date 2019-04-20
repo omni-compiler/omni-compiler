@@ -69,9 +69,25 @@ int xmp_array_lbound_(xmp_desc_t **d, int *dim, int *lbound) {
 
 }
 
+int xmp_lbound_(xmp_desc_t **d, int *dim) {
+
+  int lbound;
+  xmp_array_lbound(*d, *dim, &lbound);
+  return lbound;
+
+}
+
 int xmp_array_ubound_(xmp_desc_t **d, int *dim, int *ubound) {
 
   return xmp_array_ubound(*d, *dim, ubound);
+
+}
+
+int xmp_ubound_(xmp_desc_t **d, int *dim) {
+
+  int ubound;
+  xmp_array_ubound(*d, *dim, &ubound);
+  return ubound;
 
 }
 
@@ -109,9 +125,9 @@ int xmp_array_lead_dim_(xmp_desc_t **d, int size[]){
   return 0;
 }
 
-int xmp_array_gtol_(xmp_desc_t **d, int *g_idx, int *l_idx){
+int xmp_array_gtol_(xmp_desc_t **d, int *dim, int *g_idx, int *l_idx){
 
-  xmp_array_gtol(*d, g_idx, l_idx);
+  xmp_array_gtol(*d, *dim, *g_idx, l_idx);
 
   return 0;
 }
@@ -404,3 +420,9 @@ void xmp_unpack_nomask_(_XMP_array_t **a_d, _XMP_array_t **v_d){
    xmpf_unpack(*a_d, *v_d, NULL);
 }
 
+
+int xmp_array_owner_rank(_XMP_array_t *d, int *ref_index, int *owners);
+
+int xmp_array_owner_rank_(_XMP_array_t **d, int *ref_index, int *owners){
+  return xmp_array_owner_rank(*d, ref_index, owners);
+}

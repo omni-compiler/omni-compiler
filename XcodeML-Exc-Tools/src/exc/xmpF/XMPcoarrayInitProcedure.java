@@ -1,15 +1,8 @@
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
-
 package exc.xmpF;
 
 import exc.object.*;
 import exc.block.*;
 import java.util.*;
-
 
 /*
  * create an initialization subroutine 
@@ -202,7 +195,7 @@ public class XMPcoarrayInitProcedure {
       coarray.addStmts_setCoshapeAndName(blist2, env);
     }
 
-    funcDef2.Finalize();
+    funcDef2.finalizeBlock();
 
     env.setCurrentDef(funcDef1);
   }

@@ -1,16 +1,10 @@
-/*
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package exc.xcodeml;
 
 import static xcodeml.util.XmLog.fatal;
 import static xcodeml.util.XmLog.fatal_dump;
 import xcodeml.util.XmDomUtil;
 import xcodeml.util.ILineNo;
-
+import xcodeml.util.IXobject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -26,7 +20,6 @@ import org.w3c.dom.Node;
 
 import exc.object.*;
 import exc.openmp.OMPpragma;
-
 
 /**
  * convert Xobject/F to XcodeML(DOM)/F
@@ -146,6 +139,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             // (CODE name () () declarations)
             e = addChildNodes(createElement(name),
                               transName(xobj.getArg(0)),
+			      transSymbols(xobj.getArg(1)),
                               transDeclarations(xobj.getArgOrNull(3)));
         }
             break;
@@ -380,20 +374,20 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
                               transValue(xobj.getArg(1)));
 
             Xobject caseList = xobj.getArg(2);
-
-            if (caseList.Opcode() == Xcode.F_STATEMENT_LIST){
-                for (Xobject a : (XobjList)caseList) {
-                    if (a.Opcode() == Xcode.F_STATEMENT_LIST){
-                        for (Xobject b : (XobjList)a){
-                            addChildNode(e, trans(b));
-                        }
-                    } else {
-                        addChildNode(e, trans(a));
-                    }
-                }
-            } else {
-                addChildNode(e, trans(caseList));
-            }
+	    addToBody(e, caseList);
+            // if (caseList.Opcode() == Xcode.F_STATEMENT_LIST){
+            //     for (Xobject a : (XobjList)caseList) {
+            //         if (a.Opcode() == Xcode.F_STATEMENT_LIST){
+            //             for (Xobject b : (XobjList)a){
+            //                 addChildNode(e, trans(b));
+            //             }
+            //         } else {
+            //             addChildNode(e, trans(a));
+            //         }
+            //     }
+            // } else {
+            //     addChildNode(e, trans(caseList));
+            // }
             break;
 
         case F_CASE_LABEL:
@@ -430,7 +424,8 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
 
 
         case F_WHERE_STATEMENT: {
-            e = addChildNodes(createElement(name),
+            e = addChildNodes(createElement(name,
+					    "construct_name", getArg0Name(xobj)),
                               transCondition(xobj.getArg(1)),
                               transThen(xobj.getArgOrNull(2)));
             Xobject xelse = xobj.getArgOrNull(3);
@@ -504,6 +499,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             break;
 
         case PRAGMA_LINE:
+	case COMMENT_LINE:
         case TEXT:
             e = addChildNode(createElement(name),
                              trans(xobj.getArg(0).getString()));
@@ -630,9 +626,15 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             Xobject code = xobj.getArgOrNull(0);
             Xobject msg = xobj.getArgOrNull(1);
             if (code != null) {
-                addAttributes(e,
-                              "code", code.getString());
-            }
+	      if (code.Opcode() == Xcode.STRING)
+		addAttributes(e,
+			      "code", code.getString());
+	      else {
+		Element e1 = createElement("code");
+		addChildNode(e1, trans(code));
+		addChildNode(e, e1);
+	      }
+	    }
             if (msg != null) {
 	      if (msg.Opcode() == Xcode.F_CHARACTER_CONSTATNT)
 		addAttributes(e,
@@ -650,6 +652,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             e = createElement(name, "construct_name", getArg0Name(xobj));
             addChildNode(e, transBody((XobjList)xobj.getArg(1)));
             break;
+
         case F_BLOCK_STATEMENT:
             e = createElement(name, "construct_name", getArg0Name(xobj));
             XobjList identList = (XobjList)xobj.getArg(1);
@@ -659,6 +662,15 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             e = addChildNodes(e,
                               transSymbols(identList),
                               transDeclarations(declList),
+                              transBody(body));
+            break;
+
+	case F_ASSOCIATE_STATEMENT:
+            e = createElement(name, "construct_name", getArg0Name(xobj));
+            identList = (XobjList)xobj.getArg(1);
+            body = (XobjList)xobj.getArg(2);
+            e = addChildNodes(e,
+                              transSymbols(identList),
                               transBody(body));
             break;
 
@@ -938,30 +950,31 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
 	    addChildNode(e, f1);
 
 	    Element f2 = createElement("list");
-	    body = xobj.getArg(2);
+	    body = xobj.getArgOrNull(2);
 	    if (body != null){
-		if (body.Opcode() == Xcode.F_STATEMENT_LIST){
-		    for (Xobject a : (XobjList)body){
-			if (a.Opcode() == Xcode.F_STATEMENT_LIST){
-			    for (Xobject b : (XobjList)a){
-				if (b.Opcode() == Xcode.F_STATEMENT_LIST){
-				    for (Xobject c : (XobjList)b){
-					addChildNode(f2, trans(c));
-				    }
-				}
-				else {
-				    addChildNode(f2, trans(b));
-				}
-			    }
-			}
-			else {
-			    addChildNode(f2, trans(a));
-			}
-		    }
-		}
-		else {
-		    addChildNode(f2, trans(body));
-		}
+		addToBody(f2, body);
+		// if (body.Opcode() == Xcode.F_STATEMENT_LIST){
+		//     for (Xobject a : (XobjList)body){
+		// 	if (a.Opcode() == Xcode.F_STATEMENT_LIST){
+		// 	    for (Xobject b : (XobjList)a){
+		// 		if (b.Opcode() == Xcode.F_STATEMENT_LIST){
+		// 		    for (Xobject c : (XobjList)b){
+		// 			addChildNode(f2, trans(c));
+		// 		    }
+		// 		}
+		// 		else {
+		// 		    addChildNode(f2, trans(b));
+		// 		}
+		// 	    }
+		// 	}
+		// 	else {
+		// 	    addChildNode(f2, trans(a));
+		// 	}
+		//     }
+		// }
+		// else {
+		//     addChildNode(f2, trans(body));
+		// }
             }
 	    addChildNode(e, f2);
 

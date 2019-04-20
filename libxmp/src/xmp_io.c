@@ -9,7 +9,7 @@
 //#define DEBUG
 //#define CHECK_POINT
 
-#define MPI_TYPE_CREATE_RESIZED1  MPI_Type_create_resized1
+#define MPI_TYPE_CREATE_RESIZED1  MPI_Type_create_resized
 
 #include "xmp.h"
 #include "xmp_constant.h"
@@ -19,10 +19,10 @@
 /* ------------------------------------------------------------------ */
 extern void _XMP_fatal(char *msg);
 
-static int MPI_Type_create_resized1(MPI_Datatype oldtype,
-				    MPI_Aint     lb,
-				    MPI_Aint     extent,
-				    MPI_Datatype *newtype);
+/* static int MPI_Type_create_resized1(MPI_Datatype oldtype, */
+/* 				    MPI_Aint     lb, */
+/* 				    MPI_Aint     extent, */
+/* 				    MPI_Datatype *newtype); */
 /* ------------------------------------------------------------------ */
 static int xmp_array_gclubound_tmp(xmp_desc_t d, int dim)
 {
@@ -267,7 +267,9 @@ static int _xmp_io_set_view_block_cyclic
 #endif /* DEBUG */
 	{
 	  int cnt=0;
-	  b[cnt]=1; d[cnt]=0;      t[cnt]=MPI_LB;  cnt++;
+	  // I just comment out the next line to remove obsolete MPI_LB because the displaement of
+	  // the second item is always zero.
+	  //	  b[cnt]=1; d[cnt]=0;      t[cnt]=MPI_LB;  cnt++;
 	  if (byte_newtype2a > 0){
 	    b[cnt]=1; d[cnt]=(y_base1-y_base1)*type_size; t[cnt]=newtype2aa; cnt++;
 	    if (byte_newtype2b > 0){
@@ -314,11 +316,12 @@ static int _xmp_io_set_view_block_cyclic
       fprintf(stderr, "_xmp_io_set_view_block_cyclic: myrank=%d: space_size=%ld  total_size=%ld\n",
 	     myrank, space_size, total_size);
 #endif /* DEBUG */
-      int b[3]; MPI_Aint d[3]; MPI_Datatype t[3];
-      b[0]=1; d[0]=0;          t[0]=MPI_LB;
-      b[1]=1; d[1]=space_size; t[1]=dataType_tmp;
-      b[2]=1; d[2]=total_size; t[2]=MPI_UB;
-      mpiRet = MPI_Type_create_struct(3, b, d, t, _dataType1);
+      /* int b[3]; MPI_Aint d[3]; MPI_Datatype t[3]; */
+      /* b[0]=1; d[0]=0;          t[0]=MPI_LB; */
+      /* b[1]=1; d[1]=space_size; t[1]=dataType_tmp; */
+      /* b[2]=1; d[2]=total_size; t[2]=MPI_UB; */
+      /* mpiRet = MPI_Type_create_struct(3, b, d, t, _dataType1); */
+      mpiRet = MPI_Type_create_resized(dataType_tmp, 0, total_size-1, _dataType1);
       if (mpiRet != MPI_SUCCESS) { return 1; }
       int byte_dataType1; MPI_Aint lb_dataType1, extent_dataType1;
       MPI_Type_size(*_dataType1, &byte_dataType1);
@@ -504,7 +507,9 @@ static int _xmp_io_set_view_block_cyclic
 #endif /* DEBUG */
 	{
 	  int cnt=0;
-	  b[cnt]=1; d[cnt]=0;      t[cnt]=MPI_LB;  cnt++;
+	  // I just comment out the next line to remove obsolete MPI_LB because the displaement of
+	  // the second item is always zero.
+	  //	  b[cnt]=1; d[cnt]=0;      t[cnt]=MPI_LB;  cnt++;
 	  if (byte_newtype2a > 0){
 	    b[cnt]=1 ; d[cnt]=(y_base1-y_base1)*type_size; t[cnt]=newtype2aa; cnt++;
 	    if (byte_newtype2b > 0){
@@ -545,11 +550,12 @@ static int _xmp_io_set_view_block_cyclic
       fprintf(stderr, "_xmp_io_set_view_block_cyclic: myrank=%d: space_size=%ld  total_size=%ld\n",
 	     myrank, space_size, total_size);
 #endif /* DEBUG */
-      int b[3]; MPI_Aint d[3]; MPI_Datatype t[3];
-      b[0]=1; d[0]=0;          t[0]=MPI_LB;
-      b[1]=1; d[1]=space_size; t[1]=dataType_tmp;
-      b[2]=1; d[2]=total_size; t[2]=MPI_UB;
-      mpiRet = MPI_Type_create_struct(3, b, d, t, _dataType1);
+      /* int b[3]; MPI_Aint d[3]; MPI_Datatype t[3]; */
+      /* b[0]=1; d[0]=0;          t[0]=MPI_LB; */
+      /* b[1]=1; d[1]=space_size; t[1]=dataType_tmp; */
+      /* b[2]=1; d[2]=total_size; t[2]=MPI_UB; */
+      /* mpiRet = MPI_Type_create_struct(3, b, d, t, _dataType1); */
+      mpiRet = MPI_Type_create_resized(dataType_tmp, 0, total_size-1, _dataType1);
       if (mpiRet != MPI_SUCCESS) { return 1; }
       int byte_dataType1; MPI_Aint lb_dataType1, extent_dataType1;
       MPI_Type_size(*_dataType1, &byte_dataType1);
@@ -797,7 +803,9 @@ static int _xmp_io_write_read_block_cyclic
 #endif /* DEBUG */
 	{
 	  int cnt=0;
-	  b[cnt]=1; d[cnt]=0;      t[cnt]=MPI_LB;  cnt++;
+	  // I just comment out the next line to remove obsolete MPI_LB because the displaement of
+	  // the second item is always zero.
+	  //	  b[cnt]=1; d[cnt]=0;      t[cnt]=MPI_LB;  cnt++;
 	  if (byte_newtype3a > 0){
 	    b[cnt]=1 ; d[cnt]=(i_base1 - i_base1)*type_size; t[cnt]=newtype3aa; cnt++;
 	    if (byte_newtype3b > 0){
@@ -841,11 +849,12 @@ static int _xmp_io_write_read_block_cyclic
       fprintf(stderr, "_xmp_io_write_read_block_cyclic: myrank=%d: space_size=%ld  total_size=%ld\n",
 	     myrank, space_size, total_size);
 #endif /* DEBUG */
-      int b[3]; MPI_Aint d[3]; MPI_Datatype t[3];
-      b[0]=1; d[0]=0;          t[0]=MPI_LB;
-      b[1]=1; d[1]=space_size; t[1]=dataType_tmp;
-      b[2]=1; d[2]=total_size; t[2]=MPI_UB;
-      mpiRet = MPI_Type_create_struct(3, b, d, t, _dataType1);
+      /* int b[3]; MPI_Aint d[3]; MPI_Datatype t[3]; */
+      /* b[0]=1; d[0]=0;          t[0]=MPI_LB; */
+      /* b[1]=1; d[1]=space_size; t[1]=dataType_tmp; */
+      /* b[2]=1; d[2]=total_size; t[2]=MPI_UB; */
+      /* mpiRet = MPI_Type_create_struct(3, b, d, t, _dataType1); */
+      mpiRet = MPI_Type_create_resized(dataType_tmp, 0, total_size-1, _dataType1);
       if (mpiRet != MPI_SUCCESS) { return 1; }
       int byte_dataType1; MPI_Aint lb_dataType1, extent_dataType1;
       MPI_Type_size(*_dataType1, &byte_dataType1);
@@ -3623,29 +3632,29 @@ int xmp_file_clear_view_all(xmp_file_t  *pstXmp_file, long long disp)
   return 0;
 }
 
-/*****************************************************************************/
-/*  FUNCTION NAME : MPI_Type_create_resized1                                 */
-/*                                                                           */
-/*****************************************************************************/
-static int MPI_Type_create_resized1(MPI_Datatype oldtype,
-				    MPI_Aint     lb,
-				    MPI_Aint     extent,
-				    MPI_Datatype *newtype)
-{
-        int          mpiRet;
-        int          b[3];
-        MPI_Aint     d[3];
-        MPI_Datatype t[3];
+/* /\*****************************************************************************\/ */
+/* /\*  FUNCTION NAME : MPI_Type_create_resized1                                 *\/ */
+/* /\*                                                                           *\/ */
+/* /\*****************************************************************************\/ */
+/* static int MPI_Type_create_resized1(MPI_Datatype oldtype, */
+/* 				    MPI_Aint     lb, */
+/* 				    MPI_Aint     extent, */
+/* 				    MPI_Datatype *newtype) */
+/* { */
+/*         int          mpiRet; */
+/*         int          b[3]; */
+/*         MPI_Aint     d[3]; */
+/*         MPI_Datatype t[3]; */
 
-        b[0] = b[1] = b[2] = 1;
-        d[0] = 0;
-        d[1] = lb;
-        d[2] = extent;
-        t[0] = MPI_LB;
-        t[1] = oldtype;
-        t[2] = MPI_UB;
+/*         b[0] = b[1] = b[2] = 1; */
+/*         d[0] = 0; */
+/*         d[1] = lb; */
+/*         d[2] = extent; */
+/*         t[0] = MPI_LB; */
+/*         t[1] = oldtype; */
+/*         t[2] = MPI_UB; */
 
-        mpiRet = MPI_Type_create_struct(3, b, d, t, newtype);
+/*         mpiRet = MPI_Type_create_struct(3, b, d, t, newtype); */
 
-        return mpiRet;
-}
+/*         return mpiRet; */
+/* } */

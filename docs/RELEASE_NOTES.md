@@ -1,5 +1,33 @@
 Omni Compiler Software RELEASE NOTES
 
+# ver. 1.3.2    2018/11/08
+* Add Python module for Fortran.
+* Add some benchmarks in samples/XMP.
+* Fixed lots of bugs.
+
+# ver. 1.3.1    2018/06/04
+* Remove XcodeML-tools as a separate project (https://github.com/omni-compiler/xcodeml-tools)
+* Be able to omit iteration list of loop directive for nest loop statement
+* Fixed lots of bugs.
+
+# ver. 1.3.0    2018/03/30
+* XcalableACC official release.
+* Remove round brackets tests in XMP/C.
+* Support the reduce_shadow directive.
+* Add benchmarks in ./samples directory.
+* Fixed lots of bugs.
+
+# ver. 1.2.3    2018/01/15
+* Python module for C supports master-worker pattern
+* Improve performance of XMP/C on for-loop statement.
+* Fixed lots of bugs.
+
+# ver. 1.2.2    2017/12/04
+* Add Python module for C.
+* Support KNL : "./configure --target=KNL-linux-gnu".
+* Improve performance of XMP/C on for-loop statement.
+* Fixed lots of bugs.
+
 # ver. 1.2.1    2017/09/04
 * Fix xmp_init() and xmp_finalize() to call an XMP program from an MPI program.
 * Fixed lots of bugs.

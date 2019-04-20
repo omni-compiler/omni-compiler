@@ -1,7 +1,0 @@
-MODULE m
-  IMPLICIT NONE
-  TYPE, ABSTRACT :: sequence_t
-    SEQUENCE
-    INTEGER :: x
-  END TYPE sequence_t
-END MODULE m

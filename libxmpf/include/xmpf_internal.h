@@ -41,8 +41,6 @@ typedef struct _XMP_object_ref_type {
   _XMP_nodes_t *n_desc;
     
   int ndims;
-/*   int *offset; */
-/*   int *index; */
   int *arg0;
   int *arg1;
   int *arg2;
@@ -50,19 +48,7 @@ typedef struct _XMP_object_ref_type {
 } _XMP_object_ref_t;
 
 
-/* typedef struct _XMP_object_ref_type2 { */
-/*   int ref_kind;  */
-/*   _XMP_template_t *t_desc; */
-/*   _XMP_nodes_t *n_desc; */
-    
-/*   int ndims; */
-/*   int *lb; */
-/*   int *ub; */
-/*   int *st; */
-/* } _XMP_object_ref_t2; */
-
-
-/* From xmpf_index.c */
+/* From xmp_index.c */
 void _XMP_L2G(int local_idx, long long int *global_idx,
 	      _XMP_template_t *template, int template_index);
 void _XMP_G2L(long long int global_idx,int *local_idx,
@@ -83,7 +69,7 @@ extern int _XMP_world_size;
 extern int _XMP_world_rank;
 
 /* From xmp_align.c */
-void xmpf_array_alloc__(_XMP_array_t **a_desc, int *n_dim, int *type, _XMP_template_t **t_desc);
+void xmpf_array_alloc__(_XMP_array_t **a_desc, int *n_dim, int *type, size_t *datatype, _XMP_template_t **t_desc);
 void xmpf_array_dealloc__(_XMP_array_t **a_desc);
 void xmpf_align_info__(_XMP_array_t **a_desc, int *a_idx,
 		       int *lower, int *upper, int *t_idx, int *off);
@@ -205,6 +191,10 @@ extern _XMP_async_comm_t* _XMP_get_current_async();
 extern _XMP_async_comm_t* _XMP_get_async(int);
 extern void xmpc_init_async(int);
 extern void xmpc_start_async();
+
+/* From xmp_reduce_shadow.c */
+void _XMP_set_reduce_shadow__(_XMP_array_t *a, int dim, int lwidth, int uwidth, int is_periodic);
+void _XMP_reduce_shadow__(_XMP_array_t *a);
 
 /* From xmpf_pack.c */
 void _XMPF_pack_array(void *buffer, void *src, int array_type, size_t array_type_size,

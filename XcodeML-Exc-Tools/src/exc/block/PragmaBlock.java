@@ -1,9 +1,3 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package exc.block;
 
 import exc.object.*;
@@ -26,6 +20,25 @@ public class PragmaBlock extends CompoundBlock
         this.code = code;
         this.pragma = pragma;
         this.args = args;
+    }
+
+    /** make clone */
+    public PragmaBlock(PragmaBlock b)
+    {
+      super(b);
+      LineNo ln = getLineNo();
+      if (ln != null)
+	setLineNo(new LineNo(ln.fileName(), ln.lineNo() - 1));
+      this.code = b.Opcode();
+      this.pragma = b.getPragma();
+      this.args = b.getClauses().copy();
+    }
+
+    /** make clone */
+    @Override
+    public Block copy()
+    {
+        return new PragmaBlock(this);
     }
 
     public String getPragma()

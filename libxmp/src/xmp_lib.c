@@ -3,6 +3,7 @@
 #include "xmp_internal.h"
 #include "xmp.h"
 #include <stddef.h>
+
 extern void _XMP_align_local_idx(long long int global_idx, int *local_idx,
                                  _XMP_array_t *array, int array_axis, int *rank);
 extern void _XMP_init_shadow_dim(_XMP_array_t *array, int i, int type, int lo, int hi);
@@ -16,6 +17,10 @@ MPI_Comm xmp_get_mpi_comm(void)
 
 void xmp_init_mpi(int *argc, char ***argv) {}
 void xmp_finalize_mpi(void) {}
+
+void xmp_init_py(MPI_Fint comm) {
+  _XMP_init(1, NULL, MPI_Comm_f2c(comm));
+}
 
 void xmp_init(MPI_Comm comm)
 {
@@ -226,15 +231,10 @@ int xmp_array_lead_dim(xmp_desc_t d, int size[])
   return 0;
 }
 
-int xmp_array_gtol(xmp_desc_t d, int g_idx[], int l_idx[])
+int xmp_array_gtol(xmp_desc_t d, int dim, int g_idx, int *l_idx)
 {
-  _XMP_array_t *a = (_XMP_array_t *)d;
-
-  int ndims, rank;
-  xmp_array_ndims(d, &ndims);
-  for(int i=0;i<ndims;i++){
-    _XMP_align_local_idx((long long int)g_idx[i], &l_idx[i], a, i, &rank);
-  }
+  int rank;
+  _XMP_align_local_idx((long long int)g_idx, l_idx, d, dim-1, &rank);
 
   return 0;
 }
@@ -542,27 +542,23 @@ void *xmp_malloc(xmp_desc_t d, ...)
   _XMP_template_t *t = a->align_template;
   if (!t->is_fixed) _XMP_fatal("target template is not fixed");
   a->is_allocated = t->is_owner;
-
   int is_star[_XMP_N_MAX_DIM] = { 0 };
   unsigned long long *acc[_XMP_N_MAX_DIM] = { NULL };
-  unsigned long long dummy;
 
   va_list args;
   va_start(args, d);
-
   for (int i = 0; i < a->dim; i++){
     int size = va_arg(args, int);
     _XMP_array_info_t *ai = &(a->info[i]);
-    int tdim = ai->align_template_index;
+    int tdim      = ai->align_template_index;
     ai->ser_upper = size - 1;
-    ai->ser_size = size;
-
+    ai->ser_size  = size;
+    acc[i]        = ai->acc;
+    
     if (tdim == _XMP_N_NO_ALIGN_TEMPLATE){
-      acc[i] = &dummy;
       _XMP_align_array_NOT_ALIGNED(a, i);
     }
     else {
-      acc[i] = ai->acc;
       _XMP_template_info_t *info = &(t->info[tdim]);
       is_star[tdim] = 1;
 
@@ -572,30 +568,26 @@ void *xmp_malloc(xmp_desc_t d, ...)
 
       switch (t->chunk[tdim].dist_manner){
       case _XMP_N_DIST_DUPLICATION:
-	_XMP_align_array_DUPLICATION(a, i, ai->align_template_index, ai->align_subscript);
+	_XMP_align_array_DUPLICATION(a, i, tdim, ai->align_subscript);
 	break;
       case _XMP_N_DIST_BLOCK:
-	_XMP_align_array_BLOCK(a, i, ai->align_template_index, ai->align_subscript, ai->temp0);
+	_XMP_align_array_BLOCK(a, i, tdim, ai->align_subscript, ai->temp0);
 	break;
       case _XMP_N_DIST_CYCLIC:
-	_XMP_align_array_CYCLIC(a, i, ai->align_template_index, ai->align_subscript, ai->temp0);
+	_XMP_align_array_CYCLIC(a, i, tdim, ai->align_subscript, ai->temp0);
 	break;
       case _XMP_N_DIST_BLOCK_CYCLIC:
-	_XMP_align_array_BLOCK_CYCLIC(a, i, ai->align_template_index, ai->align_subscript,
-				      ai->temp0);
+	_XMP_align_array_BLOCK_CYCLIC(a, i, tdim, ai->align_subscript, ai->temp0);
 	break;
       case _XMP_N_DIST_GBLOCK:
-	_XMP_align_array_GBLOCK(a, i, ai->align_template_index, ai->align_subscript, ai->temp0);
+	_XMP_align_array_GBLOCK(a, i, tdim, ai->align_subscript, ai->temp0);
 	break;
       default:
 	_XMP_fatal("unknown distribution manner");
 	return NULL;
       }
-
       _XMP_init_shadow_dim(a, i, ai->shadow_type, ai->shadow_size_lo, ai->shadow_size_hi);
-
     }
-
   }
 
   va_end(args);
@@ -619,4 +611,60 @@ void xmp_free(xmp_desc_t d){
 void xmp_exit(int status){
   _XMP_finalize(true);
   exit(status);
+}
+
+void xmp_array_lbound_global(xmp_desc_t d, int dim, int *global_i)
+{
+  _XMP_array_t *a = (_XMP_array_t *)d;
+  *global_i = a->info[dim-1].par_lower;
+}
+
+void xmp_array_ubound_global(xmp_desc_t d, int dim, int *global_i)
+{
+  _XMP_array_t *a = (_XMP_array_t *)d;
+  *global_i = a->info[dim-1].par_upper;
+}
+
+
+void _XMP_calc_gmove_rank_array_SCALAR(xmp_desc_t array, int *ref_index, int *rank_array);
+
+int xmp_array_owner_rank(xmp_desc_t d, int *ref_index, int *owners){
+
+  int num = 0;
+  
+  _XMP_array_t *array = (_XMP_array_t *)d;
+  _XMP_nodes_t *nodes = array->align_template->onto_nodes;
+  int nodes_dim = nodes->dim;
+  int rank_array[_XMP_N_MAX_DIM];
+  int lb[_XMP_N_MAX_DIM] = {0}, ub[_XMP_N_MAX_DIM];;
+
+  for (int i = 0; i < nodes_dim; i++) rank_array[i] = -1;
+  for (int i = 0; i < _XMP_N_MAX_DIM; i++) ub[i] = 1;
+
+  _XMP_calc_gmove_rank_array_SCALAR(array, ref_index, rank_array);
+
+  for (int i = 0; i < nodes_dim; i++){
+    //    printf("%d : %d\n", i, rank_array[i]);
+    if (rank_array[i] == -1){
+      //lb[i] = 0;
+      ub[i] = nodes->info[i].size;
+    }
+    else {
+      lb[i] = rank_array[i];
+      ub[i] = rank_array[i] + 1;
+    }
+  }
+
+  //printf("(%d, %d) => %d %d %d %d\n", ref_index[0], ref_index[1], lb[0], ub[0], lb[1], ub[1]);
+  
+  for (rank_array[0] = lb[0]; rank_array[0] < ub[0]; rank_array[0]++)
+  for (rank_array[1] = lb[1]; rank_array[1] < ub[1]; rank_array[1]++)
+  for (rank_array[2] = lb[2]; rank_array[2] < ub[2]; rank_array[2]++)
+  for (rank_array[3] = lb[3]; rank_array[3] < ub[3]; rank_array[3]++)
+  for (rank_array[4] = lb[4]; rank_array[4] < ub[4]; rank_array[4]++)
+  for (rank_array[5] = lb[5]; rank_array[5] < ub[5]; rank_array[5]++)
+  for (rank_array[6] = lb[6]; rank_array[6] < ub[6]; rank_array[6]++)
+    owners[num++] = _XMP_calc_linear_rank_on_target_nodes(nodes, rank_array, _XMP_get_execution_nodes());
+
+  return num;
 }

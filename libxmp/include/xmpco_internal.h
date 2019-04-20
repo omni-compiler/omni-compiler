@@ -20,8 +20,16 @@
 #define ROUND_UP_COMM(n)      _ROUND_UP((n),COMM_UNIT)
 #define ROUND_UP_MALLOC(n)    _ROUND_UP_PLUS((n),MALLOC_UNIT)
 
+enum _SyncMode {
+  syncNONBLOCK   = 0,
+  syncBLOCK      = 1,
+  syncATOMIC     = 2,
+  syncRUNTIME    = 3
+};
+typedef enum _SyncMode SyncMode;
 
-/*****************************************      \
+
+/*****************************************\
     typedef
 \*****************************************/
 // MEMORY MANAGEMENT STRUCTURE-I (linkage with procedures)
@@ -93,14 +101,14 @@ extern void XMPCO_GET_arrayExpr(CoarrayInfo_t *descPtr, char *baseAddr,
                                 int rank, int skip[], int count[]);
 
 extern void XMPCO_PUT_scalarStmt(CoarrayInfo_t *descPtr, char *baseAddr, int element,
-                                 int coindex, char *rhs, BOOL synchronous);
+                                 int coindex, char *rhs, SyncMode sync_mode);
 extern void XMPCO_PUT_arrayStmt(CoarrayInfo_t *descPtr, char *baseAddr, int element,
                                 int coindex, char *rhsAddr, int rank,
                                 int skip[], int skip_rhs[], int count[],
-                                BOOL synchronous);
+                                SyncMode sync_mode);
 extern void XMPCO_PUT_spread(CoarrayInfo_t *descPtr, char *baseAddr, int element,
                              int coindex, char *rhs, int rank,
-                             int skip[], int count[], BOOL synchronous);
+                             int skip[], int count[], SyncMode sync_mode);
 
 
 // inquire functions (xmpco_lib.c)

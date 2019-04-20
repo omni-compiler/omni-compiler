@@ -485,19 +485,23 @@ public class XMPtransCoarrayRun
     localCoarrays = new ArrayList<XMPcoarray>();
     moduleCoarrays = new ArrayList<XMPcoarray>();
     Xobject idList = def.getFuncIdList();
+    if (idList == null)
+      idList = new XobjList(Xcode.ID_LIST);
 
     /* divide coarrays into localCoarrays and moduleCoarrays
      */
-    for (Xobject obj: (XobjList)idList) {
-      Ident ident = (Ident)obj;
-      if (ident.wasCoarray()) {
-        // found it is a coarray or a variable converted from a coarray
-        XMPcoarray coarray = new XMPcoarray(ident, def, getFblock(), env);
-        coarray.setUseMallocWithHint(useMalloc);
-        if (coarray.isUseAssociated())
-          moduleCoarrays.add(coarray);
-        else
-          localCoarrays.add(coarray);
+    if (idList != null){
+      for (Xobject obj: (XobjList)idList) {
+	Ident ident = (Ident)obj;
+	if (ident.wasCoarray()) {
+	  // found it is a coarray or a variable converted from a coarray
+	  XMPcoarray coarray = new XMPcoarray(ident, def, getFblock(), env);
+	  coarray.setUseMallocWithHint(useMalloc);
+	  if (coarray.isUseAssociated())
+	    moduleCoarrays.add(coarray);
+	  else
+	    localCoarrays.add(coarray);
+	}
       }
     }
 
@@ -639,7 +643,7 @@ public class XMPtransCoarrayRun
   public void run3() {
     _hoistLocalCoarrays(               null,               null, getFblock(), true );
     _rewriteExprLocalCoarrays(getFblock());
-    funcDef.Finalize();
+    funcDef.finalizeBlock();
   }
 
   /*
@@ -647,7 +651,7 @@ public class XMPtransCoarrayRun
    */
   public void run4() {
     _hoistLocalCoarrays(def.getFuncIdList(), def.getFuncDecls(), getFblock(), false);
-    funcDef.Finalize();
+    funcDef.finalizeBlock();
   }
 
   /*
@@ -680,8 +684,10 @@ public class XMPtransCoarrayRun
       if (onlyCafMode) {
         // SPECIAL HANDLING (TEMPORARY) to work XMPtransCoarray alone without XMPtranslate
         //  convert main program to soubroutine xmpf_main
-        if (isMainProgram())
+        if (isMainProgram()){
           _convMainProgramToSubroutine("xmpf_main");
+          XMPtranslate.create_main(def);
+        }
       }
     } else {
       XMP.fatal("XMPtransCoarrayRun.run1(), def kind unkown : " + def);
@@ -707,7 +713,7 @@ public class XMPtransCoarrayRun
     _setVisibleCoarrays();
     transExecPart();
 
-    funcDef.Finalize();
+    funcDef.finalizeBlock();
   }
 
 
@@ -739,7 +745,7 @@ public class XMPtransCoarrayRun
     // should be made after execution of transDeclPart_*.
     _setVisibleCoarrays();
 
-    funcDef.Finalize();
+    funcDef.finalizeBlock();
   }
 
 
@@ -803,7 +809,7 @@ public class XMPtransCoarrayRun
     --------------------------------------------
       subroutine EX1
         real :: V1(1:10,1:20)                                        ! f. f1.
-        common /xmpf_COARRAY_EX1/ V1                                 ! f4.
+        common /xmpf_COARRAY_EX1/ V1                                 ! c4.
         integer(8) :: descptr_V1                                     ! a.
         common /xmpf_descptr_EX1/ descptr_V1                         ! a1.
         ...
@@ -922,7 +928,7 @@ public class XMPtransCoarrayRun
       // f1. remove SAVE attributes from declarations of coarrays
       removeSaveAttr(staticLocalCoarrays);
       if (version == 4) {
-        // f4. generate common block for data
+        // c4. generate common block for data
         genCommonBlockForStaticCoarrays(staticLocalCoarrays);
       }
     }
@@ -1328,6 +1334,16 @@ public class XMPtransCoarrayRun
 
         if (allocated(V3)) write(*,*) "yes"       ! keep 'allocated' ! l2.
     --------------------------------------------
+
+    common and special handling for the COARRAY directive
+    (for the coarray pass that executes after the XMP pass)
+    --------------------------------------------
+        call xmpf_coarray_set_nodes ( a , XMP_DESC_p )
+    --------------------------------------------
+    output (commonly)
+    --------------------------------------------
+        call xmpf_coarray_set_nodes ( xmpf_descptr_a , XMP_DESC_p )  ! r1.
+    --------------------------------------------
   */
   private void transExecPart() {
 
@@ -1352,6 +1368,9 @@ public class XMPtransCoarrayRun
 
     // l2. fake intrinsic 'allocatable' (allocatable coarrays only)
     replaceIntrinsicCalls2(visibleCoarrays);
+
+    // r1. replace argument of runtime call
+    replaceArgumentOfRuntimeCall(visibleCoarrays);
 
     // i. initialization/finalization for auto-syncall and auto-deallocate
     //    and initialization of descPtr (only Ver.6)
@@ -1969,9 +1988,11 @@ public class XMPtransCoarrayRun
           continue;
 
         if (_hasGETfuncAsRHS(assignExpr)) {
-          // found -- convert the statement
+          // found statement "expr = COARRAYGET_GENERIC_NAME()"
+          // try optimization
           Xobject callExpr = convGETfuncStmtToCallStmt(assignExpr);
-          s.setExpr(callExpr);
+          if (callExpr != null)    // succeeded
+            s.setExpr(callExpr);
         }
       }
     }
@@ -1985,6 +2006,13 @@ public class XMPtransCoarrayRun
     Xobject rhs = assignExpr.getArg(1);
     Xobject actualArgs = rhs.getArg(1);
     String subrName = XMPcoindexObj.COARRAYGETSUB_GENERIC_NAME;
+
+    // check if it has consistent type and kind
+    // assuming that the last argument is the mold variable
+    Xobject mold = ((XobjList)actualArgs).getTail();
+    Ftype lhsFtype = new Ftype(lhs);
+    if (!lhsFtype.sameTypeAndKind(mold))
+      return null;
 
     actualArgs.add(lhs);
 
@@ -2679,6 +2707,13 @@ public class XMPtransCoarrayRun
     }
 
     Xobject tag;
+    /////////////////////////////////
+    ////  for issue #586
+    ////   The trigger of the auto-deallocation should be not an allocate statement
+    ////   but the declaration of the allocatable coarray.
+    //System.out.println("@@@@ "+(coarray.wasMovedFromModule())+(coarray.def != def)+
+    //             (coarray.usesMalloc()));
+    /////////////////////////////////
     if (coarray.wasMovedFromModule() || coarray.def != def ||
         !coarray.usesMalloc()) {
       // coarray is originally defined in a use-associated module or
@@ -2990,6 +3025,42 @@ public class XMPtransCoarrayRun
   }
 
 
+  //-----------------------------------------------------
+  //  TRANSLATION r1.
+  //  - replace argument of runtime call for COARRAY directive
+  //-----------------------------------------------------
+  //
+  private void replaceArgumentOfRuntimeCall(ArrayList<XMPcoarray> coarrays) {
+    XobjectIterator xi = new topdownXobjectIterator(def.getFuncBody());
+    for (xi.init(); !xi.end(); xi.next()) {
+      Xobject xobj = xi.getXobject();
+      if (xobj == null)
+        continue;
+      if (xobj.Opcode() != Xcode.FUNCTION_CALL ||
+          xobj.getArg(0).Opcode() == Xcode.MEMBER_REF)
+        continue;
+
+      /*  Replace coarray argument with the descriptor
+       *  if the function name is xmpf_coarray_set_nodes.
+       */
+      String fname = xobj.getArg(0).getString();
+      if (fname.equals(XMPcoarray.SET_NODES_NAME)) {
+        for (XobjArgs args = ((XobjList)xobj.getArg(1)).getArgs();
+             args != null; args = args.nextArgs()) {
+          Xobject arg = args.getArg();
+          XMPcoarray coarray = _findCoarrayInCoarrays(arg, coarrays);
+          if (coarray != null) {
+            // found the argument to be replaced
+            Ident descPtr = coarray.getDescPointerId();
+            args.setArg(descPtr);
+          }
+        }
+      }
+    }
+  }
+
+
+
   // not used currently.
   private void _removeCoarrayIntrinsicIdents(XobjArgs prevArgs, XobjArgs args) {
     // termination
@@ -3256,8 +3327,10 @@ public class XMPtransCoarrayRun
     if (_isIntrinsic(fname) && _isCoarrayInCoarrays(arg1, candidates)) {
       XMPcoarray coarray = _findCoarrayInCoarrays(arg1, candidates);
       if (coarray.usesMalloc()) {
-        XobjString associated = Xcons.Symbol(Xcode.IDENT, "associated");
-        xobj.setArg(0, associated);
+        //XobjString associated = Xcons.Symbol(Xcode.IDENT, "associated");
+        //xobj.setArg(0, associated);
+	Ident associated = env.FintrinsicIdent(Xtype.FlogicalFunctionType, "associated");
+	xobj.setArg(0, associated.Ref());
       }
     }
   }

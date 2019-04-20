@@ -9,6 +9,10 @@ OM_DRIVER_CONF_DIR=@OM_DRIVER_CONF_DIR@
 ### Directory for saving intermediate files ###
 PID=$$
 TEMP_DIR=/tmp/__omni_tmp__${PID}
+while test -e $TEMP_DIR; do
+    PID=$$
+    TEMP_DIR=/tmp/__omni_tmp__${PID}
+done
 DEBUG_TEMP_DIR="__omni_tmp__"
 
 ### Default options ###
@@ -162,7 +166,7 @@ for file in "${f_files[@]}"; do
     FILE_O=${TEMP_DIR}/"${FILE_NAME}"_${EXT}.o
 
     if [ "$target" != "sxace-nec-superux" ]; then
-	omni_exec mkdir -p "${module_dir[@]}"
+	[ "${module_dir}" != "" ] && omni_exec mkdir -p "${module_dir[@]}"
 	omni_exec $OMNI_FC_CMD "${module_dirs[@]}" "${native_add_opt[@]}" $OMNI_FC_OPT "${other_args[@]}" "${FILE_F90}" -o "${FILE_O}"
     else
 	## On SX-ACE, when indicating "${FILE_F90}" by an absolute path, "-to" option is ignored.

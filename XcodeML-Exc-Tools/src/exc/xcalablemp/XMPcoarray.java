@@ -2,6 +2,7 @@ package exc.xcalablemp;
 
 import exc.object.*;
 import exc.block.*;
+import xcodeml.util.IXobject;
 import java.util.Vector;
 
 public class XMPcoarray {
@@ -142,7 +143,7 @@ public class XMPcoarray {
     Vector<Long> sizeVector = new Vector<Long>(varDim);
 
     if(!isArray){
-      sizeVector.add(new Long(1));
+	sizeVector.add((long)1);
       Xobject arg = Xcons.Cast(Xtype.unsignedType, Xcons.LongLongConstant(0, 1));
       funcArgs.add(arg);
       lockFuncArgs.add(arg);
@@ -153,7 +154,7 @@ public class XMPcoarray {
         if((dimSize == 0) || (dimSize == -1)) {
           throw new XMPexception("array size should be declared statically");
         }
-        sizeVector.add(new Long(dimSize));
+        sizeVector.add((long)dimSize);
         Xobject arg = Xcons.Cast(Xtype.unsignedType, Xcons.LongLongConstant(0, dimSize));
 	funcArgs.add(arg);
         lockFuncArgs.add(arg);

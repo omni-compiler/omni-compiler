@@ -1,15 +1,9 @@
-/* 
- * $TSUKUBA_Release: Omni XMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
-
 package exc.xmpF;
 
 import exc.object.*;
 import exc.block.*;
 import java.util.*;
+import xcodeml.util.XmOption;
 
 /**
  * XcalableMP AST translator (for Coarray)
@@ -18,9 +12,9 @@ public class XMPtransCoarray implements XobjectDefVisitor
 {
   XMPenv env;
   private int pass;
-  private int version = 3;             // default (useMalloc=true, optLevel=1)
+  private int version = 3;             // default (useMalloc=true)
   private Boolean useMalloc = true;    // default (use RA or RS method for mamory allocation)
-  private int optLevel = 0;            // default
+  private int optLevel = 1;            // default
   private Boolean onlyCafMode;
 
   private ArrayList<XMPtransCoarrayRun> pastRuns;
@@ -39,12 +33,17 @@ public class XMPtransCoarray implements XobjectDefVisitor
     this.pass = pass;
     _set_version(suboption);
     this.onlyCafMode = onlyCafMode;
+    if (XmOption.getCoarrayEntryNames().isEmpty()) {
+      String[] names = exc.xmpF.XMPtransCoarray_libs.EntryNameArray;
+      for (String name: names)
+        XmOption.addToCoarrayEntryNames(name);    
+    }
     pastRuns = new ArrayList<XMPtransCoarrayRun>();
   }
 
   public void finish()
   {
-    env.finalize();
+    env.finalizeEnv();
   }
     
 

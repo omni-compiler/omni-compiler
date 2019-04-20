@@ -207,34 +207,34 @@ extern void xmpc_gmv_do(void *gmv_desc_leftp, void *gmv_desc_rightp, int mode);
 
 
 // xmp_gmove_acc.c
-extern void _XMP_gmove_acc_BCAST_SCALAR(void *dst_addr, void *src_addr, void *array, ...);
-extern int _XMP_gmove_acc_HOMECOPY_SCALAR(void *array, ...);
-extern void _XMP_gmove_acc_SENDRECV_SCALAR(void *dst_addr, void *src_addr, void *dst_array, void *src_array, ...);
-extern void _XMP_gmove_acc_LOCALCOPY_ARRAY(int type, size_t type_size, ...);
-extern void _XMP_gmove_acc_BCAST_ARRAY(void *src_array, int type, size_t type_size, ...);
-extern void _XMP_gmove_acc_HOMECOPY_ARRAY(void *dst_array, int type, size_t type_size, ...);
-extern void _XMP_gmove_acc_SENDRECV_ARRAY(void *dst_array, void *src_array, void *dst_array_dev, void *src_array_dev, int type, size_t type_size, ...);
-extern void _XMP_gmove_acc_BCAST_TO_NOTALIGNED_ARRAY(void *dst_array, void *src_array, int type, size_t type_size, ...);
+extern void xmpc_gmv_g_alloc_acc(void **gmv_desc, void *ap, void *dev_addr);
+extern void xmpc_gmv_l_alloc_acc(void **gmv_desc, void *local_data, int n);
+extern void xmpc_gmv_do_acc(void *gmv_desc_leftp, void *gmv_desc_rightp, int mode);
 
 // xmp_loop.c
-extern void _XMP_sched_loop_template_DUPLICATION(int ser_init, int ser_cond, int ser_step,
-                                                 int *par_init, int *par_cond, int *par_step,
-                                                 void *template, int template_index);
-extern void _XMP_sched_loop_template_BLOCK(int ser_init, int ser_cond, int ser_step,
-                                           int *par_init, int *par_cond, int *par_step,
-                                           void *template, int template_index);
-extern void _XMP_sched_loop_template_CYCLIC(int ser_init, int ser_cond, int ser_step,
-                                            int *par_init, int *par_cond, int *par_step,
-                                            void *template, int template_index);
-extern void _XMP_sched_loop_template_BLOCK_CYCLIC(int ser_init, int ser_cond, int ser_step,
-                                           int *par_init, int *par_cond, int *par_step,
-                                           void *template, int template_index);
-extern void _XMP_sched_loop_nodes(int ser_init, int ser_cond, int ser_step,
-                                  int *par_init, int *par_cond, int *par_step,
-                                  void *nodes, int nodes_index);
-extern void _XMP_sched_loop_template_GBLOCK(int ser_init, int ser_cond, int ser_step,
-					    int *par_init, int *par_cond, int *par_step,
-					    void *template, int template_index);
+extern void xmpc_loop_sched(int ser_init, int ser_cond, int ser_step,
+			    int *par_init, int *par_cond, int *par_step,
+			    void *t_desc, int t_idx,
+			    int expand_type, int lwidth, int uwidth, int unbound_flag);
+/* extern void _XMP_sched_loop_template_DUPLICATION(int ser_init, int ser_cond, int ser_step, */
+/*                                                  int *par_init, int *par_cond, int *par_step, */
+/*                                                  void *template, int template_index); */
+/* extern void _XMP_sched_loop_template_BLOCK(int ser_init, int ser_cond, int ser_step, */
+/*                                            int *par_init, int *par_cond, int *par_step, */
+/*                                            void *template, int template_index, */
+/* 					   int expand_type, int lwidth, int uwidth, int unbound_flag); */
+/* extern void _XMP_sched_loop_template_CYCLIC(int ser_init, int ser_cond, int ser_step, */
+/*                                             int *par_init, int *par_cond, int *par_step, */
+/*                                             void *template, int template_index); */
+/* extern void _XMP_sched_loop_template_BLOCK_CYCLIC(int ser_init, int ser_cond, int ser_step, */
+/*                                            int *par_init, int *par_cond, int *par_step, */
+/*                                            void *template, int template_index); */
+/* extern void _XMP_sched_loop_nodes(int ser_init, int ser_cond, int ser_step, */
+/*                                   int *par_init, int *par_cond, int *par_step, */
+/*                                   void *nodes, int nodes_index); */
+/* extern void _XMP_sched_loop_template_GBLOCK(int ser_init, int ser_cond, int ser_step, */
+/* 					    int *par_init, int *par_cond, int *par_step, */
+/* 					    void *template, int template_index); */
 
 // xmp_math_function.c
 extern int _XMP_modi_ll_i(long long value, int cycle);
@@ -293,6 +293,10 @@ extern void _XMP_reflect__(char *a);
 extern void _XMP_wait_async__(int async_id);
 extern void _XMP_reflect_async__(void *a, int async_id);
 
+// xmp_reduce_shadow.c
+extern void _XMP_set_reduce_shadow__(void *a, int dim, int lwidth, int uwidth, int is_periodic);
+extern void _XMP_reduce_shadow__(void *a);
+
 // xmp_runtime.c
 //extern void _XMP_init(int, char**, MPI_Comm); 
 //extern void _XMP_finalize(bool);
@@ -325,7 +329,7 @@ extern void _XMP_dist_template_GBLOCK(void *template, int template_index, int no
 
 extern int _XMP_exec_task_TEMPLATE_PART(void **task_desc, void *ref_template, ...);
 extern int _XMP_exec_task_TEMPLATE_PART_nocomm(void **task_desc, void *ref_template, ...);
-extern long long int _XMP_L2G_GBLOCK(int local_idx, void *template, int template_index);
+extern /*long long*/ int xmpc_ltog(int local_idx, void *template, int template_index, int offset);
 
 // xmp_util.c
 extern void *_XMP_alloc(size_t size);

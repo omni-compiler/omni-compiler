@@ -1,34 +1,26 @@
+/* -*- Mode: java; c-basic-offset:2 ; indent-tabs-mode:nil ; -*- */
 package exc.util;
-
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
-
 import exc.object.XobjectFile;
-import exc.object.IXobject;
-
 import exc.openacc.ACC;
 import exc.openacc.AccDevice;
 import exc.openacc.AccTranslator;
 import exc.openmp.OMP;
 import exc.openmp.OMPtranslate;
-
 import exc.xcalablemp.XMP;
 import exc.xcalablemp.XMPglobalDecl;
 import exc.xcalablemp.XMPtranslate;
 import exc.xcalablemp.XMPrealloc;
-
 import exc.xcodeml.XcodeMLtools;
 import exc.xcodeml.XcodeMLtools_F;
 import exc.xcodeml.XcodeMLtools_Fmod;
 import exc.xcodeml.XcodeMLtools_C;
-
 import xcodeml.util.*;
-
 import exc.xcodeml.XmXobjectToXcodeTranslator;
 import exc.xcodeml.XmfXobjectToXcodeTranslator;
 import exc.xcodeml.XmcXobjectToXcodeTranslator;
-
 import org.w3c.dom.Document;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.TransformerConfigurationException;
@@ -49,41 +41,45 @@ public class omompx
   private static void usage()
   {
     final String[] lines = {
-      "arguments: [-xc|-xf] [-l] [-fopenmp] [-f[no]coarray] [-dxcode] [-ddecomp] [-dump]",
+      "arguments: [-xc|-xf] [-l] [-fopenmp] [-fopenmp-only-target] [-f[no]coarray] [-dxcode] [-ddecomp] [-dump]",
       "           <input XcodeML file>",
       "           [-o <output reconstructed XcodeML file>]",
       "",
-      "  -xc          process XcodeML/C document.",
-      "  -xf          process XcodeML/Fortran document.",
-      "  -l           suppress line directive in decompiled code.",
-      "  -fopenmp     enable OpenMP translation.",
+      "  -xc                   process XcodeML/C document.",
+      "  -xf                   process XcodeML/Fortran document.",
+      "  -l                    suppress line directive in decompiled code.",
+      "  -fopenmp              enable OpenMP translation.",
+      "  -fopenmp-only-target  enable OpenMP only target translation.",
       "  -fcoarry[=suboption]",
-      "               enable coarray translation optionally with a suboption.",
-      "  -fnocoarry   pass without coarray translation (default for C).",
+      "                        enable coarray translation optionally with a suboption.",
+      "  -fnocoarry            pass without coarray translation (default for C).",
       "  -fcoarry-no-use-statement",
-      "               supress generation of the USE statement for coarray runtime libraries.",
-      "  -fatomicio   enable transforming Fortran IO statements to atomic operations.",
-      "  -w N         set max columns to N for Fortran source.",
-      "  -gnu         decompile for GNU Fortran (default).",
-      "  -intel       decompile for Intel Fortran.",
-      "  -M dir       specify where to search for .xmod files",
+      "                        supress generation of the USE statement for coarray runtime libraries.",
+      "  -fatomicio            enable transforming Fortran IO statements to atomic operations.",
+      "  -w N                  set max columns to N for Fortran source.",
+      "  -gnu                  decompile for GNU Fortran (default).",
+      "  -intel                decompile for Intel Fortran.",
+      "  -M dir                specify where to search for .xmod files",
       "  -max_assumed_shape=N  set max number of assumed-shape arrays of a proedure (for Fortran).",
-      "  -decomp      output decompiled source code.",
-      "  -silent      no output.",
+      "  -decomp               output decompiled source code.",
+      "  -silent               no output.",
+      "  -rename_main=NAME",
+      "                        rename the main function NAME.",
       "",
       " Debug Options:",
-      "  -d           enable output debug message.",
-      "  -dxcode      output Xcode file as <input file>.x",
-      "  -dump        output Xcode file and decompiled file to standard output.",
-      "  -domp        enable output OpenMP translation debug message.",
+      "  -d                    enable output debug message.",
+      "  -dxcode               output Xcode file as <input file>.x",
+      "  -dump                 output Xcode file and decompiled file to standard output.",
+      "  -domp                 enable output OpenMP translation debug message.",
       " Profiling Options:",
-      "  -scalasca-all       : output results in scalasca format for all directives.",
-      "  -scalasca-selective : output results in scalasca format for selected directives.",
-      "  -tlog-all           : output results in tlog format for all directives.",
-      "  -tlog-selective     : output results in tlog format for selected directives.",
+      "  -scalasca-all         output results in scalasca format for all directives.",
+      "  -scalasca-selective   output results in scalasca format for selected directives.",
+      "  -tlog-all             output results in tlog format for all directives.",
+      "  -tlog-selective       output results in tlog format for selected directives.",
       "",
-      "  -enable-threads  enable 'threads' clause",
-      "  -enable-gpu      enable xmp-dev directive/clauses"
+      "  -enable-threads       enable 'threads' clause",
+      "  -enable-gpu           enable xmp-dev directive/clauses",
+      "  -enable-Fonesided     enable one-sided functions (Only Fortran)"
     };
         
     for(String line : lines) {
@@ -98,6 +94,7 @@ public class omompx
     String outXmlFile          = null;
     String lang                = "C";
     boolean openMP             = false;
+    boolean openMPonlyTarget   = false;
     boolean openACC            = false;
     boolean coarray            = true;
     boolean xcalableMP         = false;
@@ -114,9 +111,11 @@ public class omompx
     boolean doScalasca         = false;
     boolean doTlog             = false;
     boolean silent             = false;
+    boolean Fonesided          = false;
     int maxColumns             = 0;
     String coarray_suboption   = "";        // HIDDEN
-    boolean coarray_noUseStmt  = false;     // TEMPORARY
+    //    boolean coarray_noUseStmt  = false;     // TEMPORARY
+    boolean coarray_useStmt    = true;     // TEMPORARY
     int accDefaultVectorLength = 0;
     boolean accDisableReadOnlyDataCache = false;
         
@@ -138,15 +137,17 @@ public class omompx
         XmOption.setIsSuppressLineDirective(true);
       } else if(arg.equals("-fopenmp")) {
         openMP = true;
+      } else if(arg.equals("-fopenmp-only-target")) {
+        openMPonlyTarget = true;
       } else if(arg.equals("-fcoarray")) {
         coarray = true;
       } else if(arg.equals("-fnocoarray")) {
         coarray = false;
-        coarray_noUseStmt = true;
+        coarray_useStmt = false;
       } else if(arg.startsWith("-fcoarray=")) {                  // HIDDEN
         coarray_suboption += arg.substring(arg.indexOf("=")+1);
       } else if(arg.equals("-fcoarray-no-use-statement")) {       // TEMPORARY
-        coarray_noUseStmt = true;
+        coarray_useStmt = false;
       } else if(arg.equals("-facc")) {
         openACC = true; 
       } else if(arg.equals("-fxmp")) {
@@ -156,6 +157,8 @@ public class omompx
         xcalableMPthreads = true;
       } else if(arg.equals("-enable-gpu")) {
         xcalableMPGPU = true;
+      } else if(arg.equals("-enable-Fonesided")) {
+        Fonesided = true;
       } else if(arg.equals("-fxmpf")) {
         xmpf = true;
       } else if(arg.equals("-fasync")) {
@@ -173,6 +176,9 @@ public class omompx
         outputDecomp = true;
       } else if(arg.equals("-silent")){
         silent = true;
+      } else if(arg.startsWith("-rename_main=")) {
+        String main_name = arg.substring(arg.indexOf("=") + 1);
+        XmOption.setMainName(main_name);
       } else if(arg.equals("-dump")) {
         dump = true;
         outputXcode = true;
@@ -239,7 +245,8 @@ public class omompx
       }
     }
         
-    doScalasca = (all_profile == true || selective_profile == true) && (doScalasca == false && doTlog == false);
+    doScalasca = (all_profile == true || selective_profile == true) 
+      && (doScalasca == false && doTlog == false);
 
     Reader reader = null;
     File dir      = null;
@@ -262,17 +269,22 @@ public class omompx
    
     XmOption.setLanguage(XmLanguage.valueOf(lang));
     XmOption.setIsOpenMP(openMP);
+    XmOption.setIsOpenMPonlyTarget(openMPonlyTarget);
     XmOption.setIsCoarray(coarray);
     XmOption.setIsAsync(async);
     XmOption.setIsXcalableMP(xcalableMP);
     XmOption.setIsXcalableMPthreads(xcalableMPthreads);
     XmOption.setIsXcalableMPGPU(xcalableMPGPU);
     XmOption.setTlogMPIisEnable(doTlog);
-    XmOption.setCoarrayNoUseStatement(coarray_noUseStmt);   // TEMPORARY
+    XmOption.setFonesided(Fonesided);
+    //    XmOption.setCoarrayNoUseStatement(coarray_noUseStmt);   // TEMPORARY
+    XmOption.setCoarrayUseStatement(coarray_useStmt);
     XmOption.setIsXcalableACC(xcalableACC);
     
     // read XcodeML
-    XcodeMLtools tools = (XmOption.getLanguage() == XmLanguage.F)? new XcodeMLtools_F() : new XcodeMLtools_C();
+    XcodeMLtools tools = 
+      (XmOption.getLanguage() == XmLanguage.F)? 
+      new XcodeMLtools_F() : new XcodeMLtools_C();
     XobjectFile xobjFile = tools.read(reader);
     
     if (inXmlFile != null) reader.close();
@@ -340,7 +352,7 @@ public class omompx
           xobjFile.addHeaderLine("# include \"openacc.h\"");
         }
       }
-      xmpTranslator.finalize();
+      xmpTranslator.finish();
 
       if(xcodeWriter != null) {
         xobjFile.Output(xcodeWriter);
@@ -366,6 +378,30 @@ public class omompx
         new exc.xmpF.XMPtransCoarray(xobjFile, 4, coarray_suboption,
                                      xmpf_onlyCafMode);
       xobjFile.iterateDef(caf_translator4);
+    }
+
+    if (xmpf && xmpf_onlyCafMode) {
+      System.out.println("<ONLY-CAF MODE> XMP/F gloval-view translator is " +
+                         "bypassed for " + xobjFile.getSourceFileName() + ".");
+    }
+
+    if (xmpf && !xmpf_onlyCafMode) {
+      // XMP Fortran
+      exc.xmpF.XMPtranslate xmp_translator = new exc.xmpF.XMPtranslate(xobjFile);
+      xobjFile.iterateDef(xmp_translator);
+      
+      if(exc.xmpF.XMP.hasErrors())
+        System.exit(1);
+      
+      xmp_translator.finish();
+
+      if(xcodeWriter != null) {
+        xobjFile.Output(xcodeWriter);
+        xcodeWriter.flush();
+      }
+    }
+    
+    if (xmpf && (!xmpf_skipCafMode && XmOption.isCoarray())) {
 
       // Coarray Fortran pass#1
       exc.xmpF.XMPtransCoarray caf_translator1 =
@@ -391,29 +427,11 @@ public class omompx
       }
     }
 
-    if (xmpf && xmpf_onlyCafMode) {
-      System.out.println("<ONLY-CAF MODE> XMP/F gloval-view translator is " +
-                         "bypassed for " + xobjFile.getSourceFileName() + ".");
-    }
-
-    if (xmpf && !xmpf_onlyCafMode) {
-      // XMP Fortran
-      exc.xmpF.XMPtranslate xmp_translator = new exc.xmpF.XMPtranslate(xobjFile);
-      xobjFile.iterateDef(xmp_translator);
-      
-      if(exc.xmpF.XMP.hasErrors())
-        System.exit(1);
-      
-      xmp_translator.finish();
-
-      if(xcodeWriter != null) {
-        xobjFile.Output(xcodeWriter);
-        xcodeWriter.flush();
-      }
-    }
-    
     // OpenMP translation
-    if(openMP) {
+    if(openMP || openMPonlyTarget) {
+      if(openMPonlyTarget)
+        xobjFile.addHeaderLine("#include \"ompc_target.h\"");
+      
       OMPtranslate omp_translator = new OMPtranslate(xobjFile);
       xobjFile.iterateDef(omp_translator);
             
@@ -427,7 +445,7 @@ public class omompx
         xcodeWriter.flush();
       }
     }
-    
+
     if(openACC){
       if(ACC.device == AccDevice.NONE){
         switch(ACC.platform){

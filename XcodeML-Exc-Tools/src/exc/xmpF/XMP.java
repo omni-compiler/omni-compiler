@@ -1,9 +1,3 @@
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
-
 package exc.xmpF;
 
 import exc.object.*;
@@ -18,8 +12,17 @@ import xcodeml.util.XmLog;
 public class XMP {
   public static boolean debugFlag = false;
 
-  final static String prop = "XMPprop";
-  final static String RWprotected = "XMPRWprotected";
+  final static String prop            = "XMPprop";
+  final static String RWprotected     = "XMPRWprotected";
+  final static String globalAlias     = "XMPglobalAlias";
+  final static String origIndexRange  = "XMPorigIndexRange";
+  final static String Shadow_w_list   = "XMPShadow_w_list";
+  final static String HasShadow       = "XMPHasShadow";
+  final static String Template        = "XMPTemplate";
+  final static String StructId        = "XMPStructId";
+  final static String Env             = "XMPEnv";
+  final static String AlignSourceList = "XMPAlignSourceList";
+  final	static String AlignScriptList = "XMPAlignScriptList";
 
   // defined in xmp_constant.h
   public final static int REDUCE_NONE		= 0;
@@ -47,6 +50,11 @@ public class XMP {
   public final static int GMOVE_IN              = 401;
   public final static int GMOVE_OUT	        = 402;
 
+  public final static int LOOP_EXPAND           = 410;
+  public final static int LOOP_MARGIN           = 411;
+  public final static int LOOP_PEEL_AND_WAIT    = 412;
+  public final static int LOOP_NONE             = 413;
+    
   public final static int MAX_DIM		= 15;
   public       static int MAX_ASSUMED_SHAPE     = 16;
   public final static int NONBASIC_TYPE		= 99 /*599*/;
@@ -54,9 +62,11 @@ public class XMP {
   public final static String SIZE_ARRAY_NAME    = "xmp_size_array";
   public final static String XMP_COMMON_NAME    = "XMP_COMMON";
 
-  public final static String PREFIX_		= "XMP__";
-  public final static String DESC_PREFIX_	= "XMP_DESC_";
-  public final static String SAVE_DESC_PREFIX_	= "XMP_SAVE_";    
+  public final static String PREFIX_		 = "XMP__";
+  public final static String DESC_PREFIX_ 	 = "XMP_DESC_";
+  public final static String DESC_STRUCT_PREFIX_ = "XMP_STRUCT_DESC_";
+  public final static String SAVE_DESC_PREFIX_	 = "XMP_SAVE_";
+  public final static String STRUCT_PREFIX_      = "XMP_STRUCT_";
 
   public final static String ASTERISK		= "* @{ASTERISK}@";
   public final static String COLON		= ": @{COLON}@";
@@ -101,6 +111,10 @@ public class XMP {
   public final static String set_reflect_f    = "xmpf_set_reflect_";
   public final static String reflect_f        = "xmpf_reflect_";
   public final static String reflect_async_f  = "xmpf_reflect_async_";
+  public final static String set_reduce_shadow_f    = "xmpf_set_reduce_shadow_";
+  public final static String reduce_shadow_f        = "xmpf_reduce_shadow_";
+  public final static String reduce_shadow_async_f  = "xmpf_reduce_shadow_async_";
+    
   public final static String init_async_f     = "xmpf_init_async_";
   public final static String start_async_f    = "xmpf_start_async_";
   public final static String wait_async_f     = "xmpf_wait_async_";
@@ -128,6 +142,10 @@ public class XMP {
   public final static String set_reflect_acc_f    = "xaccf_set_reflect_";
   public final static String reflect_acc_f        = "xaccf_reflect_";
   public final static String reflect_async_acc_f  = "xaccf_reflect_async_";
+  public final static String set_reduce_shadow_acc_f    = "xaccf_set_reduce_shadow_";
+  public final static String reduce_shadow_acc_f        = "xaccf_reduce_shadow_";
+  public final static String reduce_shadow_async_acc_f  = "xaccf_reduce_shadow_async_";
+
   public final static String reduction_acc_f      = "xaccf_reduction_";
   public final static String reduction_loc_acc_f  = "xaccf_reduction_loc_";
   public final static String bcast_acc_f          = "xaccf_bcast_";
@@ -260,7 +278,7 @@ public class XMP {
   static int gensym_num = 0;
   
   public static String genSym(String prefix) {
-    String newString = new String(prefix + String.valueOf(gensym_num));
+    String newString = new String("XMP_" + prefix + String.valueOf(gensym_num));
     gensym_num++;
     return newString;
   }

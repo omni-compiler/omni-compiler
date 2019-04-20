@@ -45,8 +45,11 @@ void _XMP_init_array_desc(_XMP_array_t **array, _XMP_template_t *template, int d
   a->type_size            = type_size;
   
   size_t dummy;
-  if(type != _XMP_N_TYPE_NONBASIC)
+  if (type != _XMP_N_TYPE_NONBASIC)
     _XMP_setup_reduce_type(&a->mpi_type, &dummy, type);
+  else {
+    a->mpi_type = MPI_BYTE;
+  }
   
   a->order           = MPI_ORDER_C;
   a->array_addr_p    = NULL;
@@ -180,11 +183,8 @@ void _XMP_init_array_desc_NOT_ALIGNED(_XMP_array_t **adesc, _XMP_template_t *tem
     ai->align_template_index = _XMP_N_NO_ALIGN_TEMPLATE;
 
   }
-
   *adesc = a;
-
 }
-
 
 void _XMP_finalize_array_desc(_XMP_array_t *array)
 {
@@ -931,7 +931,8 @@ void _XMP_init_array_nodes(_XMP_array_t *array)
   int template_dim = align_template->dim;
   int align_template_shrink[template_dim];
   int align_template_num = 0;
-  long long align_template_lower[template_dim], align_template_upper[template_dim], align_template_stride[template_dim];
+  long long align_template_lower[template_dim], align_template_upper[template_dim],
+            align_template_stride[template_dim];
   
   for(int i=0;i<template_dim;i++)
     align_template_shrink[i] = 1;
@@ -977,7 +978,6 @@ unsigned long long _XMP_get_array_total_elmts(_XMP_array_t *array) {
 
 void _XMP_align_array_noalloc(_XMP_array_t *a, int adim, int tdim, long long align_subscript, 
 			     int *temp0, unsigned long long *acc0){
-  _XMP_ASSERT(a->dim == 1);
 
   a->is_allocated = false;
 

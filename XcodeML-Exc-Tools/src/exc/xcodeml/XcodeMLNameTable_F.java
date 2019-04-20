@@ -136,6 +136,8 @@ public class XcodeMLNameTable_F extends XcodeMLNameTable {
 			new XcodeMLName(Xcode.XMP_PRAGMA, "XMPPragma"),
 			new XcodeMLName(Xcode.ACC_PRAGMA, "ACCPragma"),
 
+			new XcodeMLName(Xcode.COMMENT_LINE, "FcommentLine"),
+
 			new XcodeMLName(Xcode.F_SYNCALL_STATEMENT, "syncAllStatement"),
 			new XcodeMLName(Xcode.F_SYNCIMAGE_STATEMENT, "syncImagesStatement"),
 			new XcodeMLName(Xcode.F_SYNCMEMORY_STATEMENT, "syncMemoryStatement"),
@@ -144,6 +146,7 @@ public class XcodeMLNameTable_F extends XcodeMLNameTable {
 			new XcodeMLName(Xcode.F_UNLOCK_STATEMENT, "unlockStatement"),
 			new XcodeMLName(Xcode.F_SYNC_STAT, "syncStat"),
 			new XcodeMLName(Xcode.F_BLOCK_STATEMENT, "blockStatement"),
+			new XcodeMLName(Xcode.F_ASSOCIATE_STATEMENT, "associateStatement"),
 			new XcodeMLName(Xcode.F_TYPE_PARAM, "typeParam"),
 			new XcodeMLName(Xcode.F_TYPE_PARAMS, "typeParams"),
 			new XcodeMLName(Xcode.F_TYPE_PARAM_VALUES, "typeParamValues"),

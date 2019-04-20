@@ -4,7 +4,6 @@ import exc.object.*;
 import exc.util.MachineDep;
 import exc.block.*;
 import xcodeml.util.XmOption;
-
 import java.io.File;
 import java.util.*;
 
@@ -14,7 +13,6 @@ import java.util.*;
 public class XMPtransPragma
 {
   private XMPenv  env;
-    
   public XMPtransPragma() { }
 
   // pass3: do transformation for XMP pragma
@@ -110,8 +108,16 @@ public class XMPtransPragma
 		      Xtype.FsubroutineType);
       XobjString modName = Xcons.Symbol(Xcode.IDENT, env.getCurrentDef().getDef().getName());
       Xobject decls = Xcons.List(Xcons.List(Xcode.F_USE_DECL, modName, Xcons.IntConstant(0)));
-      XobjectDef prolog_def = 
-      	XobjectDef.Func(prolog_f, null, decls, prolog.toXobject());
+
+      Xobject orig_idList = def.getDef().getDef().getArg(1).copy();
+      for (Xobject obj: (XobjList)orig_idList) {
+	Ident ident = (Ident)obj;
+	ident.setFdeclaredModule(env.currentDefName());
+      }
+      
+      XobjectDef prolog_def =
+	  XobjectDef.Func(prolog_f, orig_idList, decls, prolog.toXobject());
+      //XobjectDef.Func(prolog_f, null, decls, prolog.toXobject());
       env.getEnv().add(prolog_def);
 
     } else {
@@ -146,9 +152,19 @@ public class XMPtransPragma
       epilog.add(Xcons.List(Xcode.F_CONTINUE_STATEMENT));
     }
     if(table != null){
+      // First, outputs all nodes
       for(XMPobject o: table.getXMPobjects()){
-	o.buildConstructor(prolog,env,block);
-	o.buildDestructor(epilog,env,block);
+	if (o.getKind() == XMPobject.NODES){
+	  o.buildConstructor(prolog,env,block);
+	  o.buildDestructor(epilog,env,block);
+	}
+      }
+      // Second, outputs all templates
+      for(XMPobject o: table.getXMPobjects()){
+	if (o.getKind() == XMPobject.TEMPLATE){
+	  o.buildConstructor(prolog,env,block);
+	  o.buildDestructor(epilog,env,block);
+	}
       }
       for(XMParray a: table.getXMParrays()){
 	a.buildConstructor(prolog,env,block);
@@ -195,6 +211,7 @@ public class XMPtransPragma
       return translateLoop(pb,info);
 
     case REFLECT:
+    case REDUCE_SHADOW:
       return translateReflect(pb,info);
     case BARRIER:
       return translateBarrier(pb,info);
@@ -229,6 +246,8 @@ public class XMPtransPragma
 
   private Block translateLoop(PragmaBlock pb, XMPinfo info){
     BlockList ret_body = Bcons.emptyBody();
+    int origLoopType = info.getLoopType();
+    Vector<XMPdimInfo> widthList = info.getWidthList();
     XMPobjectsRef on_ref = info.getOnRef();
 
     // generate on_ref object
@@ -261,6 +280,10 @@ public class XMPtransPragma
     BasicBlock entry_bb = entry_block.getBasicBlock();
 
     for(int k = 0; k < info.getLoopDim(); k++){
+
+      XMPtemplate t = on_ref.getTemplate();
+      int t_idx = on_ref.getLoopOnIndex(k);
+
       XMPdimInfo d_info = info.getLoopDimInfo(k);
       Ident local_loop_var = d_info.getLoopLocalVar();
 
@@ -280,9 +303,9 @@ public class XMPtransPragma
 
       // transform
       Xtype btype = local_loop_var.Type();
-      Ident lb_var = env.declIdent(XMP.genSym("XMP_loop_lb"), btype,pb);
-      Ident ub_var = env.declIdent(XMP.genSym("XMP_loop_ub"), btype,pb);
-      Ident step_var = env.declIdent(XMP.genSym("XMP_loop_step"), step_type,pb);
+      Ident lb_var = env.declIdent(XMP.genSym("loop_lb"), btype,pb);
+      Ident ub_var = env.declIdent(XMP.genSym("loop_ub"), btype,pb);
+      Ident step_var = env.declIdent(XMP.genSym("loop_step"), step_type,pb);
       
       Xobject org_loop_ind_var = for_block.getInductionVar();
 
@@ -293,18 +316,40 @@ public class XMPtransPragma
       entry_bb.add(Xcons.Set(ub_var.Ref(), for_block.getUpperBound()));
       entry_bb.add(Xcons.Set(step_var.Ref(), for_block.getStep()));
 
+      Xobject lower, upper, unboundFlag;
+      if (widthList.isEmpty()){
+	lower = Xcons.IntConstant(0);
+	upper = Xcons.IntConstant(0);
+	unboundFlag = Xcons.IntConstant(0);
+      }
+      else {
+	// Here the stride means an unbound flag.
+	XMPdimInfo w = widthList.get(t_idx);
+	lower = w.getLower();
+	upper = w.getUpper();
+	unboundFlag = w.getStride();
+      }
+
+      int loopType;
+      if (origLoopType == XMP.LOOP_MARGIN && unboundFlag.getInt() == -1){
+	loopType = XMP.LOOP_EXPAND;
+      }
+      else {
+	loopType = origLoopType;
+      }
+      
       Ident schd_f = 
 	env.declInternIdent(XMP.loop_sched_f,Xtype.FsubroutineType);
       Xobject args = Xcons.List(lb_var.Ref(), ub_var.Ref(), step_var.Ref(),
 				Xcons.IntConstant(k),
-				on_ref.getDescId().Ref());
+				on_ref.getDescId().Ref(),
+				Xcons.IntConstant(loopType),
+				lower, upper, unboundFlag);
       entry_bb.add(schd_f.callSubroutine(args));
 
       for_block.setLowerBound(lb_var.Ref());
       for_block.setUpperBound(ub_var.Ref());
 
-      XMPtemplate t = on_ref.getTemplate();
-      int t_idx = on_ref.getLoopOnIndex(k);
       if (for_block.getStep().isOneConstant() && (t.getDistMannerAt(t_idx) != XMPtemplate.CYCLIC ||
 						  t.getDistArgAt(t_idx) == null ||
 						  t.getDistArgAt(t_idx).isOneConstant())){
@@ -321,7 +366,7 @@ public class XMPtransPragma
           case XMPtemplate.BLOCK:
           case XMPtemplate.GBLOCK:
           {
-            Ident l2g_off_var = env.declIdent(XMP.genSym("XMP_l2g_off"), Xtype.FintType, pb);
+            Ident l2g_off_var = env.declIdent(XMP.genSym("loop_l2goff"), Xtype.FintType, pb);
             Ident l2g_f =
                     env.declInternIdent(XMP.l2g_f, Xtype.FsubroutineType);
             args = Xcons.List(l2g_off_var.Ref(),
@@ -338,11 +383,29 @@ public class XMPtransPragma
         }else {
           Ident l2g_f =
                   env.declInternIdent(XMP.l2g_f, Xtype.FsubroutineType);
-          args = Xcons.List(org_loop_ind_var,
-                  local_loop_var.Ref(),
-                  Xcons.IntConstant(k),
-                  on_ref.getDescId().Ref());
-          for_block.getBody().insert(l2g_f.callSubroutine(args));
+
+          switch (t.getDistMannerAt(t_idx)){
+          case XMPtemplate.BLOCK:
+          case XMPtemplate.GBLOCK:
+            {
+              Ident l2g_off_var = env.declIdent(XMP.genSym("loop_l2goff"), Xtype.FintType, pb);
+              args = Xcons.List(l2g_off_var.Ref(),
+                                Xcons.IntConstant(0),
+                                Xcons.IntConstant(k),
+                                on_ref.getDescId().Ref());
+              entry_bb.add(l2g_f.callSubroutine(args));
+              for_block.getBody().insert(Xcons.Set(org_loop_ind_var, Xcons.binaryOp(Xcode.PLUS_EXPR, l2g_off_var.Ref(), local_loop_var.Ref())));
+              break;
+            }
+          default:
+            {
+              args = Xcons.List(org_loop_ind_var,
+                                local_loop_var.Ref(),
+                                Xcons.IntConstant(k),
+                                on_ref.getDescId().Ref());
+              for_block.getBody().insert(l2g_f.callSubroutine(args));
+            }
+          }
         }
       }
     }
@@ -486,7 +549,10 @@ public class XMPtransPragma
     Ident f, g, h;
     boolean isAcc = info.isAcc();
 
-    f = env.declInternIdent(isAcc? XMP.reflect_acc_f : XMP.reflect_f,Xtype.FsubroutineType);
+    if (info.pragma == XMPpragma.REFLECT)
+      f = env.declInternIdent(isAcc? XMP.reflect_acc_f : XMP.reflect_f, Xtype.FsubroutineType);
+    else
+      f = env.declInternIdent(isAcc? XMP.reduce_shadow_acc_f : XMP.reduce_shadow_f, Xtype.FsubroutineType);
     
     if (info.getAsyncId() != null){
       Xobject arg = Xcons.List(info.getAsyncId());
@@ -497,7 +563,10 @@ public class XMPtransPragma
     Vector<XMParray> reflectArrays = info.getReflectArrays();
     for(XMParray a: reflectArrays){
       for (int i = 0; i < info.widthList.size(); i++){
-	  g = env.declInternIdent(isAcc? XMP.set_reflect_acc_f : XMP.set_reflect_f,Xtype.FsubroutineType);
+	  if (info.pragma == XMPpragma.REFLECT)
+	    g = env.declInternIdent(isAcc? XMP.set_reflect_acc_f : XMP.set_reflect_f, Xtype.FsubroutineType);
+	  else
+	    g = env.declInternIdent(isAcc? XMP.set_reduce_shadow_acc_f : XMP.set_reduce_shadow_f, Xtype.FsubroutineType);
 	  XMPdimInfo w = info.widthList.get(i);
 
 	  // Here the stride means the periodic flag.
@@ -512,7 +581,10 @@ public class XMPtransPragma
       }
 
       if (info.getAsyncId() != null){
-	  h = env.declInternIdent(isAcc? XMP.reflect_async_acc_f : XMP.reflect_async_f,Xtype.FsubroutineType);
+	  if (info.pragma == XMPpragma.REFLECT)
+	    h = env.declInternIdent(isAcc? XMP.reflect_async_acc_f : XMP.reflect_async_f, Xtype.FsubroutineType);
+	  else
+	    h = f; // no change for REDUCE_SHADOW
 	  bb.add(h.callSubroutine(Xcons.List(a.getDescId().Ref(), info.getAsyncId())));
       }
       else {
@@ -719,9 +791,24 @@ public class XMPtransPragma
 
     Ident f = env.declInternIdent(isAcc? XMP.bcast_acc_f : XMP.bcast_f, Xtype.FsubroutineType);
 
-    for(Ident id: info.getInfoVarIdents()){
-      Xtype type = id.Type();
+    for (Xobject v: info.getInfoVars()){
+
+      Xtype type = null;
       Xobject size_expr = Xcons.IntConstant(1);
+
+      if (v.isVariable()){
+
+	Ident id = env.findVarIdent(v.getName(), pb);
+	if (id == null){
+	  XMP.errorAt(pb,"variable '"+v.getName()+"' in bcast is not found");
+	}
+
+	type = id.Type();
+
+      }
+      else {
+	type = v.Type();
+      }
 
       if (type.isFarray()){
 	if (type.isFassumedSize()){
@@ -740,27 +827,28 @@ public class XMPtransPragma
 	    else {
 	      size = s;
 	    }
-
+	    
 	    size_expr = Xcons.binaryOp(Xcode.MUL_EXPR, size_expr, size);
 	  }
 	}
 	else {
 	  Ident size_func = env.declIntrinsicIdent("size", Xtype.FintFunctionType);
-	  size_expr = size_func.Call(Xcons.List(id.Ref()));
+	  size_expr = size_func.Call(Xcons.List(v));
 	}
 	type = type.getRef();
       }
 
-      if(!type.isBasic()){
+      if (!type.isBasic()){
 	XMP.fatal("bcast for non-basic type ="+type);
       }
 
-      if(type.getFlen() != null)
-        size_expr = Xcons.binaryOp(Xcode.MUL_EXPR, size_expr, type.getFlen());
+      if (type.getFlen() != null)
+	size_expr = Xcons.binaryOp(Xcode.MUL_EXPR, size_expr, type.getFlen());
 
-      Xobject args = Xcons.List(id.Ref(), size_expr, XMP.typeIntConstant(type), from_ref_arg, on_ref_arg);
+      Xobject args = Xcons.List(v, size_expr, XMP.typeIntConstant(type), from_ref_arg, on_ref_arg);
 
       ret_body.add(f.callSubroutine(args));
+	
     }
 
     if (info.getAsyncId() != null){
@@ -779,10 +867,10 @@ public class XMPtransPragma
       ret_body.add(g.callSubroutine(Xcons.List(from_ref.getDescId())));
     }
 
-    if(isAcc) {
+    if (isAcc) {
       XobjList vars = Xcons.List();
-      for (Ident id : info.getInfoVarIdents()) {
-        vars.add(id.Ref());
+      for (Xobject v : info.getInfoVars()) {
+        vars.add(v);
       }
       ret_body = Bcons.blockList(buildAccHostData(vars, ret_body));
     }
@@ -828,7 +916,7 @@ public class XMPtransPragma
     Block b = on_ref.buildConstructor(env);
     BasicBlock bb = b.getBasicBlock();
 
-    Ident taskNodesDescId = env.declObjectId(XMP.genSym("XMP_TASK_NODES"), pb);
+    Ident taskNodesDescId = env.declObjectId(XMP.genSym("TASK_NODES"), pb);
 
     Ident f;
     if (!info.isNocomm()){
@@ -840,13 +928,11 @@ public class XMPtransPragma
     Ident g2 = env.declInternIdent(XMP.ref_dealloc_f, Xtype.FsubroutineType, pb);
 
     if (tasksFlag){
-      //parentBlock.insert(on_ref.buildConstructor(env));
       parentBlock.insert(b);
       parentBlock.add(g1.callSubroutine(Xcons.List(taskNodesDescId)));
       parentBlock.add(g2.callSubroutine(Xcons.List(on_ref.getDescId())));
     }
     else {
-      //ret_body.add(on_ref.buildConstructor(env));
       ret_body.add(b);
     }
 
@@ -854,7 +940,6 @@ public class XMPtransPragma
     if (!info.isNocomm()){
       f = env.declInternIdent(XMP.test_task_on_f,
 			      Xtype.FlogicalFunctionType, pb);
-      //Xobject cond = f.Call(Xcons.List(on_ref.getDescId().Ref()));
       cond = f.Call(Xcons.List(taskNodesDescId.Ref()));
     }
     else {
@@ -908,16 +993,15 @@ public class XMPtransPragma
   private final static int GMOVE_OUT = 402;
 
   private Block translateGmove(PragmaBlock pb, XMPinfo i) {
-
     Block b = Bcons.emptyBlock();
     BasicBlock bb = b.getBasicBlock();
 
-    Xobject left = i.getGmoveLeft();
+    Xobject left  = i.getGmoveLeft();
     Xobject right = i.getGmoveRight();
-    
+
     if (left == null && right == null) return pb.getBody().getHead();
 
-    Ident left_desc = buildGmoveDesc(left, bb, pb);
+    Ident left_desc  = buildGmoveDesc(left, bb, pb);
     Ident right_desc = buildGmoveDesc(right, bb, pb);
 
     if (i.getAsyncId() != null){
@@ -927,8 +1011,6 @@ public class XMPtransPragma
     }
 
     Ident f = env.declInternIdent(XMP.gmove_do_f, Xtype.FsubroutineType);
-    // Xobject args = Xcons.List(left_desc.Ref(), right_desc.Ref(),
-    // 			      Xcons.IntConstant(GMOVE_COLL));
     Xobject args = Xcons.List(left_desc.Ref(), right_desc.Ref(), i.getGmoveOpt());
     bb.add(f.callSubroutine(args));
 
@@ -956,35 +1038,45 @@ public class XMPtransPragma
     switch(x.Opcode()){
     case F_ARRAY_REF:
       Xobject a = x.getArg(0).getArg(0);
-      array = (XMParray)a.getProp(XMP.RWprotected);
+      if(a.Opcode() == Xcode.VAR)
+	array = (XMParray)a.getProp(XMP.RWprotected);
+      else if(a.Opcode() == Xcode.MEMBER_REF){
+	String structName = a.getArg(0).getName();
+        String memberName = a.getArg(1).getName();
+	Ident structId = env.findVarIdent(structName,pb);
+        Ident memberId = structId.Type().getMemberList().getIdent(XMP.PREFIX_ + memberName);
+	array = (XMParray)memberId.getProp(XMP.RWprotected);
+      }
       if(array != null){
 	f = env.declInternIdent(XMP.gmove_g_alloc_f, Xtype.FsubroutineType);
 	args = Xcons.List(descId.Ref(), array.getDescId().Ref());
 	bb.add(f.callSubroutine(args));
 	
-	// System.out.println("idx args="+x.getArg(1));
 	f = env.declInternIdent(XMP.gmove_g_dim_info_f, Xtype.FsubroutineType);
  	int idx = 0;
  	for(Xobject e: (XobjList) x.getArg(1)){
  	  switch(e.Opcode()){
 	  case F_ARRAY_INDEX:
-	    args = Xcons.List(descId.Ref(),Xcons.IntConstant(idx),
+	    args = Xcons.List(descId.Ref(), Xcons.IntConstant(idx),
 			      Xcons.IntConstant(GMOVE_INDEX),
 			      e.getArg(0),
-			      Xcons.IntConstant(0),Xcons.IntConstant(0));
+			      Xcons.IntConstant(0), Xcons.IntConstant(0));
 	    break;
 	  case F_INDEX_RANGE:
 	    if(e.getArg(0) == null && e.getArg(1) == null){
-	      args = Xcons.List(descId.Ref(),Xcons.IntConstant(idx),
+	      args = Xcons.List(descId.Ref(), Xcons.IntConstant(idx),
 				Xcons.IntConstant(GMOVE_ALL),
 				Xcons.IntConstant(0),
-				Xcons.IntConstant(0),Xcons.IntConstant(0));
+				Xcons.IntConstant(0), Xcons.IntConstant(0));
 	    } else {
+	      Xobject ubound = e.getArg(1);
+	      if (ubound == null) ubound = env.declInternIdent("xmp_ubound", Xtype.FintFunctionType).
+				      Call(Xcons.List(array.getDescId().Ref(), Xcons.IntConstant(idx)));
 	      Xobject stride = e.getArg(2);
-	      if(stride == null) stride = Xcons.IntConstant(1);
-	      args = Xcons.List(descId.Ref(),Xcons.IntConstant(idx),
+	      if (stride == null) stride = Xcons.IntConstant(1);
+	      args = Xcons.List(descId.Ref(), Xcons.IntConstant(idx),
 				Xcons.IntConstant(GMOVE_RANGE),
-				e.getArg(0),e.getArg(1),stride);
+				e.getArg(0), ubound, stride);
 	    }
 	    break;
 	  default:

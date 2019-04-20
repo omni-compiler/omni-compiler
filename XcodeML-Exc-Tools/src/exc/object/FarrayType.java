@@ -1,10 +1,5 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package exc.object;
+
 import exc.block.Block;
 
 /**
@@ -50,7 +45,7 @@ public class FarrayType extends Xtype
         return sizeExprs;
     }
 
-    public void setFarraySizeExpr(Xobject[] sizeEexprs)
+    public void setFarraySizeExpr(Xobject[] sizeExprs)
     {
         this.sizeExprs = sizeExprs;
     }

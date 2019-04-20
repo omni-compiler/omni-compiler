@@ -509,9 +509,11 @@ _XMP_nodes_t *_XMP_create_nodes_by_template_ref(_XMP_template_t *ref_template, i
     }
   }
 
-  return _XMP_init_nodes_struct_NODES_NAMED(new_nodes_dim, onto_nodes, onto_nodes_shrink,
-                                            onto_nodes_ref_lower, onto_nodes_ref_upper,
-					    onto_nodes_ref_stride, new_nodes_dim_size, _XMP_N_INT_TRUE);
+  if (new_nodes_dim > 0)
+    return _XMP_init_nodes_struct_NODES_NAMED(new_nodes_dim, onto_nodes, onto_nodes_shrink,
+					      onto_nodes_ref_lower, onto_nodes_ref_upper,
+					      onto_nodes_ref_stride, new_nodes_dim_size, _XMP_N_INT_TRUE);
+  else return NULL;
 }
 
 int _XMP_exec_task_TEMPLATE_PART(_XMP_task_desc_t **task_desc, _XMP_template_t *ref_template, ...) {
@@ -747,6 +749,41 @@ int _XMP_calc_template_par_triplet(_XMP_template_t *template, int template_index
   *template_stride = par_stride;
 
   return _XMP_N_INT_TRUE;
+}
+
+// should return long long int?
+/*long long*/ int xmpc_ltog(int local_idx, _XMP_template_t *template, int dim, int offset)
+{
+  /*long long*/ int global_index = 0;
+  _XMP_template_chunk_t *chunk   = &(template->chunk[dim]);
+  _XMP_nodes_info_t *n_info      = chunk->onto_nodes_info;
+  long long base                 = template->info[dim].ser_lower;
+
+  switch(chunk->dist_manner){
+  case _XMP_N_DIST_DUPLICATION:
+    global_index = local_idx;
+    break;
+  case _XMP_N_DIST_BLOCK:
+    global_index = base + n_info->rank * chunk->par_chunk_width + local_idx;
+    break;
+  case _XMP_N_DIST_CYCLIC:
+    global_index = base + n_info->rank + n_info->size * local_idx;
+    break;
+  case _XMP_N_DIST_BLOCK_CYCLIC:
+    {
+      int w = chunk->par_width;
+      global_index =  base + n_info->rank * w
+	          + (local_idx/w) * w * n_info->size + local_idx%w;
+    }
+    break;
+  case _XMP_N_DIST_GBLOCK:
+    global_index = local_idx + chunk->mapping_array[n_info->rank];
+  default:
+    _XMP_fatal("_XMP_: unknown chunk dist_manner");
+  }
+
+  return global_index - offset;
+    
 }
 
 

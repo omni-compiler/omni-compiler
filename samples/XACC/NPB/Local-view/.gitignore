@@ -1,0 +1,6 @@
+*.o
+sys/setparams
+config/make.def
+config/suite.def
+*/npbparams.h
+bin

@@ -110,6 +110,8 @@ L   ARRAY_REF                  XbcArrayRef
 # -----------------
 # C: Directive
 L   PRAGMA_LINE                XbcPragma                    XbfFpragmaStatement
+L   COMMENT_LINE
+L   LINEMARKER
 L   TEXT                       XbcText
 
 # -----------------
@@ -313,8 +315,9 @@ T   ID
 L   CPP_NESTEDNAMESPECIFIER_TYPESPEC
 
 # -----------------
-# Fortran2008: BLOCK, VOLATILE.
+# Fortran2008: BLOCK, VOLATILE, ASSOCIATE.
 L   F_BLOCK_STATEMENT
+L   F_ASSOCIATE_STATEMENT
 
 # -----------------
 # C++11

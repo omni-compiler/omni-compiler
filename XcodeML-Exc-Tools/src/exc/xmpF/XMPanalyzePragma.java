@@ -1,18 +1,12 @@
-/* 
- * $TSUKUBA_Release: Omni XcalableMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package exc.xmpF;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import exc.object.*;
 import exc.block.*;
 import java.util.*;
 import xcodeml.util.XmOption;
+import exc.xcalablemp.*;
 
 /**
  * process analyze XcalableMP pragma
@@ -30,7 +24,6 @@ public class XMPanalyzePragma
 
     Block b;
     Block fblock = def.getBlock();
-
 
     // pass1: traverse to collect information about XMP pramga
     XMP.debug("pass1:");
@@ -196,10 +189,37 @@ public class XMPanalyzePragma
       break;
 
     case LOOP:
-      analyzeLoop(pb.getClauses(), pb.getBody(), pb,info);
-      break; 
+      {
+      Block newBlock = null;
+      XobjList expandOpt = (XobjList)pb.getClauses().getArg(2);
 
+      if (expandOpt == null || expandOpt.hasNullArg()){
+	;
+      }
+      else if (expandOpt.getArg(0).getInt() == XMP.LOOP_MARGIN){
+	newBlock = divideMarginLoop(pb);
+      }
+      else if (expandOpt.getArg(0).getInt() == XMP.LOOP_PEEL_AND_WAIT){
+	newBlock = peelLoop(pb);
+      }
+      
+      if (newBlock != null){
+	Block next;
+	for (Block b = newBlock.getBody().getHead(); b != null; b = next){
+	  next = b.getNext();
+	  analyzePragma((PragmaBlock)b);
+	}
+	pb.replace(newBlock);
+      }
+      else {
+	analyzeLoop(pb.getClauses(), pb.getBody(), pb, info);
+      }
+      break;
+      
+    }
+      
     case REFLECT:
+    case REDUCE_SHADOW:
       analyzeReflect(pb.getClauses(),info,pb);
       break;
 
@@ -248,7 +268,6 @@ public class XMPanalyzePragma
       break;
 
     case ARRAY:
-      //analyzeArray(pb.getClauses(), pb.getBody(), info, pb);
       break;
 
     default:
@@ -266,9 +285,7 @@ public class XMPanalyzePragma
 				 XMPenv env, PragmaBlock pb){
 
     // global array
-
     String gName = localAliasDecl.getArg(1).getName();
-
     Ident gArrayId = env.findVarIdent(gName, pb);
     if (gArrayId == null) {
       XMP.errorAt(pb, "global array '" + gName + "' is not declared");
@@ -282,9 +299,7 @@ public class XMPanalyzePragma
     }
 
     // local array
-
     String lName = localAliasDecl.getArg(0).getName();
-
     Ident lArrayId = env.findVarIdent(lName, pb);
     if (lArrayId == null) {
       XMP.errorAt(pb, "local alias '" + lName + "' is not declared");
@@ -305,7 +320,7 @@ public class XMPanalyzePragma
     if (!lType.isFassumedShape()){
       XMP.errorAt(pb, "local alias must be declared as an assumed-shape array.");
       return;
-    }      
+    }
 
     if (gType.getNumDimensions() != lType.getNumDimensions()){
       XMP.errorAt(pb, "The rank is different between the global array and the local alias");
@@ -318,20 +333,20 @@ public class XMPanalyzePragma
     }
 
     // replace name
-
     Ident origLocalId = gObject.getLocalId();
-    Xtype localType = origLocalId.Type();
-    StorageClass sclass = origLocalId.getStorageClass();
-
-    env.removeIdent(lName, pb);
     env.removeIdent(origLocalId.getName(), pb);
+    lArrayId.setProp(XMP.origIndexRange, ((FarrayType)lArrayId.Type()).getFindexRange());
 
-    Ident newLocalId = env.declIdent(lName, localType, false, pb);
-    newLocalId.setStorageClass(sclass);
-    newLocalId.setValue(Xcons.Symbol(Xcode.VAR, localType, lName));
+    int arrayDim = lType.getNumDimensions();
+    Xobject[] sizeExprs = new Xobject[arrayDim];
+    for (int i = 0; i < arrayDim; i++)
+      sizeExprs[i] = Xcons.FindexRangeOfAssumedShape();
 
-    gObject.setLocalId(newLocalId);
+    lType.setFarraySizeExpr(sizeExprs);
+    lType.setIsFallocatable(true);
 
+    gObject.setLocalId(lArrayId);
+    lArrayId.setProp(XMP.globalAlias, gObject);
   }
 
   private void analyzeTemplateFix(Xobject tfixDecl, 
@@ -364,9 +379,7 @@ public class XMPanalyzePragma
 
     // set info
     info.setTemplateFix(tObject, sizeList, distList);
-
   }
-
 
   /* 
    * analyze Loop directive:
@@ -374,55 +387,52 @@ public class XMPanalyzePragma
    */
   void analyzeLoop(Xobject loopDecl, BlockList loopBody,
 		   PragmaBlock pb, XMPinfo info) {
+
     // get block to schedule
     Vector<XMPdimInfo> dims = new Vector<XMPdimInfo>();
-    
+
     // schedule loop
     XobjList loopIterList = (XobjList)loopDecl.getArg(0);
+    
     if (loopIterList == null || loopIterList.Nargs() == 0) {
+      XobjList onRef          = (XobjList)loopDecl.getArg(1);
+      XobjList onRefIterList  = (XobjList)onRef.getArg(1);
+      loopIterList = XMPutil.getLoopIterListFromOnRef(onRefIterList);
+    }
+    
+    while(true){
       ForBlock loopBlock = getOutermostLoopBlock(loopBody);
-      if(loopBlock == null){
-    	  XMP.errorAt(pb,"loop is not found after loop directive");
-    	  return;
-      }
-      dims.add(XMPdimInfo.loopInfo(loopBlock));
-      loopBody = loopBlock.getBody();
-    } else {
-      while(true){
-    	  ForBlock loopBlock = getOutermostLoopBlock(loopBody);
-    	  if(loopBlock == null) break;
-    	  boolean is_found = false;
-    	  for(Xobject x: loopIterList){
-    		  if(x.Opcode() == Xcode.LIST) x = x.getArg(0);
-    		  if(isEqualVar(loopBlock.getInductionVar(),x)){
-    			  is_found = true;
-    			  break;
-    		  }
-    	  }
-    	  if(is_found)
-    		  dims.add(XMPdimInfo.loopInfo(loopBlock));
-    	  loopBody = loopBlock.getBody();
-      }
-
-      /* check loopIterList */
+      if(loopBlock == null) break;
+      boolean is_found = false;
       for(Xobject x: loopIterList){
-    	  if(x.Opcode() == Xcode.LIST){
-    		  if(x.getArgOrNull(1) != null ||
-    		     x.getArgOrNull(2) != null){
-    			  XMP.errorAt(pb,"bad syntax in loop directive");
-    		  }
-    		  x = x.getArg(0);
-    	  }
-    	  boolean is_found = false;
-    	  for(XMPdimInfo d_info: dims){
-    		  if(isEqualVar(d_info.getLoopVar(),x)){
-    			  is_found = true;
-    			  break;
-    		  }
-    	  }
-    	  if(!is_found)
-    		  XMP.errorAt(pb,"loop index is not found in loop varaibles");
+	if(x.Opcode() == Xcode.LIST) x = x.getArg(0);
+	if(isEqualVar(loopBlock.getInductionVar(),x)){
+	  is_found = true;
+	  break;
+	}
       }
+      if(is_found)
+	dims.add(XMPdimInfo.loopInfo(loopBlock));
+      loopBody = loopBlock.getBody();
+    }
+    
+    /* check loopIterList */
+    for(Xobject x: loopIterList){
+      if(x.Opcode() == Xcode.LIST){
+	if(x.getArgOrNull(1) != null || x.getArgOrNull(2) != null){
+	  XMP.errorAt(pb,"bad syntax in loop directive");
+	}
+	x = x.getArg(0);
+      }
+      boolean is_found = false;
+      for(XMPdimInfo d_info: dims){
+	if(isEqualVar(d_info.getLoopVar(),x)){
+	  is_found = true;
+	  break;
+	}
+      }
+      if(!is_found)
+	XMP.errorAt(pb,"loop index is not found in loop varaibles");
     }
     
     XMPobjectsRef on_ref = XMPobjectsRef.parseDecl(loopDecl.getArg(1),env,pb);
@@ -479,7 +489,27 @@ public class XMPanalyzePragma
       }
     }
     
-    Xobject reductionSpec = loopDecl.getArg(2);
+    // width list
+    XobjList expandOpt = (XobjList)loopDecl.getArg(2);
+    int loopType;
+    Vector<XMPdimInfo> widthList = new Vector<XMPdimInfo>();
+    if (expandOpt == null || expandOpt.hasNullArg()){
+      loopType = XMP.LOOP_NONE;
+    }
+    else {
+      loopType = expandOpt.getArg(0).getInt();
+      for (Xobject x: (XobjList)expandOpt.getArg(1)){
+    	XMPdimInfo width = new XMPdimInfo();
+
+    	if (XMP.debugFlag)
+    	  System.out.println("width = ("+x.getArg(0)+":"+x.getArg(1)+":"+x.getArg(2)+")");
+
+    	width.parse(x);
+    	widthList.add(width);
+      }
+    }
+    
+    Xobject reductionSpec = loopDecl.getArg(3);
     if(reductionSpec != null) 
       analyzeReductionSpec(info, reductionSpec, pb);
 
@@ -488,22 +518,115 @@ public class XMPanalyzePragma
     checkLocalizableLoop(dims,on_ref,pb);
 
     info.setBody(loopBody);  // inner most body
-    info.setLoopInfo(dims, on_ref);
+    info.setLoopInfo(dims, on_ref, loopType, widthList);
+  }
+
+  private static Block divideMarginLoop(PragmaBlock pb){
+    // The type is XMP.LOOP_MARGIN
+    BlockList loops = Bcons.emptyBody();
+    boolean flag = false;
+    XobjList expandOpt = (XobjList)pb.getClauses().getArg(2);
+    PragmaBlock pb1, pb2;
+    XobjList expandOpt1 = null, expandOpt2 = null;
+
+    for (int i = 0; i < expandOpt.getArg(1).Nargs(); i++){
+
+      Xobject expandWidth = expandOpt.getArg(1).getArg(i);
+      Xobject lower = expandWidth.getArg(0);
+      Xobject upper = expandWidth.getArg(1);
+
+      Xobject stride = expandWidth.getArg(2);
+      if (stride.isIntConstant() && stride.getInt() == -1) continue;
+
+      if (!lower.isZeroConstant() && !upper.isZeroConstant()){
+	flag = true;
+	
+	// for lower margin
+	pb1 = (PragmaBlock)pb.copy();
+	expandOpt1 = (XobjList)pb1.getClauses().getArg(2);
+
+	for (int j = 0; j < expandOpt1.getArg(1).Nargs(); j++){
+	  Xobject expandWidth1 = expandOpt1.getArg(1).getArg(j);
+	  if (j == i){
+	    expandWidth1.setArg(0, lower);
+	    expandWidth1.setArg(1, Xcons.IntConstant(0));
+	  }
+	  else if (j > i){
+	    expandWidth1.setArg(2, Xcons.IntConstant(-1)); // edge of margin
+	  }
+	  else { // j < i
+	    expandWidth1.setArg(0, Xcons.IntConstant(0));
+	    expandWidth1.setArg(1, Xcons.IntConstant(0));
+	  }
+	}
+
+	loops.add(pb1);
+			     
+	// for upper margin
+	pb2 = (PragmaBlock)pb.copy();
+	expandOpt2 = (XobjList)pb2.getClauses().getArg(2);
+
+	for (int j = 0; j < expandOpt1.getArg(1).Nargs(); j++){
+	  Xobject expandWidth2 = expandOpt2.getArg(1).getArg(j);
+	  if (j == i){
+	    expandWidth2.setArg(0, Xcons.IntConstant(0));
+	    expandWidth2.setArg(1, upper);
+	  }
+	  else if (j > i){
+	    expandWidth2.setArg(2, Xcons.IntConstant(-1)); // edge of margin
+	  }
+	  else { // j < i
+	    expandWidth2.setArg(0, Xcons.IntConstant(0));
+	    expandWidth2.setArg(1, Xcons.IntConstant(0));
+	  }	    
+	}
+	loops.add(pb2);
+      }
+    }
+
+    if (flag){
+      return Bcons.COMPOUND(loops);
+    }
+    else {
+      return null;
+    }
+  }
+
+  private static Block peelLoop(PragmaBlock pb){
+    // The type is XMP.LOOP_PEEL_AND_WAIT
+    BlockList bl = Bcons.emptyBody();
+
+    // First, create the kernel loop
+    PragmaBlock pb3 = (PragmaBlock)pb.copy();
+    pb3.getClauses().getArg(2).setArg(0, Xcons.IntConstant(XMP.LOOP_EXPAND));
+    pb3.getClauses().getArg(2).setArg(1, pb.getClauses().getArg(2).getArg(2));
+    bl.add(pb3);
+
+    // Second, create wait_async
+    XobjList clauses = Xcons.List();
+    clauses.add(Xcons.List(pb.getClauses().getArg(2).getArg(1)));
+    clauses.add(null);
+    PragmaBlock pb2 = new PragmaBlock(Xcode.XMP_PRAGMA, "WAIT_ASYNC", clauses, null);
+    bl.add(pb2);
+    
+    // Third, create the peeled Loop
+    PragmaBlock pb1 = (PragmaBlock)pb.copy();
+    pb1.getClauses().getArg(2).setArg(0, Xcons.IntConstant(XMP.LOOP_MARGIN));
+    pb1.getClauses().getArg(2).setArg(1, pb.getClauses().getArg(2).getArg(2));
+    bl.add(pb1);
+
+    return Bcons.COMPOUND(bl);
   }
 
   private static ForBlock getOutermostLoopBlock(BlockList body) {
     Block b = body.getHead();
     while (b != null) {
       if (b.Opcode() == Xcode.F_DO_STATEMENT) {
-//         if (b.getNext() != null){
-//           // XMP.error("only one loop statement is allowed in loop directive");
-// 	  return null;
-// 	}
         ForBlock forBlock = (ForBlock)b;
         forBlock.Canonicalize();
         if (!(forBlock.isCanonical())){
-        	// XMP.error("loop statement is not canonical");
-        	return null;
+	  // XMP.error("loop statement is not canonical");
+	  return null;
         }
         return forBlock;
       }
@@ -511,11 +634,7 @@ public class XMPanalyzePragma
     	  return getOutermostLoopBlock(b.getBody());
       else if (b.Opcode() == Xcode.OMP_PRAGMA || b.Opcode() == Xcode.ACC_PRAGMA)
     	  return getOutermostLoopBlock(b.getBody());
-//       else if(b.Opcode() == Xcode.F_STATEMENT_LIST &&
-// 	      b.getBasicBlock().getHead().getExpr().Opcode() 
-// 	      == Xcode.PRAGMA_LINE) 
-// 	b = b.getNext();   // skip pragma_line
-//       else return null;  // otherwise, failed.
+
       b = b.getNext();
     } 
     return null;
@@ -566,14 +685,17 @@ public class XMPanalyzePragma
     Xobject asyncOpt = reflectDecl.getArg(2);
     Xobject accOpt = reflectDecl.getArg(3);
 
-//     if(reflectOpt != null){
-//       XMP.fatal("reflect opt is not supported yet, sorry!");
-//       return;
-//     }
-
     Vector<XMParray> reflectArrays = new Vector<XMParray>();
-    // check array
     for(Xobject x: reflectNameList){
+      if(x.Opcode() == Xcode.MEMBER_REF){
+	String structName = x.getArg(0).getName();
+	String memberName = x.getArg(1).getName();
+	Ident structId = env.findVarIdent(structName,pb);
+	Ident memberId = structId.Type().getMemberList().getIdent(XMP.PREFIX_ + memberName);
+	memberId.setProp(XMP.HasShadow, info);
+	continue;
+      }
+      
       if(!x.isVariable()){
 	XMP.errorAt(pb,"Bad array name in reflect name list");
 	continue;
@@ -593,13 +715,12 @@ public class XMPanalyzePragma
     }
 
     Vector<XMPdimInfo> widthList = new Vector<XMPdimInfo>();
-    // width list
     for (Xobject x: widthOpt){
 	XMPdimInfo width = new XMPdimInfo();
 
 	if(XMP.debugFlag)
-	    System.out.println("width = ("+x.getArg(0)+":"+x.getArg(1)+":"+x.getArg(2)+")");
-
+	  System.out.println("width = ("+x.getArg(0)+":"+x.getArg(1)+":"+x.getArg(2)+")");
+	
 	width.parse(x);
 	widthList.add(width);
     }
@@ -612,7 +733,7 @@ public class XMPanalyzePragma
       XMP.errorAt(pb, "Enable XcalableACC to use the acc clause");
     }
   }
-
+  
   void analyzeBarrier(Xobject barrierDecl, 
 		      XMPinfo info, PragmaBlock pb) {
     Xobject barrierOnRef = barrierDecl.getArg(0);
@@ -634,24 +755,17 @@ public class XMPanalyzePragma
     Xobject asyncOpt = reductionDecl.getArg(2);
     Xobject accOpt = reductionDecl.getArg(3);
 
-    // if(reductionOpt != null){
-    //   XMP.fatal("redution opt is not supported yet, sorry!");
-    //   return;
-    // }
-
     analyzeReductionSpec(info, reductionSpec, pb);
     info.setOnRef(XMPobjectsRef.parseDecl(reductionOnRef,env,pb));
 
-    if (asyncOpt != null && !XmOption.isAsync()){
+    if (asyncOpt != null && !XmOption.isAsync())
       XMP.errorAt(pb, "MPI-3 is required to use the async clause on a reduction directive");
-    }
 
     info.setAsyncId(asyncOpt);
 
     info.setAcc(accOpt);
-    if (info.isAcc() && !XmOption.isXcalableACC()){
+    if (info.isAcc() && !XmOption.isXcalableACC())
       XMP.errorAt(pb, "Enable XcalableACC to use the acc clause");
-    }
   }
 
   private void analyzeReductionSpec(XMPinfo info, Xobject reductionSpec,
@@ -699,36 +813,21 @@ public class XMPanalyzePragma
     Xobject asyncOpt = bcastDecl.getArg(3);
     Xobject accOpt = bcastDecl.getArg(4);
 
-    // if(bcastOpt != null){
-    //   XMP.fatal("bcast opt is not supported yet, sorry!");
-    //   return;
-    // }
-
-    Vector<Ident> bcast_vars = new Vector<Ident>();
-    for(Xobject v: bcastNameList){
-      if(!v.isVariable()){
-	XMP.errorAt(pb,"not variable in bcast variable list");
-      }
-      Ident id = env.findVarIdent(v.getName(),pb);
-      if(id == null){
-	XMP.errorAt(pb,"variable '"+v.getName()+"' in reduction is not found");
-      }
-      bcast_vars.add(id);
-    }
+    Vector<Xobject> bcast_vars = new Vector<Xobject>();
+    for(Xobject v: bcastNameList)
+      bcast_vars.add(v); // not analyzed here
     
     info.setBcastInfo(XMPobjectsRef.parseDecl(fromRef,env,pb),
 		      XMPobjectsRef.parseDecl(onRef,env,pb),
 		      bcast_vars);
 
-    if (asyncOpt != null && !XmOption.isAsync()){
+    if (asyncOpt != null && !XmOption.isAsync())
       XMP.errorAt(pb, "MPI-3 is required to use the async clause on a bcast directive");
-    }
 
     info.setAsyncId(asyncOpt);
     info.setAcc(accOpt);
-    if (info.isAcc() && !XmOption.isXcalableACC()){
+    if (info.isAcc() && !XmOption.isXcalableACC())
       XMP.errorAt(pb, "Enable XcalableACC to use the acc clause");
-    }
   }
 
   private void analyzeWaitAsync(Xobject waitAsyncDecl, 
@@ -750,12 +849,7 @@ public class XMPanalyzePragma
 		   XMPinfo info, PragmaBlock pb) {
     Xobject onRef = taskDecl.getArg(0);
     Xobject nocomm = taskDecl.getArg(1);
-    // Xobject taskOpt = taskDecl.getArg(1);
     
-    // if(taskOpt != null){
-    //   XMP.fatal("task opt is not supported yet, sorry!");
-    //   return;
-    // }
     info.setOnRef(XMPobjectsRef.parseDecl(onRef,env,pb));
     info.setNocomm(nocomm);
   }
@@ -765,16 +859,11 @@ public class XMPanalyzePragma
     //XMP.fatal("analyzeTasks");
   }
 
-  // private void analyzeTasks(PragmaBlock pb) {
-  //   XMP.fatal("analyzeTasks");
-  // }
-
   private void analyzeGmove(Xobject gmoveDecl, BlockList body, 
 			    XMPinfo info, PragmaBlock pb) {
     Xobject gmoveOpt = gmoveDecl.getArg(0); // NORMAL | IN | OUT
     Xobject asyncOpt = gmoveDecl.getArg(1);
     Xobject accOpt   = gmoveDecl.getArg(2);
-    //Xobject Opt = gmoveDecl.getArg(2);
 
     // check body is single statement.
     Block b = body.getHead();
@@ -785,70 +874,51 @@ public class XMPanalyzePragma
     Xobject x = s.getExpr();
     if(x.Opcode() != Xcode.F_ASSIGN_STATEMENT)
       XMP.fatal("not assignment for Gmove");
-    Xobject left = x.left();
+    Xobject left  = x.left();
     Xobject right = x.right();
     
     // opcode must be VAR or ARRAY_REF
-    boolean left_is_global = checkGmoveOperand(left, gmoveOpt.getInt() == XMP.GMOVE_OUT, pb);
-    boolean right_is_global = checkGmoveOperand(right, gmoveOpt.getInt() == XMP.GMOVE_IN, pb);
-
-    boolean left_is_scalar = isScalar(left);
+    boolean left_is_global  = checkGmoveOperand(left, gmoveOpt.getInt()  == XMP.GMOVE_OUT, pb);
+    boolean right_is_global = checkGmoveOperand(right, gmoveOpt.getInt() == XMP.GMOVE_IN,  pb);
+    boolean left_is_scalar  = isScalar(left);
     boolean right_is_scalar = isScalar(right);
 
-    if (left_is_scalar && !right_is_scalar){
-      XMP.fatal("Incompatible ranks in assignment.");
-    }
-
-    if (!right_is_global && gmoveOpt.getInt() == XMP.GMOVE_IN)
+    if (left_is_scalar && !right_is_scalar)
+      XMP.errorAt(pb, "Incompatible ranks in assignment.");
+    else if (!right_is_global && gmoveOpt.getInt() == XMP.GMOVE_IN)
       XMP.errorAt(pb, "RHS should be global in GMOVE IN.");
-
-    if (!left_is_global && gmoveOpt.getInt() == XMP.GMOVE_OUT)
+    else if (!left_is_global && gmoveOpt.getInt() == XMP.GMOVE_OUT)
       XMP.errorAt(pb, "LHS should be global in GMOVE OUT.");
 
     if (!left_is_global){
-      if (!right_is_global){
-	// local assignment
+      if (!right_is_global){ // local assignment
 	info.setGmoveOperands(null, null);
 	return;
       }
-      // else if (right_is_scalar){
-      // 	// make bcast
-      // 	info.setGmoveOperands(null, null);
-      // 	return;
-      // }
     }
     else if (left_is_global){
       if (!right_is_global){
-	if (gmoveOpt.getInt() == XMP.GMOVE_NORMAL &&
-	    !left_is_scalar &&
+	if (gmoveOpt.getInt() == XMP.GMOVE_NORMAL && !left_is_scalar &&
 	    convertGmoveToArray(pb, left, right)) return;
       }
-      // else if (right_is_scalar){
-      // 	// make bcast
-      // 	if (convertGmoveToArray(pb, left, right)) return;
-      // }
     }
 
     if(XMP.hasError()) return;
     
     info.setGmoveOperands(left,right);
-
     info.setGmoveOpt(gmoveOpt);
 
-    if (asyncOpt != null && !XmOption.isAsync()){
+    if (asyncOpt != null && !XmOption.isAsync())
       XMP.errorAt(pb, "MPI-3 is required to use the async clause on a gmove directive");
-    }
 
     info.setAsyncId(asyncOpt);
 
     info.setAcc(accOpt);
-    if (info.isAcc() && !XmOption.isXcalableACC()){
+    if (info.isAcc() && !XmOption.isXcalableACC())
       XMP.errorAt(pb, "Enable XcalableACC to use the acc clause");
-    }
   }
 
   private boolean checkGmoveOperand(Xobject x, boolean remotely_accessed, PragmaBlock pb){
-
     Ident id = null;
     XMParray array = null;
 
@@ -858,12 +928,29 @@ public class XMPanalyzePragma
       if(a.Opcode() != Xcode.F_VAR_REF)
 	XMP.fatal("not F_VAR_REF for F_ARRAY_REF");
       a = a.getArg(0);
-      if(a.Opcode() != Xcode.VAR)
-	XMP.fatal("not VAR for F_VAR_REF");
-      id = env.findVarIdent(a.getName(),pb);
-      if(id == null)
-	XMP.fatal("array in F_ARRAY_REF is not declared");
-      array = XMParray.getArray(id);
+      if(a.Opcode() == Xcode.VAR){
+	id = env.findVarIdent(a.getName(),pb);
+	if(id == null)
+	  XMP.fatal("array in F_ARRAY_REF is not declared");
+	array = XMParray.getArray(id);
+      }
+      else if(a.Opcode() == Xcode.MEMBER_REF){
+	String structName = a.getArg(0).getName();
+	String memberName = a.getArg(1).getName();
+	Ident structId = env.findVarIdent(structName,pb);
+	Ident memberId = structId.Type().getMemberList().getIdent(XMP.PREFIX_ + memberName);
+	if(memberId.isMemberAligned() && (XMPpragma.valueOf(pb.getPragma()) != XMPpragma.ARRAY)){
+	  Xobject memberObj = a.getArg(1);
+	  memberObj.setProp(XMP.RWprotected, "foo"); // This is a flag to remove the distributed array
+	                                             // in gmove construct from the target of rewriting
+	                                             // in XMPrewriteExpr.rewriteExpr().
+	  return true;
+	}
+      }
+      else{
+	XMP.fatal("not VAR for F_VAR_REF or MEMBER_REF");
+      }
+      
       if(array != null){
 	if (remotely_accessed && id.getStorageClass() != StorageClass.FSAVE){
 	  XMP.fatal("Current limitation: Only a SAVE or MODULE variable can be the target of gmove in/out.");
@@ -919,12 +1006,6 @@ public class XMPanalyzePragma
   }
 
   private boolean convertGmoveToArray(PragmaBlock pb, Xobject left, Xobject right){
-
-    // boolean lhs_is_scalar = isScalar(left);
-    // boolean rhs_is_scalar = isScalar(right);
-
-    // if (!lhs_is_scalar && rhs_is_scalar){
-
       pb.setPragma("ARRAY");
 
       Xobject onRef = Xcons.List();
@@ -962,25 +1043,8 @@ public class XMPanalyzePragma
       Xobject decl = Xcons.List(onRef);
       pb.setClauses(decl);
 
-    // }
-    // else { // lhs_is_scalar || !rhs_is_scalar){
-    //   return false;
-    // }
-
     return true;
-
   }
-
-  // private boolean isScalar(Xobject x){
-  //   if (x.Opcode() == Xcode.F_ARRAY_REF){
-  //     for (XobjArgs args = x.getArg(1).getArgs(); args != null;
-  // 	   args = args.nextArgs()){
-  // 	if (args.getArg().Opcode() != Xcode.F_ARRAY_INDEX) return false;
-  //     }
-  //   }
-  //   return true;
-  // }
-
 
   private Block analyzeArray(PragmaBlock pb){
 
@@ -1023,10 +1087,6 @@ public class XMPanalyzePragma
 
     // opcode must be VAR or ARRAY_REF
     boolean left_is_global = checkGmoveOperand(left, false, pb);
-    //boolean right_is_global = checkGmoveOperand(right, pb);
-
-    //if (!left_is_global && !right_is_global)
-    //XMP.errorAt(pb, "local assignment for array");
     
     if (XMP.hasError()) return null;
     
@@ -1034,7 +1094,6 @@ public class XMPanalyzePragma
     info.setOnRef(XMPobjectsRef.parseDecl(onRef, env, pb));
 
     return convertArrayToLoop(pb, info);
-
   }
 
   private Block convertArrayToLoop(PragmaBlock pb, XMPinfo info){
@@ -1078,7 +1137,7 @@ public class XMPanalyzePragma
 	int tidx = leftArray.getAlignSubscriptIndexAt(i);
 	if (tidx == -1) continue;
 
-    	var = env.declIdent(XMP.genSym("XMP_loop_i"), Xtype.intType, pb);
+    	var = env.declIdent(XMP.genSym("loop_i"), Xtype.intType, pb);
     	varList.add(var);
 	varListTemplate.set(tidx, var);
 
@@ -1088,8 +1147,8 @@ public class XMPanalyzePragma
 	    lb = sizeExprs[i].getArg(0);
 	  }
 	  if (lb == null){
-	    lb = env.declIntrinsicIdent("lbound", Xtype.FintFunctionType).
-	      Call(Xcons.List(left_var, Xcons.IntConstant(i+1)));
+	    lb = env.declInternIdent("xmp_lbound", Xtype.FintFunctionType).
+	      Call(Xcons.List(leftArray.getDescId().Ref(), Xcons.IntConstant(i+1)));
 	  }
 	}
 
@@ -1099,8 +1158,8 @@ public class XMPanalyzePragma
 	    ub = sizeExprs[i].getArg(1);
 	  }
 	  if (ub == null){
-	    ub = env.declIntrinsicIdent("ubound", Xtype.FintFunctionType).
-	      Call(Xcons.List(left_var, Xcons.IntConstant(i+1)));
+	    ub = env.declInternIdent("xmp_ubound", Xtype.FintFunctionType).
+	      Call(Xcons.List(leftArray.getDescId().Ref(), Xcons.IntConstant(i+1)));
 	  }
 	}
 
@@ -1116,9 +1175,7 @@ public class XMPanalyzePragma
 	expr = Xcons.binaryOp(Xcode.PLUS_EXPR, expr, lb);
 
     	subscripts.setArg(i, Xcons.FarrayIndex(expr));
-
       }
-
     }
 
     //
@@ -1143,9 +1200,6 @@ public class XMPanalyzePragma
 
 	  Xobject sub = subscripts1.getArg(i);
 	  if (sub.Opcode() == Xcode.F_INDEX_RANGE){
-
-	    //int tidx = array1.getAlignSubscriptIndexAt(i);
-
 	    Xobject lb, st;
 
 	    lb = ((XobjList)sub).getArg(0);
@@ -1154,8 +1208,8 @@ public class XMPanalyzePragma
 		lb = sizeExprs1[i].getArg(0);
 	      }
 	      if (lb == null){
-		lb = env.declIntrinsicIdent("lbound", Xtype.FintFunctionType).
-		  Call(Xcons.List(x_var, Xcons.IntConstant(i+1)));
+		lb = env.declInternIdent("xmp_lbound", Xtype.FintFunctionType).
+		  Call(Xcons.List(array1.getDescId().Ref(), Xcons.IntConstant(i+1)));
 	      }
 	    }
 
@@ -1163,8 +1217,6 @@ public class XMPanalyzePragma
 	    if (st == null) st = Xcons.IntConstant(1);
 
 	    Xobject expr;
-	    //expr = Xcons.binaryOp(Xcode.MUL_EXPR, varList.get(k).Ref(), st);
-
 	    Ident loopVar;
 	    if (array1 != null){
 	      int tidx = array1.getAlignSubscriptIndexAt(i);
@@ -1180,9 +1232,7 @@ public class XMPanalyzePragma
 	    subscripts1.setArg(i, Xcons.FarrayIndex(expr));
 	    k++;
 	  }
-
 	}
-
       }
     }
 
@@ -1191,7 +1241,6 @@ public class XMPanalyzePragma
     //
 
     BlockList loop = null;
-
     BlockList body = Bcons.emptyBody();
     body.add(Xcons.Set(info.getGmoveLeft(), info.getGmoveRight()));
 
@@ -1230,7 +1279,6 @@ public class XMPanalyzePragma
     Xobject onSubscripts = pb.getClauses().getArg(0).getArg(1);
 
     if (onSubscripts != null && !onSubscripts.isEmptyList()){
-      int k = 0;
       for (int i = 0; i < onSubscripts.Nargs(); i++){
     	Xobject sub = onSubscripts.getArg(i);
     	if (sub.Opcode() == Xcode.LIST){ // triplet
@@ -1241,8 +1289,8 @@ public class XMPanalyzePragma
 	      lb = template.getLowerAt(i);
 	    }
 	    else {
-	      Ident ret = env.declIdent(XMP.genSym("XMP_ret_"), Xtype.intType, pb);
-	      Ident tlb = env.declIdent(XMP.genSym("XMP_" + template.getName() + "_lb"), Xtype.intType, pb);
+	      Ident ret = env.declIdent(XMP.genSym("ret_"), Xtype.intType, pb);
+	      Ident tlb = env.declIdent(XMP.genSym(template.getName() + "_lb"), Xtype.intType, pb);
 	      
 	      Ident f = env.declInternIdent("xmp_template_lbound", Xtype.FintFunctionType);
 	      Xobject args1 = Xcons.List(template.getDescId().Ref(), Xcons.IntConstant(i+1), tlb.Ref());
@@ -1278,14 +1326,16 @@ public class XMPanalyzePragma
 	    }
 	  }
 	  else st = Xcons.IntConstant(1);
-	  Xobject expr;
-	  //expr = Xcons.binaryOp(Xcode.MUL_EXPR, varList.get(k).Ref(), st);
+
 	  Ident loopVar = varListTemplate.get(i);
-	  if (loopVar == null) XMP.fatal("template-ref does not conform to the array on lhs.");
-	  expr = Xcons.binaryOp(Xcode.MUL_EXPR, loopVar.Ref(), st);
-	  expr = Xcons.binaryOp(Xcode.PLUS_EXPR, expr, lb);
-    	  subscriptList.add(expr);
-	  k++;
+	  if (loopVar != null){
+	    Xobject expr = Xcons.binaryOp(Xcode.MUL_EXPR, loopVar.Ref(), st);
+	    expr = Xcons.binaryOp(Xcode.PLUS_EXPR, expr, lb);
+	    subscriptList.add(expr);
+	  }
+	  else {
+	    subscriptList.add(null);
+	  }
     	}
 	else { // scalar
     	  subscriptList.add(sub);
@@ -1300,8 +1350,8 @@ public class XMPanalyzePragma
 	  lb = template.getLowerAt(i);
 	}
 	else {
-	  Ident ret = env.declIdent(XMP.genSym("XMP_ret_"), Xtype.intType, pb);
-	  Ident tlb = env.declIdent(XMP.genSym("XMP_" + template.getName() + "_lb"), Xtype.intType, pb);
+	  Ident ret = env.declIdent(XMP.genSym("ret_"), Xtype.intType, pb);
+	  Ident tlb = env.declIdent(XMP.genSym(template.getName() + "_lb"), Xtype.intType, pb);
 	      
 	  Ident f = env.declInternIdent("xmp_template_lbound", Xtype.FintFunctionType);
 	  Xobject args1 = Xcons.List(template.getDescId().Ref(), Xcons.IntConstant(i+1), tlb.Ref());
@@ -1310,20 +1360,21 @@ public class XMPanalyzePragma
 	  lb = tlb.Ref();
 	}
 
-	//Xobject expr = Xcons.binaryOp(Xcode.PLUS_EXPR, varList.get(i).Ref(), lb);
 	Ident loopVar = varListTemplate.get(i);
-	if (loopVar == null) XMP.fatal("template-ref does not conform to the array on lhs.");
-	Xobject expr = Xcons.binaryOp(Xcode.PLUS_EXPR, loopVar.Ref(), lb);
-    	subscriptList.add(expr);
+	if (loopVar != null){
+	  Xobject expr = Xcons.binaryOp(Xcode.PLUS_EXPR, loopVar.Ref(), lb);
+	  subscriptList.add(expr);
+	}
+	else {
+	  subscriptList.add(null);
+	}
       }
     }
 
     onRef.add(subscriptList);
     args.add(onRef);
-
     args.add(null);
-
+    args.add(null);
     return Bcons.PRAGMA(Xcode.XMP_PRAGMA, "LOOP", args, loop);
   }
-
 }

@@ -1,9 +1,10 @@
 package exc.object;
-import exc.block.*;
 
+import exc.block.*;
+import exc.xcalablemp.*;
+import java.util.Vector;
 import java.util.ArrayList;
 import java.util.List;
-
 import exc.util.XobjectVisitor;
 import xcodeml.util.XmLog;
 import xcodeml.util.XmOption;
@@ -61,7 +62,9 @@ public class Ident extends Xobject
     /** Codimensions for coarray (#284) */
     private Xobject codimensions;      // Codimensions might be moved into this.type like Fortran.
                                        // See exc.object.FarrayType
-  
+    private boolean memberAligned = false;
+    private Ident origId          = null;
+
     // constructor
     public Ident(String name, StorageClass stg_class, Xtype type, Xobject v,
                  VarScope scope)
@@ -86,8 +89,8 @@ public class Ident extends Xobject
         enum_value, fparam_value, codimensions);
     }
 
-    public Ident(String name, String full_name, int access, boolean is_op, StorageClass stg_class, Xtype type, Xobject v,
-                 int optionalFlags, Xobject gccAttrs,
+    public Ident(String name, String full_name, int access, boolean is_op, StorageClass stg_class, Xtype type,
+		 Xobject v, int optionalFlags, Xobject gccAttrs,
                  int bit_field, Xobject bit_field_expr, Xobject enum_value,
                  Xobject fparam_value, Xobject codimensions)
     {
@@ -107,6 +110,7 @@ public class Ident extends Xobject
         this.fparam_value = fparam_value;
         this.codimensions = codimensions;
     }
+
   /************************
     // for upper-compatibility
     public Ident(String name, StorageClass stg_class, Xtype type, Xobject v,
@@ -139,6 +143,7 @@ public class Ident extends Xobject
       this.enum_value = enum_value;
       this.fparam_value = fparam_value;
       this.codimensions = codimensions;
+      this.type = type;
     }
   /***************************************:
     // for upper-compatibility
@@ -285,13 +290,31 @@ public class Ident extends Xobject
         return (Type() == null) ? false : Type().wasCoarray();
     }
 
+  public void saveOrigId() {
+      this.origId      = (Ident)this.copy();
+      this.origId.type = this.Type().copy();
+    }
 
+    public Ident getOrigId(){
+        return this.origId;
+    }
+    
+    public void setMemberAligned(boolean flag)
+    {
+        this.memberAligned = flag;
+    }
+  
+    public boolean isMemberAligned(){
+        return this.memberAligned;
+    }
+  
     public boolean isDeclared()
     {
         return declared;
     }
 
     /** @deprecated setIsDeclared() */
+    @Deprecated
     public void Declared()
     {
         declared = true;
@@ -345,34 +368,16 @@ public class Ident extends Xobject
     @Override
     public Xobject cfold(Block block)
     {
-      // System.out.println("cfold: name='"+name+"' fparam_value="+fparam_value);
-      
       if (Type().isFparameter() && fparam_value != null) {
         // I don't know why but fparam_value is always in this form.
         if (fparam_value.Nargs() == 2 && fparam_value.getArg(1) == null) {
           Xobject value = fparam_value.getArg(0);
           return value.cfold(block);
-        } else {
+        }
+	else {
           XmLog.fatal("Ident.cfold: unknown form of fparam_value");
         }
       }
-
-      // if (declared_module != null) {
-      //   XobjectDefEnv xobjDefEnv = ((FunctionBlock)block).getEnv();
-      //   XobjectFile xobjFile = (XobjectFile)xobjDefEnv;
-
-      //   if (xobjFile.findVarIdent(declared_module) == null)
-      //     XmLog.fatal("Ident.cfold: not found module name in globalSymbols: " + 
-      //                 declared_module);
-
-      //   for (XobjectDef punit: xobjFile.getDefs()) {
-      //     if (declared_module.equals(punit.getName())) {
-      //       // found the module that declares this ident
-      //       Ident ident2 = punit.getDef().findVarIdent(name);
-      //       return ident2.cfold(block);
-      //     }
-      //   }
-      //}
 
       return this.copy();
     }

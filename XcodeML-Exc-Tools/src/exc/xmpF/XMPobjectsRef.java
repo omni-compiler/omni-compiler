@@ -1,14 +1,7 @@
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
-
 package exc.xmpF;
 
 import exc.block.*;
 import exc.object.*;
-
 import java.util.Vector;
 
 /* 
@@ -105,7 +98,7 @@ public class XMPobjectsRef {
     }
 
     // allocate DescId
-    descId = env.declObjectId(XMP.genSym("XMP_REF_"+refName), pb);
+    descId = env.declObjectId(XMP.genSym("REF_"+refName), pb);
   }
 
   public void setLoopDimInfo(Vector<XMPdimInfo> dims) { loop_dims = dims;}

@@ -23,7 +23,7 @@ static void _getsubCoarray_DMA(void *descPtr, char *baseAddr, int coindex, char 
 static void _getsubCoarray_buffer(void *descPtr, char *baseAddr, int coindex, char *local,
                                int bytes, int rank, int skip[], int skip_local[], int count[]);
 
-static void _getsubCoarray_bufferPack(void *descPtr, char *baseAddr, int coindex, char *local,
+static void _getsubCoarray_bufferUnpack(void *descPtr, char *baseAddr, int coindex, char *local,
                                    int bytes, int rank, int skip[], int skip_local[],
                                    int count[]);
 
@@ -36,11 +36,11 @@ static void _getsubVectorIter_buffer(void *descPtr, char *baseAddr, int bytes, i
                                   char *src, int rank, int skip[], int skip_kind[],
                                   int count[]);
 
-static void _getsubVectorIter_bufferPack(void *descPtr, char *baseAddr, int bytes, int coindex,
+static void _getsubVectorIter_bufferUnpack(void *descPtr, char *baseAddr, int bytes, int coindex,
                                       char *local, int rank, int skip[], int skip_local[], int count[],
                                       int contiguity);
 
-static void _getsubVectorIter_bufferPack_1(char *local, int bytes,
+static void _getsubVectorIter_bufferUnpack_1(char *local, int bytes,
                                         int rank, int skip[], int skip_local[],
                                         int count[]);
 
@@ -51,8 +51,8 @@ static void _getsubVectorIter_bufferPack_1(char *local, int bytes,
 
 /* handling local bufer */
 static void _init_localBuf(void *descPtr, char *dst, int coindex);
-static void _push_localBuf(char *src, int bytes);
-static void _flush_localBuf(void);
+static void _pop_localBuf(char *src, int bytes);
+static void _fillin_localBuf(size_t copySize);
 
 static void _debugPrint_getsubCoarray(int bytes, int rank,
                                    int skip[], int skip_local[], int count[]);
@@ -69,7 +69,6 @@ int    _localBuf_size;           // size of the local buffer
 char * _localBuf_name;           // name of the local buffer
 
 /* dynamic infos */
-int    _localBuf_used;          // length of valid data in localBuf
 void * _remote_desc;
 char * _remote_baseAddr;
 int    _remote_coindex;
@@ -190,7 +189,7 @@ void _getsubCoarray_DMA(void *descPtr, char *baseAddr, int coindex, char *local,
   if (_XMPCO_get_isMsgMode()) {
     char work[200];
     char* p;
-    sprintf(work, "DMA-RDMA GETSUB %d", bytes);
+    sprintf(work, "RDMA-DMA GETSUB %d", bytes);
     p = work + strlen(work);
     for (int i = 0; i < rank; i++) {
       sprintf(p, " (%d-byte stride) * %d", skip[i], count[i]);
@@ -245,16 +244,16 @@ void _getsubCoarray_buffer(void *descPtr, char *baseAddr, int coindex, char *loc
 
   } else {
 
-    // Packing Buffer-RDMA scheme selected because:
+    // Unpacking Buffer-RDMA scheme selected because:
     //  - the collapsed coarray still has contiguity between the array elements, and
     //  - The local buffer has room for two or more array elements.
 
     if (_XMPCO_get_isMsgMode()) {
-      _XMPCO_debugPrint("=SELECTED Packing Buffer-RDMA\n");
+      _XMPCO_debugPrint("=SELECTED Unpacking Buffer-RDMA\n");
       _debugPrint_getsubCoarray(bytes, rank, skip, skip_local, count);
     }
 
-    _getsubCoarray_bufferPack(descPtr, baseAddr, coindex, local,
+    _getsubCoarray_bufferUnpack(descPtr, baseAddr, coindex, local,
                            bytes, rank, skip, skip_local, count);
   }
 }
@@ -264,7 +263,7 @@ void _getsubCoarray_buffer(void *descPtr, char *baseAddr, int coindex, char *loc
  *   - bytes == skip[0], i.e., at least the first dimension of the coarray is contiguous.
  *   - bytes * 2 <= _localBuf_size, i.e., the element is smaller enough than localBuf.
  */
-static void _getsubCoarray_bufferPack(void *descPtr, char *baseAddr, int coindex, char *local,
+static void _getsubCoarray_bufferUnpack(void *descPtr, char *baseAddr, int coindex, char *local,
                                    int bytes, int rank, int skip[], int skip_local[],
                                    int count[])
 {
@@ -278,10 +277,10 @@ static void _getsubCoarray_bufferPack(void *descPtr, char *baseAddr, int coindex
     size *= count[k];
   }
 
-  _XMPCO_debugPrint("=CALLING _getsubVectorIter_bufferPack, rank=%d, contiguity=%d\n",
+  _XMPCO_debugPrint("=CALLING _getsubVectorIter_bufferUnpack, rank=%d, contiguity=%d\n",
                           rank, contiguity);
 
-  _getsubVectorIter_bufferPack(descPtr, baseAddr, bytes, coindex,
+  _getsubVectorIter_bufferUnpack(descPtr, baseAddr, bytes, coindex,
                             local, rank, skip, skip_local, count,
                             contiguity);
 }
@@ -375,22 +374,16 @@ void _getsubVectorIter_buffer(void *descPtr, char *baseAddr, int bytes, int coin
 }
 
 
-void _getsubVectorIter_bufferPack(void *descPtr, char *baseAddr, int bytes, int coindex,
+void _getsubVectorIter_bufferUnpack(void *descPtr, char *baseAddr, int bytes, int coindex,
                                char *local, int rank, int skip[], int skip_local[], int count[],
                                int contiguity)
 {
   assert(rank >= 1);
 
-  //  _XMPCO_debugPrint("==GETSUB VECTOR-ITER Packing-buffer, recursive call (rank=%d)\n"
-  //                          "  contiguity=%d, baseAddr=%p, local=%p\n",
-  //                          rank, contiguity, baseAddr, local);
-
   if (contiguity == rank) {     // the collapsed coarray is fully contiguous.
     _init_localBuf(descPtr, baseAddr, coindex);
-    _getsubVectorIter_bufferPack_1(local, bytes,
+    _getsubVectorIter_bufferUnpack_1(local, bytes,
                                 rank, skip, skip_local, count);
-    _flush_localBuf();
-
     return;
   }
 
@@ -400,7 +393,7 @@ void _getsubVectorIter_bufferPack(void *descPtr, char *baseAddr, int bytes, int 
 
   char *src = local;
   for (int i = 0; i < n; i++) {
-    _getsubVectorIter_bufferPack(descPtr, baseAddr, bytes, coindex,
+    _getsubVectorIter_bufferUnpack(descPtr, baseAddr, bytes, coindex,
                               src, rank - 1, skip, skip_local, count,
                               contiguity);
     src += gap_local;
@@ -412,16 +405,16 @@ void _getsubVectorIter_bufferPack(void *descPtr, char *baseAddr, int bytes, int 
  *   - The coarray is fully contiguous in this range of rank.
  * Local buffer is being used.
  */
-void _getsubVectorIter_bufferPack_1(char *local, int bytes,
+void _getsubVectorIter_bufferUnpack_1(char *local, int bytes,
                                  int rank, int skip[], int skip_local[],
                                  int count[])
 {
-  char *src = local;
+  char *dst = local;
     
   if (rank == 1) {
     for (int i = 0; i < count[0]; i++) {
-      _push_localBuf(src, bytes);
-      src += skip_local[0];
+      _pop_localBuf(dst, bytes);
+      dst += skip_local[0];
     }
     return;
   }
@@ -430,9 +423,9 @@ void _getsubVectorIter_bufferPack_1(char *local, int bytes,
   int gap_local =  skip_local[rank - 1];
 
   for (int i = 0; i < n; i++) {
-    _getsubVectorIter_bufferPack_1(src, bytes,
+    _getsubVectorIter_bufferUnpack_1(dst, bytes,
                                 rank - 1, skip, skip_local, count);
-    src += gap_local;
+    dst += gap_local;
   }
 }
 
@@ -455,62 +448,59 @@ void _init_localBuf(void *descPtr, char *dst, int coindex)
   _remote_desc = descPtr;
   _remote_baseAddr = dst;
   _remote_coindex = coindex;
-  _localBuf_used = 0;
 }
 
 
-void _push_localBuf(char *src0, int bytes0)
+void _pop_localBuf(char *dst0, int bytes0)
 {
-  char *src = src0;
+  char *dst = dst0;
   int bytes = bytes0;
-  int copySize;
+  size_t copySize;
 
-  if (_localBuf_used + bytes >= _localBuf_size) {
-      _flush_localBuf();
+  // for huge data
+  while (bytes > _localBuf_size) {
+    copySize = _localBuf_size;      
+    _fillin_localBuf(copySize);
 
-      // for huge data
-      while (bytes > _localBuf_size) {
-        copySize = _localBuf_size;      
-        _XMPCO_debugPrint("===MEMCPY %d of %d bytes to localBuf (cont\'d)\n"
-                                "  from: addr=%p\n"
-                                "  to  : localBuf\n",
-                                copySize, bytes,
-                                src);
+    _XMPCO_debugPrint("===UNBUFFER %d of %d bytes\n"
+		      "  from: localBuf\n"
+		      "  to  : addr=%p\n",
+		      copySize, bytes,
+		      dst);
 
-        (void)memcpy(_localBuf_baseAddr, src, copySize);
-        _localBuf_used = copySize;
+    (void)memcpy(dst, _localBuf_baseAddr, copySize);
+    
+    dst += copySize;
+    bytes -= copySize;
+  }
 
-        _flush_localBuf();
-
-        src += copySize;
-        bytes -= copySize;
-      }
-  }    
-
-  if (bytes == 0)
-    return;
   copySize = bytes;
+  _fillin_localBuf(copySize);
 
-  _XMPCO_debugPrint("===MEMCPY %d bytes to localBuf (final)\n"
-                          "  from: addr=%p\n"
-                          "  to  : localBuf + offset(%d bytes)\n",
-                          copySize,
-                          src,
-                          _localBuf_used);
+  _XMPCO_debugPrint("===UNBUFFER %d bytes (final)\n"
+		    "  from: %s\n"
+		    "  to  : local %p\n",
+		    copySize,
+		    _localBuf_name,
+		    dst);
 
-  (void)memcpy(_localBuf_baseAddr + _localBuf_used, src, copySize);
-  _localBuf_used += copySize;
+  (void)memcpy(dst, _localBuf_baseAddr, copySize);
 }
 
 
-void _flush_localBuf()
+void _fillin_localBuf(size_t copySize)
 {
-  if (_localBuf_used > 0) {
-    _XMPCO_getVector_DMA(_remote_desc, _remote_baseAddr, _localBuf_used, _remote_coindex,
+  _XMPCO_debugPrint("===FILL-IN %d bytes\n"
+		    "  from: remote[%d] %p\n"
+		    "  to  : %s\n",
+		    copySize,
+		    _remote_coindex, _remote_baseAddr,
+		    _localBuf_name);
+
+  if (copySize > 0) {
+    _XMPCO_getVector_DMA(_remote_desc, _remote_baseAddr, copySize, _remote_coindex,
                         _localBuf_desc, _localBuf_offset, _localBuf_name);
-    _remote_baseAddr += _localBuf_used;
-    _localBuf_used = 0;
+    _remote_baseAddr += copySize;
   }
 }
-
 

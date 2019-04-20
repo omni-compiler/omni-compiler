@@ -5,6 +5,8 @@
 *.xmod
 *.so
 *.hex
+*.smod
+*.xsmod
 a.out
 Xcode.java
 
@@ -15,18 +17,7 @@ config.status
 /Makefile
 
 # Sub directories
-C-BackEnd/Makefile
-C-BackEnd/build/
-C-FrontEnd/src/C_Front
-C-FrontEnd/src/Makefile
-C-FrontEnd/src/c-exprcode.c
-C-FrontEnd/src/c-exprcode.h
-C-FrontEnd/src/c-lexer.c
-C-FrontEnd/src/c-parser.c
-C-FrontEnd/src/c-parser.h
-C-FrontEnd/src/c-parser.output
-C-FrontEnd/src/c-token.c
-C-FrontEnd/src/c-token.h
+interfaces/Makefile
 
 Driver/atool/Makefile
 Driver/atool/mk/vars.mk
@@ -38,34 +29,17 @@ Driver/atool/src/include/nata/nata_platform.h
 Driver/atool/src/lib/Makefile
 Driver/bin/ompcc
 Driver/bin/ompf90
-Driver/bin/omtranslate
 Driver/bin/xmpcc
 Driver/bin/xmpf90
+Driver/bin/C_Trans
+Driver/bin/F_Trans
 Driver/etc/ompcc.conf
 Driver/etc/ompf90.conf
-Driver/etc/setup.conf
 Driver/etc/version
 Driver/etc/xmpcc.conf
 Driver/etc/xmpf90.conf
 Driver/src/Makefile
 Driver/src/om_replace_pragma
-
-F-BackEnd/Makefile
-F-BackEnd/bin/F_Back
-F-BackEnd/bin/F_Decomp
-F-BackEnd/bin/F_Trans
-F-BackEnd/build/
-F-BackEnd/src/xcodeml/f/decompile/XfDecompileDomVisitor_coarrayLibs.java
-
-F-FrontEnd/gnu_module/Makefile
-F-FrontEnd/gnu_module/T_Module
-F-FrontEnd/gnu_module/xmpmod
-F-FrontEnd/src/C-exprcode.c
-F-FrontEnd/src/C-exprcode.h
-F-FrontEnd/src/F_Front
-F-FrontEnd/src/Makefile
-F-FrontEnd/src/F-input-xmod.h
-F-FrontEnd/src/F95-parser.c
 
 XcodeML-Common/Makefile
 XcodeML-Common/build/
@@ -73,6 +47,7 @@ XcodeML-Common/build/
 XcodeML-Exc-Tools/Makefile
 XcodeML-Exc-Tools/build/
 XcodeML-Exc-Tools/src/exc/util/MachineDepConst.java
+XcodeML-Exc-Tools/src/exc/xmpF/XMPtransCoarray_libs.java
 
 include/config.h
 include/stamp-h1
@@ -108,6 +83,8 @@ libxmpf/include/xmp_coarray_reduction.h
 libxmpf/include/xmp_coarray_getsub.h
 libxmpf/src/Makefile
 libxmpf/src/include_work/
+
+tests/XMP/others/F/__omni_tmp__018.f90
 
 # Other
 __omni_tmp__/

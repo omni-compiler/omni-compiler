@@ -66,7 +66,7 @@ extern int      xmp_array_lshadow(xmp_desc_t d, int dim, int *lshadow);
 extern int      xmp_array_ushadow(xmp_desc_t d, int dim, int *ushadow);
 extern int      xmp_array_owner(xmp_desc_t d, int ndims, int index[], int dim);
 extern int      xmp_array_lead_dim(xmp_desc_t d, int size[]);
-extern int      xmp_array_gtol(xmp_desc_t d, int g_idx[], int lidx[]);
+extern int      xmp_array_gtol(xmp_desc_t d, int dim, int g_idx, int *lidx);
 extern int      xmp_align_axis(xmp_desc_t d, int dim, int *axis);
 extern int      xmp_align_offset(xmp_desc_t d, int dim, int *offset);
 extern int      xmp_align_format(xmp_desc_t d, int dim);
@@ -104,6 +104,8 @@ extern void     xmp_sort_down(xmp_desc_t a_desc, xmp_desc_t b_desc);
 extern void    *xmp_malloc(xmp_desc_t d, ...);
 extern void     xmp_free(xmp_desc_t d);
 extern void     xmp_exit(int status);
+extern void     xmp_array_lbound_global(xmp_desc_t d, int dim, int *global_i);
+extern void     xmp_array_ubound_global(xmp_desc_t d, int dim, int *global_i);
 extern void     xmp_atomic_define(int, int);
 extern void     xmp_atomic_ref(int*, int);
 
