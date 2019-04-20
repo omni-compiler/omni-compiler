@@ -31,6 +31,13 @@ static const int useSingleStreamLimit = 1; //16 * 1024; //element
 #define TLOG_LOG(log) do{}while(0)
 #endif
 
+//#define USE_BAR
+#ifdef USE_BAR
+#define BARRIER() MPI_Barrier(MPI_COMM_WORLD)
+#else
+#define BARRIER()
+#endif
+
 typedef struct {
   uint64_t count;
   uint64_t stride;
@@ -729,46 +736,62 @@ static void _XMP_reflect_(_XMP_array_t *a, int dummy)
       int hi_width = reflect->hi_width;
       if (!lo_width && !hi_width) continue;
 
+      if(i == 0){
+	TLOG_LOG(TLOG_EVENT_5_IN);
+      }else if(i == 1){
+	TLOG_LOG(TLOG_EVENT_6_IN);
+      }
+
       //pack etc...
-      TLOG_LOG(TLOG_EVENT_5_IN);
+      BARRIER();
+      TLOG_LOG(TLOG_EVENT_7_IN);
       if(packVector && (i != packSkipDim)){
 	gpu_pack_vector2(reflect, a->type_size);
       }
-      TLOG_LOG(TLOG_EVENT_9);
+
       if(useHostBuffer){
 	gpu_update_host(reflect);
       }
       if((packVector && i != packSkipDim) || useHostBuffer){
 	gpu_pack_wait(reflect);
-	TLOG_LOG(TLOG_EVENT_2);
       }
-      TLOG_LOG(TLOG_EVENT_5_OUT);
-
-      //start
-      TLOG_LOG(TLOG_EVENT_6_IN);
-
-      MPI_Startall(4, reflect->req);
-      TLOG_LOG(TLOG_EVENT_6_OUT);
-
-      //wait
-      TLOG_LOG(TLOG_EVENT_7_IN);
-      MPI_Waitall(4, reflect->req, MPI_STATUSES_IGNORE);
+      BARRIER();
       TLOG_LOG(TLOG_EVENT_7_OUT);
 
-      //unpack etc...
+      //start
       TLOG_LOG(TLOG_EVENT_8_IN);
+
+      MPI_Startall(4, reflect->req);
+      BARRIER();
+      TLOG_LOG(TLOG_EVENT_8_OUT);
+
+      //wait
+      TLOG_LOG(TLOG_EVENT_9_IN);
+      MPI_Waitall(4, reflect->req, MPI_STATUSES_IGNORE);
+      BARRIER();
+      TLOG_LOG(TLOG_EVENT_9_OUT);
+
+      //unpack etc...
+      TLOG_LOG(TLOG_EVENT_10_IN);
 
       if(useHostBuffer){
 	gpu_update_device(reflect);
       }
-      TLOG_LOG(TLOG_EVENT_4);
+
       if(packVector && (i != packSkipDim)){
 	gpu_unpack(reflect, a->type_size);
       }
       if((packVector && i != packSkipDim) || useHostBuffer){
 	gpu_unpack_wait(reflect);
       }
-      TLOG_LOG(TLOG_EVENT_8_OUT);
+      BARRIER();
+      TLOG_LOG(TLOG_EVENT_10_OUT);
+
+      if(i == 0){
+	TLOG_LOG(TLOG_EVENT_5_OUT);
+      }else if(i==1){
+	TLOG_LOG(TLOG_EVENT_6_OUT);
+      }
     }else{ /* _XMP_N_SHADOW_FULL */
       ;
     }

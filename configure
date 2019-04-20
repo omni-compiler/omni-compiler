@@ -726,6 +726,7 @@ SSL2BLAMP
 LIBBLAS
 LIBXML2_LIB_DIR
 LIBXML2_INCLUDE_DIR
+PZCL_PREFIX
 OPENCL_PREFIX
 CUDA_PREFIX
 GPU_CFLAGS
@@ -758,6 +759,7 @@ PPTGT
 MM5TGT
 CPU
 OS
+PZCL
 OPENCL
 CUDA
 MKDIR_P
@@ -849,6 +851,7 @@ with_gpucc
 with_gpu_cflags
 with_cuda
 with_opencl
+with_pzcl
 with_libxml2
 with_libxml2_include
 with_libxml2_lib
@@ -1525,6 +1528,7 @@ Optional Packages:
   --with-gpu-cflags=CFLAGS    GPU C compiler flags (default: -arch=sm_20 -O3 -Wno-deprecated-gpu-targets)
   --with-cuda=DIR             CUDA installation path (default: /usr/local/cuda)
   --with-opencl=DIR           OpenCL installation path (default: /usr/local/cuda)
+  --with-pzcl=DIR             PZCL installation path
   --with-libxml2=DIR          specify prefix directory for installed libxml2 package (default: /usr)
                               Equivalent to --with-libxml2-include=PATH/include plus --with-libxml2-lib=PATH/lib64
   --with-libxml2-include=DIR  specify directory for installed libxml2 include files
@@ -8138,6 +8142,16 @@ else
 fi
 
 
+# specify PZCL path
+
+# Check whether --with-pzcl was given.
+if test "${with_pzcl+set}" = set; then :
+  withval=$with_pzcl; PZCL_PREFIX="${withval}"; use_pzcl=yes
+else
+  use_pzcl=no
+fi
+
+
 # set cuda default path
 if test "x${CUDA_PREFIX}" = "xyes"; then
    CUDA_PREFIX=/usr/local/cuda
@@ -8159,6 +8173,18 @@ fi
 OPENCL=$FALSE
 if test "x${use_opencl}" = "xyes"; then
     OPENCL=$TRUE
+fi
+
+
+# set pzcl default path
+if test "x${PZCL_PREFIX}" = "xyes"; then
+   as_fn_error $? "no argument with --with-pzcl" "$LINENO" 5
+fi
+
+# AM_CONDITIONAL(PZCL, test x${use_pzcl} = xyes)
+PZCL=$FALSE
+if test "x${use_pzcl}" = "xyes"; then
+    PZCL=$TRUE
 fi
 
 
@@ -8518,8 +8544,11 @@ if test "x${use_cuda}" = "xyes"; then
 elif test "x${use_opencl}" = "xyes"; then
     ACC_DEFAULT_PLATFORM=OpenCL
     ACC_DEFAULT_DEVICE=Fermi
+elif test "x${use_pzcl}" = "xyes"; then
+    ACC_DEFAULT_PLATFORM=PZCL
+    ACC_DEFAULT_DEVICE=PEZYSC
 elif test "x${doOpenAcc}" = "xyes"; then
-    as_fn_error $? "CUDA or OpenCL not found. Please attach --with-cuda or --with-opencl." "$LINENO" 5
+    as_fn_error $? "CUDA, OpenCL, or PZCL not found. Please attach --with-cuda, --with-opencl, or --with-pzcl." "$LINENO" 5
 fi
 
 

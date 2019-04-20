@@ -24,6 +24,7 @@ static void pagelock(_ACC_memory_t *data)
 
 _ACC_memory_t* _ACC_memory_alloc(void *host_addr, size_t size, void *memory_object)
 {
+  _ACC_init_current_device_if_not_inited();
   _ACC_memory_t *memory = (_ACC_memory_t *)_ACC_alloc(sizeof(_ACC_memory_t));
   memory->host_addr = host_addr;
   if(memory_object != NULL){
@@ -75,8 +76,10 @@ void _ACC_cl_copy(void *host_addr, cl_mem memory_object, size_t mem_offset, size
   cl_command_queue command_queue = _ACC_queue_get_command_queue(queue);
 
   if(direction == _ACC_COPY_HOST_TO_DEVICE){
+    _ACC_DEBUG("HostToDevice: from=(host)%p, to=(device)%p+%zd, size=%zd, is_blocking=%d\n", host_addr, memory_object, mem_offset, size, is_blocking);
     CL_CHECK(clEnqueueWriteBuffer(command_queue, memory_object, is_blocking, mem_offset, size, host_addr, 0 /*num_wait_ev*/, NULL, NULL));
   }else if(direction == _ACC_COPY_DEVICE_TO_HOST){
+    _ACC_DEBUG("DeviceToHost: from=(device)%p+%zd, to=(host)%p, size=%zd, is_blocking=%d\n", memory_object, mem_offset, host_addr, size, is_blocking);
     CL_CHECK(clEnqueueReadBuffer(command_queue, memory_object, is_blocking, mem_offset, size, host_addr, 0 /*num_wait_ev*/, NULL, NULL));
   }else{
     _ACC_FATAL("invalid direction\n");

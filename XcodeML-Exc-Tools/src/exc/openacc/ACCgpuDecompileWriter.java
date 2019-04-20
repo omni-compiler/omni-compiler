@@ -93,6 +93,9 @@ class ACCgpuDecompileWriter extends PrintWriter {
           }
 
           String funcName = id.getName();
+          if(ACC.platform == ACC.Platform.PZCL){
+            funcName = "pzc_" + funcName;
+          }
           if (id.Type().isFuncProto() && id.Type().getFuncParam() != null) {
             XobjArgs a = id.Type().getFuncParam().getArgs();
             XobjArgs n = v.getArg(1).getArgs();
@@ -124,6 +127,8 @@ class ACCgpuDecompileWriter extends PrintWriter {
                   break;
                 case OpenCL:
                   println("__kernel");
+                  break;
+                case PZCL:
                   break;
               }
             } else {
@@ -969,6 +974,8 @@ class ACCgpuDecompileWriter extends PrintWriter {
           break;
         case OpenCL:
           print("__local ");
+          break;
+        case PZCL:
           break;
       }
     }

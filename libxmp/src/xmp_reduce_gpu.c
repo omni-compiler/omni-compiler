@@ -1,4 +1,3 @@
-#include <cuda_runtime.h>
 #include <xmp_internal.h>
 
 void _XMP_reduce_gpu_NODES_ENTIRE(_XMP_nodes_t *nodes, void *addr, int count, int datatype, int op);
@@ -110,13 +109,6 @@ static void _XMP_setup_reduce_op(MPI_Op *mpi_op, int op) {
 }
 //end of copy
 
-void cudaErrorCheck(cudaError_t e)
-{
- if(e != cudaSuccess){
-   _XMP_fatal((char*)cudaGetErrorString(e));
-  }
-}
-
 void _XMP_reduce_gpu_NODES_ENTIRE(_XMP_nodes_t *nodes, void *dev_addr, int count, int datatype, int op)
 {
   if (count == 0) {
@@ -135,17 +127,16 @@ void _XMP_reduce_gpu_NODES_ENTIRE(_XMP_nodes_t *nodes, void *dev_addr, int count
 
   size_t size = datatype_size * count;
   void *host_buf = _XMP_alloc(size);
-  cudaError_t e;
 
   // copy dev to host
-  e = cudaMemcpy(host_buf, dev_addr, size, cudaMemcpyDeviceToHost);
-  cudaErrorCheck(e);
+  //e = cudaMemcpy(host_buf, dev_addr, size, cudaMemcpyDeviceToHost);
+  _XACC_memory_read(host_buf, dev_addr, 0, size, _XACC_QUEUE_NULL, true);
 
   MPI_Allreduce(MPI_IN_PLACE, host_buf, count, mpi_datatype, mpi_op, *((MPI_Comm *)nodes->comm));
 
   // copy host to dev
-  e = cudaMemcpy(dev_addr, host_buf, size, cudaMemcpyHostToDevice);
-  cudaErrorCheck(e);
+  //e = cudaMemcpy(dev_addr, host_buf, size, cudaMemcpyHostToDevice);
+  _XACC_memory_write(dev_addr, 0, host_buf, size, _XACC_QUEUE_NULL, true);
 
   _XMP_free(host_buf);
 }
@@ -160,18 +151,17 @@ void _XMP_reduce_gpu_CLAUSE(void *dev_addr, int count, int datatype, int op) {
 
   size_t size = datatype_size * count;
   void *host_buf = _XMP_alloc(size);
-  cudaError_t e;
 
   // copy dev to host
-  e = cudaMemcpy(host_buf, dev_addr, size, cudaMemcpyDeviceToHost);
-  cudaErrorCheck(e);
+  //e = cudaMemcpy(host_buf, dev_addr, size, cudaMemcpyDeviceToHost);
+  _XACC_memory_read(host_buf, dev_addr, 0, size, _XACC_QUEUE_NULL, true);
 
   // reduce
   MPI_Allreduce(MPI_IN_PLACE, host_buf, count, mpi_datatype, mpi_op, *((MPI_Comm *)(_XMP_get_execution_nodes())->comm));
 
   // copy host to dev
-  e = cudaMemcpy(dev_addr, host_buf, size, cudaMemcpyHostToDevice);
-  cudaErrorCheck(e);
+  //e = cudaMemcpy(dev_addr, host_buf, size, cudaMemcpyHostToDevice);
+  _XACC_memory_write(dev_addr, 0, host_buf, size, _XACC_QUEUE_NULL, true);
 
   _XMP_free(host_buf);
 }

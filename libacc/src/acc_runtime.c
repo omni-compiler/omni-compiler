@@ -37,7 +37,7 @@ int acc_get_num_devices( acc_device_t acc_device )
     return acc_get_num_devices( default_not_host_device );
 
   case acc_device_nvidia:
-    return _ACC_platform_get_num_devices();
+    return _ACC_platform_get_num_devices( acc_device );
 
   default:
     _ACC_fatal("unknown device type");
@@ -47,7 +47,7 @@ int acc_get_num_devices( acc_device_t acc_device )
 
 void acc_set_device_type( acc_device_t acc_device )
 {
-  _ACC_DEBUG("acc_set_device(type:%d)\n",(int)acc_device)
+  _ACC_DEBUG("acc_set_device_type(type:%d)\n", acc_device)
   switch(acc_device){
   case acc_device_none:
     //    _ACC_fatal("acc_set_device_type : acc_device_none is not allowed");
@@ -68,6 +68,7 @@ void acc_set_device_type( acc_device_t acc_device )
 
   case acc_device_nvidia:
     current_device = acc_device_nvidia;
+    _ACC_platform_set_device_type(acc_device);
     return;
 
   default:
@@ -111,7 +112,6 @@ void acc_set_device_num( int num, acc_device_t acc_device )
     return;
 
   case acc_device_nvidia:
-    //gpu_device_num = num;
     _ACC_set_device_num(num-1);
     return;
 

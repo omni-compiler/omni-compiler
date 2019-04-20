@@ -137,6 +137,11 @@ AC_ARG_WITH(opencl,
 	    [  --with-opencl=DIR           OpenCL installation path (default: /usr/local/cuda)],
 	    [OPENCL_PREFIX="${withval}"; use_opencl=yes], [use_opencl=no])
 
+# specify PZCL path
+AC_ARG_WITH(pzcl,
+	    [  --with-pzcl=DIR             PZCL installation path],
+	    [PZCL_PREFIX="${withval}"; use_pzcl=yes], [use_pzcl=no])
+
 # set cuda default path
 if test "x${CUDA_PREFIX}" = "xyes"; then
    CUDA_PREFIX=/usr/local/cuda
@@ -160,6 +165,18 @@ if test "x${use_opencl}" = "xyes"; then
     OPENCL=$TRUE
 fi
 AC_SUBST(OPENCL)
+
+# set pzcl default path
+if test "x${PZCL_PREFIX}" = "xyes"; then
+   AC_MSG_ERROR([no argument with --with-pzcl])
+fi
+
+# AM_CONDITIONAL(PZCL, test x${use_pzcl} = xyes)
+PZCL=$FALSE
+if test "x${use_pzcl}" = "xyes"; then
+    PZCL=$TRUE
+fi
+AC_SUBST(PZCL)
 
 # specify libxmp path
 AC_ARG_WITH(libxml2,
@@ -445,8 +462,11 @@ if test "x${use_cuda}" = "xyes"; then
 elif test "x${use_opencl}" = "xyes"; then
     ACC_DEFAULT_PLATFORM=OpenCL
     ACC_DEFAULT_DEVICE=Fermi
+elif test "x${use_pzcl}" = "xyes"; then
+    ACC_DEFAULT_PLATFORM=PZCL
+    ACC_DEFAULT_DEVICE=PEZYSC
 elif test "x${doOpenAcc}" = "xyes"; then
-    AC_MSG_ERROR([CUDA or OpenCL not found. Please attach --with-cuda or --with-opencl.])
+    AC_MSG_ERROR([CUDA, OpenCL, or PZCL not found. Please attach --with-cuda, --with-opencl, or --with-pzcl.])
 fi
 AC_SUBST(ACC_DEFAULT_PLATFORM)
 AC_SUBST(ACC_DEFAULT_DEVICE)
@@ -1257,6 +1277,7 @@ AC_SUBST(GPU_CMD)
 AC_SUBST(GPU_CFLAGS)
 AC_SUBST(CUDA_PREFIX)
 AC_SUBST(OPENCL_PREFIX)
+AC_SUBST(PZCL_PREFIX)
 AC_SUBST(ACC_DEFAULT_PLATFORM)
 AC_SUBST(ACC_DEFAULT_DEVICE)
 AC_SUBST(LIBXML2_INCLUDE_DIR)

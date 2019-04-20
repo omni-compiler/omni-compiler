@@ -90,6 +90,11 @@ public enum ACCpragma {
   ROUTINE_ARG,
 
   //internal
+
+  //for pezy
+  SYNC,
+  FLUSH,
+  YIELD,
   ;
   
   private String name = null;
@@ -138,6 +143,9 @@ public enum ACCpragma {
     case DECLARE:
     case WAIT:
     case ROUTINE:
+    case SYNC:
+    case FLUSH:
+    case YIELD:
       return true;
     default:
       return false;
@@ -204,6 +212,9 @@ public enum ACCpragma {
     case ENTER_DATA:
     case EXIT_DATA:
     case ATOMIC:
+    case SYNC:
+    case FLUSH:
+    case YIELD:
       return true;
     }
     return false;

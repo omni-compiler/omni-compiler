@@ -3,6 +3,7 @@ package exc.openacc;
 public enum AccDevice {
     /*                 maxNumGangs, maxNumWorkers, maxVectorLength, defaultVectorLength, RODataCacheAvailable*/
     NVIDIA("NVIDIA",             0,             0,               0,                   0,          false),
+    PEZYSC("PEZY-SC",         8192,             1,               8,                   8,          false),
     NONE("",                     0,             0,               0,                   0,          false),
     ;
     //2^31-1 = 2147483647

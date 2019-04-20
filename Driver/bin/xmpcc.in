@@ -6,6 +6,7 @@ OM_DRIVER_CONF_DIR=@OM_DRIVER_CONF_DIR@
 . ${OMNI_HOME}/libexec/omni_common_lib.sh
 . ${OMNI_HOME}/libexec/xmpcc_lib.sh
 . ${OMNI_HOME}/libexec/omni_acc_lib.sh
+. ${OMNI_HOME}/libexec/omni_pzcc.sh
 
 ### Directory for saving intermediate files ###
 PID=$$
@@ -184,6 +185,19 @@ for c_file in "${c_files[@]}"; do
 		FILE_USER_CL=`basename "${C_FILE}" .c`_pp.cl
 		omni_exec cp "${FILE_CL}" "${FILE_USER_CL}"
 	    fi
+	elif [ $OPENACC_PLATFORM = "PZCL" ]; then
+	    #pzcl kernel compile
+	    FILE_PZC=${TEMP_DIR}/"${FILE_NAME}"_pp.pzc
+	    if [ -e "${FILE_PZC}" ]; then
+		FILE_PZ=${TEMP_DIR}/"${FILE_NAME}"_pp.pz
+		FILE_O_CPU="${FILE_O}".cpu
+		FILE_USER_PZ=${FILE_NAME}_pp.pz
+		omni_exec omni_pzcc -d "${TEMP_DIR}" -o ${FILE_PZ} ${FILE_PZC}
+		omni_exec objcopy -I binary -O elf64-x86-64 -B i386 ${FILE_PZ} ${FILE_PZ}.o
+		omni_exec mv "${FILE_O}" "${FILE_O_CPU}"
+		omni_exec ld -r "${FILE_O_CPU}" "${FILE_PZ}".o -o "${FILE_O}"
+		omni_exec rm -f "${FILE_O_CPU}"
+	    fi
 	fi
     fi
     
@@ -236,17 +250,21 @@ elif [ "$target"  = "sxace-nec-superux" -a "${output_file}" != "" ]; then
 fi
 
 obj_files+=("$TRAVERSE_FILE_O")
-if [ @XACC@ = 0 ]; then
-    [ @CUDA@ = 0 ] && OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_CUDA_LIB"
-    [ @OPENCL@ = 0 ] && OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_OPENCL_LIB"
-fi
 if [ $ENABLE_OPENACC = true ]; then
     if [ $OPENACC_PLATFORM = "CUDA" ]; then
 	OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_ACC_CUDA_LIB"
     elif [ $OPENACC_PLATFORM = "OpenCL" ]; then
 	OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_ACC_OPENCL_LIB"
+    elif [ $OPENACC_PLATFORM = "PZCL" ]; then
+	OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_ACC_PZCL_LIB"
     fi
     obj_files+=("$TRAVERSE_FILE_ACC_O")
+fi
+
+if [ @XACC@ = 0 ]; then
+    [ @CUDA@ = 0 ] && OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_CUDA_LIB"
+    [ @OPENCL@ = 0 ] && OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_OPENCL_LIB"
+    [ @PZCL@ = 0 ] && OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_PZCL_LIB"
 fi
 
 omni_exec $OMNI_LINKER_CMD "${obj_files[@]}" "${linker_add_opt[@]}" "${other_args[@]}" "${archive_files[@]}" "${lib_args[@]}" $OMNI_LINKER_OPT
