@@ -42,6 +42,7 @@ IS_TCA           = @TCA@
 IS_XACC          = @XACC@
 IS_CUDA          = @CUDA@
 IS_OPENCL        = @OPENCL@
+IS_PZCL          = @PZCL@
 ENABLE_SHARED    = @SHARED@
 
 ifeq ($(ENABLE_SHARED), $(TRUE))
@@ -123,6 +124,17 @@ ifeq ($(IS_OPENCL), $(TRUE))
     HEADERS  += xacc_util_cl_kernel.hex
 .SUFFIXES: .cl .hex
 .cl.hex:
+	xxd -i < $< >$@
+
+endif
+ifeq ($(IS_PZCL), $(TRUE))
+    OBJECTS  += xacc_util_cl.o
+    CFLAGS   += -D_XMP_XACC_PZCL -I@PZCL_PREFIX@/inc
+    HEADERS  += xacc_util_cl_kernel.hex
+.SUFFIXES: .pzc .pz .hex
+.pzc.pz:
+	OMNI_PZCL_PREFIX=@PZCL_PREFIX@ ../../Driver/libexec/omni_pzcc.sh -o $@ $<
+.pz.hex:
 	xxd -i < $< >$@
 
 endif

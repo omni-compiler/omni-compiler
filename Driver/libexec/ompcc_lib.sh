@@ -37,8 +37,8 @@ Omni OpenACC Options
   -acc, --openacc         : enable OpenACC function.
   --no-ldg                : disable use of read-only data cache.
   --default-veclen=LENGTH : specify default vector length (default: 256)
-  --platform=PLATFORM     : Specify platform [CUDA | OpenCL] (default: $OPENACC_PLATFORM)
-  --device=DEVICE         : Specify device [ccXX (XX is compute capability) | Fermi (=cc20) | Kepler (=cc35)] (default: $OPENACC_DEVICE)
+  --platform=PLATFORM     : Specify platform [CUDA | OpenCL | PZCL] (default: $OPENACC_PLATFORM)
+  --device=DEVICE         : Specify device [ccXX (XX is compute capability) | Fermi (=cc20) | Kepler (=cc35) | PEZYSC] (default: $OPENACC_DEVICE)
 
 Omni OpenMP Options
   -fopenmp-only-target    : enable OpenMP only target function.

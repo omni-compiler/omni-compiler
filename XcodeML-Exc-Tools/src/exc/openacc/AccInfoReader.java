@@ -83,6 +83,15 @@ class AccInfoReader extends AccProcessor{
     case DECLARE:
       pb.setProp(AccDirective.prop, new AccDeclare(_globalDecl, info, pb));
       break;
+    case SYNC:
+      pb.setProp(AccDirective.prop, new AccSync(_globalDecl, info, pb));
+      break;
+    case FLUSH:
+      pb.setProp(AccDirective.prop, new AccFlush(_globalDecl, info, pb));
+      break;
+    case YIELD:
+      pb.setProp(AccDirective.prop, new AccYield(_globalDecl, info, pb));
+      break;
     default:
       ACC.fatal("unknown directive: " + directive.getName());
     }

@@ -138,9 +138,10 @@ extern "C" {
 
   //acc_platform?
   void _ACC_platform_set_device_num(int device_num);
+  void _ACC_platform_set_device_type(acc_device_t device_type);
   bool _ACC_platform_allocate_device(int dev_num);
   void _ACC_platform_init_device(int device_num);
-  int _ACC_platform_get_num_devices();
+  int _ACC_platform_get_num_devices(acc_device_t device_type);
   void _ACC_platform_init();
   void _ACC_platform_finalize();
 

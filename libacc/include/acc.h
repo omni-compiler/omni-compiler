@@ -28,6 +28,7 @@ extern "C" {
   void _ACC_copy_async(void *host_addr, void *device_addr, size_t size, int direction, int async);
 
   void _ACC_program_init(void **desc, char * kernel_src_filename, int num_kernels, char ** kernel_names);
+  void _ACC_program_init_mem(void **desc, char *kernel_bin_start, char *kernel_bin_end, int num_kernels, char ** kernel_names);
   void _ACC_launch(void *program, int kernel_num, int *_ACC_conf, int async_num, int num_args, unsigned long long/*instead of size_t*/ *arg_sizes, void **args);
   void _ACC_program_finalize(void *program);
 

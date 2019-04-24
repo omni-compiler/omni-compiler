@@ -6,6 +6,11 @@
 #include "../../libacc/include/openacc.h"
 #endif
 
+#ifdef _XMP_XACC_PZCL
+#define ROUNDUP(x, base) ((((x)-1)/(base)+1)*(base))
+#define ADJUST_GLOBAL_WORK_SIZE(x) MIN(8192, ROUNDUP((x), 128))
+#endif
+
 static unsigned char _kernel_src[] = {
 #include "xacc_util_cl_kernel.hex"
 };
@@ -13,6 +18,9 @@ static unsigned char _kernel_src[] = {
 void _XACC_queue_create(_XACC_queue_t *queue)
 {
     cl_int ret;
+#ifdef _XMP_XACC_PZCL
+    *queue = (cl_command_queue)acc_get_opencl_queue(ACC_ASYNC_SYNC);
+#else
     cl_context context = (cl_context)acc_get_current_opencl_context();
     cl_device_id device_id = (cl_device_id)acc_get_current_opencl_device();
 
@@ -21,13 +29,16 @@ void _XACC_queue_create(_XACC_queue_t *queue)
 
     XACC_DEBUG("queue create %p", command_queue);
     *queue = command_queue;
+#endif
 }
 
 void _XACC_queue_destroy(_XACC_queue_t *queue)
 {
+#ifndef _XMP_XACC_PZCL
     XACC_DEBUG("queue destroy %p", *queue);
     CL_CHECK(clFinish(*queue));
     CL_CHECK(clReleaseCommandQueue(*queue));
+#endif
     *queue = NULL;
 }
 
@@ -109,15 +120,31 @@ cl_program create_and_build_program(const char * kernel_src, const size_t kernel
     cl_program program;
 
     cl_context context = (cl_context)acc_get_current_opencl_context();
-    const char *srcs[] = {kernel_src};
+    cl_device_id device_id = (cl_device_id)acc_get_current_opencl_device();
     const size_t src_sizes[] = {kernel_src_size};
+
+#ifdef _XMP_XACC_OPENCL
+    const char *srcs[] = {kernel_src};
     program = clCreateProgramWithSource(context, 1, srcs, src_sizes, &ret);
+#else
+    {
+	cl_int binary_statuses[1]; //consider only current device
+	const unsigned char *bins[] = {(const unsigned char *)kernel_src};
+	program = clCreateProgramWithBinary(context, 1, &device_id, src_sizes,
+					    bins,
+					    binary_statuses, &ret);
+	for(int i = 0; i < 1; i++){
+	    CL_CHECK(binary_statuses[i]);
+	}
+    }
+#endif
     CL_CHECK(ret);
 
     //build program
-    cl_device_id device_id = (cl_device_id)acc_get_current_opencl_device();
     const char build_option[] = "";
     ret = clBuildProgram(program, 1, &device_id, build_option, NULL, NULL);
+
+#ifdef _XMP_XACC_OPENCL
     if(ret != CL_SUCCESS){
 	//print build error
 	const int max_error_length = 1024*1024;
@@ -131,6 +158,7 @@ cl_program create_and_build_program(const char * kernel_src, const size_t kernel
 	_XMP_free(error_log);
 	exit(1);
     }
+#endif
 
     return program;
 }
@@ -188,12 +216,10 @@ void create_kernels(cl_kernel kernels[], cl_program program, int num_kernels, co
 }
 
 #define KERNEL_FUNCTIONS \
-    NAME(_XACC_pack_vector),\
     NAME(_XACC_pack_vector_8),\
     NAME(_XACC_pack_vector_16),\
     NAME(_XACC_pack_vector_32),\
     NAME(_XACC_pack_vector_64),\
-    NAME(_XACC_unpack_vector),\
     NAME(_XACC_unpack_vector_8),\
     NAME(_XACC_unpack_vector_16),\
     NAME(_XACC_unpack_vector_32),\
@@ -227,9 +253,14 @@ void enqueue_kernel(cl_command_queue command_queue, cl_kernel kernel, int num_ar
 {
   int i;
   for(i=0;i<num_args; i++){
+    XACC_DEBUG("clSetKernelArg(arg_num=%d, arg_size=%zd, arg=%p)", i, arg_sizes[i], args[i]);
     CL_CHECK(clSetKernelArg(kernel, i, arg_sizes[i], args[i]));
   }
 
+  XACC_DEBUG("clEnqueueNDRangeKernel(work_dim=%d)", work_dim);
+  for(i = 0; i < work_dim; i++){
+    XACC_DEBUG("                      (global_work_size[%d]=%zd, local_work_size[%d]=%zd)", i, global_work_size[i], i, local_work_size[i]);
+  }
   CL_CHECK(clEnqueueNDRangeKernel(command_queue, kernel, work_dim, NULL, global_work_size, local_work_size, /*num_ev_wait*/ 0, /*ev_wait_list*/ NULL, /*ev*/ NULL));
 }
 
@@ -255,6 +286,18 @@ void _XACC_memory_pack_vector(_XACC_memory_t dst_mem, size_t dst_offset,
     size_t dst_offset_e = dst_offset / typesize;
     size_t src_offset_e = src_offset / typesize;
 
+#ifdef _XMP_XACC_PZCL
+    const int max_num_threads = 8192;
+    int num_threads = ADJUST_GLOBAL_WORK_SIZE(blocklength_e * count); //MIN(blocklength_e * count, max_num_threads);
+
+    cl_uint work_dim = 1;
+    size_t global_work_size[] = {num_threads};
+    size_t local_work_size[] = {8};
+
+    if(global_work_size[0] > 8192 || global_work_size[0] % 128 != 0){
+      _XMP_fatal("invalid global_work_size at pack vector");
+    }
+#else
     int bx = 1, by;
     int tx = 1, ty;
     if(blocklength_e >= numThreads){
@@ -267,8 +310,10 @@ void _XACC_memory_pack_vector(_XACC_memory_t dst_mem, size_t dst_offset,
     ty = numThreads / tx;
     by = (count-1)/ty + 1;
 
-    size_t global_work_size[2] = {bx*tx, by*ty};
-    size_t local_work_size[2] = {tx, ty};
+    cl_uint work_dim = 2;
+    size_t global_work_size[] = {bx*tx, by*ty};
+    size_t local_work_size[] = {tx, ty};
+#endif
 
     void *args[] = {&dst_mem, &dst_offset_e, &src_mem, &src_offset_e, &blocklength_e, &stride_e, &count};
     size_t arg_sizes[] = {sizeof(dst_mem), sizeof(dst_offset_e), sizeof(src_mem), sizeof(src_offset_e), sizeof(blocklength_e), sizeof(stride_e), sizeof(count)};
@@ -276,19 +321,19 @@ void _XACC_memory_pack_vector(_XACC_memory_t dst_mem, size_t dst_offset,
     switch(typesize){
     case 1:
 	XACC_DEBUG("pack_vector_8\n");
-	enqueue_kernel(queue, _kernels[_XACC_pack_vector_8], 7, args, arg_sizes, 2, global_work_size, local_work_size);
+	enqueue_kernel(queue, _kernels[_XACC_pack_vector_8], 7, args, arg_sizes, work_dim, global_work_size, local_work_size);
 	break;
     case 2:
 	XACC_DEBUG("pack_vector_16\n");
-	enqueue_kernel(queue, _kernels[_XACC_pack_vector_16], 7, args, arg_sizes, 2, global_work_size, local_work_size);
+	enqueue_kernel(queue, _kernels[_XACC_pack_vector_16], 7, args, arg_sizes, work_dim, global_work_size, local_work_size);
 	break;
     case 4:
 	XACC_DEBUG("pack_vector_32\n");
-	enqueue_kernel(queue, _kernels[_XACC_pack_vector_32], 7, args, arg_sizes, 2, global_work_size, local_work_size);
+	enqueue_kernel(queue, _kernels[_XACC_pack_vector_32], 7, args, arg_sizes, work_dim, global_work_size, local_work_size);
 	break;
     case 8:
 	XACC_DEBUG("pack_vector_64\n");
-	enqueue_kernel(queue, _kernels[_XACC_pack_vector_64], 7, args, arg_sizes, 2, global_work_size, local_work_size);
+	enqueue_kernel(queue, _kernels[_XACC_pack_vector_64], 7, args, arg_sizes, work_dim, global_work_size, local_work_size);
 	break;
     default:
 	{
@@ -296,7 +341,7 @@ void _XACC_memory_pack_vector(_XACC_memory_t dst_mem, size_t dst_offset,
 	    size_t arg_sizes_default[] = {sizeof(dst_mem), sizeof(dst_offset), sizeof(src_mem), sizeof(src_offset), sizeof(blocklength), sizeof(stride), sizeof(count)};
 
 	    XACC_DEBUG("pack_vector_default\n");
-	    enqueue_kernel(queue, _kernels[_XACC_pack_vector], 7, args_default, arg_sizes_default, 2, global_work_size, local_work_size);
+	    enqueue_kernel(queue, _kernels[_XACC_pack_vector_8], 7, args_default, arg_sizes_default, work_dim, global_work_size, local_work_size);
 	}
     }
 }
@@ -320,6 +365,18 @@ void _XACC_memory_unpack_vector(_XACC_memory_t dst_mem, size_t dst_offset,
     size_t dst_offset_e = dst_offset / typesize;
     size_t src_offset_e = src_offset / typesize;
 
+#ifdef _XMP_XACC_PZCL
+    const int max_num_threads = 8192;
+    int num_threads = ADJUST_GLOBAL_WORK_SIZE(blocklength_e * count); //MIN(blocklength_e * count, max_num_threads);
+
+    cl_uint work_dim = 1;
+    size_t global_work_size[] = {num_threads};
+    size_t local_work_size[] = {8};
+
+    if(global_work_size[0] > 8192 || global_work_size[0] % 128 != 0){
+      _XMP_fatal("invalid global_work_size at unpack vector");
+    }
+#else
     int bx = 1, by;
     int tx = 1, ty;
 
@@ -333,8 +390,10 @@ void _XACC_memory_unpack_vector(_XACC_memory_t dst_mem, size_t dst_offset,
     ty = numThreads / tx;
     by = (count-1)/ty + 1;
 
-    size_t global_work_size[2] = {bx*tx, by*ty};
-    size_t local_work_size[2] = {tx, ty};
+    cl_uint work_dim = 2;
+    size_t global_work_size[] = {bx*tx, by*ty};
+    size_t local_work_size[] = {tx, ty};
+#endif
 
     void *args[] = {&dst_mem, &dst_offset_e, &src_mem, &src_offset_e, &blocklength_e, &stride_e, &count};
     size_t arg_sizes[] = {sizeof(dst_mem), sizeof(dst_offset_e), sizeof(src_mem), sizeof(src_offset_e), sizeof(blocklength_e), sizeof(stride_e), sizeof(count)};
@@ -342,19 +401,19 @@ void _XACC_memory_unpack_vector(_XACC_memory_t dst_mem, size_t dst_offset,
     switch(typesize){
     case 1:
 	XACC_DEBUG("unpack_vector_8\n");
-	enqueue_kernel(queue, _kernels[_XACC_unpack_vector_8], 7, args, arg_sizes, 2, global_work_size, local_work_size);
+	enqueue_kernel(queue, _kernels[_XACC_unpack_vector_8], 7, args, arg_sizes, work_dim, global_work_size, local_work_size);
 	break;
     case 2:
 	XACC_DEBUG("unpack_vector_16\n");
-	enqueue_kernel(queue, _kernels[_XACC_unpack_vector_16], 7, args, arg_sizes, 2, global_work_size, local_work_size);
+	enqueue_kernel(queue, _kernels[_XACC_unpack_vector_16], 7, args, arg_sizes, work_dim, global_work_size, local_work_size);
 	break;
     case 4:
 	XACC_DEBUG("unpack_vector_32\n");
-	enqueue_kernel(queue, _kernels[_XACC_unpack_vector_32], 7, args, arg_sizes, 2, global_work_size, local_work_size);
+	enqueue_kernel(queue, _kernels[_XACC_unpack_vector_32], 7, args, arg_sizes, work_dim, global_work_size, local_work_size);
 	break;
     case 8:
 	XACC_DEBUG("unpack_vector_64\n");
-	enqueue_kernel(queue, _kernels[_XACC_unpack_vector_64], 7, args, arg_sizes, 2, global_work_size, local_work_size);
+	enqueue_kernel(queue, _kernels[_XACC_unpack_vector_64], 7, args, arg_sizes, work_dim, global_work_size, local_work_size);
 	break;
     default:
 	{
@@ -362,7 +421,7 @@ void _XACC_memory_unpack_vector(_XACC_memory_t dst_mem, size_t dst_offset,
 	    size_t arg_sizes_default[] = {sizeof(dst_mem), sizeof(dst_offset), sizeof(src_mem), sizeof(src_offset), sizeof(blocklength), sizeof(stride), sizeof(count)};
 
 	    XACC_DEBUG("unpack_vector_default\n");
-	    enqueue_kernel(queue, _kernels[_XACC_unpack_vector], 7, args_default, arg_sizes_default, 2, global_work_size, local_work_size);
+	    enqueue_kernel(queue, _kernels[_XACC_unpack_vector_8], 7, args_default, arg_sizes_default, work_dim, global_work_size, local_work_size);
 	}
     }
 }

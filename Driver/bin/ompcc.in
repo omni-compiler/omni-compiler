@@ -6,6 +6,7 @@ OM_DRIVER_CONF_DIR=@OM_DRIVER_CONF_DIR@
 . ${OMNI_HOME}/libexec/omni_common_lib.sh
 . ${OMNI_HOME}/libexec/ompcc_lib.sh
 . ${OMNI_HOME}/libexec/omni_acc_lib.sh
+. ${OMNI_HOME}/libexec/omni_pzcc.sh
 
 ### Directory for saving intermediate files ###
 PID=$$
@@ -202,6 +203,20 @@ for c_file in "${c_files[@]}"; do
 	    FILE_USER_CL="${FILE_NAME}"_pp.cl
 	    omni_exec cp "${FILE_CL}" "${FILE_USER_CL}"
 	fi
+    elif [ $OPENACC_PLATFORM = "PZCL" ]; then
+	#pzcl kernel compile
+	FILE_PZC=${TEMP_DIR}/"${FILE_NAME}"_pp.pzc
+	if [ -e "${FILE_PZC}" ]; then
+	    FILE_PZ=${TEMP_DIR}/"${FILE_NAME}"_pp.pz
+	    FILE_O_CPU="${FILE_O}".cpu
+	    FILE_USER_PZ=${FILE_NAME}_pp.pz
+	    omni_exec omni_pzcc -d "${TEMP_DIR}" -o ${FILE_PZ} ${FILE_PZC}
+	    omni_exec objcopy -I binary -O elf64-x86-64 -B i386 ${FILE_PZ} ${FILE_PZ}.o
+	    omni_exec mv "${FILE_O}" "${FILE_O_CPU}"
+	    omni_exec ld -r "${FILE_O_CPU}" "${FILE_PZ}".o -o "${FILE_O}"
+	    omni_exec rm -f "${FILE_O_CPU}"
+#	    omni_exec cp "${FILE_PZ}" "${FILE_USER_PZ}"
+	fi
     fi
 
     if [ "$ENABLE_LINKER" = false -a "${output_file}" != "" ]; then
@@ -241,6 +256,8 @@ if [ "$ENABLE_ACC" = true ]; then
 	OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_CUDA_LIB"
     elif [ "$OPENACC_PLATFORM" = "OpenCL" ]; then
 	OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_OPENCL_LIB"
+    elif [ $OPENACC_PLATFORM = "PZCL" ]; then
+	OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_PZCL_LIB"
     fi
     obj_files+=("$TRAVERSE_FILE_O")
 else

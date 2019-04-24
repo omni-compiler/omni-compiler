@@ -9,6 +9,7 @@ FALSE           = 1
 TRUE            = 0
 IS_CUDA		= @CUDA@
 IS_OPENCL	= @OPENCL@
+IS_PZCL	        = @PZCL@
 
 ifeq ($(IS_CUDA), $(TRUE)) #if CUDA
 HEADERS += acc_gpu_func.hpp acc_gpu_reduction.hpp acc_gpu_atomic.hpp
@@ -16,6 +17,10 @@ endif
 
 ifeq ($(IS_OPENCL), $(TRUE)) #if OPENCL
 HEADERS += acc_cl.h
+endif
+
+ifeq ($(IS_PZCL), $(TRUE)) #if PZCL
+HEADERS += acc_pezy.hpp acc_pezy_util.hpp acc_pezy_reduction.hpp
 endif
 
 all:

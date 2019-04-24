@@ -25,14 +25,19 @@ typedef void* _XACC_memory_t;
 
 #endif
 
-//--OpenCL------------------------------------------------
-#if defined(_XMP_XACC_OPENCL)
+//--OpenCL, PZCL------------------------------------------------
+#if defined(_XMP_XACC_OPENCL) || defined(_XMP_XACC_PZCL)
+#ifdef _XMP_XACC_OPENCL
 #include <CL/cl.h>
+#else
+#include "pzcl/pzcl_ocl_wrapper.h"
+#endif
 
 #define CL_CHECK(ret)					\
   do{							\
-    if(ret != CL_SUCCESS){				\
-      fprintf(stderr, "%s:%d,rank=%d,  OpenCL error code %d\n", __FILE__, __LINE__, _XMP_world_rank, ret); \
+    cl_int err = ret;					\
+    if(err != CL_SUCCESS){				\
+      fprintf(stderr, "%s:%d,rank=%d,  OpenCL error code %d\n", __FILE__, __LINE__, _XMP_world_rank, err); \
       exit(1);						\
     }							\
   }while(0)

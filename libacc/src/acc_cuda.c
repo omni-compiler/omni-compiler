@@ -4,14 +4,27 @@
 #include "acc_gpu_internal.h"
 #include "cuda_runtime.h"
 
-int _ACC_platform_get_num_devices()
+int _ACC_platform_get_num_devices(acc_device_t device_type)
 {
-  int count;
-  cudaError_t error = cudaGetDeviceCount(&count);
-  if(error != cudaSuccess){
-    _ACC_gpu_fatal(error);
+  switch (device_type) {
+  case acc_device_nvidia:
+    {
+      int count;
+      cudaError_t error = cudaGetDeviceCount(&count);
+      if(error != cudaSuccess){
+	_ACC_gpu_fatal(error);
+      }
+      return count;
+    }
+  case acc_device_none:
+    return 0;
+  case acc_device_host:
+    return 1;
+  default:
+    _ACC_fatal("invalid device_type for _ACC_platform_get_num_devices");
   }
-  return count;
+
+  return 0;
 }
 
 bool _ACC_platform_allocate_device(int device_num)
@@ -37,6 +50,13 @@ void _ACC_platform_set_device_num(int device_num /*0-based*/)
   cudaError_t cuda_err = cudaSetDevice(device_num);
   if (cuda_err != cudaSuccess) {
     _ACC_fatal("fail to set GPU device in _ACC_gpu_set_device_num");
+  }
+}
+
+void _ACC_platform_set_device_type(acc_device_t device_type)
+{
+  if (device_type != acc_device_nvidia) {
+    _ACC_fatal("unsupported devie type for _ACC_platform_set_device_type");
   }
 }
 

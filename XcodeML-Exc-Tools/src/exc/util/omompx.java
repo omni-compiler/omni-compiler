@@ -453,6 +453,9 @@ public class omompx
           case OpenCL:
             ACC.device = AccDevice.getDevice("Fermi");
             break;
+          case PZCL:
+            ACC.device = AccDevice.PEZYSC;
+            break;
         }
       }
 
