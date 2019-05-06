@@ -124,6 +124,7 @@ public class BlockList
 
 		if (head.next == null) {
 			head = null;
+			return;
 		}
 
 		head = head.next;
