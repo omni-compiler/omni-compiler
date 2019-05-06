@@ -109,12 +109,24 @@ public class BlockList
         add(new SimpleBlock(Xcode.LIST, BasicBlock.Statement(x)));
     }
     
+	public void removeAll()
+	{
+		head = null;
+		tail = null;
+	}
+
     public void removeFirst()
     {
         if(head == null)
             return;
-        head = head.next;
-        head.prev = null;
+
+		if (head.next == null) {
+			head = null;
+			return;
+		}
+
+		head = head.next;
+		head.prev = null;
     }
 
     // insert block before head
