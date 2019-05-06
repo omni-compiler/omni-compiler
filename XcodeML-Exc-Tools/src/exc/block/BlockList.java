@@ -110,12 +110,10 @@ public class BlockList
     }
     
 	public void removeAll()
-    {
+	{
 		head = null;
 		tail = null;
 	}
-		   
-			
 
     public void removeFirst()
     {
