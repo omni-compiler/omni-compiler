@@ -123,10 +123,11 @@ public class BlockList
             return;
 
 		if (head.next == null) {
-			return;
+			head = null;
 		}
-        head = head.next;
-        head.prev = null;
+
+		head = head.next;
+		head.prev = null;
     }
 
     // insert block before head
