@@ -42,37 +42,37 @@ public class AccTranslator implements XobjectDefVisitor {
   }
 
   private void doFuncDef(FunctionBlock fb){
-    // _infoReader.doFuncDef(fb);
-    // ACC.exitByError();
-    // // _analyzer.doFuncDef(fb);
-    // ACC.exitByError();
+    _infoReader.doFuncDef(fb);
+    ACC.exitByError();
+    // _analyzer.doFuncDef(fb);
+    ACC.exitByError();
 
-    // if(_onlyAnalyze) {
-    //   _infoWriter.doFuncDef(fb);
-    //   ACC.exitByError();
-    //   return;
-    // }
+    if(_onlyAnalyze) {
+      _infoWriter.doFuncDef(fb);
+      ACC.exitByError();
+      return;
+    }
 
-    // _generator.doFuncDef(fb);
-    // ACC.exitByError();
+    _generator.doFuncDef(fb);
+    ACC.exitByError();
     // _rewrite.doFuncDef(fb);
     // ACC.exitByError();
   }
 
   private void doNonFuncDef(Xobject x){
-    // _infoReader.doNonFuncDef(x);
-    // ACC.exitByError();
-    // _analyzer.doNonFuncDef(x);
-    // ACC.exitByError();
+    _infoReader.doNonFuncDef(x);
+    ACC.exitByError();
+    _analyzer.doNonFuncDef(x);
+    ACC.exitByError();
 
-    // if(_onlyAnalyze) {
-    //   _infoWriter.doNonFuncDef(x);
-    //   ACC.exitByError();
-    //   return;
-    // }
+    if(_onlyAnalyze) {
+      _infoWriter.doNonFuncDef(x);
+      ACC.exitByError();
+      return;
+    }
 
-    // _generator.doNonFuncDef(x);
-    // ACC.exitByError();
+    _generator.doNonFuncDef(x);
+    ACC.exitByError();
     // _rewrite.doNonFuncDef(x);
     // ACC.exitByError();
   }
