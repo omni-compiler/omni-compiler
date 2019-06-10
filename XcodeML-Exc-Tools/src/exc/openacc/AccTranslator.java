@@ -44,7 +44,7 @@ public class AccTranslator implements XobjectDefVisitor {
   private void doFuncDef(FunctionBlock fb){
     _infoReader.doFuncDef(fb);
     ACC.exitByError();
-    // _analyzer.doFuncDef(fb);
+    _analyzer.doFuncDef(fb);
     ACC.exitByError();
 
     if(_onlyAnalyze) {
