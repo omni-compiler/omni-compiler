@@ -1150,7 +1150,7 @@ public class AccKernel {
     _readOnlyOuterIdSet = new LinkedHashSet<Ident>(outerIdSet);
     AssignedIdCollector assignedIdCollector = new AssignedIdCollector();
     for (Block b : _kernelBlocks) {
-      _readOnlyOuterIdSet.removeAll(assignedIdCollector.collect(b));
+      // _readOnlyOuterIdSet.removeAll(assignedIdCollector.collect(b));
     }
 
     //make outerId list
