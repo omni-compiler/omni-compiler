@@ -73,8 +73,8 @@ public class AccTranslator implements XobjectDefVisitor {
 
     _generator.doNonFuncDef(x);
     ACC.exitByError();
-    // _rewrite.doNonFuncDef(x);
-    // ACC.exitByError();
+    _rewrite.doNonFuncDef(x);
+    ACC.exitByError();
   }
 
   public void finish(){
