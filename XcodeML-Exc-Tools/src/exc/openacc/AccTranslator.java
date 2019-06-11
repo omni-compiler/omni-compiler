@@ -55,8 +55,8 @@ public class AccTranslator implements XobjectDefVisitor {
 
     _generator.doFuncDef(fb);
     ACC.exitByError();
-    // _rewrite.doFuncDef(fb);
-    // ACC.exitByError();
+    _rewrite.doFuncDef(fb);
+    ACC.exitByError();
   }
 
   private void doNonFuncDef(Xobject x){
