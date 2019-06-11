@@ -491,7 +491,7 @@ public class omompx
     Document xcodeDoc = xc2xcodeTranslator.write(xobjFile);
 
     // transformation from DOM to the file. It means to output DOM to the file.
-    if(silent == false){
+    // if(silent == false){
       try {
         Transformer transformer = TransformerFactory.newInstance().newTransformer();
         transformer.setOutputProperty(OutputKeys.METHOD, "xml");
@@ -511,7 +511,7 @@ public class omompx
       } catch(TransformerException e) {
         throw new XmException(e);
       }
-    }
+    // }
     
     // Decompile
     XmDecompilerContext context = null;
