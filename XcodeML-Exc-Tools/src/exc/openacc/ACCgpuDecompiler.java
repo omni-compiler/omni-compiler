@@ -84,16 +84,16 @@ class ACCgpuDecompiler {
         includeLines.add("#include \"xmp_index_macro.h\"");
       }
 
-      for(String includeLine : includeLines){
-        writer.println(includeLine);
-      }
+      // for(String includeLine : includeLines){
+      //   writer.println(includeLine);
+      // }
 
-      writer.println();
+      // writer.println();
 
-      writer.printAll();
+      // writer.printAll();
       
-      writer.flush();
-      writer.close();
+      // writer.flush();
+      // writer.close();
     }catch (IOException e){
       ACC.fatal("error in gpu decompiler: " + e.getMessage());
     }
