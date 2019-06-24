@@ -53,6 +53,7 @@ IS_FX100         = @FX100@
 IS_XACC          = @XACC@
 IS_CUDA          = @CUDA@
 IS_OPENCL        = @OPENCL@
+IS_PZCL          = @PZCL@
 ENABLE_SHARED    = @SHARED@
 
 ifeq ($(ENABLE_SHARED), $(TRUE))
@@ -77,6 +78,9 @@ ifeq ($(IS_CUDA), $(TRUE))
 endif
 ifeq ($(IS_OPENCL), $(TRUE))
     CFLAGS  += -D_XMP_XACC_OPENCL -I@OPENCL_PREFIX@/include
+endif
+ifeq ($(IS_PZCL), $(TRUE))
+    CFLAGS  += -D_XMP_XACC_PZCL -I@PZCL_PREFIX@/inc
 endif
 endif
 

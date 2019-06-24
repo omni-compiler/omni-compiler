@@ -194,14 +194,14 @@ void _XMP_gtol_array_ref_triplet(_XMP_array_t *array,
   }
 }
 
-static void _XMP_calc_gmove_rank_array_SCALAR(_XMP_array_t *array, int *ref_index, int *rank_array) {
+void _XMP_calc_gmove_rank_array_SCALAR(_XMP_array_t *array, int *ref_index, int *rank_array) {
   _XMP_template_t *template = array->align_template;
 
   int array_dim = array->dim;
   for (int i = 0; i < array_dim; i++) {
     _XMP_array_info_t *ai = &(array->info[i]);
     int template_index = ai->align_template_index;
-    if (template_index != _XMP_N_NO_ALIGN_TEMPLATE) {
+     if (template_index != _XMP_N_NO_ALIGN_TEMPLATE) {
       _XMP_template_chunk_t *chunk = &(template->chunk[ai->align_template_index]);
       int onto_nodes_index = chunk->onto_nodes_index;
       _XMP_ASSERT(array_nodes_index != _XMP_N_NO_ONTO_NODES);
@@ -214,6 +214,17 @@ static void _XMP_calc_gmove_rank_array_SCALAR(_XMP_array_t *array, int *ref_inde
 }
 
 int _XMP_calc_gmove_array_owner_linear_rank_SCALAR(_XMP_array_t *array, int *ref_index) {
+  _XMP_nodes_t *array_nodes = array->array_nodes;
+  int array_nodes_dim = array_nodes->dim;
+  int rank_array[array_nodes_dim];
+
+  _XMP_calc_gmove_rank_array_SCALAR(array, ref_index, rank_array);
+
+  return _XMP_calc_linear_rank_on_target_nodes(array_nodes, rank_array, _XMP_get_execution_nodes());
+}
+
+int xmp_calc_gmove_array_owner_linear_rank_scalar_(_XMP_array_t **a, int *ref_index) {
+  _XMP_array_t *array = *a;
   _XMP_nodes_t *array_nodes = array->array_nodes;
   int array_nodes_dim = array_nodes->dim;
   int rank_array[array_nodes_dim];
@@ -680,6 +691,7 @@ void _XMP_gmove_BCAST_GSCALAR(void *dst_addr, _XMP_array_t *array, int ref_index
   int type_size = array->type_size;
 
   if(_XMP_IS_SINGLE) {
+    src_addr = _XMP_get_array_addr(array, ref_index);
     memcpy(dst_addr, src_addr, type_size);
     return;
   }

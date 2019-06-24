@@ -42,9 +42,9 @@ TESTDIRS1    = "global-view/array/C" "global-view/array/F" "global-view/bcast/C"
 	       "global-view/loop/C"  "global-view/loop/F"  "global-view/reduction/C" "global-view/reduction/F" \
 	       "global-view/shadow-reflect/C" "global-view/shadow-reflect/F" "global-view/task/C"  "global-view/task/F"
 TESTDIRS2    = "global-view/template_fix/C"   "global-view/template_fix/F"   "global-view/gmove/C" "global-view/gmove/F" \
-	       "global-view/inquiry/C"   "global-view/inquiry/F" "global-view/gblock/C"    "global-view/gblock/F"
-TESTDIRS3  =   "global-view/align/C"     "global-view/align/F" "global-view/intrinsic/F" \
-	       "global-view/util/C"      "global-view/util/F/" "others/C" "others/F"
+	       "global-view/inquiry/C" "global-view/inquiry/F" "global-view/gblock/C"    "global-view/gblock/F"
+TESTDIRS3  =   "global-view/align/C" "global-view/align/F" "global-view/intrinsic/F" "global-view/util/C"\
+	       "global-view/util/F/" "global-view/structure/C" "global-view/structure/F" "others/C" "others/F"
 IS_MPI3_ASYNC=@MPI3_ASYNC@
 ifeq ($(IS_MPI3_ASYNC), $(TRUE))
    TESTDIRS3 += "global-view/async/C" "global-view/async/F"

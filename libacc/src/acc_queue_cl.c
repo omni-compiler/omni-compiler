@@ -9,14 +9,31 @@ struct _ACC_queue_type{
   unsigned *block_count;
 };
 
+#ifdef PEZY
+// single command_queue per device when using pzcl
+static cl_command_queue _ACC_cl_command_queues[_ACC_CL_MAX_NUM_DEVICES] = {NULL};
+#endif
+
 _ACC_queue_t* _ACC_queue_create(int async_num)
 {
   _ACC_DEBUG("queue create\n")
   _ACC_queue_t *queue = (_ACC_queue_t *)_ACC_alloc(sizeof(_ACC_queue_t));
 
   cl_int ret;
+#ifdef PEZY
+  if(_ACC_cl_command_queues[_ACC_cl_device_num] == NULL){
+    _ACC_cl_command_queues[_ACC_cl_device_num] = clCreateCommandQueue(_ACC_cl_current_context, _ACC_cl_device_ids[_ACC_cl_device_num], 0 /*prop*/, &ret);
+    CL_CHECK(ret);
+    _ACC_DEBUG("create command queue %p for %d\n", _ACC_cl_command_queues[_ACC_cl_device_num], async_num);
+  }else{
+    _ACC_DEBUG("retain command queue %p for %d\n", _ACC_cl_command_queues[_ACC_cl_device_num], async_num);
+    CL_CHECK(clRetainCommandQueue(_ACC_cl_command_queues[_ACC_cl_device_num]));
+  }
+  queue->command_queue = _ACC_cl_command_queues[_ACC_cl_device_num];
+#else
   queue->command_queue = clCreateCommandQueue(_ACC_cl_current_context, _ACC_cl_device_ids[_ACC_cl_device_num], 0 /*prop*/, &ret);
   CL_CHECK(ret);
+#endif
 
   queue->last_event = NULL;
 
@@ -29,8 +46,7 @@ void _ACC_queue_destroy(_ACC_queue_t* queue)
 {
   if(queue == NULL) return;
 
-  CL_CHECK(clFlush(queue->command_queue));
-  CL_CHECK(clFinish(queue->command_queue));
+  _ACC_queue_wait(queue);
   CL_CHECK(clReleaseCommandQueue(queue->command_queue));
 
   //FIXME do something such as _ACC_gpu_mpool_free_block(queue->mpool);
@@ -41,7 +57,6 @@ void _ACC_queue_destroy(_ACC_queue_t* queue)
 void _ACC_queue_wait(_ACC_queue_t *queue)
 {
   //XXX is clFlush need?
-  CL_CHECK(clFlush(queue->command_queue));
   CL_CHECK(clFinish(queue->command_queue));
 }
 

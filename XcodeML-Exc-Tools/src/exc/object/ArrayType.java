@@ -42,7 +42,13 @@ public class ArrayType extends Xtype
     {
         return ref;
     }
-    
+
+    @Override
+    public void setRef(Xtype ref)
+    {
+	this.ref = ref;
+    }
+
     @Override
     public long getArraySize()
     {

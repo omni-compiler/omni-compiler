@@ -5,6 +5,7 @@ GPUCC       = @GPU_CMD@
 GPUCFLAGS   = @GPU_CFLAGS@
 CUDA_DIR    = @CUDA_PREFIX@
 OPENCL_DIR  = @OPENCL_PREFIX@
+PZCL_DIR    = @PZCL_PREFIX@
 OMNI_DIR    = @OMNI_HOME@
 RANLIB      = @RANLIB@
 AR          = @AR@
@@ -28,6 +29,7 @@ FALSE           = 1
 TRUE            = 0
 IS_CUDA		= @CUDA@
 IS_OPENCL	= @OPENCL@
+IS_PZCL		= @PZCL@
 IS_TCA          = @TCA@
 ENABLE_SHARED   = @SHARED@
 
@@ -44,6 +46,14 @@ LIBACC_CL   = libacc_cl.a
 HEADERS_CL  = acc_internal_cl.h
 OBJECTS_CL  = acc_cl.o acc_memory_cl.o acc_queue_cl.o acc_kernel_cl.o acc_mpool_cl.o
 CFLAGS      += -I$(OPENCL_DIR)/include -DOMNI_INCLUDE_DIR="$(OMNI_DIR)/include"
+LIBS        += $(LIBACC_CL)
+endif
+
+ifeq ($(IS_PZCL), $(TRUE))
+LIBACC_CL   = libacc_cl.a
+HEADERS_CL  = acc_internal_cl.h
+OBJECTS_CL  = acc_cl.o acc_memory_cl.o acc_queue_cl.o acc_kernel_cl.o acc_mpool_cl.o
+CFLAGS      += -I$(PZCL_DIR)/inc -DOMNI_INCLUDE_DIR="$(OMNI_DIR)/include" -DPEZY
 LIBS        += $(LIBACC_CL)
 endif
 

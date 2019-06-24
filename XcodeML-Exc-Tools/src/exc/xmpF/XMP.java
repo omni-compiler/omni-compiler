@@ -12,10 +12,17 @@ import xcodeml.util.XmLog;
 public class XMP {
   public static boolean debugFlag = false;
 
-  final static String prop = "XMPprop";
-  final static String RWprotected = "XMPRWprotected";
-  final static String globalAlias = "XMPglobalAlias";
-  final static String origIndexRange = "XMPorigIndexRange";
+  final static String prop            = "XMPprop";
+  final static String RWprotected     = "XMPRWprotected";
+  final static String globalAlias     = "XMPglobalAlias";
+  final static String origIndexRange  = "XMPorigIndexRange";
+  final static String Shadow_w_list   = "XMPShadow_w_list";
+  final static String HasShadow       = "XMPHasShadow";
+  final static String Template        = "XMPTemplate";
+  final static String StructId        = "XMPStructId";
+  final static String Env             = "XMPEnv";
+  final static String AlignSourceList = "XMPAlignSourceList";
+  final	static String AlignScriptList = "XMPAlignScriptList";
 
   // defined in xmp_constant.h
   public final static int REDUCE_NONE		= 0;
@@ -55,9 +62,11 @@ public class XMP {
   public final static String SIZE_ARRAY_NAME    = "xmp_size_array";
   public final static String XMP_COMMON_NAME    = "XMP_COMMON";
 
-  public final static String PREFIX_		= "XMP__";
-  public final static String DESC_PREFIX_	= "XMP_DESC_";
-  public final static String SAVE_DESC_PREFIX_	= "XMP_SAVE_";    
+  public final static String PREFIX_		 = "XMP__";
+  public final static String DESC_PREFIX_ 	 = "XMP_DESC_";
+  public final static String DESC_STRUCT_PREFIX_ = "XMP_STRUCT_DESC_";
+  public final static String SAVE_DESC_PREFIX_	 = "XMP_SAVE_";
+  public final static String STRUCT_PREFIX_      = "XMP_STRUCT_";
 
   public final static String ASTERISK		= "* @{ASTERISK}@";
   public final static String COLON		= ": @{COLON}@";

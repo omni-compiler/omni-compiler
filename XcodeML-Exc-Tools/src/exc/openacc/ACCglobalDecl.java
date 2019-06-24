@@ -17,6 +17,7 @@ class ACCglobalDecl{
   private static final String ACC_TRAVERSE_FINALIZE_FUNC_NAME = "acc_traverse_finalize";
   private static final String ACC_KERNELS_FINALIZE_FUNC_NAME = "_ACC_program_finalize";
   public static final String ACC_KERNELS_INIT_FUNC_NAME = "_ACC_program_init";
+  public static final String ACC_KERNELS_INIT_MEM_FUNC_NAME = "_ACC_program_init_mem";
   private XobjectFile   _env;
   private XobjList _globalConstructorFuncBody;
   private XobjList _globalDestructorFuncBody;
@@ -271,7 +272,8 @@ class ACCglobalDecl{
 
 
     { //init
-      Ident kernelInitFuncId = ACCutil.getMacroFuncId(ACC_KERNELS_INIT_FUNC_NAME, Xtype.voidType);
+      boolean embedKernel = true;
+      Ident kernelInitFuncId = ACCutil.getMacroFuncId(embedKernel? ACC_KERNELS_INIT_MEM_FUNC_NAME : ACC_KERNELS_INIT_FUNC_NAME, Xtype.voidType);
       XobjList nameList = Xcons.List();
       for(String name : _kernelNames){
         nameList.add(Xcons.StringConstant(name));
@@ -279,12 +281,25 @@ class ACCglobalDecl{
       BlockList body = Bcons.emptyBody();
       Ident kernelNamesId = body.declLocalIdent("_ACC_kernel_names", Xtype.Array(Xtype.stringType, numKernels),
               StorageClass.AUTO, nameList);
-      String fileName = new File(_env_device.getSourceFileName()).getName();
-      XobjList args = Xcons.List(
-              Xcons.AddrOf(_programId.getAddr()),
-              Xcons.StringConstant(fileName),
-              Xcons.IntConstant(numKernels),
-              kernelNamesId.Ref());
+      String fileName = _env_device.getSourceFileName();
+      if(! embedKernel){
+	fileName = new File(fileName).getName();
+      }
+      if(ACC.platform == ACC.Platform.PZCL){
+        fileName = ACCutil.removeExtension(fileName) + ".pz";
+      }
+      XobjList args = Xcons.List(Xcons.AddrOf(_programId.getAddr()));
+      if(embedKernel){
+	String varNameCommon = "_binary_" + fileName.replaceAll("\\.|/", "_");
+	Ident startId = _env.declExternIdent(varNameCommon + "_start", Xtype.Array(Xtype.charType, null));
+	Ident endId = _env.declExternIdent(varNameCommon + "_end", Xtype.Array(Xtype.charType, null));
+        args.add(startId.Ref());
+        args.add(endId.Ref());
+      }else{
+        args.add(Xcons.StringConstant(fileName));
+      }
+      args.add(Xcons.IntConstant(numKernels));
+      args.add(kernelNamesId.Ref());
       body.add(kernelInitFuncId.Call(args));
       addGlobalConstructor(Bcons.COMPOUND(body).toXobject());
     }

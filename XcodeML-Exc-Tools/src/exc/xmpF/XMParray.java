@@ -11,46 +11,34 @@ import java.util.Iterator;
 public class XMParray {
   private final static String XMP_ARRAY_PROP = "XMP_ARRAY_PROP";
 
-  private Ident	arrayId; // global/original ident
+  private Ident	arrayId;      // global/original ident
   private Block arrayIdBlock; // Block ident found
-  private String name;   // original name
-  private Xtype	type;    // original type
+  private String name;        // original name
+  private Xtype	type;         // original type
   private Xtype elementType;
-  
-  // private String localName; // xmp name
-  // private Xtype localType;
   private Ident localId; 
-
   private Vector<XMPdimInfo> dims;
-
-  private Ident	descId;  // descriptor
-
-  // private Ident localId; // local ident
-  
+  private Ident	descId;      // descriptor
   private XMPtemplate template;
-
   StorageClass sclass;
-  boolean is_linearized = false;
-
+  boolean is_linearized       = false;
   private int NthAssumedShape = -1;
-
-  boolean shadow_declared = false;
-
-  boolean is_saveDesc = false;
+  boolean shadow_declared     = false;
+  boolean is_saveDesc         = false;
 
   // null constructor
   public XMParray() { }
 
   public XMParray(XMParray orig, Ident newId, String newName, Ident newLocalId){
-    arrayId = newId;
-    name = newName;
-    type = orig.type;
+    arrayId     = newId;
+    name        = newName;
+    type        = orig.type;
     elementType = orig.elementType;
-    localId = newLocalId;
-    dims = orig.dims;
-    descId = orig.descId;
-    template = orig.template;
-    sclass = orig.sclass;
+    localId     = newLocalId;
+    dims        = orig.dims;
+    descId      = orig.descId;
+    template    = orig.template;
+    sclass      = orig.sclass;
   }    
 
   public String toString(){
@@ -60,17 +48,11 @@ public class XMParray {
     return s+"}";
   }
 
-  public String getName() {
-    return name;
-  }
+  public String getName() { return name; }
 
-  public Xtype getType() {
-    return type;
-  }
+  public Xtype getType() { return type; }
 
-  public int getDim(){
-    return dims.size();
-  }
+  public int getDim(){ return dims.size(); }
 
   public boolean isDistributed(int index){
     int idx = dims.elementAt(index).getAlignSubscriptIndex();
@@ -84,8 +66,7 @@ public class XMParray {
     return template.getDistMannerAt(idx);
   }    
 
-  public void setAlignSubscriptIndexAt(int alignSubscriptIndex, 
-				       int index) {
+  public void setAlignSubscriptIndexAt(int alignSubscriptIndex, int index) {
     dims.elementAt(index).align_subscript_index = alignSubscriptIndex;
   }
 
@@ -93,8 +74,7 @@ public class XMParray {
     return dims.elementAt(index).align_subscript_index;
   }
 
-  public void setAlignSubscriptOffsetAt(Xobject alignSubscriptOffset, 
-				      int index) {
+  public void setAlignSubscriptOffsetAt(Xobject alignSubscriptOffset, int index) {
     dims.elementAt(index).align_subscript_offset = alignSubscriptOffset;
   }
 
@@ -107,7 +87,7 @@ public class XMParray {
   }
 
   public void setShadow(int left, int right, int index) {
-    dims.elementAt(index).shadow_left = left;
+    dims.elementAt(index).shadow_left  = left;
     dims.elementAt(index).shadow_right = right;
   }
 
@@ -121,14 +101,14 @@ public class XMParray {
 
   public boolean hasShadow(int index){
     return (dims.elementAt(index).is_full_shadow ||
-	    dims.elementAt(index).shadow_left != 0 ||
+	    dims.elementAt(index).shadow_left  != 0 ||
 	    dims.elementAt(index).shadow_right != 0);
   }
 
   public boolean hasShadow(){
-    for(int i = 0; i < dims.size(); i++){
+    for(int i = 0; i < dims.size(); i++)
       if(hasShadow(i)) return true;
-    }
+    
     return false;
   }
 
@@ -148,17 +128,11 @@ public class XMParray {
     return dims.elementAt(index).getLower();
   }    
     
-  public Ident getArrayId() {
-    return arrayId;
-  }
+  public Ident getArrayId() { return arrayId; }
 
-  public Ident getDescId() {
-    return descId;
-  }
+  public Ident getDescId() { return descId; }
 
-  public XMPtemplate getAlignTemplate() {
-    return template;
-  }
+  public XMPtemplate getAlignTemplate() { return template; }
 
   public Ident getLocalId() { return localId; }
 
@@ -176,15 +150,11 @@ public class XMParray {
     id.setProp(XMP_ARRAY_PROP,array);
   }
 
-  public void setLinearized(boolean flag){
-    is_linearized = flag;
-  }
+  public void setLinearized(boolean flag){ is_linearized = flag; }
 
   public boolean isSaveDesc() { return is_saveDesc; }
 
-  public void setSaveDesc(boolean flag){
-    is_saveDesc = flag;
-  }
+  public void setSaveDesc(boolean flag){ is_saveDesc = flag; }
 
   public boolean isLinearized() { return is_linearized; }
 
@@ -194,20 +164,127 @@ public class XMParray {
   public static void analyzeAlign(Xobject a, Xobject arrayArgs,
 				  Xobject templ, Xobject tempArgs,
 				  XMPenv env, PragmaBlock pb){
-    XMParray arrayObject = new XMParray();
-    arrayObject.parseAlign(a,arrayArgs,templ,tempArgs,env,pb);
-    env.declXMParray(arrayObject,pb);
+    boolean isStructure  = (a.Opcode() == Xcode.LIST);
+    if (isStructure) {
+      declareForStructure(a,arrayArgs,templ,tempArgs,env,pb);
+    }
+    else {
+      XMParray arrayObject = new XMParray();
+      arrayObject.parseAlign(a,arrayArgs,templ,tempArgs,env,pb);
+      env.declXMParray(arrayObject,pb);
+    }
   }
 
+  public static void declareForStructure(Xobject a, Xobject alignSourceList,
+					 Xobject templ, Xobject alignScriptList,
+					 XMPenv env, PragmaBlock pb) {
+    String structName = a.getArg(0).getSym();
+    String memberName = a.getArg(1).getSym();
+    Ident structId = (pb == null)? env.findVarIdent(structName, pb) : pb.findVarIdent(structName);
+
+    if (structId == null) {
+      XMP.errorAt(pb,"structure '" + structName + "' is not declared");
+      return;
+    }
+    
+    Ident arrayId = structId.Type().getMemberList().getIdent(memberName);
+    if (arrayId == null) {
+      XMP.errorAt(pb,"structure's member '" + structName + "%" + memberName + "' is not declared");
+      return;
+    }
+    
+    arrayId.saveOrigId();
+    arrayId.setProp(XMP.Env, env);
+    Xtype type = arrayId.Type();
+    
+    String templateName = templ.getString();
+    XMPtemplate template = env.findXMPtemplate(templateName, pb);
+    arrayId.setProp(XMP.Template, template);
+    
+    if (template == null)
+      XMP.errorAt(pb,"template '" + templateName + "' is not declared");
+    
+    if (!template.isDistributed() && !type.isFallocatable())
+      XMP.errorAt(pb,"template '" + templateName + "' is not distributed");
+    
+    if(XMP.hasError()) return;
+   
+    int templateDim = template.getDim();
+    int arrayDim = type.getNumDimensions();
+    if (arrayDim > XMP.MAX_DIM) {
+      XMP.errorAt(pb,"array dimension should be less than " + (XMP.MAX_DIM + 1));
+      return;
+    }
+
+    Vector<XMPdimInfo> src_dims  = XMPdimInfo.parseSubscripts(alignSourceList);
+    Vector<XMPdimInfo> tmpl_dims = XMPdimInfo.parseSubscripts(alignScriptList);
+
+    // check src_dims
+    for(XMPdimInfo i: src_dims){
+      if(i.isStar()) continue;
+      if(i.isTriplet()){
+        XMP.errorAt(pb,"bad syntax in align source script");
+        break;
+      }
+      Xobject t = i.getIndex();
+      if(t.isVariable()){
+        for(XMPdimInfo j: src_dims){  // cross check!
+          if(j.isStar()) continue;
+          if(t != j.getIndex() && t.equals(j.getIndex())){
+            XMP.errorAt(pb,"same variable is found for '"+t.getName()+"'");
+            break;
+          }
+        }
+        if(XMP.hasError()) break;
+      } else
+        XMP.errorAt(pb,"align source script must be variable");
+    }
+
+    // check tmpl_dims
+    for(XMPdimInfo i: tmpl_dims){
+      if(i.isStar()) continue;
+      if(i.isTriplet()){
+        XMP.errorAt(pb,"bad syntax in align script");
+        break;
+      }
+      Xobject t = i.getIndex();
+      if(!t.isVariable()){
+        switch(t.Opcode()){
+        case PLUS_EXPR:
+        case MINUS_EXPR:
+          if(!t.left().isVariable())
+            XMP.errorAt(pb,"left hand-side in align-subscript must be a variable");
+          // check right-hand side?
+          break;
+        default:
+          XMP.errorAt(pb,"bad expression in align-subsript");
+        }
+      }
+    }
+
+    if(src_dims.size() != arrayDim)
+      XMP.errorAt(pb,"source dimension is different from array dimension");
+
+    if(XMP.hasError()) return;
+
+    String localName    = XMP.PREFIX_ + memberName;
+    Xobject sizeExprs[] = new Xobject[arrayDim];
+    for(int i=0;i<arrayDim;i++)
+      sizeExprs[i] = Xcons.FindexRangeOfAssumedShape();
+
+    ((FarrayType)arrayId.Type()).setFarraySizeExpr(sizeExprs);
+    ((FarrayType)arrayId.Type()).setIsFallocatable(true);
+    arrayId.setName(localName);
+    arrayId.setMemberAligned(true);
+    arrayId.setProp(XMP.AlignSourceList, alignSourceList);
+    arrayId.setProp(XMP.AlignScriptList, alignScriptList);
+  }
+  
   void parseAlign(Xobject a, Xobject alignSourceList,
 		  Xobject templ, Xobject alignScriptList,
 		  XMPenv env, PragmaBlock pb){
-    Xobject t,tt;
-
-    // get array information
-    name = a.getString();
-
-    arrayId = env.findVarIdent(name, pb); // find ident, in this block(func)
+    name    = a.getString();
+    arrayId = env.findVarIdent(name, pb);
     if (arrayId == null) {
       XMP.errorAt(pb,"array '" + name + "' is not declared");
       return;
@@ -227,7 +304,6 @@ public class XMParray {
 
     if(XMP.debugFlag) System.out.println("arrayId="+arrayId);
 
-
     sclass = arrayId.getStorageClass();
     if(XMP.debugFlag) System.out.println("sclass="+sclass);
     switch(sclass){
@@ -246,23 +322,15 @@ public class XMParray {
     String templateName = templ.getString();
     template = env.findXMPtemplate(templateName, pb);
 
-    if (template == null) {
+    if (template == null)
       XMP.errorAt(pb,"template '" + templateName + "' is not declared");
-    }
 
-    // if (!template.isFixed() && !type.isFallocatable()) {
-    //   XMP.errorAt(pb, "non-allocatable array cannot be aligned with an unfixed template");
-    //   //XMP.errorAt(pb,"template '" + templateName + "' is not fixed");
-    // }
-
-    if (!template.isDistributed() && !type.isFallocatable()) {
+    if (!template.isDistributed() && !type.isFallocatable())
       XMP.errorAt(pb,"template '" + templateName + "' is not distributed");
-    }
 
     if(XMP.hasError()) return;
 
     int templateDim = template.getDim();
-
     int arrayDim = type.getNumDimensions();
     if (arrayDim > XMP.MAX_DIM) {
       XMP.errorAt(pb,"array dimension should be less than " + (XMP.MAX_DIM + 1));
@@ -273,7 +341,7 @@ public class XMParray {
     String desc_id_name = XMP.DESC_PREFIX_ + name;
     descId = env.declObjectId(desc_id_name, arrayIdBlock);
     elementType = type.getRef();
-    
+
     Vector<XMPdimInfo> src_dims = XMPdimInfo.parseSubscripts(alignSourceList);
     Vector<XMPdimInfo> tmpl_dims = XMPdimInfo.parseSubscripts(alignScriptList);
 
@@ -284,7 +352,7 @@ public class XMParray {
 	XMP.errorAt(pb,"bad syntax in align source script");
 	break;
       }
-      t = i.getIndex();
+      Xobject t = i.getIndex();
       if(t.isVariable()){
 	for(XMPdimInfo j: src_dims){  // cross check!
 	  if(j.isStar()) continue;
@@ -305,7 +373,7 @@ public class XMParray {
 	XMP.errorAt(pb,"bad syntax in align script");
 	break;
       }
-      t = i.getIndex();
+      Xobject t = i.getIndex();
       if(!t.isVariable()){
 	switch(t.Opcode()){
 	case PLUS_EXPR:
@@ -320,9 +388,8 @@ public class XMParray {
       }
     }
 
-    if(src_dims.size() != arrayDim){
+    if(src_dims.size() != arrayDim)
       XMP.errorAt(pb,"source dimension is different from array dimension");
-    }
       
     if(XMP.hasError()) return;
 
@@ -337,12 +404,13 @@ public class XMParray {
 	dims.elementAt(i).setAlignSubscript(-1,null);
 	continue;
       }
-      t = d_info.getIndex(); // must be variable
+
+      Xobject t = d_info.getIndex(); // must be variable
       // find the associated variable in align-script
       int idx = -1;
       Xobject idxOffset = null;
       for(int j = 0; j < tmpl_dims.size(); j++){
-	tt = tmpl_dims.elementAt(j).getIndex();
+	Xobject tt = tmpl_dims.elementAt(j).getIndex();
 	if(tt == null) continue;
 	if(tt.isVariable()){
 	  if(tt.equals(t)){
@@ -379,18 +447,15 @@ public class XMParray {
 
     Xtype localType = null;
     Xobject sizeExprs[];
+
     switch(sclass){
     case FPARAM: {
-
-      if (type.isFallocatable()){
+      if (type.isFallocatable())
 	XMP.errorAt(pb, "allocatable dummy arrays cannot be distributed.");
-      }
 
       Xtype ftype = env.getCurrentDef().getDef().getNameObj().Type();
-
-      if (ftype.isFunction() && !ftype.isFsubroutine() && type.isFassumedShape()){
+      if (ftype.isFunction() && !ftype.isFsubroutine() && type.isFassumedShape())
 	XMP.fatal("assumed-shape distributed arrays in functions are not supported.");
-      }
 
       if (ftype.isFsubroutine() && type.isFassumedShape()){
 	Xobject id_list = env.getCurrentDef().getBlock().getBody().getIdentList();
@@ -406,9 +471,8 @@ public class XMParray {
 	  }
 	}
 	if (NthAssumedShape == -1) XMP.fatal("non-dummy argument cannot have a deferred shape.");
-	if (NthAssumedShape >= XMP.MAX_ASSUMED_SHAPE){
+	if (NthAssumedShape >= XMP.MAX_ASSUMED_SHAPE)
 	  XMP.fatal("too many assumed-shape arguments (MAX = " + XMP.MAX_ASSUMED_SHAPE + ").");
-	}
       }
 
       if (env.getCurrentDef().getDef().getParent() != null ||
@@ -450,17 +514,117 @@ public class XMParray {
     localId = env.declIdent(localName,localType,false,arrayIdBlock);
     localId.setStorageClass(arrayId.getStorageClass());
     localId.setValue(Xcons.Symbol(Xcode.VAR,localType,localName));
-    
     setArray(arrayId,this);
+  }
 
+  public void parseAlignForStructure(String structVarName, Ident structVarId, Block structVarBlock,
+				     String memberName, Ident memberId, XMPenv env)
+  {
+    this.name         = memberId.getOrigId().getName();
+    this.arrayId      = memberId.getOrigId();
+    this.arrayIdBlock = structVarBlock;
+    this.localId      = memberId;
+    this.type         = this.arrayId.Type();
+    if (this.type.getKind() != Xtype.F_ARRAY)
+      XMP.errorAt(this.arrayIdBlock, memberName + " is not an array");
+
+    this.sclass = structVarId.getStorageClass();
+    switch(this.sclass){
+    case PARAM:
+    case EXTDEF:
+    case EXTERN:
+    case FLOCAL:
+    case FPARAM:
+    case FSAVE:
+      break;
+    default:
+      XMP.errorAt(this.arrayIdBlock, "bad storage class of XMP array");
+    }
+    if(XMP.hasError()) return;
+
+    this.template = (XMPtemplate)memberId.getProp(XMP.Template);
+
+    // declare array address pointer, array descriptor
+    String descIdName = XMP.DESC_STRUCT_PREFIX_ + structVarName + "_" + this.name;
+    this.descId       = env.declObjectId(descIdName, this.arrayIdBlock);
+    this.elementType  = this.type.getRef();
+
+    XobjList alignSourceList     = (XobjList)memberId.getProp(XMP.AlignSourceList);
+    XobjList alignScriptList     = (XobjList)memberId.getProp(XMP.AlignScriptList);
+    Vector<XMPdimInfo> src_dims  = XMPdimInfo.parseSubscripts(alignSourceList);
+    Vector<XMPdimInfo> tmpl_dims = XMPdimInfo.parseSubscripts(alignScriptList);
+
+    // allocate dims
+    this.dims = new Vector<XMPdimInfo>();
+    for(Xobject x: this.type.getFarraySizeExpr())
+      this.dims.add(XMPdimInfo.createFromRange(x));
+
+    for(int i = 0; i < src_dims.size(); i++){
+      XMPdimInfo d_info = src_dims.elementAt(i);
+      if(d_info.isStar()) {
+        this.dims.elementAt(i).setAlignSubscript(-1,null);
+        continue;
+      }
+
+      Xobject t = d_info.getIndex(); // must be variable
+      // find the associated variable in align-script
+      int idx = -1;
+      Xobject idxOffset = null;
+      for(int j = 0; j < tmpl_dims.size(); j++){
+        Xobject tt = tmpl_dims.elementAt(j).getIndex();
+        if(tt == null) continue;
+        if(tt.isVariable()){
+          if(tt.equals(t)){
+            idx = j;
+            break;
+          }
+        }  else if(tt.left().equals(t)){
+          idx = j;
+          idxOffset = tt.right();
+          if(tt.Opcode() == Xcode.MINUS_EXPR)
+            idxOffset = Xcons.unaryOp(Xcode.UNARY_MINUS_EXPR,idxOffset);
+          break;
+        }
+      }
+
+      if(idx < 0)
+        XMP.errorAt(this.arrayIdBlock, "the associated align-subscript not found:"+t.getName());
+      else
+        this.dims.elementAt(i).setAlignSubscript(idx,idxOffset);
+    }
+
+    // Finally, allocate size and offset var
+    int dim_i = 0;
+    for(XMPdimInfo info: this.dims){
+      // allocate variables for size and offset, use fixed name
+      info.setArrayInfoVar(env.declIdent(descIdName+"_size_"+dim_i,
+                                         Xtype.FintType,arrayIdBlock),
+                           env.declIdent(descIdName+"_off_"+dim_i,
+                                         Xtype.FintType,arrayIdBlock),
+                           env.declIdent(descIdName+"_blkoff_"+dim_i,
+                                         Xtype.FintType,arrayIdBlock));
+      dim_i++;
+    }
+
+    this.localId.setStorageClass(arrayId.getStorageClass());
+    setArray(arrayId, this);
   }
 
   public static void analyzeShadow(Xobject a, Xobject shadow_w_list,
 				   XMPenv env, PragmaBlock pb){
-    if(!a.isVariable()){
-      XMP.errorAt(pb,"shadow cannot applied to non-array");
+    boolean isStructure  = (a.Opcode() == Xcode.LIST);
+    if (isStructure) {
+      String structName = a.getArg(0).getSym();
+      String memberName = a.getArg(1).getSym();
+      Ident structId = (pb == null)? env.findVarIdent(structName, pb) : pb.findVarIdent(structName);
+      Ident arrayId = structId.Type().getMemberList().getIdent(XMP.PREFIX_ + memberName);
+      arrayId.setProp(XMP.Shadow_w_list, shadow_w_list);
       return;
     }
+
+    if(!a.isVariable())
+      XMP.errorAt(pb,"shadow cannot applied to non-array");
+
     String name = a.getString();
     Ident id = env.findVarIdent(name, pb);
     if(id == null){
@@ -522,31 +686,68 @@ public class XMParray {
 	  continue;
 	}
 
-	// if(d_info.hasStride()){
-	//   XMP.errorAt(pb,"bad syntax in shadow");
-	//   continue;
-	// }
-	// if(d_info.hasLower()){
-	//   if(d_info.getLower().isIntConstant())
-	//     left = d_info.getLower().getInt();
-	//   else
-	//     XMP.errorAt(pb,"shadow width(right) is not integer constant");
-	//   if(d_info.getUpper().isIntConstant())
-	//     right = d_info.getUpper().getInt();
-	//   else
-	//     XMP.errorAt(pb,"shadow width(left) is not integer constant");
-	// } else {
-	//   if(d_info.getIndex().isIntConstant())
-	//     left = right = d_info.getIndex().getInt();
-	//   else 
-	//     XMP.errorAt(pb,"shadow width is not integer constant");
-	// }
-
 	array.setShadow(left,right,i);
       }
     }
   }
 
+  public void analyzeShadowForStructure(Block b) {
+    XMParray array          = XMParray.getArray(this.arrayId);
+    Xobject shadow_w_list   = (Xobject)this.localId.getProp(XMP.Shadow_w_list);
+    Vector<XMPdimInfo> dims = XMPdimInfo.parseSubscripts(shadow_w_list);
+    if(dims.size() != array.getDim()){
+      XMP.errorAt(b,"shadow dimension size is different from array dimension");
+      return;
+    }
+    else if (array.shadow_declared){
+      XMP.errorAt(b, "variable '" + name + "' already has shadow region");
+      return;
+    }
+    array.shadow_declared = true;
+
+    for(int i = 0; i < dims.size(); i++){
+      XMPdimInfo d_info = dims.elementAt(i);
+      int right = 0;
+      int left  = 0;
+      
+      if(d_info.isStar())
+        array.setFullShadow(i);
+      else {
+	if (d_info.isScalar()){ // scalar
+          if (d_info.getIndex().isIntConstant())
+            left = right = d_info.getIndex().getInt();
+          else
+            XMP.errorAt(b,"shadow width is not integer constant");
+        }
+	else if (!d_info.hasStride()){ // "lshadow : ushadow"
+          if (d_info.hasLower()){
+            if (d_info.getLower().isIntConstant())
+              left = d_info.getLower().getInt();
+            else
+              XMP.errorAt(b,"shadow width(left) is not integer constant");
+          }
+          else {
+            XMP.errorAt(b,"no shadow width(left) is specified.");
+          }
+          if (d_info.hasLower()){
+            if (d_info.getUpper().isIntConstant())
+              right = d_info.getUpper().getInt();
+            else
+              XMP.errorAt(b,"shadow width(right) is not integer constant");
+          }
+          else {
+            XMP.errorAt(b,"no shadow width(right) is specified.");
+          }
+        }
+        else {
+          XMP.errorAt(b,"bad syntax in shadow");
+          continue;
+        }
+        array.setShadow(left,right,i);
+      }
+    }
+  }
+  
   /* !$xmp align A(i) with t(i+off)
    *
    *  ! _xmpf_array_alloc(a_desc,#dim,type,t_desc)
@@ -557,22 +758,13 @@ public class XMParray {
    *  allocate ( A_local(0:a_1_size-1, 0:...) )
    *  ! _xmpf_array_set_local_array(a_desc,a_local)
    */
-
   public void buildConstructor(BlockList body, XMPenv env, Block block){
     if (is_saveDesc && type.isFallocatable())
       XMP.fatal("an allocatable array cannot have the save_desc attribute.");
 
-    BlockList b;
-    if (is_saveDesc && !env.currentDefIsModule()){
-      b = Bcons.emptyBody();
-    }
-    else {
-      b = body;
-    }
-
+    BlockList b = (is_saveDesc && !env.currentDefIsModule())? Bcons.emptyBody() : body;
     Ident flagVar = null;
     if (is_saveDesc && !env.currentDefIsModule()){
-
       Xtype save_desc = descId.Type().copy();
       save_desc.setIsFsave(true);
       descId.setType(save_desc);
@@ -601,14 +793,9 @@ public class XMParray {
       				    Xcons.List(Xcode.F_VALUE, Xcons.FlogicalConstant(false)));
     }
 
-    Ident f;
-    Xobject args;
-    
-    f = env.declInternIdent(XMP.array_alloc_f,Xtype.FsubroutineType, block);
-
+    Ident f = env.declInternIdent(XMP.array_alloc_f,Xtype.FsubroutineType, block);
     Xobject type_size = null;
     if (!elementType.isBasic()){
-
       env.useModule("iso_c_binding");
       env.findModule("iso_c_binding"); // import
       XobjString modName = Xcons.Symbol(Xcode.IDENT, "iso_c_binding");
@@ -628,28 +815,27 @@ public class XMParray {
       type_size = Xcons.IntConstant(0);
     }
     
-    args = Xcons.List(descId.Ref(),Xcons.IntConstant(dims.size()),
-		      XMP.typeIntConstant(elementType), type_size,
-		      template.getDescId().Ref());
+    Xobject args = Xcons.List(descId.Ref(),Xcons.IntConstant(dims.size()),
+			      XMP.typeIntConstant(elementType), type_size,
+			      template.getDescId().Ref());
     b.add(f.callSubroutine(args));
 
     f = env.declInternIdent(XMP.init_allocated_f, Xtype.FsubroutineType, block);
     args = Xcons.List(descId.Ref());
     b.add(f.callSubroutine(args));
 
-    if (type.isFallocatable()) return;
-
+    if(type.isFallocatable()) return;
+    
     Ident sizeArray = null;
-    if (type.isFassumedShape()){
+    if (type.isFassumedShape())
       sizeArray = env.declOrGetSizeArray(block);
-    }
 
     f = env.declInternIdent(XMP.array_align_info_f,Xtype.FsubroutineType, block);
     for(int i = 0; i < dims.size(); i++){
       XMPdimInfo info = dims.elementAt(i);
-
       Xobject lower = info.getLower();
       Xobject upper = null;
+
       if (info.getUpper() == null && NthAssumedShape >= 0 && NthAssumedShape < XMP.MAX_ASSUMED_SHAPE){
 	upper = Xcons.FarrayRef(sizeArray.Ref(), Xcons.IntConstant(NthAssumedShape), Xcons.IntConstant(i));
 	upper = Xcons.binaryOp(Xcode.PLUS_EXPR, upper, lower);
@@ -695,6 +881,7 @@ public class XMParray {
     b.add(f.callSubroutine(Xcons.List(descId.Ref())));
 
     Xobject allocate_statement = null;
+
     if(isLinearized()){
       // allocate size variable
       Xobject alloc_size = null;
@@ -702,6 +889,7 @@ public class XMParray {
 	XMPdimInfo info = dims.elementAt(i);
 	f = env.declInternIdent(XMP.array_get_local_size_f,
 			      Xtype.FsubroutineType, block);
+
 	b.add(f.callSubroutine(Xcons.List(descId.Ref(),
 					  Xcons.IntConstant(i),
 					  info.getArraySizeVar().Ref(),
@@ -725,7 +913,7 @@ public class XMParray {
       for(int i = 0; i < dims.size(); i++){
 	XMPdimInfo info = dims.elementAt(i);
 	f = env.declInternIdent(XMP.array_get_local_size_f,
-			      Xtype.FsubroutineType, block);
+				Xtype.FsubroutineType, block);
 	b.add(f.callSubroutine(Xcons.List(descId.Ref(),
 					  Xcons.IntConstant(i),
 					  info.getArraySizeVar().Ref(),
@@ -749,9 +937,16 @@ public class XMParray {
 	Xobject coShape = Xcons.List(Xcode.F_CO_SHAPE, localId.Type().getCodimensions());
 	alloc_args.add(coShape);
       }
-      
+
       // allocatable
-      allocate_statement = Xcons.FallocateByList(localId.Ref(),alloc_args);
+      if (localId.isMemberAligned()){
+	Ident structVarId       = (Ident)localId.getProp(XMP.StructId);
+	Xobject structMemberRef = Xcons.List(Xcode.MEMBER_REF, type, Xcons.FvarRef(structVarId),
+					     Xcons.Symbol(Xcode.IDENT, type, localId.getName()));
+	allocate_statement = Xcons.FallocateByList(structMemberRef,alloc_args);
+      }
+      else
+	allocate_statement = Xcons.FallocateByList(localId.Ref(),alloc_args);
     }
 
     if (is_saveDesc && !env.currentDefIsModule()){
@@ -764,19 +959,33 @@ public class XMParray {
       body.add(allocate_statement);
       break;
     case FSAVE:
-      Xobject cond =  
-	env.FintrinsicIdent(Xtype.FlogicalFunctionType,"allocated").
-	Call(Xcons.List(localId.Ref()));
-      body.add(Bcons.IF(Xcons.unaryOp(Xcode.LOG_NOT_EXPR,cond),
-			allocate_statement,null));
-      break;
+      {
+	Xobject target = null;
+	if (localId.isMemberAligned())
+	  target = Xcons.List(Xcode.MEMBER_REF, type, Xcons.FvarRef((Ident)localId.getProp(XMP.StructId)),
+			      Xcons.Symbol(Xcode.IDENT, type, localId.getName()));
+	else
+	  target = localId.Ref();
+	
+	Xobject cond = env.FintrinsicIdent(Xtype.FlogicalFunctionType,"allocated").
+	  Call(Xcons.List(target));
+	body.add(Bcons.IF(Xcons.unaryOp(Xcode.LOG_NOT_EXPR,cond),
+			  allocate_statement,null));
+	break;
+      }
     }
     
     // set
     f = env.declInternIdent(XMP.array_set_local_array_f,Xtype.FsubroutineType, block);
     Xobject isCoarray = (sclass == StorageClass.FSAVE) ? Xcons.IntConstant(1) : Xcons.IntConstant(0);
-    body.add(f.callSubroutine(Xcons.List(descId.Ref(), localId.Ref(), isCoarray)));
-
+    if (localId.isMemberAligned()){
+      Ident structVarId       = (Ident)localId.getProp(XMP.StructId);
+      Xobject structMemberRef = Xcons.List(Xcode.MEMBER_REF, type, Xcons.FvarRef(structVarId),
+					   Xcons.Symbol(Xcode.IDENT, type, localId.getName()));
+      body.add(f.callSubroutine(Xcons.List(descId.Ref(), structMemberRef, isCoarray)));
+    }
+    else
+      body.add(f.callSubroutine(Xcons.List(descId.Ref(), localId.Ref(), isCoarray)));
   }
 
   /*
@@ -786,21 +995,17 @@ public class XMParray {
 				Block block, XMPenv env){
 
     XobjList boundList = (XobjList)alloc.getArg(1);
-
     Ident f;
     Xobject args;
-
     Xobject orig_lower[] = new Xobject[dims.size()];
 
     // Following codes come from XMParray.buildConstructor
-
     f = env.declInternIdent(XMP.init_allocated_f, Xtype.FsubroutineType, block);
     args = Xcons.List(descId.Ref());
     st.insert(f.callSubroutine(args));
 
     f = env.declInternIdent(XMP.array_align_info_f,Xtype.FsubroutineType, block);
     for(int i = 0; i < dims.size(); i++){
-
       XobjList bound = (XobjList)boundList.getArg(i);
       Xobject lower, upper;
 
@@ -942,7 +1147,7 @@ public class XMParray {
     
       f = env.declInternIdent(XMP.array_dealloc_f,Xtype.FsubroutineType, block);
       args = Xcons.List(descId.Ref());
-      body.add(f.callSubroutine(args));
+      body.insert(f.callSubroutine(args));
     }
   }
 
@@ -975,8 +1180,6 @@ public class XMParray {
       if(x.Opcode() != Xcode.F_ARRAY_INDEX)
 	 XMP.fatal("convertLinearIndex: not F_ARRAY_INDEX");
       x = x.getArg(0);
-
-//      x = Xcons.binaryOp(Xcode.MINUS_EXPR,x,info.getArrayOffsetVar().Ref());
 
       if(idx == null) idx = x;
       else idx = Xcons.binaryOp(Xcode.PLUS_EXPR,idx,x);

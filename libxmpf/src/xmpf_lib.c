@@ -420,3 +420,9 @@ void xmp_unpack_nomask_(_XMP_array_t **a_d, _XMP_array_t **v_d){
    xmpf_unpack(*a_d, *v_d, NULL);
 }
 
+
+int xmp_array_owner_rank(_XMP_array_t *d, int *ref_index, int *owners);
+
+int xmp_array_owner_rank_(_XMP_array_t **d, int *ref_index, int *owners){
+  return xmp_array_owner_rank(*d, ref_index, owners);
+}

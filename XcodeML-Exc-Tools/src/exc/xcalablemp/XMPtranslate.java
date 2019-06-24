@@ -213,12 +213,19 @@ public class XMPtranslate implements XobjectDefVisitor {
       for (iter2.init(); !iter2.end(); iter2.next()){
 	Xobject x = iter2.getXobject();
 	if (x != null && x.Opcode() == Xcode.SUB_ARRAY_REF){
-	  String arrayName = x.getArg(0).getSym();
-	  Ident arrayId = null;
+          Boolean isStructure = (x.getArg(0).Opcode() == Xcode.MEMBER_ARRAY_REF);
+	  String arrayName    = XMPutil.getArrayName(x);
+	  Ident arrayId       = null;
 
-	  if (block.getBody() != null) arrayId = block.getBody().findLocalIdent(arrayName);
-	  if (arrayId == null) arrayId = block.findVarIdent(arrayName);
-	  if (arrayId == null) arrayId = _globalDecl.findVarIdent(arrayName);
+	  if(! isStructure){
+	    if (block.getBody() != null) arrayId = block.getBody().findLocalIdent(arrayName);
+	    if (arrayId == null) arrayId = block.findVarIdent(arrayName);
+	    if (arrayId == null) arrayId = _globalDecl.findVarIdent(arrayName);
+	  }
+	  else{
+	    XMPalignedArray alignedArray = _globalDecl.getXMPalignedArray(arrayName);
+	    arrayId = alignedArray.getArrayId();
+	  }
 	  if (arrayId == null) continue;
 
 	  Xtype arrayType = arrayId.Type();

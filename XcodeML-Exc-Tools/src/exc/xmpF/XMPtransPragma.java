@@ -4,7 +4,6 @@ import exc.object.*;
 import exc.util.MachineDep;
 import exc.block.*;
 import xcodeml.util.XmOption;
-
 import java.io.File;
 import java.util.*;
 
@@ -14,7 +13,6 @@ import java.util.*;
 public class XMPtransPragma
 {
   private XMPenv  env;
-    
   public XMPtransPragma() { }
 
   // pass3: do transformation for XMP pragma
@@ -793,50 +791,6 @@ public class XMPtransPragma
 
     Ident f = env.declInternIdent(isAcc? XMP.bcast_acc_f : XMP.bcast_f, Xtype.FsubroutineType);
 
-    // for(Ident id: info.getInfoVarIdents()){
-    //   Xtype type = id.Type();
-    //   Xobject size_expr = Xcons.IntConstant(1);
-
-    //   if (type.isFarray()){
-    // 	if (type.isFassumedSize()){
-    // 	  XMP.fatal("assumed-size array cannot be the target of bcast.");
-    // 	}
-        
-    // 	if (!type.isFassumedShape() && !type.isFallocatable()){
-    // 	  for (Xobject s: type.getFarraySizeExpr()){
-    // 	    Xobject size;
-    // 	    if (s.Opcode() == Xcode.F_INDEX_RANGE){
-    // 	      Xobject lb = s.getArg(0);
-    // 	      Xobject ub = s.getArg(1);
-    // 	      size = Xcons.binaryOp(Xcode.MINUS_EXPR, ub, lb);
-    // 	      size = Xcons.binaryOp(Xcode.PLUS_EXPR, size, Xcons.IntConstant(1));
-    // 	    }
-    // 	    else {
-    // 	      size = s;
-    // 	    }
-
-    // 	    size_expr = Xcons.binaryOp(Xcode.MUL_EXPR, size_expr, size);
-    // 	  }
-    // 	}
-    // 	else {
-    // 	  Ident size_func = env.declIntrinsicIdent("size", Xtype.FintFunctionType);
-    // 	  size_expr = size_func.Call(Xcons.List(id.Ref()));
-    // 	}
-    // 	type = type.getRef();
-    //   }
-
-    //   if(!type.isBasic()){
-    // 	XMP.fatal("bcast for non-basic type ="+type);
-    //   }
-
-    //   if(type.getFlen() != null)
-    //     size_expr = Xcons.binaryOp(Xcode.MUL_EXPR, size_expr, type.getFlen());
-
-    //   Xobject args = Xcons.List(id.Ref(), size_expr, XMP.typeIntConstant(type), from_ref_arg, on_ref_arg);
-
-    //   ret_body.add(f.callSubroutine(args));
-    // }
-
     for (Xobject v: info.getInfoVars()){
 
       Xtype type = null;
@@ -974,13 +928,11 @@ public class XMPtransPragma
     Ident g2 = env.declInternIdent(XMP.ref_dealloc_f, Xtype.FsubroutineType, pb);
 
     if (tasksFlag){
-      //parentBlock.insert(on_ref.buildConstructor(env));
       parentBlock.insert(b);
       parentBlock.add(g1.callSubroutine(Xcons.List(taskNodesDescId)));
       parentBlock.add(g2.callSubroutine(Xcons.List(on_ref.getDescId())));
     }
     else {
-      //ret_body.add(on_ref.buildConstructor(env));
       ret_body.add(b);
     }
 
@@ -988,7 +940,6 @@ public class XMPtransPragma
     if (!info.isNocomm()){
       f = env.declInternIdent(XMP.test_task_on_f,
 			      Xtype.FlogicalFunctionType, pb);
-      //Xobject cond = f.Call(Xcons.List(on_ref.getDescId().Ref()));
       cond = f.Call(Xcons.List(taskNodesDescId.Ref()));
     }
     else {
@@ -1042,16 +993,15 @@ public class XMPtransPragma
   private final static int GMOVE_OUT = 402;
 
   private Block translateGmove(PragmaBlock pb, XMPinfo i) {
-
     Block b = Bcons.emptyBlock();
     BasicBlock bb = b.getBasicBlock();
 
-    Xobject left = i.getGmoveLeft();
+    Xobject left  = i.getGmoveLeft();
     Xobject right = i.getGmoveRight();
-    
+
     if (left == null && right == null) return pb.getBody().getHead();
 
-    Ident left_desc = buildGmoveDesc(left, bb, pb);
+    Ident left_desc  = buildGmoveDesc(left, bb, pb);
     Ident right_desc = buildGmoveDesc(right, bb, pb);
 
     if (i.getAsyncId() != null){
@@ -1061,8 +1011,6 @@ public class XMPtransPragma
     }
 
     Ident f = env.declInternIdent(XMP.gmove_do_f, Xtype.FsubroutineType);
-    // Xobject args = Xcons.List(left_desc.Ref(), right_desc.Ref(),
-    // 			      Xcons.IntConstant(GMOVE_COLL));
     Xobject args = Xcons.List(left_desc.Ref(), right_desc.Ref(), i.getGmoveOpt());
     bb.add(f.callSubroutine(args));
 
@@ -1090,35 +1038,45 @@ public class XMPtransPragma
     switch(x.Opcode()){
     case F_ARRAY_REF:
       Xobject a = x.getArg(0).getArg(0);
-      array = (XMParray)a.getProp(XMP.RWprotected);
+      if(a.Opcode() == Xcode.VAR)
+	array = (XMParray)a.getProp(XMP.RWprotected);
+      else if(a.Opcode() == Xcode.MEMBER_REF){
+	String structName = a.getArg(0).getName();
+        String memberName = a.getArg(1).getName();
+	Ident structId = env.findVarIdent(structName,pb);
+        Ident memberId = structId.Type().getMemberList().getIdent(XMP.PREFIX_ + memberName);
+	array = (XMParray)memberId.getProp(XMP.RWprotected);
+      }
       if(array != null){
 	f = env.declInternIdent(XMP.gmove_g_alloc_f, Xtype.FsubroutineType);
 	args = Xcons.List(descId.Ref(), array.getDescId().Ref());
 	bb.add(f.callSubroutine(args));
 	
-	// System.out.println("idx args="+x.getArg(1));
 	f = env.declInternIdent(XMP.gmove_g_dim_info_f, Xtype.FsubroutineType);
  	int idx = 0;
  	for(Xobject e: (XobjList) x.getArg(1)){
  	  switch(e.Opcode()){
 	  case F_ARRAY_INDEX:
-	    args = Xcons.List(descId.Ref(),Xcons.IntConstant(idx),
+	    args = Xcons.List(descId.Ref(), Xcons.IntConstant(idx),
 			      Xcons.IntConstant(GMOVE_INDEX),
 			      e.getArg(0),
-			      Xcons.IntConstant(0),Xcons.IntConstant(0));
+			      Xcons.IntConstant(0), Xcons.IntConstant(0));
 	    break;
 	  case F_INDEX_RANGE:
 	    if(e.getArg(0) == null && e.getArg(1) == null){
-	      args = Xcons.List(descId.Ref(),Xcons.IntConstant(idx),
+	      args = Xcons.List(descId.Ref(), Xcons.IntConstant(idx),
 				Xcons.IntConstant(GMOVE_ALL),
 				Xcons.IntConstant(0),
-				Xcons.IntConstant(0),Xcons.IntConstant(0));
+				Xcons.IntConstant(0), Xcons.IntConstant(0));
 	    } else {
+	      Xobject ubound = e.getArg(1);
+	      if (ubound == null) ubound = env.declInternIdent("xmp_ubound", Xtype.FintFunctionType).
+				      Call(Xcons.List(array.getDescId().Ref(), Xcons.IntConstant(idx)));
 	      Xobject stride = e.getArg(2);
-	      if(stride == null) stride = Xcons.IntConstant(1);
-	      args = Xcons.List(descId.Ref(),Xcons.IntConstant(idx),
+	      if (stride == null) stride = Xcons.IntConstant(1);
+	      args = Xcons.List(descId.Ref(), Xcons.IntConstant(idx),
 				Xcons.IntConstant(GMOVE_RANGE),
-				e.getArg(0),e.getArg(1),stride);
+				e.getArg(0), ubound, stride);
 	    }
 	    break;
 	  default:

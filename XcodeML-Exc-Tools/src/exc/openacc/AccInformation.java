@@ -189,7 +189,13 @@ class AccInformation {
 
   AccInformation(ACCpragma pragma, Xobject arg) throws ACCexception {
     _pragma = pragma;
-    if(pragma == ACCpragma.WAIT || pragma == ACCpragma.CACHE){
+    switch(pragma){
+    case WAIT:
+    case CACHE:
+    case SYNC:
+    case FLUSH:
+    case YIELD:
+	System.out.println(arg);
       addClause(makeClause(pragma, arg));
       return;
     }
@@ -220,6 +226,9 @@ class AccInformation {
     case VECTOR:
     case WAIT: //it will be int expr list
     case ASYNC: //it will be int expr list
+    case SYNC:
+    case FLUSH:
+    case YIELD:
       if(arg == null){
         return new Clause(clauseKind);
       }else {

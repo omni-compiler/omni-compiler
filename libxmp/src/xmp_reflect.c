@@ -189,7 +189,7 @@ void _XMP_reflect__(_XMP_array_t *a)
 	  reflect->is_periodic = _xmp_is_periodic[i];
 	}
 
-	if (_xmp_reflect_pack_flag){
+	if (_xmp_reflect_pack_flag && reflect->req[0] != MPI_REQUEST_NULL){
 	  _XMP_TSTART(t0);
 	  _XMP_reflect_pack_dim(a, i, _xmp_lwidth, _xmp_uwidth, _xmp_is_periodic, _XMP_COMM_REFLECT);
 	  _XMP_TEND(xmptiming_.t_copy, t0);
@@ -204,7 +204,7 @@ void _XMP_reflect__(_XMP_array_t *a)
 	  _XMP_TSTART(t0);
 	  MPI_Waitall(4, reflect->req, MPI_STATUSES_IGNORE);
 	  _XMP_TEND2(xmptiming_.t_wait, xmptiming_.tdim_wait[i], t0);
-	  if (_xmp_reflect_pack_flag){
+	  if (_xmp_reflect_pack_flag && reflect->req[0] != MPI_REQUEST_NULL){
 	    _XMP_TSTART(t0);
 	    _XMP_reflect_unpack_dim(a, i, _xmp_lwidth, _xmp_uwidth, _xmp_is_periodic);
 	    _XMP_TEND(xmptiming_.t_copy, t0);

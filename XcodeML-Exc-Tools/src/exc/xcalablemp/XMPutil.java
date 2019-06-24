@@ -278,7 +278,7 @@ public class XMPutil {
     return false;
   }
 
-  public static int getFirstIndex(XobjList list, int constant) throws XMPexception {
+  public static int getFirstIndex(XobjList list, int constant) {
     int index = 0;
     Iterator<Xobject> it = list.iterator();
     while (it.hasNext()) {
@@ -293,10 +293,11 @@ public class XMPutil {
       index++;
     }
 
-    throw new XMPexception("exception in exc.xcalablemp.XMPutil.getFirstIndex(), element does not exist");
+    XMP.fatal("exception in exc.xcalablemp.XMPutil.getFirstIndex(), element does not exist");
+    return -1;
   }
 
-  public static int getFirstIndex(XobjList list, String string) throws XMPexception {
+  public static int getFirstIndex(XobjList list, String string) {
     int index = 0;
     Iterator<Xobject> it = list.iterator();
     while (it.hasNext()) {
@@ -315,10 +316,11 @@ public class XMPutil {
       index++;
     }
 
-    throw new XMPexception("exception in exc.xcalablemp.XMPutil.getFirstIndex(), element does not exist");
+    XMP.fatal("exception in exc.xcalablemp.XMPutil.getFirstIndex(), element does not exist");
+    return -1;
   }
 
-  public static int getLastIndex(XobjList list, int constant) throws XMPexception {
+  public static int getLastIndex(XobjList list, int constant) {
     int elmtIndex = 0;
     boolean hasFound = false;
 
@@ -339,11 +341,13 @@ public class XMPutil {
     }
 
     if (hasFound) return elmtIndex;
-    else
-      throw new XMPexception("exception in exc.xcalablemp.XMPutil.getLastIndex(), element does not exist");
+    else{
+      XMP.fatal("exception in exc.xcalablemp.XMPutil.getLastIndex(), element does not exist");
+      return -1;
+    }
   }
 
-  public static int getLastIndex(XobjList list, String string) throws XMPexception {
+  public static int getLastIndex(XobjList list, String string) {
     int elmtIndex = 0;
     boolean hasFound = false;
 
@@ -364,8 +368,10 @@ public class XMPutil {
     }
 
     if (hasFound) return elmtIndex;
-    else
-      throw new XMPexception("exception in exc.xcalablemp.XMPutil.getLastIndex(), element does not exist");
+    else{
+      XMP.fatal("exception in exc.xcalablemp.XMPutil.getLastIndex(), element does not exist");
+      return -1;
+    }
   }
 
   public static Xobject foldIntConstant(Xobject expr){
@@ -462,6 +468,37 @@ public class XMPutil {
         return false;
 
     return true;
+  }
+
+  public static String getArrayName(Xobject expr) {
+    if ((expr.Opcode() == Xcode.ARRAY_REF) ||
+        (expr.Opcode() == Xcode.SUB_ARRAY_REF)) {
+      Xobject arrayAddr = expr.getArg(0);
+      Boolean isStructure = (arrayAddr.Opcode() == Xcode.MEMBER_ARRAY_REF);
+      Boolean isArray = (arrayAddr.Opcode() == Xcode.ARRAY_ADDR);
+      Boolean isPointer = (arrayAddr.Opcode() == Xcode.POINTER_REF);
+      Boolean isVar = (arrayAddr.Opcode() == Xcode.VAR);
+      if (isStructure){
+
+	if (arrayAddr.getArg(0).Opcode() != Xcode.ADDR_OF ||
+	    arrayAddr.getArg(0).getArg(0).Opcode() != Xcode.VAR) return null;
+
+	String structName = arrayAddr.getArg(0).getArg(0).getSym();
+	String arrayName  = arrayAddr.getArg(1).getSym();
+	return XMP.STRUCT + structName + "_" + arrayName;
+
+      }
+      else if (isArray || isPointer || isVar){
+        return arrayAddr.getSym();
+      }
+      else {
+	return null;
+      }
+    }
+    else {
+      XMP.fatal("cannot find array ref");
+      return null;
+    }
   }
 }
   

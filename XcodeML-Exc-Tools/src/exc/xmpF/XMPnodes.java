@@ -74,6 +74,7 @@ public class XMPnodes extends XMPobject {
       XMP.errorAt(pb,"XMP object '"+_name+"' is already declared");
       return;
     }
+    env.removeIdent(_name, pb);
 
     // declare nodes desciptor
     _descId = env.declObjectId(XMP.DESC_PREFIX_ + _name, pb);
@@ -216,7 +217,7 @@ public class XMPnodes extends XMPobject {
     if (!_is_saveDesc){
       Ident f = env.declInternIdent(XMP.nodes_dealloc_f,Xtype.FsubroutineType,block);
       Xobject args = Xcons.List(_descId.Ref());
-      body.add(f.callSubroutine(args));
+      body.insert(f.callSubroutine(args));
     }
   }
 }

@@ -116,6 +116,10 @@ public class XMPinfo
     reflectArrays = arrays;
   }
 
+  public void addReflectArray(XMParray array){
+    reflectArrays.add(array);
+  }
+  
   public void setReflectArrays(Vector<XMParray> arrays, Vector<XMPdimInfo> list){
     reflectArrays = arrays;
     widthList = list;

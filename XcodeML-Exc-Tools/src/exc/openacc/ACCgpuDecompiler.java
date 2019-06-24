@@ -15,7 +15,7 @@ class ACCgpuDecompiler {
   private static final int BUFFER_SIZE = 4096;
   private final String CUDA_SRC_EXTENSION = ".cu";
   private final String OPENCL_SRC_EXTENSION = ".cl";
-  private final String OPENACC_SRC_EXTENSION = ".c";
+  private final String PZCL_SRC_EXTENSION = ".pzc";
   public static final String GPU_FUNC_CONF = "OEPNACC_GPU_FUNC_CONF_PROP";
   public static final String GPU_FUNC_CONF_ASYNC = "OEPNACC_GPU_FUNC_CONF_ASYNC_PROP";
   public static final String GPU_FUNC_CONF_SHAREDMEMORY = "OEPNACC_GPU_FUNC_CONF_SHAREDMEMORY_PROP";
@@ -47,14 +47,14 @@ class ACCgpuDecompiler {
     try{
       String filename = ACCutil.removeExtension(env.getSourceFileName());
       switch(ACC.platform){
-        case outputACC:
-          filename += OPENACC_SRC_EXTENSION;
-          break;
         case OpenCL:
           filename += OPENCL_SRC_EXTENSION;
           break;
         case CUDA:
           filename += CUDA_SRC_EXTENSION;
+          break;
+        case PZCL:
+          filename += PZCL_SRC_EXTENSION;
           break;
         default:
           ACC.fatal("unknown platform");
@@ -74,7 +74,9 @@ class ACCgpuDecompiler {
 	    //          includeLines.add("#include \"acc.h\"");
           includeLines.add("#include \"acc_cl.h\"");
           break;
-        case outputACC:
+        case PZCL:
+	    //          includeLines.add("#include \"acc.h\"");
+          includeLines.add("#include \"acc_pezy.hpp\"");
           break;
         default:
           ACC.fatal("unknown platform");

@@ -91,7 +91,10 @@ public class XMPtranslateGlobalPragma {
     XobjList alignNameList         = (XobjList)alignDecl.getArg(0);
     XobjList alignSubscriptList    = (XobjList)alignDecl.getArg(3);
     XobjList alignSubscriptVarList = (XobjList)alignSubscriptList.left();
-  
+    Xobject  structVar             = null;
+    if(alignDecl.Nargs() == 5)
+      structVar = alignDecl.getArg(4).getArg(0);
+
     String kind_bracket = alignSubscriptList.getTail().getString();
     boolean isSquare    = kind_bracket.equals("SQUARE");
     alignSubscriptList.removeLastArgs(); // Remove information of ROUND or SQUARE
@@ -102,7 +105,7 @@ public class XMPtranslateGlobalPragma {
     while (iter.hasNext()) {
       Xobject x = iter.next();
       alignDeclCopy.setArg(0, x);
-      XMPalignedArray.translateAlign(alignDeclCopy, _globalDecl, false, null);
+      XMPalignedArray.translateAlign(alignDeclCopy, _globalDecl, false, null, structVar);
     }
   }
 
@@ -111,15 +114,18 @@ public class XMPtranslateGlobalPragma {
   }
 
   private void translateShadow(Xobject shadowPragma) throws XMPexception {
-    XobjList shadowDecl = (XobjList)shadowPragma.getArg(1);
+    XobjList shadowDecl     = (XobjList)shadowPragma.getArg(1);
     XobjList shadowNameList = (XobjList)shadowDecl.getArg(0);
     XobjList shadowDeclCopy = (XobjList)shadowDecl.copy();
-
+    Xobject  structVar      = null;
+    if(shadowDecl.Nargs() == 3)
+      structVar = shadowDecl.getArg(2).getArg(0);
+    
     Iterator<Xobject> iter = shadowNameList.iterator();
     while (iter.hasNext()) {
       Xobject x = iter.next();
       shadowDeclCopy.setArg(0, x);
-      XMPshadow.translateShadow(shadowDeclCopy, _globalDecl, false, null);
+      XMPshadow.translateShadow(shadowDeclCopy, _globalDecl, false, null, structVar);
     }
   }
 

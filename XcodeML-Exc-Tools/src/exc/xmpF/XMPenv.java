@@ -399,18 +399,6 @@ out:{
     table.putXMParray(array);
   }
 
-  /*
-   * put/get XMPcorray (not yet ...)
-   */
-//   public void putXMPcoarray(XMPcoarray array) {
-//     _globalObjectTable.putXMPcoarray(array);
-//   }
-
-//   public XMPcoarray getXMPcoarray(String name) {
-//     return _globalObjectTable.getXMPcoarray(name);
-//   }
-
-
   public Ident declOrGetSizeArray(Block b){
 
     Ident sizeArray = findVarIdent(XMP.SIZE_ARRAY_NAME, b);

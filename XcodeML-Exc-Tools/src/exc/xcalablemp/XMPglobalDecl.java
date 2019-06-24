@@ -150,6 +150,10 @@ public class XMPglobalDecl {
   public Ident findVarIdent(String name) {
     return _env.findVarIdent(name);
   }
+  
+  public Ident findIdent(String name) {
+    return _env.findIdent(name);
+  }
 
   public Block createFuncCallBlock(String funcName, XobjList funcArgs) {
     Ident funcId = declExternFunc(funcName);
@@ -266,6 +270,9 @@ public class XMPglobalDecl {
     // global
     a = getXMPalignedArray(name);
     if (a != null && a.getArrayId() == id) return a;
+
+    // fix me for structure member
+    if (a != null && a.isStructure()) return getXMPalignedArray(name);
 
     return null;
   }

@@ -94,6 +94,9 @@ extern "C" {
   /* returns the OpenCL context handle in use for the current device */
   void* acc_get_current_opencl_context();
 
+  /* returns the OpenCL command queue handle in use for the current device for the specified async value */
+  void* acc_get_opencl_queue();
+
 #ifdef __cplusplus
 }
 #endif

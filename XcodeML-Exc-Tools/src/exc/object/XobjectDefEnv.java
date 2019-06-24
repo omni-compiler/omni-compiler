@@ -102,7 +102,12 @@ public class XobjectDefEnv extends PropObject
     {
         return findIdent(name, kind);
     }
-    
+
+    public Ident findIdent(String name)
+    {
+        return findIdent(name, IXobject.FINDKIND_ANY);
+    }
+  
     public Ident findVarIdent(String name)
     {
         return findIdent(name, IXobject.FINDKIND_VAR);

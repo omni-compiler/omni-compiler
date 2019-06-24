@@ -504,6 +504,9 @@ public class XMPgpuDecompileWriter extends PrintWriter {
       }
       break;
 
+    case LINEMARKER:
+      break;
+
     default:
       /* fatal("print: unknown decopmile = "+v); */
       printUserCode(v);

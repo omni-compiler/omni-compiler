@@ -86,6 +86,9 @@ class ACCgpuDecompileWriter extends PrintWriter {
           }
 
           String funcName = id.getName();
+          if(ACC.platform == ACC.Platform.PZCL){
+            funcName = "pzc_" + funcName;
+          }
           if (id.Type().isFuncProto() && id.Type().getFuncParam() != null) {
             XobjArgs a = id.Type().getFuncParam().getArgs();
             XobjArgs n = v.getArg(1).getArgs();
@@ -118,7 +121,7 @@ class ACCgpuDecompileWriter extends PrintWriter {
                 case OpenCL:
                   println("__kernel");
                   break;
-                case outputACC:
+                case PZCL:
                   break;
               }
             } else {
@@ -617,6 +620,9 @@ class ACCgpuDecompileWriter extends PrintWriter {
       print("})");
       break;
 
+    case LINEMARKER:
+      break;
+
     default:
       /* fatal("print: unknown decopmile = "+v); */
       printUserCode(v);
@@ -965,7 +971,7 @@ class ACCgpuDecompileWriter extends PrintWriter {
         case OpenCL:
           print("__local ");
           break;
-        case outputACC:
+        case PZCL:
           break;
       }
     }
