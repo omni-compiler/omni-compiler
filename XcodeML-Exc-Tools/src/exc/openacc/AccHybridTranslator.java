@@ -15,31 +15,22 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 
     @Override
     public void doDef(XobjectDef def) {
-        if (def.isFuncDef()) {
-            FuncDefBlock fd = new FuncDefBlock(def);
-            FunctionBlock fb = fd.getBlock();
-            doFuncDef(fb);
-            fd.finalizeBlock();
-        } else {
-            Xobject x = def.getDef();
-            doNonFuncDef(x);
-        }
+        // if (def.isFuncDef()) {
+        //     FuncDefBlock fd = new FuncDefBlock(def);
+        //     FunctionBlock fb = fd.getBlock();
+        //     doFuncDef(fb);
+        //     fd.finalizeBlock();
+        // } else {
+        //     Xobject x = def.getDef();
+        //     doNonFuncDef(x);
+        // }
     }
 
     public void finish() {
         // ヘッダーを出力する？
 
-        if (!_onlyAnalyze) {
-            ACCgpuDecompiler gpuDecompiler = new ACCgpuDecompiler();
-            gpuDecompiler.decompile(_globalDecl);
+        // ACCgpuDecompiler gpuDecompiler = new ACCgpuDecompiler();
+        // gpuDecompiler.decompile(_globalDecl);
 
-            _globalDecl.setupKernelsInitAndFinalize();
-            _globalDecl.setupGlobalConstructor();
-            _globalDecl.setupGlobalDestructor();
-            _globalDecl.setupMain();
-            _globalDecl.setupHeaderInclude();
-        }
-
-        _globalDecl.finish();
     }
 }
