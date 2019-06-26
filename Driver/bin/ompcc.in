@@ -135,7 +135,6 @@ if [ "$ENABLE_ACC" = true ]; then
     [ "$DEFAULT_VECLEN" != "" ] && OMNI_CX2X_OPT="$OMNI_CX2X_OPT -default-veclen=${DEFAULT_VECLEN}"
     OMNI_CX2X_OPT="$OMNI_CX2X_OPT -platform=$OPENACC_PLATFORM"
     OMNI_CX2X_OPT="$OMNI_CX2X_OPT -device=$OPENACC_DEVICE"
-    fi
 else
     [ "$ENABLE_TARGET" = false ] && OMNI_CX2X_OPT="$OMNI_CX2X_OPT -fopenmp"
 fi
