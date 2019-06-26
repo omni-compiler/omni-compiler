@@ -7,6 +7,8 @@ import exc.object.XobjectFile;
 import exc.openacc.ACC;
 import exc.openacc.AccDevice;
 import exc.openacc.AccTranslator;
+import exc.openacc.AccHybridTranslator;
+import exc.openacc.ACC.Platform;
 import exc.openmp.OMP;
 import exc.openmp.OMPtranslate;
 import exc.xcalablemp.XMP;
@@ -467,12 +469,17 @@ public class omompx
         ACC.device.setUseReadOnlyDataCache(false);
       }
 
-      //XmOption.setDebugOutput(true);
-      AccTranslator accTranslator = new AccTranslator(xobjFile, false);
-      xobjFile.iterateDef(accTranslator);
+      if(ACC.platform == Platform.Hybrid) {
+        AccHybridTranslator accHybridTranslator = new AccHybridTranslator(xobjFile);
+      }
+      else {
+        //XmOption.setDebugOutput(true);
+        AccTranslator accTranslator = new AccTranslator(xobjFile, false);
+        xobjFile.iterateDef(accTranslator);
 
-      accTranslator.finish();
-      
+        accTranslator.finish();
+      }
+        
       if(xcodeWriter != null) {
         xobjFile.Output(xcodeWriter);
         xcodeWriter.flush();
@@ -494,7 +501,7 @@ public class omompx
     Document xcodeDoc = xc2xcodeTranslator.write(xobjFile);
 
     // transformation from DOM to the file. It means to output DOM to the file.
-    // if(silent == false){
+    if(silent == false){
       try {
         Transformer transformer = TransformerFactory.newInstance().newTransformer();
         transformer.setOutputProperty(OutputKeys.METHOD, "xml");
@@ -514,7 +521,7 @@ public class omompx
       } catch(TransformerException e) {
         throw new XmException(e);
       }
-    // }
+    }
     
     // Decompile
     XmDecompilerContext context = null;
