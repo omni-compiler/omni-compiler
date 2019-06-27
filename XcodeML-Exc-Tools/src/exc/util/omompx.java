@@ -458,6 +458,8 @@ public class omompx
           case PZCL:
             ACC.device = AccDevice.PEZYSC;
             break;
+          case Hybrid:
+            break;
         }
       }
 
