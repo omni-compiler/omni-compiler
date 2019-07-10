@@ -473,6 +473,7 @@ public class omompx
 
       if(ACC.platform == Platform.Hybrid) {
         AccHybridTranslator accHybridTranslator = new AccHybridTranslator(xobjFile);
+        // xobjFile.iterateDef(accHybridTranslator);
       }
       else {
         //XmOption.setDebugOutput(true);
