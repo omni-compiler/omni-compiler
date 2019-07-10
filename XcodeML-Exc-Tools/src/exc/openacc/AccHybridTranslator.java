@@ -30,7 +30,7 @@ public class AccHybridTranslator implements XobjectDefVisitor {
         } else {
             Xobject x = def.getDef();
             doNonFuncDef(x);
-　    　 }
+        }
     }
 
     private void doFuncDef(FunctionBlock fb){
