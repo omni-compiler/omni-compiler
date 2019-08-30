@@ -1,4 +1,4 @@
-/* -*- Mode: Java; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
+/* -*- Mode: java; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 package exc.openmp;
 
 import java.util.ArrayList;
