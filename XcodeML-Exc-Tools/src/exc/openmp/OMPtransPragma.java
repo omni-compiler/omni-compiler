@@ -371,7 +371,7 @@ public class OMPtransPragma
         return null;
         
       default:
-        OMP.fatal("unknown pragma");
+        OMP.fatal("unknown pragma: " + i.pragma);
         //             ignore it
         return null;
       }
