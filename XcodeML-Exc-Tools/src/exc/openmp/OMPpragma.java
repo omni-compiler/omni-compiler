@@ -32,9 +32,11 @@ public enum OMPpragma
     THREADPRIVATE,      /* threadprivate <namelist> */
     PARALLEL_FOR,       /* parallel <clause_list> */
     PARALLEL_SECTIONS,  /* parallel <clause_list> */
+    TARGET,
     TARGET_ENTER_DATA,
     FUNCTION_BODY,
-    
+    TASKWAIT,
+
     /*
      * clause
      */
@@ -49,6 +51,7 @@ public enum OMPpragma
     _DATA_PRIVATE_SHARED, /* using internally */
     TARGET_DATA_MAP,
     DIR_NUM_THREADS,
+    DEPEND,
 
     /* DATA_REDUCTION_* values are synchronized with
        OMPC_REDUCTION_* values in ompc_reduction.h */
