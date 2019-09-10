@@ -476,7 +476,7 @@ public class omompx
         xobjFile.iterateDef(accHybridTranslator);
       }
       else {
-        //XmOption.setDebugOutput(true);
+        XmOption.setDebugOutput(true);
         AccTranslator accTranslator = new AccTranslator(xobjFile, false);
         xobjFile.iterateDef(accTranslator);
 
