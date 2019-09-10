@@ -7,41 +7,43 @@ import xcodeml.util.XmOption;
 import exc.block.*;
 
 public class AccHybridTranslator implements XobjectDefVisitor {
-    private final ACCglobalDecl _globalDecl;
-    private final AccRewriter _rewrite;
+    // private final ACCglobalDecl _globalDecl;
+    // private final AccRewriter _rewrite;
     
     public AccHybridTranslator(XobjectFile xobjFile) {
         if (!XmOption.isLanguageC()) {
             ACC.fatal("current version only supports C language.");
         }
 
-        _globalDecl = new ACCglobalDecl(xobjFile);
-        _rewrite = new AccRewriter(_globalDecl);
+        // _globalDecl = new ACCglobalDecl(xobjFile);
+        // _rewrite = new AccRewriter(_globalDecl);
     }
 
     // AccTranslator から
     @Override
     public void doDef(XobjectDef def) {
-        if (def.isFuncDef()) {
-            FuncDefBlock fd = new FuncDefBlock(def);
-            FunctionBlock fb = fd.getBlock();
-            doFuncDef(fb);
-            fd.finalizeBlock();
-        } else {
-            Xobject x = def.getDef();
-            doNonFuncDef(x);
-        }
+
+        System.out.println("Func name is " + def.getName());
+    //     if (def.isFuncDef()) {
+    //         FuncDefBlock fd = new FuncDefBlock(def);
+    //         FunctionBlock fb = fd.getBlock();
+    //         doFuncDef(fb);
+    //         fd.finalizeBlock();
+    //     } else {
+    //         Xobject x = def.getDef();
+    //         doNonFuncDef(x);
+    //     }
     }
 
-    private void doFuncDef(FunctionBlock fb){
-        _rewrite.doFuncDef(fb);
-        ACC.exitByError();
-    }
+    // private void doFuncDef(FunctionBlock fb){
+    //     _rewrite.doFuncDef(fb);
+    //     ACC.exitByError();
+    // }
     
-    private void doNonFuncDef(Xobject x){
-        _rewrite.doNonFuncDef(x);
-        ACC.exitByError();
-    }
+    // private void doNonFuncDef(Xobject x){
+    //     _rewrite.doNonFuncDef(x);
+    //     ACC.exitByError();
+    // }
       
     // AccProcessor から
     // private void doFuncDef(FunctionBlock fb) {
