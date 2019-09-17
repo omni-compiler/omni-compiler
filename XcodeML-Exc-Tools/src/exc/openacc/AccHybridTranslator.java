@@ -29,8 +29,8 @@ public class AccHybridTranslator implements XobjectDefVisitor {
         XobjectIterator i = new topdownXobjectIterator(def.getFuncBody());
         for(i.init(); !i.end(); i.next()){
             Xobject x = i.getXobject();
-            if(x.isVariable() || x.isVarAddr())
-                System.out.println("Variable '"+x.getName()+"' is referenced from Function '"+fname+"'");
+            if(x != null && (x.isVariable() || x.isVarAddr()))
+                System.out.println("Variable '" + x.getName() + "' is referenced from Function '" + fname + "'");
         }
 
     //     if (def.isFuncDef()) {
