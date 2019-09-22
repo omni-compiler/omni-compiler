@@ -43,7 +43,8 @@ public class AccHybridTranslator implements XobjectDefVisitor {
             fb = j.getBlock();
             // System.out.println("block: " + fb.
 
-            BasicBlock bb = fb.getBasicBlock();
+			BasicBlock bb = fb.getBasicBlock();
+			if(bb == null) continue;
             for(Statement s = bb.getHead(); s != null; s = s.getNext()){
 				Xobject x = s.getExpr();
 				System.out.println("statement: " + x.getName());
