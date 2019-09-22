@@ -27,11 +27,27 @@ public class AccHybridTranslator implements XobjectDefVisitor {
         System.out.println("Func name is " + fname);
 
         XobjectIterator i = new topdownXobjectIterator(def.getFuncBody());
-        for(i.init(); !i.end(); i.next()){
+        for(i.init(); !i.end(); i.next()) {
             Xobject x = i.getXobject();
             if(x != null && (x.isVariable() || x.isVarAddr()))
                 System.out.println("Variable '" + x.getName() + "' is referenced from Function '" + fname + "'");
         }
+
+        Block fb = Bcons.buildFunctionBlock(def);
+        BlockIterator j = new topdownBlockIterator(fb);
+        for(j.init(); !j.end(); j.next()){
+            fb = j.getBlock();
+            // System.out.println("block: " + fb.
+
+            BasicBlock bb = fb.getBasicBlock();
+            for(Statement s = bb.getHead(); s != null; s = s.getNext()){
+				Xobject x = s.getExpr();
+				System.out.println("statement: " + x.getName());
+				
+                // 式xに対する操作 ...
+            }
+        }
+
 
     //     if (def.isFuncDef()) {
     //         FuncDefBlock fd = new FuncDefBlock(def);
