@@ -33,6 +33,10 @@ public class AccHybridTranslator implements XobjectDefVisitor {
                 System.out.println("Variable '" + x.getName() + "' is referenced from Function '" + fname + "'");
         }
 
+		if(!def.isFuncDef()) {
+            return;
+		}
+		
         Block fb = Bcons.buildFunctionBlock(def);
         BlockIterator j = new topdownBlockIterator(fb);
         for(j.init(); !j.end(); j.next()){
