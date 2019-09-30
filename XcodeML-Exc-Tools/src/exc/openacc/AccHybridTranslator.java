@@ -78,7 +78,7 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 						BlockList newBody = Bcons.emptyBody(body.getIdentList().copy(), body.getDecls().copy());
 						body.setIdentList(null);
 						body.setDecls(null);
-						newBody.add(Bcons.PRAGMA(Xcode.ACC_PRAGMA, pragmaBlock.getPragma(), pragmaBlock.getClauses(), body));
+						// newBody.add(Bcons.PRAGMA(Xcode.ACC_PRAGMA, pragmaBlock.getPragma(), pragmaBlock.getClauses(), body));
 						pragmaBlock.replace(Bcons.COMPOUND(newBody));
 					}
 				}
