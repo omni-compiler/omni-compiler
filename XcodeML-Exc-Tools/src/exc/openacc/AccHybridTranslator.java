@@ -53,7 +53,10 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 		// }
 		// }
 
-		// XMPrewriteExpr より
+		if(fname == "main")
+			fb.remove();
+
+		// XMPrewriteExpr より		
 		topdownBlockIterator bIter = new topdownBlockIterator(fb);
 
 		for (bIter.init(); !bIter.end(); bIter.next()) {
