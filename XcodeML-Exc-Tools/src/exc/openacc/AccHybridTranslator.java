@@ -37,7 +37,7 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 			return;
 		}
 
-		Block fb = Bcons.buildFunctionBlock(def);
+		// Block fb = Bcons.buildFunctionBlock(def);
 		// BlockIterator j = new topdownBlockIterator(fb);
 		// for(j.init(); !j.end(); j.next()){
 		// fb = j.getBlock();
@@ -53,21 +53,20 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 		// }
 		// }
 
-		// XMPrewriteExpr より		
+		FuncDefBlock fd = new FuncDefBlock(def);
+		FunctionBlock fb = fd.getBlock();
+		String funcName = fb.getName();
+		if (funcName == "main") {
+			fb.remove();
+			return;
+		}
+
+		// XMPrewriteExpr より
 		topdownBlockIterator bIter = new topdownBlockIterator(fb);
 
 		for (bIter.init(); !bIter.end(); bIter.next()) {
 			Block block = bIter.getBlock();
 
-			// FuncDefBlock fd = new FuncDefBlock(def);
-			// String funcName = fd.getBlock().getName();
-			// if(funcName == "main") {
-			if(fname == "main") {
-				// FunctionBlock fblock = fd.getBlock();
-				// fblock.remove();
-				block.remove();
-			}
-				
 			if (block.Opcode() == Xcode.ACC_PRAGMA) {
 				PragmaBlock pragmaBlock = ((PragmaBlock) block);
 				Xobject clauses = pragmaBlock.getClauses();
@@ -77,8 +76,8 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 					// BlockList newBody = Bcons.emptyBody();
 					// rewriteACCClauses(clauses, pragmaBlock, fb, localXMPsymbolTable, newBody);
 					// if (!newBody.isEmpty()) {
-					// 	bIter.setBlock(Bcons.COMPOUND(newBody));
-					// 	newBody.add(block);
+					// bIter.setBlock(Bcons.COMPOUND(newBody));
+					// newBody.add(block);
 					// }
 				}
 
@@ -89,7 +88,8 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 						BlockList newBody = Bcons.emptyBody(body.getIdentList().copy(), body.getDecls().copy());
 						body.setIdentList(null);
 						body.setDecls(null);
-						// newBody.add(Bcons.PRAGMA(Xcode.ACC_PRAGMA, pragmaBlock.getPragma(), pragmaBlock.getClauses(), body));
+						// newBody.add(Bcons.PRAGMA(Xcode.ACC_PRAGMA, pragmaBlock.getPragma(),
+						// pragmaBlock.getClauses(), body));
 						pragmaBlock.replace(Bcons.COMPOUND(newBody));
 					}
 				}
