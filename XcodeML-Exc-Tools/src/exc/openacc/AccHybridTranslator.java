@@ -61,7 +61,7 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 			if (block.Opcode() == Xcode.ACC_PRAGMA) {
 				PragmaBlock pragmaBlock = ((PragmaBlock) block);
 				Xobject clauses = pragmaBlock.getClauses();
-				if (clauses != null) {
+				if (clauses == null) {
 					// エラーにしたい
 
 					// BlockList newBody = Bcons.emptyBody();
@@ -73,6 +73,7 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 				}
 
 				if (pragmaBlock.getPragma().equals("DATA")) {
+					System.out.println("DATA ディレクティブ！！！");
 					BlockList body = pragmaBlock.getBody();
 					if (body.getDecls() != null) {
 						BlockList newBody = Bcons.emptyBody(body.getIdentList().copy(), body.getDecls().copy());
