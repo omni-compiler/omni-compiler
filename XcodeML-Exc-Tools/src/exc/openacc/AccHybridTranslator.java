@@ -53,8 +53,12 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 		// }
 		// }
 
-		if(fname == "main")
-			fb.remove();
+		FuncDefBlock fd = new FuncDefBlock(def);
+		String funcName = fd.getBlock().getName();
+		if(funcName == "main") {
+			FunctionBlock fblock = fd.getBlock();
+			fblock.remove();
+		}
 
 		// XMPrewriteExpr より		
 		topdownBlockIterator bIter = new topdownBlockIterator(fb);
