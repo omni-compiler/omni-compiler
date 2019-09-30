@@ -53,19 +53,21 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 		// }
 		// }
 
-		FuncDefBlock fd = new FuncDefBlock(def);
-		String funcName = fd.getBlock().getName();
-		if(funcName == "main") {
-			fd.removeDeclInit();
-			// FunctionBlock fblock = fd.getBlock();
-			// fblock.remove();
-		}
-
 		// XMPrewriteExpr より		
 		topdownBlockIterator bIter = new topdownBlockIterator(fb);
 
 		for (bIter.init(); !bIter.end(); bIter.next()) {
 			Block block = bIter.getBlock();
+
+			// FuncDefBlock fd = new FuncDefBlock(def);
+			// String funcName = fd.getBlock().getName();
+			// if(funcName == "main") {
+			if(fname == "main") {
+				// FunctionBlock fblock = fd.getBlock();
+				// fblock.remove();
+				block.remove();
+			}
+				
 			if (block.Opcode() == Xcode.ACC_PRAGMA) {
 				PragmaBlock pragmaBlock = ((PragmaBlock) block);
 				Xobject clauses = pragmaBlock.getClauses();
