@@ -72,7 +72,7 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 					// }
 				}
 
-				if (pragmaBlock.getPragma().equals("LOOP")) {
+				if (pragmaBlock.getPragma().equals("DATA")) {
 					BlockList body = pragmaBlock.getBody();
 					if (body.getDecls() != null) {
 						BlockList newBody = Bcons.emptyBody(body.getIdentList().copy(), body.getDecls().copy());
