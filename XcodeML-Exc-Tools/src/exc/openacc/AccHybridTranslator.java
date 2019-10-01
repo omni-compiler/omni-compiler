@@ -64,7 +64,7 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 			Block block = bIter.getBlock();
 
 			if (funcName == "main") {
-				block.remove();
+				// block.remove();
 				continue;
 			}
 	
