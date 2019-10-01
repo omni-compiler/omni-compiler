@@ -33,10 +33,6 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 				System.out.println("Variable '" + x.getName() + "' is referenced from Function '" + fname + "'");
 		}
 
-		if (!def.isFuncDef()) {
-			return;
-		}
-
 		// Block fb = Bcons.buildFunctionBlock(def);
 		// BlockIterator j = new topdownBlockIterator(fb);
 		// for(j.init(); !j.end(); j.next()){
@@ -52,6 +48,10 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 		// // 式xに対する操作 ...
 		// }
 		// }
+
+		if (!def.isFuncDef()) {
+			return;
+		}
 
 		FuncDefBlock fd = new FuncDefBlock(def);
 		FunctionBlock fb = fd.getBlock();
@@ -93,7 +93,7 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 				}
 
 				if (pragmaBlock.getPragma().equals("DATA")) {
-					// XMPrewriteExprの rewriteACCClauses() より…
+					// XMPrewriteExprの rewriteACCClauses() を参考に記述
 					bottomupXobjectIterator iter = new bottomupXobjectIterator(clauses);
 
 					for (iter.init(); !iter.end(); iter.next()) {
@@ -121,7 +121,11 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 								// // pragmaBlock.getClauses(), body));
 								// pragmaBlock.replace(Bcons.COMPOUND(newBody));
 								// }
-								pragmaBlock.remove();
+
+								// Block pareblock = pragmaBlock.getParentBlock();
+								// pareblock.remove();
+
+								def.setDef(null);
 							}
 						}
 					}
@@ -130,7 +134,7 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 		}
 
 		// ブロックからXobjectに戻す！！
-		def.setDef(fb.toXobject());
+		// def.setDef(fb.toXobject());
 
 		// if (def.isFuncDef()) {
 		// FuncDefBlock fd = new FuncDefBlock(def);
@@ -142,7 +146,7 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 		// doNonFuncDef(x);
 		// }
 	}
-	
+
 
 	// private void doFuncDef(FunctionBlock fb){
 	// _rewrite.doFuncDef(fb);
