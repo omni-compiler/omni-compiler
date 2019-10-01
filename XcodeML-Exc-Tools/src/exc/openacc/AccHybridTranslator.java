@@ -60,12 +60,13 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 		if (funcName == "main") {
 			// BlockList body = block.getBody();
 			// if (body.getDecls() != null) {
-			// 	BlockList newBody = Bcons.emptyBody(body.getIdentList().copy(), body.getDecls().copy());
-			// 	body.setIdentList(null);
-			// 	body.setDecls(null);
-			// 	// newBody.add(Bcons.PRAGMA(Xcode.ACC_PRAGMA, pragmaBlock.getPragma(),
-			// 	// pragmaBlock.getClauses(), body));
-			// 	block.replace(Bcons.COMPOUND(newBody));
+			// BlockList newBody = Bcons.emptyBody(body.getIdentList().copy(),
+			// body.getDecls().copy());
+			// body.setIdentList(null);
+			// body.setDecls(null);
+			// // newBody.add(Bcons.PRAGMA(Xcode.ACC_PRAGMA, pragmaBlock.getPragma(),
+			// // pragmaBlock.getClauses(), body));
+			// block.replace(Bcons.COMPOUND(newBody));
 			// }
 			def.setDef(null);
 			return;
@@ -92,18 +93,38 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 				}
 
 				if (pragmaBlock.getPragma().equals("DATA")) {
-					// if (pragmaBlock.getClauses().equals("COPYIN")) {
-					System.out.println("DATA ディレクティブ！！！");
-					BlockList body = pragmaBlock.getBody();
-					// if (body.getDecls() != null) {
-					// 	BlockList newBody = Bcons.emptyBody(body.getIdentList().copy(), body.getDecls().copy());
-					// 	body.setIdentList(null);
-					// 	body.setDecls(null);
-					// 	// newBody.add(Bcons.PRAGMA(Xcode.ACC_PRAGMA, pragmaBlock.getPragma(),
-					// 	// pragmaBlock.getClauses(), body));
-					// 	pragmaBlock.replace(Bcons.COMPOUND(newBody));
-					// }
-					pragmaBlock.remove();
+					// XMPrewriteExprの rewriteACCClauses() より…
+					bottomupXobjectIterator iter = new bottomupXobjectIterator(clauses);
+
+					for (iter.init(); !iter.end(); iter.next()) {
+						Xobject x = iter.getXobject();
+						if (x == null)
+							continue;
+
+						if (x.Opcode() == Xcode.LIST) {
+							if (x.left() == null || x.left().Opcode() != Xcode.STRING)
+								continue;
+
+							String clauseName = x.left().getString();
+							ACCpragma accClause = ACCpragma.valueOf(clauseName);
+							if (accClause == ACCpragma.COPYIN) {
+							// if(!accClause.isDataClause()) continue;
+
+								System.out.println("DATA ディレクティブ！！！");
+								BlockList body = pragmaBlock.getBody();
+								// if (body.getDecls() != null) {
+								// BlockList newBody = Bcons.emptyBody(body.getIdentList().copy(),
+								// body.getDecls().copy());
+								// body.setIdentList(null);
+								// body.setDecls(null);
+								// // newBody.add(Bcons.PRAGMA(Xcode.ACC_PRAGMA, pragmaBlock.getPragma(),
+								// // pragmaBlock.getClauses(), body));
+								// pragmaBlock.replace(Bcons.COMPOUND(newBody));
+								// }
+								pragmaBlock.remove();
+							}
+						}
+					}
 				}
 			}
 		}
@@ -121,6 +142,7 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 		// doNonFuncDef(x);
 		// }
 	}
+	
 
 	// private void doFuncDef(FunctionBlock fb){
 	// _rewrite.doFuncDef(fb);
