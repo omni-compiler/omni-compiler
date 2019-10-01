@@ -95,14 +95,15 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 					// if (pragmaBlock.getClauses().equals("COPYIN")) {
 					System.out.println("DATA ディレクティブ！！！");
 					BlockList body = pragmaBlock.getBody();
-					if (body.getDecls() != null) {
-						BlockList newBody = Bcons.emptyBody(body.getIdentList().copy(), body.getDecls().copy());
-						body.setIdentList(null);
-						body.setDecls(null);
-						// newBody.add(Bcons.PRAGMA(Xcode.ACC_PRAGMA, pragmaBlock.getPragma(),
-						// pragmaBlock.getClauses(), body));
-						pragmaBlock.replace(Bcons.COMPOUND(newBody));
-					}
+					// if (body.getDecls() != null) {
+					// 	BlockList newBody = Bcons.emptyBody(body.getIdentList().copy(), body.getDecls().copy());
+					// 	body.setIdentList(null);
+					// 	body.setDecls(null);
+					// 	// newBody.add(Bcons.PRAGMA(Xcode.ACC_PRAGMA, pragmaBlock.getPragma(),
+					// 	// pragmaBlock.getClauses(), body));
+					// 	pragmaBlock.replace(Bcons.COMPOUND(newBody));
+					// }
+					pragmaBlock.remove();
 				}
 			}
 		}
