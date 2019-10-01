@@ -56,10 +56,6 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 		FuncDefBlock fd = new FuncDefBlock(def);
 		FunctionBlock fb = fd.getBlock();
 		String funcName = fb.getName();
-		if (funcName == "main") {
-			fb.remove();
-			return;
-		}
 
 		// XMPrewriteExpr より
 		topdownBlockIterator bIter = new topdownBlockIterator(fb);
@@ -67,6 +63,11 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 		for (bIter.init(); !bIter.end(); bIter.next()) {
 			Block block = bIter.getBlock();
 
+			if (funcName == "main") {
+				block.remove();
+				continue;
+			}
+	
 			if (block.Opcode() == Xcode.ACC_PRAGMA) {
 				PragmaBlock pragmaBlock = ((PragmaBlock) block);
 				Xobject clauses = pragmaBlock.getClauses();
@@ -95,6 +96,9 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 				}
 			}
 		}
+
+		// ブロックからXobjectに戻す！！
+		def.setDef(fb.toXobject());
 
 		// if (def.isFuncDef()) {
 		// FuncDefBlock fd = new FuncDefBlock(def);
