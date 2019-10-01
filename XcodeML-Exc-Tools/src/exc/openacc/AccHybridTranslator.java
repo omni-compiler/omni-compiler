@@ -57,25 +57,26 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 		FunctionBlock fb = fd.getBlock();
 		String funcName = fb.getName();
 
+		if (funcName == "main") {
+			// BlockList body = block.getBody();
+			// if (body.getDecls() != null) {
+			// 	BlockList newBody = Bcons.emptyBody(body.getIdentList().copy(), body.getDecls().copy());
+			// 	body.setIdentList(null);
+			// 	body.setDecls(null);
+			// 	// newBody.add(Bcons.PRAGMA(Xcode.ACC_PRAGMA, pragmaBlock.getPragma(),
+			// 	// pragmaBlock.getClauses(), body));
+			// 	block.replace(Bcons.COMPOUND(newBody));
+			// }
+			def.setDef(null);
+			return;
+		}
+
 		// XMPrewriteExpr より
 		topdownBlockIterator bIter = new topdownBlockIterator(fb);
 
 		for (bIter.init(); !bIter.end(); bIter.next()) {
 			Block block = bIter.getBlock();
 
-			if (funcName == "main") {
-				BlockList body = block.getBody();
-				if (body.getDecls() != null) {
-					BlockList newBody = Bcons.emptyBody(body.getIdentList().copy(), body.getDecls().copy());
-					body.setIdentList(null);
-					body.setDecls(null);
-					// newBody.add(Bcons.PRAGMA(Xcode.ACC_PRAGMA, pragmaBlock.getPragma(),
-					// pragmaBlock.getClauses(), body));
-					block.replace(Bcons.COMPOUND(newBody));
-				}
-				continue;
-			}
-	
 			if (block.Opcode() == Xcode.ACC_PRAGMA) {
 				PragmaBlock pragmaBlock = ((PragmaBlock) block);
 				Xobject clauses = pragmaBlock.getClauses();
@@ -90,8 +91,8 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 					// }
 				}
 
-				// if (pragmaBlock.getPragma().equals("DATA")) {
-				if (pragmaBlock.getClauses().equals("COPYIN")) {
+				if (pragmaBlock.getPragma().equals("DATA")) {
+					// if (pragmaBlock.getClauses().equals("COPYIN")) {
 					System.out.println("DATA ディレクティブ！！！");
 					BlockList body = pragmaBlock.getBody();
 					if (body.getDecls() != null) {
