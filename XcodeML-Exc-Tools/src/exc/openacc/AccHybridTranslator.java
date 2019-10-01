@@ -82,7 +82,8 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 					// }
 				}
 
-				if (pragmaBlock.getPragma().equals("DATA")) {
+				// if (pragmaBlock.getPragma().equals("DATA")) {
+				if (pragmaBlock.getClauses().equals("COPYIN")) {				
 					System.out.println("DATA ディレクティブ！！！");
 					BlockList body = pragmaBlock.getBody();
 					if (body.getDecls() != null) {
