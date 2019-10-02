@@ -14,7 +14,7 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 	// private final AccRewriter _rewrite;
 	private final boolean _isRemoveMainFunc;
 
-	public AccHybridTranslator(boolean isRemoveMainFunc) {
+	public AccHybridTranslator(XobjectFile xobjFile, boolean isRemoveMainFunc) {
 		if (!XmOption.isLanguageC()) {
 			ACC.fatal("current version only supports C language.");
 		}
