@@ -452,9 +452,9 @@ public class omompx {
         AccHybridTranslator accHybridTranslator_GPU = new AccHybridTranslator(xobjFile, false);
         xobjFile.iterateDef(accHybridTranslator_GPU);
         decompile(lang, xobjFile, silent, outXmlFile, maxColumns, outputDecomp, dump, srcPath, baseName, dir, "GPU");
-        AccHybridTranslator accHybridTranslator_FPGA = new AccHybridTranslator(xobjFile, true);
-        xobjFile.iterateDef(accHybridTranslator_FPGA);
-        decompile(lang, xobjFile, silent, outXmlFile, maxColumns, outputDecomp, dump, srcPath, baseName, dir, "FPGA");
+        // AccHybridTranslator accHybridTranslator_FPGA = new AccHybridTranslator(xobjFile, true);
+        // xobjFile.iterateDef(accHybridTranslator_FPGA);
+        // decompile(lang, xobjFile, silent, outXmlFile, maxColumns, outputDecomp, dump, srcPath, baseName, dir, "FPGA");
         return;
       } else {
         XmOption.setDebugOutput(true);
