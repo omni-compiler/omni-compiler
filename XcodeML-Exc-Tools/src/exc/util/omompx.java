@@ -19,6 +19,7 @@ import exc.xcalablemp.XMPrealloc;
 import exc.xcodeml.XcodeMLtools;
 import exc.xcodeml.XcodeMLtools_F;
 import exc.xcodeml.XcodeMLtools_Fmod;
+import exc.xcodeml.XmException;
 import exc.xcodeml.XcodeMLtools_C;
 import xcodeml.util.*;
 import exc.xcodeml.XmXobjectToXcodeTranslator;
@@ -479,7 +480,7 @@ public class omompx {
 
   private static void decompile(String lang, XobjectFile xobjFile, boolean silent, String outXmlFile, int maxColumns,
                                 boolean outputDecomp, boolean dump, String srcPath, String baseName, File dir, 
-                                String ondevice) {
+                                String ondevice) throws Exception {
     // translate Xcode to XcodeML
     // create transformer from Xobject to XcodeML DOM.
     XmXobjectToXcodeTranslator xc2xcodeTranslator = null;
