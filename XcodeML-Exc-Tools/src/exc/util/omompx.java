@@ -449,10 +449,10 @@ public class omompx {
       }
 
       if (ACC.platform == Platform.Hybrid) {
-        AccHybridTranslator accHybridTranslator_GPU = new AccHybridTranslator(xobjFile, false);
+        AccHybridTranslator accHybridTranslator_GPU = new AccHybridTranslator(false);
         xobjFile.iterateDef(accHybridTranslator_GPU);
         decompile(lang, xobjFile, silent, outXmlFile, maxColumns, outputDecomp, dump, srcPath, baseName, dir, "GPU");
-        AccHybridTranslator accHybridTranslator_FPGA = new AccHybridTranslator(xobjFile, true);
+        AccHybridTranslator accHybridTranslator_FPGA = new AccHybridTranslator(true);
         xobjFile.iterateDef(accHybridTranslator_FPGA);
         decompile(lang, xobjFile, silent, outXmlFile, maxColumns, outputDecomp, dump, srcPath, baseName, dir, "FPGA");
         return;

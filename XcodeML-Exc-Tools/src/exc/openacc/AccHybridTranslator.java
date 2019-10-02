@@ -12,14 +12,16 @@ import exc.block.*;
 public class AccHybridTranslator implements XobjectDefVisitor {
 	// private final ACCglobalDecl _globalDecl;
 	// private final AccRewriter _rewrite;
+	private final boolean _isRemoveMainFunc;
 
-	public AccHybridTranslator(XobjectFile xobjFile, boolean removeMainFunc) {
+	public AccHybridTranslator(boolean isRemoveMainFunc) {
 		if (!XmOption.isLanguageC()) {
 			ACC.fatal("current version only supports C language.");
 		}
 
 		// _globalDecl = new ACCglobalDecl(xobjFile);
 		// _rewrite = new AccRewriter(_globalDecl);
+		_isRemoveMainFunc = isRemoveMainFunc;
 	}
 
 	// AccTranslator から
@@ -60,7 +62,7 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 		FunctionBlock fb = fd.getBlock();
 		String funcName = fb.getName();
 
-		if (funcName == "main") {
+		if (funcName == "main" && _isRemoveMainFunc == true) {
 			// BlockList body = block.getBody();
 			// if (body.getDecls() != null) {
 			// BlockList newBody = Bcons.emptyBody(body.getIdentList().copy(),
