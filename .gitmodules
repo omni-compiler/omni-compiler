@@ -1,4 +1,4 @@
 [submodule "xcodeml-tools"]
 	path = xcodeml-tools
-	url = https://github.com/takashift/xcodeml-tools.git
+	url = https://github.com/omni-compiler/xcodeml-tools.git
 

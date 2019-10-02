@@ -4,13 +4,16 @@ import exc.block.FuncDefBlock;
 import exc.block.FunctionBlock;
 import exc.object.*;
 import xcodeml.util.XmOption;
+
+import com.sun.org.apache.xpath.internal.operations.Bool;
+
 import exc.block.*;
 
 public class AccHybridTranslator implements XobjectDefVisitor {
 	// private final ACCglobalDecl _globalDecl;
 	// private final AccRewriter _rewrite;
 
-	public AccHybridTranslator(XobjectFile xobjFile) {
+	public AccHybridTranslator(XobjectFile xobjFile, Boolean removeMainFunc) {
 		if (!XmOption.isLanguageC()) {
 			ACC.fatal("current version only supports C language.");
 		}

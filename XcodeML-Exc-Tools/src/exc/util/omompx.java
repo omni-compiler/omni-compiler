@@ -472,7 +472,7 @@ public class omompx
       }
 
       if(ACC.platform == Platform.Hybrid) {
-        AccHybridTranslator accHybridTranslator = new AccHybridTranslator(xobjFile);
+        AccHybridTranslator accHybridTranslator = new AccHybridTranslator(xobjFile, false);
         xobjFile.iterateDef(accHybridTranslator);
       }
       else {
