@@ -19,7 +19,6 @@ import exc.xcalablemp.XMPrealloc;
 import exc.xcodeml.XcodeMLtools;
 import exc.xcodeml.XcodeMLtools_F;
 import exc.xcodeml.XcodeMLtools_Fmod;
-import exc.xcodeml.XmException;
 import exc.xcodeml.XcodeMLtools_C;
 import xcodeml.util.*;
 import exc.xcodeml.XmXobjectToXcodeTranslator;
