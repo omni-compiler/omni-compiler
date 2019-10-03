@@ -449,6 +449,14 @@ public class omompx {
       }
 
       if (ACC.platform == Platform.Hybrid) {
+        Writer xcodeWriter2 = null;
+        if (dump || outputXcode) {
+          if (dump) {
+            xcodeWriter2 = new OutputStreamWriter(System.out);
+          } else {
+            xcodeWriter2 = new BufferedWriter(new FileWriter(inXmlFile + "2.x"));
+          }
+        }
         XobjectFile xobjFile2 = (XobjectFile)xobjFile.clone();
 
         AccHybridTranslator accHybridTranslator_GPU = new AccHybridTranslator(xobjFile, false);
@@ -458,20 +466,24 @@ public class omompx {
           xobjFile.Output(xcodeWriter);
           xcodeWriter.flush();
         }
+        if (!dump && outputXcode) {
+          xcodeWriter.close();
+        }
         decompile(lang, xobjFile, silent, outXmlFile, maxColumns, outputDecomp, dump, srcPath, baseName, dir, "GPU");
 
         AccHybridTranslator accHybridTranslator_FPGA = new AccHybridTranslator(xobjFile2, true);
         xobjFile2.iterateDef(accHybridTranslator_FPGA);
 
-        if (xcodeWriter != null) {
-          xobjFile2.Output(xcodeWriter);
-          xcodeWriter.flush();
+        if (xcodeWriter2 != null) {
+          xobjFile2.Output(xcodeWriter2);
+          xcodeWriter2.flush();
+        }
+        if (!dump && outputXcode) {
+          xcodeWriter2.close();
         }
         decompile(lang, xobjFile2, silent, outXmlFile, maxColumns, outputDecomp, dump, srcPath, baseName, dir, "FPGA");
         
-        if (!dump && outputXcode) {
-          xcodeWriter.close();
-        }
+
         return;
 
       } else {
