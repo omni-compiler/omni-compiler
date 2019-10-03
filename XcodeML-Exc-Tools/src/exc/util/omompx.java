@@ -458,6 +458,11 @@ public class omompx {
           }
         }
         XobjectFile xobjFile2 = (XobjectFile)xobjFile.clone();
+        if(xobjFile2 == null) {
+          System.out.println("xobjFile2 is null");
+          return;
+        }
+
         // Output Xcode
         if (xcodeWriter2 != null) {
           xobjFile.Output(xcodeWriter2);
