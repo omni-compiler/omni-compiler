@@ -268,6 +268,10 @@ public class omompx {
     // read XcodeML
     XcodeMLtools tools = (XmOption.getLanguage() == XmLanguage.F) ? new XcodeMLtools_F() : new XcodeMLtools_C();
     XobjectFile xobjFile = tools.read(reader);
+    XobjectFile xobjFile2 = null;
+    if (ACC.platform == Platform.Hybrid) {
+      xobjFile2 = tools.read(reader);
+    }
 
     if (inXmlFile != null)
       reader.close();
@@ -448,16 +452,30 @@ public class omompx {
         ACC.device.setUseReadOnlyDataCache(false);
       }
 
-      if (ACC.platform == Platform.Hybrid) {
-        // 多分xobjFileをコピーする必要がある？
-        XobjectFile xobjFile2 = xobjFile;
+      if (ACC.platform == Platform.Hybrid && xobjFile2 != null) {
         AccHybridTranslator accHybridTranslator_GPU = new AccHybridTranslator(xobjFile, false);
         xobjFile.iterateDef(accHybridTranslator_GPU);
+        
+        if (xcodeWriter != null) {
+          xobjFile.Output(xcodeWriter);
+          xcodeWriter.flush();
+        }
         decompile(lang, xobjFile, silent, outXmlFile, maxColumns, outputDecomp, dump, srcPath, baseName, dir, "GPU");
+
         AccHybridTranslator accHybridTranslator_FPGA = new AccHybridTranslator(xobjFile2, true);
         xobjFile2.iterateDef(accHybridTranslator_FPGA);
+
+        if (xcodeWriter != null) {
+          xobjFile2.Output(xcodeWriter);
+          xcodeWriter.flush();
+        }
         decompile(lang, xobjFile2, silent, outXmlFile, maxColumns, outputDecomp, dump, srcPath, baseName, dir, "FPGA");
+        
+        if (!dump && outputXcode) {
+          xcodeWriter.close();
+        }
         return;
+
       } else {
         XmOption.setDebugOutput(true);
         AccTranslator accTranslator = new AccTranslator(xobjFile, false);
