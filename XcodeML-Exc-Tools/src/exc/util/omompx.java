@@ -458,10 +458,14 @@ public class omompx {
           }
         }
         XobjectFile xobjFile2 = (XobjectFile)xobjFile.clone();
+        // Output Xcode
+        if (xcodeWriter2 != null) {
+          xobjFile.Output(xcodeWriter2);
+          xcodeWriter2.flush();
+        }
 
         AccHybridTranslator accHybridTranslator_GPU = new AccHybridTranslator(xobjFile, false);
         xobjFile.iterateDef(accHybridTranslator_GPU);
-        
         if (xcodeWriter != null) {
           xobjFile.Output(xcodeWriter);
           xcodeWriter.flush();
@@ -473,7 +477,6 @@ public class omompx {
 
         AccHybridTranslator accHybridTranslator_FPGA = new AccHybridTranslator(xobjFile2, true);
         xobjFile2.iterateDef(accHybridTranslator_FPGA);
-
         if (xcodeWriter2 != null) {
           xobjFile2.Output(xcodeWriter2);
           xcodeWriter2.flush();
