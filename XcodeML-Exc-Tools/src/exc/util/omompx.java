@@ -465,7 +465,7 @@ public class omompx {
 
         // Output Xcode
         if (xcodeWriter2 != null) {
-          xobjFile.Output(xcodeWriter2);
+          xobjFile2.Output(xcodeWriter2);
           xcodeWriter2.flush();
         }
 
