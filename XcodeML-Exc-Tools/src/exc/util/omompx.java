@@ -449,12 +449,14 @@ public class omompx {
       }
 
       if (ACC.platform == Platform.Hybrid) {
+        // 多分xobjFileをコピーする必要がある？
+        XobjectFile xobjFile2 = xobjFile;
         AccHybridTranslator accHybridTranslator_GPU = new AccHybridTranslator(xobjFile, false);
         xobjFile.iterateDef(accHybridTranslator_GPU);
         decompile(lang, xobjFile, silent, outXmlFile, maxColumns, outputDecomp, dump, srcPath, baseName, dir, "GPU");
-        // AccHybridTranslator accHybridTranslator_FPGA = new AccHybridTranslator(xobjFile, true);
-        // xobjFile.iterateDef(accHybridTranslator_FPGA);
-        // decompile(lang, xobjFile, silent, outXmlFile, maxColumns, outputDecomp, dump, srcPath, baseName, dir, "FPGA");
+        AccHybridTranslator accHybridTranslator_FPGA = new AccHybridTranslator(xobjFile2, true);
+        xobjFile2.iterateDef(accHybridTranslator_FPGA);
+        decompile(lang, xobjFile2, silent, outXmlFile, maxColumns, outputDecomp, dump, srcPath, baseName, dir, "FPGA");
         return;
       } else {
         XmOption.setDebugOutput(true);
