@@ -268,10 +268,6 @@ public class omompx {
     // read XcodeML
     XcodeMLtools tools = (XmOption.getLanguage() == XmLanguage.F) ? new XcodeMLtools_F() : new XcodeMLtools_C();
     XobjectFile xobjFile = tools.read(reader);
-    XobjectFile xobjFile2 = null;
-    if (ACC.platform == Platform.Hybrid) {
-      xobjFile2 = tools.read(reader);
-    }
 
     if (inXmlFile != null)
       reader.close();
@@ -452,7 +448,9 @@ public class omompx {
         ACC.device.setUseReadOnlyDataCache(false);
       }
 
-      if (ACC.platform == Platform.Hybrid && xobjFile2 != null) {
+      if (ACC.platform == Platform.Hybrid) {
+        XobjectFile xobjFile2 = (XobjectFile)xobjFile.clone();
+
         AccHybridTranslator accHybridTranslator_GPU = new AccHybridTranslator(xobjFile, false);
         xobjFile.iterateDef(accHybridTranslator_GPU);
         

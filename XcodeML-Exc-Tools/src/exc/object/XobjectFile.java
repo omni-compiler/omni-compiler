@@ -8,7 +8,7 @@ import java.util.*;
  * This contains: - type informations used in this file. - global symbol table -
  * information of global data - codes for functions
  */
-public class XobjectFile extends XobjectDefEnv {
+public class XobjectFile extends XobjectDefEnv implements Cloneable {
   private List<Xtype> typeList = new ArrayList<Xtype>();
   protected HashMap<String, Xtype> typeIdTable = new HashMap<String, Xtype>();
 
@@ -68,7 +68,16 @@ public class XobjectFile extends XobjectDefEnv {
     this.version = version;
     this.time = time;
   }
-    
+  
+  @Override
+  public Object clone() {
+    try {
+      return super.clone();
+    } catch (CloneNotSupportedException e) {
+      throw new InternalError(e.toString());
+    }
+  } 
+
   //
   // Global Symbol table management
   // 
