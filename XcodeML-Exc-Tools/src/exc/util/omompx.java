@@ -458,7 +458,7 @@ public class omompx {
           }
         }
         XobjectFile xobjFile2 = (XobjectFile)xobjFile.clone();
-        if(xobjFile2 == xobjFile) {
+        if(xobjFile2.equals(xobjFile)) {
           System.out.println("xobjFile2 == xobjFile");
           return;
         }
