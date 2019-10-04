@@ -457,7 +457,18 @@ public class omompx {
             xcodeWriter2 = new BufferedWriter(new FileWriter(inXmlFile + "2.x"));
           }
         }
-        XobjectFile xobjFile2 = (XobjectFile)xobjFile.clone();
+
+        if (inXmlFile == null) {
+          reader = new InputStreamReader(System.in);
+        } else {
+          reader = new BufferedReader(new FileReader(inXmlFile));
+        }
+        XobjectFile xobjFile2 = tools.read(reader);
+        if (inXmlFile != null)
+          reader.close();
+        if (xobjFile2 == null)
+          System.exit(1);
+
         if(xobjFile2.equals(xobjFile)) {
           System.out.println("xobjFile2 == xobjFile");
           return;
