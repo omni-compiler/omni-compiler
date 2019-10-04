@@ -491,7 +491,7 @@ public class omompx {
         }
         decompile(lang, xobjFile, silent, outXmlFile, maxColumns, outputDecomp, dump, srcPath, baseName, dir, "GPU");
 
-        AccHybridTranslator accHybridTranslator_FPGA = new AccHybridTranslator(xobjFile2, false);
+        AccHybridTranslator accHybridTranslator_FPGA = new AccHybridTranslator(xobjFile2, true);
         xobjFile2.iterateDef(accHybridTranslator_FPGA);
         if (xcodeWriter2 != null) {
           xobjFile2.Output(xcodeWriter2);
