@@ -580,7 +580,6 @@ public class omompx {
           baseName += "_GPU";
         } else if (ondevice == "FPGA") {
           baseName += "_FPGA";
-        } else {
         }
         String newFileName = baseName + "." + (XmOption.isLanguageC() ? "c" : "F90");
         File newFile = new File(dir, newFileName);
