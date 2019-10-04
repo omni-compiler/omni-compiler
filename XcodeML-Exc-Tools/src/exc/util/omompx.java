@@ -458,8 +458,8 @@ public class omompx {
           }
         }
         XobjectFile xobjFile2 = (XobjectFile)xobjFile.clone();
-        if(xobjFile2 == null) {
-          System.out.println("xobjFile2 is null");
+        if(xobjFile2 == xobjFile) {
+          System.out.println("xobjFile2 == xobjFile");
           return;
         }
 
