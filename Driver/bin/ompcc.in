@@ -148,11 +148,16 @@ for c_file in "${c_files[@]}"; do
     FILE_IN_X=${TEMP_DIR}/"${FILE_NAME}"_in.xml
     FILE_OUT_X=${TEMP_DIR}/"${FILE_NAME}"_out.xml
 
-    [ "$OPENACC_PLATFORM" = "Hybrid" ] && OMNI_CX2X_OPT="$OMNI_CX2X_OPT -o ${FILE_OUT_X}"
+    [ "$OPENACC_PLATFORM" = "Hybrid" ]  && OMNI_CX2X_OPT="$OMNI_CX2X_OPT -o ${FILE_OUT_X}"
 
     omni_exec $OMNI_CX2X_CMD $OMNI_CX2X_OPT "${xcode_translator_add_opt[@]}" "${FILE_IN_X}"
     # also create ${TEMP_DIR}/${FILE_NAME}_in.c
-    omni_exec cp ${TEMP_DIR}/"${FILE_NAME}"_in.c ${TEMP_DIR}/"${FILE_NAME}".c
+    if [ "$OPENACC_PLATFORM" = "Hybrid" ]; then
+        omni_exec mv ${TEMP_DIR}/"${FILE_NAME}"_in_GPU.c  ${TEMP_DIR}/"${FILE_NAME}"_GPU.c
+        omni_exec mv ${TEMP_DIR}/"${FILE_NAME}"_in_FPGA.c ${TEMP_DIR}/"${FILE_NAME}"_FPGA.c
+    else
+        omni_exec cp ${TEMP_DIR}/"${FILE_NAME}"_in.c ${TEMP_DIR}/"${FILE_NAME}".c
+    fi
 done
 [ "$STOP_TRANSLATOR" = true ] && exit 0;
 
