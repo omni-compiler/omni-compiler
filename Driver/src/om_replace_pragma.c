@@ -406,7 +406,7 @@ static void preprocess(char *srcFileName){
     if(isPragma(buf)){
       char *pragmaStr = getPragmaStr(buf);
 
-      if( startsWithWord(pragmaStr, "omp") || startsWithWord(pragmaStr, "acc")
+      if( startsWithWord(pragmaStr, "omp") || startsWithWord(pragmaStr, "acc") || startsWithWord(pragmaStr, "accomn")
 	  || (enableXMP && startsWithWord(pragmaStr, "xmp")) ){
 	fprintf(output, "%s(%s)\n", PRAGMA_NAME1, pragmaStr);
       }else{
