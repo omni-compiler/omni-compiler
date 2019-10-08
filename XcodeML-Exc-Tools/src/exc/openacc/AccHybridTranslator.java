@@ -112,7 +112,7 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 
 							String clauseName = x.left().getString();
 							ACCpragma accClause = ACCpragma.valueOf(clauseName);
-							if (accClause == ACCpragma.COPYIN) {
+							if (accClause == ACCpragma.COPYIN && !_isRemoveMainFunc) {
 							// if(!accClause.isDataClause()) continue;
 
 								System.out.println("DATA ディレクティブ！！！");
