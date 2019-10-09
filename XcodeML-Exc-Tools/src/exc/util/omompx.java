@@ -469,11 +469,6 @@ public class omompx {
         if (xobjFile2 == null)
           System.exit(1);
 
-        if(xobjFile2.equals(xobjFile)) {
-          System.out.println("xobjFile2 == xobjFile");
-          return;
-        }
-
         // Output Xcode
         if (xcodeWriter2 != null) {
           xobjFile2.Output(xcodeWriter2);
@@ -501,7 +496,6 @@ public class omompx {
           xcodeWriter2.close();
         }
         decompile(lang, xobjFile2, silent, outXmlFile, maxColumns, outputDecomp, dump, srcPath, baseName, dir, "FPGA");
-        
 
         return;
 
