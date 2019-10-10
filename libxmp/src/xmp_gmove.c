@@ -248,13 +248,15 @@ static void _XMP_gmove_bcast(void *buffer, size_t type_size, unsigned long long 
   _XMP_nodes_t *exec_nodes = _XMP_get_execution_nodes();
   _XMP_ASSERT(exec_nodes->is_member);
 
-  MPI_Datatype mpi_datatype;
-  MPI_Type_contiguous(type_size, MPI_BYTE, &mpi_datatype);
-  MPI_Type_commit(&mpi_datatype);
+  MPI_Bcast(buffer, type_size*count, MPI_BYTE, root_rank, *((MPI_Comm *)exec_nodes->comm));
 
-  MPI_Bcast(buffer, count, mpi_datatype, root_rank, *((MPI_Comm *)exec_nodes->comm));
+  /* MPI_Datatype mpi_datatype; */
+  /* MPI_Type_contiguous(type_size, MPI_BYTE, &mpi_datatype); */
+  /* MPI_Type_commit(&mpi_datatype); */
 
-  MPI_Type_free(&mpi_datatype);
+  /* MPI_Bcast(buffer, count, mpi_datatype, root_rank, *((MPI_Comm *)exec_nodes->comm)); */
+
+  /* MPI_Type_free(&mpi_datatype); */
 }
 
 /* void _XMP_gmove_bcast_SCALAR(void *dst_addr, void *src_addr, size_t type_size, int root_rank) { */
@@ -1483,9 +1485,9 @@ static void _XMP_gmove_garray_garray_block_cyclic(_XMP_gmv_desc_t *gmv_desc_left
   int dst_lower[dst_dim], dst_upper[dst_dim], dst_stride[dst_dim];
   int src_lower[src_dim], src_upper[src_dim], src_stride[src_dim];
 
-  MPI_Datatype mpi_datatype;
-  MPI_Type_contiguous(type_size, MPI_BYTE, &mpi_datatype);
-  MPI_Type_commit(&mpi_datatype);
+  MPI_Datatype mpi_datatype = dst_array->mpi_type;
+  /* MPI_Type_contiguous(type_size, MPI_BYTE, &mpi_datatype); */
+  /* MPI_Type_commit(&mpi_datatype); */
 
   do {
     for (int i = 0; i < dst_dim; i++) {
@@ -1530,7 +1532,7 @@ static void _XMP_gmove_garray_garray_block_cyclic(_XMP_gmv_desc_t *gmv_desc_left
 
   } while (_XMP_get_next_rank(dst_array_nodes, dst_array_nodes_ref));
 
-  MPI_Type_free(&mpi_datatype);
+  /* MPI_Type_free(&mpi_datatype); */
 }
 
 
