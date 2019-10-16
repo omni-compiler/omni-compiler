@@ -71,6 +71,8 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 			// // pragmaBlock.getClauses(), body));
 			// block.replace(Bcons.COMPOUND(newBody));
 			// }
+
+			// remove main function
 			def.setDef(null);
 			return;
 		}
@@ -112,7 +114,7 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 								continue;
 
 							String clauseName = x.left().getName();
-							if (clauseName == _acc_ondevice) {
+							if (clauseName != _acc_ondevice) {
 							// if(!accClause.isDataClause()) continue;
 
 								BlockList body = pragmaBlock.getBody();
@@ -129,6 +131,7 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 								// Block pareblock = pragmaBlock.getParentBlock();
 								// pareblock.remove();
 
+								// remove pragma body
 								def.setDef(null);
 							}
 						}
