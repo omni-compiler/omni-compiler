@@ -5,8 +5,6 @@ import exc.block.FunctionBlock;
 import exc.object.*;
 import xcodeml.util.XmOption;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
-
 import exc.block.*;
 
 public class AccHybridTranslator implements XobjectDefVisitor {
@@ -62,7 +60,7 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 		FunctionBlock fb = fd.getBlock();
 		String funcName = fb.getName();
 
-		if (funcName == "main" && _acc_ondevice == "GPU") {
+		if (funcName == "main" && _acc_ondevice == "FPGA") {
 			// BlockList body = block.getBody();
 			// if (body.getDecls() != null) {
 			// BlockList newBody = Bcons.emptyBody(body.getIdentList().copy(),
@@ -85,19 +83,22 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 
 			if (block.Opcode() == Xcode.ACC_PRAGMA) {
 				PragmaBlock pragmaBlock = ((PragmaBlock) block);
-				Xobject clauses = pragmaBlock.getClauses();
-				if (clauses == null) {
-					// エラーにしたい
-
-					// BlockList newBody = Bcons.emptyBody();
-					// rewriteACCClauses(clauses, pragmaBlock, fb, localXMPsymbolTable, newBody);
-					// if (!newBody.isEmpty()) {
-					// bIter.setBlock(Bcons.COMPOUND(newBody));
-					// newBody.add(block);
-					// }
-				}
 
 				if (pragmaBlock.getPragma().equals("ONDEVICE")) {
+					Xobject clauses = pragmaBlock.getClauses();
+					if (clauses == null) {
+						// エラーにしたい
+						System.out.println("Not found DEVICE!\nusage: #pragma accomn ondevice( DEVICE )");
+						System.exit(1);
+						
+						// BlockList newBody = Bcons.emptyBody();
+						// rewriteACCClauses(clauses, pragmaBlock, fb, localXMPsymbolTable, newBody);
+						// if (!newBody.isEmpty()) {
+						// bIter.setBlock(Bcons.COMPOUND(newBody));
+						// newBody.add(block);
+						// }
+					}
+
 					// XMPrewriteExprの rewriteACCClauses() を参考に記述
 					bottomupXobjectIterator iter = new bottomupXobjectIterator(clauses);
 
@@ -107,15 +108,13 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 							continue;
 
 						if (x.Opcode() == Xcode.LIST) {
-							if (x.left() == null || x.left().Opcode() != Xcode.STRING)
+							if (x.left() == null)
 								continue;
 
-							String clauseName = x.left().getString();
-							ACCpragma accClause = ACCpragma.valueOf(clauseName);
-							if (accClause == ACCpragma.ONDEVICE && clauseName == _acc_ondevice) {
+							String clauseName = x.left().getName();
+							if (clauseName == _acc_ondevice) {
 							// if(!accClause.isDataClause()) continue;
 
-								System.out.println("DATA ディレクティブ！！！");
 								BlockList body = pragmaBlock.getBody();
 								// if (body.getDecls() != null) {
 								// BlockList newBody = Bcons.emptyBody(body.getIdentList().copy(),
