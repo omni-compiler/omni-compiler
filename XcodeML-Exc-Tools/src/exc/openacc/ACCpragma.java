@@ -20,6 +20,8 @@ public enum ACCpragma {
   ATOMIC,
   ROUTINE,
 
+  //accmon directive
+  ONDEVICE,
   
   //general
   IF,

@@ -12,16 +12,16 @@ import exc.block.*;
 public class AccHybridTranslator implements XobjectDefVisitor {
 	// private final ACCglobalDecl _globalDecl;
 	// private final AccRewriter _rewrite;
-	private final boolean _isRemoveMainFunc;
+	private final String _acc_ondevice;
 
-	public AccHybridTranslator(XobjectFile xobjFile, boolean isRemoveMainFunc) {
+	public AccHybridTranslator(XobjectFile xobjFile, String acc_ondevice) {
 		if (!XmOption.isLanguageC()) {
 			ACC.fatal("current version only supports C language.");
 		}
 
 		// _globalDecl = new ACCglobalDecl(xobjFile);
 		// _rewrite = new AccRewriter(_globalDecl);
-		_isRemoveMainFunc = isRemoveMainFunc;
+		_acc_ondevice = acc_ondevice;
 	}
 
 	// AccTranslator から
@@ -62,7 +62,7 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 		FunctionBlock fb = fd.getBlock();
 		String funcName = fb.getName();
 
-		if (funcName == "main" && _isRemoveMainFunc == true) {
+		if (funcName == "main" && _acc_ondevice == "GPU") {
 			// BlockList body = block.getBody();
 			// if (body.getDecls() != null) {
 			// BlockList newBody = Bcons.emptyBody(body.getIdentList().copy(),
@@ -97,7 +97,7 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 					// }
 				}
 
-				if (pragmaBlock.getPragma().equals("DATA")) {
+				if (pragmaBlock.getPragma().equals("ONDEVICE")) {
 					// XMPrewriteExprの rewriteACCClauses() を参考に記述
 					bottomupXobjectIterator iter = new bottomupXobjectIterator(clauses);
 
@@ -112,7 +112,7 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 
 							String clauseName = x.left().getString();
 							ACCpragma accClause = ACCpragma.valueOf(clauseName);
-							if (accClause == ACCpragma.COPYIN && !_isRemoveMainFunc) {
+							if (accClause == ACCpragma.ONDEVICE && clauseName == _acc_ondevice) {
 							// if(!accClause.isDataClause()) continue;
 
 								System.out.println("DATA ディレクティブ！！！");
