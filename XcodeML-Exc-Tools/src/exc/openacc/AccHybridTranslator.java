@@ -117,22 +117,25 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 							if (clauseName != _acc_ondevice) {
 							// if(!accClause.isDataClause()) continue;
 
+								// remove pragma block
+								def.setDef(null);
+							}
+							else {
+								
 								BlockList body = pragmaBlock.getBody();
-								// if (body.getDecls() != null) {
-								// BlockList newBody = Bcons.emptyBody(body.getIdentList().copy(),
-								// body.getDecls().copy());
-								// body.setIdentList(null);
-								// body.setDecls(null);
-								// // newBody.add(Bcons.PRAGMA(Xcode.ACC_PRAGMA, pragmaBlock.getPragma(),
-								// // pragmaBlock.getClauses(), body));
-								// pragmaBlock.replace(Bcons.COMPOUND(newBody));
-								// }
+								if (body.getDecls() != null) {
+								BlockList newBody = Bcons.emptyBody(body.getIdentList().copy(),
+								body.getDecls().copy());
+								body.setIdentList(null);
+								body.setDecls(null);
+								// newBody.add(Bcons.PRAGMA(Xcode.ACC_PRAGMA, pragmaBlock.getPragma(), pragmaBlock.getClauses(), body));
+								newBody.add(Bcons.COMPOUND(body));
+								pragmaBlock.replace(Bcons.COMPOUND(newBody));
+								}
 
 								// Block pareblock = pragmaBlock.getParentBlock();
 								// pareblock.remove();
 
-								// remove pragma body
-								def.setDef(null);
 							}
 						}
 					}
