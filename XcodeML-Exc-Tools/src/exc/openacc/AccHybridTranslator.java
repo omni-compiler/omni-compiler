@@ -121,20 +121,21 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 								def.setDef(null);
 							}
 							else {
-								
 								BlockList body = pragmaBlock.getBody();
 								if (body.getDecls() != null) {
-								BlockList newBody = Bcons.emptyBody(body.getIdentList().copy(),
-								body.getDecls().copy());
-								body.setIdentList(null);
-								body.setDecls(null);
-								// newBody.add(Bcons.PRAGMA(Xcode.ACC_PRAGMA, pragmaBlock.getPragma(), pragmaBlock.getClauses(), body));
-								newBody.add(Bcons.COMPOUND(body));
-								pragmaBlock.replace(Bcons.COMPOUND(newBody));
+									BlockList newBody = Bcons.emptyBody(body.getIdentList().copy(), body.getDecls().copy());
+									body.setIdentList(null);
+									body.setDecls(null);
+									// newBody.add(Bcons.PRAGMA(Xcode.ACC_PRAGMA, pragmaBlock.getPragma(), pragmaBlock.getClauses(), body));
+									newBody.add(Bcons.COMPOUND(body));
+									pragmaBlock.replace(Bcons.COMPOUND(newBody));
 								}
 
 								// Block pareblock = pragmaBlock.getParentBlock();
 								// pareblock.remove();
+
+								// ブロックからXobjectに戻す！！
+								def.setDef(fb.toXobject());
 
 							}
 						}
@@ -142,9 +143,6 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 				}
 			}
 		}
-
-		// ブロックからXobjectに戻す！！
-		// def.setDef(fb.toXobject());
 
 		// if (def.isFuncDef()) {
 		// FuncDefBlock fd = new FuncDefBlock(def);
