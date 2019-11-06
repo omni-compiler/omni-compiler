@@ -120,7 +120,7 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 								// remove pragma block
 								def.setDef(null);
 							}
-							else {
+							else if (clauseName == _acc_ondevice) {
 								BlockList body = pragmaBlock.getBody();
 								if (body.getDecls() != null) {
 									BlockList newBody = Bcons.emptyBody(body.getIdentList().copy(), body.getDecls().copy());
@@ -137,6 +137,10 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 								// ブロックからXobjectに戻す！！
 								def.setDef(fb.toXobject());
 
+							}
+							else {
+								System.out.println("Not Supported DEVICE! at #pragma accomn ondevice( DEVICE )");
+								System.exit(1);										
 							}
 						}
 					}
