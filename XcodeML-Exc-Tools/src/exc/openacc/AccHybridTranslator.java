@@ -10,15 +10,22 @@ import exc.block.*;
 public class AccHybridTranslator implements XobjectDefVisitor {
 	// private final ACCglobalDecl _globalDecl;
 	// private final AccRewriter _rewrite;
+	private final XobjectFile _xobjFile;
+	private final String _originFileName;
 	private final String _acc_ondevice;
+	private boolean is_original_file = false;
+	private boolean is_next_marker_original_file = false;
+	private String include_file;
 
-	public AccHybridTranslator(XobjectFile xobjFile, String acc_ondevice) {
+	public AccHybridTranslator(XobjectFile xobjFile, String originFileName, String acc_ondevice) {
 		if (!XmOption.isLanguageC()) {
 			ACC.fatal("current version only supports C language.");
 		}
 
 		// _globalDecl = new ACCglobalDecl(xobjFile);
 		// _rewrite = new AccRewriter(_globalDecl);
+		_xobjFile = xobjFile;
+		_originFileName = originFileName;
 		_acc_ondevice = acc_ondevice;
 	}
 
@@ -53,6 +60,42 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 		// }
 
 		if (!def.isFuncDef()) {
+			Xobject v = def.getDef();
+
+			if (v != null && v.Opcode() == Xcode.LINEMARKER && v.getLineNo() != null) {
+				String flags = v.getArg(0).getString();
+				String filename = v.getLineNo().fileName();
+
+				if (filename.equals(_originFileName)) {
+					is_original_file = true;
+					is_next_marker_original_file = true;
+					if (flags.contains("2"))
+						_xobjFile.addHeaderLine("#include " + include_file);
+				} else {
+					if (is_next_marker_original_file && flags.contains("1")) {
+						is_next_marker_original_file = false;
+						include_file = filename;
+						if (flags.contains("3")) {
+							while (include_file.contains("/")) {
+								int index = include_file.indexOf("/");
+								include_file = include_file.substring(index + 1);
+							}
+							include_file = "<" + include_file + ">";
+						} else
+							include_file = "\"" + include_file + "\"";
+					}
+					is_original_file = false;
+				}
+			}
+
+			if (!is_original_file) {
+				def.setDef(null);
+			}
+			return;
+		}
+
+		if (!is_original_file) {
+			def.setDef(null);
 			return;
 		}
 
@@ -60,7 +103,7 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 		FunctionBlock fb = fd.getBlock();
 		String funcName = fb.getName();
 
-		if (funcName == "main" && _acc_ondevice == "FPGA") {
+		if (funcName.equals("main") && _acc_ondevice.equals("FPGA")) {
 			// BlockList body = block.getBody();
 			// if (body.getDecls() != null) {
 			// BlockList newBody = Bcons.emptyBody(body.getIdentList().copy(),
@@ -92,7 +135,7 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 						// エラーにしたい
 						System.out.println("Not found DEVICE!\nusage: #pragma accomn ondevice( DEVICE )");
 						System.exit(1);
-						
+
 						// BlockList newBody = Bcons.emptyBody();
 						// rewriteACCClauses(clauses, pragmaBlock, fb, localXMPsymbolTable, newBody);
 						// if (!newBody.isEmpty()) {
@@ -114,19 +157,20 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 								continue;
 
 							String clauseName = x.left().getName();
-							if (clauseName != _acc_ondevice) {
-							// if(!accClause.isDataClause()) continue;
-
-								// remove pragma block
-								def.setDef(null);
+							if (clauseName.equals("GPU") || clauseName.equals("FPGA")) {
+								System.out.println(
+										"Current version ONLY Supports DEVICE GPU or FPGA! at #pragma accomn ondevice( DEVICE )");
+								System.exit(1);
 							}
-							else if (clauseName == _acc_ondevice) {
+							if (clauseName.equals(_acc_ondevice)) {
 								BlockList body = pragmaBlock.getBody();
 								if (body.getDecls() != null) {
-									BlockList newBody = Bcons.emptyBody(body.getIdentList().copy(), body.getDecls().copy());
+									BlockList newBody = Bcons.emptyBody(body.getIdentList().copy(),
+											body.getDecls().copy());
 									body.setIdentList(null);
 									body.setDecls(null);
-									// newBody.add(Bcons.PRAGMA(Xcode.ACC_PRAGMA, pragmaBlock.getPragma(), pragmaBlock.getClauses(), body));
+									// newBody.add(Bcons.PRAGMA(Xcode.ACC_PRAGMA, pragmaBlock.getPragma(),
+									// pragmaBlock.getClauses(), body));
 									newBody.add(Bcons.COMPOUND(body));
 									pragmaBlock.replace(Bcons.COMPOUND(newBody));
 								}
@@ -137,10 +181,11 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 								// ブロックからXobjectに戻す！！
 								def.setDef(fb.toXobject());
 
-							}
-							else {
-								System.out.println("Not Supported DEVICE! at #pragma accomn ondevice( DEVICE )");
-								System.exit(1);										
+							} else {
+								// if(!accClause.isDataClause()) continue;
+
+								// remove pragma block
+								def.setDef(null);
 							}
 						}
 					}
@@ -158,7 +203,6 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 		// doNonFuncDef(x);
 		// }
 	}
-
 
 	// private void doFuncDef(FunctionBlock fb){
 	// _rewrite.doFuncDef(fb);

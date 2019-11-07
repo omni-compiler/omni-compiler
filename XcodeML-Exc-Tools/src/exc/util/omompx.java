@@ -105,6 +105,7 @@ public class omompx {
     boolean coarray_useStmt = true; // TEMPORARY
     int accDefaultVectorLength = 0;
     boolean accDisableReadOnlyDataCache = false;
+    String originFileName = null;
 
     // environment variable analysis
     Boolean xmpf_onlyCafMode = "1".equals(System.getenv("XMP_ONLYCAF"));
@@ -222,6 +223,9 @@ public class omompx {
       } else if (arg.startsWith("-device=")) {
         String n = arg.substring("-device=".length());
         ACC.device = AccDevice.getDevice(n);
+      } else if (arg.startsWith("-originfilename=")) {
+        String n = arg.substring("-originfilename=".length());
+        originFileName = n;
       } else if (arg.startsWith("-")) {
         error("unknown option " + arg);
       } else if (inXmlFile == null) {
@@ -436,6 +440,9 @@ public class omompx {
           ACC.device = AccDevice.PEZYSC;
           break;
         case Hybrid:
+          if (originFileName == null) {
+            error("needs argument -originfilename=example.c");
+          }
           break;
         }
       }
@@ -475,7 +482,7 @@ public class omompx {
           xcodeWriter2.flush();
         }
 
-        AccHybridTranslator accHybridTranslator_GPU = new AccHybridTranslator(xobjFile, "GPU");
+        AccHybridTranslator accHybridTranslator_GPU = new AccHybridTranslator(xobjFile, originFileName, "GPU");
         xobjFile.iterateDef(accHybridTranslator_GPU);
         if (xcodeWriter != null) {
           xobjFile.Output(xcodeWriter);
@@ -486,7 +493,7 @@ public class omompx {
         }
         decompile(lang, xobjFile, silent, outXmlFile, maxColumns, outputDecomp, dump, srcPath, baseName, dir, "GPU");
 
-        AccHybridTranslator accHybridTranslator_FPGA = new AccHybridTranslator(xobjFile2, "FPGA");
+        AccHybridTranslator accHybridTranslator_FPGA = new AccHybridTranslator(xobjFile2, originFileName, "FPGA");
         xobjFile2.iterateDef(accHybridTranslator_FPGA);
         if (xcodeWriter2 != null) {
           xobjFile2.Output(xcodeWriter2);
