@@ -577,9 +577,9 @@ public class omompx {
       if (dump || srcPath == null) {
         decompWriter = new OutputStreamWriter(System.out);
       } else { // set decompile writer
-        if (ondevice == "GPU") {
+        if (ondevice.equals("GPU")) {
           baseName += "_GPU";
-        } else if (ondevice == "FPGA") {
+        } else if (ondevice.equals("FPGA")) {
           baseName += "_FPGA";
         }
         String newFileName = baseName + "." + (XmOption.isLanguageC() ? "c" : "F90");

@@ -157,9 +157,9 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 								continue;
 
 							String clauseName = x.left().getName();
-							if (clauseName.equals("GPU") || clauseName.equals("FPGA")) {
+							if (!clauseName.equals("GPU") && !clauseName.equals("FPGA")) {
 								System.out.println(
-										"Current version ONLY Supports DEVICE GPU or FPGA! at #pragma accomn ondevice( DEVICE )");
+										"Current version ONLY Supports DEVICE GPU or FPGA! : #pragma accomn ondevice( DEVICE )");
 								System.exit(1);
 							}
 							if (clauseName.equals(_acc_ondevice)) {
