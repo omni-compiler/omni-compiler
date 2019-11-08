@@ -27,6 +27,7 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 		_xobjFile = xobjFile;
 		_originFileName = originFileName;
 		_acc_ondevice = acc_ondevice;
+		xobjFile.addHeaderLine("*/");
 	}
 
 	// AccTranslator から
@@ -334,6 +335,7 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 	public void finish() {
 		// ヘッダーを出力する？
 
+		_xobjFile.setProgramAttributes(_originFileName, _xobjFile.getLanguageAttribute(), "AccHybridTranslator", _xobjFile.getVersion(), _xobjFile.getTime());
 		// ACCgpuDecompiler gpuDecompiler = new ACCgpuDecompiler();
 		// gpuDecompiler.decompile(_globalDecl);
 

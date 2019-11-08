@@ -484,6 +484,7 @@ public class omompx {
 
         AccHybridTranslator accHybridTranslator_GPU = new AccHybridTranslator(xobjFile, originFileName, "GPU");
         xobjFile.iterateDef(accHybridTranslator_GPU);
+        accHybridTranslator_GPU.finish();
         if (xcodeWriter != null) {
           xobjFile.Output(xcodeWriter);
           xcodeWriter.flush();
@@ -495,6 +496,7 @@ public class omompx {
 
         AccHybridTranslator accHybridTranslator_FPGA = new AccHybridTranslator(xobjFile2, originFileName, "FPGA");
         xobjFile2.iterateDef(accHybridTranslator_FPGA);
+        accHybridTranslator_FPGA.finish();
         if (xcodeWriter2 != null) {
           xobjFile2.Output(xcodeWriter2);
           xcodeWriter2.flush();
