@@ -335,7 +335,7 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 	public void finish() {
 		// ヘッダーを出力する？
 
-		_xobjFile.setProgramAttributes(_originFileName, _xobjFile.getLanguageAttribute(), "AccHybridTranslator", _xobjFile.getVersion(), _xobjFile.getTime());
+		_xobjFile.setProgramAttributes(_originFileName, _xobjFile.getLanguageAttribute(), "AccHybridTranslator", _xobjFile.getCompilerInfo()+" "+_xobjFile.getVersion(), _xobjFile.getTime());
 		// ACCgpuDecompiler gpuDecompiler = new ACCgpuDecompiler();
 		// gpuDecompiler.decompile(_globalDecl);
 
