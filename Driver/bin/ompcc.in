@@ -156,6 +156,7 @@ for c_file in "${c_files[@]}"; do
     if [ "$OPENACC_PLATFORM" = "Hybrid" ]; then
         omni_exec mv ${TEMP_DIR}/"${FILE_NAME}"_in_GPU.c  "${BASENAME}"_GPU.c
         omni_exec mv ${TEMP_DIR}/"${FILE_NAME}"_in_FPGA.c "${BASENAME}"_FPGA.c
+        exit 0;
     else
         omni_exec cp ${TEMP_DIR}/"${FILE_NAME}"_in.c ${TEMP_DIR}/"${FILE_NAME}".c
     fi
