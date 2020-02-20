@@ -35,13 +35,13 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 	public void doDef(XobjectDef def) {
 
 		String fname = def.getName();
-		System.out.println("Func name is " + fname);
+		// System.out.println("Func name is " + fname);
 
 		XobjectIterator i = new topdownXobjectIterator(def.getFuncBody());
 		for (i.init(); !i.end(); i.next()) {
 			Xobject x = i.getXobject();
-			if (x != null && (x.isVariable() || x.isVarAddr()))
-				System.out.println("Variable '" + x.getName() + "' is referenced from Function '" + fname + "'");
+			// if (x != null && (x.isVariable() || x.isVarAddr()))
+			// 	System.out.println("Variable '" + x.getName() + "' is referenced from Function '" + fname + "'");
 		}
 
 		// Block fb = Bcons.buildFunctionBlock(def);
@@ -160,7 +160,7 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 							String clauseName = x.left().getName();
 							if (!clauseName.equals("GPU") && !clauseName.equals("FPGA")) {
 								System.out.println(
-										"Current version ONLY Supports DEVICE GPU or FPGA! : #pragma accomn ondevice( DEVICE )");
+										"Current version ONLY Supports GPU or FPGA as DEVICE! : #pragma accomn ondevice( DEVICE )");
 								System.exit(1);
 							}
 							if (clauseName.equals(_acc_ondevice)) {
