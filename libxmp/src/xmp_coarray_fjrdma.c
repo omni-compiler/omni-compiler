@@ -38,6 +38,10 @@ extern int _XMP_flag_put_nb_rr_i;
 #define _XMP_COARRAY_FLAG_NIC_TMP_i3 (FJMPI_RDMA_LOCAL_NIC3 | FJMPI_RDMA_REMOTE_NIC3 | FJMPI_RDMA_IMMEDIATE_RETURN)
 /** End these variables are temporral **/ 
 
+#if 0
+// move to : xmp_coarray_utils.c
+// >>>
+
 /******************************************************************/
 /* DESCRIPTION : Set addresses                                    */
 /* ARGUMENT    : [OUT] *addrs     : Addresses                     */
@@ -1262,6 +1266,11 @@ static size_t _XMP_calc_stride(const _XMP_array_section_t *array_info, const int
  end:
   return stride[1] - stride[0];
 }
+
+// <<<
+// move to : xmp_coarray_utils.c
+#endif // #if 0
+
 /**
    Execute sync_memory for put operation
  */
