@@ -10,6 +10,9 @@
 #if defined(_XMP_XACC)
 #include "xacc_internal.h"
 #endif
+#if defined(_XMP_UTOFU)
+#include <utofu.h>
+#endif
 
 #define _XMP_comm_t void
 
@@ -362,6 +365,10 @@ typedef struct xmp_coarray{
   MPI_Win win_acc;
   _XMP_nodes_t *nodes; //nodes associated with window. it is not the same as _coarrayInfo_t.nodes in xmpf_coarray_alloc.c
   //#endif
+#endif
+
+#ifdef _XMP_UTOFU
+  utofu_stadd_t *stadds;
 #endif
 }_XMP_coarray_t;
 

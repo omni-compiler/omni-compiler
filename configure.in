@@ -455,6 +455,10 @@ AC_ARG_ENABLE(fjrdma,
                           MPI3 is used instead of FJRDMA. This disable option works on only FX100 (true default)],
   [dofjrdma=no], [dofjrdma=yes])
 
+AC_ARG_ENABLE(utofu,
+  [  --enable-utofu          enable uTofu for one-sided communication.],
+  [doutofu=yes], [doutofu=no])
+
 AC_ARG_ENABLE(gnu-extension,
   [  --enable-gnu-extension  enable Fortran GNU intrinsic extension (false default).],
   [dognuext=yes], [dognuext=no])
@@ -642,6 +646,47 @@ if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$t
     # Omni F
     OMNI_F2X_FLAGS=""
     OMNI_NTV_FCFLAGS="-Free"
+    OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT_F"
+
+    # Omni Common
+    OMNI_X2X_FLAGS=""
+
+    # ranlib & ar & nm
+    AC_CHECK_PROG([RANLIB], [ranlibpx], [ranlibpx], [ranlib])
+    AC_CHECK_PROG([AR], [arpx], [arpx], [ar])
+    ARFLAGS="cr"
+    AC_CHECK_PROG([NM], [nmpx], [nmpx], [nm])
+
+elif test "x${target}" = "xFugaku-linux-gnu"; then
+    # OpenMP
+    OPENMP_OPT_C="-fopenmp"
+    OPENMP_OPT_F="-Kopenmp"
+
+    # XcalableMP
+    XMPC_DEF="-D_XCALABLEMP"
+    XMPF_DEF="-D_XCALABLEMP"
+
+    # MPI C
+    AC_CHECK_PROG([MPI_CC], [mpifccpx], [mpifccpx])
+    MPI_CFLAGS="-Nclang -O2 -std=gnu99 $OPENMP_OPT_C"
+    MPI_CPPFLAGS="-E -std=gnu99"
+    MPI_CLIBS=""
+
+    # MPI F
+    AC_CHECK_PROG([MPI_FC], [mpifrtpx], [mpifrtpx])
+    MPI_FPPFLAGS="-E -Cpp"
+    MPI_FCFLAGS="-Kfast $OPENMP_OPT_F"
+    MPI_MODINC="-M"
+    MPI_FCLIBS=""
+
+    # Omni C
+    OMNI_C2X_FLAGS=""
+    OMNI_NTV_CFLAGS="-std=gnu99 -ltofucom"
+    OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT_C"
+
+    # Omni F
+    OMNI_F2X_FLAGS=""
+    OMNI_NTV_FCFLAGS="-Free -ltofucom"
     OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT_F"
 
     # Omni Common
@@ -1476,7 +1521,7 @@ if test "x${doMPI3_ASYNC}" = "xyes"; then
 fi
 
 use_mpi3_onesided=no
-if test "x${doMPI3_ASYNC}" = "xyes" -a "x${use_gasnet}" = "xno" -a "x${target}" != "xKcomputer-linux-gnu" -a "x${target}" != "xFX10-linux-gnu" -a "x${target}" != "xFX100-linux-gnu" ; then
+if test "x${doMPI3_ASYNC}" = "xyes" -a "x${use_gasnet}" = "xno" -a "x${target}" != "xKcomputer-linux-gnu" -a "x${target}" != "xFX10-linux-gnu" -a "x${target}" != "xFX100-linux-gnu" -a "x${doutofu}" = "xno" ; then
     use_mpi3_onesided=yes
 elif test "x${dofjrdma}" = "xno"; then
     use_mpi3_onesided=yes
@@ -1484,11 +1529,15 @@ fi
 
 MPI3_ASYNC=$FALSE
 MPI3_ONESIDED=$FALSE
+UTOFU=$FALSE
 if test "x${doMPI3_ASYNC}" = "xyes"; then
     MPI3_ASYNC=$TRUE
 fi
 if test "x${use_mpi3_onesided}" = "xyes"; then
     MPI3_ONESIDED=$TRUE
+fi
+if test "x${doutofu}" = "xyes"; then
+    UTOFU=$TRUE
 fi
 
 if test "x${use_gasnet}" = "xyes"; then
@@ -1499,10 +1548,13 @@ elif test "x${target}" = "xKcomputer-linux-gnu" -o "x${target}" = "xFX10-linux-g
     if test "x${dofjrdma}" = "xyes"; then
         ONESIDED_CPPFLAGS="-D_XMP_FJRDMA"
     fi
+elif test "x${doutofu}" = "xyes"; then
+    ONESIDED_CPPFLAGS="-D_XMP_UTOFU"
 fi
 
 AC_SUBST(MPI3_ASYNC)
 AC_SUBST(MPI3_ONESIDED)
+AC_SUBST(UTOFU)
 AC_SUBST(MPI_VERSION)
 AC_SUBST(MPI_SUBVERSION)
 AC_SUBST(ONESIDED_CPPFLAGS)
@@ -2164,6 +2216,12 @@ elif test x$use_mpi3_onesided = xyes; then
 elif test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$target" = "FX100-linux-gnu"; then
     isOnesided=yes
     ONESIDED_LIB="Fujitsu RDMA"
+    isCoarray=yes
+    isPostWait=yes
+    isLockUnlock=no
+elif test x$doutofu = xyes; then
+    isOnesided=yes
+    ONESIDED_LIB="Fujitsu uTofu"
     isCoarray=yes
     isPostWait=yes
     isLockUnlock=no
