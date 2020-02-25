@@ -31,6 +31,7 @@ TRUE             = 0
 IS_GASNET        = @GASNET@
 IS_MPI3_ONESIDED = @MPI3_ONESIDED@
 IS_FJRDMA        = @FJRDMA@
+IS_UTOFU         = @UTOFU@
 IS_KCOMPUTER     = @KCOMPUTER@
 IS_FX10          = @FX10@
 IS_FX100         = @FX100@
@@ -79,6 +80,13 @@ ifeq ($(IS_FJRDMA), $(TRUE))
 	           xmp_onesided.o xmp_onesided_fjrdma.o xmp_coarray.o xmp_coarray_utils.o xmp_coarray_local.o \
 		   xmp_post_wait.o xmp_post_wait_fjrdma.o xmp_coarray_fjrdma.o xmp_intrinsic_fjrdma.o
 	CFLAGS  += -D_XMP_FJRDMA
+endif
+
+ifeq ($(IS_UTOFU), $(TRUE))
+	OBJECTS += xmpco_alloc.o xmpco_get_expr.o  xmpco_get_stmt.o  xmpco_lib.o xmpco_msg.o xmpco_params.o xmpco_put.o xmpco_sync.o \
+	           xmp_onesided.o xmp_onesided_utofu.o xmp_coarray.o xmp_coarray_utils.o xmp_coarray_local.o \
+		   xmp_post_wait.o xmp_post_wait_utofu.o xmp_coarray_utofu.o xmp_intrinsic_utofu.o
+	CFLAGS  += -D_XMP_UTOFU
 endif
 
 ifeq ($(IS_MPI3_ASYNC), $(TRUE))
