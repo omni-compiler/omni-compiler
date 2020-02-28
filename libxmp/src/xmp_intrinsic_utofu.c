@@ -18,6 +18,7 @@ static uint64_t _XMP_utofu_sync_memory_armw( const uint64_t edata,
     struct utofu_mrq_notice notice;
     ret = utofu_poll_mrq(_xmp_utofu_vcq_hdl, 0, &notice);
     if( ret != UTOFU_SUCCESS && ret != UTOFU_ERR_NOT_FOUND ) {
+      _XMP_utofu_error_check( ret );
       _XMP_fatal("_XMP_utofu_sync_memory_armw : utofu_poll_mrq not success");
     }
     if( ret == UTOFU_SUCCESS ) {

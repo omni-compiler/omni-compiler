@@ -99,6 +99,9 @@ void _xmp_utofu_wait_noargs(void)
     if( ret == UTOFU_SUCCESS ) {
       _XMP_utofu_check_mrq_notice( &notice );
     }
+    else if(ret != UTOFU_ERR_NOT_FOUND) {
+      _XMP_utofu_error_check( ret );
+    }
   }
 }
 
@@ -148,6 +151,9 @@ void _xmp_utofu_wait(const int node_num, const int tag)
     if( ret == UTOFU_SUCCESS ) {
       _XMP_utofu_check_mrq_notice( &notice );
     }
+    else if(ret != UTOFU_ERR_NOT_FOUND) {
+      _XMP_utofu_error_check( ret );
+    }
   }
 }
 
@@ -164,6 +170,9 @@ void _xmp_utofu_wait_node(const int node_num)
     ret = utofu_poll_mrq(_xmp_utofu_vcq_hdl, 0, &notice);
     if( ret == UTOFU_SUCCESS ) {
       _XMP_utofu_check_mrq_notice( &notice );
+    }
+    else if(ret != UTOFU_ERR_NOT_FOUND) {
+      _XMP_utofu_error_check( ret );
     }
   }
 }

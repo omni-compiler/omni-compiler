@@ -589,6 +589,7 @@ _XMP_UTOFU_EXTERN_ size_t _xmp_utofu_edata_flag_armw_gets;
 extern void _XMP_utofu_initialize();
 extern void _XMP_utofu_finalize();
 
+extern void _XMP_utofu_error_check(int);
 extern uint64_t _XMP_utofu_check_mrq_notice(struct utofu_mrq_notice *);
 extern void _XMP_utofu_coarray_malloc(_XMP_coarray_t *, void **, const size_t);
 extern void _XMP_utofu_regmem(_XMP_coarray_t *, void *, const size_t);

@@ -2,6 +2,164 @@
 #include "xmp.h"
 #include "xmp_internal.h"
 
+
+void _XMP_utofu_error_check( int utofu_ret )
+{
+  fprintf(stderr, "utofu return code : ");
+  switch( utofu_ret ) {
+    case UTOFU_SUCCESS:
+      fprintf(stderr, "UTOFU_SUCCESS\n");
+      break;
+    case UTOFU_ERR_NOT_FOUND:
+      fprintf(stderr, "UTOFU_ERR_NOT_FOUND\n");
+      break;
+    case UTOFU_ERR_NOT_COMPLETED:
+      fprintf(stderr, "UTOFU_ERR_NOT_COMPLETED\n");
+      break;
+    case UTOFU_ERR_NOT_PROCESSED:
+      fprintf(stderr, "UTOFU_ERR_NOT_PROCESSED\n");
+      break;
+    case UTOFU_ERR_BUSY:
+      fprintf(stderr, "UTOFU_ERR_BUSY\n");
+      break;
+    case UTOFU_ERR_USED:
+      fprintf(stderr, "UTOFU_ERR_USED\n");
+      break;
+    case UTOFU_ERR_FULL:
+      fprintf(stderr, "UTOFU_ERR_FULL\n");
+      break;
+    case UTOFU_ERR_NOT_AVAILABLE:
+      fprintf(stderr, "UTOFU_ERR_NOT_AVAILABLE\n");
+      break;
+    case UTOFU_ERR_NOT_SUPPORTED:
+      fprintf(stderr, "UTOFU_ERR_NOT_SUPPORTED\n");
+      break;
+    case UTOFU_ERR_TCQ_OTHER:
+      fprintf(stderr, "UTOFU_ERR_TCQ_OTHER\n");
+      break;
+    case UTOFU_ERR_TCQ_DESC:
+      fprintf(stderr, "UTOFU_ERR_TCQ_DESC\n");
+      break;
+    case UTOFU_ERR_TCQ_MEMORY:
+      fprintf(stderr, "UTOFU_ERR_TCQ_MEMORY\n");
+      break;
+    case UTOFU_ERR_TCQ_STADD:
+      fprintf(stderr, "UTOFU_ERR_TCQ_STADD\n");
+      break;
+    case UTOFU_ERR_TCQ_LENGTH:
+      fprintf(stderr, "UTOFU_ERR_TCQ_LENGTH\n");
+      break;
+    case UTOFU_ERR_MRQ_OTHER:
+      fprintf(stderr, "UTOFU_ERR_MRQ_OTHER\n");
+      break;
+    case UTOFU_ERR_MRQ_PEER:
+      fprintf(stderr, "UTOFU_ERR_MRQ_PEER\n");
+      break;
+    case UTOFU_ERR_MRQ_LCL_MEMORY:
+      fprintf(stderr, "UTOFU_ERR_MRQ_LCL_MEMORY\n");
+      break;
+    case UTOFU_ERR_MRQ_RMT_MEMORY:
+      fprintf(stderr, "UTOFU_ERR_MRQ_RMT_MEMORY\n");
+      break;
+    case UTOFU_ERR_MRQ_LCL_STADD:
+      fprintf(stderr, "UTOFU_ERR_MRQ_LCL_STADD\n");
+      break;
+    case UTOFU_ERR_MRQ_RMT_STADD:
+      fprintf(stderr, "UTOFU_ERR_MRQ_RMT_STADD\n");
+      break;
+    case UTOFU_ERR_MRQ_LCL_LENGTH:
+      fprintf(stderr, "UTOFU_ERR_MRQ_LCL_LENGTH\n");
+      break;
+    case UTOFU_ERR_MRQ_RMT_LENGTH:
+      fprintf(stderr, "UTOFU_ERR_MRQ_RMT_LENGTH\n");
+      break;
+    case UTOFU_ERR_BARRIER_OTHER:
+      fprintf(stderr, "UTOFU_ERR_BARRIER_OTHER\n");
+      break;
+    case UTOFU_ERR_BARRIER_MISMATCH:
+      fprintf(stderr, "UTOFU_ERR_BARRIER_MISMATCH\n");
+      break;
+    case UTOFU_ERR_INVALID_ARG:
+      fprintf(stderr, "UTOFU_ERR_INVALID_ARG\n");
+      break;
+    case UTOFU_ERR_INVALID_POINTER:
+      fprintf(stderr, "UTOFU_ERR_INVALID_POINTER\n");
+      break;
+    case UTOFU_ERR_INVALID_FLAGS:
+      fprintf(stderr, "UTOFU_ERR_INVALID_FLAGS\n");
+      break;
+    case UTOFU_ERR_INVALID_COORDS:
+      fprintf(stderr, "UTOFU_ERR_INVALID_COORDS\n");
+      break;
+    case UTOFU_ERR_INVALID_PATH:
+      fprintf(stderr, "UTOFU_ERR_INVALID_PATH\n");
+      break;
+    case UTOFU_ERR_INVALID_TNI_ID:
+      fprintf(stderr, "UTOFU_ERR_INVALID_TNI_ID\n");
+      break;
+    case UTOFU_ERR_INVALID_CQ_ID:
+      fprintf(stderr, "UTOFU_ERR_INVALID_CQ_ID\n");
+      break;
+    case UTOFU_ERR_INVALID_BG_ID:
+      fprintf(stderr, "UTOFU_ERR_INVALID_BG_ID\n");
+      break;
+    case UTOFU_ERR_INVALID_CMP_ID:
+      fprintf(stderr, "UTOFU_ERR_INVALID_CMP_ID\n");
+      break;
+    case UTOFU_ERR_INVALID_VCQ_HDL:
+      fprintf(stderr, "UTOFU_ERR_INVALID_VCQ_HDL\n");
+      break;
+    case UTOFU_ERR_INVALID_VCQ_ID:
+      fprintf(stderr, "UTOFU_ERR_INVALID_VCQ_ID\n");
+      break;
+    case UTOFU_ERR_INVALID_VBG_ID:
+      fprintf(stderr, "UTOFU_ERR_INVALID_VBG_ID\n");
+      break;
+    case UTOFU_ERR_INVALID_PATH_ID:
+      fprintf(stderr, "UTOFU_ERR_INVALID_PATH_ID\n");
+      break;
+    case UTOFU_ERR_INVALID_STADD:
+      fprintf(stderr, "UTOFU_ERR_INVALID_STADD\n");
+      break;
+    case UTOFU_ERR_INVALID_ADDRESS:
+      fprintf(stderr, "UTOFU_ERR_INVALID_ADDRESS\n");
+      break;
+    case UTOFU_ERR_INVALID_SIZE:
+      fprintf(stderr, "UTOFU_ERR_INVALID_SIZE\n");
+      break;
+    case UTOFU_ERR_INVALID_STAG:
+      fprintf(stderr, "UTOFU_ERR_INVALID_STAG\n");
+      break;
+    case UTOFU_ERR_INVALID_EDATA:
+      fprintf(stderr, "UTOFU_ERR_INVALID_EDATA\n");
+      break;
+    case UTOFU_ERR_INVALID_NUMBER:
+      fprintf(stderr, "UTOFU_ERR_INVALID_NUMBER\n");
+      break;
+    case UTOFU_ERR_INVALID_OP:
+      fprintf(stderr, "UTOFU_ERR_INVALID_OP\n");
+      break;
+    case UTOFU_ERR_INVALID_DESC:
+      fprintf(stderr, "UTOFU_ERR_INVALID_DESC\n");
+      break;
+    case UTOFU_ERR_INVALID_DATA:
+      fprintf(stderr, "UTOFU_ERR_INVALID_DATA\n");
+      break;
+    case UTOFU_ERR_OUT_OF_RESOURCE:
+      fprintf(stderr, "UTOFU_ERR_OUT_OF_RESOURCE\n");
+      break;
+    case UTOFU_ERR_OUT_OF_MEMORY:
+      fprintf(stderr, "UTOFU_ERR_OUT_OF_MEMORY\n");
+      break;
+    case UTOFU_ERR_FATAL:
+      fprintf(stderr, "UTOFU_ERR_FATAL\n");
+      break;
+    default:
+      fprintf(stderr, "unknown return code : %d\n", utofu_ret);
+  }
+}
+
+
 // for bsearch >>>
 typedef struct _XMP_utofu_vcqid_table {
   int rank;
@@ -214,7 +372,7 @@ static void _utofu_mput(const size_t target_rank,
 static void _utofu_scalar_mput_do(const size_t target_rank,
                                   utofu_stadd_t* dst_stadds, utofu_stadd_t* src_stadds,
                                   size_t* lengths, const size_t transfer_elmts,
-                                  const size_t elmt_size, const uint64_t edata,
+                                  const uint64_t edata,
                                   const unsigned long int post_flags, const uintptr_t cbvalue)
 {
   _utofu_mput(target_rank, dst_stadds, src_stadds, lengths, 0, transfer_elmts,
@@ -222,9 +380,7 @@ static void _utofu_scalar_mput_do(const size_t target_rank,
 }
 
 
-static void _XMP_utofu_sync_memory_get( const uint64_t edata,
-                                        const unsigned long int post_flags,
-                                        const uintptr_t cbvalue )
+static void _XMP_utofu_sync_memory_get( const unsigned long int post_flags )
 {
   int ret;
 
@@ -240,6 +396,7 @@ static void _XMP_utofu_sync_memory_get( const uint64_t edata,
     struct utofu_mrq_notice notice;
     ret = utofu_poll_mrq(_xmp_utofu_vcq_hdl, 0, &notice);
     if( ret != UTOFU_SUCCESS && ret != UTOFU_ERR_NOT_FOUND ) {
+      _XMP_utofu_error_check( ret );
       _XMP_fatal("_XMP_utofu_sync_memory_get : utofu_poll_mrq not success");
     }
     if( ret == UTOFU_SUCCESS )
@@ -247,18 +404,14 @@ static void _XMP_utofu_sync_memory_get( const uint64_t edata,
   }
 }
 
-static void _XMP_utofu_sync_memory_get_all( const uint64_t edata,
-                                            const unsigned long int post_flags,
-                                            const uintptr_t cbvalue )
+static void _XMP_utofu_sync_memory_get_all( const unsigned long int post_flags )
 {
   while( _xmp_utofu_num_of_gets != 0 ) {
-    _XMP_utofu_sync_memory_get( edata, post_flags, cbvalue );
+    _XMP_utofu_sync_memory_get( post_flags );
   }
 }
 
-static void _XMP_utofu_sync_memory_put( const uint64_t edata,
-                                        const unsigned long int post_flags,
-                                        const uintptr_t cbvalue )
+static void _XMP_utofu_sync_memory_put( const unsigned long int post_flags )
 {
   int ret;
 
@@ -274,6 +427,7 @@ static void _XMP_utofu_sync_memory_put( const uint64_t edata,
     struct utofu_mrq_notice notice;
     ret = utofu_poll_mrq(_xmp_utofu_vcq_hdl, 0, &notice);
     if( ret != UTOFU_SUCCESS && ret != UTOFU_ERR_NOT_FOUND ) {
+      _XMP_utofu_error_check( ret );
       _XMP_fatal("_XMP_utofu_sync_memory_put : utofu_poll_mrq not success");
     }
     if( ret == UTOFU_SUCCESS )
@@ -281,12 +435,10 @@ static void _XMP_utofu_sync_memory_put( const uint64_t edata,
   }
 }
 
-static void _XMP_utofu_sync_memory_put_all( const uint64_t edata,
-                                            const unsigned long int post_flags,
-                                            const uintptr_t cbvalue )
+static void _XMP_utofu_sync_memory_put_all( const unsigned long int post_flags )
 {
   while( _xmp_utofu_num_of_puts != 0 ) {
-    _XMP_utofu_sync_memory_put( edata, post_flags, cbvalue );
+    _XMP_utofu_sync_memory_put( post_flags );
   }
 }
 
@@ -315,14 +467,14 @@ void _XMP_utofu_contiguous_put(const int target_rank, const uint64_t dst_offset,
     for( size_t i = 0; i < dst_elmts; i++ ) dst_stadds[i] = dst_stadd + i * elmt_size;
     for( size_t i = 0; i < dst_elmts; i++ ) src_stadds[i] = src_stadd;
     for( size_t i = 0; i < dst_elmts; i++ ) lengths[i]    = elmt_size;
-    _utofu_scalar_mput_do(target_rank, dst_stadds, src_stadds, lengths, dst_elmts, elmt_size,
+    _utofu_scalar_mput_do(target_rank, dst_stadds, src_stadds, lengths, dst_elmts,
                           edata, post_flags, cbvalue);
   }
   else{
     _XMP_fatal("_XMP_utofu_contiguous_put : error");
   }
 
-  _XMP_utofu_sync_memory_put_all( edata, post_flags, cbvalue );
+  _XMP_utofu_sync_memory_put_all( post_flags );
 }
 
 
@@ -349,7 +501,7 @@ static void _utofu_contiguous_put(const int target_rank, const uint64_t dst_offs
   _utofu_put( target_rank, src_stadd, dst_stadd,
               transfer_size, edata, post_flags, cbvalue );
 
-  _XMP_utofu_sync_memory_put_all( edata, post_flags, cbvalue );
+  _XMP_utofu_sync_memory_put_all( post_flags );
 
   if(src_desc == NULL)
     utofu_dereg_mem(_xmp_utofu_vcq_hdl, src_stadd, 0);
@@ -390,7 +542,7 @@ static void _utofu_NON_contiguous_general_mput(const int target_rank,
   _XMP_set_coarray_addresses_with_chunk(src_stadds, src_stadd, src_info, src_dims, copy_chunk, copy_elmts);
   for(size_t i=0;i<copy_elmts;i++) lengths[i] = copy_chunk;
 
-  _utofu_scalar_mput_do(target_rank, dst_stadds, src_stadds, lengths, copy_elmts, elmt_size,
+  _utofu_scalar_mput_do(target_rank, dst_stadds, src_stadds, lengths, copy_elmts,
                         edata, post_flags, cbvalue);
 }
 
@@ -428,7 +580,7 @@ static void _utofu_NON_contiguous_put(const int target_rank, const uint64_t dst_
                                        edata, post_flags, cbvalue);
   }
 
-  _XMP_utofu_sync_memory_put_all( edata, post_flags, cbvalue );
+  _XMP_utofu_sync_memory_put_all( post_flags );
 
   if(src_desc == NULL)
     utofu_dereg_mem(_xmp_utofu_vcq_hdl, src_stadd, 0);
@@ -463,9 +615,9 @@ static void _utofu_scalar_mput(const int target_rank,
   for( size_t i = 0; i < transfer_elmts; i++ ) src_stadds[i] = src_stadd;
   for( size_t i = 0; i < transfer_elmts; i++ ) lengths[i] = elmt_size;
 
-  _utofu_scalar_mput_do(target_rank, dst_stadds, src_stadds, lengths, transfer_elmts, elmt_size,
+  _utofu_scalar_mput_do(target_rank, dst_stadds, src_stadds, lengths, transfer_elmts,
                         edata, post_flags, cbvalue);
-  _XMP_utofu_sync_memory_put_all( edata, post_flags, cbvalue );
+  _XMP_utofu_sync_memory_put_all( post_flags );
 
   if(src_desc == NULL)
     utofu_dereg_mem(_xmp_utofu_vcq_hdl, src_stadd, 0);
@@ -592,12 +744,12 @@ void _XMP_utofu_contiguous_get(const int target_rank, const _XMP_coarray_t *dst_
   if(dst_elmts == src_elmts){
     _utofu_get( target_rank, lcl_stadd, rmt_stadd,
                 transfer_size, edata, post_flags, cbvalue );
-    _XMP_utofu_sync_memory_get_all( edata, post_flags, cbvalue );
+    _XMP_utofu_sync_memory_get_all( post_flags );
   }
   else if(src_elmts == 1){
     _utofu_get( target_rank, lcl_stadd, rmt_stadd,
                 elmt_size, edata, post_flags, cbvalue );
-    _XMP_utofu_sync_memory_get_all( edata, post_flags, cbvalue );
+    _XMP_utofu_sync_memory_get_all( post_flags );
 
     char *dst = dst_desc->real_addr + dst_offset;
     for( size_t i = 1; i < dst_elmts; i++ )
@@ -631,7 +783,7 @@ static void _utofu_contiguous_get(const int target_rank, const uint64_t dst_offs
   _utofu_get( target_rank, lcl_stadd, rmt_stadd,
               transfer_size, edata, post_flags, cbvalue );
 
-  _XMP_utofu_sync_memory_get_all( edata, post_flags, cbvalue );
+  _XMP_utofu_sync_memory_get_all( post_flags );
 
   if(dst_desc == NULL)
     utofu_dereg_mem(_xmp_utofu_vcq_hdl, lcl_stadd, 0);
@@ -710,7 +862,7 @@ static void _utofu_NON_contiguous_get(const int target_rank, const uint64_t dst_
                                        edata, post_flags, cbvalue);
   }
 
-  _XMP_utofu_sync_memory_get_all( edata, post_flags, cbvalue );
+  _XMP_utofu_sync_memory_get_all( post_flags );
 
   if(dst_desc == NULL)
     utofu_dereg_mem(_xmp_utofu_vcq_hdl, lcl_stadd, 0);
@@ -740,7 +892,7 @@ static void _utofu_scalar_mget(const int target_rank,
   }
 
   _utofu_get( target_rank, lcl_stadd, rmt_stadd, elmt_size, edata, post_flags, cbvalue );
-  _XMP_utofu_sync_memory_get_all( edata, post_flags, cbvalue );
+  _XMP_utofu_sync_memory_get_all( post_flags );
 
   char *src_addr = dst + dst_offset;
   char *dst_addr = src_addr;
@@ -813,6 +965,7 @@ void _XMP_utofu_sync_memory(void)
     struct utofu_mrq_notice notice;
       ret = utofu_poll_mrq(_xmp_utofu_vcq_hdl, 0, &notice);
     if( ret != UTOFU_SUCCESS && ret != UTOFU_ERR_NOT_FOUND ) {
+      _XMP_utofu_error_check( ret );
       _XMP_fatal("_XMP_utofu_sync_memory : utofu_poll_mrq not success");
     }
     if( ret == UTOFU_SUCCESS )
@@ -903,6 +1056,9 @@ static void _wait_sync_images(const int num, int *rank_set)
     ret = utofu_poll_mrq(_xmp_utofu_vcq_hdl, 0, &notice);
     if( ret == UTOFU_SUCCESS ) {
       _XMP_utofu_check_mrq_notice( &notice );
+    }
+    else if( ret != UTOFU_ERR_NOT_FOUND) {
+      _XMP_utofu_error_check( ret );
     }
   }
 }
