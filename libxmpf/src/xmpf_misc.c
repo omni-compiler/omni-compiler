@@ -18,7 +18,7 @@ void xmpf_init_all__()
   _xmp_pack_array = _XMPF_pack_array;
   _xmp_unpack_array = _XMPF_unpack_array;
 
-#if defined(_XMP_GASNET) || defined(_XMP_FJRDMA) || defined(_XMP_MPI3_ONESIDED)
+#if defined(_XMP_GASNET) || defined(_XMP_FJRDMA) || defined(_XMP_MPI3_ONESIDED) || defined(_XMP_UTOFU)
   /* for Coarray Fortran environment */
   _XMPF_coarray_init();
 #endif
