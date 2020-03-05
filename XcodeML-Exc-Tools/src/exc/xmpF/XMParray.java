@@ -504,7 +504,7 @@ public class XMParray {
 	sizeExprs[i] = Xcons.FindexRangeOfAssumedShape();
       localType = Xtype.Farray(elementType,sizeExprs);
       localType.setTypeQualFlags(type.getTypeQualFlags());
-      localType.setIsFallocatable(true);
+      if (!localType.isFpointer()) localType.setIsFallocatable(true);
       break;
     default:
       XMP.fatal("XMP_array: unknown sclass");
@@ -820,12 +820,12 @@ public class XMParray {
 			      template.getDescId().Ref());
     b.add(f.callSubroutine(args));
 
+    if(type.isFallocatable() || type.isFpointer()) return;
+    
     f = env.declInternIdent(XMP.init_allocated_f, Xtype.FsubroutineType, block);
     args = Xcons.List(descId.Ref());
     b.add(f.callSubroutine(args));
 
-    if(type.isFallocatable()) return;
-    
     Ident sizeArray = null;
     if (type.isFassumedShape())
       sizeArray = env.declOrGetSizeArray(block);
@@ -1121,8 +1121,8 @@ public class XMParray {
   /*
    * rewrite Deallocate for aligned arrays
    */
-    public void rewriteDeallocate(XobjList dealloc, Statement st,
-				  Block block, XMPenv env){
+  public void rewriteDeallocate(XobjList dealloc, Statement st,
+				Block block, XMPenv env){
     Ident f;
 
     // deallocate desc
@@ -1133,6 +1133,50 @@ public class XMParray {
 
   }
   
+  /*
+   * rewrite pointer assignment for aligned arrays
+   */
+  public void rewritePointerAssign(XMParray rhs_array, Statement st,
+				   Block block, XMPenv env){
+
+    Ident f;
+    Xobject args;
+
+    // Following codes come from XMParray.buildConstructor
+    f = env.declInternIdent(XMP.init_allocated_f, Xtype.FsubroutineType, block);
+    args = Xcons.List(descId.Ref());
+    st.insert(f.callSubroutine(args));
+
+    f = env.declInternIdent(XMP.assign_align_info_f, Xtype.FsubroutineType, block);
+    args = Xcons.List(descId.Ref(), rhs_array.getDescId().Ref());
+    st.insert(f.callSubroutine(args));
+    
+    if(hasShadow()){
+      f = env.declInternIdent(XMP.array_init_shadow_f,Xtype.FsubroutineType, block);
+      for(int i = 0; i < dims.size(); i++){
+  	if(hasShadow(i)){
+  	  int left = getShadowLeft(i);
+  	  int right = getShadowRight(i);
+  	  if(isFullShadow(i)) left = right = -1;
+  	  args = Xcons.List(descId.Ref(),
+  			    Xcons.IntConstant(i),
+  			    Xcons.IntConstant(left),
+  			    Xcons.IntConstant(right));
+  	  st.insert(f.callSubroutine(args));
+  	}
+      }
+    }
+
+    f = env.declInternIdent(XMP.array_init_f,Xtype.FsubroutineType, block);
+    st.insert(f.callSubroutine(Xcons.List(descId.Ref())));
+      
+    // set
+    f = env.declInternIdent(XMP.array_set_local_array_f,Xtype.FsubroutineType, block);
+    Xobject isCoarray = (sclass == StorageClass.FSAVE) ? Xcons.IntConstant(1) : Xcons.IntConstant(0);
+    st.add(f.callSubroutine(Xcons.List(descId.Ref(), localId.Ref(), isCoarray)));
+
+  }
+
   public void buildSetup(BlockList body, XMPenv env){
     Ident f;
     Xobject args;
