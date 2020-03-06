@@ -406,8 +406,11 @@ void xmpf_assign_align_info__(_XMP_array_t **a_desc, _XMP_array_t **b_desc)
   _XMP_array_t *b = *b_desc;
   
   // check if the align targeta are identical.
+
   // NOTE: the matching of the rank and type should be checked by the frontend and the backend compiler.
-  //       the matching of "alignment" (i.e. correspondence of the axes and align-subscripts) is ignored.
+  //       the matching of "alignment" (i.e. correspondence of the axes and align-subscripts) and
+  //       the shadow attribute is ignored but should have been done by the translator.
+
   if (a->align_template != b->align_template) _XMP_fatal("The arrays on a pointer assignment must be "
 							 "aligned with an identical template.");
 

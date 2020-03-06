@@ -1136,13 +1136,14 @@ public class XMParray {
   /*
    * rewrite pointer assignment for aligned arrays
    */
-  public void rewritePointerAssign(XMParray rhs_array, Statement st,
+  public void rewritePointerAssign(Xobject pointer_assign, XMParray rhs_array, Statement st,
 				   Block block, XMPenv env){
 
     Ident f;
     Xobject args;
 
     // Following codes come from XMParray.buildConstructor
+
     f = env.declInternIdent(XMP.init_allocated_f, Xtype.FsubroutineType, block);
     args = Xcons.List(descId.Ref());
     st.insert(f.callSubroutine(args));
@@ -1167,6 +1168,29 @@ public class XMParray {
       }
     }
 
+    // Following codes come from XMParray.buildConstructor
+    f = env.declInternIdent(XMP.init_allocated_f, Xtype.FsubroutineType, block);
+    args = Xcons.List(descId.Ref());
+    st.insert(f.callSubroutine(args));
+
+    f = env.declInternIdent(XMP.array_align_info_f,Xtype.FsubroutineType, block);
+
+    // translate the statement (lower bounds to be zero if the axis is distributed)
+    XobjList spec = Xcons.List();
+    for (int i = 0; i < dims.size(); i++){
+      if (isDistributed(i)){
+    	// distributed
+    	spec.add(Xcons.FindexRangeOfAssumedShape(Xcons.IntConstant(0)));
+      }
+      else {
+    	// not distributed
+    	spec.add(Xcons.FindexRangeOfAssumedShape(this.getLowerAt(i)));
+      }
+    }
+      
+    pointer_assign.setArg(0, Xcons.FarrayRef(localId.Ref(), spec));
+    //pointer_assign.setArg(1, rhs_array.getLocalId().Ref());
+      
     f = env.declInternIdent(XMP.array_init_f,Xtype.FsubroutineType, block);
     st.insert(f.callSubroutine(Xcons.List(descId.Ref())));
       

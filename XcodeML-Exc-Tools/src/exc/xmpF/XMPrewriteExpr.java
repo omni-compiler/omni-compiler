@@ -70,7 +70,7 @@ public class XMPrewriteExpr
 	    XMParray rhs_array = XMParray.getArray(rhs_id);
 	    if (rhs_array == null) break;
 
-	    lhs_array.rewritePointerAssign(rhs_array, st, fb, env);
+	    lhs_array.rewritePointerAssign(x, rhs_array, st, fb, env);
 
 	    break;
 	  }
