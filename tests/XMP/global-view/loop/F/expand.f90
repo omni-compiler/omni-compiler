@@ -4,33 +4,28 @@ program test
   !$xmp template t(8,8)
   !$xmp distribute t(block,block) onto p
 
-  integer a(8,8,8)
+  integer a(8,8)
   !$xmp align a(i,j) with t(i,j)
   !$xmp shadow a(1,1)
 
-  integer b(8,8,8)
+  integer b(8,8)
   !$xmp align b(i,j) with t(i,j)
   !$xmp shadow b(1,1)
 
-  integer c(8,8,8)
-  !$xmp align a(i,j) with t(i,j)
-  !$xmp shadow a(1,1)
-
   integer result = 0
   
-
-  !$xmp loop on t(i,j)
-  do j = 1, 8
-     do i = 1, 8
-        b(i,j) = i * 10 + j
-     end do
-  end do
-  
   !$xmp array on t
-  a = 
+  a = 1
 
   !$xmp reflect (a) width(/periodic/1,/periodic/1)
 
+  !$xmp loop on t(i,j) expand(/unbound/1,/unbound/1)
+  do j = 1, 8
+     do i = 1, 8
+        b(i,j) = 1
+     end do
+  end do
+  
   !$xmp loop on t(i,j) expand(/unbound/1,/unbound/1) reduction(+:result)
   do j = 1, 8
      do i = 1, 8
