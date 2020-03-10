@@ -607,10 +607,10 @@ extern void _XMP_utofu_get(const int, const int, const int,
                     const int, const int, const _XMP_array_section_t *, 
                     const _XMP_array_section_t *, const _XMP_coarray_t *,
                     const _XMP_coarray_t *, void *, const size_t, const size_t);
-extern void _XMP_utofu_sync_all();
-extern void _XMP_utofu_sync_memory();
+extern void _XMP_utofu_sync_all(void);
+extern void _XMP_utofu_sync_memory(void);
 extern void _XMP_utofu_sync_images(const int, int*, int*);
-extern void _XMP_utofu_build_sync_images_table();
+extern void _XMP_utofu_build_sync_images_table(void);
 
 extern void _XMP_utofu_atomic_define(int, _XMP_coarray_t *, size_t, int, size_t);
 extern void _XMP_utofu_atomic_ref(int, _XMP_coarray_t *, size_t, int *, size_t);

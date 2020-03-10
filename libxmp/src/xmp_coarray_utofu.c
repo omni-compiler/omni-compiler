@@ -720,7 +720,7 @@ static void _utofu_mget(const size_t target_rank,
 static void _utofu_scalar_mget_do(const size_t target_rank,
                                   utofu_stadd_t* lcl_stadds, utofu_stadd_t* rmt_stadds,
                                   size_t* lengths, const size_t transfer_elmts,
-                                  const size_t elmt_size, const uint64_t edata,
+                                  const uint64_t edata,
                                   const unsigned long int post_flags, const uintptr_t cbvalue)
 {
   _utofu_mget(target_rank, lcl_stadds, rmt_stadds, lengths, 0, transfer_elmts,
@@ -824,7 +824,7 @@ static void _utofu_NON_contiguous_general_mget(const int target_rank,
   _XMP_set_coarray_addresses_with_chunk(rmt_stadds, rmt_stadd, src_info, src_dims, copy_chunk, copy_elmts);
   for(size_t i=0;i<copy_elmts;i++) lengths[i] = copy_chunk;
 
-  _utofu_scalar_mget_do(target_rank, lcl_stadds, rmt_stadds, lengths, copy_elmts, elmt_size,
+  _utofu_scalar_mget_do(target_rank, lcl_stadds, rmt_stadds, lengths, copy_elmts,
                         edata, post_flags, cbvalue);
 }
 
@@ -981,7 +981,7 @@ void _XMP_utofu_sync_all(void)
   MPI_Barrier(comm);
 }
 
-void _XMP_utofu_build_sync_images_table()
+void _XMP_utofu_build_sync_images_table(void)
 {
   _sync_images_table = malloc(sizeof(unsigned int) * _XMP_world_size);
 
