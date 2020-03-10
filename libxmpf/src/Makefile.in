@@ -116,6 +116,7 @@ endif
 
 ifeq ($(IS_UTOFU), $(TRUE))
     CFLAGS  += -D_XMP_UTOFU
+    FCFLAGS += -D_XMP_UTOFU
 endif
 
 ifeq ($(IS_SUPERUX), $(TRUE))
