@@ -2,7 +2,7 @@
 #include "xmp.h"
 #include "xmp_internal.h"
 
-
+// Check return code of utofu function
 void _XMP_utofu_error_check( int utofu_ret )
 {
   fprintf(stderr, "utofu return code : ");
@@ -160,11 +160,16 @@ void _XMP_utofu_error_check( int utofu_ret )
 }
 
 
-// for bsearch >>>
+// for sync images >>>
 typedef struct _XMP_utofu_vcqid_table {
   int rank;
   utofu_vcq_id_t vcqid;
 } _XMP_utofu_vcqid_t;
+
+static _XMP_utofu_vcqid_t *_xmp_utofu_vcqid_t;
+static unsigned int *_sync_images_table;
+static utofu_stadd_t _lcl_stadd;
+static utofu_stadd_t *_rmt_stadds;
 
 int compare_vcqid_table(const void *a, const void *b)
 {
@@ -172,13 +177,6 @@ int compare_vcqid_table(const void *a, const void *b)
   else if( ((_XMP_utofu_vcqid_t*)a)->vcqid > ((_XMP_utofu_vcqid_t*)b)->vcqid ) return  1;
   else return 0;
 }
-
-static _XMP_utofu_vcqid_t *_xmp_utofu_vcqid_t;
-// <<< for bsearch
-
-static unsigned int *_sync_images_table;
-static utofu_stadd_t _lcl_stadd;
-static utofu_stadd_t *_rmt_stadds;
 
 static void _add_sync_images_table_rank(const int rank)
 {
@@ -198,6 +196,7 @@ static void _add_sync_images_table_vcqid(const utofu_vcq_id_t vcqid)
     _sync_images_table[p->rank]++;
   }
 }
+// <<< for sync images
 
 uint64_t _XMP_utofu_check_mrq_notice( struct utofu_mrq_notice *notice )
 {
