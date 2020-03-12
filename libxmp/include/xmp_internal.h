@@ -414,7 +414,7 @@ extern void _XMP_threads_finalize(void);
 #endif
 
 // ----- for coarray & post/wait -------------------
-#if defined(_XMP_GASNET) || defined(_XMP_FJRDMA) || defined(_XMP_TCA) || defined(_XMP_MPI3_ONESIDED)
+#if defined(_XMP_GASNET) || defined(_XMP_FJRDMA) || defined(_XMP_TCA) || defined(_XMP_MPI3_ONESIDED) || defined(_XMP_UTOFU)
 #define _XMP_DEFAULT_ONESIDED_HEAP_SIZE   "27M"
 #define _XMP_DEFAULT_ONESIDED_STRIDE_SIZE "5M"
 /* Momo:
@@ -443,6 +443,23 @@ extern void _XMP_stride_memcpy_4dim(char *, const char *, const _XMP_array_secti
 extern void _XMP_stride_memcpy_5dim(char *, const char *, const _XMP_array_section_t *, size_t, const int);
 extern void _XMP_stride_memcpy_6dim(char *, const char *, const _XMP_array_section_t *, size_t, const int);
 extern void _XMP_stride_memcpy_7dim(char *, const char *, const _XMP_array_section_t *, size_t, const int);
+
+extern void _XMP_set_coarray_addresses_with_chunk(uint64_t *, const uint64_t, const _XMP_array_section_t *, const int, const size_t, const size_t);
+extern void _XMP_set_coarray_addresses(const uint64_t, const _XMP_array_section_t *, const int, const size_t, uint64_t *);
+extern int _is_all_element(const _XMP_array_section_t *, int);
+extern int _check_round(const _XMP_array_section_t *, const int);
+extern int _is_constant_stride_1dim();
+extern int _is_constant_stride_2dim(const _XMP_array_section_t *);
+extern int _is_constant_stride_3dim(const _XMP_array_section_t *);
+extern int _is_constant_stride_4dim(const _XMP_array_section_t *);
+extern int _is_constant_stride_5dim(const _XMP_array_section_t *);
+extern int _is_constant_stride_6dim(const _XMP_array_section_t *);
+extern int _is_constant_stride_7dim(const _XMP_array_section_t *);
+extern int _is_the_same_shape_except_for_start(const _XMP_array_section_t *, const _XMP_array_section_t *, const int, const int);
+extern int _XMP_is_the_same_constant_stride(const _XMP_array_section_t *, const _XMP_array_section_t *, const int, const int);
+// extern size_t _XMP_calc_stride(const _XMP_array_section_t *, const int, const size_t);
+extern long _XMP_calc_stride(const _XMP_array_section_t *, const int, const size_t);
+
 extern _Bool _XMP_check_overlapping(const char *dst_start, const char *dst_end, const char *src_start, const char *src_end);
 extern void _XMP_local_contiguous_copy(char *, const char *, const size_t, const size_t, const size_t);
 extern size_t _XMP_calc_max_copy_chunk(const int, const int, const _XMP_array_section_t *, const _XMP_array_section_t *);
@@ -546,6 +563,64 @@ extern void _XMP_fjrdma_sync_memory_put();
 extern void _XMP_fjrdma_sync_memory_get();
 extern void _XMP_fjrdma_atomic_define(int, _XMP_coarray_t*, size_t, int, _XMP_coarray_t*, size_t, size_t);
 extern void _XMP_fjrdma_atomic_ref(int, _XMP_coarray_t*, size_t, int*, _XMP_coarray_t*, size_t, size_t);
+#endif
+
+#ifdef _XMP_UTOFU
+#include <utofu.h>
+
+#ifndef _XMP_UTOFU_EXTERN_
+#define _XMP_UTOFU_EXTERN_ extern
+#endif
+_XMP_UTOFU_EXTERN_ utofu_tni_id_t              _xmp_utofu_tni_id;
+_XMP_UTOFU_EXTERN_ struct utofu_onesided_caps *_xmp_utofu_onesided_caps;
+_XMP_UTOFU_EXTERN_ utofu_vcq_hdl_t             _xmp_utofu_vcq_hdl;
+_XMP_UTOFU_EXTERN_ utofu_vcq_id_t             *_xmp_utofu_vcq_ids;
+_XMP_UTOFU_EXTERN_ utofu_vcq_id_t             *_xmp_utofu_vcq_ids_org;
+_XMP_UTOFU_EXTERN_ int _xmp_utofu_num_of_puts;
+_XMP_UTOFU_EXTERN_ int _xmp_utofu_num_of_gets;
+_XMP_UTOFU_EXTERN_ size_t _xmp_utofu_edata_flag_sync_images;
+_XMP_UTOFU_EXTERN_ size_t _xmp_utofu_edata_flag_armw_puts;
+_XMP_UTOFU_EXTERN_ size_t _xmp_utofu_edata_flag_armw_gets;
+#undef _XMP_UTOFU_EXTERN_
+
+#define _XMP_UTOFU_COARRAY_PUT_POST_FLAGS (UTOFU_ONESIDED_FLAG_TCQ_NOTICE | UTOFU_ONESIDED_FLAG_LOCAL_MRQ_NOTICE | UTOFU_ONESIDED_FLAG_STRONG_ORDER)
+#define _XMP_UTOFU_COARRAY_GET_POST_FLAGS (UTOFU_ONESIDED_FLAG_TCQ_NOTICE | UTOFU_ONESIDED_FLAG_LOCAL_MRQ_NOTICE | UTOFU_ONESIDED_FLAG_STRONG_ORDER)
+
+extern void _XMP_utofu_initialize();
+extern void _XMP_utofu_finalize();
+
+extern void _XMP_utofu_error_check(int);
+extern uint64_t _XMP_utofu_check_mrq_notice(struct utofu_mrq_notice *);
+extern void _XMP_utofu_coarray_malloc(_XMP_coarray_t *, void **, const size_t);
+extern void _XMP_utofu_regmem(_XMP_coarray_t *, void *, const size_t);
+extern void _XMP_utofu_deallocate(_XMP_coarray_t *);
+extern void _XMP_utofu_coarray_lastly_deallocate();
+extern void _XMP_utofu_contiguous_put(const int, const uint64_t, const uint64_t, const _XMP_coarray_t *, 
+				     const _XMP_coarray_t *, const size_t, const size_t, const size_t);
+extern void _XMP_utofu_put(const int, const int, const int,
+                    const int, const int, const _XMP_array_section_t *,
+                    const _XMP_array_section_t *, const _XMP_coarray_t *,
+                    const _XMP_coarray_t *, void *, const size_t, const size_t);
+extern void _XMP_utofu_contiguous_get(const int, const _XMP_coarray_t *, const _XMP_coarray_t *,
+				     const uint64_t, const uint64_t, const size_t, const size_t, const size_t);
+extern void _XMP_utofu_get(const int, const int, const int,
+                    const int, const int, const _XMP_array_section_t *, 
+                    const _XMP_array_section_t *, const _XMP_coarray_t *,
+                    const _XMP_coarray_t *, void *, const size_t, const size_t);
+extern void _XMP_utofu_sync_all(void);
+extern void _XMP_utofu_sync_memory(void);
+extern void _XMP_utofu_sync_images(const int, int*, int*);
+extern void _XMP_utofu_build_sync_images_table(void);
+
+extern void _XMP_utofu_atomic_define(int, _XMP_coarray_t *, size_t, int, size_t);
+extern void _XMP_utofu_atomic_ref(int, _XMP_coarray_t *, size_t, int *, size_t);
+
+extern void _xmp_utofu_post_wait_initialize();
+extern void _xmp_utofu_add_postreq(const utofu_vcq_id_t, const int);
+extern void _xmp_utofu_post(const int, const int);
+extern void _xmp_utofu_wait_noargs();
+extern void _xmp_utofu_wait(const int, const int);
+extern void _xmp_utofu_wait_node(const int);
 #endif
 
 #ifdef _XMP_TCA

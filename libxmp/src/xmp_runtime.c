@@ -51,7 +51,7 @@ void _XMP_init(int argc, char** argv, MPI_Comm comm)
     _XMP_init_tca();
 #endif
 
-#if defined(_XMP_GASNET) || defined(_XMP_FJRDMA) || defined(_XMP_TCA) || defined(_XMP_MPI3_ONESIDED)
+#if defined(_XMP_GASNET) || defined(_XMP_FJRDMA) || defined(_XMP_TCA) || defined(_XMP_MPI3_ONESIDED) || defined(_XMP_UTOFU)
     _XMP_initialize_onesided_functions();
 #endif
 #ifdef _XMP_MPI3
@@ -75,7 +75,7 @@ void _XMP_finalize(bool isFinalize)
   if (_XMP_runtime_working) {
     xmpc_traverse_finalize();
     
-#if defined(_XMP_GASNET) || defined(_XMP_FJRDMA) || defined(_XMP_TCA) || defined(_XMP_MPI3_ONESIDED)
+#if defined(_XMP_GASNET) || defined(_XMP_FJRDMA) || defined(_XMP_TCA) || defined(_XMP_MPI3_ONESIDED) || defined(_XMP_UTOFU)
     _XMP_finalize_onesided_functions();
 #endif
     _XMP_finalize_world(isFinalize);

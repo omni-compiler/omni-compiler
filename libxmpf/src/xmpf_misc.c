@@ -18,7 +18,7 @@ void xmpf_init_all__()
   _xmp_pack_array = _XMPF_pack_array;
   _xmp_unpack_array = _XMPF_unpack_array;
 
-#if defined(_XMP_GASNET) || defined(_XMP_FJRDMA) || defined(_XMP_MPI3_ONESIDED)
+#if defined(_XMP_GASNET) || defined(_XMP_FJRDMA) || defined(_XMP_MPI3_ONESIDED) || defined(_XMP_UTOFU)
   /* for Coarray Fortran environment */
   _XMPF_coarray_init();
 #endif
@@ -34,7 +34,7 @@ void xmpf_finalize_all__()
   if(! xmp_get_ruuning()) return;
 
   //  xmpf_dbg_printf("sched = %f, start = %f, wait = %f\n", t_sched, t_start, t_wait);
-#if defined(_XMP_GASNET) || defined(_XMP_FJRDMA) || defined(_XMP_MPI3_ONESIDED)
+#if defined(_XMP_GASNET) || defined(_XMP_FJRDMA) || defined(_XMP_MPI3_ONESIDED) || defined(_XMP_UTOFU)
   _XMPF_coarray_finalize();
 #endif
   xmpf_finalize_each__();

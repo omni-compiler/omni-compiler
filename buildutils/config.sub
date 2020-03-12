@@ -720,6 +720,10 @@ case $basic_machine in
 	        basic_machine=FX100
   	        os=-linux
 	        ;;
+	Fugaku)
+	        basic_machine=Fugaku
+  	        os=-linux
+	        ;;
         KNC)
 	        basic_machine=KNC
                 os=-linux

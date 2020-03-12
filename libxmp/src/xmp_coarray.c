@@ -343,6 +343,8 @@ void _XMP_coarray_malloc(void **coarray_desc, void *addr)
   _XMP_gasnet_coarray_malloc(*coarray_desc, addr, (size_t)transfer_size);
 #elif _XMP_FJRDMA
   _XMP_fjrdma_coarray_malloc(*coarray_desc, addr, (size_t)transfer_size);
+#elif _XMP_UTOFU
+  _XMP_utofu_coarray_malloc(*coarray_desc, addr, (size_t)transfer_size);
 #elif _XMP_MPI3_ONESIDED
   _XMP_mpi_coarray_malloc(*coarray_desc, addr, (size_t)transfer_size, false);
 #endif
@@ -368,6 +370,8 @@ void _XMP_coarray_regmem(void **coarray_desc, void *addr)
   _XMP_fatal("_XMP_coarray_regmem_do is not supported over GASNet.\n");
 #elif _XMP_FJRDMA
   _XMP_fjrdma_regmem(*coarray_desc, addr, (size_t)transfer_size);
+#elif _XMP_UTOFU
+  _XMP_utofu_regmem(*coarray_desc, addr, (size_t)transfer_size);
 #elif _XMP_MPI3_ONESIDED
   _XMP_mpi_coarray_regmem(*coarray_desc, addr, (size_t)transfer_size, false);
 #endif
@@ -389,6 +393,9 @@ void _XMP_coarray_attach(_XMP_coarray_t *coarray_desc, void *addr, const size_t 
 #elif _XMP_FJRDMA
   //not implemented
   _XMP_fatal("_XMP_fjrdma_coarray_attach is not implemented\n");
+#elif _XMP_UTOFU
+  //not implemented
+  _XMP_fatal("_XMP_utofu_coarray_attach is not implemented\n");
 #elif _XMP_MPI3_ONESIDED
   _XMP_mpi_coarray_attach(coarray_desc, addr, coarray_size, false);
 #endif
@@ -412,6 +419,9 @@ void _XMP_coarray_detach(_XMP_coarray_t *coarray_desc)
 #elif _XMP_FJRDMA
   //not implemented
   _XMP_fatal("_XMP_fjrdma_coarray_detach is not implemented\n");
+#elif _XMP_UTOFU
+  //not implemented
+  _XMP_fatal("_XMP_utofu_coarray_detach is not implemented\n");
 #elif _XMP_MPI3_ONESIDED
   _XMP_mpi_coarray_detach(coarray_desc, false);
 #endif
@@ -1187,6 +1197,9 @@ void _XMP_coarray_put(void *remote_coarray, void *local_array, void *local_coarr
 #elif _XMP_FJRDMA
     _XMP_fjrdma_put(remote_coarray_is_contiguous, local_array_is_contiguous, target_rank, _coarray_dims, _array_dims, 
 		    _coarray, _array, remote_coarray, local_coarray, local_array, (size_t)_transfer_coarray_elmts, (size_t)_transfer_array_elmts);
+#elif _XMP_UTOFU
+    _XMP_utofu_put(remote_coarray_is_contiguous, local_array_is_contiguous, target_rank, _coarray_dims, _array_dims, 
+		    _coarray, _array, remote_coarray, local_coarray, local_array, (size_t)_transfer_coarray_elmts, (size_t)_transfer_array_elmts);
 #elif _XMP_MPI3_ONESIDED
     _XMP_mpi_put(remote_coarray_is_contiguous, local_array_is_contiguous, target_rank, _coarray_dims, _array_dims,
 		 _coarray, _array, remote_coarray, local_array, (size_t)_transfer_coarray_elmts, (size_t)_transfer_array_elmts,
@@ -1246,6 +1259,9 @@ void _XMP_coarray_get(void *remote_coarray, void *local_array, void *local_coarr
 		    _coarray_dims, _array_dims, _coarray, _array, remote_coarray, local_array, (size_t)_transfer_coarray_elmts, (size_t)_transfer_array_elmts);
 #elif _XMP_FJRDMA
     _XMP_fjrdma_get(remote_coarray_is_contiguous, local_array_is_contiguous, target_rank, _coarray_dims, _array_dims,
+		    _coarray, _array, remote_coarray, local_coarray, local_array, (size_t)_transfer_coarray_elmts, (size_t)_transfer_array_elmts);
+#elif _XMP_UTOFU
+    _XMP_utofu_get(remote_coarray_is_contiguous, local_array_is_contiguous, target_rank, _coarray_dims, _array_dims,
 		    _coarray, _array, remote_coarray, local_coarray, local_array, (size_t)_transfer_coarray_elmts, (size_t)_transfer_array_elmts);
 #elif _XMP_MPI3_ONESIDED
     _XMP_mpi_get(remote_coarray_is_contiguous, local_array_is_contiguous, target_rank, _coarray_dims, _array_dims,
@@ -1307,6 +1323,9 @@ void _XMP_coarray_rdma_do2(const int rdma_code, void *remote_coarray, void *loca
 #elif _XMP_FJRDMA
       _XMP_fjrdma_put(remote_coarray_is_contiguous, local_array_is_contiguous, target_rank, _coarray_dims, _array_dims, 
 		      _coarray, _array, remote_coarray, local_coarray, local_array, (size_t)_transfer_coarray_elmts, (size_t)_transfer_array_elmts);
+#elif _XMP_UTOFU
+      _XMP_utofu_put(remote_coarray_is_contiguous, local_array_is_contiguous, target_rank, _coarray_dims, _array_dims, 
+		      _coarray, _array, remote_coarray, local_coarray, local_array, (size_t)_transfer_coarray_elmts, (size_t)_transfer_array_elmts);
 #elif _XMP_MPI3_ONESIDED
       _XMP_mpi_put(remote_coarray_is_contiguous, local_array_is_contiguous, target_rank, _coarray_dims, _array_dims,
 		   _coarray, _array, remote_coarray, local_array, (size_t)_transfer_coarray_elmts, (size_t)_transfer_array_elmts,
@@ -1325,6 +1344,9 @@ void _XMP_coarray_rdma_do2(const int rdma_code, void *remote_coarray, void *loca
 		      _coarray_dims, _array_dims, _coarray, _array, remote_coarray, local_array, (size_t)_transfer_coarray_elmts, (size_t)_transfer_array_elmts);
 #elif _XMP_FJRDMA
       _XMP_fjrdma_get(remote_coarray_is_contiguous, local_array_is_contiguous, target_rank, _coarray_dims, _array_dims, 
+		      _coarray, _array, remote_coarray, local_coarray, local_array, (size_t)_transfer_coarray_elmts, (size_t)_transfer_array_elmts);
+#elif _XMP_UTOFU
+      _XMP_utofu_get(remote_coarray_is_contiguous, local_array_is_contiguous, target_rank, _coarray_dims, _array_dims, 
 		      _coarray, _array, remote_coarray, local_coarray, local_array, (size_t)_transfer_coarray_elmts, (size_t)_transfer_array_elmts);
 #elif _XMP_MPI3_ONESIDED
       _XMP_mpi_get(remote_coarray_is_contiguous, local_array_is_contiguous, target_rank, _coarray_dims, _array_dims,
@@ -1352,6 +1374,8 @@ void _XMP_coarray_sync_all()
   _XMP_gasnet_sync_all();
 #elif _XMP_FJRDMA
   _XMP_fjrdma_sync_all();
+#elif _XMP_UTOFU
+  _XMP_utofu_sync_all();
 #elif _XMP_MPI3_ONESIDED
   _XMP_mpi_sync_all();
 #endif
@@ -1366,6 +1390,8 @@ void _XMP_coarray_sync_memory()
   _XMP_gasnet_sync_memory();
 #elif _XMP_FJRDMA
   _XMP_fjrdma_sync_memory();
+#elif _XMP_UTOFU
+  _XMP_utofu_sync_memory();
 #elif _XMP_TCA
   _XMP_tca_sync_memory();
 #elif _XMP_MPI3_ONESIDED
@@ -1382,6 +1408,8 @@ void xmp_sync_memory(const int* status)
   _XMP_gasnet_sync_memory();
 #elif _XMP_FJRDMA
   _XMP_fjrdma_sync_memory();
+#elif _XMP_UTOFU
+  _XMP_utofu_sync_memory();
 #elif _XMP_TCA
   _XMP_tca_sync_memory();
 #elif _XMP_MPI3_ONESIDED
@@ -1398,6 +1426,8 @@ void xmp_sync_all(const int* status)
   _XMP_gasnet_sync_all();
 #elif _XMP_FJRDMA
   _XMP_fjrdma_sync_all();
+#elif _XMP_UTOFU
+  _XMP_utofu_sync_all();
 #elif _XMP_MPI3_ONESIDED
   _XMP_mpi_sync_all();
 #endif
@@ -1412,6 +1442,8 @@ void xmp_sync_images(const int num, int* image_set, int* status)
   _XMP_gasnet_sync_images(num, image_set, status);
 #elif _XMP_FJRDMA
   _XMP_fjrdma_sync_images(num, image_set, status);
+#elif _XMP_UTOFU
+  _XMP_utofu_sync_images(num, image_set, status);
 #elif _XMP_MPI3_ONESIDED
   _XMP_mpi_sync_images(num, image_set, status);
 #endif
@@ -1465,6 +1497,9 @@ void _XMP_coarray_contiguous_put(const int target_rank, _XMP_coarray_t *dst_desc
 #elif _XMP_FJRDMA
     _XMP_fjrdma_contiguous_put(target_rank, (uint64_t)dst_offset, (uint64_t)src_offset, dst_desc, src_desc, 
 			     (size_t)dst_elmts, (size_t)src_elmts, elmt_size);
+#elif _XMP_UTOFU
+    _XMP_utofu_contiguous_put(target_rank, (uint64_t)dst_offset, (uint64_t)src_offset, dst_desc, src_desc,
+                             (size_t)dst_elmts, (size_t)src_elmts, elmt_size);
 #elif _XMP_TCA
     _XMP_fatal("_XMP_tca_contiguous_put is unimplemented");
 #elif _XMP_MPI3_ONESIDED
@@ -1507,6 +1542,9 @@ void _XMP_coarray_contiguous_get(const int target_rank, _XMP_coarray_t *dst_desc
 #elif _XMP_FJRDMA
     _XMP_fjrdma_contiguous_get(target_rank, dst_desc, src_desc, (uint64_t)dst_offset, (uint64_t)src_offset, 
 			     (size_t)dst_elmts, (size_t)src_elmts, elmt_size);
+#elif _XMP_UTOFU
+    _XMP_utofu_contiguous_get(target_rank, dst_desc, src_desc, (uint64_t)dst_offset, (uint64_t)src_offset, 
+			     (size_t)dst_elmts, (size_t)src_elmts, elmt_size);
 #elif _XMP_MPI3_ONESIDED
     _XMP_mpi_contiguous_get(target_rank, dst_desc, src_desc, (size_t)dst_offset, (size_t)src_offset,
 			  (size_t)dst_elmts, (size_t)src_elmts, elmt_size, false, false);
@@ -1523,6 +1561,8 @@ void _XMP_build_sync_images_table()
   _XMP_gasnet_build_sync_images_table();
 #elif _XMP_FJRDMA
   _XMP_fjrdma_build_sync_images_table();
+#elif _XMP_UTOFU
+  _XMP_utofu_build_sync_images_table();
 #elif _XMP_MPI3_ONESIDED
   _XMP_mpi_build_sync_images_table();
 #endif
@@ -1584,6 +1624,8 @@ static void _XMP_coarray_deallocate(_XMP_coarray_t *c)
   free(c->addr);
 #if defined(_XMP_GASNET)
   //
+#elif defined(_XMP_UTOFU)
+  _XMP_utofu_deallocate(c);
 #elif defined(_XMP_MPI3_ONESIDED)
   _XMP_mpi_coarray_deallocate(c, false);
 #else
@@ -1604,6 +1646,8 @@ void _XMP_coarray_lastly_deallocate()
   _XMP_gasnet_coarray_lastly_deallocate();
 #elif _XMP_FJRDMA
   _XMP_fjrdma_coarray_lastly_deallocate();
+#elif _XMP_UTOFU
+  // _XMP_utofu_coarray_lastly_deallocate();
 #elif _XMP_MPI3_ONESIDED
   _XMP_mpi_coarray_lastly_deallocate(false);
 #endif
@@ -1654,6 +1698,9 @@ void _XMP_coarray_put_acc(void *remote_coarray, void *local_array, void *local_c
 		    _coarray, _array, remote_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts);
 #elif _XMP_FJRDMA
     _XMP_fjrdma_put(remote_coarray_is_contiguous, local_array_is_contiguous, target_rank, _coarray_dims, _array_dims, 
+		    _coarray, _array, remote_coarray, local_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts);
+#elif _XMP_UTOFU
+    _XMP_utofu_put(remote_coarray_is_contiguous, local_array_is_contiguous, target_rank, _coarray_dims, _array_dims, 
 		    _coarray, _array, remote_coarray, local_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts);
 #elif _XMP_MPI3_ONESIDED
     _XMP_mpi_put(remote_coarray_is_contiguous, local_array_is_contiguous, target_rank, _coarray_dims, _array_dims, 
@@ -1709,6 +1756,9 @@ void _XMP_coarray_get_acc(void *remote_coarray, void *local_array, void *local_c
 #elif _XMP_FJRDMA
     _XMP_fjrdma_get(remote_coarray_is_contiguous, local_array_is_contiguous, target_rank, _coarray_dims, _array_dims,
 		    _coarray, _array, remote_coarray, local_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts);
+#elif _XMP_UTOFU
+    _XMP_utofu_get(remote_coarray_is_contiguous, local_array_is_contiguous, target_rank, _coarray_dims, _array_dims,
+		    _coarray, _array, remote_coarray, local_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts);
 #elif _XMP_MPI3_ONESIDED
     _XMP_mpi_get(remote_coarray_is_contiguous, local_array_is_contiguous, target_rank, _coarray_dims, _array_dims,
 		 _coarray, _array, remote_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts,
@@ -1726,3 +1776,4 @@ _XMP_coarray_t** _XMP_coarray_get_list(int *num)
   *num = _coarray_queue.num;
   return _coarray_queue.coarrays;
 }
+

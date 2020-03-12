@@ -44,6 +44,7 @@ IS_CRAY          = @CRAY@
 IS_GASNET        = @GASNET@
 IS_MPI3_ONESIDED = @MPI3_ONESIDED@
 IS_FJRDMA        = @FJRDMA@
+IS_UTOFU         = @UTOFU@
 IS_MPI3_ASYNC    = @MPI3_ASYNC@
 IS_POWERPC       = @POWERPC@
 IS_SUPERUX       = @SUPERUX@
@@ -111,6 +112,11 @@ endif
 ifeq ($(IS_FJRDMA), $(TRUE))
     CFLAGS  += -D_XMP_FJRDMA
     FCFLAGS += -D_XMP_FJRDMA
+endif
+
+ifeq ($(IS_UTOFU), $(TRUE))
+    CFLAGS  += -D_XMP_UTOFU
+    FCFLAGS += -D_XMP_UTOFU
 endif
 
 ifeq ($(IS_SUPERUX), $(TRUE))

@@ -89,6 +89,8 @@ void _XMP_initialize_onesided_functions()
   _XMP_gasnet_intrinsic_initialize();
 #elif _XMP_FJRDMA
   _XMP_fjrdma_initialize();
+#elif _XMP_UTOFU
+  _XMP_utofu_initialize();
 #elif _XMP_MPI3_ONESIDED
   size_t _xmp_heap_size;
   _xmp_heap_size   = _get_size("XMP_ONESIDED_HEAP_SIZE");
@@ -99,7 +101,7 @@ void _XMP_initialize_onesided_functions()
   _XMP_tca_initialize();
 #endif
 
-#if defined(_XMP_GASNET) || defined(_XMP_FJRDMA) || defined(_XMP_TCA) || defined(_XMP_MPI3_ONESIDED)
+#if defined(_XMP_GASNET) || defined(_XMP_FJRDMA) || defined(_XMP_TCA) || defined(_XMP_MPI3_ONESIDED) || defined(_XMP_UTOFU)
   _XMP_build_sync_images_table();
   _XMP_build_coarray_queue();
   _XMP_post_wait_initialize();
@@ -144,6 +146,8 @@ void _XMP_finalize_onesided_functions()
 #elif _XMP_FJRDMA
   if(_XMP_world_size > _XMP_ONESIDED_MAX_PROCS) return;
   else _XMP_fjrdma_finalize();
+#elif _XMP_UTOFU
+  _XMP_utofu_finalize();
 #elif _XMP_MPI3_ONESIDED
   _XMP_mpi_onesided_finalize();
 #endif
