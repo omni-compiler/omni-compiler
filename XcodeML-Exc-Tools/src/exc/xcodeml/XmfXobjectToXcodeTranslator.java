@@ -1278,6 +1278,10 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         if (ident == null) {
             return null;
         }
+	else if (ident.getProp("XMP_ARRAY_PROP") != null) {
+	    // not output ids of distributed arrays.
+	    return null;
+	}
         Element e = createElement("id");
 
         // type
