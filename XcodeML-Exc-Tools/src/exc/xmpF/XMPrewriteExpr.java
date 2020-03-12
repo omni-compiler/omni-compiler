@@ -32,7 +32,7 @@ public class XMPrewriteExpr
       }
     }
 
-    // rewrite allocate, deallocate, and stop statements
+    // rewrite pointer assignment, allocate, deallocate, and stop statements
     BasicBlockIterator iter3 = new BasicBlockIterator(fb);
     for (iter3.init(); !iter3.end(); iter3.next()){
       Block b = iter3.getBasicBlock().getParent();
@@ -42,6 +42,38 @@ public class XMPrewriteExpr
 	Xobject x = st.getExpr();
 	if (x == null)  continue;
 	switch (x.Opcode()) {
+	case F_POINTER_ASSIGN_STATEMENT:
+	  {
+	    // must be performed before rewriteExpr
+
+	    Xobject lhs_obj = x.getArg(0);
+
+	    while (lhs_obj.Opcode() == Xcode.MEMBER_REF ||
+		   lhs_obj.Opcode() == Xcode.F_ARRAY_REF ||
+		   lhs_obj.Opcode() == Xcode.F_VAR_REF)
+	      lhs_obj = lhs_obj.getArg(0).getArg(0);
+	      
+	    Ident lhs_id = env.findVarIdent(lhs_obj.getName(), b);
+	    if (lhs_id == null) break;
+	    XMParray lhs_array = XMParray.getArray(lhs_id);
+	    if (lhs_array == null) break;
+
+	    Xobject rhs_obj = x.getArg(1);
+
+	    while (rhs_obj.Opcode() == Xcode.MEMBER_REF ||
+		   rhs_obj.Opcode() == Xcode.F_ARRAY_REF ||
+		   rhs_obj.Opcode() == Xcode.F_VAR_REF)
+	      rhs_obj = rhs_obj.getArg(0).getArg(0);
+	      
+	    Ident rhs_id = env.findVarIdent(rhs_obj.getName(), b);
+	    if (rhs_id == null) break;
+	    XMParray rhs_array = XMParray.getArray(rhs_id);
+	    if (rhs_array == null) break;
+
+	    lhs_array.rewritePointerAssign(x, rhs_array, st, fb, env);
+
+	    break;
+	  }
 	case F_ALLOCATE_STATEMENT:
 	  {
             // must be performed before rewriteExpr
