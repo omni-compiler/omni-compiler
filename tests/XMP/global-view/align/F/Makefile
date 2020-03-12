@@ -6,7 +6,7 @@ OBJS  = $(TESTS:.f90=.o)
 
 .PHONY: clean all default run submit showlog cleanlog
 
-all default: $(EXES)
+all default: $(EXES) public.o
 
 .SUFFIXES: .x .f90
 
@@ -18,6 +18,9 @@ test.x: main.f90 init.o
 
 init.o: init.f90
 	$(XFC) -fbounds-check $< -c
+
+public.o: public.f90
+	$(XFC) -c $<
 
 run: $(EXES)
 	$(XRUN) -n 2 ./offset.x
