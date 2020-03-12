@@ -977,8 +977,9 @@ public class Xcons
     public static Xobject FinterfaceFunctionDecl(Ident name, XobjList paramDecls)
     {
         return Xcons.List(Xcode.F_INTERFACE_DECL, (Xobject)null,
-            IntConstant(0), IntConstant(0), Xcons.List(
-                Xcons.List(Xcode.FUNCTION_DECL, name, null, null, paramDecls)));
+            IntConstant(0), IntConstant(0),
+	    Xcons.List(Xcons.List(Xcode.FUNCTION_DECL, name, null, null, paramDecls)),
+	    IntConstant(0));
     }
 
     public static Xobject StatementLabel(String label)
