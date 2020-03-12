@@ -686,6 +686,7 @@ JAVA
 ONESIDED_CPPFLAGS
 MPI_SUBVERSION
 MPI_VERSION
+UTOFU
 MPI3_ONESIDED
 MPI3_ASYNC
 NM_OPT
@@ -862,6 +863,7 @@ enable_xacc
 enable_mod2xmod
 enable_shared
 enable_fjrdma
+enable_utofu
 enable_gnu_extension
 with_libblas
 enable_SSL2BLAMP
@@ -1521,6 +1523,7 @@ Optional Features:
   --enable-shared         enable to generate shared library (false default)
   --enable-fjrdma         enable FJRDMA for one-sided communication. If "--disable-fjrdma" is attatched,
                           MPI3 is used instead of FJRDMA. This disable option works on only FX100 (true default)
+  --enable-utofu          enable uTofu for one-sided communication.
   --enable-gnu-extension  enable Fortran GNU intrinsic extension (false default).
   --enable-SSL2BLAMP      enable Fujitsu Math Library (true on only the K computer, false on Fx10 & FX100)
   --enable-intelmkl       enable Intel Math Kernel Library (false default)
@@ -8565,6 +8568,14 @@ else
 fi
 
 
+# Check whether --enable-utofu was given.
+if test "${enable_utofu+set}" = set; then :
+  enableval=$enable_utofu; doutofu=yes
+else
+  doutofu=no
+fi
+
+
 # Check whether --enable-gnu-extension was given.
 if test "${enable_gnu_extension+set}" = set; then :
   enableval=$enable_gnu_extension; dognuext=yes
@@ -8828,6 +8839,230 @@ fi
     # Omni F
     OMNI_F2X_FLAGS=""
     OMNI_NTV_FCFLAGS="-Free"
+    OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT_F"
+
+    # Omni Common
+    OMNI_X2X_FLAGS=""
+
+    # ranlib & ar & nm
+    # Extract the first word of "ranlibpx", so it can be a program name with args.
+set dummy ranlibpx; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_RANLIB+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$RANLIB"; then
+  ac_cv_prog_RANLIB="$RANLIB" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_RANLIB="ranlibpx"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_prog_RANLIB" && ac_cv_prog_RANLIB="ranlib"
+fi
+fi
+RANLIB=$ac_cv_prog_RANLIB
+if test -n "$RANLIB"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $RANLIB" >&5
+$as_echo "$RANLIB" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+    # Extract the first word of "arpx", so it can be a program name with args.
+set dummy arpx; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_AR+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$AR"; then
+  ac_cv_prog_AR="$AR" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_AR="arpx"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_prog_AR" && ac_cv_prog_AR="ar"
+fi
+fi
+AR=$ac_cv_prog_AR
+if test -n "$AR"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $AR" >&5
+$as_echo "$AR" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+    ARFLAGS="cr"
+    # Extract the first word of "nmpx", so it can be a program name with args.
+set dummy nmpx; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_NM+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$NM"; then
+  ac_cv_prog_NM="$NM" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_NM="nmpx"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_prog_NM" && ac_cv_prog_NM="nm"
+fi
+fi
+NM=$ac_cv_prog_NM
+if test -n "$NM"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $NM" >&5
+$as_echo "$NM" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+
+elif test "x${target}" = "xFugaku-linux-gnu"; then
+    # OpenMP
+    OPENMP_OPT_C="-fopenmp"
+    OPENMP_OPT_F="-Kopenmp"
+
+    # XcalableMP
+    XMPC_DEF="-D_XCALABLEMP"
+    XMPF_DEF="-D_XCALABLEMP"
+
+    # MPI C
+    # Extract the first word of "mpifccpx", so it can be a program name with args.
+set dummy mpifccpx; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_MPI_CC+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$MPI_CC"; then
+  ac_cv_prog_MPI_CC="$MPI_CC" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_MPI_CC="mpifccpx"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+MPI_CC=$ac_cv_prog_MPI_CC
+if test -n "$MPI_CC"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $MPI_CC" >&5
+$as_echo "$MPI_CC" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+    MPI_CFLAGS="-Nclang -O2 -std=gnu99 $OPENMP_OPT_C"
+    MPI_CPPFLAGS="-E -std=gnu99"
+    MPI_CLIBS=""
+
+    # MPI F
+    # Extract the first word of "mpifrtpx", so it can be a program name with args.
+set dummy mpifrtpx; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_MPI_FC+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$MPI_FC"; then
+  ac_cv_prog_MPI_FC="$MPI_FC" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_MPI_FC="mpifrtpx"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+MPI_FC=$ac_cv_prog_MPI_FC
+if test -n "$MPI_FC"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $MPI_FC" >&5
+$as_echo "$MPI_FC" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+    MPI_FPPFLAGS="-E -Cpp"
+    MPI_FCFLAGS="-Kfast $OPENMP_OPT_F"
+    MPI_MODINC="-M"
+    MPI_FCLIBS=""
+
+    # Omni C
+    OMNI_C2X_FLAGS=""
+    OMNI_NTV_CFLAGS="-std=gnu99 -ltofucom"
+    OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT_C"
+
+    # Omni F
+    OMNI_F2X_FLAGS=""
+    OMNI_NTV_FCFLAGS="-Free -ltofucom"
     OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT_F"
 
     # Omni Common
@@ -10589,6 +10824,17 @@ fi
 	    MPI_CFLAGS="-O2 -std=gnu99 -Wall -Wpointer-arith $OPENMP_OPT_C"
 	    MPI_CLIBS=""
 
+            ### 607 ###
+	    case $chk in
+	    gcc*)
+	    version=`${MPI_CC} -dumpversion`
+	    version=${version%%.*} # 6.3.0 -> 6
+	    if test $version -ge 7; then
+	      MPI_CPPFLAGS+=" -D_Float128=double"
+	    fi
+	    ;;
+	    esac
+
 	    # Omni C
 	    OMNI_C2X_FLAGS=""
 	    OMNI_NTV_CFLAGS="-std=gnu99 -lm"
@@ -10981,6 +11227,7 @@ fi
 
 
 
+
 #--------------------------------------------------------------------
 # Set user defined value.
 if test "${userMPI_CFLAGS}" != ""; then
@@ -11165,7 +11412,7 @@ if test "x${doMPI3_ASYNC}" = "xyes"; then
 fi
 
 use_mpi3_onesided=no
-if test "x${doMPI3_ASYNC}" = "xyes" -a "x${use_gasnet}" = "xno" -a "x${target}" != "xKcomputer-linux-gnu" -a "x${target}" != "xFX10-linux-gnu" -a "x${target}" != "xFX100-linux-gnu" ; then
+if test "x${doMPI3_ASYNC}" = "xyes" -a "x${use_gasnet}" = "xno" -a "x${target}" != "xKcomputer-linux-gnu" -a "x${target}" != "xFX10-linux-gnu" -a "x${target}" != "xFX100-linux-gnu" -a "x${doutofu}" = "xno" ; then
     use_mpi3_onesided=yes
 elif test "x${dofjrdma}" = "xno"; then
     use_mpi3_onesided=yes
@@ -11173,11 +11420,15 @@ fi
 
 MPI3_ASYNC=$FALSE
 MPI3_ONESIDED=$FALSE
+UTOFU=$FALSE
 if test "x${doMPI3_ASYNC}" = "xyes"; then
     MPI3_ASYNC=$TRUE
 fi
 if test "x${use_mpi3_onesided}" = "xyes"; then
     MPI3_ONESIDED=$TRUE
+fi
+if test "x${doutofu}" = "xyes"; then
+    UTOFU=$TRUE
 fi
 
 if test "x${use_gasnet}" = "xyes"; then
@@ -11188,7 +11439,10 @@ elif test "x${target}" = "xKcomputer-linux-gnu" -o "x${target}" = "xFX10-linux-g
     if test "x${dofjrdma}" = "xyes"; then
         ONESIDED_CPPFLAGS="-D_XMP_FJRDMA"
     fi
+elif test "x${doutofu}" = "xyes"; then
+    ONESIDED_CPPFLAGS="-D_XMP_UTOFU"
 fi
+
 
 
 
@@ -13093,6 +13347,12 @@ elif test x$use_mpi3_onesided = xyes; then
 elif test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$target" = "FX100-linux-gnu"; then
     isOnesided=yes
     ONESIDED_LIB="Fujitsu RDMA"
+    isCoarray=yes
+    isPostWait=yes
+    isLockUnlock=no
+elif test x$doutofu = xyes; then
+    isOnesided=yes
+    ONESIDED_LIB="Fujitsu uTofu"
     isCoarray=yes
     isPostWait=yes
     isLockUnlock=no

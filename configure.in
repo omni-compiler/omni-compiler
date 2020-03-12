@@ -1039,6 +1039,17 @@ else
 	    MPI_CFLAGS="-O2 -std=gnu99 -Wall -Wpointer-arith $OPENMP_OPT_C"
 	    MPI_CLIBS=""
 
+            ### 607 ###
+	    case $chk in
+	    gcc*)
+	    version=`${MPI_CC} -dumpversion`
+	    version=${version%%.*} # 6.3.0 -> 6
+	    if test $version -ge 7; then
+	      MPI_CPPFLAGS+=" -D_Float128=double"
+	    fi
+	    ;;
+	    esac
+
 	    # Omni C
 	    OMNI_C2X_FLAGS=""
 	    OMNI_NTV_CFLAGS="-std=gnu99 -lm"
