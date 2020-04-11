@@ -9,6 +9,7 @@ import exc.openacc.AccDevice;
 import exc.openacc.AccTranslator;
 import exc.openmp.OMP;
 import exc.openmp.OMPtranslate;
+import exc.openmp.OMPDDRD;
 import exc.xcalablemp.XMP;
 import exc.xcalablemp.XMPglobalDecl;
 import exc.xcalablemp.XMPtranslate;
@@ -79,7 +80,11 @@ public class omompx
       "",
       "  -enable-threads       enable 'threads' clause",
       "  -enable-gpu           enable xmp-dev directive/clauses",
-      "  -enable-Fonesided     enable one-sided functions (Only Fortran)"
+      "  -enable-Fonesided     enable one-sided functions (Only Fortran)",
+      "",
+      " Dynamic Data Race Checking Options:",
+      "  -ompf-dynamic-data-race-detect       detect dynamically data races",
+      "  -ompf-dynamic-data-race-detect-max-num-threads=N       the number of threads"
     };
         
     for(String line : lines) {
@@ -123,6 +128,9 @@ public class omompx
     Boolean xmpf_onlyCafMode = "1".equals(System.getenv("XMP_ONLYCAF"));
     Boolean xmpf_skipCafMode = "1".equals(System.getenv("XMP_SKIPCAF"));
 
+    // dynamic data race checking
+    boolean ompf_dynamic_data_race_detect = false;
+
     for(int i = 0; i < args.length; ++i) {
       String arg = args[i];
       String narg = (i < args.length - 1) ? args[i + 1] : null;
@@ -135,6 +143,11 @@ public class omompx
         lang = "F";
       } else if(arg.equals("-l")) {
         XmOption.setIsSuppressLineDirective(true);
+      } else if(arg.equals("-ompf-dynamic-data-race-detect")) {
+        ompf_dynamic_data_race_detect = true;
+      } else if (arg.startsWith("-ompf-dynamic-data-race-detect-max-num-threads=")) {
+	  String n = arg.substring(47);
+	  exc.openmp.OMPDDRD.DDRD_NUM_THREADS = Integer.parseInt(n);
       } else if(arg.equals("-fopenmp")) {
         openMP = true;
       } else if(arg.equals("-fopenmp-only-target")) {
@@ -428,6 +441,21 @@ public class omompx
     }
 
     // OpenMP translation
+    if(ompf_dynamic_data_race_detect) {
+      OMPDDRD omp_translator = new OMPDDRD(xobjFile);
+      xobjFile.iterateDef(omp_translator);
+            
+      if(OMP.hasErrors())
+        System.exit(1);
+            
+      omp_translator.finish();
+            
+      if(xcodeWriter != null) {
+        xobjFile.Output(xcodeWriter);
+        xcodeWriter.flush();
+      }
+    } else {
+
     if(openMP || openMPonlyTarget) {
       if(openMPonlyTarget)
         xobjFile.addHeaderLine("#include \"ompc_target.h\"");
@@ -444,6 +472,8 @@ public class omompx
         xobjFile.Output(xcodeWriter);
         xcodeWriter.flush();
       }
+    }
+
     }
 
     if(openACC){
