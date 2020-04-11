@@ -82,6 +82,11 @@ public class omompx
       "  -enable-gpu           enable xmp-dev directive/clauses",
       "  -enable-Fonesided     enable one-sided functions (Only Fortran)",
       "",
+      " Typechecking Options:",
+      "  -stencil-typecheck       typecheck stencil kernels",
+      "  -stencil-typecheck-all   typecheck all stencil kernels",
+      "  -stencil-typecheck-quiet make it quiet in typechecking",
+      "",
       " Dynamic Data Race Checking Options:",
       "  -ompf-dynamic-data-race-detect       detect dynamically data races",
       "  -ompf-dynamic-data-race-detect-max-num-threads=N       the number of threads"
@@ -127,6 +132,11 @@ public class omompx
     // environment variable analysis
     Boolean xmpf_onlyCafMode = "1".equals(System.getenv("XMP_ONLYCAF"));
     Boolean xmpf_skipCafMode = "1".equals(System.getenv("XMP_SKIPCAF"));
+
+    // stencil typecheck
+    boolean stencil_typecheck = false;
+    boolean stencil_typecheck_all = false;
+    boolean stencil_typecheck_quiet = false;
 
     // dynamic data race checking
     boolean ompf_dynamic_data_race_detect = false;
@@ -249,6 +259,13 @@ public class omompx
       } else if (arg.startsWith("-device=")){
         String n = arg.substring("-device=".length());
         ACC.device = AccDevice.getDevice(n);
+      } else if(arg.equals("-stencil-typecheck")) {
+        stencil_typecheck = true;
+      } else if(arg.equals("-stencil-typecheck-all")) {
+        stencil_typecheck = true;
+        stencil_typecheck_all = true;
+      } else if(arg.equals("-stencil-typecheck-quiet")) {
+        stencil_typecheck_quiet = true;
       } else if(arg.startsWith("-")){
         error("unknown option " + arg);
       } else if(inXmlFile == null) {
@@ -400,6 +417,16 @@ public class omompx
 
     if (xmpf && !xmpf_onlyCafMode) {
       // XMP Fortran
+      if (stencil_typecheck) {
+        exc.xmpF.XMPenv.isStencilTypecheckFlag = true;
+      }
+      if (stencil_typecheck_all) {
+        exc.xmpF.XMPenv.isStencilTypecheckFlag = true;
+        exc.xmpF.XMPenv.isStencilTypecheckallFlag =true;
+      }
+      if (stencil_typecheck_quiet) {
+        exc.xmpF.XMPenv.isStencilTypecheckQuietFlag =true;
+      }
       exc.xmpF.XMPtranslate xmp_translator = new exc.xmpF.XMPtranslate(xobjFile);
       xobjFile.iterateDef(xmp_translator);
       
