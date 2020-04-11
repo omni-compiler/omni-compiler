@@ -219,8 +219,11 @@ elif [ "$target"  = "sxace-nec-superux" -a "${output_file}" != "" ]; then
     other_args+=("-o" "'${output_file[@]}'")
 fi
 
-[ $ENABLE_DDRD = true ] && OMNI_LINKER_OPT=" -ffree-form -fcray-pointer -fopenmp -lgomp"
+if [ $ENABLE_DDRD = true ]; then
+omni_exec $OMNI_LINKER_CMD "${obj_files[@]}" "${linker_add_opt[@]}" "${other_args[@]}" "${archive_files[@]}" "${lib_args[@]}" $OMNI_LNK_FCFLAGS
+else
 omni_exec $OMNI_LINKER_CMD "${obj_files[@]}" "${linker_add_opt[@]}" "${other_args[@]}" "${archive_files[@]}" "${lib_args[@]}" $OMNI_LINKER_OPT
+fi
     
 ### Delete temporal directory ###
 [ $ENABLE_DEBUG = false ] && omni_exec rm -rf "${TEMP_DIR}"
