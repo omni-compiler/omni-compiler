@@ -29,6 +29,7 @@ STOP_FRONTEND=false
 STOP_TRANSLATOR=false
 STOP_BACKEND=false
 STOP_COMPILE=false
+ENABLE_DDRD=false
 
 ### Set options ###
 # e.g.) ompf90 -I/usr/lib a.f b.F c.f90 d.F90 e.o --tmp --Wlfoo lib.a -DTEST -Jdir -lm -o a.out
@@ -210,8 +211,7 @@ done
 
 # link
 [ $ENABLE_ACC = true ] && OMNI_LINKER_OPT="$OMNI_GPUCC_LIB $OMNI_LINKER_OPT"
-obj_files+=("$OMPF_MAIN_O")
-
+[ $ENABLE_DDRD = false ] && obj_files+=("$OMPF_MAIN_O")
 if [ "$target" != "sxace-nec-superux" -a "${output_file}" != "" ]; then
     other_args+=("-o" "${output_file[@]}")
 elif [ "$target"  = "sxace-nec-superux" -a "${output_file}" != "" ]; then
@@ -219,7 +219,11 @@ elif [ "$target"  = "sxace-nec-superux" -a "${output_file}" != "" ]; then
     other_args+=("-o" "'${output_file[@]}'")
 fi
 
+if [ $ENABLE_DDRD = true ]; then
+omni_exec $OMNI_LINKER_CMD "${obj_files[@]}" "${linker_add_opt[@]}" "${other_args[@]}" "${archive_files[@]}" "${lib_args[@]}" $OMNI_LNK_FCFLAGS
+else
 omni_exec $OMNI_LINKER_CMD "${obj_files[@]}" "${linker_add_opt[@]}" "${other_args[@]}" "${archive_files[@]}" "${lib_args[@]}" $OMNI_LINKER_OPT
+fi
     
 ### Delete temporal directory ###
 [ $ENABLE_DEBUG = false ] && omni_exec rm -rf "${TEMP_DIR}"
