@@ -25,6 +25,9 @@ public class XMPtranslate implements XobjectDefVisitor
   XMPrewriteExpr rewriteExpr = new XMPrewriteExpr();
   XMPtransPragma transPragma = new XMPtransPragma();
     
+  // typecheck
+  XMPtypecheckStencilKernel typecheckStencilKernel = new XMPtypecheckStencilKernel();
+
   static final String XMPmainFunc = "xmpf_main";
 
   /**
@@ -310,6 +313,11 @@ public class XMPtranslate implements XobjectDefVisitor
 
     anaPragma.run(fd,env);
     if(XMP.hasError()) return;
+
+    if(env.getStencilTypecheckFlag()) {
+	typecheckStencilKernel.run(fd, env);
+	if(XMP.hasError()) return;
+    }
 
     rewriteExpr.run(fd, env);
     if(XMP.hasError()) return;
