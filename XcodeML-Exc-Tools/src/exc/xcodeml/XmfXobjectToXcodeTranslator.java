@@ -1608,18 +1608,27 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
     }
 
     private Element transValue(Xobject xobj) {
+
         if (xobj == null) {
             return null;
         }
-        Element e = addChildNode(createElement("value"),
-                                 transExpr(xobj.getArg(0)));
-        Node rcExpr = transExpr(xobj.getArgOrNull(1));
-        if (rcExpr != null) {
-            Element rcElem = addChildNode(createElement("repeat_count"),
-                                          rcExpr);
-            addChildNode(e, rcElem);
-        }
-        return e;
+
+	if (xobj.Opcode() == Xcode.FUNCTION_CALL){
+	    return addChildNode(createElement("value"),
+				     transExpr(xobj));
+	}
+	else {
+	
+	    Element e = addChildNode(createElement("value"),
+				     transExpr(xobj.getArg(0)));
+	    Node rcExpr = transExpr(xobj.getArgOrNull(1));
+	    if (rcExpr != null) {
+		Element rcElem = addChildNode(createElement("repeat_count"),
+					      rcExpr);
+		addChildNode(e, rcElem);
+		}
+		return e;
+	}
     }
 
     private static final String PROP_KEY_IDSET = "DeclComparator.idSet";
