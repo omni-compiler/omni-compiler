@@ -1664,6 +1664,13 @@ public class XMPcoarray {
 
   public void setPointer() {
     ident.Type().setIsFpointer(true);
+
+	if(ident.getStorageClass() != StorageClass.FPARAM){
+	  Ident f = declIntExtendIntrinsicIdent("null");
+	  BlockList blist = fblock.getBody();
+	  Xobject x = blist.findLocalDecl(name);
+	  x.setArg(1, Xcons.functionCall(f, null));
+	}
   }
 
   public void resetPointer() {

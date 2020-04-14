@@ -1614,7 +1614,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         }
 
 	if (xobj.Opcode() == Xcode.FUNCTION_CALL){
-	    Element e = addChildNode(createElement("value"),
+	    return addChildNode(createElement("value"),
 				     transExpr(xobj));
 	}
 	else {
@@ -1626,11 +1626,9 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
 		Element rcElem = addChildNode(createElement("repeat_count"),
 					      rcExpr);
 		addChildNode(e, rcElem);
-	    }
-
+		}
+		return e;
 	}
-	
-        return e;
     }
 
     private static final String PROP_KEY_IDSET = "DeclComparator.idSet";
