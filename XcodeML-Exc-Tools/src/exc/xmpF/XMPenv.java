@@ -21,6 +21,10 @@ public class XMPenv {
 
   private final static String SYMBOL_TABLE = "XMP_PROP_XMP_SYMBOL_TABLE";
   
+  public static boolean isStencilTypecheckFlag;
+  public static boolean isStencilTypecheckallFlag;
+  public static boolean isStencilTypecheckQuietFlag;
+
   public XMPenv() { }
 
   /**
@@ -430,6 +434,19 @@ out:{
     }
     return xmp_null;
   }
+
+  public boolean getStencilTypecheckFlag() {
+    return isStencilTypecheckFlag;
+  }
+
+  public boolean getStencilTypecheckallFlag() {
+    return isStencilTypecheckallFlag;
+  }
+
+  public boolean getStencilTypecheckQuietFlag() {
+    return isStencilTypecheckQuietFlag;
+  }
+
 
   /*
    *  wrapper -- for collect init
