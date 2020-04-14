@@ -84,6 +84,7 @@ public class XMPmodule extends XMPenv {
       return;
     }
     XcodeMLtools_Fmod tools = new XcodeMLtools_Fmod();
+    tools.getImportedModule().clear();
     env = tools.read(reader);
     this.module_name = tools.getModuleName();
     // xobjFile.Output(new PrintWriter(System.out));

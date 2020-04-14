@@ -1,6 +1,7 @@
 package exc.xcodeml;
 
 import java.util.Vector;
+import java.util.HashSet;
 import java.io.*;
 
 import org.w3c.dom.*;
@@ -26,8 +27,11 @@ public class XcodeMLtools_Fmod extends XcodeMLtools_F {
 
   static private Vector<String> search_path;
 
+  static HashSet<String> imported_module;
+
   static {
     search_path = new Vector<String>();
+    imported_module = new HashSet<String>();
   }
 
   // constructor
@@ -36,6 +40,8 @@ public class XcodeMLtools_Fmod extends XcodeMLtools_F {
   public String getModuleName() { return module_name; }
 
   public Vector<Xobject> getAuxInfo() { return aux_info; }
+
+  public HashSet<String> getImportedModule() { return imported_module; }
 
   public XobjectFile read(Reader reader) {
     Document doc = readDocument(reader);
@@ -88,6 +94,13 @@ public class XcodeMLtools_Fmod extends XcodeMLtools_F {
 
       if (!found){
 	fatal("module file '"+mod_file_name+"' not found");
+      }
+
+      if (imported_module.contains(module_name)){
+	continue; // already imported
+      }
+      else {
+	imported_module.add(module_name);
       }
 
       try {
