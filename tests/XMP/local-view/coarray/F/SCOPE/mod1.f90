@@ -49,5 +49,6 @@
        print '("[",i0,"] OK")', me
     else
        print '("[",i0,"] number of NGs: ",i0)', me, nerr
+       call exit(1)
     end if
   end subroutine final_msg

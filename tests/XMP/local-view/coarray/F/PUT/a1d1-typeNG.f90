@@ -43,6 +43,7 @@
        print '("result[",i0,"] OK")', me
     else
        print '("result[",i0,"] number of NGs: ",i0)', me, nerr
+       call exit(1)
     end if
 
 101 format ("b(",i0,")[",i0,"]=",f10.6," should be ",f10.6)

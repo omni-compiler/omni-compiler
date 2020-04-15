@@ -9,5 +9,6 @@
      print *, "OK"
   else
      print *, "NG: illegal size of coarrays"
+     call exit(1)
   endif
   end

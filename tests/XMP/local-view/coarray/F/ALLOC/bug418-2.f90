@@ -7,5 +7,6 @@
      write(*,*) "OK"
   else 
      write(*,*) "NG: itmp(3)[*] is illegally allocated or not allocated."
+     call exit(1)
   endif
   end

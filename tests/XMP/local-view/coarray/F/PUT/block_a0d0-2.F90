@@ -31,12 +31,14 @@ block
           write(*,101) me
        else
           write(*,100) me
+          call exit(1)
        endif
     else
        if (a0==data0) then
           write(*,101) me
        else
           write(*,100) me
+          call exit(1)
        endif
     end if
 

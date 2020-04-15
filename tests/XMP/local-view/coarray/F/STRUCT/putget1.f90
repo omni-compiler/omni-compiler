@@ -45,6 +45,7 @@
        print '("[",i0,"] OK")', me
     else
        print '("[",i0,"] number of NGs: ",i0)', me, nerr
+       call exit(1)
     end if
 
 101 format ("aa(",i0,")[",i0,"]=",i0," should be ",i0)

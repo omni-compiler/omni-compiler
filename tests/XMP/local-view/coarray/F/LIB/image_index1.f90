@@ -4,5 +4,6 @@
      print '("[",i0,"] OK")', this_image()
   else
      print '("[",i0,"] NG: nnnn=",i0)', this_image(), nnnn
+     call exit(1)
   end if
   end

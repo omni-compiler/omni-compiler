@@ -65,6 +65,7 @@
     else
        if (nerr>0) then
           print '("[",i0,"] number of NGs: ",i0)', me, nerr
+          call exit(1)
        endif
        if (nwarn>0) then
           print '("[",i0,"] number of Warnings: ",i0)', me, nwarn

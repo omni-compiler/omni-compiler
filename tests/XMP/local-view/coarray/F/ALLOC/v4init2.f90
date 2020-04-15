@@ -24,5 +24,6 @@ program main
      write(*,*) "OK",nbytes,nestim
   else
      write(*,*) "NG",nbytes,nestim
+     call exit(1)
   endif
 end program main

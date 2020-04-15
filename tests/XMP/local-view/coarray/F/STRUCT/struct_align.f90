@@ -34,6 +34,7 @@
        write(*,101) me, n_alloced, n_necessary
     else  !! NG
        write(*,102) me, n_alloced, n_necessary
+       call exit(1)
     endif
 
 100 format("[", i0, "] OK. perfect")

@@ -34,6 +34,7 @@ endif
      print '("[",i0,"] OK")', this_image()
   else
      print '("[",i0,"] number of NGs: ",i0)', this_image(), nerr
+     call exit(1)
   end if
 
 

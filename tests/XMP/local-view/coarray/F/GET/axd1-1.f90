@@ -61,6 +61,7 @@
        print '("result[",i0,"] OK")', me
     else
        print '("result[",i0,"] number of NGs: ",i0)', me, nerr
+       call exit(1)
     end if
     !---------------------------- check and output end
 

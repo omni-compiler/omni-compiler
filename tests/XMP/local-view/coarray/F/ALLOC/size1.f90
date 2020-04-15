@@ -41,6 +41,7 @@ subroutine sub(v2, k1, k2)
      write(*,100) this_image(), "OK"
   else
      write(*,101) this_image(), "NG", nerr
+     call exit(1)
   endif
 
 100 format("[",i0,"] ",a) 

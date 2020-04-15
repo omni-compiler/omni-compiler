@@ -58,6 +58,7 @@ program zan
      write(*,100) me, "OK"
   else
      write(*,101) me, "NG", nerr
+     call exit(1)
   endif
 
 100 format("[",i0,"] ",a) 

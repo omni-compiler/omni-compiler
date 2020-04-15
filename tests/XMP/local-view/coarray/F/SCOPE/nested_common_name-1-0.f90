@@ -18,7 +18,8 @@ call sub1(100)
 if(a0.eq.10.and.a1.eq.1000) then
   print *, 'OK 1'
 else
-  print *, 'NG 1 : a0 = ', a0, ', a1 = ', a1
+   print *, 'NG 1 : a0 = ', a0, ', a1 = ', a1
+   call exit(1)
 end if
 call sub2
 
@@ -27,7 +28,8 @@ contains
     if(a0.eq.10) then
       print *, 'OK 2'
     else
-      print *, 'NG 2 : a0 = ', a0
+       print *, 'NG 2 : a0 = ', a0
+       call exit(1)
     end if
   end subroutine
 end
