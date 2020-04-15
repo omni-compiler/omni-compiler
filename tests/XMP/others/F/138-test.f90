@@ -10,5 +10,6 @@
        print *,"OK"
     else
        print *,"NG"
+       call exit(1)
     endif
   end program user

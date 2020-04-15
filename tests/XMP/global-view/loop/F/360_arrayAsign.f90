@@ -16,6 +16,7 @@
         write(*,*) "PASS"
      else
         write(*,*) "NG"
+        call exit(1)
      endif
   enddo
 

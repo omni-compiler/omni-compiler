@@ -91,7 +91,7 @@ program main
   !$xmp task on p(1)
   if ( answer /= 0 ) then
      write(*,*) "ERROR"
-     call abort
+     call exit(1)
   endif
 
   write(*,*) "PASS"

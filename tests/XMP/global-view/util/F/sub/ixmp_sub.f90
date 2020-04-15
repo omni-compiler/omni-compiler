@@ -14,6 +14,9 @@ subroutine hoge
 
   if (sum == 210) then
      write(*,*) "PASS"
+  else
+     write(*,*) "Error"
+     call exit(1)
   end if
   
 end subroutine hoge

@@ -8,7 +8,7 @@ integer ierr
      write(*,*) "PASS ",tname
   else
      write(*,*) "ERROR ",tname
-     call abort
+     call exit(1)
   endif
 !$xmp end task
 

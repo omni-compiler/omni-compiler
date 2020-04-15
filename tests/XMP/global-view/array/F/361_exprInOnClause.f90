@@ -37,6 +37,7 @@
      write(*,*) "PASS"
   else
      write(*,*) "NG nerr=",nerr
+     call exit(1)
   endif
   !$xmp end task
 
