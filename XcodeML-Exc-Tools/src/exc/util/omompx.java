@@ -66,6 +66,7 @@ public class omompx
       "  -silent               no output.",
       "  -rename_main=NAME",
       "                        rename the main function NAME.",
+      "  -pointer_size=N,N,N   set pointer sizes (scalar, array, difference between ranks)",
       "",
       " Debug Options:",
       "  -d                    enable output debug message.",
@@ -199,6 +200,15 @@ public class omompx
         outputDecomp = true;
       } else if(arg.equals("-silent")){
         silent = true;
+      } else if(arg.startsWith("-pointer_size=")){
+        String   s = arg.substring(arg.indexOf("=") + 1);
+        String[] v = s.split(",", 0);
+        int pointer_scalar_size = Integer.parseInt(v[0]);
+        int pointer_array_size  = Integer.parseInt(v[1]);
+        int pointer_diff_size   = Integer.parseInt(v[2]);
+        XmOption.setPointerScalarSize(pointer_scalar_size);
+        XmOption.setPointerArraySize(pointer_array_size);
+        XmOption.setPointerDiffSize(pointer_diff_size);
       } else if(arg.startsWith("-rename_main=")) {
         String main_name = arg.substring(arg.indexOf("=") + 1);
         XmOption.setMainName(main_name);
