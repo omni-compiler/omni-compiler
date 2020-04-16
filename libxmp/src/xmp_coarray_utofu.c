@@ -241,7 +241,7 @@ void _XMP_utofu_regmem( _XMP_coarray_t *coarray_desc, void *addr, const size_t c
 
   coarray_desc->stadds = (utofu_stadd_t*)malloc(sizeof(utofu_stadd_t) * _XMP_world_size);
   utofu_stadd_t stadds;
-  utofu_reg_mem(_xmp_utofu_vcq_hdl, addr, sizeof(addr), 0, &stadds);
+  utofu_reg_mem(_xmp_utofu_vcq_hdl, addr, coarray_size, 0, &stadds);
 
   MPI_Comm comm = xmp_get_mpi_comm();
   int image_size = xmp_num_images();
@@ -491,7 +491,7 @@ static void _utofu_contiguous_put(const int target_rank, const uint64_t dst_offs
   utofu_stadd_t src_stadd;
 
   if(src_desc == NULL){
-    utofu_reg_mem(_xmp_utofu_vcq_hdl, src + src_offset, sizeof(src), 0, &src_stadd);
+    utofu_reg_mem(_xmp_utofu_vcq_hdl, src + src_offset, transfer_size, 0, &src_stadd);
   }
   else{
     src_stadd = src_desc->stadds[_XMP_world_rank] + src_offset;
@@ -562,7 +562,7 @@ static void _utofu_NON_contiguous_put(const int target_rank, const uint64_t dst_
   size_t elmt_size = dst_desc->elmt_size;
 
   if(src_desc == NULL){
-    utofu_reg_mem(_xmp_utofu_vcq_hdl, src + src_offset, sizeof(src), 0, &src_stadd);
+    utofu_reg_mem(_xmp_utofu_vcq_hdl, src + src_offset, transfer_elmts * elmt_size, 0, &src_stadd);
   }
   else{
     src_stadd = src_desc->stadds[_XMP_world_rank] + src_offset;
@@ -604,7 +604,7 @@ static void _utofu_scalar_mput(const int target_rank,
   size_t lengths[transfer_elmts];
 
   if(src_desc == NULL) {
-    utofu_reg_mem(_xmp_utofu_vcq_hdl, src + src_offset, sizeof(src), 0, &src_stadd);
+    utofu_reg_mem(_xmp_utofu_vcq_hdl, src + src_offset, transfer_elmts * elmt_size, 0, &src_stadd);
   }
   else {
     src_stadd = src_desc->stadds[_XMP_world_rank] + src_offset;
@@ -773,7 +773,7 @@ static void _utofu_contiguous_get(const int target_rank, const uint64_t dst_offs
   utofu_stadd_t lcl_stadd;
 
   if(dst_desc == NULL){
-    utofu_reg_mem(_xmp_utofu_vcq_hdl, dst + dst_offset, sizeof(dst), 0, &lcl_stadd);
+    utofu_reg_mem(_xmp_utofu_vcq_hdl, dst + dst_offset, transfer_size, 0, &lcl_stadd);
   }
   else{
     lcl_stadd = dst_desc->stadds[_XMP_world_rank] + dst_offset;
@@ -844,7 +844,7 @@ static void _utofu_NON_contiguous_get(const int target_rank, const uint64_t dst_
   size_t elmt_size = src_desc->elmt_size;
 
   if(dst_desc == NULL){
-    utofu_reg_mem(_xmp_utofu_vcq_hdl, dst + dst_offset, sizeof(dst), 0, &lcl_stadd);
+    utofu_reg_mem(_xmp_utofu_vcq_hdl, dst + dst_offset, transfer_elmts * elmt_size, 0, &lcl_stadd);
   }
   else{
     lcl_stadd = dst_desc->stadds[_XMP_world_rank] + dst_offset;
@@ -884,7 +884,7 @@ static void _utofu_scalar_mget(const int target_rank,
   size_t elmt_size = src_desc->elmt_size;
 
   if(dst_desc == NULL){
-    utofu_reg_mem(_xmp_utofu_vcq_hdl, dst + dst_offset, sizeof(dst), 0, &lcl_stadd);
+    utofu_reg_mem(_xmp_utofu_vcq_hdl, dst + dst_offset, transfer_elmts * elmt_size, 0, &lcl_stadd);
   }
   else{
     lcl_stadd = dst_desc->stadds[_XMP_world_rank] + dst_offset;
