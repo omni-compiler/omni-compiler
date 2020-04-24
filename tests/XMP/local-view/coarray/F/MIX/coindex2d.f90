@@ -50,6 +50,7 @@ program coarray_dir3
      write(*,100) me0
   else
      write(*,110) me0, nerr
+     call exit(1)
   end if
 
 100 format("[",i0,"] OK")

@@ -35,7 +35,7 @@ ierr=0
     print *, 'PASS'
   else
     print *, 'ERROR'
-    call abort
+    call exit(1)
   end if
 
   end

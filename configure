@@ -690,6 +690,9 @@ UTOFU
 MPI3_ONESIDED
 MPI3_ASYNC
 NM_OPT
+OMNI_POINTER_ARRAY_DIFF_SIZE
+OMNI_POINTER_ARRAY_INIT_SIZE
+OMNI_POINTER_SCALAR_SIZE
 OMNI_X2X_FLAGS
 OMNI_LNK_FCFLAGS
 OMNI_NTV_FCFLAGS
@@ -10824,7 +10827,7 @@ fi
 	    MPI_CFLAGS="-O2 -std=gnu99 -Wall -Wpointer-arith $OPENMP_OPT_C"
 	    MPI_CLIBS=""
 
-            ### 607 ###
+        ### 607 ###
 	    case $chk in
 	    gcc*)
 	    version=`${MPI_CC} -dumpversion`
@@ -11364,6 +11367,9 @@ OMNI_F_PP="$MPI_FPP $MPI_FPPFLAGS"
 # Omni Common
 
 
+
+
+
 # ranlib & ar & nm
 
 
@@ -11595,6 +11601,19 @@ if test "$target" = "Kcomputer-linux-gnu"; then
   #JAVA_OPT="-Xmx1600m -Xms800m"
   JAVAC_OPT+="-J-Xmx200m -J-Xms200m"
   JAR_OPT="-J-Xmx200m -J-Xms200m"
+elif test "x${target}" = "xFugaku-linux-gnu"; then
+  OMNI_X2X_FLAGS+=" -pointer_size=16,24,32"
+else
+  chk=`${MPI_CC} --version | head -n1`
+  case $chk in
+  gcc*)
+  version=`${MPI_CC} -dumpversion`
+  version=${version%%.*} # 4.3.0 -> 4
+  if test $version -le 4; then
+    OMNI_X2X_FLAGS+=" -pointer_size=8,24,24"
+  fi
+  ;;
+  esac
 fi
 
 

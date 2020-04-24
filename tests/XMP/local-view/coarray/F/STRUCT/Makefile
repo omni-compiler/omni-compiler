@@ -16,7 +16,7 @@ endif
 # restciction on FJ compiler and Ver.3
 ifneq ($(EXEC_FC),mpifrtpx)
 OUT_debug += issue033.x
-OUT_basic += struct_align2.x alloc0.x
+OUT_basic += alloc0.x
 OUT_debug += issue033-2.x
 OUT_basic += get_compo1.x
 endif

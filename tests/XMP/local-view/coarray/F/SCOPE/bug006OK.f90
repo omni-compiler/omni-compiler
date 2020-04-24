@@ -21,6 +21,7 @@ if (b==252500*me) then
    write(*,*) "OK"
 else
    write(*,*) "NG"
+   call exit(1)
 endif
 
 end

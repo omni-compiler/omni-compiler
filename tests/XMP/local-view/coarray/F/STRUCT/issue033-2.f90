@@ -35,6 +35,7 @@
      write(*,100) me
   else
      write(*,110) me, nerr
+     call exit(1)
   end if
 
 100 format("[",i0,"] OK")

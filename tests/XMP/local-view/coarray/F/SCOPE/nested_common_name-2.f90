@@ -27,7 +27,8 @@ contains
     if(a0.eq.1000) then
       print *, 'OK 2'
     else
-      print *, 'NG 2 : a0 = ', a0
+       print *, 'NG 2 : a0 = ', a0
+       call exit(1)
     end if
   end subroutine
 end

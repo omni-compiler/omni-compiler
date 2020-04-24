@@ -40,6 +40,7 @@ program main
      print '("[",i0,"] OK")', this_image()
   else
      print '("[",i0,"] number of NGs: ",i0)', this_image(), nerr
+     call exit(1)
   end if
 
 100 format("[",i0,"] allocated:",i0,", garbage:",i0)

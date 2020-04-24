@@ -11,8 +11,10 @@ int main(void)
 {
     if (a.X.x==1 && a.X.y==3 && a.Y.x==2 && a.Y.y==4)
       printf("PASS\n");
-    else
+    else{
       printf("FAIL : %d, %d, %d, %d not 1, 3, 2, 4\n", a.X.x, a.X.y, a.Y.x, a.Y.y);
+	  return 1;
+	}
     return 0;
 }
 

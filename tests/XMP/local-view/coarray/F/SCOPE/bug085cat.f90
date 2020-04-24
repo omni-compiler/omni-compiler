@@ -37,6 +37,7 @@ end program main
        print '("[",i0,"] OK")', this_image()
     else
        print '("[",i0,"] NG: nerr=",i0)', this_image(), nerr
+       call exit(1)
     endif
     
 

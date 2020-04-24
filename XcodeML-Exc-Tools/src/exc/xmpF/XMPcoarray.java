@@ -3,6 +3,7 @@ package exc.xmpF;
 import exc.object.*;
 import exc.block.*;
 import java.util.*;
+import xcodeml.util.*;
 
 /*
  * Madiator for each coarray
@@ -918,21 +919,27 @@ public class XMPcoarray {
   }
 
 
-  /* These values are desided to match gfortran. If they do not match other
-   * Fortran compilers, it should be modified.
-   *    ----------------------------------
-   *       p  p(:) p(:,:) p(:,:,:) ...
-   *       8   48    72      96    ...
-   *    ----------------------------------
+  /* These values are desided to match a fortran compiler.
+   *    ----------------------------------------------
+   *                      p  p(:) p(:,:) p(:,:,:) ...
+   *  gfortran-4.8.5:   8   48    72      96    ...
+   *  gfortran-8.3.0:   8   64    88     112    ...
+   *  Fugaku        :  16   56    88     120    ...
+   *  ----------------------------------------------
+   *  Values of pointer_scalar_size, pointer_array_init_size, pointer_array_diff_size are as following,
+   *  gfortran-4.8.5:  8, 24, 24
+   *  gfortran-8.3.0:  8, 40, 24
+   *  Fugaku:         16, 24, 32
    */
   private int _getPointerComponentLength_atmost(Xtype type) {
-    int rank, length;
-    rank = getRank(type);
-    if (rank == 0)
-      length = 8;
+	int pointer_scalar_size = XmOption.getPointerScalarSize();
+	int pointer_array_size  = XmOption.getPointerArraySize();
+	int pointer_diff_size   = XmOption.getPointerDiffSize();
+	int rank = getRank(type);
+	if (rank == 0)
+	  return pointer_scalar_size;
     else
-      length = 24 * rank + 24;
-    return length;
+	  return pointer_array_size + pointer_diff_size * rank;
   }
 
   /* These values are desided to match gfortran. If they do not match other
@@ -1664,6 +1671,13 @@ public class XMPcoarray {
 
   public void setPointer() {
     ident.Type().setIsFpointer(true);
+
+	if(ident.getStorageClass() != StorageClass.FPARAM){
+	  Ident f = declIntExtendIntrinsicIdent("null");
+	  BlockList blist = fblock.getBody();
+	  Xobject x = blist.findLocalDecl(name);
+	  x.setArg(1, Xcons.functionCall(f, null));
+	}
   }
 
   public void resetPointer() {

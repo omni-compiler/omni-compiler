@@ -292,7 +292,7 @@ subroutine initcomm
         print *,'Invalid number of PE'
         print *,'Please check partitioning pattern or number of PE'
      end if
-     stop
+     stop 1
   end if
 !
   return

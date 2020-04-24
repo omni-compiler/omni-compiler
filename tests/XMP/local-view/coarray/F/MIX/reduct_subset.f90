@@ -120,6 +120,7 @@ program main
        write(*,100) this_image()
     else
        write(*,110) this_image(), nerr
+       call exit(1)
     end if
 
 100 format("[",i0,"] OK")

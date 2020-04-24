@@ -35,6 +35,7 @@
 
   if (nerr /= 0) then
      write(*,100) me,nerr
+     call exit(1)
   else
      write(*,101) me
   endif

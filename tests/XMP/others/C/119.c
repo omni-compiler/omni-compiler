@@ -15,8 +15,10 @@ int main(){
 
   if(error)
     printf("PASS\n");
-  else
+  else{
     printf("ERROR\n");
+	return 1;
+  }
   
   return 0;
 }

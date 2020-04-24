@@ -13,4 +13,5 @@ program main
 !!   include "xmp_coarray.h"
   call autosyncall
   print '("[",i0,"] NG")', this_image()
+  call exit(1)
 end

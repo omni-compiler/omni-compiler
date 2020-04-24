@@ -81,6 +81,7 @@
        write(*,101) me
     else
        write(*,102) me, nerr
+       call exit(1)
     endif
 
 100 format("[",i0,"] ",a," should be ",i0," but ",i0)
