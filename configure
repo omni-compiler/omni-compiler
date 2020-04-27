@@ -9064,7 +9064,7 @@ fi
     OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT_C"
 
     # Omni F
-    OMNI_F2X_FLAGS=""
+    OMNI_F2X_FLAGS="-I${FJSVXTCLANGA}/include/mpi/fujitsu"
     OMNI_NTV_FCFLAGS="-Free -ltofucom"
     OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT_F"
 
@@ -11603,6 +11603,7 @@ if test "$target" = "Kcomputer-linux-gnu"; then
   JAR_OPT="-J-Xmx200m -J-Xms200m"
 elif test "x${target}" = "xFugaku-linux-gnu"; then
   OMNI_X2X_FLAGS+=" -pointer_size=16,24,32"
+  JAVA_OPT="-Xmx800m -Xms800m"
 else
   chk=`${MPI_CC} --version | head -n1`
   case $chk in
