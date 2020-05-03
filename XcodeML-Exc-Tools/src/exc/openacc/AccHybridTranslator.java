@@ -181,17 +181,26 @@ public class AccHybridTranslator implements XobjectDefVisitor {
 
 								// ブロックからXobjectに戻す！！
 								def.setDef(fb.toXobject());
+								return;
 
 							} else {
 								// if(!accClause.isDataClause()) continue;
 
 								// remove pragma block
 								def.setDef(null);
+								return;
 							}
 						}
 					}
+				} else if (_acc_ondevice.equals("FPGA")) {
+					def.setDef(null);
+					return;
 				}
 			}
+		}
+
+		if (_acc_ondevice.equals("FPGA")) {
+			def.setDef(null);
 		}
 
 		// if (def.isFuncDef()) {
