@@ -22,7 +22,7 @@ MPICH_BASE_DIR=${TMP_DIR}/mpich
 MPICH_INSTALL_DIR=${MPICH_BASE_DIR}/work
 
 ARCHIVE=archive.tar.bz2
-REMOTE_HOST=${USER}@omni.riken.jp
+REMOTE_HOST=${USER}@omni-compiler.org
 GASNET_OPENMPI_PATH=/opt/GASNet-openmpi
 GASNET_MPICH_PATH=/opt/GASNet-mpich
 OPENMPI_PATH=/opt/openmpi
@@ -95,9 +95,9 @@ export PATH=${OPENMPI_PATH}/bin:${GASNET_OPENMPI_INSTALL_DIR}/bin:$PATH
 cd ${GASNET_OPENMPI_BASE_DIR}/${OMNI}
 sh autogen.sh
 ./configure --prefix=${GASNET_OPENMPI_INSTALL_DIR} --with-gasnet=${GASNET_OPENMPI_PATH}
-make -j16; make install
-make clean-tests;       make tests -j16;       make run-tests
-make clean-tests-F2003; make tests-F2003 -j16; make run-tests-F2003
+make -j; make install
+make clean-tests;       make tests -j;       make run-tests
+make clean-tests-F2003; make tests-F2003 -j; make run-tests-F2003
 
 EOF
 
@@ -111,9 +111,9 @@ export PATH=${MPICH_PATH}/bin:${GASNET_MPICH_INSTALL_DIR}/bin:$PATH
 cd ${GASNET_MPICH_BASE_DIR}/${OMNI}
 sh autogen.sh
 ./configure --prefix=${GASNET_MPICH_INSTALL_DIR} --with-gasnet=${GASNET_MPICH_PATH}
-make -j16; make install
-make clean-tests;       make tests -j16;       make run-tests
-make clean-tests-F2003; make tests-F2003 -j16; make run-tests-F2003
+make -j; make install
+make clean-tests;       make tests -j;       make run-tests
+make clean-tests-F2003; make tests-F2003 -j; make run-tests-F2003
 
 ## OpenMPI
 echo ""
@@ -124,9 +124,9 @@ export PATH=${OPENMPI_PATH}/bin:${OPENMPI_INSTALL_DIR}/bin:$PATH
 cd ${OPENMPI_BASE_DIR}/${OMNI}
 sh autogen.sh
 ./configure --prefix=${OPENMPI_INSTALL_DIR}
-make -j16; make install
-make clean-tests;       make tests -j16;       make run-tests
-make clean-tests-F2003; make tests-F2003 -j16; make run-tests-F2003
+make -j; make install
+make clean-tests;       make tests -j;       make run-tests
+make clean-tests-F2003; make tests-F2003 -j; make run-tests-F2003
 
 ## MPICH
 echo ""
@@ -137,9 +137,9 @@ export PATH=${MPICH_PATH}/bin:${MPICH_INSTALL_DIR}/bin:$PATH
 cd ${MPICH_BASE_DIR}/${OMNI}
 sh autogen.sh
 ./configure --prefix=${MPICH_INSTALL_DIR}
-make -j16; make install
-make clean-tests;       make tests -j16;       make run-tests
-make clean-tests-F2003; make tests-F2003 -j16; make run-tests-F2003
+make -j; make install
+make clean-tests;       make tests -j;       make run-tests
+make clean-tests-F2003; make tests-F2003 -j; make run-tests-F2003
 EOF
 fi
 
