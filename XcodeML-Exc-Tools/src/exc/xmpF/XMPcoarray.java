@@ -404,34 +404,33 @@ public class XMPcoarray {
   //  returns null if it is not allocated
   //-----------------------------------------------------
   //
-  /******************************
-  public Xobject makeStmt_setCoshape() {
-    return makeStmt_setCoshape(env);
-  }
-  public Xobject makeStmt_setCoshape(XMPenv env) {
-    int corank = getCorank();
-
-    Xobject args = Xcons.List(getDescPointerId(),
-                              Xcons.IntConstant(corank));
-    for (int i = 0; i < corank - 1; i++) {
-      args.add(getLcobound(i));
-      args.add(getUcobound(i));
-    }
-    args.add(getLcobound(corank - 1));
-
-    if (args.hasNullArg())
-      XMP.fatal("generated null argument " + SET_COSHAPE_NAME +
-                "(makeStmt_setCoshape())");
-
-    Ident subr = env.findVarIdent(SET_COSHAPE_NAME, null);
-    if (subr == null) {
-      subr = env.declExternIdent(SET_COSHAPE_NAME,
-                                 BasicType.FexternalSubroutineType);
-    }
-    Xobject subrCall = subr.callSubroutine(args);
-    return subrCall;
-  }
-  ***********************************/
+  //
+  //  public Xobject makeStmt_setCoshape() {
+    //    return makeStmt_setCoshape(env);
+    //  }
+    //  public Xobject makeStmt_setCoshape(XMPenv env) {
+    //    int corank = getCorank();
+    //
+    //    Xobject args = Xcons.List(getDescPointerId(),
+    //                              Xcons.IntConstant(corank));
+    //    for (int i = 0; i < corank - 1; i++) {
+    //      args.add(getLcobound(i));
+    //      args.add(getUcobound(i));
+    //    }
+    //    args.add(getLcobound(corank - 1));
+    //
+    //    if (args.hasNullArg())
+    //      XMP.fatal("generated null argument " + SET_COSHAPE_NAME +
+    //                "(makeStmt_setCoshape())");
+    //
+    //    Ident subr = env.findVarIdent(SET_COSHAPE_NAME, null);
+    //    if (subr == null) {
+    //      subr = env.declExternIdent(SET_COSHAPE_NAME,
+    //                                 BasicType.FexternalSubroutineType);
+    //    }
+    //    Xobject subrCall = subr.callSubroutine(args);
+    //    return subrCall;
+    //  }
 
   public void addStmts_setCoshapeAndName(BlockList list, XMPenv env) {
     addStmts_setCoshape(list, env);
@@ -544,35 +543,34 @@ public class XMPcoarray {
   //     "CALL set_codim (descPtr, corank-1, clb)"
   //-----------------------------------------------------
   //
-  /*********************************************
-  public Xobject makeStmt_setCoshape(XobjList coshape) {
-    int corank = getCorank();
-    if (corank != coshape.Nargs()) {
-      XMP.fatal("number of codimensions not matched with the declaration:"
-                + corank + " and " + coshape.Nargs());
-      return null;
-    }
-
-    Xobject args = Xcons.List(getDescPointerId(),
-                              Xcons.IntConstant(corank));
-    for (int i = 0; i < corank - 1; i++) {
-      args.add(_getLboundInIndexRange(coshape.getArg(i)));
-      args.add(_getUboundInIndexRange(coshape.getArg(i)));
-    }
-    args.add(_getLboundInIndexRange(coshape.getArg(corank - 1)));
-    if (args.hasNullArg())
-      XMP.fatal("generated null argument " + SET_COSHAPE_NAME + 
-                " (XMPcoarray.makeStmt_setCoshape(coshape))");
-
-    Ident subr = env.findVarIdent(SET_COSHAPE_NAME, null);
-    if (subr == null) {
-      subr = env.declExternIdent(SET_COSHAPE_NAME,
-                                 BasicType.FexternalSubroutineType);
-    }
-    Xobject subrCall = subr.callSubroutine(args);
-    return subrCall;
-  }
-  *********************************************************/
+    //
+    //  public Xobject makeStmt_setCoshape(XobjList coshape) {
+    //    int corank = getCorank();
+    //    if (corank != coshape.Nargs()) {
+    //      XMP.fatal("number of codimensions not matched with the declaration:"
+    //                + corank + " and " + coshape.Nargs());
+    //      return null;
+    //    }
+    //
+    //    Xobject args = Xcons.List(getDescPointerId(),
+    //                              Xcons.IntConstant(corank));
+    //    for (int i = 0; i < corank - 1; i++) {
+    //      args.add(_getLboundInIndexRange(coshape.getArg(i)));
+    //      args.add(_getUboundInIndexRange(coshape.getArg(i)));
+    //    }
+    //    args.add(_getLboundInIndexRange(coshape.getArg(corank - 1)));
+    //    if (args.hasNullArg())
+    //      XMP.fatal("generated null argument " + SET_COSHAPE_NAME + 
+    //                " (XMPcoarray.makeStmt_setCoshape(coshape))");
+    //
+    //    Ident subr = env.findVarIdent(SET_COSHAPE_NAME, null);
+    //    if (subr == null) {
+    //      subr = env.declExternIdent(SET_COSHAPE_NAME,
+    //                                 BasicType.FexternalSubroutineType);
+    //    }
+    //    Xobject subrCall = subr.callSubroutine(args);
+    //    return subrCall;
+    //  }
 
   public void addStmts_setCoshape(BlockList list, XobjList coshape) {
     Xobject stmt;
