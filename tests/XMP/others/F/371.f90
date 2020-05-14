@@ -1,4 +1,4 @@
-MODULE mod
+MODULE mod_371
   INTERFACE OPERATOR(.add.)
      MODULE PROCEDURE iadd
      MODULE PROCEDURE fadd
@@ -14,11 +14,11 @@ CONTAINS
     real :: ret
     ret = x + y
   END FUNCTION fadd
-END MODULE mod
+END MODULE mod_371
 
 program test
 
-  USE mod, OPERATOR(.x.) => OPERATOR(.add.)
+  USE mod_371, OPERATOR(.x.) => OPERATOR(.add.)
 
   PRINT *, 1.x.2
   PRINT *, 1 .x. 2
