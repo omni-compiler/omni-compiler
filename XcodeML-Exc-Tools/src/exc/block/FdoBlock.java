@@ -44,12 +44,6 @@ public class FdoBlock extends Block implements ForBlock
     }
   
     @Override
-    public Block copy()
-    {
-        return new FdoBlock(this);
-    }
-
-    @Override
     public void Canonicalize()
     {
         is_canonical = true;

@@ -286,6 +286,11 @@ U   XMP_DESC_OF
 L   ACC_PRAGMA 
 
 # -----------------
+# METAX Pragma
+L   OMN_PRAGMA
+L   OMNDECL_PRAGMA
+
+# -----------------
 L   INDEX_RANGE
 L   LOWER_BOUND
 L   UPPER_BOUND
