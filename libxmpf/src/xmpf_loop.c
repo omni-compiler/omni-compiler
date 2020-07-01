@@ -1,89 +1,16 @@
 #include "xmpf_internal.h"
 
 
-/* static void _XMP_sched_loop(int *global_lb, int *global_ub, int *global_step, */
-/* 			    int *local_lb, int *local_ub, int *local_step, */
-/* 			    _XMP_template_t *t_desc, int t_idx, int off) */
-/* { */
-
-/*   _XMP_ASSERT(*global_step != 0); */
-/*   int global_ub_C = (*global_step > 0) ? (*global_ub + 1) : (*global_ub - 1); */
-
-/*   switch (t_desc->chunk[t_idx].dist_manner){ */
-
-/*     case _XMP_N_DIST_DUPLICATION: */
-/*       _XMP_sched_loop_template_DUPLICATION(*global_lb, global_ub_C, *global_step, */
-/* 					   local_lb, local_ub, local_step, */
-/* 					   t_desc, t_idx); */
-/*       break; */
-
-/*     case _XMP_N_DIST_BLOCK: */
-/*       _XMP_sched_loop_template_BLOCK(*global_lb, global_ub_C, *global_step, */
-/* 				     local_lb, local_ub, local_step, */
-/* 				     t_desc, t_idx); */
-/*       break; */
-
-/*     case _XMP_N_DIST_CYCLIC: */
-/*       _XMP_sched_loop_template_CYCLIC(*global_lb, global_ub_C, *global_step, */
-/* 				      local_lb, local_ub, local_step, */
-/* 				      t_desc, t_idx); */
-/*       break; */
-
-/*     case _XMP_N_DIST_BLOCK_CYCLIC: */
-/*       _XMP_sched_loop_template_BLOCK_CYCLIC(*global_lb, global_ub_C, *global_step, */
-/* 					    local_lb, local_ub, local_step, */
-/* 					    t_desc, t_idx); */
-/*       break; */
-
-/*     default: */
-/*       _XMP_fatal("xmpf_sched_loop_template: unknown chunk dist_manner"); */
-
-/*   } */
-
-/*   (*local_ub)--; // because upper bound in Fortran is inclusive */
-
-/* /\*   xmpf_dbg_printf("loop_sched(%d,%d,%d)->(%d,%d,%d)\n", *\/ */
-/* /\* 		  *global_lb,*global_ub,*global_step, *\/ */
-/* /\* 		  *local_lb,*local_ub,*local_step); *\/ */
-
-/*   return; */
-
-/* } */
-
-
-//void xmpf_sched_loop_template_local__(int *global_lb, int *global_ub, int *global_step,
-//				      int *local_lb, int *local_ub, int *local_step,
-//				      _XMP_object_ref_t **r_desc)
-//{
-//  _XMP_object_ref_t *rp = *r_desc;
-//  _XMP_ASSERT(rp->ref_kind == XMP_OBJ_REF_TEMPL);
-//
-//  for (int i = 0; i < rp->ndims; i++){
-//
-//    if (rp->index[i] != -1){
-//      _XMP_sched_loop(&global_lb[i], &global_ub[i], &global_step[i],
-//		      &local_lb[i], &local_ub[i], &local_step[i],
-//		      rp->t_desc, rp->index[i], rp->offset[i]);
-//    }
-//    else { /* the nest is not aligned with any dimension of the template. */
-//      local_lb[i] = global_lb[i];
-//      local_ub[i] = global_ub[i];
-//      local_step[i] = global_step[i];
-//    }
-//
-//  }
-//
-//  return;
-//
-//}
-
-
-void xmpf_loop_sched__(int *lb, int *ub, int *st, int *r_idx, _XMP_object_ref_t **r_desc)
+void xmpf_loop_sched__(int *lb, int *ub, int *st, int *r_idx, _XMP_object_ref_t **r_desc,
+		       int *expand_type, int *lwidth, int *uwidth, int *unbound_flag)
 {
   _XMP_object_ref_t *rp = *r_desc;
   _XMP_ASSERT(rp->ref_kind == XMP_OBJ_REF_TEMPL);
+  _XMP_ASSERT(*expand_type != _XMP_LOOP_MARGIN || *lwidth == 0 || *uwidth == 0);
+  
+  int glb_orig = *lb;
+  int gub_orig = *ub;
 
-  //if (rp->index[*r_idx] != -1){
   if (rp->REF_INDEX[*r_idx] != -1){
 
     _XMP_ASSERT(*st != 0);
@@ -131,17 +58,69 @@ void xmpf_loop_sched__(int *lb, int *ub, int *st, int *r_idx, _XMP_object_ref_t 
 
     }
 
-    //(*lb) -= off;
-    //(*ub) -= off;
-
     (*ub)--; // because upper bound in Fortran is inclusive
   }
   else {
     ; /* the nest is not aligned with any dimension of the template. */
   }
 
-  //xmpf_dbg_printf("loop = (%d : %d)\n", *lb, *ub);
+  if (*expand_type == _XMP_LOOP_NONE){
+    //xmpf_dbg_printf("%d : %d\n", *lb, *ub);
+    return;
+  }
+  else if (*expand_type == _XMP_LOOP_EXPAND){
 
+    if ((*lb) <= (*ub)){ // iterates at least once
+      (*lb) -= (*lwidth);
+      (*ub) += (*uwidth);
+    }
+
+  }
+  else if (*expand_type == _XMP_LOOP_MARGIN){
+
+    if ((*lb) <= (*ub)){ // iterates at least once
+
+      if (*lwidth > 0){
+	(*lb) -= (*lwidth);
+	(*ub) = (*lb) + (*lwidth) - 1;
+      }
+      else if (*lwidth < 0){
+	(*ub) = (*lb) - (*lwidth) - 1;
+	// (*lb)
+      }
+      else if (*uwidth > 0){
+	(*ub) += (*uwidth);
+	(*lb) = (*ub) - (*uwidth) + 1;
+      }
+      else if (*uwidth < 0){
+	(*lb) = (*ub) + (*uwidth) + 1;
+	// (*ub)
+      }
+
+    }
+
+  }
+
+  if (*unbound_flag == 0){
+
+    _XMP_template_t *t_desc = rp->t_desc;
+    int t_idx = rp->REF_INDEX[*r_idx];
+
+    long long int glb;
+    _XMP_L2G(*lb, &glb, t_desc, t_idx);
+    if (glb < glb_orig){
+      (*lb) += (*lwidth);
+    }
+
+    long long int gub;
+    _XMP_L2G(*ub, &gub, t_desc, t_idx);
+    if (gub > gub_orig){
+      (*ub) -= (*uwidth);
+    }
+  }
+
+  //xmpf_dbg_printf("%d : %d\n", *lb, *ub);
+  
   return;
 
 }

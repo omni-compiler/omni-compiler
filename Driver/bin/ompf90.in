@@ -9,6 +9,10 @@ OM_DRIVER_CONF_DIR=@OM_DRIVER_CONF_DIR@
 ### Directory for saving intermediate files ###
 PID=$$
 TEMP_DIR=/tmp/__omni_tmp__${PID}
+while test -e $TEMP_DIR; do
+    PID=$$
+    TEMP_DIR=/tmp/__omni_tmp__${PID}
+done
 DEBUG_TEMP_DIR="__omni_tmp__"
 
 ### Default options ###
@@ -25,6 +29,7 @@ STOP_FRONTEND=false
 STOP_TRANSLATOR=false
 STOP_BACKEND=false
 STOP_COMPILE=false
+ENABLE_DDRD=false
 
 ### Set options ###
 # e.g.) ompf90 -I/usr/lib a.f b.F c.f90 d.F90 e.o --tmp --Wlfoo lib.a -DTEST -Jdir -lm -o a.out
@@ -69,7 +74,6 @@ omni_f_check_file_exist
 # Note that, if TEMP_DIR exists, the TEMP_DIR is not deleted (KAGEMAI #379)
 
 omni_exec mkdir -p $TEMP_DIR
-[ $ENABLE_DEBUG = true ] && echo "Create ${TEMP_DIR}/"
 
 ### Clean temporal directory before exit ###
 omni_set_trap
@@ -131,7 +135,7 @@ for file in "${f_files[@]}"; do
     FILE_IN_X=${TEMP_DIR}/"${FILE_NAME}"_${EXT}_in.xml
     FILE_OUT_X=${TEMP_DIR}/"${FILE_NAME}"_${EXT}_out.xml
 
-    omni_exec $OMNI_FX2X_CMD $OMNI_FX2X_OPT "${xcode_translator_add_opt[@]}" "${module_opt[@]}" "${trans_module_opt[@]}" "${FILE_IN_X}" -o "${FILE_OUT_X}"
+    omni_exec $OMNI_FX2X_CMD $OMNI_FX2X_OPT "${xcode_translator_add_opt[@]}" "${module_opt[@]}" "${trans_module_opt[@]}" "${FILE_IN_X}"
     # also create ${TEMP_DIR}/${FILE_NAME}_${EXT}_in.F90
 done
 [ $STOP_TRANSLATOR = true ] && exit 0;
@@ -163,7 +167,7 @@ for file in "${f_files[@]}"; do
     FILE_O=${TEMP_DIR}/"${FILE_NAME}"_${EXT}.o
 
     if [ "$target" != "sxace-nec-superux" ]; then
-	omni_exec mkdir -p "${module_dir[@]}"
+	[ "${module_dir}" != "" ] && omni_exec mkdir -p "${module_dir[@]}"
 	omni_exec $OMNI_FC_CMD "${module_dirs[@]}" "${native_add_opt[@]}" $OMNI_FC_OPT "${other_args[@]}" "${FILE_F90}" -o "${FILE_O}"
     else
 	## On SX-ACE, when indicating "${FILE_F90}" by an absolute path, "-to" option is ignored.
@@ -207,8 +211,7 @@ done
 
 # link
 [ $ENABLE_ACC = true ] && OMNI_LINKER_OPT="$OMNI_GPUCC_LIB $OMNI_LINKER_OPT"
-obj_files+=("$OMPF_MAIN_O")
-
+[ $ENABLE_DDRD = false ] && obj_files+=("$OMPF_MAIN_O")
 if [ "$target" != "sxace-nec-superux" -a "${output_file}" != "" ]; then
     other_args+=("-o" "${output_file[@]}")
 elif [ "$target"  = "sxace-nec-superux" -a "${output_file}" != "" ]; then
@@ -216,7 +219,11 @@ elif [ "$target"  = "sxace-nec-superux" -a "${output_file}" != "" ]; then
     other_args+=("-o" "'${output_file[@]}'")
 fi
 
+if [ $ENABLE_DDRD = true ]; then
+omni_exec $OMNI_LINKER_CMD "${obj_files[@]}" "${linker_add_opt[@]}" "${other_args[@]}" "${archive_files[@]}" "${lib_args[@]}" $OMNI_LNK_FCFLAGS
+else
 omni_exec $OMNI_LINKER_CMD "${obj_files[@]}" "${linker_add_opt[@]}" "${other_args[@]}" "${archive_files[@]}" "${lib_args[@]}" $OMNI_LINKER_OPT
+fi
     
 ### Delete temporal directory ###
 [ $ENABLE_DEBUG = false ] && omni_exec rm -rf "${TEMP_DIR}"

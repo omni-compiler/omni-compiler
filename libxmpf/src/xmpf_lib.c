@@ -1,9 +1,3 @@
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
-
 #include "xmpf_internal.h"
 #include "xmp_internal.h"
 #include "xmp.h"
@@ -23,19 +17,17 @@ void xmp_init_mpi_(void) {
 void xmp_finalize_mpi_(void) {
 }
 
-void xmp_init_() {
-  _XMP_init(0, NULL);
+void xmp_init_(MPI_Fint *comm) {
+  _XMP_init(1, NULL, MPI_Comm_f2c(*comm));
 }
 
 void xmp_finalize_(void) {
-  xmp_finalize();
+  _XMP_finalize(false);
 }
-
 
 int xmpf_desc_kind_(xmp_desc_t **d, int *kind) {
   return xmp_desc_kind(*d, kind);
 }
-
 
 int xmp_num_nodes_(void) {
   return _XMP_get_execution_nodes()->comm_size;
@@ -77,9 +69,25 @@ int xmp_array_lbound_(xmp_desc_t **d, int *dim, int *lbound) {
 
 }
 
+int xmp_lbound_(xmp_desc_t **d, int *dim) {
+
+  int lbound;
+  xmp_array_lbound(*d, *dim, &lbound);
+  return lbound;
+
+}
+
 int xmp_array_ubound_(xmp_desc_t **d, int *dim, int *ubound) {
 
   return xmp_array_ubound(*d, *dim, ubound);
+
+}
+
+int xmp_ubound_(xmp_desc_t **d, int *dim) {
+
+  int ubound;
+  xmp_array_ubound(*d, *dim, &ubound);
+  return ubound;
 
 }
 
@@ -117,9 +125,9 @@ int xmp_array_lead_dim_(xmp_desc_t **d, int size[]){
   return 0;
 }
 
-int xmp_array_gtol_(xmp_desc_t **d, int *g_idx, int *l_idx){
+int xmp_array_gtol_(xmp_desc_t **d, int *dim, int *g_idx, int *l_idx){
 
-  xmp_array_gtol(*d, g_idx, l_idx);
+  xmp_array_gtol(*d, *dim, *g_idx, l_idx);
 
   return 0;
 }
@@ -412,3 +420,9 @@ void xmp_unpack_nomask_(_XMP_array_t **a_d, _XMP_array_t **v_d){
    xmpf_unpack(*a_d, *v_d, NULL);
 }
 
+
+int xmp_array_owner_rank(_XMP_array_t *d, int *ref_index, int *owners);
+
+int xmp_array_owner_rank_(_XMP_array_t **d, int *ref_index, int *owners){
+  return xmp_array_owner_rank(*d, ref_index, owners);
+}

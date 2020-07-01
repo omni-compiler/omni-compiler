@@ -105,9 +105,23 @@ xmpc_gmv_l_dim_info(_XMP_gmv_desc_t *gp, int i, int a_lb, int a_len,
   gp->a_ub[i] = a_len - 1;
 
   gp->kind[i] = kind;
-  gp->lb[i] = lb;
-  gp->ub[i] = lb + st * (len - 1);
-  gp->st[i] = st;
+
+  switch (kind){
+  case XMP_N_GMOVE_ALL:
+    gp->lb[i] = a_lb;
+    gp->ub[i] = a_len - 1;
+    gp->st[i] = 1;
+    break;
+  case XMP_N_GMOVE_INDEX:
+  case XMP_N_GMOVE_RANGE:
+    gp->lb[i] = lb;
+    gp->ub[i] = lb + st * (len - 1);
+    gp->st[i] = st;
+    break;
+  default:
+    _XMP_fatal("wrong gmove kind");
+  }
+
 }
 
 
@@ -180,7 +194,7 @@ xmpc_gmv_do(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp,
       // in _XMP_gmove_1to1)
       _XMP_array_t *a = NULL;
       _XMPC_larray_alloc(&a, gmv_desc_leftp,
-			   gmv_desc_rightp->a_desc->type, gmv_desc_rightp->a_desc->align_template);
+			 gmv_desc_rightp->a_desc->type, gmv_desc_rightp->a_desc->align_template);
       _XMP_gmove_larray_garray(gmv_desc_leftp, gmv_desc_rightp, mode);
       _XMP_finalize_array_desc(a);
 

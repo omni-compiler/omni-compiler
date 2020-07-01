@@ -70,6 +70,12 @@
 #define _XMP_N_GMOVE_IN				401
 #define _XMP_N_GMOVE_OUT			402
 
+// defined in exc.xcalablemp.XMP???
+#define _XMP_LOOP_EXPAND                        410
+#define _XMP_LOOP_MARGIN                        411
+#define _XMP_LOOP_PEEL_AND_WAIT                 412
+#define _XMP_LOOP_NONE                          413
+
 // defined in exc.object.BasicType + 500
 #define _XMP_N_TYPE_BOOL			502
 #define _XMP_N_TYPE_CHAR			503
@@ -125,5 +131,10 @@
 #define _XMP_DESC_NODES                         2200
 #define _XMP_DESC_TEMPLATE                      2201
 #define _XMP_DESC_ARRAY                         2202
+
+#define _XMP_COMM_NONE                          3000
+#define _XMP_COMM_REFLECT                       3001
+#define _XMP_COMM_REDUCE_SHADOW                 3002
+#define _XMP_COMM_GMOVE                         3003
 
 #endif // _XMP_CONSTANT

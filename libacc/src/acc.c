@@ -123,7 +123,8 @@ void _ACC_finalize(void)
 }
 
 void _ACC_init_type(acc_device_t device_type)
-{ 
+{
+  _ACC_DEBUG("_ACC_init_type(device_type=%d)\n", device_type);
   switch(device_type){
   case acc_device_none:
     _ACC_fatal("device_type = none is unsupported");
@@ -147,7 +148,7 @@ void _ACC_init_type(acc_device_t device_type)
 
   _ACC_DEBUG("begin _ACC_init_type\n")
 
-  _num_devices = _ACC_platform_get_num_devices();
+  _num_devices = _ACC_platform_get_num_devices(device_type);
 
   _ACC_DEBUG("Total number of devices = %d\n", _num_devices)
 
@@ -157,7 +158,7 @@ void _ACC_init_type(acc_device_t device_type)
   }
 
   acc_set_device_type(device_type);
-  _ACC_set_device_num(-10); //set device to default
+  //  _ACC_set_device_num(-10); //set device to default
 
   _ACC_device_working = true;
 
@@ -305,7 +306,7 @@ static void _ACC_init_device_if_not_inited(int num)
 }
 
 static void init_device(int dev_num){ //0-based, notnormalized
-  _ACC_DEBUG("initializing GPU %d\n",dev_num)
+  _ACC_DEBUG("initializing device %d\n",dev_num)
 
   if(dev_num < 0){ //default device num
     int i;
@@ -316,11 +317,11 @@ static void init_device(int dev_num){ //0-based, notnormalized
       }
     }
     if(i == _num_devices){
-      _ACC_fatal("failed to alloc GPU device");
+      _ACC_fatal("failed to alloc device");
     }
   }else{
     if(! _ACC_platform_allocate_device(dev_num)){
-      _ACC_fatal("failed to alloc GPU device");
+      _ACC_fatal("failed to alloc device");
     }
   }
 

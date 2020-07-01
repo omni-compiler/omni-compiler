@@ -86,6 +86,11 @@ public class Xcons
         return new XobjLong(code, type, high, low);
     }
 
+    public static XobjLong LongConstant(long value)
+    {
+        return Long(Xcode.LONG_CONSTANT, Xtype.longType, value);
+    }
+
     public static XobjLong LongLongConstant(long high, long low)
     {
         return new XobjLong(high, low);
@@ -950,6 +955,26 @@ public class Xcons
         return x;
     }
     
+    public static Xobject FarrayRef(Xobject var, XobjList indices)
+    {
+        Xobject x = Xcons.List(Xcode.F_ARRAY_REF, var.Type().getRef(),
+            Xcons.List(Xcode.F_VAR_REF, var));
+        Xobject l = Xcons.List();
+        
+        if(var.Type().isFarray()) {
+            int n = var.Type().getNumDimensions() - indices.Nargs();
+            for(int i = 0; i < n; ++i)
+                l.add(Xcons.FindexRangeOfAssumedShape());
+        }
+        
+        for(Xobject i : indices) {
+            l.add(Xcons.List(Xcode.F_ARRAY_INDEX, i));
+        }
+        
+        x.add(l);
+        return x;
+    }
+
     public static Xobject Fallocate(Xobject var, Xobject ... indices)
     {
         XobjList l = Xcons.List(indices);
@@ -972,8 +997,9 @@ public class Xcons
     public static Xobject FinterfaceFunctionDecl(Ident name, XobjList paramDecls)
     {
         return Xcons.List(Xcode.F_INTERFACE_DECL, (Xobject)null,
-            IntConstant(0), IntConstant(0), Xcons.List(
-                Xcons.List(Xcode.FUNCTION_DECL, name, null, null, paramDecls)));
+            IntConstant(0), IntConstant(0),
+	    Xcons.List(Xcons.List(Xcode.FUNCTION_DECL, name, null, null, paramDecls)),
+	    IntConstant(0));
     }
 
     public static Xobject StatementLabel(String label)

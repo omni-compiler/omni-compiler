@@ -22,11 +22,11 @@ OMNI_C2X_OPT="${OMNI_C2X_MUST_OPT} @OMNI_C2X_FLAGS@"
 
 # Translator
 OMNI_CX2X_CMD="@JAVA@"
-OMNI_JAR1="${OMNI_HOME}/share/xcalablemp/om-exc-tools.jar"
-OMNI_JAR2="${OMNI_HOME}/share/xcalablemp/om-c-back.jar"
-OMNI_JAR3="${OMNI_HOME}/share/xcalablemp/om-f-back.jar"
-OMNI_JAR4="${OMNI_HOME}/share/xcalablemp/om-common.jar"
-OMNI_CX2X_MUST_OPT="-cp ${OMNI_JAR4}:${OMNI_JAR3}:${OMNI_JAR2}:${OMNI_JAR1} exc.util.omompx -decomp -xc"
+OMNI_JAR1="${OMNI_HOME}/share/om-exc-tools.jar"
+OMNI_JAR2="${OMNI_HOME}/share/om-c-back.jar"
+OMNI_JAR3="${OMNI_HOME}/share/om-f-back.jar"
+OMNI_JAR4="${OMNI_HOME}/share/om-common.jar"
+OMNI_CX2X_MUST_OPT="-cp ${OMNI_JAR4}:${OMNI_JAR3}:${OMNI_JAR2}:${OMNI_JAR1} exc.util.omompx -decomp -xc -silent"
 OMNI_CX2X_OPT="@JAVA_OPT@ ${OMNI_CX2X_MUST_OPT} @OMNI_X2X_FLAGS@"
 
 # Native Compile
@@ -36,7 +36,8 @@ OMNI_CC_OPT="@OMNI_NTV_CFLAGS@ ${OMNI_CC_MUST_OPT}"
 ENABLE_ACC="@ENABLE_ACC@"   # "1" is yes, "0" is no.
 OMNI_GPUCC_CMD="@GPU_CMD@"
 OMNI_GPUCC_MUST_OPT="-c -I${OMNI_HOME}/include"
-OMNI_GPUCC_OPT="@GPU_CFLAGS@ ${OMNI_GPUCC_MUST_OPT}"
+OMNI_GPUCC_OPT="${OMNI_GPUCC_MUST_OPT}"
+OMNI_PZCL_PREFIX="@PZCL_PREFIX@"
 
 # Linker
 OMNI_TRAVERSE="${OMNI_HOME}/libexec/omni_traverse.sh"
@@ -46,3 +47,4 @@ OMNI_LINKER_OPT="${OMNI_LINKER_MUST_OPT} @OMNI_LNK_CFLAGS@"
 OMPC_MAIN_O="${OMNI_HOME}/lib/ompc_main.o"
 OMNI_CUDA_LIB="-lacc -lacc_cuda -L@CUDA_PREFIX@/lib64 -lcudart"
 OMNI_OPENCL_LIB="-lacc -lacc_cl -L@OPENCL_PREFIX@/lib64 -lOpenCL"
+OMNI_PZCL_LIB="-lacc -lacc_cl -L@PZCL_PREFIX@/lib @PZCL_PREFIX@/lib/libpzcl.a -lstdc++"

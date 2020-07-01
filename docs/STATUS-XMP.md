@@ -1,4 +1,4 @@
-Implementation Status version 1.1.1
+Implementation Status version 1.3.1 or later
 ---------------------------------------
 # Global-View
 * Mot support block(n) distribution in distribute directive in XMP/C

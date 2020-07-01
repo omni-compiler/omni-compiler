@@ -1,9 +1,10 @@
 #!/bin/bash
 #
-# V3
+# V3.2
 #
 
 #VERBOSE=yes
+NM=nm
 MODE=1         # generate subroutines respectively for all groups
 #MODE=2          # generate one subroutine for all proceures of all groups
 
@@ -70,14 +71,56 @@ fi
 
 
 #--------------------------------------------------------------
-# find names ${PREFIX}_traverse_* 
+# find symbol names in the input files:
+#  1) defNames: symbols defined in the files
+#  2) usedNames: symbols used in the files
+#  3) undefNames: symbols used but not defined in the files
 #--------------------------------------------------------------
 
-#--- get traverse procedures
-trav_cands=`$NM $NM_OPT "${INFILES[@]}" | \
-    awk 'NF >= 2 && $(NF-1) ~ "^[U]$" { print $NF }'`
+#-- 1) get defNames
+defNames=`$NM $NM_OPT "${INFILES[@]}" | \
+        awk 'NF >= 2 && $(NF-1) ~ "^[DdTt]$" { print $NF }'`
+
+#-- 2) get usedNames
+usedNames=`$NM $NM_OPT "${INFILES[@]}" | \
+        awk 'NF >= 2 && $(NF-1) ~ "^[U]$" { print $NF }'`
+
+#-- 3) get undefNames
+undefNames=""
+for uname in $usedNames; do
+    match="no"
+    for dname in $defNames; do
+	if [ $uname == $dname ]; then
+	    match="yes"
+	    break
+	fi
+    done
+    if [ $match == "no" ]; then
+	undefNames+=" $uname"
+    fi
+done
+
+if [ "$VERBOSE" = "yes" ]; then
+    echo
+    echo "[symbols defined in the input files]"
+    echo $defNames
+    echo "[symbols used in the input files]"
+    echo $usedNames
+    echo "[symbols used but not defined in the input files]"
+    echo $undefNames
+fi
+
+#--------------------------------------------------------------
+# get names of the traversers and target procedures
+#  1) traversers: will be defined by this tool to call all target
+#     procedures, and must be called from the user program.
+#  2) target procedures: are previously defined by the user, and 
+#     will be called from the traverser.
+#--------------------------------------------------------------
+
+#-- 1) get traversers
 traversers=()
-for name in $trav_cands; do
+for name in $undefNames; do
     name=${name#_}                # re-mangling for MacOS
     case $name in
         ${M_PREFIX}_traverse_?*)
@@ -88,11 +131,9 @@ for name in $trav_cands; do
     esac
 done
 
-#--- get procedures to be traversed
-proc_cands=`$NM $NM_OPT "${INFILES[@]}" | \
-    awk 'NF >= 2 && $(NF-1) ~ "^[DdTt]$" { print $NF }'`
+#-- 2) get target procedures
 procedures=()
-for name in $proc_cands; do
+for name in $defNames; do
     name=${name#_}                # re-mangling for MacOS
     case $name in
         ${M_PREFIX}_traverse_*_?* )
@@ -108,6 +149,19 @@ done
 if [ "${error}" = "yes" ]; then
     exit 1
 fi
+
+if [ "$VERBOSE" = "yes" ]; then
+    echo
+    echo "[traversers]"
+    echo "  ${traversers[@]}"
+    echo "[target procedures]"
+    echo "  ${procedures[@]}"
+fi
+
+
+#--------------------------------------------------------------
+# action
+#--------------------------------------------------------------
 
 #--- classify the chosen names by keywords
 if [ $MODE == 1 ]; then
@@ -132,16 +186,8 @@ fi
 
 if [ "$VERBOSE" = "yes" ]; then
     echo
-    echo "[candidate names for tarverse procedures]"
-    echo "  "$trav_cands
-    echo "[generated traverse procedures]"
-    echo "  ${traversers[@]}"
-    echo "[group names]"
+    echo "[group names (=traversers if mode==1)]"
     echo "  ${groupnames[@]}"
-    echo "[candidate names for called procedures]"
-    echo "  "$proc_cands
-    echo "[procedures called in traverse procedures]"
-    echo "  ${procedures[@]}"
     echo
 fi
 

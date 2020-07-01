@@ -1,18 +1,10 @@
-/* 
- * $TSUKUBA_Release: Omni XMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package exc.xmpF;
 
 import java.io.*;
 import java.util.Vector;
-
 import exc.object.*;
 import exc.block.*;
 import exc.xcodeml.*;
-
 import xcodeml.util.XmOption;
 
 /**

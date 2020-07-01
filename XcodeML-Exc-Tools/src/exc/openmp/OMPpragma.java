@@ -1,9 +1,3 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package exc.openmp;
 
 import exc.object.Ident;
@@ -37,6 +31,7 @@ public enum OMPpragma
     THREADPRIVATE,      /* threadprivate <namelist> */
     PARALLEL_FOR,       /* parallel <clause_list> */
     PARALLEL_SECTIONS,  /* parallel <clause_list> */
+    TARGET_ENTER_DATA,
     FUNCTION_BODY,
     
     /*
@@ -51,6 +46,7 @@ public enum OMPpragma
     DATA_COPYPRIVATE,
     DATA_COPYIN,
     _DATA_PRIVATE_SHARED, /* using internally */
+    TARGET_DATA_MAP,
     DIR_NUM_THREADS,
 
     /* DATA_REDUCTION_* values are synchronized with

@@ -3,21 +3,43 @@
 JAVAC        = @JAVAC@
 JAVAC_OPT    = @JAVAC_OPT@
 JAR          = @JAR@
-JAR_OPT   = @JAR_OPT@
-JAVADIR      = @OMNI_HOME@/share/xcalablemp
+JAR_OPT      = @JAR_OPT@
+JAVADIR      = @OMNI_HOME@/share
 MKDIR_P      = @MKDIR_P@
 INSTALL      = @INSTALL@
 OM_EXC_TOOLS = build/om-exc-tools.jar
 SOURCE       = $(wildcard src/exc/*/*.java)
+OMP_SOURCE   = $(wildcard src/exc/openmp/*.java)
+SOURCE_AUTO  = src/exc/xmpF/XMPtransCoarray_libs.java
+SCRIPT       = $(SOURCE_AUTO).sh
+SCRIPT_SRC  = ../libxmpf/src/xmpf_coarray_decl.F90
+SCRIPT_INC  = ../libxmpf/include
+
+XCODE_JAVA   = src/exc/object/Xcode.java
+XCODE_DEF    = ./Xcode.def
+XCODE_GEN    = ./genXcodeJava.pl
 
 all: $(OM_EXC_TOOLS)
-$(OM_EXC_TOOLS): $(SOURCE)
-	$(JAVAC) $(JAVAC_OPT) src/exc/*/*.java -classpath ../XcodeML-Common/build/om-common.jar:../C-BackEnd/build/om-c-back.jar:./src
+
+$(XCODE_JAVA):	$(XCODE_DEF) $(XCODE_GEN)
+	rm -f $@
+	perl $(XCODE_GEN)
+
+$(OM_EXC_TOOLS): $(SOURCE) $(SOURCE_AUTO) $(XCODE_JAVA)
+	$(JAVAC) $(JAVAC_OPT) src/exc/*/*.java -classpath src:../xcodeml-tools/XcodeML-Common/build/om-common.jar
 	$(MKDIR_P) build
 	cd src; $(JAR) $(JAR_OPT) cf ../$@ ./exc/*/*.class
 
+openmp: $(OMP_SOURCE)
+	$(JAVAC) $(JAVAC_OPT) src/exc/openmp/*.java -classpath src:../xcodeml-tools/XcodeML-Common/build/om-common.jar
+	$(MKDIR_P) build
+	cd src; $(JAR) $(JAR_OPT) cf ../$(OM_EXC_TOOLS) ./exc/*/*.class
+
+$(SOURCE_AUTO): $(SCRIPT) $(SCRIPT_SRC) $(SCRIPT_INC)
+	$(SCRIPT) $(SCRIPT_SRC) $(SCRIPT_INC) >$@
+
 clean:
-	rm -f $(OM_EXC_TOOLS) src/exc/*/*.class
+	rm -f $(OM_EXC_TOOLS) src/exc/*/*.class src/xcodeml/util/*.class $(SOURCE_AUTO)
 
 install: $(OM_EXC_TOOLS)
 	$(MKDIR_P) $(DESTDIR)$(JAVADIR)

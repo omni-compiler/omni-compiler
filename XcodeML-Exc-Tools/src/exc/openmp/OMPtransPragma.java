@@ -1,21 +1,13 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
+/* -*- Mode: java; c-basic-offset:2 ; indent-tabs-mode:nil ; -*- */
 package exc.openmp;
-
 import exc.object.*;
+import exc.block.*;
 import exc.util.MachineDep;
 import exc.xcodeml.XcodeMLtools;
-import exc.block.*;
-
 import java.io.File;
 import java.util.*;
-
-import xcodeml.IXobject;
 import xcodeml.util.XmLog;
+import xcodeml.util.IXobject;
 import xcodeml.util.XmOption;
 
 /**
@@ -23,284 +15,284 @@ import xcodeml.util.XmOption;
  */
 public class OMPtransPragma
 {
-    protected XobjectDef current_def;
-    protected XobjectFile env;
+  protected XobjectDef current_def;
+  protected XobjectFile env;
+  public String mainFunc;
+  public String barrierFunc;
+  public String currentThreadBarrierFunc;
+  public String doParallelFunc;
+  public String doParallelIfFunc;
+  public String parallelTaskFunc;
+  public String parallelTaskIfFunc;
 
-    public String mainFunc;
-    public String barrierFunc;
-    public String currentThreadBarrierFunc;
-    public String doParallelFunc;
-    public String doParallelIfFunc;
-    public String parallelTaskFunc;
-    public String parallelTaskIfFunc;
-    	
-    public String defaultShedFunc;
-    public String blockShedFunc;
-    public String cyclicShedFunc;
-    public String staticShedInitFunc;
-    public String staticShedNextFunc;
-    public String dynamicShedInitFunc;
-    public String dynamicShedNextFunc;
-    public String guidedShedInitFunc;
-    public String guidedShedNextFunc;
-    public String runtimeShedInitFunc;
-    public String runtimeShedNextFunc;
-    public String affinityShedInitFunc;
-    public String affinityShedNextFunc;
+  public String ompTargetEnterData;
 
-    public String orderedInitFunc;
-    public String orderedSetLoopIdFunc;
-    public String orderedBeginFunc;
-    public String orderedEndFunc;
+  public String defaultShedFunc;
+  public String blockShedFunc;
+  public String cyclicShedFunc;
+  public String staticShedInitFunc;
+  public String staticShedNextFunc;
+  public String dynamicShedInitFunc;
+  public String dynamicShedNextFunc;
+  public String guidedShedInitFunc;
+  public String guidedShedNextFunc;
+  public String runtimeShedInitFunc;
+  public String runtimeShedNextFunc;
+  public String affinityShedInitFunc;
+  public String affinityShedNextFunc;
+  
+  public String orderedInitFunc;
+  public String orderedSetLoopIdFunc;
+  public String orderedBeginFunc;
+  public String orderedEndFunc;
+  
+  public String threadIdFunc;
+  public String sectionInitFunc;
+  public String sectionIdFunc;
+  public String doSingleFunc;
+  public String enterCriticalFunc;
+  public String exitCriticalFunc;
+  public String isMasterFunc;
+  public String atomicLockFunc;
+  public String atomicUnlockFunc;
+  public String threadLockFunc;
+  public String threadUnlockFunc;
+  public String bcopyFunc; // not supported in Xcode/Fortran
+  public String isLastFunc;
+  
+  public String flushFunc;
+  public String getThdprvFunc; // not supported in Xcode/Fortran
+  public String copyinThdprvFunc; // not supported in Xcode/Fortran
+  
+  public String allocShared; // not supported in Xcode/Fortran
+  public String freeShared; // not supported in Xcode/Fortran
 
-    public String threadIdFunc;
-    public String sectionInitFunc;
-    public String sectionIdFunc;
-    public String doSingleFunc;
-    public String enterCriticalFunc;
-    public String exitCriticalFunc;
-    public String isMasterFunc;
-    public String atomicLockFunc;
-    public String atomicUnlockFunc;
-    public String threadLockFunc;
-    public String threadUnlockFunc;
-    public String bcopyFunc; // not supported in Xcode/Fortran
-    public String isLastFunc;
+  public String allocaFunc; // not supported in Xcode/Fortran
 
-    public String flushFunc;
-    public String getThdprvFunc; // not supported in Xcode/Fortran
-    public String copyinThdprvFunc; // not supported in Xcode/Fortran
+  public String doReduction; // not supported in Xcode/Fortran
+  public String doReductionInit; // not supported in Xcode/Fortran
 
-    public String allocShared; // not supported in Xcode/Fortran
-    public String freeShared; // not supported in Xcode/Fortran
+  public String OMPfuncPrefix;
+  public String criticalLockPrefix;
+  public String reductionLockPrefix; // not supported in Xcode/Fortran
+  
+  public String setNumThreadsFunc;
+  public String getNumThreadsFunc;
+  public String getThreadNumFunc;
+  public String getMaxThreadsFunc;
+  
+  public String setBoundsFuncPrefix;
+  public String saveArrayFunc;
+  public String loadArrayFunc;
 
-    public String allocaFunc; // not supported in Xcode/Fortran
+  public final static String ASTERISK = "* @{ASTERISK}@";
+  public final static int _M_ASTERISK = -1;
+  public final static int _M_NOT_SPECIFIED = -2;
+  public final static int _M_DATA_MAP_BLOCK = 0;
+  public final static int OMP_DATA_MAP_TO = 0;
+  public final String FallocatedFunc = "allocated";
+  public final String Fsize = "size";
+  public final String FlboundFunc = "lbound";
+  public final String FuboundFunc = "ubound";
+  public final String FdoParallelWrapperPrefix = "ompf_dop";
+  public final String FParallelTaskWrapperPrefix = "ompf_ptask";
+  public final String FdummyFunc = "ompf_func";
+  public final String FgetThdprvFuncPrefix = "ompf_getthdprv_";
+  
+  public static final String PROP_KEY_FINTERNAL_MODULE = "OMPtransPragma.FinternalModuel";
+  
+  public static final String ARGV_VAR = "_ompc_argv";
+  public static final String ARGS_VAR = "_ompc_args";
+  public static final String SHARE_VAR_PREFIX = "pp_";
+  public static final String LOCAL_VAR_PREFIX = "p_";
+  public static final String COPYPRV_VAR_PREFIX = "cp_";
+  public static final String TEMP_VAR_PREFIX = "t_";
+  public static final String THDPRV_LOCAL_VAR_PREFIX = "tp_";
+  public static final String THDPRV_STORE_PREFIX = "ts_";
+  public static final String COND_VAR = LOCAL_VAR_PREFIX + "_cond";
+  public static final String NARG_VAR = LOCAL_VAR_PREFIX + "_narg";
+  public static final String THDNUM_VAR = LOCAL_VAR_PREFIX + "_tn";
+  public static final String THDNUM_LOOP_VAR = LOCAL_VAR_PREFIX + "_tnlp";
+  public static final String FINTERNAL_MODULE_PREFIX = "ompf_internal_";
+  public static final String FTHDPRV_COMMON_PREFIX = "tc_";
+  
+  public static final int F_MAX_PARALLEL_PARAMS = 64;
+  
+  public OMPtransPragma()
+  {
+    if(XmOption.isLanguageC()) {
+      mainFunc                = "ompc_main";
+      OMPfuncPrefix            = "ompc_func";
+      barrierFunc              = "ompc_barrier";
+      currentThreadBarrierFunc = "ompc_current_thread_barrier";
+      doParallelFunc           = "ompc_do_parallel";
+      doParallelIfFunc         = "ompc_do_parallel_if";
 
-    public String doReduction; // not supported in Xcode/Fortran
-    public String doReductionInit; // not supported in Xcode/Fortran
-
-    public String OMPfuncPrefix;
-    public String criticalLockPrefix;
-    public String reductionLockPrefix; // not supported in Xcode/Fortran
+      ompTargetEnterData = "_OMP_target_enter_data";
+      
+      defaultShedFunc      = "ompc_default_sched";
+      blockShedFunc        = "ompc_static_bsched";
+      cyclicShedFunc       = "ompc_static_csched";
+      staticShedInitFunc   = "ompc_static_sched_init";
+      staticShedNextFunc   = "ompc_static_sched_next";
+      dynamicShedInitFunc  = "ompc_dynamic_sched_init";
+      dynamicShedNextFunc  = "ompc_dynamic_sched_next";
+      guidedShedInitFunc   = "ompc_guided_sched_init";
+      guidedShedNextFunc   = "ompc_guided_sched_next";
+      runtimeShedInitFunc  = "ompc_runtime_sched_init";
+      runtimeShedNextFunc  = "ompc_runtime_sched_next";
+      affinityShedInitFunc = "ompc_affinity_sched_init";
+      affinityShedNextFunc = "ompc_affinity_sched_next";
+      
+      orderedInitFunc      = "ompc_init_ordered";
+      orderedSetLoopIdFunc = "ompc_set_loop_id";
+      orderedBeginFunc     = "ompc_ordered_begin";
+      orderedEndFunc       = "ompc_ordered_end";
+      
+      threadIdFunc      = "ompc_thread_id";
+      sectionInitFunc   = "ompc_section_init";
+      sectionIdFunc     = "ompc_section_id";
+      doSingleFunc      = "ompc_do_single";
+      enterCriticalFunc = "ompc_enter_critical";
+      exitCriticalFunc  = "ompc_exit_critical";
+      isMasterFunc      = "ompc_is_master";
+      atomicLockFunc    = "ompc_atomic_lock";
+      atomicUnlockFunc  = "ompc_atomic_unlock";
+      threadLockFunc    = "ompc_thread_lock";
+      threadUnlockFunc  = "ompc_thread_unlock";
+      bcopyFunc         = "ompc_bcopy";
+      isLastFunc        = "ompc_is_last";
     
-    public String setNumThreadsFunc;
-    public String getNumThreadsFunc;
-    public String getThreadNumFunc;
-    public String getMaxThreadsFunc;
-    
-    public String setBoundsFuncPrefix;
-    public String saveArrayFunc;
-    public String loadArrayFunc;
-    
-    public final String FallocatedFunc = "allocated";
-    public final String Fsize = "size";
-    public final String FlboundFunc = "lbound";
-    public final String FuboundFunc = "ubound";
-    public final String FdoParallelWrapperPrefix = "ompf_dop";
-    public final String FParallelTaskWrapperPrefix = "ompf_ptask";
-    public final String FdummyFunc = "ompf_func";
-    public final String FgetThdprvFuncPrefix = "ompf_getthdprv_";
-    
-    public static final String PROP_KEY_FINTERNAL_MODULE = "OMPtransPragma.FinternalModuel";
-    
-    public static final String ARGV_VAR = "_ompc_argv";
-    public static final String ARGS_VAR = "_ompc_args";
-    public static final String SHARE_VAR_PREFIX = "pp_";
-    public static final String LOCAL_VAR_PREFIX = "p_";
-    public static final String COPYPRV_VAR_PREFIX = "cp_";
-    public static final String TEMP_VAR_PREFIX = "t_";
-    public static final String THDPRV_LOCAL_VAR_PREFIX = "tp_";
-    public static final String THDPRV_STORE_PREFIX = "ts_";
-    public static final String COND_VAR = LOCAL_VAR_PREFIX + "_cond";
-    public static final String NARG_VAR = LOCAL_VAR_PREFIX + "_narg";
-    public static final String THDNUM_VAR = LOCAL_VAR_PREFIX + "_tn";
-    public static final String THDNUM_LOOP_VAR = LOCAL_VAR_PREFIX + "_tnlp";
-    public static final String FINTERNAL_MODULE_PREFIX = "ompf_internal_";
-    public static final String FTHDPRV_COMMON_PREFIX = "tc_";
-    
-    public static final int F_MAX_PARALLEL_PARAMS = 64;
-    
-    public OMPtransPragma()
-    {
-        if(XmOption.isLanguageC()) {
-            mainFunc = "ompc_main";
-            OMPfuncPrefix = "ompc_func";
-            barrierFunc = "ompc_barrier";
-            currentThreadBarrierFunc = "ompc_current_thread_barrier";
-            doParallelFunc = "ompc_do_parallel";
-            doParallelIfFunc = "ompc_do_parallel_if";
-    
-            defaultShedFunc = "ompc_default_sched";
-            blockShedFunc = "ompc_static_bsched";
-            cyclicShedFunc = "ompc_static_csched";
-            staticShedInitFunc = "ompc_static_sched_init";
-            staticShedNextFunc = "ompc_static_sched_next";
-            dynamicShedInitFunc = "ompc_dynamic_sched_init";
-            dynamicShedNextFunc = "ompc_dynamic_sched_next";
-            guidedShedInitFunc = "ompc_guided_sched_init";
-            guidedShedNextFunc = "ompc_guided_sched_next";
-            runtimeShedInitFunc = "ompc_runtime_sched_init";
-            runtimeShedNextFunc = "ompc_runtime_sched_next";
-            affinityShedInitFunc = "ompc_affinity_sched_init";
-            affinityShedNextFunc = "ompc_affinity_sched_next";
-    
-            orderedInitFunc = "ompc_init_ordered";
-            orderedSetLoopIdFunc = "ompc_set_loop_id";
-            orderedBeginFunc = "ompc_ordered_begin";
-            orderedEndFunc = "ompc_ordered_end";
-    
-            threadIdFunc = "ompc_thread_id";
-            sectionInitFunc = "ompc_section_init";
-            sectionIdFunc = "ompc_section_id";
-            doSingleFunc = "ompc_do_single";
-            enterCriticalFunc = "ompc_enter_critical";
-            exitCriticalFunc = "ompc_exit_critical";
-            isMasterFunc = "ompc_is_master";
-            atomicLockFunc = "ompc_atomic_lock";
-            atomicUnlockFunc = "ompc_atomic_unlock";
-            threadLockFunc = "ompc_thread_lock";
-            threadUnlockFunc = "ompc_thread_unlock";
-            bcopyFunc = "ompc_bcopy";
-            isLastFunc = "ompc_is_last";
-    
-            flushFunc = "ompc_flush";
-            getThdprvFunc = "ompc_get_thdprv"; // pointer
-            copyinThdprvFunc = "ompc_copyin_thdprv";
-    
-            allocShared = "ompc_alloc_shared"; // pointer
-            freeShared = "ompc_free_shared";
-    
-            allocaFunc = "alloca";
-    
-            doReduction = "ompc_reduction";
-            doReductionInit = "ompc_reduction_init";
-    
-            criticalLockPrefix = "ompc_lock_critical";
-            reductionLockPrefix = "ompc_lock_reduction";
+      flushFunc        = "ompc_flush";
+      getThdprvFunc    = "ompc_get_thdprv"; // pointer
+      copyinThdprvFunc = "ompc_copyin_thdprv";
+      
+      allocShared         = "ompc_alloc_shared"; // pointer
+      freeShared          = "ompc_free_shared";
+      allocaFunc          = "alloca";
+      doReduction         = "ompc_reduction";
+      doReductionInit     = "ompc_reduction_init";
+      criticalLockPrefix  = "ompc_lock_critical";
+      reductionLockPrefix = "ompc_lock_reduction";
+      setNumThreadsFunc   = "ompc_set_num_threads";
+      getNumThreadsFunc   = "ompc_get_num_threads";
+      getThreadNumFunc    = "ompc_get_thread_num";
+      getMaxThreadsFunc   = "ompc_get_max_threads";
+      
+    } else {
+      mainFunc = "ompf_main";
+      OMPfuncPrefix = "ompf_func";
+      barrierFunc = "ompf_barrier";
+      currentThreadBarrierFunc = "ompf_current_thread_barrier";
+      doParallelFunc = "ompf_do_parallel";
+      doParallelIfFunc = "ompf_do_parallel_if";
+      
+      parallelTaskFunc = "ompf_parallel_task";
+      parallelTaskIfFunc = "ompf_parallel_task_if";
             
-            setNumThreadsFunc = "ompc_set_num_threads";
-            getNumThreadsFunc = "ompc_get_num_threads";
-            getThreadNumFunc = "ompc_get_thread_num";
-            getMaxThreadsFunc = "ompc_get_max_threads";
-            
-        } else {
-            
-            mainFunc = "ompf_main";
-            OMPfuncPrefix = "ompf_func";
-            barrierFunc = "ompf_barrier";
-            currentThreadBarrierFunc = "ompf_current_thread_barrier";
-            doParallelFunc = "ompf_do_parallel";
-            doParallelIfFunc = "ompf_do_parallel_if";
-
-            parallelTaskFunc = "ompf_parallel_task";
-            parallelTaskIfFunc = "ompf_parallel_task_if";
-    
-            defaultShedFunc = "ompf_default_sched";
-            blockShedFunc = "ompf_static_bsched";
-            cyclicShedFunc = "ompf_static_csched";
-            staticShedInitFunc = "ompf_static_sched_init";
-            staticShedNextFunc = "ompf_static_sched_next";
-            dynamicShedInitFunc = "ompf_dynamic_sched_init";
-            dynamicShedNextFunc = "ompf_dynamic_sched_next";
-            guidedShedInitFunc = "ompf_guided_sched_init";
-            guidedShedNextFunc = "ompf_guided_sched_next";
-            runtimeShedInitFunc = "ompf_runtime_sched_init";
-            runtimeShedNextFunc = "ompf_runtime_sched_next";
-            affinityShedInitFunc = "ompf_affinity_sched_init";
-            affinityShedNextFunc = "ompf_affinity_sched_next";
-    
-            orderedInitFunc = "ompf_init_ordered";
-            orderedSetLoopIdFunc = "ompf_set_loop_id";
-            orderedBeginFunc = "ompf_ordered_begin";
-            orderedEndFunc = "ompf_ordered_end";
-    
-            threadIdFunc = "ompf_thread_id";
-            sectionInitFunc = "ompf_section_init";
-            sectionIdFunc = "ompf_section_id";
-            doSingleFunc = "ompf_do_single";
-            enterCriticalFunc = "ompf_enter_critical";
-            exitCriticalFunc = "ompf_exit_critical";
-            isMasterFunc = "ompf_is_master";
-            atomicLockFunc = "ompf_atomic_lock";
-            atomicUnlockFunc = "ompf_atomic_unlock";
-            threadLockFunc = "ompf_thread_lock";
-            threadUnlockFunc = "ompf_thread_unlock";
-            bcopyFunc = null;
-            isLastFunc = "ompf_is_last";
-    
-            flushFunc = "ompf_flush";
-            getThdprvFunc = null;
-            copyinThdprvFunc = null;
-    
-            allocShared = null;
-            freeShared = null;
-    
-            allocaFunc = null;
-    
-            doReduction = "ompf_reduction";
-            doReductionInit = null;
-    
-            criticalLockPrefix = "ompf_lock_critical";
-            reductionLockPrefix = null;
-            
-            setNumThreadsFunc = "ompf_set_num_threads";
-            getNumThreadsFunc = "ompf_get_num_threads";
-            getThreadNumFunc = "ompf_get_thread_num";
-            getMaxThreadsFunc = "ompf_get_max_threads";
-            setBoundsFuncPrefix = "ompf_set_bounds_";
-            saveArrayFunc = "ompf_save_array_header";
-            loadArrayFunc = "ompf_load_array_header";
-        }
+      defaultShedFunc = "ompf_default_sched";
+      blockShedFunc = "ompf_static_bsched";
+      cyclicShedFunc = "ompf_static_csched";
+      staticShedInitFunc = "ompf_static_sched_init";
+      staticShedNextFunc = "ompf_static_sched_next";
+      dynamicShedInitFunc = "ompf_dynamic_sched_init";
+      dynamicShedNextFunc = "ompf_dynamic_sched_next";
+      guidedShedInitFunc = "ompf_guided_sched_init";
+      guidedShedNextFunc = "ompf_guided_sched_next";
+      runtimeShedInitFunc = "ompf_runtime_sched_init";
+      runtimeShedNextFunc = "ompf_runtime_sched_next";
+      affinityShedInitFunc = "ompf_affinity_sched_init";
+      affinityShedNextFunc = "ompf_affinity_sched_next";
+      
+      orderedInitFunc = "ompf_init_ordered";
+      orderedSetLoopIdFunc = "ompf_set_loop_id";
+      orderedBeginFunc = "ompf_ordered_begin";
+      orderedEndFunc = "ompf_ordered_end";
+      
+      threadIdFunc = "ompf_thread_id";
+      sectionInitFunc = "ompf_section_init";
+      sectionIdFunc = "ompf_section_id";
+      doSingleFunc = "ompf_do_single";
+      enterCriticalFunc = "ompf_enter_critical";
+      exitCriticalFunc = "ompf_exit_critical";
+      isMasterFunc = "ompf_is_master";
+      atomicLockFunc = "ompf_atomic_lock";
+      atomicUnlockFunc = "ompf_atomic_unlock";
+      threadLockFunc = "ompf_thread_lock";
+      threadUnlockFunc = "ompf_thread_unlock";
+      bcopyFunc = null;
+      isLastFunc = "ompf_is_last";
+      
+      flushFunc = "ompf_flush";
+      getThdprvFunc = null;
+      copyinThdprvFunc = null;
+      
+      allocShared = null;
+      freeShared = null;
+      allocaFunc = null;
+      doReduction = "ompf_reduction";
+      doReductionInit = null;
+      criticalLockPrefix = "ompf_lock_critical";
+      reductionLockPrefix = null;
+      setNumThreadsFunc = "ompf_set_num_threads";
+      getNumThreadsFunc = "ompf_get_num_threads";
+      getThreadNumFunc = "ompf_get_thread_num";
+      getMaxThreadsFunc = "ompf_get_max_threads";
+      setBoundsFuncPrefix = "ompf_set_bounds_";
+      saveArrayFunc = "ompf_save_array_header";
+      loadArrayFunc = "ompf_load_array_header";
     }
+  }
 
-    // pass3: do transformation for OMP pragma
-    public void run(FuncDefBlock def)
-    {
-        Block b;
-        Block fblock = def.getBlock();
-        current_def = def.getDef();
-        env = current_def.getFile();
-
-        OMP.debug("pass3:");
-        BlockIterator i = new bottomupBlockIterator(fblock);
-        for(i.init(); !i.end(); i.next()) {
-            b = i.getBlock();
-            if(b.Opcode() == Xcode.OMP_PRAGMA) {
-                b = transPragma((PragmaBlock)b);
-                if(b != null)
-                    i.setBlock(b);
-            }
-        }
-
-        Block body = fblock.getBody().getHead();
-        transFunctionBody((CompoundBlock)body, fblock.getBody().getDecls());
+  // pass3: do transformation for OMP pragma
+  public void run(FuncDefBlock def)
+  {
+    Block b;
+    Block fblock = def.getBlock();
+    current_def = def.getDef();
+    env = current_def.getFile();
+    
+    OMP.debug("pass3:");
+    BlockIterator i = new bottomupBlockIterator(fblock);
+    for(i.init(); !i.end(); i.next()) {
+      b = i.getBlock();
+      if(b.Opcode() == Xcode.OMP_PRAGMA) {
+        b = transPragma((PragmaBlock)b);
+        if(b != null)
+          i.setBlock(b);
+      }
     }
+    
+    Block body = fblock.getBody().getHead();
+    transFunctionBody((CompoundBlock)body, fblock.getBody().getDecls());
+  }
 
     public Ident OMPfuncIdent(String name)
     {
-        if(name == null)
-            throw new IllegalArgumentException("may be generating unsupported function call");
-        
-        Xtype t;
-        if(XmOption.isLanguageC()) {
-            if(name == getThdprvFunc || name == allocShared || name == allocaFunc)
-                t = Xtype.Function(Xtype.Pointer(Xtype.voidType));
-            else
-                t = Xtype.Function(Xtype.intType);
-        } else {
-            if(name == getMaxThreadsFunc || name == getThreadNumFunc ||
-                name == getNumThreadsFunc || name == sectionIdFunc)
-                t = Xtype.FintFunctionType;
-            else if(name == isLastFunc || name == isMasterFunc ||
-                name == doSingleFunc ||
+      if(name == null)
+        throw new IllegalArgumentException("may be generating unsupported function call");
+      
+      Xtype t;
+      if(XmOption.isLanguageC()) {
+        if(name == getThdprvFunc || name == allocShared || name == allocaFunc)
+          t = Xtype.Function(Xtype.Pointer(Xtype.voidType));
+        else if(name == ompTargetEnterData)
+          t = Xtype.Function(Xtype.voidType);
+        else
+          t = Xtype.Function(Xtype.intType);
+      } else {
+        if(name == getMaxThreadsFunc || name == getThreadNumFunc ||
+           name == getNumThreadsFunc || name == sectionIdFunc)
+          t = Xtype.FintFunctionType;
+        else if(name == isLastFunc || name == isMasterFunc || name == doSingleFunc ||
                 name == staticShedNextFunc || name == dynamicShedNextFunc ||
                 name == guidedShedNextFunc || name == runtimeShedNextFunc ||
                 name == affinityShedNextFunc)
-                t = Xtype.FlogicalFunctionType;
-            else
-                t = Xtype.FsubroutineType;
-        }
-        return current_def.declExternIdent(name, t);
+          t = Xtype.FlogicalFunctionType;
+        else
+          t = Xtype.FsubroutineType;
+      }
+      return current_def.declExternIdent(name, t);
     }
 
     public Ident OMPFintrinsicIdent(String name)
@@ -316,64 +308,216 @@ public class OMPtransPragma
         return Ident.Fident(name, t ,false, false, env);
     }
     
-    // pass3:
-    // write pragma
-    public Block transPragma(PragmaBlock pb, XobjectDef current_def)
-    {
-        this.current_def = current_def;
-        env = current_def.getFile();
-        return transPragma(pb);
+  // pass3:
+  // write pragma
+  public Block transPragma(PragmaBlock pb, XobjectDef current_def)
+  {
+    this.current_def = current_def;
+    env = current_def.getFile();
+    return transPragma(pb);
+  }
+
+  Block transPragma(PragmaBlock pb)
+  {
+    OMPinfo i = (OMPinfo)pb.getProp(OMP.prop);
+    OMP.debug("Pragma:" + i.pragma);
+    
+    if(XmOption.isOpenMPOnlyTarget()){
+      switch(i.pragma) {
+      case TARGET_ENTER_DATA:
+        return transTargetEnterData(pb, i);
+      default:
+        return null;
+      }
     }
-
-    Block transPragma(PragmaBlock pb)
-    {
-        OMPinfo i = (OMPinfo)pb.getProp(OMP.prop);
-        OMP.debug("Pragma:"+i.pragma);
-        switch(i.pragma) {
-        case BARRIER: /* barrier */
-            return transBarrier(pb, i);
-
-        case PARALLEL: /* new parallel section */
-            return transParallelRegion(pb, i);
-
-        case FOR: /* for <clause_list> */
-	    if(pb.getBody().getHead().Opcode() == Xcode.OMP_PRAGMA)
-		return null;
-            return transFor(pb, i);
-
-        case SECTIONS: /* sections <clause_list> */
-            return transSections(pb, i);
-
-        case SINGLE:
-            return transSingle(pb, i);
-
-        case MASTER: /* master */
-            return transMaster(pb, i);
-
-        case CRITICAL: /* critical <name> */
-            return transCritical(pb, i);
-
-        case ATOMIC:
-            return transAtomic(pb, i);
-
-        case FLUSH:
-            return transFlush(pb, i);
-
-        case ORDERED:
-            return transOrdered(pb, i);
+    else{  
+      switch(i.pragma) {
+      case BARRIER: /* barrier */
+        return transBarrier(pb, i);
+      
+      case PARALLEL: /* new parallel section */
+        return transParallelRegion(pb, i);
         
-        case TASK:
-        	return transTaskRegion(pb,i);
-	
-        case SIMD:
-        	return null;
-        default:
-             OMP.fatal("unknown pragma");
-//             ignore it
-            return null;
-        }
+      case FOR: /* for <clause_list> */
+        if(pb.getBody().getHead().Opcode() == Xcode.OMP_PRAGMA)
+          return null;
+        return transFor(pb, i);
+        
+      case SECTIONS: /* sections <clause_list> */
+        return transSections(pb, i);
+      
+      case SINGLE:
+        return transSingle(pb, i);
+        
+      case MASTER: /* master */
+        return transMaster(pb, i);
+        
+      case CRITICAL: /* critical <name> */
+        return transCritical(pb, i);
+        
+      case ATOMIC:
+        return transAtomic(pb, i);
+        
+      case FLUSH:
+        return transFlush(pb, i);
+        
+      case ORDERED:
+        return transOrdered(pb, i);
+        
+      case TASK:
+        return transTaskRegion(pb,i);
+        
+      case SIMD:
+        return null;
+        
+      default:
+        OMP.fatal("unknown pragma");
+        //             ignore it
+        return null;
+      }
+    }
+  }
+
+  public Block transTargetEnterData(PragmaBlock b, OMPinfo i)
+  {
+    XobjList clause    = (XobjList)b.getClauses();
+    BlockList ret_body = Bcons.emptyBody();
+    int arrayNum = 0;
+    int mapKind = -1;
+
+    for(int j=0;j<clause.Nargs();j++){
+       Xobject expr = clause.getArg(j);
+       if(expr.getArg(0).getString().equals("TARGET_DATA_MAP")){
+          arrayNum = expr.getArg(1).Nargs() - 1;
+          String s = expr.getArg(1).getArg(0).getName();
+          if(s.equals("to")) mapKind = OMP_DATA_MAP_TO;
+       }
     }
 
+    for(int j=0;j<arrayNum;j++){
+      Ident arrayId    = null;
+      boolean isShadow = false;
+      boolean isLayout = false;
+      boolean isDevice = false;
+      for(int k=0;k<clause.Nargs();k++){
+        Xobject expr  = clause.getArg(k);
+        XobjList body = (XobjList)expr.getArg(1);
+        String s      = expr.getArg(0).getString();
+        if(s.equals("TARGET_DATA_MAP")){
+          Xobject x = body.getArg(j+1);
+          if(x.Opcode() == Xcode.VAR)        // Only array name
+            arrayId = b.findVarIdent(x.getName());
+          else if(x.Opcode() == Xcode.LIST)  // sub-array
+            arrayId = b.findVarIdent(x.getArg(0).getName());
+        }
+        else if(s.equals("TARGET_LAYOUT")){
+          isLayout = true;
+        }
+        else if(s.equals("TARGET_SHADOW")){
+          isShadow = true;
+        }
+        else if(s.equals("TARGET_DEVICE")){
+          isDevice = true;
+        }
+        else{
+          throw new IllegalArgumentException("Invalid argument in openmp enter data directive");
+        }
+      } // end k
+
+      XobjList args        = Xcons.List();
+      Xobject arrayAddr    = arrayId.getAddr();
+      Xtype arrayType      = arrayId.Type();
+      Xobject sizeofExpr   = Xcons.SizeOf(arrayType.getArrayElementType());
+      int arrayDim         = arrayType.getNumDimensions();
+      Xobject arrayDimExpr = Xcons.IntConstant(arrayDim);
+
+      args.add(Xcons.IntConstant(mapKind));
+      args.add(arrayAddr);
+      args.add(sizeofExpr);
+      args.add(arrayDimExpr);
+      
+      for(int k=0; k<arrayDim; k++, arrayType=arrayType.getRef()){
+        Xobject startExpr = Xcons.IntConstant(0);
+        Xobject endExpr   = Xcons.IntConstant((int)arrayType.getArraySize());
+        args.add(startExpr);
+        args.add(endExpr);
+      }
+
+      if(isShadow){
+        args.add(Xcons.IntConstant(1));
+        for(int k=0;k<clause.Nargs();k++){
+          Xobject expr = clause.getArg(k);
+          String kind  = expr.getArg(0).getString();
+          if(kind.equals("TARGET_SHADOW")){
+            if(expr.Nargs()-1 != arrayDim)
+              throw new IllegalArgumentException("Invalid argument in shadow clause");
+            for(int m=0;m<arrayDim;m++){
+              args.add(expr.getArg(m+1).getArg(0));
+              args.add(expr.getArg(m+1).getArg(1));
+            }
+          }
+        }
+      }
+      else{
+        args.add(Xcons.IntConstant(0));
+      }
+
+      if(isLayout){
+         for(int k=0;k<clause.Nargs();k++){
+           Xobject expr = clause.getArg(k);
+           String kind  = expr.getArg(0).getString();
+           if(kind.equals("TARGET_LAYOUT")){
+             for(int m=0;m<arrayDim;m++){
+               Xobject var = expr.getArg(1).getArg(m);
+               String dist = var.getName();
+               if(dist.equals("block"))
+                 args.add(Xcons.IntConstant(_M_DATA_MAP_BLOCK));
+               else if(dist.equals(ASTERISK))
+                 args.add(Xcons.IntConstant(_M_ASTERISK));
+               else
+                 throw new IllegalArgumentException("Invalid argument in layout clause");
+              }
+           }
+         }
+      }
+      else{
+        args.add(Xcons.IntConstant(_M_NOT_SPECIFIED));
+      }
+      
+      if(isDevice){
+        for(int k=0;k<clause.Nargs();k++){
+          Xobject expr = clause.getArg(k);
+          String kind  = expr.getArg(0).getString();
+          if(kind.equals("TARGET_DEVICE")){
+            int dims = expr.Nargs() - 1;
+            if(dims != arrayDim && isLayout)
+              throw new IllegalArgumentException("Invalid dimension in device clause");
+
+            args.add(Xcons.IntConstant(dims));
+            for(int m=0;m<dims;m++){
+              Xobject startDevice = expr.getArg(m+1).getArg(0);
+              if(startDevice.getName().equals(ASTERISK)){
+                args.add(Xcons.IntConstant(_M_ASTERISK));
+              }
+              else{
+                Xobject lenDevice = expr.getArg(m+1).getArg(1);
+                args.add(startDevice);
+                args.add(lenDevice);
+              }
+            }
+          }
+        }
+      }
+      else{
+         args.add(Xcons.IntConstant(_M_NOT_SPECIFIED));
+      }
+      
+      ret_body.add(Bcons.Statement(OMPfuncIdent(ompTargetEnterData).Call(args)));
+    }
+    
+    return Bcons.COMPOUND(ret_body);
+  }
+  
     public Block transBarrier(PragmaBlock b, OMPinfo i)
     {
         return Bcons.Statement(OMPfuncIdent(barrierFunc).Call(null));

@@ -1,9 +1,3 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package exc.object;
 
 /**
@@ -16,7 +10,7 @@ public class FunctionType extends Xtype
     boolean is_function_proto;
     private String fresult_name;
 
-    public FunctionType(String id, Xtype ref, Xobject param_list, int typeQualFlags,
+    public FunctionType(String id, Xtype ref, Xobject param_list, long typeQualFlags,
         boolean is_func_proto, Xobject gccAttrs, String fresult_name)
     {
         super(Xtype.FUNCTION, id, typeQualFlags, gccAttrs);
@@ -26,7 +20,7 @@ public class FunctionType extends Xtype
         this.fresult_name = fresult_name;
     }
 
-    public FunctionType(Xtype ref, int typeQualFlags)
+    public FunctionType(Xtype ref, long typeQualFlags)
     {
         this(null, ref, null, typeQualFlags, false, null, null);
     }

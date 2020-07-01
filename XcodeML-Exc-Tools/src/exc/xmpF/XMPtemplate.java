@@ -1,9 +1,3 @@
- /*
-  * $TSUKUBA_Release: $
-  * $TSUKUBA_Copyright:
-  *  $
-  */
-
 package exc.xmpF;
 
  import exc.block.*;
@@ -154,6 +148,7 @@ package exc.xmpF;
        XMP.errorAt(pb,"XMP object '"+_name+"' is already declared");
        return;
      }
+     env.removeIdent(_name, pb);
 
      // declare template desciptor
      _descId =  env.declObjectId(XMP.DESC_PREFIX_ + _name, pb);
@@ -345,7 +340,7 @@ package exc.xmpF;
        Ident f = env.declInternIdent(XMP.template_dealloc_f,Xtype.
 				     FsubroutineType,block);
        Xobject args = Xcons.List(_descId.Ref());
-       body.add(f.callSubroutine(args));
+       body.insert(f.callSubroutine(args));
      }
    }
 }

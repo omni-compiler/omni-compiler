@@ -1,21 +1,6 @@
-/*
- * $tsukuba_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
-// package exc.xcodeml;
-
 package exc.xcodeml;
 
-
-import static xcodeml.util.XmDomUtil.collectChildNodes;
-import static xcodeml.util.XmDomUtil.collectElementsExclude;
-import static xcodeml.util.XmDomUtil.getAttr;
-import static xcodeml.util.XmDomUtil.getAttrBool;
-import static xcodeml.util.XmDomUtil.getContent;
-import static xcodeml.util.XmDomUtil.getContentText;
-import static xcodeml.util.XmDomUtil.getElement;
+import static xcodeml.util.XmDomUtil.*;
 import org.w3c.dom.*;
 
 import java.io.Reader;
@@ -26,36 +11,10 @@ import java.util.Stack;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import xcodeml.c.decompile.XcConstObj;
-import xcodeml.c.util.XmcBindingUtil;
 import xcodeml.util.XmStringUtil;
-import exc.object.ArrayType;
-import exc.object.BasicType;
-import exc.object.EnumType;
-import exc.object.FunctionType;
-import exc.object.Ident;
-import exc.object.PointerType;
-import exc.object.StorageClass;
-import exc.object.StructType;
-import exc.object.UnionType;
-import exc.object.VarScope;
-import exc.object.Xcode;
-import exc.object.Xcons;
-import exc.object.XmpCoArrayType;
-import exc.object.XobjArgs;
-import exc.object.XobjList;
-import exc.object.XobjString;
-import exc.object.Xobject;
-import exc.object.XobjectFile;
-import exc.object.Xtype;
+import xcodeml.util.XmLongLongConst;
 
-import static xcodeml.util.XmDomUtil.getElement;
-import static xcodeml.util.XmDomUtil.getAttr;
-import static xcodeml.util.XmDomUtil.getContent;
-import static xcodeml.util.XmDomUtil.getContentText;
-import static xcodeml.util.XmDomUtil.getAttrBool;
-import static xcodeml.util.XmDomUtil.collectChildNodes;
-import static xcodeml.util.XmDomUtil.collectElementsExclude;
+import exc.object.*;
 
 /**
  * tools for XcodeML/C to Xcode translation.
@@ -75,29 +34,21 @@ public class XcodeMLtools_C extends XcodeMLtools {
   void enterType(Node n) {
     String name = n.getNodeName();
 
-    if (name.equals("basicType")) {
-      declBasicType(n);
-    } else if (name.equals("pointerType")) {
-      declPointerType(n);
-    } else if (name.equals("functionType")) {
-      declFunctionType(n);
-    } else if (name.equals("arrayType")) {
-      declArrayType(n);
-    } else if (name.equals("structType")) {
-      declStructType(n);
-    } else if (name.equals("unionType")) {
-      declUnionType(n);
-    } else if (name.equals("enumType")) {
-      declEnumType(n);
-    } else if (name.equals("classType")) {
-      declStructType(n);
-    } else if (name.equals("coArrayType")) {
-      declCoArrayType(n);
-    } else {
+    switch (name){
+    case "basicType"   : declBasicType(n);    break;
+    case "pointerType" : declPointerType(n);  break;
+    case "functionType": declFunctionType(n); break;
+    case "arrayType"   : declArrayType(n);    break;
+    case "structType"  : declStructType(n);   break;
+    case "unionType"   : declUnionType(n);    break;
+    case "enumType"    : declEnumType(n);     break;
+    case "classType"   : declStructType(n);   break;
+    case "coArrayType" : declCoArrayType(n);  break;
+    default:
       fatal("Unknown node in typeTable: " + n);
     }
   }
-
+  
   /*
    * global Ident section
    */
@@ -113,15 +64,17 @@ public class XcodeMLtools_C extends XcodeMLtools {
   @Override
   void enterGlobalDecl(Node n) {
     Xobject xobj = toXobject(n);
-    //xobj.setParentRecursively(null);
+
     switch (xobj.Opcode()) {
     case FUNCTION_DEFINITION:
     case VAR_DECL:
     case FUNCTION_DECL:
     case GCC_ASM_DEFINITION:
     case PRAGMA_LINE:
+    case LINEMARKER:
     case TEXT:
     case ACC_PRAGMA:
+    case OMP_PRAGMA:
     case XMP_PRAGMA:
     case CPP_CLASS_DECL:
     case CPP_DECL_NAMESPACE:
@@ -267,6 +220,13 @@ public class XcodeMLtools_C extends XcodeMLtools {
       return x;
     }
 
+    case LINEMARKER:
+      String linemarkerFlag = getAttr(n, "flag");
+      x = Xcons.List(code,
+		     new XobjString(Xcode.STRING, linemarkerFlag));
+      setCommonAttributes(n, x);
+      return x;
+
     case STRING_CONSTANT:
       return Xcons.StringConstant(getContentText(n));
 
@@ -281,16 +241,15 @@ public class XcodeMLtools_C extends XcodeMLtools {
 			 getContentText(n));
 
     case LONGLONG_CONSTANT: {
-      XcConstObj.LongLongConst llConst =
-	XmcBindingUtil.createLongLongConst(getContentText(n),
-					   typeId);
-      if (llConst == null) {
-	fatal("Invalid long long value");
-      }
-      return Xcons.Long(code,
-			type,
-			llConst.getHigh(),
-			llConst.getLow());
+        XmLongLongConst llConst =
+            XmLongLongConst.createLongLongConst(getContentText(n));
+        if (llConst == null) {
+            fatal("Invalid long long value");
+        }
+        return Xcons.Long(code,
+                          type,
+                          llConst.getHigh(),
+                          llConst.getLow());
     }
 
     case MOE_CONSTANT:
@@ -751,10 +710,10 @@ public class XcodeMLtools_C extends XcodeMLtools {
     String argTypeName = getAttr(argNode, "type");
     Xtype argType = getType(argTypeName);
 
-    if (argType instanceof ArrayType &&
-	((ArrayType) argType).getArraySizeExpr() != null) {
-      argType = Xtype.voidPtrType;
-    }
+    //    if (argType instanceof ArrayType &&
+    //	((ArrayType) argType).getArraySizeExpr() != null) {
+    //      argType = Xtype.voidPtrType;
+    //    }
 
     XobjList child = Xcons.List(Xcode.TYPE_NAME, argType);
     XobjList objList = Xcons.List(code, type);
@@ -764,9 +723,21 @@ public class XcodeMLtools_C extends XcodeMLtools {
 
   /** process arrayRef. */
   private XobjList enterArrayRef(Xcode code, Xtype type, Node arrayRefNode) {
-    ArrayList<Node> childNodes = collectElementsExclude(arrayRefNode,
-							"arrayAddr");
+    // ArrayList<Node> childNodes = collectElementsExclude(arrayRefNode,
+    // 							"arrayAddr");
+
+    ArrayList<Node> childNodes;
     Node arrayAddrNode = getElement(arrayRefNode, "arrayAddr");
+
+    if (arrayAddrNode != null){
+      childNodes = collectElementsExclude(arrayRefNode, "arrayAddr");
+    }
+    else { // pointer
+      childNodes = collectChildNodes(arrayRefNode);
+      arrayAddrNode = childNodes.get(0);
+      childNodes.remove(0);
+    }
+
     XobjList objList = enterAsXobjList(arrayRefNode,
 				       code,
 				       type,
@@ -794,8 +765,11 @@ public class XcodeMLtools_C extends XcodeMLtools {
       childNodes = collectElementsExclude(subArrayRefNode, "arrayAddr");
     }
     else { // pointer
-      arrayAddrNode = getElement(subArrayRefNode, "Var");
-      childNodes = collectElementsExclude(subArrayRefNode, "Var");
+      //arrayAddrNode = getElement(subArrayRefNode, "Var");
+      //childNodes = collectElementsExclude(subArrayRefNode, "Var");
+      childNodes = collectChildNodes(subArrayRefNode);
+      arrayAddrNode = childNodes.get(0);
+      childNodes.remove(0);
     }
 
     XobjList objList = enterAsXobjList(subArrayRefNode,
@@ -840,12 +814,12 @@ public class XcodeMLtools_C extends XcodeMLtools {
     return objList;
   }
 
-  private int getTypeQualFlags(Node n, boolean isFunctionType) {
-    int tqConst = getAttrBool(n, "is_const") ? Xtype.TQ_CONST : 0;
-    int tqRestrict = getAttrBool(n, "is_restrict") ? Xtype.TQ_RESTRICT : 0;
-    int tqVolatile = getAttrBool(n, "is_volatile") ? Xtype.TQ_VOLATILE : 0;
-    int tqInline = (isFunctionType && getAttrBool(n, "is_inline")) ? Xtype.TQ_INLINE : 0;
-    int tqFuncStatic = (isFunctionType && getAttrBool(n, "is_static")) ? Xtype.TQ_FUNC_STATIC : 0;
+  private long getTypeQualFlags(Node n, boolean isFunctionType) {
+    long tqConst = getAttrBool(n, "is_const") ? Xtype.TQ_CONST : 0;
+    long tqRestrict = getAttrBool(n, "is_restrict") ? Xtype.TQ_RESTRICT : 0;
+    long tqVolatile = getAttrBool(n, "is_volatile") ? Xtype.TQ_VOLATILE : 0;
+    long tqInline = (isFunctionType && getAttrBool(n, "is_inline")) ? Xtype.TQ_INLINE : 0;
+    long tqFuncStatic = (isFunctionType && getAttrBool(n, "is_static")) ? Xtype.TQ_FUNC_STATIC : 0;
 
     return tqConst | tqRestrict | tqVolatile | tqInline | tqFuncStatic;
   }
@@ -857,7 +831,7 @@ public class XcodeMLtools_C extends XcodeMLtools {
   private void declBasicType(Node n) {
     String typeId = getAttr(n, "type");
     String name = getAttr(n, "name");
-    int tq = getTypeQualFlags(n, false);
+    long tq = getTypeQualFlags(n, false);
     Xobject gccAttrs = getGccAttributes(n);
     BasicType.TypeInfo ti = BasicType.getTypeInfoByCName(name);
 
@@ -1048,9 +1022,9 @@ public class XcodeMLtools_C extends XcodeMLtools {
 
    */
   private int getAsCInt(String str) {
-    return XmStringUtil.getAsCInt(null, str);
+    return XmStringUtil.getAsCInt(str);
   }
   private long getAsCLong(String str) {
-    return XmStringUtil.getAsCLong(null, str);
+    return XmStringUtil.getAsCLong(str);
   }
 }

@@ -1,14 +1,7 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package exc.openmp;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import xcodeml.util.XmOption;
 import exc.object.*;
 import exc.xcodeml.XcodeMLtools;
@@ -272,6 +265,8 @@ public class OMPanalyzePragma
         case THREADPRIVATE:
             omp_env.declThreadPrivate(def.getDef().getDef(), pb, pb.getClauses());
             break;
+	case TARGET_ENTER_DATA:
+	    break;
         default:
             OMP.fatal("unknown OpenMP pramga = " + p);
             break;

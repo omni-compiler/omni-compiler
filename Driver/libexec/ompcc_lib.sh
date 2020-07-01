@@ -16,6 +16,7 @@ Compile Driver Options
    --tmp             : output translated code to __omni_tmp__<file>.
    --dry             : only print processing status (not compile).
    --debug           : save intermediate files to __omni_tmp__/.
+   --cc=<CC>         : specify C compiler
    --stop-pp         : save intermediate files and stop after preprocess.
    --stop-frontend   : save intermediate files and stop after frontend.
    --stop-translator : save intermediate files and stop after translator.
@@ -36,8 +37,11 @@ Omni OpenACC Options
   -acc, --openacc         : enable OpenACC function.
   --no-ldg                : disable use of read-only data cache.
   --default-veclen=LENGTH : specify default vector length (default: 256)
-  --platform=PLATFORM     : Specify platform (CUDA | OpenCL) (default: $OPENACC_PLATFORM)
-  --device=DEVICE         : Specify device (Fermi | Kepler) (default: $OPENACC_DEVICE)
+  --platform=PLATFORM     : Specify platform [CUDA | OpenCL | PZCL] (default: $OPENACC_PLATFORM)
+  --device=DEVICE         : Specify device [ccXX (XX is compute capability) | Fermi (=cc20) | Kepler (=cc35) | PEZYSC] (default: $OPENACC_DEVICE)
+
+Omni OpenMP Options
+  -fopenmp-only-target    : enable OpenMP only target function.
 EOF
 }
 
@@ -96,6 +100,9 @@ function ompcc_set_parameters()
 		DRY_RUN=true;;
 	    --debug)
 		ENABLE_DEBUG=true;;
+	    --cc=*)
+		ENABLE_SPECIFY_CC=true
+		SPECIFIED_CC="${1#--cc=}";;
             --stop-pp)
 		VERBOSE=true; STOP_PP=true;;
             --stop-frontend)
@@ -145,6 +152,8 @@ function ompcc_set_parameters()
 	    -acc|--openacc)
 		[ ${ENABLE_ACC} = "0" ] && omni_error_exit "warning: $1 option is unavailable, rebuild the compiler with ./configure --enable-openacc"
 		ENABLE_ACC=true;;
+	    -fopenmp-only-target)
+		ENABLE_TARGET=true;;
 	    --no-ldg)
 		DISABLE_LDG=true;;
 	    --default-veclen=*)

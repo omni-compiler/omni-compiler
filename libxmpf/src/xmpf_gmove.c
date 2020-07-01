@@ -129,9 +129,23 @@ xmpf_gmv_l_dim_info__(_XMP_gmv_desc_t **gmv_desc , int *i_dim, int *a_lb, int *a
   gp->a_ub[i] = *a_ub;
 
   gp->kind[i] = *kind;
-  gp->lb[i] = *lb;
-  gp->ub[i] = *ub;
-  gp->st[i] = *st;
+
+  switch (*kind){
+  case XMP_N_GMOVE_ALL:
+    gp->lb[i] = *a_lb;
+    gp->ub[i] = *a_ub;
+    gp->st[i] = 1;
+    break;
+  case XMP_N_GMOVE_INDEX:
+  case XMP_N_GMOVE_RANGE:
+    gp->lb[i] = *lb;
+    gp->ub[i] = *ub;
+    gp->st[i] = *st;
+    break;
+  default:
+    _XMP_fatal("wrong gmove kind");
+  }
+
 }
 
 
@@ -154,7 +168,7 @@ xmpf_gmv_dealloc__(_XMP_gmv_desc_t **gmv_desc){
 
 
 static void _XMPF_larray_alloc(_XMP_array_t **a, _XMP_gmv_desc_t *gmv_desc, int type, _XMP_template_t *t){
-  xmpf_array_alloc__(a, &gmv_desc->ndims, &type, &t);
+  xmpf_array_alloc__(a, &gmv_desc->ndims, &type, 0/* dummy */, &t);
   for (int i = 0; i < gmv_desc->ndims; i++){
     int t_idx = -1; int off = 0;
     xmpf_align_info__(a, &i, gmv_desc->a_lb + i, gmv_desc->a_ub + i, &t_idx, &off);

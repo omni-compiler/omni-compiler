@@ -130,6 +130,11 @@ public class XMPglobalDecl {
     _globalDestructorFuncBody.add(Xcons.List(Xcode.EXPR_STATEMENT, funcId.Call(args)));
   }
 
+  public void insertGlobalFinalizeFuncCall(String funcName, Xobject args) {
+    Ident funcId = declExternFunc(funcName);
+    _globalDestructorFuncBody.insert(Xcons.List(Xcode.EXPR_STATEMENT, funcId.Call(args)));
+  }
+
   public Ident declGlobalIdent(String name, Xtype t) {
     return _env.declGlobalIdent(name, t);
   }
@@ -144,6 +149,10 @@ public class XMPglobalDecl {
 
   public Ident findVarIdent(String name) {
     return _env.findVarIdent(name);
+  }
+  
+  public Ident findIdent(String name) {
+    return _env.findIdent(name);
   }
 
   public Block createFuncCallBlock(String funcName, XobjList funcArgs) {
@@ -262,6 +271,9 @@ public class XMPglobalDecl {
     a = getXMPalignedArray(name);
     if (a != null && a.getArrayId() == id) return a;
 
+    // fix me for structure member
+    if (a != null && a.isStructure()) return getXMPalignedArray(name);
+
     return null;
   }
 
@@ -295,7 +307,7 @@ public class XMPglobalDecl {
     return null;
   }
 
-  public void finalize() {
+  public void finalizeGlobalDecl() {
     _env.collectAllTypes();
     _env.fixupTypeRef();
   }

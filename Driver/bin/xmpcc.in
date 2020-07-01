@@ -6,10 +6,15 @@ OM_DRIVER_CONF_DIR=@OM_DRIVER_CONF_DIR@
 . ${OMNI_HOME}/libexec/omni_common_lib.sh
 . ${OMNI_HOME}/libexec/xmpcc_lib.sh
 . ${OMNI_HOME}/libexec/omni_acc_lib.sh
+. ${OMNI_HOME}/libexec/omni_pzcc.sh
 
 ### Directory for saving intermediate files ###
 PID=$$
 TEMP_DIR=/tmp/__omni_tmp__${PID}
+while test -e $TEMP_DIR; do
+    PID=$$
+    TEMP_DIR=/tmp/__omni_tmp__${PID}
+done
 DEBUG_TEMP_DIR="__omni_tmp__"
 
 ### Default options ###
@@ -30,7 +35,6 @@ ENABLE_XACC=false
 ENABLE_SCALASCA=false
 ENABLE_SCALASCA_ALL=false
 ENABLE_SCALASCA_SELECTIVE=false
-ENABLE_TLOG=false
 ENABLE_TLOG_ALL=false
 ENABLE_TLOG_SELECTIVE=false
 DISABLE_LDG=false
@@ -74,7 +78,6 @@ omni_c_check_file_exist
 # Note that, if TEMP_DIR exists, the TEMP_DIR is not deleted (KAGEMAI #379)
 
 omni_exec mkdir -p $TEMP_DIR
-[ $ENABLE_DEBUG = true ] && echo "Create ${TEMP_DIR}/"
 
 ### Clean temporal directory before exit ###
 omni_set_trap
@@ -82,6 +85,7 @@ omni_set_trap
 ### Preprocessor ###
 [ $ONLY_PP = true -a -f "${output_file}" ] && omni_exec rm "${output_file}"
 [ $ENABLE_OPENMP = true ] && OMNI_CPP_OPT="$OPENMP_OPT_C $OMNI_CPP_OPT"
+[ $ENABLE_XACC = true ]   && OMNI_CPP_OPT="-D_XCALABLEACC $OMNI_CPP_OPT"
 for c_file in "${c_files[@]}"; do
     C_FILE=("${c_file}")
     FILE_NAME=`omni_c_norm_file_name "${C_FILE}"`     # ./hoge/fuga.c -> hoge_2f_fuga_2f_a
@@ -138,7 +142,7 @@ for c_file in "${c_files[@]}"; do
     FILE_IN_X=${TEMP_DIR}/"${FILE_NAME}"_in.xml
     FILE_OUT_X=${TEMP_DIR}/"${FILE_NAME}"_out.xml
 
-    omni_exec $OMNI_CX2X_CMD $OMNI_CX2X_OPT "${xcode_translator_add_opt[@]}" "${FILE_IN_X}" -o "${FILE_OUT_X}"
+    omni_exec $OMNI_CX2X_CMD $OMNI_CX2X_OPT "${xcode_translator_add_opt[@]}" "${FILE_IN_X}"
     # also create ${TEMP_DIR}/${FILE_NAME}_in.c
     omni_exec cp ${TEMP_DIR}/"${FILE_NAME}"_in.c ${TEMP_DIR}/"${FILE_NAME}".c
 done
@@ -176,6 +180,7 @@ for c_file in "${c_files[@]}"; do
 	    FILE_CU=${TEMP_DIR}/"${FILE_NAME}"_pp.cu
 	    if [ -e "${FILE_CU}" ]; then
 		GPUCC_ADD_ARGS=(`omni_acc_cuda_get_args ${other_args[@]}`)
+		GPUCC_ADD_ARGS+=("-arch=sm_`omni_acc_cuda_get_cc_version ${OPENACC_DEVICE}`")
 		omni_acc_cuda_compile ${FILE_CU} ${FILE_O} ${GPUCC_ADD_ARGS[@]}
 	    fi
 	elif [ $OPENACC_PLATFORM = "OpenCL" ]; then
@@ -183,6 +188,19 @@ for c_file in "${c_files[@]}"; do
 	    if [ -e "${FILE_CL}" ]; then
 		FILE_USER_CL=`basename "${C_FILE}" .c`_pp.cl
 		omni_exec cp "${FILE_CL}" "${FILE_USER_CL}"
+	    fi
+	elif [ $OPENACC_PLATFORM = "PZCL" ]; then
+	    #pzcl kernel compile
+	    FILE_PZC=${TEMP_DIR}/"${FILE_NAME}"_pp.pzc
+	    if [ -e "${FILE_PZC}" ]; then
+		FILE_PZ=${TEMP_DIR}/"${FILE_NAME}"_pp.pz
+		FILE_O_CPU="${FILE_O}".cpu
+		FILE_USER_PZ=${FILE_NAME}_pp.pz
+		omni_exec omni_pzcc -d "${TEMP_DIR}" -o ${FILE_PZ} ${FILE_PZC}
+		omni_exec objcopy -I binary -O elf64-x86-64 -B i386 ${FILE_PZ} ${FILE_PZ}.o
+		omni_exec mv "${FILE_O}" "${FILE_O_CPU}"
+		omni_exec ld -r "${FILE_O_CPU}" "${FILE_PZ}".o -o "${FILE_O}"
+		omni_exec rm -f "${FILE_O_CPU}"
 	    fi
 	fi
     fi
@@ -212,9 +230,9 @@ OMNI_TRAVERSE_OPT="--C --nm ${NM}"
 [ "${TARGET}" = "powerpc-hitachi-aix" ] && OMNI_TRAVERSE_OPT="${OMNI_TRAVERSE_OPT} --sr"
 [ $ENABLE_OPENACC = true ] && OMNI_TRAVERSE_ACC_OPT="${OMNI_TRAVERSE_OPT} --prefix acc"
 OMNI_TRAVERSE_OPT="${OMNI_TRAVERSE_OPT} --prefix xmpc"
-omni_exec $OMNI_TRAVERSE $OMNI_TRAVERSE_OPT -o $TRAVERSE_FILE_C "${obj_files[@]}" "${archive_files[@]}"
+omni_exec $OMNI_TRAVERSE $OMNI_TRAVERSE_OPT -o $TRAVERSE_FILE_C "${obj_files[@]}" "${archive_files[@]}" ${OMNI_HOME}/lib/libxmp.a
 
-omni_exec $OMNI_MPICC_CMD -c $TRAVERSE_FILE_C -o $TRAVERSE_FILE_O
+omni_exec $OMNI_MPICC_CMD $OMNI_MPICC_OPT "${native_add_opt[@]}" "${other_args[@]}" -c $TRAVERSE_FILE_C -o $TRAVERSE_FILE_O
 
 # omni_traverse for ACC
 if [ $ENABLE_OPENACC = true ]; then
@@ -226,7 +244,7 @@ fi
 
 # link
 [ $ENABLE_SCALASCA = true ] && OMNI_LINKER_CMD="scalasca -instrument -user $OMNI_LINKER_CMD"
-[ $ENABLE_TLOG     = true ] && OMNI_LINKER_OPT="$OMNI_LINKER_OPT -ltlog_mpi"
+OMNI_LINKER_OPT="$OMNI_LINKER_OPT -ltlog_mpi"
 
 if [ "$target" != "sxace-nec-superux" -a "${output_file}" != "" ]; then
     other_args+=("-o" "${output_file[@]}")
@@ -236,15 +254,21 @@ elif [ "$target"  = "sxace-nec-superux" -a "${output_file}" != "" ]; then
 fi
 
 obj_files+=("$TRAVERSE_FILE_O")
-[ @XACC@ = 0 ] && OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_CUDA_LIB"
-    
 if [ $ENABLE_OPENACC = true ]; then
     if [ $OPENACC_PLATFORM = "CUDA" ]; then
 	OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_ACC_CUDA_LIB"
     elif [ $OPENACC_PLATFORM = "OpenCL" ]; then
 	OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_ACC_OPENCL_LIB"
+    elif [ $OPENACC_PLATFORM = "PZCL" ]; then
+	OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_ACC_PZCL_LIB"
     fi
     obj_files+=("$TRAVERSE_FILE_ACC_O")
+fi
+
+if [ @XACC@ = 0 ]; then
+    [ @CUDA@ = 0 ] && OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_CUDA_LIB"
+    [ @OPENCL@ = 0 ] && OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_OPENCL_LIB"
+    [ @PZCL@ = 0 ] && OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_PZCL_LIB"
 fi
 
 omni_exec $OMNI_LINKER_CMD "${obj_files[@]}" "${linker_add_opt[@]}" "${other_args[@]}" "${archive_files[@]}" "${lib_args[@]}" $OMNI_LINKER_OPT

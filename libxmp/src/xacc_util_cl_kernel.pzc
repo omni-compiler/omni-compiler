@@ -1,0 +1,62 @@
+#include "pzc_builtin.h"
+
+#define SIZE_T long int
+
+template<typename T>
+static void
+pack_vector(T *dst, SIZE_T dst_off, const T *src, SIZE_T src_off, SIZE_T blocklength, SIZE_T stride, SIZE_T count)
+{
+    const size_t global_id = get_pid() * get_maxtid() + get_tid();
+    const size_t global_size = get_maxpid() * get_maxtid();
+    size_t cb;
+    const SIZE_T max_cb = count * blocklength;
+    for(cb = global_id; cb < max_cb; cb += global_size){
+        size_t c = cb / blocklength;
+	size_t b = cb % blocklength;
+	dst[dst_off + cb] = src[src_off + stride * c + b];
+	chgthread();
+    }
+    flush();
+}
+
+#define PACK_VECTOR(bit, type)			\
+void \
+pzc__XACC_pack_vector_##bit(type *dst, SIZE_T dst_off, const type *src, SIZE_T src_off, SIZE_T blocklength, SIZE_T stride, SIZE_T count)\
+{\
+    pack_vector<type>(dst, dst_off, src, src_off, blocklength, stride, count);\
+}
+
+PACK_VECTOR( 8,char)
+PACK_VECTOR(16,short)
+PACK_VECTOR(32,int)
+PACK_VECTOR(64,long)
+
+
+template<typename T>
+static void
+unpack_vector(T *dst, SIZE_T dst_off, const T *src, SIZE_T src_off, SIZE_T blocklength, SIZE_T stride, SIZE_T count)
+{
+    const size_t global_id = get_pid() * get_maxtid() + get_tid();
+    const size_t global_size = get_maxpid() * get_maxtid();
+    size_t cb;
+    const SIZE_T max_cb = count * blocklength;
+    for(cb = global_id; cb < max_cb; cb += global_size){
+        size_t c = cb / blocklength;
+	size_t b = cb % blocklength;
+	dst[dst_off + stride * c + b] = src[src_off + cb];
+	chgthread();
+    }
+    flush();
+}
+
+#define UNPACK_VECTOR(bit, type) \
+void \
+pzc__XACC_unpack_vector_##bit(type *dst, SIZE_T dst_off, const type *src, SIZE_T src_off, SIZE_T blocklength, SIZE_T stride, SIZE_T count)\
+{\
+    unpack_vector<type>(dst, dst_off, src, src_off, blocklength, stride, count); \
+}
+
+UNPACK_VECTOR( 8,char)
+UNPACK_VECTOR(16,short)
+UNPACK_VECTOR(32,int)
+UNPACK_VECTOR(64,long)

@@ -1,9 +1,3 @@
-/* 
- * $TSUKUBA_Release: Omni XcalableMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package exc.xmpF;
 
 import exc.object.*;
@@ -24,11 +18,13 @@ public class XMPinfo
 
   XMPobjectsRef on_ref;
   Vector<Ident> info_vars;
+  Vector<Xobject> info_vars2;
   Xobject async_id;
   Vector<Xobject> waitAsyncIds;
 
   // loop info for loop
   Vector<XMPdimInfo> loop_dims;  // and on_ref
+  int loop_type;
 
   // for reflect
   Vector<XMParray> reflectArrays; // and async_id
@@ -79,6 +75,8 @@ public class XMPinfo
 
   public Vector<Ident> getInfoVarIdents() { return info_vars; }
 
+  public Vector<Xobject> getInfoVars() { return info_vars2; }
+
   public void setAsyncId(Xobject async_id) { this.async_id = async_id; }
 
   public Xobject getAsyncId() { return async_id; }
@@ -97,8 +95,17 @@ public class XMPinfo
     on_ref = ref;
   }
 
+  public void setLoopInfo(Vector<XMPdimInfo> dims, XMPobjectsRef ref, int type, Vector<XMPdimInfo> list){
+    loop_dims = dims;
+    on_ref = ref;
+    loop_type = type;
+    widthList = list;
+  }
+
   public int getLoopDim() { return loop_dims.size(); }
   
+  public int getLoopType() { return loop_type; }
+
   public XMPdimInfo getLoopDimInfo(int i) { return loop_dims.elementAt(i); }
 
   public Xobject getLoopVar(int i) { 
@@ -109,6 +116,10 @@ public class XMPinfo
     reflectArrays = arrays;
   }
 
+  public void addReflectArray(XMParray array){
+    reflectArrays.add(array);
+  }
+  
   public void setReflectArrays(Vector<XMParray> arrays, Vector<XMPdimInfo> list){
     reflectArrays = arrays;
     widthList = list;
@@ -116,6 +127,7 @@ public class XMPinfo
   
   public  Vector<XMParray> getReflectArrays(){ return reflectArrays; }
 
+  // also used for loop
   public  Vector<XMPdimInfo> getWidthList() {
       return widthList;
   }
@@ -127,10 +139,10 @@ public class XMPinfo
   }
 
   public void setBcastInfo(XMPobjectsRef from, XMPobjectsRef on,
-			   Vector<Ident> vars){
+			   Vector<Xobject> vars){
     bcast_from = from;
     on_ref = on;
-    info_vars = vars;
+    info_vars2 = vars;
   }
 
   public int getReductionOp() { return reduction_op; }

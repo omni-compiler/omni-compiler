@@ -1,6 +1,7 @@
 // $Id: ColorMapFrame.java,v 1.1.1.1 2005/06/20 09:56:18 msato Exp $
 // $RWC_Release$
 // $RWC_Copyright$
+import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 import java.awt.event.*;
@@ -9,7 +10,7 @@ import java.applet.Applet;
 //
 // Dialog for setting condition
 //
-class ColorMapFrame extends Frame implements ActionListener {
+class ColorMapFrame extends JFrame implements ActionListener {
   Button hideButton;
 
   // constructor

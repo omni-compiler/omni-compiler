@@ -1,14 +1,8 @@
-/* 
- * $TSUKUBA_Release: Omni XMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
-
 package exc.xmpF;
 
 import exc.object.*;
 import exc.block.*;
+import xcodeml.util.XmOption;
 
 /**
  * XcalableMP AST translator:
@@ -31,6 +25,9 @@ public class XMPtranslate implements XobjectDefVisitor
   XMPrewriteExpr rewriteExpr = new XMPrewriteExpr();
   XMPtransPragma transPragma = new XMPtransPragma();
     
+  // typecheck
+  XMPtypecheckStencilKernel typecheckStencilKernel = new XMPtypecheckStencilKernel();
+
   static final String XMPmainFunc = "xmpf_main";
 
   /**
@@ -59,7 +56,7 @@ public class XMPtranslate implements XobjectDefVisitor
    * Finialize the env, that is, reflect all changes on block to Xobject.
    */
   public void finish() {
-    env.finalize();
+    env.finalizeEnv();
   }
     
   private void replace_main(XobjectDef d) {
@@ -71,6 +68,29 @@ public class XMPtranslate implements XobjectDefVisitor
     d.setName(XMPmainFunc);
   }
 
+  static public void create_main(XobjectDef d){
+    Ident mainId = Ident.FidentNotExternal("main", Xtype.FsubroutineType);
+    BlockList newFuncBody = Bcons.emptyBody();
+
+    newFuncBody.add(Ident.FidentNotExternal("xmpf_init_all_", Xtype.FsubroutineType).callSubroutine(null));
+
+    if(XmOption.isFonesided()){
+      newFuncBody.add(Ident.FidentNotExternal("xmpf_traverse_countcoarray", Xtype.FsubroutineType).callSubroutine(null));
+      newFuncBody.add(Ident.FidentNotExternal("xmpf_coarray_malloc_pool", Xtype.FsubroutineType).callSubroutine(null));
+      newFuncBody.add(Ident.FidentNotExternal("xmpf_traverse_initcoarray", Xtype.FsubroutineType).callSubroutine(null));
+      newFuncBody.add(Ident.FidentNotExternal("xmpf_sync_all_auto", Xtype.FsubroutineType).callSubroutine(null));
+    }
+
+    newFuncBody.add(Ident.FidentNotExternal("xmpf_traverse_module", Xtype.FsubroutineType).callSubroutine(null));
+
+    newFuncBody.add(Ident.FidentNotExternal("xmpf_main", Xtype.FsubroutineType).callSubroutine(null));
+    newFuncBody.add(Ident.FidentNotExternal("xmpf_finalize_all_", Xtype.FsubroutineType).callSubroutine(null));
+
+    XobjectDef newMain = XobjectDef.Func(mainId, null, null, newFuncBody.toXobject());
+    newMain.getFuncType().setIsFprogram(true);
+    d.addAfterThis(newMain);
+  }
+  
   private XobjectDef wrap_external(XobjectDef d){
     String name = d.getName();
 
@@ -126,7 +146,8 @@ public class XMPtranslate implements XobjectDefVisitor
       if (kk.getArg(0) == null) continue;
       if (kk.Opcode() == Xcode.F_COMMON_DECL ||
 	  kk.Opcode() == Xcode.F_DATA_DECL ||
-	  kk.Opcode() == Xcode.F_NAMELIST_DECL) continue;
+	  kk.Opcode() == Xcode.F_NAMELIST_DECL ||
+	  kk.Opcode() == Xcode.F_INTERFACE_DECL) continue;
       Ident id = d.findIdent(kk.getArg(0).getName());
       if (id == null) continue;
       Xtype type  = id.Type();
@@ -270,7 +291,9 @@ public class XMPtranslate implements XobjectDefVisitor
       if(ft != null && ft.isFprogram()) {
 	ft.setIsFprogram(false);
 	replace_main(d);
+        create_main(d);
       }
+      
       else if (d.getParent() == null){ // neither internal nor module procedures
       	newChild = wrap_external(d);
       }
@@ -292,6 +315,11 @@ public class XMPtranslate implements XobjectDefVisitor
     anaPragma.run(fd,env);
     if(XMP.hasError()) return;
 
+    if(env.getStencilTypecheckFlag()) {
+	typecheckStencilKernel.run(fd, env);
+	if(XMP.hasError()) return;
+    }
+
     rewriteExpr.run(fd, env);
     if(XMP.hasError()) return;
 
@@ -299,7 +327,7 @@ public class XMPtranslate implements XobjectDefVisitor
     if(XMP.hasError()) return;
 
     // finally, replace body
-    fd.Finalize();
+    fd.finalizeBlock();
 
     if(XMP.debugFlag) {
       System.out.println("**** final **** "+fd.getDef());

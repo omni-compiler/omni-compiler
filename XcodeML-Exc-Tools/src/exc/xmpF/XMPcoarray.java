@@ -1,14 +1,9 @@
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
-
 package exc.xmpF;
 
 import exc.object.*;
 import exc.block.*;
 import java.util.*;
+import xcodeml.util.*;
 
 /*
  * Madiator for each coarray
@@ -28,13 +23,14 @@ public class XMPcoarray {
   final static String XMPF_LCOBOUND = "xmpf_lcobound";
   final static String XMPF_UCOBOUND = "xmpf_ucobound";
   final static String XMPF_COSIZE = "xmpf_cosize";
-  final static String GET_IMAGE_INDEX_NAME = "xmpf_coarray_get_image_index";
+  //  final static String GET_IMAGE_INDEX_NAME = "xmpf_coarray_get_image_index";
+  final static String GET_IMAGE_INDEX_NAME = "xmpf_image_index_generic";
   //  final static String SET_COSHAPE_NAME = "xmpf_coarray_set_coshape";
   final static String SET_CORANK_NAME = "xmpf_coarray_set_corank";
   final static String SET_CODIMENSION_NAME = "xmpf_coarray_set_codim";
   final static String SET_VARNAME_NAME = "xmpf_coarray_set_varname";
   final static String GET_DESCR_ID_NAME = "xmpf_get_descr_id";
-  final static String SET_NODES_NAME = "xmpf_coarray_set_nodes";    // for COARRAY directive
+  public final static String SET_NODES_NAME = "xmpf_coarray_set_nodes";    // for COARRAY directive
   final static String SET_IMAGE_NODES_NAME = "xmpf_coarray_set_image_nodes";  // for IMAGE directive
 
   final static String COUNT_SIZE_NAME = "xmpf_coarray_count_size";
@@ -408,34 +404,39 @@ public class XMPcoarray {
   //  returns null if it is not allocated
   //-----------------------------------------------------
   //
-  /******************************
-  public Xobject makeStmt_setCoshape() {
-    return makeStmt_setCoshape(env);
+  //
+  //  public Xobject makeStmt_setCoshape() {
+    //    return makeStmt_setCoshape(env);
+    //  }
+    //  public Xobject makeStmt_setCoshape(XMPenv env) {
+    //    int corank = getCorank();
+    //
+    //    Xobject args = Xcons.List(getDescPointerId(),
+    //                              Xcons.IntConstant(corank));
+    //    for (int i = 0; i < corank - 1; i++) {
+    //      args.add(getLcobound(i));
+    //      args.add(getUcobound(i));
+    //    }
+    //    args.add(getLcobound(corank - 1));
+    //
+    //    if (args.hasNullArg())
+    //      XMP.fatal("generated null argument " + SET_COSHAPE_NAME +
+    //                "(makeStmt_setCoshape())");
+    //
+    //    Ident subr = env.findVarIdent(SET_COSHAPE_NAME, null);
+    //    if (subr == null) {
+    //      subr = env.declExternIdent(SET_COSHAPE_NAME,
+    //                                 BasicType.FexternalSubroutineType);
+    //    }
+    //    Xobject subrCall = subr.callSubroutine(args);
+    //    return subrCall;
+    //  }
+
+  public void addStmts_setCoshapeAndName(BlockList list, XMPenv env) {
+    addStmts_setCoshape(list, env);
+    Xobject subrCall = makeStmt_setVarName();
+    list.add(subrCall);
   }
-  public Xobject makeStmt_setCoshape(XMPenv env) {
-    int corank = getCorank();
-
-    Xobject args = Xcons.List(getDescPointerId(),
-                              Xcons.IntConstant(corank));
-    for (int i = 0; i < corank - 1; i++) {
-      args.add(getLcobound(i));
-      args.add(getUcobound(i));
-    }
-    args.add(getLcobound(corank - 1));
-
-    if (args.hasNullArg())
-      XMP.fatal("generated null argument " + SET_COSHAPE_NAME +
-                "(makeStmt_setCoshape())");
-
-    Ident subr = env.findVarIdent(SET_COSHAPE_NAME, null);
-    if (subr == null) {
-      subr = env.declExternIdent(SET_COSHAPE_NAME,
-                                 BasicType.FexternalSubroutineType);
-    }
-    Xobject subrCall = subr.callSubroutine(args);
-    return subrCall;
-  }
-  ***********************************/
 
   public void addStmts_setCoshape(BlockList list) {
     addStmts_setCoshape(list, env);
@@ -542,35 +543,34 @@ public class XMPcoarray {
   //     "CALL set_codim (descPtr, corank-1, clb)"
   //-----------------------------------------------------
   //
-  /*********************************************
-  public Xobject makeStmt_setCoshape(XobjList coshape) {
-    int corank = getCorank();
-    if (corank != coshape.Nargs()) {
-      XMP.fatal("number of codimensions not matched with the declaration:"
-                + corank + " and " + coshape.Nargs());
-      return null;
-    }
-
-    Xobject args = Xcons.List(getDescPointerId(),
-                              Xcons.IntConstant(corank));
-    for (int i = 0; i < corank - 1; i++) {
-      args.add(_getLboundInIndexRange(coshape.getArg(i)));
-      args.add(_getUboundInIndexRange(coshape.getArg(i)));
-    }
-    args.add(_getLboundInIndexRange(coshape.getArg(corank - 1)));
-    if (args.hasNullArg())
-      XMP.fatal("generated null argument " + SET_COSHAPE_NAME + 
-                " (XMPcoarray.makeStmt_setCoshape(coshape))");
-
-    Ident subr = env.findVarIdent(SET_COSHAPE_NAME, null);
-    if (subr == null) {
-      subr = env.declExternIdent(SET_COSHAPE_NAME,
-                                 BasicType.FexternalSubroutineType);
-    }
-    Xobject subrCall = subr.callSubroutine(args);
-    return subrCall;
-  }
-  *********************************************************/
+    //
+    //  public Xobject makeStmt_setCoshape(XobjList coshape) {
+    //    int corank = getCorank();
+    //    if (corank != coshape.Nargs()) {
+    //      XMP.fatal("number of codimensions not matched with the declaration:"
+    //                + corank + " and " + coshape.Nargs());
+    //      return null;
+    //    }
+    //
+    //    Xobject args = Xcons.List(getDescPointerId(),
+    //                              Xcons.IntConstant(corank));
+    //    for (int i = 0; i < corank - 1; i++) {
+    //      args.add(_getLboundInIndexRange(coshape.getArg(i)));
+    //      args.add(_getUboundInIndexRange(coshape.getArg(i)));
+    //    }
+    //    args.add(_getLboundInIndexRange(coshape.getArg(corank - 1)));
+    //    if (args.hasNullArg())
+    //      XMP.fatal("generated null argument " + SET_COSHAPE_NAME + 
+    //                " (XMPcoarray.makeStmt_setCoshape(coshape))");
+    //
+    //    Ident subr = env.findVarIdent(SET_COSHAPE_NAME, null);
+    //    if (subr == null) {
+    //      subr = env.declExternIdent(SET_COSHAPE_NAME,
+    //                                 BasicType.FexternalSubroutineType);
+    //    }
+    //    Xobject subrCall = subr.callSubroutine(args);
+    //    return subrCall;
+    //  }
 
   public void addStmts_setCoshape(BlockList list, XobjList coshape) {
     Xobject stmt;
@@ -729,11 +729,22 @@ public class XMPcoarray {
 
   public Xobject makeStmt_setMappingNodes(Block block)
   {
-    // descPtrId must be declarad previously in the coarray pass
     if (descPtrId == null)
       descPtrId = env.findVarIdent(getDescPointerName(), block);
 
-    Xobject args = Xcons.List(descPtrId, nodesDescId);
+    Xobject args;
+
+    // case: Coarray pass has executed before XMP pass
+    //       descPtrId is already declared.
+    if (descPtrId != null) {
+      args = Xcons.List(descPtrId, nodesDescId);
+    }
+    // case: Coarray pass will execute after XMP pass
+    //       The 1st argument will be replaced in the coarray pass.
+    else {
+      args = Xcons.List(getIdent(), nodesDescId);
+    }
+
     Ident subr = env.findVarIdent(SET_NODES_NAME, null);
     if (subr == null) {
       subr = (block == null ) ?
@@ -906,21 +917,27 @@ public class XMPcoarray {
   }
 
 
-  /* These values are desided to match gfortran. If they do not match other
-   * Fortran compilers, it should be modified.
-   *    ----------------------------------
-   *       p  p(:) p(:,:) p(:,:,:) ...
-   *       8   48    72      96    ...
-   *    ----------------------------------
+  /* These values are desided to match a fortran compiler.
+   *    ----------------------------------------------
+   *                      p  p(:) p(:,:) p(:,:,:) ...
+   *  gfortran-4.8.5:   8   48    72      96    ...
+   *  gfortran-8.3.0:   8   64    88     112    ...
+   *  Fugaku        :  16   56    88     120    ...
+   *  ----------------------------------------------
+   *  Values of pointer_scalar_size, pointer_array_init_size, pointer_array_diff_size are as following,
+   *  gfortran-4.8.5:  8, 24, 24
+   *  gfortran-8.3.0:  8, 40, 24
+   *  Fugaku:         16, 24, 32
    */
   private int _getPointerComponentLength_atmost(Xtype type) {
-    int rank, length;
-    rank = getRank(type);
-    if (rank == 0)
-      length = 8;
+	int pointer_scalar_size = XmOption.getPointerScalarSize();
+	int pointer_array_size  = XmOption.getPointerArraySize();
+	int pointer_diff_size   = XmOption.getPointerDiffSize();
+	int rank = getRank(type);
+	if (rank == 0)
+	  return pointer_scalar_size;
     else
-      length = 24 * rank + 24;
-    return length;
+	  return pointer_array_size + pointer_diff_size * rank;
   }
 
   /* These values are desided to match gfortran. If they do not match other
@@ -1369,8 +1386,11 @@ public class XMPcoarray {
     if (fnameId == null)
       fnameId = getEnv().declExternIdent(fname, Xtype.FintFunctionType);
 
-    XobjList args = Xcons.List(getDescPointerIdExpr(baseAddr), 
-                               Xcons.IntConstant(getCorank()));
+    // Old interface for xmpf_coarray_get_image_index
+    //    XobjList args = Xcons.List(getDescPointerIdExpr(baseAddr), 
+    //                               Xcons.IntConstant(getCorank()));
+    // Interface for xmpf_image_index_generic
+    XobjList args = Xcons.List(getDescPointerIdExpr(baseAddr));
     for (Xobject cosubs: (XobjList)cosubscripts) {
       args.add(cosubs);
     }
@@ -1649,6 +1669,13 @@ public class XMPcoarray {
 
   public void setPointer() {
     ident.Type().setIsFpointer(true);
+
+	if(ident.getStorageClass() != StorageClass.FPARAM){
+	  Ident f = declIntExtendIntrinsicIdent("null");
+	  BlockList blist = fblock.getBody();
+	  Xobject x = blist.findLocalDecl(name);
+	  x.setArg(1, Xcons.functionCall(f, null));
+	}
   }
 
   public void resetPointer() {
@@ -1709,9 +1736,16 @@ public class XMPcoarray {
   private Ident _getNodesDescIdByName(String nodesName,
                                       XMPenv env, FunctionBlock fblock) {
     if (nodesName != null) {
+      ////////////////////////////////
+      //System.out.println("@@ nodesName='"+nodesName+"'");
+      ////////////////////////////////
       XMPnodes nodes = env.findXMPnodes(nodesName, (ident.getDeclaredBlock() != null) ?
                                                     ident.getDeclaredBlock().getParent() : fblock);
-      return nodes.getDescId();
+      ////////////////////////////////
+      //System.out.println("   nodes="+nodes);
+      ////////////////////////////////
+      if (nodes != null)
+        return nodes.getDescId();
     }
     return null;
   }

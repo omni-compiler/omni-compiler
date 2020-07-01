@@ -4,7 +4,12 @@
 #include <stdio.h>
 #include <stdbool.h>
 
+#ifdef PEZY
+#include "pzcl/pzcl_ocl_wrapper.h"
+#include "PZSDKHelper.h"
+#else
 #include <CL/cl.h>
+#endif
 
 struct _ACC_memory_type{
   void *host_addr;
@@ -19,8 +24,9 @@ struct _ACC_memory_type{
 
 #define CL_CHECK(ret)					\
   do{							\
-    if(ret != CL_SUCCESS){				\
-      fprintf(stderr, "%s(%d) OpenCL error code %d\n", __FILE__, __LINE__, ret);	\
+    cl_int _internal_ret = ret;				\
+    if(_internal_ret != CL_SUCCESS){			\
+      printf("%s(%d) OpenCL error : %s (code %d)\n", __FILE__, __LINE__, _ACC_cl_get_error_string(_internal_ret), (int)_internal_ret); \
       exit(1);						\
     }							\
   }while(0)
@@ -36,7 +42,11 @@ struct _ACC_memory_type{
 #define _ACC_COPY_HOST_TO_DEVICE 400
 #define _ACC_COPY_DEVICE_TO_HOST 401
 
+#ifdef PEZY
 #define _ACC_CL_MAX_NUM_DEVICES 4
+#else
+#define _ACC_CL_MAX_NUM_DEVICES 4
+#endif
 
 //global variables
 extern cl_context _ACC_cl_current_context;
@@ -51,5 +61,6 @@ void _ACC_queue_set_last_event(_ACC_queue_t* queue, cl_event event);
 cl_command_queue _ACC_queue_get_command_queue(_ACC_queue_t *queue);
 
 void _ACC_cl_copy(void *host_addr, cl_mem memory_object, size_t mem_offset, size_t size, int direction, int asyncId);
+const char* _ACC_cl_get_error_string(cl_int);
 
 #endif  //end _ACC_INTERNAL_CL_HEADER

@@ -87,7 +87,16 @@ extern "C" {
 
   /* sets the NVIDIA CUDA stream handle the current device for the specified async value */
   void acc_set_cuda_stream ( int async, void* stream );
-  
+
+  /* returns the OpenCL device handle for the current device */
+  void* acc_get_current_opencl_device();
+
+  /* returns the OpenCL context handle in use for the current device */
+  void* acc_get_current_opencl_context();
+
+  /* returns the OpenCL command queue handle in use for the current device for the specified async value */
+  void* acc_get_opencl_queue();
+
 #ifdef __cplusplus
 }
 #endif

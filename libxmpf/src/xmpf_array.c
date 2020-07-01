@@ -6,7 +6,7 @@
 
 void _XMP_setup_reduce_type(MPI_Datatype *mpi_datatype, size_t *datatype_size, int datatype);
 
-void xmpf_array_alloc__(_XMP_array_t **a_desc, int *n_dim, int *type,
+void xmpf_array_alloc__(_XMP_array_t **a_desc, int *n_dim, int *type, size_t *type_size,
 			_XMP_template_t **t_desc)
 {
   _XMP_array_t *a = _XMP_alloc(sizeof(_XMP_array_t) + sizeof(_XMP_array_info_t) * (*n_dim - 1));
@@ -19,9 +19,15 @@ void xmpf_array_alloc__(_XMP_array_t **a_desc, int *n_dim, int *type,
   a->is_align_comm_member = false;
   a->dim = *n_dim;
   a->type = *type;
-  a->type_size = _XMP_get_datatype_size(a->type);
-  size_t dummy;
+  if (a->type != _XMP_N_TYPE_NONBASIC){
+    a->type_size = _XMP_get_datatype_size(a->type);
+    size_t dummy;
   _XMP_setup_reduce_type(&a->mpi_type, &dummy, *type);
+  }
+  else {
+    a->mpi_type = MPI_BYTE;
+    a->type_size = *type_size;
+  }
   a->order = MPI_ORDER_FORTRAN;
   a->array_addr_p = NULL;
   a->total_elmts = 0;
@@ -183,7 +189,9 @@ void xmpf_array_init_shadow__(_XMP_array_t **a_desc, int *i_dim,
   }
   else if (*lshadow > 0 || *ushadow > 0){
 
-    _XMP_ASSERT(ai->align_manner == _XMP_N_ALIGN_BLOCK || ai->align_manner == _XMP_N_ALIGN_GBLOCK);
+    if (ai->align_manner != _XMP_N_ALIGN_BLOCK && ai->align_manner != _XMP_N_ALIGN_GBLOCK){
+      return; // shadow ignored.
+    }
 
     ai->shadow_type = _XMP_N_SHADOW_NORMAL;
     ai->shadow_size_lo = *lshadow;
@@ -388,4 +396,29 @@ void xmpf_array_set_local_array__(_XMP_array_t **a_desc, void *array_addr, int *
   a->rdma_addr = FJMPI_Rdma_reg_mem(_memid++, array_addr, total_elmts * a->type_size);
 #endif
 
+}
+
+
+void xmpf_assign_align_info__(_XMP_array_t **a_desc, _XMP_array_t **b_desc)
+{
+  
+  _XMP_array_t *a = *a_desc;
+  _XMP_array_t *b = *b_desc;
+  
+  // check if the align targeta are identical.
+
+  // NOTE: the matching of the rank and type should be checked by the frontend and the backend compiler.
+  //       the matching of "alignment" (i.e. correspondence of the axes and align-subscripts) and
+  //       the shadow attribute is ignored but should have been done by the translator.
+
+  if (a->align_template != b->align_template) _XMP_fatal("The arrays on a pointer assignment must be "
+							 "aligned with an identical template.");
+
+  for (int i = 0; i < a->dim; i++){
+    _XMP_array_info_t *bi = &b->info[i];
+    int off = (int)bi->align_subscript;
+    xmpf_align_info__(a_desc, &i, &bi->ser_lower, &bi->ser_upper,
+		      &bi->align_template_index, &off);
+  }
+  
 }

@@ -196,6 +196,11 @@ function ompf90_set_parameters()
 		fi
 		ENABLE_ACC=true
 		;;
+	    -Mnolarge_arrays)
+		omni_error_exit "-Mnolarge_arrays option cannot be used.";;
+	    --ompf-dynamic-data-race-detect)
+		ENABLE_DDRD=true
+		;;
             *)
                 other_args+=("$1");;
 	esac

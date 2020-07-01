@@ -1,0 +1,16 @@
+#!/bin/sh
+#PJM -L rscunit=gwmpc
+#PJM -L rscgrp=batch
+#PJM -j        
+#PJM -L node=2
+#PJM --mpi proc=3
+#PJM -L elapse=00:02:00
+
+basename `dirname $PWD`
+
+for f in @OUT@; do
+    echo $f
+    mpiexec ./$f
+done
+
+echo

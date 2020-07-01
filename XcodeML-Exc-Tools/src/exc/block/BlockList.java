@@ -109,12 +109,24 @@ public class BlockList
         add(new SimpleBlock(Xcode.LIST, BasicBlock.Statement(x)));
     }
     
+	public void removeAll()
+	{
+		head = null;
+		tail = null;
+	}
+
     public void removeFirst()
     {
         if(head == null)
             return;
-        head = head.next;
-        head.prev = null;
+
+		if (head.next == null) {
+			head = null;
+			return;
+		}
+
+		head = head.next;
+		head.prev = null;
     }
 
     // insert block before head
@@ -272,24 +284,26 @@ public class BlockList
       if (id_list == null) return false;
 
       XobjArgs a = id_list.getArgs();
-      do {
+      
+      while(a != null){
 	if (a.getArg().getName().equals(name)){
 	  id_list.removeArgs(a);
       	  f1 = true;
       	  break;
 	}	  
 	a = a.nextArgs();
-      } while (a != null);
+      }
 
       XobjArgs b = decls.getArgs();
-      do {
-	if (b.getArg().getArg(0).getName().equals(name)){
+      while (b != null){
+	if (b.getArg().Opcode() == Xcode.VAR_DECL &&
+	    b.getArg().getArg(0).getName().equals(name)){
 	  decls.removeArgs(b);
       	  f2 = true;
       	  break;
 	}	  
 	b = b.nextArgs();
-      } while (b != null);
+      }
 
       return (f1 | f2);
     }

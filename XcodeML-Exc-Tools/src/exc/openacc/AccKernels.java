@@ -166,6 +166,14 @@ class AccKernels extends AccData {
       blockListList.add(blockList);
     }
 */
+    if(ACC.platform == ACC.Platform.PZCL){
+      List<Block> blockList = new ArrayList<Block>();
+      blockList.add(pb);
+      blockListList.add(blockList);
+      return blockListList;
+    }
+
+
     if(! _pb.getBody().isSingle()){
       for(Block b = pb.getBody().getHead(); b != null; b = b.getNext()){
         List<Block> blockList = new ArrayList<Block>();
@@ -186,18 +194,19 @@ class AccKernels extends AccData {
       return kernelList.get(0).getReadOnlyOuterIdSet();
     }
 
-    Iterator<AccKernel> kernelIter = kernelList.iterator();
-    AccKernel kernel = kernelIter.next();
-    Set<Ident> readOnlyOuterIdSet = kernel.getReadOnlyOuterIdSet();
-    while(kernelIter.hasNext()){
-      kernel = kernelIter.next();
-      readOnlyOuterIdSet.addAll(kernel.getReadOnlyOuterIdSet());
+    Set<Ident> readOnlyOuterIdSet = new LinkedHashSet<Ident>();
+
+    //add all outer ids
+    for(AccKernel kernel: kernelList){
+      readOnlyOuterIdSet.addAll(kernel.getOuterIdSet());
     }
 
+    //remove non-readonly ids
     for(AccKernel kern : kernelList){
-      Set<Ident> outerIdSet = new LinkedHashSet<Ident>(kern.getOuterIdSet());
-      outerIdSet.removeAll(kern.getReadOnlyOuterIdSet());
-      readOnlyOuterIdSet.removeAll(outerIdSet);
+      Set<Ident> nonReadOnlyIdSet = new LinkedHashSet<Ident>(kern.getOuterIdSet());
+      nonReadOnlyIdSet.removeAll(kern.getReadOnlyOuterIdSet());
+
+      readOnlyOuterIdSet.removeAll(nonReadOnlyIdSet);
     }
 
     return readOnlyOuterIdSet;
