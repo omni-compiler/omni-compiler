@@ -659,7 +659,7 @@ if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$t
 
 elif test "x${target}" = "xFugaku-linux-gnu"; then
     # OpenMP
-    OPENMP_OPT_C="-fopenmp"
+    OPENMP_OPT_C="-Kopenmp"
     OPENMP_OPT_F="-Kopenmp"
 
     # XcalableMP
