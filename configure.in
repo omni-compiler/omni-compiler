@@ -457,7 +457,7 @@ AC_ARG_ENABLE(fjrdma,
 
 AC_ARG_ENABLE(utofu,
   [  --enable-utofu          enable uTofu for one-sided communication.],
-  [doutofu=yes], [doutofu=no])
+  [doutofu=${enableval}], [doutofu=no])
 
 AC_ARG_ENABLE(gnu-extension,
   [  --enable-gnu-extension  enable Fortran GNU intrinsic extension (false default).],
