@@ -45,3 +45,9 @@ See docs/STATUS-XMP.md, docs/STATUS-CAF.md, and docs/STATUS-ACC.md
 ## Execute
     $ ./test
 
+# MHOAT: Multi-Hybrid OpenACC Translator
+For GPU and FPGA Hybrid Accereration
+
+## Compile
+
+    ompcc -acc -O3 gpu_fpga.c --platform=Hybrid
