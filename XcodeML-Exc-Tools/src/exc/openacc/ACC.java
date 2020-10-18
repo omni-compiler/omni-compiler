@@ -58,6 +58,6 @@ public class ACC {
     CUDA,
     OpenCL,
     PZCL,
-    Hybrid,
+    MHOAT,
   }
 }

@@ -139,7 +139,7 @@ else
     [ "$ENABLE_TARGET" = false ] && OMNI_CX2X_OPT="$OMNI_CX2X_OPT -fopenmp"
 fi
 
-[ "$OPENACC_PLATFORM" != "Hybrid" ] && OMNI_CX2X_OPT="$OMNI_CX2X_OPT -silent"
+[ "$OPENACC_PLATFORM" != "MHOAT" ] && OMNI_CX2X_OPT="$OMNI_CX2X_OPT -silent"
 
 [ "$ENABLE_TARGET" = true ] && xcode_translator_add_opt+=("-fopenmp-only-target")
 for c_file in "${c_files[@]}"; do
@@ -149,11 +149,11 @@ for c_file in "${c_files[@]}"; do
     FILE_OUT_X=${TEMP_DIR}/"${FILE_NAME}"_out.xml
     BASENAME=`basename $C_FILE .c`
 
-    [ "$OPENACC_PLATFORM" = "Hybrid" ]  && OMNI_CX2X_OPT="$OMNI_CX2X_OPT -o ${FILE_OUT_X} -originfilename=${C_FILE}"
+    [ "$OPENACC_PLATFORM" = "MHOAT" ]  && OMNI_CX2X_OPT="$OMNI_CX2X_OPT -o ${FILE_OUT_X} -originfilename=${C_FILE}"
 
     omni_exec $OMNI_CX2X_CMD $OMNI_CX2X_OPT "${xcode_translator_add_opt[@]}" "${FILE_IN_X}"
     # also create ${TEMP_DIR}/${FILE_NAME}_in.c
-    if [ "$OPENACC_PLATFORM" = "Hybrid" ]; then
+    if [ "$OPENACC_PLATFORM" = "MHOAT" ]; then
         omni_exec mv ${TEMP_DIR}/"${FILE_NAME}"_in_GPU.c  "${BASENAME}"_GPU.c
         omni_exec mv ${TEMP_DIR}/"${FILE_NAME}"_in_FPGA.c "${BASENAME}"_FPGA.c
         exit 0;

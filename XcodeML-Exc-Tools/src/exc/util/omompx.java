@@ -439,7 +439,7 @@ public class omompx {
         case PZCL:
           ACC.device = AccDevice.PEZYSC;
           break;
-        case Hybrid:
+        case MHOAT:
           if (originFileName == null) {
             error("needs argument -originfilename=example.c");
           }
@@ -455,7 +455,7 @@ public class omompx {
         ACC.device.setUseReadOnlyDataCache(false);
       }
 
-      if (ACC.platform == Platform.Hybrid) {
+      if (ACC.platform == Platform.MHOAT) {
         Writer xcodeWriter2 = null;
         if (dump || outputXcode) {
           if (dump) {
