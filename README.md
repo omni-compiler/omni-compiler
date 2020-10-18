@@ -50,4 +50,4 @@ For GPU and FPGA  Accereration
 
 ## Compile
 
-    ompcc -acc -O3 gpu_fpga.c --platform=MHOAT
+    $ ompcc -acc -O2 gpu_fpga.c --platform=MHOAT
