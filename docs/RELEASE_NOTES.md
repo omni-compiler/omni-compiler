@@ -1,5 +1,8 @@
 Omni Compiler Software RELEASE NOTES
 
+# ver. 1.3.3    2020/11/27
+* Fixed lots of bugs.
+
 # ver. 1.3.2    2018/11/08
 * Add Python module for Fortran.
 * Add some benchmarks in samples/XMP.
