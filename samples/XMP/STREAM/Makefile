@@ -21,4 +21,4 @@ STREAM-dynamic.o: STREAM-dynamic.c
 	xmpcc $(CFLAGS) -c STREAM-dynamic.c
 
 clean:
-	rm -rf *.o
+	rm -rf STREAM-static STREAM-dynamic *.o
