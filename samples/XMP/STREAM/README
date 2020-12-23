@@ -1,16 +1,23 @@
-How to use
+# Description
 
-# create a execution file
-## On the K computer or FX10
+Implementation of the [STREAM benchmark](https://www.cs.virginia.edu/stream/ref.html). 
+STREAM-static uses static array allocation and STREAM-dynamic uses dynamic array allocation.
+If running STREAM-static on a machine with limited memory, you may wish to change the 
+size of the allocated arrays.
+
+# How to use
+
+## create a execution file
+### On the K computer or FX10
  $ make compiler=K
 
-## Use Intel Compiler
+### Use Intel Compiler
  $ make compiler=intel
 
-## Other
+### Other
  $ make
 
-# run
+## run
  $ mpirun -np 4 ./STREAM-dynamic 1024
 
  The argument (1024) is a vector size.
