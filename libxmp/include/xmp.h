@@ -34,7 +34,9 @@ typedef void* xmp_desc_t;
 // ----- libxmp
 extern MPI_Comm	xmp_get_mpi_comm(void);
 extern void	xmp_init_mpi(int *argc, char ***argv);
+extern void	xmp_init_all(int argc, char *argv[]);
 extern void	xmp_finalize_mpi(void);
+extern void	xmp_finalize_all(void);
 extern void	xmp_init(MPI_Comm comm);
 extern void	xmp_finalize();
 extern int	xmp_num_nodes(void);
@@ -43,6 +45,7 @@ extern int      xmp_desc_kind(xmp_desc_t d, int *kind);
 extern int	xmp_node_num(void);
 extern int      xmpc_node_num(void);
 extern int      xmpc_this_image(void);
+extern int      xmp_this_image(void);
 extern void	xmp_barrier(void);
 extern int	xmp_all_num_nodes(void);
 extern int	xmp_all_node_num(void);

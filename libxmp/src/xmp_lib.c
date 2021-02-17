@@ -53,6 +53,11 @@ int xmp_node_num(void)
   return _XMP_get_execution_nodes()->comm_rank + 1;
 }
 
+int xmp_this_image(void)
+{
+  return _XMP_get_execution_nodes()->comm_rank + 1;
+}
+
 int xmpc_node_num(void)
 {
   return _XMP_get_execution_nodes()->comm_rank;

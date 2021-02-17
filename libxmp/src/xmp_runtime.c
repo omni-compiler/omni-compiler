@@ -88,7 +88,7 @@ char *_XMP_desc_of(void *p)
   return (char *)p;
 }
 
-void xmp_init_all(int argc, char** argv)
+void xmp_init_all(int argc, char* argv[])
 {
   _XMP_init(argc, argv, MPI_COMM_WORLD);
 }
