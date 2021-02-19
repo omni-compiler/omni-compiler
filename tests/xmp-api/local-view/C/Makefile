@@ -1,8 +1,9 @@
 #
-XMP_HOME = /home/msato/xmp
+#XMP_HOME = /home/msato/xmp
+OMNI_HOME = $(shell xmpcc --show-env | grep OMNI_HOME | sed -e 's/OMNI_HOME=//' -e 's/"//g')
 CC     = mpicc
-CFLAGS = -I$(XMP_HOME)/include -fopenmp
-LIBS = $(XMP_HOME)/lib/libxmp.a -lm
+CFLAGS = $(shell xmpcc --show-env | grep OMNI_MPICC_OPT | sed -e 's/OMNI_MPICC_OPT=//' -e 's/"//g')
+LIBS = $(shell xmpcc --show-env | grep OMNI_LINKER_OPT | sed -e 's/OMNI_LINKER_OPT=//' -e 's/"//g')
 XRUN    = mpiexec
 TESTS = $(wildcard *.c)
 EXES  = $(TESTS:.c=.x)
