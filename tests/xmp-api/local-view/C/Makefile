@@ -1,5 +1,4 @@
 #
-#XMP_HOME = /home/msato/xmp
 OMNI_HOME = $(shell xmpcc --show-env | grep OMNI_HOME | sed -e 's/OMNI_HOME=//' -e 's/"//g')
 CC     = mpicc
 CFLAGS = $(shell xmpcc --show-env | grep OMNI_MPICC_OPT | sed -e 's/OMNI_MPICC_OPT=//' -e 's/"//g')
