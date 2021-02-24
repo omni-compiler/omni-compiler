@@ -12,10 +12,13 @@ OBJS  = $(TESTS:.c=.o)
 
 all default: $(EXES)
 
-.SUFFIXES: .x
+.SUFFIXES: .c .o .x
 
-.c.x:
-	$(CC) $(CFLAGS) -o $@ $< $(LIBS)
+.c.o:
+	$(CC) $(CFLAGS) -o $@ $<
+
+.o.x:
+	$(CC) -o $@ $< $(LIBS)
 
 run: 
 	$(XRUN) -n 2 ./xmpAPI_coarray_put_1dim.x
