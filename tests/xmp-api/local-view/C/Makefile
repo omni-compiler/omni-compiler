@@ -21,8 +21,14 @@ all default: $(EXES)
 	$(CC) -o $@ $< $(LIBS)
 
 run: 
+	$(XRUN) -n 2 ./xmpAPI_coarray_put_1dim.x
 	$(XRUN) -n 2 ./xmpAPI_coarray_put_2dims.x
+	$(XRUN) -n 2 ./xmpAPI_coarray_put_3dims.x
+	$(XRUN) -n 2 ./xmpAPI_coarray_put_4dims.x
+	$(XRUN) -n 2 ./xmpAPI_coarray_get_1dim.x
 	$(XRUN) -n 2 ./xmpAPI_coarray_get_2dims.x
+	$(XRUN) -n 2 ./xmpAPI_coarray_get_3dims.x
+	$(XRUN) -n 2 ./xmpAPI_coarray_get_4dims.x
 
 # $(XRUN) -n 1 ./coarray_translation.x
 # $(XRUN) -n 2 ./coarray_scalar.x
