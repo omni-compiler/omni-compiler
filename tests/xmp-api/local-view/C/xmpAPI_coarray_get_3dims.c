@@ -121,8 +121,8 @@ int main(int argc, char *argv[]){
     else fprintf(stderr, "ERROR\n");
 
   // Fj start 202102
-  //xmp_coarray_deallocate(a_desc);
-  //xmp_coarray_deallocate(b_desc);
+  xmp_coarray_deallocate(a_desc);
+  xmp_coarray_deallocate(b_desc);
 
   xmp_finalize_all();
   // Fj end 202102
