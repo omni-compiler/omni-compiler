@@ -46,14 +46,14 @@ void initialize()
       for(int k=0;k<J;k++){
         // Fj start 202102
 	//c[i][j][k] = c_normal[i][j][k] = (i * I * J) + (j * J) + k;
-	(*c_p)[i][j][k] = c_normal[i][j][k] = (i * I * J) + (j * J) + k;
+        (*c_p)[i][j][k] = c_normal[i][j][k] = (i * I * J) + (j * J) + k;
         // Fj end 202102
       }
     }
   }  
 }
 
-int scalar_get()
+int scalar_put()
 {
   // Fj start 202102
   int start, len, stride;
@@ -65,41 +65,41 @@ int scalar_get()
   c_section = xmp_new_array_section(3);
   a_l_section = xmp_new_array_section(1);
 
-  //a_normal[0]        = a[0]:[0];
+  //a[0]:[0]            = a_normal[0];
   start = 0; len = 1; stride = 1;
   xmp_array_section_set_triplet(a_section,0,start,len,stride);
   xmp_array_section_set_triplet(a_l_section,0,start,len,stride);
   img_dims[0] = 0;
-  xmp_coarray_get_local(img_dims,a_desc,a_section,a_local,a_l_section);
+  xmp_coarray_put_local(img_dims,a_desc,a_section,a_local,a_l_section);
 
-  //b[1][2]            = a[3]:[0];
+  //a[3]:[0]            = b[1][2];
   start = 3; len = 1; stride = 1;
   xmp_array_section_set_triplet(a_section,0,start,len,stride);
   start = 1; //len = 1; stride = 1;
   xmp_array_section_set_triplet(b_section,0,start,len,stride);
   start = 2; //len = 1; stride = 1;
   xmp_array_section_set_triplet(b_section,1,start,len,stride);
-  xmp_coarray_get(img_dims,a_desc,a_section,b_desc,b_section);
+  xmp_coarray_put(img_dims,a_desc,a_section,b_desc,b_section);
 
-  //b[2:3:2][2]        = a[4]:[0];
-  start = 4; len = 1; stride = 1;
+  //a[4:2:2]:[0]        = b[2][2];
+  start = 4; len = 2; stride = 2;
   xmp_array_section_set_triplet(a_section,0,start,len,stride);
-  start = 2; len = 3; stride = 2;
-  xmp_array_section_set_triplet(b_section,0,start,len,stride);
   start = 2; len = 1; stride = 1;
+  xmp_array_section_set_triplet(b_section,0,start,len,stride);
+  start = 2; //len = 1; stride = 1;
   xmp_array_section_set_triplet(b_section,1,start,len,stride);
-  xmp_coarray_get(img_dims,a_desc,a_section,b_desc,b_section);
+  xmp_coarray_put(img_dims,a_desc,a_section,b_desc,b_section);
 
-  //a_normal[1]        = b[0][3]:[0];
+  //b[0][3]:[0]         = a_normal[0];
   start = 0; len = 1; stride = 1;
   xmp_array_section_set_triplet(b_section,0,start,len,stride);
   start = 3; //len = 1; stride = 1;
   xmp_array_section_set_triplet(b_section,1,start,len,stride);
-  start = 1; //len = 1; stride = 1;
+  start = 0; //len = 1; stride = 1;
   xmp_array_section_set_triplet(a_l_section,0,start,len,stride);
-  xmp_coarray_get_local(img_dims,b_desc,b_section,a_local,a_l_section);
+  xmp_coarray_put_local(img_dims,b_desc,b_section,a_local,a_l_section);
 
-  //c[1][2][2]         = b[3][2]:[0];
+  //b[3][2]:[0]         = c[1][2][2];
   start = 3; len = 1; stride = 1;
   xmp_array_section_set_triplet(b_section,0,start,len,stride);
   start = 2; //len = 1; stride = 1;
@@ -110,51 +110,51 @@ int scalar_get()
   xmp_array_section_set_triplet(c_section,1,start,len,stride);
   start = 2; //len = 1; stride = 1;
   xmp_array_section_set_triplet(c_section,2,start,len,stride);
-  xmp_coarray_get(img_dims,b_desc,b_section,c_desc,c_section);
-  
-  //c[2:2:2][2:2:3][1] = b[4][2]:[0];
-  start = 4; len = 1; stride = 1;
+  xmp_coarray_put(img_dims,b_desc,b_section,c_desc,c_section);
+
+  //b[4:2:2][2:2:4]:[0] = c[2][2][1];
+  start = 4; len = 2; stride = 2;
   xmp_array_section_set_triplet(b_section,0,start,len,stride);
-  start = 2; //len = 1; stride = 1;
+  start = 2; len = 2; stride = 4;
   xmp_array_section_set_triplet(b_section,1,start,len,stride);
-  start = 2; len = 2; stride = 2;
+  start = 2; len = 1; stride = 1;
   xmp_array_section_set_triplet(c_section,0,start,len,stride);
-  start = 2; len = 2; stride = 3;
+  start = 2; //len = 1; stride = 1;
   xmp_array_section_set_triplet(c_section,1,start,len,stride);
-  start = 1; len = 1; stride = 1;
+  start = 1; //len = 1; stride = 1;
   xmp_array_section_set_triplet(c_section,2,start,len,stride);
-  xmp_coarray_get(img_dims,b_desc,b_section,c_desc,c_section);
+  xmp_coarray_put(img_dims,b_desc,b_section,c_desc,c_section);
 
   xmp_free_array_section(a_section);
   xmp_free_array_section(b_section);
   xmp_free_array_section(c_section);
   xmp_free_array_section(a_l_section);
   // Fj end 202102
-  
+
   int flag = TRUE;
   // Fj start 202102
-  //if(a_normal[0] != a[0]) flag = FALSE;
-  if(a_normal[0] != (*a_p)[0]) flag = FALSE;
-  //if(b[1][2]     != a[3]) flag = FALSE;
-  if((*b_p)[1][2]     != (*a_p)[3]) flag = FALSE;
-  //if(b[2][2] != a[4] || b[4][2] != a[4] || b[6][2] != a[4]) flag = FALSE;
-  if((*b_p)[2][2] != (*a_p)[4] || (*b_p)[4][2] != (*a_p)[4] ||
-     (*b_p)[6][2] != (*a_p)[4]) flag = FALSE;
-  //if(a_normal[1] != b[0][3]) flag = FALSE;
-  if(a_normal[1] != (*b_p)[0][3]) flag = FALSE;
-  //if(c[1][2][2] != b[3][2]) flag = FALSE;
-  if((*c_p)[1][2][2] != (*b_p)[3][2]) flag = FALSE;
-  //if(c[2][2][1] != b[4][2] || c[2][5][1] != b[4][2] || 
-  //   c[4][2][1] != b[4][2] || c[4][5][1] != b[4][2]) flag = FALSE;
-  if((*c_p)[2][2][1] != (*b_p)[4][2] || (*c_p)[2][5][1] != (*b_p)[4][2] || 
-     (*c_p)[4][2][1] != (*b_p)[4][2] || (*c_p)[4][5][1] != (*b_p)[4][2])
+  //if(a[0] != a_normal[0]) flag = FALSE;
+  if((*a_p)[0] != a_normal[0]) flag = FALSE;
+  //if(a[3] != b[1][2]) flag = FALSE;
+//printf("a = %d, b = %d \n", (*a_p)[3], (*b_p)[1][2]);
+  if((*a_p)[3] != (*b_p)[1][2]) flag = FALSE;
+  //if(a[4] != b[2][2] || a[6] != b[2][2]) flag = FALSE;
+  if((*a_p)[4] != (*b_p)[2][2] || (*a_p)[6] != (*b_p)[2][2]) flag = FALSE;
+  //if(b[0][3] != a_normal[0]) flag = FALSE;
+  if((*b_p)[0][3] != a_normal[0]) flag = FALSE;
+  //if(b[3][2] != c[1][2][2]) flag = FALSE;
+  if((*b_p)[3][2] != (*c_p)[1][2][2]) flag = FALSE;
+  //if(b[4][2] != c[2][2][1] || b[4][6] != c[2][2][1] ||
+  //   b[6][2] != c[2][2][1] || b[6][6] != c[2][2][1]) flag = FALSE;
+  if((*b_p)[4][2] != (*c_p)[2][2][1] || (*b_p)[4][6] != (*c_p)[2][2][1] ||
+     (*b_p)[6][2] != (*c_p)[2][2][1] || (*b_p)[6][6] != (*c_p)[2][2][1])
     flag = FALSE;
   // Fj end 202102
 
   return flag;
 }
 
-int vector_get()
+int vector_put()
 {
   // Fj start 202102
   int start, len, stride;
@@ -166,24 +166,24 @@ int vector_get()
   c_section = xmp_new_array_section(3);
   a_l_section = xmp_new_array_section(1);
 
-  //a_normal[2:5]  = a[0:5]:[0];
+  //a[0:5]:[0]      = a_normal[2:5];
   start = 0; len = 5; stride = 1;
   xmp_array_section_set_triplet(a_section,0,start,len,stride);
   start = 2; len = 5; stride = 1;
   xmp_array_section_set_triplet(a_l_section,0,start,len,stride);
   img_dims[0] = 0;
-  xmp_coarray_get_local(img_dims,a_desc,a_section,a_local,a_l_section);
+  xmp_coarray_put_local(img_dims,a_desc,a_section,a_local,a_l_section);
 
-  //a[5:4]         = b[0:4][3]:[0];
+  //b[0:4][3]:[0]   = a[5:4];
   start = 0; len = 4; stride = 1;
   xmp_array_section_set_triplet(b_section,0,start,len,stride);
   start = 3; len = 1; stride = 1;
   xmp_array_section_set_triplet(b_section,1,start,len,stride);
   start = 5; len = 4; stride = 1;
   xmp_array_section_set_triplet(a_section,0,start,len,stride);
-  xmp_coarray_get(img_dims,b_desc,b_section,a_desc,a_section);
+  xmp_coarray_put(img_dims,b_desc,b_section,a_desc,a_section);
 
-  //c[1:2:3][2][2] = b[3][2:2:2]:[0];
+  //b[3][2:2:2]:[0] = c[1:2:3][2][2];
   start = 3; len = 1; stride = 1;
   xmp_array_section_set_triplet(b_section,0,start,len,stride);
   start = 2; len = 2; stride = 2;
@@ -200,39 +200,31 @@ int vector_get()
   int flag = TRUE;
   for(int i=0;i<5;i++)
     // Fj start 202102
-    //if(a_normal[2+i] != a[i])
-    if(a_normal[2+i] != (*a_p)[i])
+    //if(a[i] != a_normal[2+i])
+    if((*a_p)[i] != a_normal[2+i])
     // Fj end 202102
       flag = FALSE;
 
   for(int i=0;i<4;i++)
     // Fj start 202102
-    //if(a[5+i] != b[i][3])
-    if((*a_p)[5+i] != (*b_p)[i][3])
+    //if(b[i][3] != a[5+i])
+    if((*b_p)[i][3] != (*a_p)[5+i])
     // Fj end 202102
       flag = FALSE;
 
   // Fj start 202102
-  //if(c[1][2][2] != b[3][2] || c[4][2][2] != b[3][4])
-  if((*c_p)[1][2][2] != (*b_p)[3][2] || (*c_p)[4][2][2] != (*b_p)[3][4])
+  //if(b[3][2] != c[1][2][2] || b[3][4] != c[4][2][2])
+  if((*b_p)[3][2] != (*c_p)[1][2][2] || (*b_p)[3][4] != (*c_p)[4][2][2])
   // Fj end 202102
     flag = FALSE;
-
-  // Fj start 202102
-  xmp_free_array_section(a_section);
-  xmp_free_array_section(b_section);
-  xmp_free_array_section(c_section);
-  xmp_free_array_section(a_l_section);
-  // Fj end 202102
 
   return flag;
 }
 
 // Fj start 202102
 //int main()
-//{
-int main(int argc, char *argv[]){
-  //int img_dims[1];
+int main(int argc, char *argv[])
+{
   long a_dims[1], b_dims[2], c_dims[3];
   xmp_array_section_t *a_section, *b_section, *c_section;
 
@@ -248,12 +240,12 @@ int main(int argc, char *argv[]){
 // Fj end 202102
 
   initialize();
-  test_ok(scalar_get());
+  test_ok(scalar_put());
 
   // Fj start 202102
   initialize();
   // Fj end 202102
-  test_ok(vector_get());
+  test_ok(vector_put());
 
   // Fj start 202102
   xmp_coarray_deallocate(a_desc);
