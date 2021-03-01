@@ -10,12 +10,12 @@ module xmp_api
        integer xmp_this_image
      end function xmp_this_image
 
-     subroutine xmp_new_corray(desc,elmt_size, ndims, dim_lb, dim_ub, &
+     subroutine xmp_new_coarray(desc,elmt_size, ndims, dim_lb, dim_ub, &
           img_ndims, img_dim_size)
        integer(8), intent(out):: desc
        integer(4), intent(in):: elmt_size,ndims,img_ndims, img_dim_size(*)
        integer(8), intent(in), dimension(*) :: dim_lb, dim_ub
-     end subroutine xmp_new_corray
+     end subroutine xmp_new_coarray
 
      subroutine xmp_coarray_deallocate(desc, status)
        integer(8), intent(in):: desc

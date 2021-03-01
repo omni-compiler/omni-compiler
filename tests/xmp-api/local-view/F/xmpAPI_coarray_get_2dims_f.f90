@@ -34,7 +34,7 @@ program coarray_get_2dims_f
   call xmp_coarray_bind(a_desc,a)
   call xmp_coarray_bind(b_desc,b)
 
-!  print *,'xmp_corray_bind done ...'
+!  print *,'xmp_coarray_bind done ...'
   
   ret = 0
   DO I = 1, SIZE
