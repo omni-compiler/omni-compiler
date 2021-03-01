@@ -51,6 +51,10 @@ void initialize()
       }
     }
   }  
+
+  // Fj start 202102
+  xmp_sync_all(NULL);
+  // Fj end 202102
 }
 
 int scalar_get()

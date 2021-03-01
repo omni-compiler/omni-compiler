@@ -51,6 +51,10 @@ void initialize()
       }
     }
   }  
+
+  // Fj start 202102
+  xmp_sync_all(NULL);
+  // Fj end 202102
 }
 
 int scalar_put()
@@ -136,7 +140,6 @@ int scalar_put()
   //if(a[0] != a_normal[0]) flag = FALSE;
   if((*a_p)[0] != a_normal[0]) flag = FALSE;
   //if(a[3] != b[1][2]) flag = FALSE;
-//printf("a = %d, b = %d \n", (*a_p)[3], (*b_p)[1][2]);
   if((*a_p)[3] != (*b_p)[1][2]) flag = FALSE;
   //if(a[4] != b[2][2] || a[6] != b[2][2]) flag = FALSE;
   if((*a_p)[4] != (*b_p)[2][2] || (*a_p)[6] != (*b_p)[2][2]) flag = FALSE;
@@ -194,7 +197,7 @@ int vector_put()
   xmp_array_section_set_triplet(c_section,1,start,len,stride);
   start = 2; len = 1; stride = 1;
   xmp_array_section_set_triplet(c_section,2,start,len,stride);
-  xmp_coarray_get(img_dims,b_desc,b_section,c_desc,c_section);
+  xmp_coarray_put(img_dims,b_desc,b_section,c_desc,c_section);
   // Fj end 202102
 
   int flag = TRUE;
@@ -242,9 +245,7 @@ int main(int argc, char *argv[])
   initialize();
   test_ok(scalar_put());
 
-  // Fj start 202102
   initialize();
-  // Fj end 202102
   test_ok(vector_put());
 
   // Fj start 202102
