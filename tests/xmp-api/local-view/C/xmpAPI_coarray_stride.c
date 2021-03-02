@@ -67,7 +67,7 @@ void communicate_1(int me){
 
 
     img_dims[0] = 0;
-    // tmp[3:5:2] = a[2:5]:[0]; // get  aの2,3,4,5,6をtmpの3から2こ間隔で通信する
+    // tmp[3:5:2] = a[2:5]:[0]; // get
     xmp_coarray_get_local(img_dims,a_desc,a_section,tmp_local,tmp_l_section);
     (*a_p)[3] = tmp[3]; (*a_p)[5] = tmp[5]; (*a_p)[7] = tmp[7];
     (*a_p)[9] = tmp[9]; (*a_p)[11] = tmp[11];
