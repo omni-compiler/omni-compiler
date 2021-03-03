@@ -15,7 +15,7 @@ program coarray_put_2dims_f
   integer(4) status
 
 !  CALL xmpf_init_all_ ( )
-  call xmp_init_all
+  call xmp_api_init
 !  print *,'xmp_init_all done ...'
 
   a_lb(1) = 1
@@ -116,7 +116,7 @@ program coarray_put_2dims_f
   call xmp_coarray_deallocate(b_desc, status)
 
 ! CALL xmpf_finalize_all_ ( )
-  call xmp_finalize_all
+  call xmp_api_finalize
 
 end program coarray_put_2dims_f
 
