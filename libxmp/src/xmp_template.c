@@ -170,7 +170,7 @@ static int _XMP_compare_task_exec_cond(_XMP_task_desc_t *task_desc,
   return _XMP_N_INT_TRUE;
 }
 
-static void _XMP_dist_template_CYCLIC_WIDTH(_XMP_template_t *template, int template_index, int nodes_index,
+void _XMP_dist_template_CYCLIC_WIDTH(_XMP_template_t *template, int template_index, int nodes_index,
                                             unsigned long long width) {
   _XMP_ASSERT(template->is_fixed);
   _XMP_ASSERT(template->is_distributed);

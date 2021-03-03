@@ -38,6 +38,10 @@ extern void	xmp_init_all(int argc, char *argv[]);
 extern void	xmp_finalize_mpi(void);
 extern void	xmp_finalize_all(void);
 extern void	xmp_init(MPI_Comm comm);
+
+extern void	xmp_api_init(int argc, char *argv[]);
+extern void	xmp_api_finalize(void);
+
 extern void	xmp_finalize();
 extern int	xmp_num_nodes(void);
 extern int      xmp_num_images(void);

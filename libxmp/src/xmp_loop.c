@@ -421,7 +421,8 @@ void xmpc_loop_sched(int ser_init, int ser_cond, int ser_step,
 		     _XMP_template_t *t_desc, int t_idx,
 		     int expand_type, int lwidth, int uwidth, int unbound_flag)
 {
-  _XMP_ASSERT(*expand_type != _XMP_LOOP_MARGIN || *lwidth == 0 || *uwidth == 0);
+  // _XMP_ASSERT(*expand_type != _XMP_LOOP_MARGIN || *lwidth == 0 || *uwidth == 0);
+  _XMP_ASSERT(expand_type != _XMP_LOOP_MARGIN || lwidth == 0 || uwidth == 0);
   _XMP_ASSERT(ser_step != 0);
 
   // offset is not supported yet in XMP/C>
