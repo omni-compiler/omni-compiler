@@ -31,8 +31,9 @@ void _XMP_calc_array_dim_elmts(_XMP_array_t *array, int array_index) {
 
 void _XMP_setup_reduce_type(MPI_Datatype *mpi_datatype, size_t *datatype_size, int datatype);
 
-void _XMP_init_array_desc(_XMP_array_t **array, _XMP_template_t *template, int dim,
-                          int type, size_t type_size, ...)
+
+void _XMP_init_array_desc_n(_XMP_array_t **array, _XMP_template_t *template, int dim,
+			    int type, size_t type_size, int dim_size[])
 {
   _XMP_array_t *a = _XMP_alloc(sizeof(_XMP_array_t) + sizeof(_XMP_array_info_t) * (dim - 1));
 
@@ -68,10 +69,10 @@ void _XMP_init_array_desc(_XMP_array_t **array, _XMP_template_t *template, int d
   //if (!template->is_fixed) _XMP_fatal("target template is not fixed");
   a->align_template = template;
 
-  va_list args;
-  va_start(args, type_size);
+  // va_list args;
+  // va_start(args, type_size);
   for (int i=0;i<dim;i++){
-    int size = va_arg(args, int);
+    int size = dim_size[i]; /* va_arg(args, int); */
     _XMP_ASSERT(size > 0);
     
     _XMP_array_info_t *ai = &(a->info[i]);
@@ -104,9 +105,23 @@ void _XMP_init_array_desc(_XMP_array_t **array, _XMP_template_t *template, int d
 
     ai->align_template_index = -1;
   }
-  va_end(args);
+  // va_end(args);
 
   *array = a;
+}
+
+void _XMP_init_array_desc(_XMP_array_t **array, _XMP_template_t *template, int dim,
+                          int type, size_t type_size, ...)
+{
+  int dim_size[_XMP_N_MAX_DIM];
+
+  va_list args;
+  va_start(args, type_size);
+  for (int i=0;i<dim;i++){
+    dim_size[i] = va_arg(args, int);
+  }
+  va_end(args);
+  _XMP_init_array_desc_n(array, template, dim, type, type_size, dim_size);
 }
 
 // NOTE: adesc created by this function is NOT complete. For use only in gmove_1to1.
@@ -698,7 +713,7 @@ void _XMP_alloc_array2(void **array_addr, _XMP_array_t *array_desc, int is_coarr
   int dim = array_desc->dim;
 
   for (int i = dim - 1; i >= 0; i--) {
-    *acc[i] = total_elmts;
+    if(acc[i] != NULL) *acc[i] = total_elmts;
 
     array_desc->info[i].dim_acc = total_elmts;
 
