@@ -14,9 +14,8 @@ program coarray_get_2dims_f
   integer(8) :: a_sec, b_sec
   integer(4) status
 
-!  CALL xmpf_init_all_ ( )
-  call xmp_init_all
-!  print *,'xmp_init_all done ...'
+  call xmp_api_init
+!  print *,'xmp_api_init done ...'
 
   a_lb(1) = 1
   a_lb(2) = 1
@@ -110,8 +109,7 @@ program coarray_get_2dims_f
   call xmp_coarray_deallocate(a_desc, status)
   call xmp_coarray_deallocate(b_desc, status)
 
-! CALL xmpf_finalize_all_ ( )
-  call xmp_finalize_all
+  call xmp_api_finalize
 
 end program coarray_get_2dims_f
 

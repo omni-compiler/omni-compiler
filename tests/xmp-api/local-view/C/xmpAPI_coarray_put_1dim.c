@@ -25,7 +25,7 @@ int main(int argc, char *argv[]){
   long a_dims[DIMS], b_dims[DIMS];
   xmp_array_section_t *a_section, *b_section;
 
-  xmp_init_all(argc,argv);
+  xmp_api_init(argc,argv);
 
   a_dims[0] = SIZE;
   b_dims[0] = SIZE;
@@ -99,7 +99,7 @@ int main(int argc, char *argv[]){
   xmp_coarray_deallocate(a_desc);
   xmp_coarray_deallocate(b_desc);
 
-  xmp_finalize_all();
+  xmp_api_finalize();
   // Fj end 202102
 
   return ret;

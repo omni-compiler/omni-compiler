@@ -502,7 +502,7 @@ int main(int argc, char *argv[]){
   long c_dims[3];
   long d_dims[4];
   long e_dims[2];
-  xmp_init_all(argc,argv);
+  xmp_api_init(argc,argv);
 
   // For communicate_1
   a_dims[0] = 10;
@@ -551,7 +551,7 @@ int main(int argc, char *argv[]){
 
   bug_107();
   
-  xmp_finalize_all();
+  xmp_api_finalize();
 
 // #pragma xmp barrier
 // #pragma xmp reduction(MAX:return_val)

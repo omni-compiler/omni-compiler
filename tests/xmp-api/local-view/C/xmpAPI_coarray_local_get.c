@@ -236,7 +236,7 @@ int main(int argc, char *argv[]){
   long a_dims[1], b_dims[2], c_dims[3];
   xmp_array_section_t *a_section, *b_section, *c_section;
 
-  xmp_init_all(argc,argv);
+  xmp_api_init(argc,argv);
 
   a_dims[0] = I;
   b_dims[0] = I; b_dims[1] = J;
@@ -261,7 +261,7 @@ int main(int argc, char *argv[]){
   xmp_coarray_deallocate(c_desc);
   xmp_free_local_array(a_local);
 
-  xmp_finalize_all();
+  xmp_api_finalize();
   // Fj end 202102
 
   return 0;
