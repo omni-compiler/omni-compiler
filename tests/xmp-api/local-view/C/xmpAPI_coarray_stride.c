@@ -280,7 +280,7 @@ int main(int argc, char *argv[]){
   long a_dims[1];
   long b_dims[2];
   long c_dims[3];
-  xmp_init_all(argc,argv);
+  xmp_api_init(argc,argv);
   int me = xmpc_this_image();
 
   a_dims[0] = 20;
@@ -308,6 +308,6 @@ int main(int argc, char *argv[]){
 
 #pragma xmp barrier
 #pragma xmp reduction(MAX:return_val)  
-  xmp_finalize_all();
+  xmp_api_finalize();
   return return_val;
 }
