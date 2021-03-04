@@ -2,6 +2,7 @@
 /* should be marged to xmp.h */
 #include <stddef.h> 
 #include "xmp.h"
+#include "xmp_constant.h"
 
 #ifndef TRUE
 #define TRUE 1
@@ -13,82 +14,47 @@
 #define XMP_ERR_ARG         12      /* Invalid argument */
 #define XMP_ERR_DIMS        11      /* Invalid dimension argument */
 
-#ifdef not
-/* Communication argument parameters */
-#define MPI_ERR_BUFFER      xo 1      /* Invalid buffer pointer */
-#define MPI_ERR_COUNT        2      /* Invalid count argument */
-#define MPI_ERR_TYPE         3      /* Invalid datatype argument */
-#define MPI_ERR_TAG          4      /* Invalid tag argument */
-#define MPI_ERR_COMM         5      /* Invalid communicator */
-#define MPI_ERR_RANK         6      /* Invalid rank */
-#define MPI_ERR_ROOT         7      /* Invalid root */
+typedef enum xmp_datatype {
+  XMP_TYPE_BOOL=       	_XMP_N_TYPE_BOOL,	
+  XMP_TYPE_CHAR=	_XMP_N_TYPE_CHAR,
+  XMP_TYPE_UNSIGNED_CHAR=  _XMP_N_TYPE_UNSIGNED_CHAR,
+  XMP_TYPE_SHORT= 		_XMP_N_TYPE_SHORT,
+  XMP_TYPE_UNSIGNED_SHORT= _XMP_N_TYPE_UNSIGNED_SHORT,
+  XMP_TYPE_INT= 		_XMP_N_TYPE_INT,
+  XMP_TYPE_UNSIGNED_INT= 	_XMP_N_TYPE_UNSIGNED_INT,
+  XMP_TYPE_LONG= 		_XMP_N_TYPE_LONG,
+  XMP_TYPE_UNSIGNED_LONG= 	_XMP_N_TYPE_UNSIGNED_LONG,
+  XMP_TYPE_LONGLONG= 	_XMP_N_TYPE_LONGLONG,
+  XMP_TYPE_UNSIGNED_LONGLONG= 	_XMP_N_TYPE_UNSIGNED_LONGLONG,
+  XMP_TYPE_FLOAT= 		_XMP_N_TYPE_FLOAT,
+  XMP_TYPE_DOUBLE= 	_XMP_N_TYPE_DOUBLE,
+  XMP_TYPE_LONG_DOUBLE= 	_XMP_N_TYPE_LONG_DOUBLE,
+  XMP_TYPE_NONE=0
+} xmp_datatype_t;
 
-/* MPI Objects (other than COMM) */
-#define MPI_ERR_GROUP        8      /* Invalid group */
-#define MPI_ERR_OP           9      /* Invalid operation */
-#define MPI_ERR_REQUEST     19      /* Invalid mpi_request handle */
 
-/* Special topology argument parameters */
-#define MPI_ERR_TOPOLOGY    10      /* Invalid topology */
-
-/* All other arguments.  This is a class with many kinds */
-#define MPI_ERR_ARG         12      /* Invalid argument */
-
-/* Other errors that are not simply an invalid argument */
-#define MPI_ERR_OTHER       15      /* Other error; use Error_string */
-
-#define MPI_ERR_UNKNOWN     13      /* Unknown error */
-
-/* Multiple completion has three special error classes */
-#define MPI_ERR_IN_STATUS           17      /* Look in status for error value */
-#define MPI_ERR_PENDING             18      /* Pending request */
-
-/* New MPI-2 Error classes */
-#define MPI_ERR_ACCESS      20      /* */
-#define MPI_ERR_AMODE       21      /* */
-#define MPI_ERR_BAD_FILE    22      /* */
-#define MPI_ERR_CONVERSION  23      /* */
-#define MPI_ERR_DUP_DATAREP 24      /* */
-#define MPI_ERR_FILE_EXISTS 25      /* */
-#define MPI_ERR_FILE_IN_USE 26      /* */
-#define MPI_ERR_FILE        27      /* */
-#define MPI_ERR_IO          32      /* */
-#define MPI_ERR_NO_SPACE    36      /* */
-#define MPI_ERR_NO_SUCH_FILE 37     /* */
-#define MPI_ERR_READ_ONLY   40      /* */
-#define MPI_ERR_UNSUPPORTED_DATAREP   43  /* */
-
-/* MPI_ERR_INFO is NOT defined in the MPI-2 standard.  I believe that
-   this is an oversight */
-#define MPI_ERR_INFO        28      /* */
-#define MPI_ERR_INFO_KEY    29      /* */
-#define MPI_ERR_INFO_VALUE  30      /* */
-#define MPI_ERR_INFO_NOKEY  31      /* */
-
-#define MPI_ERR_NAME        33      /* */
-#define MPI_ERR_NO_MEM      34      /* Alloc_mem could not allocate memory */
-#define MPI_ERR_NOT_SAME    35      /* */
-#define MPI_ERR_PORT        38      /* */
-#define MPI_ERR_QUOTA       39      /* */
-#define MPI_ERR_SERVICE     41      /* */
-#define MPI_ERR_SPAWN       42      /* */
-#define MPI_ERR_UNSUPPORTED_OPERATION 44 /* */
-#define MPI_ERR_WIN         45      /* */
-
-#define MPI_ERR_BASE        46      /* */
-#define MPI_ERR_LOCKTYPE    47      /* */
-#define MPI_ERR_KEYVAL      48      /* Erroneous attribute key */
-#define MPI_ERR_RMA_CONFLICT 49     /* */
-#define MPI_ERR_RMA_SYNC    50      /* */ 
-#define MPI_ERR_SIZE        51      /* */
-#define MPI_ERR_DISP        52      /* */
-#define MPI_ERR_ASSERT      53      /* */
-
-#define MPI_ERR_RMA_RANGE  55       /* */
-#define MPI_ERR_RMA_ATTACH 56       /* */
-#define MPI_ERR_RMA_SHARED 57       /* */
-#define MPI_ERR_RMA_FLAVOR 58       /* */
-#endif
+typedef enum xmp_reduction_kind {
+  XMP_REDUCE_SUM= _XMP_N_REDUCE_SUM,
+  XMP_REDUCE_PROD= _XMP_N_REDUCE_PROD,
+  XMP_REDUCE_BAND= _XMP_N_REDUCE_BAND,
+  XMP_REDUCE_LAND= _XMP_N_REDUCE_LAND,
+  XMP_REDUCE_BOR= _XMP_N_REDUCE_BOR,
+  XMP_REDUCE_LOR= _XMP_N_REDUCE_LOR,
+  XMP_REDUCE_BXOR=_XMP_N_REDUCE_BXOR,
+  XMP_REDUCE_LXOR= _XMP_N_REDUCE_LXOR,
+  XMP_REDUCE_MAX= _XMP_N_REDUCE_MAX,
+  XMP_REDUCE_MIN= _XMP_N_REDUCE_MIN,
+  XMP_REDUCE_FIRSTMAX= _XMP_N_REDUCE_FIRSTMAX,
+  XMP_REDUCE_FIRSTMIN= _XMP_N_REDUCE_FIRSTMIN,
+  XMP_REDUCE_LASTMAX= _XMP_N_REDUCE_LASTMAX,
+  XMP_REDUCE_LASTMIN= _XMP_N_REDUCE_LASTMIN,
+  XMP_REDUCE_EQV= _XMP_N_REDUCE_EQV,
+  XMP_REDUCE_NEQV= _XMP_N_REDUCE_NEQV,
+  XMP_REDUCE_MINUS= _XMP_N_REDUCE_MINUS,
+  XMP_REDUCE_MAXLOC= _XMP_N_REDUCE_MAXLOC,
+  XMP_REDUCE_MINLOC= _XMP_N_REDUCE_MINLOC,
+  XMP_REDUCE_NONE=0
+} xmp_reduction_kind_t;
 
 // triplet for coarray C
 struct _xmp_asection_triplet {
@@ -148,6 +114,29 @@ int xmp_coarray_put_scalar( int img_dims[], xmp_desc_t remote_desc, xmp_array_se
 int xmp_coarray_get_scalar(int img_dims[], xmp_desc_t remote_desc, xmp_array_section_t *remote_asp, 
 			   void *addr);
 int xmp_coarray_deallocate(xmp_desc_t desc);
+
+
+/** 
+    global view
+*/
+xmp_desc_t xmp_global_nodes(int n_dims, int dim_size[], int is_static);
+
+xmp_desc_t xmpc_new_template(xmp_desc_t n, int n_dims, long long dim1, ...);
+int xmp_dist_template_BLOCK(xmp_desc_t t, int template_dim_idx, int node_dim_idx);
+int xmp_dist_template_CYCLIC(xmp_desc_t t, int template_index, int nodes_index);
+int xmp_dist_template_BLOCK_CYCLIC(xmp_desc_t t, int template_index, int nodes_index, unsigned long long width);
+void xmp_dist_template_GBLOCK(xmp_desc_t t, int template_index, int nodes_index,
+			       int *mapping_array, int *temp0);
+
+xmp_desc_t xmpc_new_array(xmp_desc_t t, xmp_datatype_t type, int n_dims, int dim_size1,/* int dim_size2,*/ ... );
+int xmp_align_array(xmp_desc_t a, int array_dim_idx, int template_dim_idx, long long offset);
+int xmp_set_shadow(xmp_desc_t a, int dim_idx, int shdw_size_lo, int shdw_size_hi);
+int xmp_set_full_shadow(xmp_desc_t a, int dim_idx);
+
+
+
+
+
 
 
 

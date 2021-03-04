@@ -8,7 +8,7 @@
 // ----- libxml
 // xmp_align.c
 extern void _XMP_init_array_desc(void **array, void *template, int dim, int type, size_t type_size, ...);
-extern void _XMP_init_array_desc_n(_XMP_array_t **array, _XMP_template_t *template, int dim,
+extern void _XMP_init_array_desc_n(void **array, void *template, int dim,
 				   int type, size_t type_size, int dim_size[]);
 extern void _XMP_finalize_array_desc(void *array);
 extern void _XMP_align_array_NOT_ALIGNED(void *array, int array_index);
@@ -97,7 +97,7 @@ extern void _XMP_coarray_malloc(void **, void *);
 extern void _XMP_coarray_regmem(void **, void *);   // for Coarray Fortran CA-method
 extern void _XMP_coarray_attach(void **, void *, const size_t);
 extern void _XMP_coarray_detach(void **);
-extern void _XMP_coarray_deallocate(_XMP_coarray_t *c);
+extern void _XMP_coarray_deallocate(void *);
 extern void _XMP_coarray_lastly_deallocate();
 
 extern void _XMP_coarray_rdma_coarray_set_1(const long, const long, const long);

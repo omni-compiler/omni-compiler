@@ -11,11 +11,9 @@
 #include "mpi-ext.h"
 #endif
 
-static int _XMP_runtime_working = _XMP_N_INT_FALSE;
+int _XMP_runtime_working = _XMP_N_INT_FALSE;
 int _XMPC_running = 1;
 int _XMPF_running = 0;
-extern void xmpc_traverse_init();
-extern void xmpc_traverse_finalize();
 
 void (*_xmp_pack_array)(void *buffer, void *src, int array_type, size_t array_type_size,
 			int array_dim, int *l, int *u, int *s, unsigned long long *d) = _XMPC_pack_array;
@@ -27,7 +25,7 @@ int xmp_get_ruuning()
   return _XMP_runtime_working;
 }
 
-void _XMP_init(int argc, char** argv, MPI_Comm comm)
+void _XMP_init_no_traverse(int argc, char** argv, MPI_Comm comm)
 {
   if (!_XMP_runtime_working) {
     int flag = 0;
@@ -60,20 +58,21 @@ void _XMP_init(int argc, char** argv, MPI_Comm comm)
     xmp_reduce_initialize();
   }
 
-
   _XMP_init_world(NULL, NULL);
   _XMP_check_reflect_type();
   
-  if (!_XMP_runtime_working) {
-    xmpc_traverse_init();
-  }
+  /* seperate runtime and initialize xmp_api */
+  /* if (!_XMP_runtime_working) { */
+  /*   xmpc_traverse_init(); */
+  /* } */
   _XMP_runtime_working = _XMP_N_INT_TRUE;
 }
 
-void _XMP_finalize(bool isFinalize)
+void _XMP_finalize_no_traverse(bool isFinalize)
 {
   if (_XMP_runtime_working) {
-    xmpc_traverse_finalize();
+    // speerate runtime and initalize xmp_api */
+    // xmpc_traverse_finalize();
     
 #if defined(_XMP_GASNET) || defined(_XMP_FJRDMA) || defined(_XMP_TCA) || defined(_XMP_MPI3_ONESIDED) || defined(_XMP_UTOFU)
     _XMP_finalize_onesided_functions();
@@ -86,16 +85,6 @@ void _XMP_finalize(bool isFinalize)
 char *_XMP_desc_of(void *p)
 {
   return (char *)p;
-}
-
-void xmp_init_all(int argc, char* argv[])
-{
-  _XMP_init(argc, argv, MPI_COMM_WORLD);
-}
-
-void xmp_finalize_all()
-{
-  _XMP_finalize(true);
 }
 
 #include "config.h"

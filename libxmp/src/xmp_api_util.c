@@ -167,19 +167,33 @@ void xmp_free_local_array_(xmp_local_array_t **app)
 }
 
 /* init/finalize */
-void xmp_init_all_()
+extern void _XMP_init_no_traverse(int argc, char** argv, MPI_Comm comm);
+
+void xmp_api_init(int argc, char* argv[])
+{
+  _XMP_init_no_traverse(argc, argv, MPI_COMM_WORLD);
+}
+
+extern void _XMP_finalize_no_traverse(bool isFinalize);
+
+void xmp_api_finalize()
+{
+  _XMP_finalize_no_traverse(true);
+}
+
+void xmp_api_init_()
 {
   char *dummy_argv[1];
   dummy_argv[0] = NULL;
-  xmp_init_all(0,dummy_argv);
+  xmp_api_init(0,dummy_argv);
 }
 
-void xmp_finalize_all_()
+void xmp_api_finalize_()
 {
-  xmp_finalize_all();
+  xmp_api_finalize();
 }
 
 /* dummy functions */
-void xmpc_traverse_init() { }
-void xmpc_traverse_finalize() { }
+// void xmpc_traverse_init() { }
+// void xmpc_traverse_finalize() { }
 
