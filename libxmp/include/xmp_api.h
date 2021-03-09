@@ -83,6 +83,7 @@ typedef struct _xmp_array_section_t {
   
 typedef struct _xmp_local_array_t {
   void *addr;
+  int element_size;
   int n_dims;
   long *dim_size;
   long *dim_f_offset;

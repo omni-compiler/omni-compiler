@@ -1,4 +1,9 @@
 module xmp_api
+  ! type xmp_desc
+  !    sequence
+  !    integer*8 :: xmp_desc
+  ! end type xmp_desc
+
   interface
      subroutine xmp_init_all
      end subroutine xmp_init_all
@@ -12,18 +17,21 @@ module xmp_api
 
      subroutine xmp_new_corray(desc,elmt_size, ndims, dim_lb, dim_ub, &
           img_ndims, img_dim_size)
+!       type(xmp_desc), intent(out):: desc
        integer(8), intent(out):: desc
        integer(4), intent(in):: elmt_size,ndims,img_ndims, img_dim_size(*)
        integer(8), intent(in), dimension(*) :: dim_lb, dim_ub
      end subroutine xmp_new_corray
 
      subroutine xmp_coarray_deallocate(desc, status)
+!       type(xmp_desc), intent(in):: desc
        integer(8), intent(in):: desc
        integer(4), intent(out):: status
      end subroutine xmp_coarray_deallocate
 
      subroutine xmp_coarray_get(img_dims,remote_desc,remote_asec, &
           local_desc, local_asec, status)
+!       type(xmp_desc), intent(in) :: remote_desc, remote_asec, local_desc, local_asec
        integer(8), intent(in) :: remote_desc, remote_asec, local_desc, local_asec
        integer(4), intent(in) :: img_dims(*)
        integer(4), intent(out):: status
@@ -31,6 +39,7 @@ module xmp_api
 
      subroutine xmp_coarray_get_local(img_dims,remote_desc,remote_asec, &
           local_desc, local_asec, status)
+!       type(xmp_desc), intent(in) :: remote_desc, remote_asec, local_desc, local_asec
        integer(8), intent(in) :: remote_desc, remote_asec, local_desc, local_asec
        integer(4), intent(in) :: img_dims(*)
        integer(4), intent(out):: status
@@ -38,6 +47,7 @@ module xmp_api
 
      subroutine xmp_coarray_put(img_dims,remote_desc,remote_asec, &
           local_desc, local_asec, status)
+!       type(xmp_desc), intent(in) :: remote_desc, remote_asec, local_desc, local_asec
        integer(8), intent(in) :: remote_desc, remote_asec, local_desc, local_asec
        integer(4), intent(in) :: img_dims(*)
        integer(4), intent(out):: status
@@ -45,21 +55,25 @@ module xmp_api
 
      subroutine xmp_coarray_put_local(img_dims,remote_desc,remote_asec, &
           local_desc, local_asec, status)
+!       type(xmp_desc), intent(in) :: remote_desc, remote_asec, local_desc, local_asec
        integer(8), intent(in) :: remote_desc, remote_asec, local_desc, local_asec
        integer(4), intent(in) :: img_dims(*)
        integer(4), intent(out):: status
      end subroutine xmp_coarray_put_local
 
      subroutine xmp_new_array_section(desc, ndims)
+!       type(xmp_desc), intent(out):: desc
        integer(8), intent(out):: desc
        integer(4), intent(in):: ndims
      end subroutine xmp_new_array_section
 
      subroutine xmp_free_array_section(desc)
+!       type(xmp_desc), intent(in):: desc
        integer(8), intent(in):: desc
      end subroutine xmp_free_array_section
 
      subroutine xmp_array_section_set_info(desc,idx,start,end, status)
+!       type(xmp_desc), intent(in):: desc
        integer(8), intent(in):: desc
        integer(4), intent(in):: idx
        integer(8), intent(in):: start, end
@@ -67,11 +81,25 @@ module xmp_api
      end subroutine xmp_array_section_set_info
 
      subroutine xmp_array_section_set_triplet(desc,idx,start,end,stride,status)
+!       type(xmp_desc), intent(in):: desc
        integer(8), intent(in):: desc
        integer(4), intent(in):: idx,stride
        integer(8), intent(in):: start, end
        integer(4), intent(out):: status
      end subroutine xmp_array_section_set_triplet
+
+     subroutine xmp_new_local_array(desc, elem_size, n_dims, dim_lb, dim_ub, addr)
+!       type(xmp_desc), intent(in):: desc
+       integer(8), intent(out):: desc
+       integer(4), intent(in):: elem_size, n_dims
+       integer(8), intent(in):: dim_lb(:), dim_ub(:)
+       integer(8), intent(in):: addr
+     end subroutine xmp_new_local_array
+       
+     subroutine xmp_free_local_array(desc)
+!       type(xmp_desc), intent(in):: desc
+       integer(8), intent(in):: desc
+     end subroutine xmp_free_local_array
 
      subroutine xmp_sync_all(status)
        integer(4) status

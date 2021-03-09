@@ -54,6 +54,7 @@ xmp_local_array_t *xmp_new_local_array(size_t elmt_size, int n_dims, long dim_si
   ap = (xmp_local_array_t *)_XMP_alloc(sizeof(struct _xmp_local_array_t));
   ap->dim_size = (long *)_XMP_alloc(sizeof(long)*n_dims);
   ap->n_dims = n_dims;
+  ap->element_size = elmt_size;
   for(i = 0; i < n_dims; i++){
     ap->dim_size[i] = dim_size[i];
   }
@@ -138,8 +139,8 @@ void xmp_free_array_section_(xmp_array_section_t **ap)
   xmp_free_array_section(*ap);
 }
 
-void xmp_new_local_array_(xmp_desc_t *desc, size_t *_elmt_size,
-			  int *_n_dims, long *dim_lb, long *dim_ub, void *loc)
+void xmp_new_local_array_(xmp_desc_t *desc, int *_elmt_size,
+			  int *_n_dims, long *dim_lb, long *dim_ub, void **loc)
 {
   xmp_local_array_t *ap;
   int i, n_dims;
@@ -149,18 +150,19 @@ void xmp_new_local_array_(xmp_desc_t *desc, size_t *_elmt_size,
   ap->dim_size = (long *)_XMP_alloc(sizeof(long)*n_dims);
   ap->dim_f_offset = (long *)_XMP_alloc(sizeof(long)*n_dims);
   ap->n_dims = n_dims;
+  ap->element_size = *_elmt_size;
 
   for(i = 0; i < n_dims; i++){   /* reverse order */
     ap->dim_f_offset[i] = dim_lb[n_dims-1-i];
     ap->dim_size[i] = dim_ub[n_dims-1-i] - dim_lb[n_dims-1-1] + 1;
   }
-  ap->addr = loc;
+  ap->addr = *loc;
   *desc = (xmp_desc_t *)ap;
 }
 
-void xmp_free_local_array_(xmp_local_array_t **app)
+void xmp_free_local_array_(xmp_desc_t *desc)
 {
-  xmp_local_array_t *ap = *app;
+  xmp_local_array_t *ap = (xmp_local_array_t *)(*desc);
   _XMP_free(ap->dim_size);
   _XMP_free(ap->dim_f_offset);
   _XMP_free(ap);
