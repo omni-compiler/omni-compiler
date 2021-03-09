@@ -64,11 +64,12 @@ program coarray_local_put_test
   call xmp_sync_all(status)
 
   if(my_image == 2) then
-    if((b(3) == 3).and.(b(5) == 5).and.(b(7) == 7)) then
+    if((a(3) == 3).and.(a(5) == 5).and.(a(7) == 7)) then
       print *," PASS "
     endif
   endif
 
+  allocate(b(SIZE))
   call xmp_free_array_section(a_sec)
   call xmp_free_array_section(b_local_sec)
 
