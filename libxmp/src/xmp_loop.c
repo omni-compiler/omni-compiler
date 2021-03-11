@@ -232,6 +232,8 @@ void _XMP_sched_loop_template_BLOCK(int ser_init, int ser_cond, int ser_step,
     *par_step = 1;
   }
 
+  /* /\* printf("ser=(%d,%d,%d), par=(%d,%d,%d)\n", *\/ */
+  /* /\* 	 ser_init,ser_cond,ser_step, *par_init,*par_cond,*par_step); *\/ */
   /* // */
   /* // for EXPAND/MARGIN */
   /* // */

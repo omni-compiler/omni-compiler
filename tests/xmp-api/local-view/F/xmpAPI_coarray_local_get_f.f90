@@ -33,10 +33,10 @@ program coarray_local_put_test
   call xmp_new_array_section(b_local_sec,1)
 
   do i=1,SIZE
-     a(i) = 0
+     a(i) = i
   enddo
   do i=1,SIZE
-     b(i) = i
+     b(i) = 0
   enddo
 
   my_image = xmp_this_image()
@@ -50,16 +50,16 @@ program coarray_local_put_test
          1,int(1,kind=8),int(8,kind=8),1,status)
 
     img_dims(1) = 2
-    ! local array b of image 1 -> coarray a of image 2
+    !  coarray a of image 2 -> local array b of image 1
     ! print *,"xmp_coarray_put_local"
-    call xmp_coarray_put_local(img_dims,a_desc,a_sec, &
-      b_local_desc,b_local_sec,status) ! local put
+    call xmp_coarray_get_local(img_dims,a_desc,a_sec, &
+         b_local_desc,b_local_sec,status) ! local put
   endif
 
   call xmp_sync_all(status)
 
-  if(my_image == 2) then
-    if((a(3) == 3).and.(a(5) == 5).and.(a(7) == 7)) then
+  if(my_image == 1) then
+    if((b(3) == 3).and.(b(5) == 5).and.(b(7) == 7)) then
       print *," PASS "
    else
       print *," ERROR "

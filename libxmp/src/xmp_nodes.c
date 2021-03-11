@@ -346,8 +346,11 @@ _XMP_nodes_t *_XMP_init_nodes_struct_GLOBAL(int dim, int *dim_size, int is_stati
   MPI_Comm *comm = _XMP_alloc(sizeof(MPI_Comm));
   MPI_Comm_dup(MPI_COMM_WORLD, comm);
 
+  // printf("create_new_nodes dim=%d (%d,%d) ...\n",dim, dim_size[0],dim_size[1]);
+
   _XMP_nodes_t *n = _XMP_create_new_nodes(_XMP_N_INT_TRUE, dim, _XMP_world_size, (_XMP_comm_t *)comm);
 
+  // printf("create_new_nodes done ..\n");
   // calc inherit info
   n->inherit_nodes = NULL;
   n->inherit_info  = NULL;
@@ -358,7 +361,7 @@ _XMP_nodes_t *_XMP_init_nodes_struct_GLOBAL(int dim, int *dim_size, int is_stati
     is_static = _XMP_N_INT_TRUE;
     for(int i=0;i<dim;i++){
       if(dim_size[i] == -1){
-	char name[20];
+	char name[40];
 	sprintf(name, "XMP_NODE_SIZE%d", i);
 	char *size = getenv(name);
 

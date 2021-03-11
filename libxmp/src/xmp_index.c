@@ -1,11 +1,11 @@
 #include "xmp_internal.h"
 
 /* index conversion from Local to Global */
-void _XMP_L2G(int local_idx, long long int *global_idx,
+int _XMP_L2G(int local_idx, long long int *global_idx,
 	      _XMP_template_t *template, int template_index)
 {
   if(! template->is_owner){
-    return;
+    return FALSE;
   }
 
   _XMP_template_chunk_t *chunk = &(template->chunk[template_index]);
@@ -37,11 +37,12 @@ void _XMP_L2G(int local_idx, long long int *global_idx,
   default:
     _XMP_fatal("_XMP_: unknown chunk dist_manner");
   }
+  return TRUE;
 }
 
 
 /* index conversion from Global to local */
-void _XMP_G2L(long long int global_idx, int *local_idx,
+int _XMP_G2L(long long int global_idx, int *local_idx,
 	      _XMP_template_t *template, int template_index)
 {
   _XMP_template_chunk_t *chunk = &(template->chunk[template_index]);
@@ -74,4 +75,5 @@ void _XMP_G2L(long long int global_idx, int *local_idx,
   default:
     _XMP_fatal("_XMP_: unknown chunk dist_manner");
   }
+  return TRUE;
 }

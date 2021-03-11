@@ -11,48 +11,49 @@
 
 #define XMP_SUCCESS 0
 
+#define XMP_ERROR	1
 #define XMP_ERR_ARG         12      /* Invalid argument */
 #define XMP_ERR_DIMS        11      /* Invalid dimension argument */
 
 typedef enum xmp_datatype {
-  XMP_TYPE_BOOL=       	_XMP_N_TYPE_BOOL,	
-  XMP_TYPE_CHAR=	_XMP_N_TYPE_CHAR,
-  XMP_TYPE_UNSIGNED_CHAR=  _XMP_N_TYPE_UNSIGNED_CHAR,
-  XMP_TYPE_SHORT= 		_XMP_N_TYPE_SHORT,
-  XMP_TYPE_UNSIGNED_SHORT= _XMP_N_TYPE_UNSIGNED_SHORT,
-  XMP_TYPE_INT= 		_XMP_N_TYPE_INT,
-  XMP_TYPE_UNSIGNED_INT= 	_XMP_N_TYPE_UNSIGNED_INT,
-  XMP_TYPE_LONG= 		_XMP_N_TYPE_LONG,
-  XMP_TYPE_UNSIGNED_LONG= 	_XMP_N_TYPE_UNSIGNED_LONG,
-  XMP_TYPE_LONGLONG= 	_XMP_N_TYPE_LONGLONG,
-  XMP_TYPE_UNSIGNED_LONGLONG= 	_XMP_N_TYPE_UNSIGNED_LONGLONG,
-  XMP_TYPE_FLOAT= 		_XMP_N_TYPE_FLOAT,
-  XMP_TYPE_DOUBLE= 	_XMP_N_TYPE_DOUBLE,
-  XMP_TYPE_LONG_DOUBLE= 	_XMP_N_TYPE_LONG_DOUBLE,
+  XMP_BOOL=       	_XMP_N_TYPE_BOOL,	
+  XMP_CHAR=	_XMP_N_TYPE_CHAR,
+  XMP_UNSIGNED_CHAR=  _XMP_N_TYPE_UNSIGNED_CHAR,
+  XMP_SHORT= 		_XMP_N_TYPE_SHORT,
+  XMP_UNSIGNED_SHORT= _XMP_N_TYPE_UNSIGNED_SHORT,
+  XMP_INT= 		_XMP_N_TYPE_INT,
+  XMP_UNSIGNED_INT= 	_XMP_N_TYPE_UNSIGNED_INT,
+  XMP_LONG= 		_XMP_N_TYPE_LONG,
+  XMP_UNSIGNED_LONG= 	_XMP_N_TYPE_UNSIGNED_LONG,
+  XMP_LONGLONG= 	_XMP_N_TYPE_LONGLONG,
+  XMP_UNSIGNED_LONGLONG= 	_XMP_N_TYPE_UNSIGNED_LONGLONG,
+  XMP_FLOAT= 		_XMP_N_TYPE_FLOAT,
+  XMP_DOUBLE= 	_XMP_N_TYPE_DOUBLE,
+  XMP_LONG_DOUBLE= 	_XMP_N_TYPE_LONG_DOUBLE,
   XMP_TYPE_NONE=0
 } xmp_datatype_t;
 
 
 typedef enum xmp_reduction_kind {
-  XMP_REDUCE_SUM= _XMP_N_REDUCE_SUM,
-  XMP_REDUCE_PROD= _XMP_N_REDUCE_PROD,
-  XMP_REDUCE_BAND= _XMP_N_REDUCE_BAND,
-  XMP_REDUCE_LAND= _XMP_N_REDUCE_LAND,
-  XMP_REDUCE_BOR= _XMP_N_REDUCE_BOR,
-  XMP_REDUCE_LOR= _XMP_N_REDUCE_LOR,
-  XMP_REDUCE_BXOR=_XMP_N_REDUCE_BXOR,
-  XMP_REDUCE_LXOR= _XMP_N_REDUCE_LXOR,
-  XMP_REDUCE_MAX= _XMP_N_REDUCE_MAX,
-  XMP_REDUCE_MIN= _XMP_N_REDUCE_MIN,
-  XMP_REDUCE_FIRSTMAX= _XMP_N_REDUCE_FIRSTMAX,
-  XMP_REDUCE_FIRSTMIN= _XMP_N_REDUCE_FIRSTMIN,
-  XMP_REDUCE_LASTMAX= _XMP_N_REDUCE_LASTMAX,
-  XMP_REDUCE_LASTMIN= _XMP_N_REDUCE_LASTMIN,
-  XMP_REDUCE_EQV= _XMP_N_REDUCE_EQV,
-  XMP_REDUCE_NEQV= _XMP_N_REDUCE_NEQV,
-  XMP_REDUCE_MINUS= _XMP_N_REDUCE_MINUS,
-  XMP_REDUCE_MAXLOC= _XMP_N_REDUCE_MAXLOC,
-  XMP_REDUCE_MINLOC= _XMP_N_REDUCE_MINLOC,
+  XMP_SUM= _XMP_N_REDUCE_SUM,
+  XMP_PROD= _XMP_N_REDUCE_PROD,
+  XMP_BAND= _XMP_N_REDUCE_BAND,
+  XMP_LAND= _XMP_N_REDUCE_LAND,
+  XMP_BOR= _XMP_N_REDUCE_BOR,
+  XMP_LOR= _XMP_N_REDUCE_LOR,
+  XMP_BXOR=_XMP_N_REDUCE_BXOR,
+  XMP_LXOR= _XMP_N_REDUCE_LXOR,
+  XMP_MAX= _XMP_N_REDUCE_MAX,
+  XMP_MIN= _XMP_N_REDUCE_MIN,
+  XMP_FIRSTMAX= _XMP_N_REDUCE_FIRSTMAX,
+  XMP_FIRSTMIN= _XMP_N_REDUCE_FIRSTMIN,
+  XMP_LASTMAX= _XMP_N_REDUCE_LASTMAX,
+  XMP_LASTMIN= _XMP_N_REDUCE_LASTMIN,
+  XMP_EQV= _XMP_N_REDUCE_EQV,
+  XMP_NEQV= _XMP_N_REDUCE_NEQV,
+  XMP_MINUS= _XMP_N_REDUCE_MINUS,
+  XMP_MAXLOC= _XMP_N_REDUCE_MAXLOC,
+  XMP_MINLOC= _XMP_N_REDUCE_MINLOC,
   XMP_REDUCE_NONE=0
 } xmp_reduction_kind_t;
 
@@ -133,16 +134,14 @@ xmp_desc_t xmpc_new_array(xmp_desc_t t, xmp_datatype_t type, int n_dims, int dim
 int xmp_align_array(xmp_desc_t a, int array_dim_idx, int template_dim_idx, long long offset);
 int xmp_set_shadow(xmp_desc_t a, int dim_idx, int shdw_size_lo, int shdw_size_hi);
 int xmp_set_full_shadow(xmp_desc_t a, int dim_idx);
+int xmp_allocate_array(xmp_desc_t a, void **addr);
+int xmpc_loop_schedule(int ser_init, int ser_cond, int ser_step,
+		       xmp_desc_t t, int t_idx,
+		       int *par_init, int *par_cond, int *par_step);
+int xmp_array_reflect(xmp_desc_t a);
+int xmp_reduction_scalar(xmp_reduction_kind_t kind, xmp_datatype_t type, void *loc);
+int xmp_bcast_scalar(xmp_datatype_t type, void *loc);
 
-
-
-
-
-
-
-
-
-
-
-
+int xmp_template_ltog(xmp_desc_t desc, int dim, int local_idx, long long int *global_idx);
+int xmp_template_gtol(xmp_desc_t desc, int dim, long long int global_idx, int *local_idx);
 

@@ -70,8 +70,8 @@ program coarray_get_2dims_f
                           call xmp_array_section_set_triplet(a_sec,2,start2,end2,stride2,status)
                           call xmp_array_section_set_triplet(b_sec,1,start1,end1,stride1,status)
                           call xmp_array_section_set_triplet(b_sec,2,start2,end2,stride2,status)
-                          img_dims(1) = 2;
-                          call xmp_coarray_get(img_dims,b_desc,b_sec,a_desc,a_sec,status);
+                          img_dims(1) = 2
+                          call xmp_coarray_get(img_dims,b_desc,b_sec,a_desc,a_sec,status)
                           
                           do i= 0, length1-1
                              do j= 0, length2-1

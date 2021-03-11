@@ -72,7 +72,7 @@ program coarray_put_2dims_f
                           call xmp_array_section_set_triplet(b_sec,1,start1,end1,stride1,status)
                           call xmp_array_section_set_triplet(b_sec,2,start2,end2,stride2,status)
                           img_dims(1) = 2;
-                          call xmp_coarray_put(img_dims,a_desc,a_sec,b_desc,b_sec,status);
+                          call xmp_coarray_put(img_dims,a_desc,a_sec,b_desc,b_sec,status)
                        end if
                        
                        call xmp_sync_all(status)
