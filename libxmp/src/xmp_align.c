@@ -37,6 +37,9 @@ void _XMP_init_array_desc_n(_XMP_array_t **array, _XMP_template_t *template, int
 {
   _XMP_array_t *a = _XMP_alloc(sizeof(_XMP_array_t) + sizeof(_XMP_array_info_t) * (dim - 1));
 
+  /* for(int i=0; i < dim; i++) */
+  /*   printf("_XMP_init_array_desc_n dim=%d, dim_size=%d\n",i, dim_size[i]); */
+
   a->desc_kind            = _XMP_DESC_ARRAY;
   
   a->is_allocated         = template->is_owner;
@@ -342,6 +345,9 @@ void _XMP_align_array_BLOCK(_XMP_array_t *array, int array_index, int template_i
   _XMP_ASSERT(template->is_fixed);
   _XMP_ASSERT(template->is_distributed);
 
+  /* printf("align_array_BLOCK: array_idx=%d, temp_idx=%d, subscript=%lld\n", */
+  /* 	 array_index, template_index,align_subscript); */
+
   _XMP_template_info_t *ti     = &(template->info[template_index]);
   _XMP_template_chunk_t *chunk = &(template->chunk[template_index]);
   _XMP_array_info_t *ai        = &(array->info[array_index]);
@@ -349,6 +355,10 @@ void _XMP_align_array_BLOCK(_XMP_array_t *array, int array_index, int template_i
   // check range
   long long align_lower = ai->ser_lower + align_subscript;
   long long align_upper = ai->ser_upper + align_subscript;
+  
+  /* printf("align: lower=%lld < %lld, upper=%lld < %lld \n", */
+  /* 	 align_lower, ti->ser_lower, align_upper, ti->ser_upper); */
+
   if(align_lower < ti->ser_lower || align_upper > ti->ser_upper)
     _XMP_fatal("aligned array is out of template bound");
 
@@ -664,6 +674,8 @@ void _XMP_alloc_array(void **array_addr, _XMP_array_t *array_desc, int is_coarra
 
   *array_addr = _XMP_alloc(total_elmts * (array_desc->type_size));
 
+  // printf("alloc_array: addr=%p, nbytes=%lld\n",*array_addr,total_elmts * (array_desc->type_size));
+
   // set members
   array_desc->array_addr_p = *array_addr;
   array_desc->total_elmts  = total_elmts;
@@ -725,6 +737,8 @@ void _XMP_alloc_array2(void **array_addr, _XMP_array_t *array_desc, int is_coarr
   }
 
   *array_addr = _XMP_alloc(total_elmts * (array_desc->type_size));
+
+  // printf("alloc_array2: addr=%p, nbytes=%lld\n",*array_addr,total_elmts * (array_desc->type_size));
 
   // set members
   array_desc->array_addr_p = *array_addr;

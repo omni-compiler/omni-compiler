@@ -107,7 +107,7 @@ typedef struct _XMP_template_type {
   
   int   dim;
 
-  // enable when is_distributed is true
+  // enable when is_distributed is `true
   _XMP_nodes_t *onto_nodes;
   _XMP_template_chunk_t *chunk;
   // ----------------------------------

@@ -92,7 +92,7 @@ module xmp_api
 !       type(xmp_desc), intent(in):: desc
        integer(8), intent(out):: desc
        integer(4), intent(in):: elem_size, n_dims
-       integer(8), intent(in):: dim_lb(:), dim_ub(:)
+       integer(8), intent(in), dimension(*):: dim_lb, dim_ub
        integer(8), intent(in):: addr
      end subroutine xmp_new_local_array
        

@@ -358,6 +358,8 @@ void _XMP_reduce_CLAUSE(void *data_addr, int count, int datatype, int op) {
   _XMP_setup_reduce_type(&mpi_datatype, &datatype_size, datatype);
   _XMP_setup_reduce_op(&mpi_op, op);
 
+  // printf("reduce: count=%d, datatype=%d, op=%d\n",count,datatype,op);
+
   // reduce
   MPI_Allreduce(MPI_IN_PLACE, data_addr, count, mpi_datatype, mpi_op, *((MPI_Comm *)(_XMP_get_execution_nodes())->comm));
 }

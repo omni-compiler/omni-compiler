@@ -49,9 +49,9 @@ typedef struct _XMP_object_ref_type {
 
 
 /* From xmp_index.c */
-void _XMP_L2G(int local_idx, long long int *global_idx,
+int _XMP_L2G(int local_idx, long long int *global_idx,
 	      _XMP_template_t *template, int template_index);
-void _XMP_G2L(long long int global_idx,int *local_idx,
+int _XMP_G2L(long long int global_idx,int *local_idx,
 	      _XMP_template_t *template, int template_index);
 
 /* From xmpf_misc.c */

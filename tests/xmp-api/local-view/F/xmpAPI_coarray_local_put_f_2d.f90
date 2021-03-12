@@ -1,9 +1,10 @@
 ! coarray - local array 
-program coarray_local_put_test
+! 2 dimension array
+program coarray_local_put_test_2d
   use xmp_api
-  integer, parameter :: SIZE=10, DIMS=1
-  integer(4), pointer :: a ( : ) => null ( )
-  integer(4), allocatable :: b(:)
+  integer, parameter :: SIZE1=50, SIZE2=10, DIMS=2
+  integer(4), pointer :: a (:,:) => null ( )
+  integer(4), allocatable :: b(:,:)
 
   integer i,j
   integer(8) :: a_desc, b_local_desc
@@ -15,28 +16,32 @@ program coarray_local_put_test
 
   call xmp_api_init
 
-  allocate(b(SIZE))
+  allocate(b(SIZE1,SIZE2))
 
   a_lb(1) = 1
-  a_ub(1) = SIZE
+  a_lb(2) = 1
+  a_ub(1) = SIZE1
+  a_ub(2) = SIZE2
 
   ! print *,"Setting array a"
   call xmp_new_coarray(a_desc, 4, DIMS, a_lb, a_ub, 1, img_dims)
   call xmp_coarray_bind(a_desc,a)
-  call xmp_new_array_section(a_sec,1)
+  call xmp_new_array_section(a_sec,2)
 
   b_lb(1) = 1
-  b_ub(1) = SIZE
+  b_lb(2) = 1
+  b_ub(1) = SIZE1
+  b_ub(2) = SIZE2
 
   ! print *,"Setting array local b"
   call xmp_new_local_array(b_local_desc,4,DIMS,b_lb,b_ub,loc(b))
-  call xmp_new_array_section(b_local_sec,1)
+  call xmp_new_array_section(b_local_sec,2)
 
-  do i=1,SIZE
-     a(i) = 0
-  enddo
-  do i=1,SIZE
-     b(i) = i
+  do i=1,SIZE2
+    do j=1,SIZE1 
+      a(j,i) = 0
+      b(j,i) = i+j
+    enddo
   enddo
 
   my_image = xmp_this_image()
@@ -45,9 +50,14 @@ program coarray_local_put_test
 
   if(my_image == 1) then
     call xmp_array_section_set_triplet(a_sec, &
-         1,int(1,kind=8),int(8,kind=8),1,status)
+         1,int(1,kind=8),int(SIZE1,kind=8),1,status)
+    call xmp_array_section_set_triplet(a_sec, &
+         2,int(1,kind=8),int(SIZE2,kind=8),1,status)
+
     call xmp_array_section_set_triplet(b_local_sec, &
-         1,int(1,kind=8),int(8,kind=8),1,status)
+         1,int(1,kind=8),int(SIZE1,kind=8),1,status)
+    call xmp_array_section_set_triplet(b_local_sec, &
+         2,int(1,kind=8),int(SIZE2,kind=8),1,status)
 
     img_dims(1) = 2
     ! local array b of image 1 -> coarray a of image 2
@@ -59,13 +69,14 @@ program coarray_local_put_test
   call xmp_sync_all(status)
 
   if(my_image == 2) then
-    if((a(3) == 3).and.(a(5) == 5).and.(a(7) == 7)) then
+    if((a(1,3) == 1+3).and.(a(2,1) == 2+1).and.(a(5,8) == 5+8)) then
       print *," PASS "
    else
       print *," ERROR "
     endif
   endif
 
+  !deallocate(b)
   call xmp_free_array_section(a_sec)
   call xmp_free_array_section(b_local_sec)
 
@@ -73,4 +84,4 @@ program coarray_local_put_test
   call xmp_free_local_array(b_local_desc)
 
   call xmp_api_finalize
-end program coarray_local_put_test
+end program coarray_local_put_test_2d

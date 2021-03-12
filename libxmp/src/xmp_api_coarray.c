@@ -64,7 +64,6 @@ int _xmp_coarray_put_get(int is_put, int img_dims[], xmp_desc_t remote_desc, xmp
       start[i] = local_asp->dim_info[i].start;
       length[i] = local_asp->dim_info[i].length;
       stride[i] = local_asp->dim_info[i].stride;
-
     }
 
     if(local_cp->f_coarray_offset != NULL){
@@ -83,7 +82,8 @@ int _xmp_coarray_put_get(int is_put, int img_dims[], xmp_desc_t remote_desc, xmp
       start[i] = local_asp->dim_info[i].start;
       length[i] = local_asp->dim_info[i].length;
       stride[i] = local_asp->dim_info[i].stride;
-
+      /* printf("elms=%ld, start=%ld, len=%ld, stride=%ld\n", */
+      /* 	     elmts[i],start[i],length[i],stride[i]); */
     }
 
     if(local_ap->dim_f_offset != NULL){
@@ -96,6 +96,10 @@ int _xmp_coarray_put_get(int is_put, int img_dims[], xmp_desc_t remote_desc, xmp
       distance[i] = i_distance;
       i_distance = i_distance*local_ap->dim_size[i];
     }
+
+    /* for(i=0; i < n_dims;i++)  */
+    /*   printf("local_array[%d]=(%ld,%ld,%ld,%ld,%ld)\n",i, */
+    /* 	     start[i],length[i], stride[i],elmts[i],distance[i]);  */
   }
 
   _XMP_coarray_rdma_array_set_n(n_dims,start,length,stride,elmts,distance);

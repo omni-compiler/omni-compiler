@@ -100,19 +100,25 @@ xmp_desc_t xmpc_new_array(xmp_desc_t t, xmp_datatype_t type, int n_dims, int dim
   int dim_size[_XMP_N_MAX_DIM];
   va_list args;
   MPI_Datatype mpi_datatype;
+  int i;
   
   _XMP_setup_reduce_type(&mpi_datatype, &type_size, (int) type);
 
   _XMP_ASSERT(n_dims <= _XMP_N_MAX_DIM);
 
-  dim_size[0] = dim_size1;
+  /* fortran order */
+  dim_size[n_dims-1] = dim_size1;
   va_start(args, dim_size1);
-  for (int i=1;i<n_dims;i++){
+  for (i= n_dims-2;i >= 0;i--){
     int size = va_arg(args, int);
     _XMP_ASSERT(size > 0);
     dim_size[i] = size;
   }
   va_end(args);
+
+  // printf("xmpc_new_array #dim=%d\n",n_dims);
+  /* for(i = 0; i < n_dims;i++) */
+  /*   printf("xmpc_new_array dim=%d, dim_size=%d\n",i,dim_size[i]); */
 
   _XMP_init_array_desc_n(&array, (_XMP_template_t *)t, n_dims, type, type_size, dim_size);
 
@@ -218,9 +224,9 @@ extern void xmpc_loop_sched(int ser_init, int ser_cond, int ser_step,
 			    _XMP_template_t *t_desc, int t_idx,
 			    int expand_type, int lwidth, int uwidth, int unbound_flag);
 
-int xmpc_loop_scedule(int ser_init, int ser_cond, int ser_step,
-		      xmp_desc_t t, int t_idx,
-		      int *par_init, int *par_cond, int *par_step)
+int xmpc_loop_schedule(int ser_init, int ser_cond, int ser_step,
+		       xmp_desc_t t, int t_idx,
+		       int *par_init, int *par_cond, int *par_step)
 {
   xmpc_loop_sched(ser_init, ser_cond, ser_step,
 		  par_init, par_cond, par_step,
@@ -229,15 +235,15 @@ int xmpc_loop_scedule(int ser_init, int ser_cond, int ser_step,
   return XMP_SUCCESS;
 }
 
-int xmp_reflect(xmp_desc_t a)
+int xmp_array_reflect(xmp_desc_t a)
 {
   _XMP_reflect__((_XMP_array_t *)a);
   return XMP_SUCCESS;
 }
 
 #ifdef not
-int xmp_gmove (xmp_array_t *lhs_ap, xmp_range_t *lhs_rp,
-	       xmp_array_t *rhs_ap, xmp_range_t *rhs_rp, xmp_gmove_kind_t kind)
+int xmp_array_gmove (xmp_array_t *lhs_ap, xmp_range_t *lhs_rp,
+		     xmp_array_t *rhs_ap, xmp_range_t *rhs_rp, xmp_gmove_kind_t kind)
 {
   XMP_fatal("xmp_gmove: not implemeted yet");
 }
@@ -270,3 +276,17 @@ int xmp_bcast_from_template(xmp_datatype_t type, void *loc, xmp_template_t *tp, 
   XMP_fatal("xmp_bast_from_template: not implemeted yet");
 }
 #endif
+
+int xmp_template_ltog(xmp_desc_t desc, int dim, int local_idx, long long int *global_idx)
+{
+  if(_XMP_L2G(local_idx,global_idx,(_XMP_template_t *)desc, dim))
+    return XMP_SUCCESS;
+  else return XMP_ERROR;
+}
+
+int xmp_template_gtol(xmp_desc_t desc, int dim, long long int global_idx, int *local_idx)
+{
+  if(_XMP_G2L(global_idx,local_idx,(_XMP_template_t *)desc, dim))
+    return XMP_SUCCESS;
+  else return XMP_ERROR;
+}
