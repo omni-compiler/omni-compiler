@@ -41,6 +41,8 @@ void _XMP_calc_template_size(_XMP_template_t *t)
     int ser_lower = t->info[i].ser_lower;
     int ser_upper = t->info[i].ser_upper;
 
+    // printf("calc_template_size: %d = (%d,%d)\n",i,ser_lower,ser_upper);
+
     if(ser_lower > ser_upper)
       _XMP_fatal("the lower bound of template should be less than or equal to the upper bound");
 

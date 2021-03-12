@@ -223,7 +223,6 @@ int xmp_array_gtol(xmp_desc_t d, int dim, int g_idx, int *l_idx)
 {
   int rank;
   _XMP_align_local_idx((long long int)g_idx, l_idx, d, dim-1, &rank);
-
   return 0;
 }
 

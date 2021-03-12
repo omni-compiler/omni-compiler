@@ -20,6 +20,8 @@ all default: $(EXES)
 run: 
 	$(XRUN) -n 2 ./xmpAPI_coarray_put_2dims_f.x
 	$(XRUN) -n 2 ./xmpAPI_coarray_get_2dims_f.x
+	$(XRUN) -n 2 ./xmpAPI_coarray_local_put_f.x
+	$(XRUN) -n 2 ./xmpAPI_coarray_local_get_f.x
 
 # $(XRUN) -n 1 ./coarray_translation.x
 # $(XRUN) -n 2 ./coarray_scalar.x

@@ -152,9 +152,11 @@ void xmp_new_local_array_(xmp_desc_t *desc, int *_elmt_size,
   ap->n_dims = n_dims;
   ap->element_size = *_elmt_size;
 
+  // for(i = 0; i < n_dims; i++) printf("local_array:dim=%d (lb=%ld,up=%ld)\n",i,dim_lb[i],dim_ub[i]);
   for(i = 0; i < n_dims; i++){   /* reverse order */
     ap->dim_f_offset[i] = dim_lb[n_dims-1-i];
-    ap->dim_size[i] = dim_ub[n_dims-1-i] - dim_lb[n_dims-1-1] + 1;
+    ap->dim_size[i] = dim_ub[n_dims-1-i] - dim_lb[n_dims-1-i] + 1;
+    // printf("dim=%d: f_offset=%d, size=%d\n",i,ap->dim_f_offset[i], ap->dim_size[i]);
   }
   ap->addr = *loc;
   *desc = (xmp_desc_t *)ap;
