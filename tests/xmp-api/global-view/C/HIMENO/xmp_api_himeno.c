@@ -1,3 +1,4 @@
+
 /********************************************************************
 
  This benchmark test program is measuring a cpu performance
@@ -80,7 +81,17 @@ static int imax,jmax,kmax;
 //#pragma xmp align b[*][k][j][i] with t(i, j, k)
 //#pragma xmp align c[*][k][j][i] with t(i, j, k)
 //#pragma xmp shadow p[1][1][0]
+
+int node_dims[2];
+xmp_desc_t n_desc, t_desc;
+xmp_desc_t p_desc, bnd_desc, wrk1_desc, wrk2_desc, a_desc, b_desc, c_desc;
+double *p_p, *bnd_p, *wrk1_p, *wrk2_p, *a_p, *b_p, *c_p;
+
+int i_init, i_cond, i_step,
+    j_init, j_cond, j_step,
+    k_init, k_cond, k_step;
 //--- 2020 Fujitsu end
+
 double reflect_time = 0, reflect_time0, ave_reflect_time, max_reflect_time;
 #define LOOP_TIMES 100
 
@@ -102,11 +113,6 @@ main(int argc,char **argv)
   double cpu,cpu0,cpu1,flop,target;
 
   //--- 2020 Fujitsu
-  int node_dims[2];
-  xmp_desc_t n_desc, t_desc;
-  xmp_desc_t p_desc, bnd_desc, wrk1_desc, wrk2_desc, a_desc, b_desc, c_desc;
-  double *p_p, *bnd_p, *wrk1_p, *wrk2_p, *a_p, *b_p, *c_p;
-
   xmp_api_init(argc, argv);
 
   // for xmp nodes n(NDY, NDX)
@@ -307,11 +313,6 @@ void
 initmt()
 {
   int i,j,k;
-  //--- 2020 Fujitsu
-  int i_init, i_cond, i_step,
-      j_init, j_cond, j_step,
-      k_init, k_cond, k_step;
-  //--- 2020 Fujitsu end
 
   //--- 2020 Fujitsu
   //#pragma xmp loop (k,j,i) on t(k,j,i)
@@ -322,7 +323,7 @@ initmt()
   xmpc_loop_schedule(0, MJMAX, 1, t_desc, 1, &j_init, &j_cond, &j_step);
   xmpc_loop_schedule(0, MKMAX, 1, t_desc, 0, &k_init, &k_cond, &k_step);
   for(i=i_init ; i<i_cond ; i+=i_step)
-    for(j=j_init ; j<j_cond ; j+=j+step)
+    for(j=j_init ; j<j_cond ; j+=j_step)
       for(k=k_init ; k<k_cond ; k+=k_step){
   //--- 2020 Fujitsu end
         a[0][i][j][k]=0.0;
@@ -421,7 +422,7 @@ jacobi(int nn)
     //    for(k=1 ; k<kmax-1 ; ++k)
     for(i=i_init ; i<i_cond ; i+=i_step)
       for(j=j_init ; j<j_cond ; j+=j_step)
-        for(k=k_init ; k<k_cond ; k+=k_step){
+        for(k=k_init ; k<k_cond ; k+=k_step)
     //--- 2020 Fujitsu end
           p[i][j][k] = wrk2[i][j][k];
 

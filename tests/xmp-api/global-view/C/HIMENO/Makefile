@@ -1,9 +1,9 @@
 OMNI_HOME = $(shell xmpcc --show-env | grep OMNI_HOME | sed -e 's/OMNI_HOME=//' -e 's/"//g')
-OMNI_CFLAGS = $(shell xmpcc --show-env | grep OMNI_MPICC_OPT | sed -e 's/OMNI_MPICC_OPT=//' -e 's/"//g')
+OMNI_FLAGS = $(shell xmpcc --show-env | grep OMNI_CPP_MUST_OPT | sed -e 's/OMNI_CPP_MUST_OPT=//' -e 's/"//g')
 OMNI_LIBS = $(shell xmpcc --show-env | grep OMNI_LINKER_OPT | sed -e 's/OMNI_LINKER_OPT=//' -e 's/"//g')
 
 CC = mpicc
-CFLAGS = -O2 $(OMNI_CFLAGS)
+CFLAGS = -O2 $(OMNI_FLAGS)
 
 ifndef NDX
 NDX = 1
