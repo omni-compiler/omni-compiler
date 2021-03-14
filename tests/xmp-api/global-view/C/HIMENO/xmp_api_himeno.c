@@ -152,7 +152,6 @@ main(int argc,char **argv)
   xmp_align_array(wrk2_desc, 2, 0, 0);
   xmp_allocate_array(wrk2_desc,(void **)&wrk2_p);
 
-
   //--- 2020 Fujitsu end
 
 
@@ -174,7 +173,10 @@ main(int argc,char **argv)
    */
   initmt();
 
-#pragma xmp task on t(0,0,0)
+  //--- 2020 Fujitsu
+  //#pragma xmp task on t(0,0,0)
+  if ( xmpc_all_node_num() == 0 )
+  //--- 2020 Fujitsu end
   {
   printf("Sequential version array size\n");
   printf(" mimax = %d mjmax = %d mkmax = %d\n",MX0,MY0,MZ0);
@@ -186,13 +188,19 @@ main(int argc,char **argv)
 
   nn= 3;
   
-#pragma xmp task on t(0,0,0)
+  //--- 2020 Fujitsu
+  //#pragma xmp task on t(0,0,0)
+  if ( xmpc_all_node_num() == 0 )
+  //--- 2020 Fujitsu end
   {
   printf(" Start rehearsal measurement process.\n");
   printf(" Measure the performance in %d times.\n\n",nn);
   }
 
-#pragma xmp barrier
+  //--- 2020 Fujitsu
+  //#pragma xmp barrier
+  xmp_barrier();
+  //--- 2020 Fujitsu end
 #ifdef _XCALABLEMP
   cpu0= xmp_wtime();
 #else
@@ -205,18 +213,27 @@ main(int argc,char **argv)
   cpu1= time();
 #endif
   cpu = cpu1 - cpu0;
-#pragma xmp reduction(max: cpu)
+  //--- 2020 Fujitsu
+  //#pragma xmp reduction(max: cpu)
+  xmp_reduction_scalar(XMP_MAX, XMP_DOUBLE, (void *)&cpu);
+  //--- 2020 Fujitsu end
 
   flop= fflop(mz,my,mx);
 
-#pragma xmp task on t(0,0,0)
+  //--- 2020 Fujitsu
+  //#pragma xmp task on t(0,0,0)
+  if ( xmpc_all_node_num() == 0 )
+  //--- 2020 Fujitsu end
   printf(" MFLOPS: %f time(s): %f %e\n\n",
 	 mflops(nn,cpu,flop),cpu,gosa);
 
   nn= (int)(target/(cpu/3.0));
   nn = LOOP_TIMES;
   reflect_time = 0.0;
-#pragma xmp task on t(0,0,0)
+  //--- 2020 Fujitsu
+  //#pragma xmp task on t(0,0,0)
+  if ( xmpc_all_node_num() == 0 )
+  //--- 2020 Fujitsu end
   {
   printf(" Now, start the actual measurement process.\n");
   printf(" The loop will be excuted in %d times\n",nn);
@@ -228,7 +245,10 @@ main(int argc,char **argv)
    *    Start measuring
    */
 
-#pragma xmp barrier
+  //--- 2020 Fujitsu
+  //#pragma xmp barrier
+  xmp_barrier();
+  //--- 2020 Fujitsu end
 #ifdef _XCALABLEMP
   cpu0= xmp_wtime();
 #else
@@ -241,18 +261,26 @@ main(int argc,char **argv)
   cpu1= time();
 #endif
   cpu = cpu1 - cpu0;
-#pragma xmp reduction(max:cpu)
+  //--- 2020 Fujitsu
+  //#pragma xmp reduction(max:cpu)
+  xmp_reduction_scalar(XMP_MAX, XMP_DOUBLE, (void *)&cpu);
+  //--- 2020 Fujitsu end
   max_reflect_time = reflect_time;
   ave_reflect_time = reflect_time;
-#pragma xmp reduction(max:max_reflect_time)
-#pragma xmp reduction(+:ave_reflect_time)
-#ifdef _XCALABLEMP
+  //--- 2020 Fujitsu
+  //#pragma xmp reduction(max:max_reflect_time)
+  xmp_reduction_scalar(XMP_MAX, XMP_DOUBLE, (void *)&max_reflect_time);
+  //#pragma xmp reduction(+:ave_reflect_time)
+  xmp_reduction_scalar(XMP_SUM, XMP_DOUBLE, (void *)&ave_reflect_time);
+  //#ifdef _XCALABLEMP
   ave_reflect_time /= xmp_num_nodes();
-#endif
+  //#endif
 
-#pragma xmp task on t(0,0,0)
+  //#pragma xmp task on t(0,0,0)
+  if ( xmpc_all_node_num() == 0 )
+  //--- 2020 Fujitsu end
   {
-    printf("cpu : %f sec. reflect(AVE.) %f sec. reflect(MAX) %f sec.\n", cpu, ave_reflect_time, max_reflect_time);
+  printf("cpu : %f sec. reflect(AVE.) %f sec. reflect(MAX) %f sec.\n", cpu, ave_reflect_time, max_reflect_time);
   printf("Loop executed for %d times\n",nn);
   printf("Gosa : %e \n",gosa);
   printf("MFLOPS measured : %f\n",mflops(nn,cpu,flop));
@@ -279,11 +307,24 @@ void
 initmt()
 {
   int i,j,k;
+  //--- 2020 Fujitsu
+  int i_init, i_cond, i_step,
+      j_init, j_cond, j_step,
+      k_init, k_cond, k_step;
+  //--- 2020 Fujitsu end
 
-#pragma xmp loop (k,j,i) on t(k,j,i)
-  for(i=0 ; i<MIMAX ; ++i)
-    for(j=0 ; j<MJMAX ; ++j)
-      for(k=0 ; k<MKMAX ; ++k){
+  //--- 2020 Fujitsu
+  //#pragma xmp loop (k,j,i) on t(k,j,i)
+  //for(i=0 ; i<MIMAX ; ++i)
+  //  for(j=0 ; j<MJMAX ; ++j)
+  //    for(k=0 ; k<MKMAX ; ++k){
+  xmpc_loop_schedule(0, MIMAX, 1, t_desc, 2, &i_init, &i_cond, &i_step);
+  xmpc_loop_schedule(0, MJMAX, 1, t_desc, 1, &j_init, &j_cond, &j_step);
+  xmpc_loop_schedule(0, MKMAX, 1, t_desc, 0, &k_init, &k_cond, &k_step);
+  for(i=i_init ; i<i_cond ; i+=i_step)
+    for(j=j_init ; j<j_cond ; j+=j+step)
+      for(k=k_init ; k<k_cond ; k+=k_step){
+  //--- 2020 Fujitsu end
         a[0][i][j][k]=0.0;
         a[1][i][j][k]=0.0;
         a[2][i][j][k]=0.0;
@@ -300,10 +341,18 @@ initmt()
         bnd[i][j][k]=0.0;
       }
 
-#pragma xmp loop (k,j,i) on t(k,j,i)
-  for(i=0 ; i<imax ; ++i)
-    for(j=0 ; j<jmax ; ++j)
-      for(k=0 ; k<kmax ; ++k){
+  //--- 2020 Fujitsu
+  //#pragma xmp loop (k,j,i) on t(k,j,i)
+  //for(i=0 ; i<imax ; ++i)
+  //  for(j=0 ; j<jmax ; ++j)
+  //    for(k=0 ; k<kmax ; ++k){
+  xmpc_loop_schedule(0, imax, 1, t_desc, 2, &i_init, &i_cond, &i_step);
+  xmpc_loop_schedule(0, jmax, 1, t_desc, 1, &j_init, &j_cond, &j_step);
+  xmpc_loop_schedule(0, kmax, 1, t_desc, 0, &k_init, &k_cond, &k_step);
+  for(i=i_init ; i<i_cond ; i+=i_step)
+    for(j=j_init ; j<j_cond ; j+=j_step)
+      for(k=k_init ; k<k_cond ; k+=k_step){
+  //--- 2020 Fujitsu end
         a[0][i][j][k]=1.0;
         a[1][i][j][k]=1.0;
         a[2][i][j][k]=1.0;
@@ -319,7 +368,10 @@ initmt()
         wrk2[i][j][k]=0.0;
         bnd[i][j][k]=1.0;
       }
-#pragma xmp reflect(p)
+  //--- 2020 Fujitsu
+  //#pragma xmp reflect(p)
+  xmp_array_reflect(p_desc);
+  //--- 2020 Fujitsu end
 }
 
 float
@@ -331,10 +383,18 @@ jacobi(int nn)
   for(n=0 ; n<nn ; ++n){
     gosa = 0.0;
 
-#pragma xmp loop (k,j,i) on t(k,j,i) reduction(+:gosa)
-    for(i=1 ; i<imax-1 ; ++i)
-      for(j=1 ; j<jmax-1 ; ++j)
-        for(k=1 ; k<kmax-1 ; ++k){
+    //--- 2020 Fujitsu
+    //#pragma xmp loop (k,j,i) on t(k,j,i) reduction(+:gosa)
+    //for(i=1 ; i<imax-1 ; ++i)
+    //  for(j=1 ; j<jmax-1 ; ++j)
+    //    for(k=1 ; k<kmax-1 ; ++k){
+    xmpc_loop_schedule(1, imax-1, 1, t_desc, 2, &i_init, &i_cond, &i_step);
+    xmpc_loop_schedule(1, jmax-1, 1, t_desc, 1, &j_init, &j_cond, &j_step);
+    xmpc_loop_schedule(1, kmax-1, 1, t_desc, 0, &k_init, &k_cond, &k_step);
+    for(i=i_init ; i<i_cond ; i+=i_step)
+      for(j=j_init ; j<j_cond ; j+=j_step)
+        for(k=k_init ; k<k_cond ; k+=k_step){
+    //--- 2020 Fujitsu end
           s0 = a[0][i][j][k] * p[i+1][j  ][k  ]
              + a[1][i][j][k] * p[i  ][j+1][k  ]
              + a[2][i][j][k] * p[i  ][j  ][k+1]
@@ -354,21 +414,29 @@ jacobi(int nn)
           wrk2[i][j][k] = p[i][j][k] + omega * ss;
         }
       
-#pragma xmp loop (k,j,i) on t(k,j,i)
-    for(i=1 ; i<imax-1 ; ++i)
-      for(j=1 ; j<jmax-1 ; ++j)
-        for(k=1 ; k<kmax-1 ; ++k)
+    //--- 2020 Fujitsu
+    //#pragma xmp loop (k,j,i) on t(k,j,i)
+    //for(i=1 ; i<imax-1 ; ++i)
+    //  for(j=1 ; j<jmax-1 ; ++j)
+    //    for(k=1 ; k<kmax-1 ; ++k)
+    for(i=i_init ; i<i_cond ; i+=i_step)
+      for(j=j_init ; j<j_cond ; j+=j_step)
+        for(k=k_init ; k<k_cond ; k+=k_step){
+    //--- 2020 Fujitsu end
           p[i][j][k] = wrk2[i][j][k];
 
-#ifdef _XCALABLEMP
+    //--- 2020 Fujitsu
+    //#ifdef _XCALABLEMP
     reflect_time0 = xmp_wtime();
-#endif
-#pragma xmp reflect (p)
-#ifdef _XCALABLEMP
+    //#endif
+    //#pragma xmp reflect (p)
+    //#ifdef _XCALABLEMP
     reflect_time += xmp_wtime() - reflect_time0;
-#endif
+    //#endif
 
-#pragma xmp reduction(+:gosa)
+    //#pragma xmp reduction(+:gosa)
+    xmp_reduction_scalar(XMP_SUM, XMP_FLOAT, (void *)&gosa);
+    //--- 2020 Fujitsu end
   } /* end n loop */
   
 
