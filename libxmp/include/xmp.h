@@ -21,6 +21,9 @@
 #define XMP_DESC_NODES                                  2200
 #define XMP_DESC_TEMPLATE                               2201
 #define XMP_DESC_ARRAY                                  2202
+#define XMP_DESC_COARRAY				2203
+#define XMP_DESC_LOCAL_ARRAY				2204
+#define XMP_DESC_ARRAY_SECTION				2205
 
 #include <stddef.h>
 #include <mpi.h>

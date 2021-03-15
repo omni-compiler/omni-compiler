@@ -305,6 +305,102 @@ void xmp_coarray_get_scalar_(int img_dims[], xmp_desc_t *_remote_desc, xmp_desc_
   *status = _xmp_coarray_put_get_scalar(FALSE,img_dims,*_remote_desc,*_remote_asec,addr);
 }
 
+/* 
+ * memory copy
+ */
+xmp_desc_t xmp_new_coarray_mem(int nbytes, int img_ndims, int img_dim_size[], void **loc) /* C */
+{
+  xmp_desc_t desc;
+  long int dim_size[1];
+  dim_size[0] = nbytes;
+  
+  _XMP_coarray_malloc_info_n(dim_size, 1, 1);
+  _XMP_coarray_malloc_image_info_n(img_dim_size,img_ndims);
+  _XMP_coarray_malloc(&desc,loc);
+  ((_XMP_coarray_t *)desc)->f_coarray_offset = NULL;
+  return desc;
+}
+
+void xmp_new_coarray_mem_(xmp_desc_t *d, int *nbytes, int *img_ndims, int *img_dim_size) /* F */
+{
+  long int dim_size[1];
+  void *loc = NULL;
+
+  dim_size[0] = *nbytes;
+  _XMP_coarray_malloc_info_n(dim_size, 1, 1);
+  _XMP_coarray_malloc_image_info_n(img_dim_size,*img_ndims);
+  _XMP_coarray_malloc(d,&loc);
+  ((_XMP_coarray_t *)*d)->f_coarray_offset = NULL;
+}
+
+int _xmp_coarray_mem_put_get(int is_put, int is_fortran, int img_dims[],
+			     xmp_desc_t remote_desc, int nbytes,void *addr)
+{
+  int i, n_dims, element_size;
+  _XMP_coarray_t *remote_cp = (_XMP_coarray_t *)remote_desc;
+  long start[1], length[1], stride[1];
+  long elmts[1], distance[1];
+  int img_n[_XMP_N_MAX_DIM];
+  void *a_addr;
+
+  if(remote_cp == NULL) return XMP_ERR_ARG;
+  element_size = remote_cp->elmt_size;
+
+  // _XMP_coarray_rdma_coarray_set_n
+  start[0] = 0;
+  length[0] = nbytes;
+  stride[0] = 1;
+
+  _XMP_coarray_rdma_coarray_set_n(1,start,length,stride);
+  
+  // _XMP_coarray_rdma_array_set_n
+  a_addr = addr;
+  distance[0] = 1;
+  elmts[0] = element_size;
+  start[0] = 0;
+  length[0] = nbytes;
+  stride[0] = 1;
+
+  _XMP_coarray_rdma_array_set_n(1,start,length,stride,elmts,distance);
+
+  // _XMP_rdma_image_set_n
+  n_dims = remote_cp->image_dims;
+  for(i = 0; i < n_dims; i++)
+    img_n[i] = img_dims[i];
+
+  if(is_fortran){
+    for(i = 0; i < n_dims; i++) img_n[i] += -1;
+  }
+  _XMP_coarray_rdma_image_set_n(n_dims,img_n);
+  
+  if(is_put) _XMP_coarray_put(remote_desc,a_addr,NULL);
+  else _XMP_coarray_get(remote_desc,a_addr,NULL);
+  return XMP_SUCCESS;
+}
+
+int xmp_coarray_mem_put(int img_dims[], xmp_desc_t remote_desc, int nbytes, void *addr)
+{
+  return _xmp_coarray_mem_put_get(TRUE, FALSE, img_dims, remote_desc, nbytes, addr);
+}
+
+int xmp_coarray_mem_get(int img_dims[], xmp_desc_t remote_desc, int nbytes, void *addr)
+{
+  return _xmp_coarray_mem_put_get(FALSE, FALSE, img_dims, remote_desc, nbytes, addr);
+}
+
+void xmp_coarray_mem_put_addr_(int *img_dims, xmp_desc_t *remote_desc, int *nbytes, void **addr, int *status)
+{
+  *status = _xmp_coarray_mem_put_get(TRUE, TRUE, img_dims, *remote_desc, *nbytes, *addr);
+}
+
+void xmp_coarray_mem_get_addr_(int img_dims[], xmp_desc_t *remote_desc, int *nbytes, void **addr, int *status)
+{
+  *status = _xmp_coarray_mem_put_get(FALSE, TRUE, img_dims, *remote_desc, *nbytes, *addr);
+}
+
+/*
+ * sync functions
+ */
 int xmp_this_image_()
 {
   return xmp_this_image();
@@ -341,9 +437,12 @@ void xmp_sync_images_all_(int *status)
 void xmp_coarray_bind_set_dim_info_(xmp_desc_t *desc,int *lb, int *ub, void **addr)
 {
   _XMP_coarray_t *ap = (_XMP_coarray_t *)*desc;
-  for(int i=0; i < ap->coarray_dims; i++){
-    lb[i] = ap->f_coarray_offset[i];
-    ub[i] = lb[i]+ap->coarray_elmts[i]-1;
+  printf(" bind_set_info %p\n",ap->f_coarray_offset);
+  if(ap->f_coarray_offset != NULL){
+    for(int i=0; i < ap->coarray_dims; i++){
+      lb[i] = ap->f_coarray_offset[i];
+      ub[i] = lb[i]+ap->coarray_elmts[i]-1;
+    }
   }
   *addr = ap->real_addr;
 }
@@ -352,3 +451,4 @@ void xmp_assign_cray_pointer_(void **ptr, void **addr)
 {
   *ptr = *addr;
 }
+

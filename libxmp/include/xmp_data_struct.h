@@ -39,7 +39,7 @@ typedef struct _XMP_nodes_info_type {
 
 typedef struct _XMP_nodes_type {
 
-  int desc_kind;
+  int desc_kind;  // XMP_DESC_NODES
   
   unsigned long long on_ref_id;
 
@@ -97,7 +97,7 @@ typedef struct _XMP_template_chunk_type {
 
 typedef struct _XMP_template_type {
 
-  int desc_kind;
+  int desc_kind;	// XMP_DESC_TEMPLATE
   
   unsigned long long on_ref_id;
 
@@ -265,7 +265,7 @@ typedef struct _XMP_array_info_type {
 
 typedef struct _XMP_array_type {
 
-  int desc_kind;
+  int desc_kind;    // XMP_DESC_ARRAY
   
   _Bool is_allocated;
   _Bool is_align_comm_member;
@@ -326,6 +326,9 @@ typedef struct _XMP_task_desc_type {
 
 // Note: When member is changed, _XMP_coarray_deallocate() may be changed.
 typedef struct xmp_coarray{
+
+  int desc_kind;    // XMP_DESC_COARRAY
+
   char **addr;      // Pointer to each node.
                     // e.g.) xmp_coarray.addr[2] is a pointer of an object on node 2.
 

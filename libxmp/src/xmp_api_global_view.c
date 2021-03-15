@@ -12,6 +12,14 @@ xmp_desc_t xmp_global_nodes(int n_dims, int dim_size[], int is_static)
   return (xmp_desc_t)np;
 }
 
+void xmp_global_nodes_(xmp_desc_t *d, int *n_dims, int *dim_size, int *is_static)
+{
+  _XMP_nodes_t *np;
+  np = _XMP_init_nodes_struct_GLOBAL(*n_dims,dim_size,*is_static);
+  *d = (xmp_desc_t)np;
+}
+
+
 #ifdef not
 /* ask whether */
 int xmp_is_on_nodes(xmp_nodes_t *np, xmp_range_t *rp)
@@ -45,6 +53,23 @@ xmp_desc_t xmpc_new_template(xmp_desc_t n, int n_dims, long long dim1, ...)
   return (xmp_desc_t)t;
 }
 
+void xmp_new_template_(xmp_desc_t *d, xmp_desc_t *n_p, int *n_dims_p,
+		       long long *dim_lb, long long *dim_ub)
+{
+  int i;
+  int n_dims = *n_dims_p;
+  _XMP_template_t *t = _XMP_create_template_desc(n_dims, TRUE);
+
+  for(i = 0;i < n_dims; i++){
+    t->info[i].ser_lower = dim_lb[i];
+    t->info[i].ser_upper = dim_ub[i];
+  }
+
+  _XMP_calc_template_size(t);
+  _XMP_init_template_chunk(t,(_XMP_nodes_t *) *n_p);
+  *d = (xmp_desc_t)t;
+}
+
 /* #pragma xmp distribute t[block][block] onto p */
 /* _XMP_dist_template_BLOCK(_XMP_DESC_t, 0, 0); */
 /*  _XMP_dist_template_BLOCK(_XMP_DESC_t, 1, 1); */
@@ -53,6 +78,16 @@ int xmp_dist_template_BLOCK(xmp_desc_t t, int template_dim_idx, int node_dim_idx
 {
   _XMP_dist_template_BLOCK((_XMP_template_t *)t, template_dim_idx, node_dim_idx);
   return XMP_SUCCESS;
+}
+
+void xmp_dist_template_block_(xmp_desc_t *t, int *template_dim_idx, int *node_dim_idx, int *status)
+{
+  if(*template_dim_idx <= 0 || *node_dim_idx <= 0){
+    *status = XMP_ERROR;
+    return;
+  }
+  _XMP_dist_template_BLOCK((_XMP_template_t *)*t, *template_dim_idx-1, *node_dim_idx-1);
+  *status = XMP_SUCCESS;
 }
 
 extern void _XMP_dist_template_CYCLIC_WIDTH(_XMP_template_t *template, int template_index, int nodes_index,
@@ -64,16 +99,49 @@ int xmp_dist_template_CYCLIC(xmp_desc_t t, int template_index, int nodes_index)
   return XMP_SUCCESS;
 }
 
+void xmp_dist_template_cyclic_(xmp_desc_t *t, int *template_index, int *nodes_index, int *status)
+{
+  if(*template_index <= 0 || *nodes_index <= 0){
+    *status = XMP_ERROR;
+    return;
+  }
+  _XMP_dist_template_CYCLIC_WIDTH((_XMP_template_t *) *t, *template_index-1, *nodes_index-1, 1);
+  *status = XMP_SUCCESS;
+}
+
 int xmp_dist_template_BLOCK_CYCLIC(xmp_desc_t t, int template_index, int nodes_index, unsigned long long width)
 {
   _XMP_dist_template_CYCLIC_WIDTH((_XMP_template_t *) t,template_index, nodes_index, width);
   return XMP_SUCCESS;
 }
 
-void xmp_dist_template_GBLOCK(xmp_desc_t t, int template_index, int nodes_index,
+void xmp_dist_template_block_cyclic_(xmp_desc_t *t, int *template_index, int *nodes_index,
+				     unsigned long long *width, int *status)
+{
+  if(*template_index <= 0 || *nodes_index <= 0){
+    *status = XMP_ERROR;
+    return;
+  }
+  _XMP_dist_template_CYCLIC_WIDTH((_XMP_template_t *) *t,*template_index-1, *nodes_index-1, *width);
+  *status = XMP_SUCCESS;
+}
+
+int xmp_dist_template_GBLOCK(xmp_desc_t t, int template_index, int nodes_index,
 			       int *mapping_array, int *temp0)
 {
   _XMP_dist_template_GBLOCK((_XMP_template_t *) t, template_index, nodes_index, mapping_array, temp0);
+  return XMP_SUCCESS;
+}
+
+void xmp_dist_template_gblock_(xmp_desc_t *t, int *template_index, int *nodes_index,
+			       int *mapping_array, int *temp0, int *status)
+{
+  if(*template_index <= 0 || *nodes_index <= 0){
+    *status = XMP_ERROR;
+    return;
+  }
+  _XMP_dist_template_GBLOCK((_XMP_template_t *) *t, *template_index-1, *nodes_index-1, mapping_array, temp0);
+  *status = XMP_SUCCESS;
 }
 
 #ifdef not
@@ -133,8 +201,12 @@ int xmp_align_array(xmp_desc_t a, int array_dim_idx, int template_dim_idx, long 
 {
   _XMP_array_t *array = (_XMP_array_t *)a;
   _XMP_template_t *template = array->align_template;
-  _XMP_template_chunk_t *tc = &(template->chunk[template_dim_idx]);
+  _XMP_template_chunk_t *tc;
   int tmp; // dummy 
+
+  /* convert */
+  template_dim_idx = template->dim - 1 - template_dim_idx;
+  tc = &(template->chunk[template_dim_idx]);
 
   /* BLOCK/CYCLIC/BLOCK_CLYCLE */
   switch (tc->dist_manner) {
@@ -156,6 +228,7 @@ int xmp_align_array(xmp_desc_t a, int array_dim_idx, int template_dim_idx, long 
   return XMP_SUCCESS;
 }
 
+
 /* REPLIACRTED, NOT_AGLINED */
 
 /*  _XMP_init_shadow(_XMP_DESC_uu, (int)(401), (int)(1), (int)(1), (int)(401), (int)(1), (int)(1)); */
@@ -168,10 +241,21 @@ int xmp_set_shadow(xmp_desc_t a, int dim_idx, int shdw_size_lo, int shdw_size_hi
   return XMP_SUCCESS;
 }
 
+void xmp_set_shadow_(xmp_desc_t *a, int *dim_idx, int *shdw_size_lo, int *shdw_size_hi,
+		     int *status)
+{
+  *status = xmp_set_shadow(*a, *dim_idx-1, *shdw_size_lo, *shdw_size_hi);
+}
+
 int xmp_set_full_shadow(xmp_desc_t a, int dim_idx)
 {
   _XMP_init_shadow_dim((_XMP_array_t *)a, dim_idx, _XMP_N_SHADOW_FULL, 0, 0);
   return XMP_SUCCESS;
+}
+
+void xmp_set_full_shadow_(xmp_desc_t *a, int *dim_idx, int *status)
+{
+  *status = xmp_set_full_shadow(*a,*dim_idx-1);
 }
 
 /*
@@ -235,10 +319,29 @@ int xmpc_loop_schedule(int ser_init, int ser_cond, int ser_step,
   return XMP_SUCCESS;
 }
 
+void xmp_loop_schedule_(int *ser_start, int *ser_end, int *ser_step,
+			xmp_desc_t *t, int *t_idx,
+			int *par_start, int *par_end, int *par_step,
+			int *status)
+{
+  xmpc_loop_sched(*ser_start, *ser_end+1, *ser_step,
+		  par_start, par_end, par_step,
+		  (_XMP_template_t *) *t, *t_idx-1,
+		  _XMP_LOOP_NONE, 0, 0, 0);
+  *par_end -= 1;
+  *status = XMP_SUCCESS;
+}
+
 int xmp_array_reflect(xmp_desc_t a)
 {
   _XMP_reflect__((_XMP_array_t *)a);
   return XMP_SUCCESS;
+}
+
+void xmp_array_reflect_(xmp_desc_t *a, int *status)
+{
+  _XMP_reflect__((_XMP_array_t *)*a);
+  *status = XMP_SUCCESS;
 }
 
 #ifdef not
@@ -255,6 +358,11 @@ int xmp_reduction_scalar(xmp_reduction_kind_t kind, xmp_datatype_t type, void *l
   return XMP_SUCCESS;
 }
 
+void xmp_reduction_scalar_(int *kind, int *type, void **loc,int *status)
+{
+  _XMP_reduce_CLAUSE(*loc, 1, (int)*type, (int)*kind);
+  *status = XMP_SUCCESS;
+}
 
 int xmp_bcast_scalar(xmp_datatype_t type, void *loc)
 {
@@ -284,9 +392,18 @@ int xmp_template_ltog(xmp_desc_t desc, int dim, int local_idx, long long int *gl
   else return XMP_ERROR;
 }
 
-int xmp_template_gtol(xmp_desc_t desc, int dim, long long int global_idx, int *local_idx)
+void xmp_template_ltog_(xmp_desc_t *desc, int *dim, int *local_idx, long long int *global_idx,
+			int *status)
 {
-  if(_XMP_G2L(global_idx,local_idx,(_XMP_template_t *)desc, dim))
-    return XMP_SUCCESS;
-  else return XMP_ERROR;
+  if(_XMP_L2G(*local_idx,global_idx,(_XMP_template_t *)*desc, *dim-1))
+    *status = XMP_SUCCESS;
+  else *status = XMP_ERROR;
+}
+
+void xmp_template_gtol_(xmp_desc_t *desc, int *dim, long long int *global_idx, int *local_idx,
+			int *status)
+{
+  if(_XMP_G2L(*global_idx,local_idx,(_XMP_template_t *)*desc, *dim-1))
+    *status = XMP_SUCCESS;
+  else *status = XMP_ERROR;
 }

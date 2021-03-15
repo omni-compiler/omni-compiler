@@ -65,6 +65,7 @@ struct _xmp_asection_triplet {
 };
 
 typedef struct _xmp_array_section_t {
+  int desc_kind;  // XMP_DESC_ARRAY_SECTION
   int n_dims; /* # of dimensions */
   struct _xmp_asection_triplet dim_info[1];
 } xmp_array_section_t;
@@ -83,6 +84,7 @@ typedef struct _xmp_array_section_t {
 /* } xmp_dimension_t; */
   
 typedef struct _xmp_local_array_t {
+  int desc_kind;  // XMP_DESC_LOCAL_ARRAY
   void *addr;
   int element_size;
   int n_dims;
@@ -127,7 +129,7 @@ xmp_desc_t xmpc_new_template(xmp_desc_t n, int n_dims, long long dim1, ...);
 int xmp_dist_template_BLOCK(xmp_desc_t t, int template_dim_idx, int node_dim_idx);
 int xmp_dist_template_CYCLIC(xmp_desc_t t, int template_index, int nodes_index);
 int xmp_dist_template_BLOCK_CYCLIC(xmp_desc_t t, int template_index, int nodes_index, unsigned long long width);
-void xmp_dist_template_GBLOCK(xmp_desc_t t, int template_index, int nodes_index,
+int xmp_dist_template_GBLOCK(xmp_desc_t t, int template_index, int nodes_index,
 			       int *mapping_array, int *temp0);
 
 xmp_desc_t xmpc_new_array(xmp_desc_t t, xmp_datatype_t type, int n_dims, int dim_size1,/* int dim_size2,*/ ... );
@@ -145,3 +147,6 @@ int xmp_bcast_scalar(xmp_datatype_t type, void *loc);
 int xmp_template_ltog(xmp_desc_t desc, int dim, int local_idx, long long int *global_idx);
 int xmp_template_gtol(xmp_desc_t desc, int dim, long long int global_idx, int *local_idx);
 
+xmp_desc_t xmp_new_coarray_mem(int nbytes, int img_ndims, int img_dim_size[], void **loc);
+int xmp_coarray_mem_put(int img_dims[], xmp_desc_t remote_desc, int nbytes, void *addr);
+int xmp_coarray_mem_get(int img_dims[], xmp_desc_t remote_desc, int nbytes, void *addr);

@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
       xmp_array_section_set_triplet(b_sec,0, 0, 8, 1);
       img_dims[0] = 1;
 
-      //! local array b of image 0 -> coarray a of image 1
+      //!  coarray a of image 1 -> local array b of image 0
       xmp_coarray_get_local(img_dims,a_desc,a_sec,b_local,b_sec);
   }
 
