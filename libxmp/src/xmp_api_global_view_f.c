@@ -21,7 +21,7 @@ void xmp_new_array_(xmp_desc_t *a_desc, xmp_desc_t *t_desc, int *type, int *n_di
 {
   size_t type_size = 0;
 
-  for(int i = 0; i < *n_dims; i++) printf("dim(i=%d)[%lld:%lld]\n",i,dim_lb[i],dim_ub[i]);
+  // for(int i = 0; i < *n_dims; i++) printf("dim(i=%d)[%lld:%lld]\n",i,dim_lb[i],dim_ub[i]);
   xmpf_array_alloc__((_XMP_array_t **)a_desc, n_dims, type, &type_size,(_XMP_template_t **) t_desc);
   xmp_f_init_allocated__((_XMP_array_t **)a_desc);
   {
@@ -30,7 +30,6 @@ void xmp_new_array_(xmp_desc_t *a_desc, xmp_desc_t *t_desc, int *type, int *n_di
       _XMP_array_info_t *ai = &(a->info[i]);
       ai->ser_lower = dim_lb[i];
       ai->ser_upper = dim_ub[i];
-      printf("xmp_new_array dim=%d, [%d:%d]\n",i,ai->ser_lower, ai->ser_upper);
     }
   }
 }
@@ -61,20 +60,20 @@ void xmp_allocate_array_(xmp_desc_t *a_desc, void **addr, int *status)
   *status = XMP_SUCCESS;
 }
 
+extern void xmpf_array_get_local_size_off__(_XMP_array_t **a_desc, int *i_dim,
+					    int *size, int *off, int *blk_off);
+
 void xmp_get_array_local_dim_(xmp_desc_t *a_desc, int *dim_lb, int *dim_ub, int *status)
 {
   _XMP_array_t *a = (_XMP_array_t *)*a_desc;
-  for(int i = 0; i < a->dim; i++){
+  int i, size, off,blkoff;
+  
+  for(i = 0; i < a->dim; i++){
     _XMP_array_info_t *ai = &(a->info[i]);
-    if (ai->align_manner != _XMP_N_ALIGN_DUPLICATION &&
-	ai->align_manner != _XMP_N_ALIGN_NOT_ALIGNED){
-      dim_lb[i] = ai->local_lower;
-      dim_ub[i] = ai->local_upper;
-    }
-    else {
-      dim_lb[i] = ai->ser_lower;
-      dim_ub[i] = ai->ser_upper;
-    }
+    xmpf_array_get_local_size_off__((_XMP_array_t **)a_desc,&i,&size,&off,&blkoff);    
+    dim_lb[i] = -ai->shadow_size_lo;
+    dim_ub[i] = size - 1 - ai->shadow_size_lo;
+    
   }
   *status = XMP_SUCCESS;
 }

@@ -437,7 +437,7 @@ void xmp_sync_images_all_(int *status)
 void xmp_coarray_bind_set_dim_info_(xmp_desc_t *desc,int *lb, int *ub, void **addr)
 {
   _XMP_coarray_t *ap = (_XMP_coarray_t *)*desc;
-  printf(" bind_set_info %p\n",ap->f_coarray_offset);
+
   if(ap->f_coarray_offset != NULL){
     for(int i=0; i < ap->coarray_dims; i++){
       lb[i] = ap->f_coarray_offset[i];

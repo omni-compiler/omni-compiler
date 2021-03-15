@@ -26,7 +26,7 @@ module xmp_api
      end function xmp_all_node_num
 
      function xmp_node_num()
-       integer xmp_all_node_num
+       integer xmp_node_num
      end function xmp_node_num
 
      function xmp_wtime()
