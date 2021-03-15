@@ -21,9 +21,16 @@ run:
 	$(XRUN) -n 2 ./xmpAPI_coarray_put_2dims_f.x
 	$(XRUN) -n 2 ./xmpAPI_coarray_get_2dims_f.x
 	$(XRUN) -n 2 ./xmpAPI_coarray_local_put_f.x
+	$(XRUN) -n 2 ./xmpAPI_coarray_local_put_f_2d.x
+	$(XRUN) -n 2 ./xmpAPI_coarray_local_put_f_3d.x
 	$(XRUN) -n 2 ./xmpAPI_coarray_local_get_f.x
+<<<<<<< HEAD
 	$(XRUN) -n 2 ./xmpAPI_coarray_mem_put_f.x
 	$(XRUN) -n 2 ./xmpAPI_coarray_mem_get_f.x
+=======
+	$(XRUN) -n 2 ./xmpAPI_coarray_local_get_f_2d.x
+	$(XRUN) -n 2 ./xmpAPI_coarray_local_get_f_3d.x
+>>>>>>> 5fda38caee176339cffd4e5e4fc585c8d9a53468
 
 # $(XRUN) -n 1 ./coarray_translation.x
 # $(XRUN) -n 2 ./coarray_scalar.x
@@ -40,8 +47,6 @@ run:
 # $(XRUN) -n 2 ./coarray_get_2dims.x
 # $(XRUN) -n 2 ./coarray_get_3dims.x
 # $(XRUN) -n 2 ./coarray_get_4dims.x
-# $(XRUN) -n 1 ./coarray_local_put.x
-# $(XRUN) -n 1 ./coarray_local_get.x
 # $(XRUN) -n 1 ./coarray_local_overlap.x
 
 RUN:
