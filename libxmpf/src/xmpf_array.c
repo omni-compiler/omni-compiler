@@ -199,13 +199,12 @@ void xmpf_array_init_shadow__(_XMP_array_t **a_desc, int *i_dim,
       
     if (array->is_allocated){
       // bug ???
-      // ai->local_lower += *lshadow;
-      // ai->local_upper += *lshadow;
-      printf("shadow ai[%d:%d] - [%d;%d]\n",
-	     ai->local_lower, ai->local_upper, *lshadow, *ushadow);
+      ai->local_lower += *lshadow;
+      ai->local_upper += *lshadow;
+      // should be like:
+      // ai->local_lower -= *lshadow;
+      // ai->local_upper += *ushadow;
 
-      ai->local_lower -= *lshadow;
-      ai->local_upper += *ushadow;
       // ai->local_stride is not changed
       ai->alloc_size += *lshadow + *ushadow;
       // ai->temp0 shuld not be used in XMP/F.

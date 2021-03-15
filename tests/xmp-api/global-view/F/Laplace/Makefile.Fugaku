@@ -1,0 +1,13 @@
+#
+OMNI_HOME = $(shell xmpf90 --show-env | grep OMNI_HOME | sed -e 's/OMNI_HOME=//' -e 's/"//g')
+FC  = mpifrtpx
+FLAGS = $(shell xmpf90 --show-env | grep OMNI_MPIFC_OPT | sed -e 's/OMNI_MPIFC_OPT=//' -e 's/"//g')
+LIBS = $(shell xmpf90 --show-env | grep OMNI_LINKER_OPT | sed -e 's/OMNI_LINKER_OPT=//' -e 's/"//g') -lxmpf
+
+all: xmp_api_laplace
+
+xmp_api_laplace: xmp_api_laplace.o
+	$(FC) $(LIBS) -o xmp_api_laplace xmp_api_laplace.o $(LIBS)
+
+xmp_api_laplace.o: xmp_api_laplace.f90
+	$(FC) $(FLAGS) -c xmp_api_laplace.f90
