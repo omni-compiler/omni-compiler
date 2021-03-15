@@ -46,14 +46,14 @@ int main(int argc, char **argv)
 
   /* #pragma xmp align u[j][i] with t[j][i] */
   u_desc = xmpc_new_array(t_desc, XMP_DOUBLE, 2, (long long)N1, (long long)N2);
-  xmp_align_array(u_desc, 0, 1, 0);
-  xmp_align_array(u_desc, 1, 0, 0);
+  xmp_align_array(u_desc, 0, 0, 0);
+  xmp_align_array(u_desc, 1, 1, 0);
   xmp_allocate_array(u_desc,(void **)&u_p);
 
   /* #pragma xmp align uu[j][i] with t[j][i] */
   uu_desc = xmpc_new_array(t_desc, XMP_DOUBLE, 2, (long long)N1, (long long)N2);
-  xmp_align_array(uu_desc, 0, 1, 0);
-  xmp_align_array(uu_desc, 1, 0, 0);
+  xmp_align_array(uu_desc, 0, 0, 0);
+  xmp_align_array(uu_desc, 1, 1, 0);
 
   /* #pragma xmp shadow uu[1:1][1:1] */
   xmp_set_shadow(uu_desc,0,1,1);

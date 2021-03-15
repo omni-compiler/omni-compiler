@@ -10,6 +10,7 @@ xmp_array_section_t *xmp_new_array_section(int n_dims)
   /* if(n_dims <=0) ... */
   ap = (xmp_array_section_t *)_XMP_alloc(sizeof(struct _xmp_array_section_t)
 					 +(n_dims-1)*sizeof(struct _xmp_asection_triplet));
+  ap->desc_kind = XMP_DESC_ARRAY_SECTION;
   ap->n_dims = n_dims;
   for(i = 0; i < n_dims; i++){
     ap->dim_info[i].start = 0;
@@ -52,6 +53,7 @@ xmp_local_array_t *xmp_new_local_array(size_t elmt_size, int n_dims, long dim_si
   int i;
   
   ap = (xmp_local_array_t *)_XMP_alloc(sizeof(struct _xmp_local_array_t));
+  ap->desc_kind = XMP_DESC_LOCAL_ARRAY;
   ap->dim_size = (long *)_XMP_alloc(sizeof(long)*n_dims);
   ap->n_dims = n_dims;
   ap->element_size = elmt_size;
@@ -147,6 +149,7 @@ void xmp_new_local_array_(xmp_desc_t *desc, int *_elmt_size,
   
   n_dims = *_n_dims;
   ap = (xmp_local_array_t *)_XMP_alloc(sizeof(struct _xmp_local_array_t));
+  ap->desc_kind = XMP_DESC_LOCAL_ARRAY;
   ap->dim_size = (long *)_XMP_alloc(sizeof(long)*n_dims);
   ap->dim_f_offset = (long *)_XMP_alloc(sizeof(long)*n_dims);
   ap->n_dims = n_dims;

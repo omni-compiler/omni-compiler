@@ -24,6 +24,8 @@ run:
 	$(XRUN) -n 2 ./xmpAPI_coarray_local_put_f_2d.x
 	$(XRUN) -n 2 ./xmpAPI_coarray_local_put_f_3d.x
 	$(XRUN) -n 2 ./xmpAPI_coarray_local_get_f.x
+	$(XRUN) -n 2 ./xmpAPI_coarray_mem_put_f.x
+	$(XRUN) -n 2 ./xmpAPI_coarray_mem_get_f.x
 	$(XRUN) -n 2 ./xmpAPI_coarray_local_get_f_2d.x
 	$(XRUN) -n 2 ./xmpAPI_coarray_local_get_f_3d.x
 

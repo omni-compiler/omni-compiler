@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include "xmp.h"
 #include "xmp_internal.h"
 #include "xmp_constant.h"
 
@@ -336,6 +337,7 @@ void _XMP_coarray_set_info(_XMP_coarray_t* c)
 void _XMP_coarray_malloc(void **coarray_desc, void *addr)
 {
   _XMP_coarray_t* c = _XMP_alloc(sizeof(_XMP_coarray_t));
+  c->desc_kind = XMP_DESC_COARRAY;
   _XMP_coarray_set_info(c);
   *coarray_desc = c;
 
@@ -362,6 +364,7 @@ void _XMP_coarray_malloc(void **coarray_desc, void *addr)
 void _XMP_coarray_regmem(void **coarray_desc, void *addr)
 {
   _XMP_coarray_t* c = _XMP_alloc(sizeof(_XMP_coarray_t));
+  c->desc_kind = XMP_DESC_COARRAY;
   _XMP_coarray_set_info(c);
   *coarray_desc = c;
 

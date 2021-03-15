@@ -27,7 +27,7 @@ OBJECTS   = xmp_lib.o xmp_util.o xmp_world.o xmp_nodes_stack.o xmp_nodes.o xmp_t
 	    xmp_loop.o xmp_gmove.o xmp_math_function.o xmp_runtime.o xmp_tlog_runtime.o xmp_io.o \
 	    xmp_reflect.o xmp_pack_vector.o xmp_intrinsic.o xmp_section_desc.o xmp_sort.o xmp_async.o \
 	    xmpc_gmove.o xmp_reduce_shadow.o xmp_index.o xmp_runtime_init.o \
-	    xmp_api_global_view.o xmp_api_util.o xmp_api_coarray.o xmp_api_fmod.o
+	xmp_api_global_view.o xmp_api_global_view_f.o xmp_api_util.o xmp_api_coarray.o xmp_api_fmod.o
 
 FALSE            = 1
 TRUE             = 0
