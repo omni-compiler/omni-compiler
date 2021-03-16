@@ -28,6 +28,7 @@ run:
 	$(XRUN) -n 2 ./xmpAPI_coarray_mem_get_f.x
 	$(XRUN) -n 2 ./xmpAPI_coarray_local_get_f_2d.x
 	$(XRUN) -n 2 ./xmpAPI_coarray_local_get_f_3d.x
+	$(XRUN) -n 2 ./xmpAPI_coarray_get_2dims_to_1dim.x
 
 # $(XRUN) -n 1 ./coarray_translation.x
 # $(XRUN) -n 2 ./coarray_scalar.x
