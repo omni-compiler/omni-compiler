@@ -144,6 +144,24 @@ void xmp_dist_template_gblock_(xmp_desc_t *t, int *template_index, int *nodes_in
   *status = XMP_SUCCESS;
 }
 
+extern void _XMP_dist_template_DUPLICATION(_XMP_template_t *template, int template_index);
+
+int xmp_dist_template_DUPLICATION(xmp_desc_t t_desc, int template_index)
+{
+  _XMP_dist_template_DUPLICATION((_XMP_template_t *)t_desc, template_index);
+  return XMP_SUCCESS;
+}
+
+void xmp_dist_template_duplication_(xmp_desc_t *t_desc, int *template_index, int *status)
+{
+  if(*template_index <= 0){
+    *status = XMP_ERROR;
+    return;
+  }
+  _XMP_dist_template_DUPLICATION((_XMP_template_t *)*t_desc, *template_index-1);
+  *status = XMP_SUCCESS;
+}
+
 #ifdef not
 int xmp_is_on_template(xmp_desc_t t, xmp_dimension_t *dp)
 {
@@ -222,6 +240,9 @@ int xmp_align_array(xmp_desc_t a, int array_dim_idx, int template_dim_idx, long 
   case _XMP_N_DIST_GBLOCK:
     _XMP_align_array_GBLOCK(array, array_dim_idx, template_dim_idx, offset, &tmp);
     break;
+  case _XMP_N_DIST_DUPLICATION:
+    _XMP_align_array_DUPLICATION(array, array_dim_idx, template_dim_idx, offset);
+    break;
   default:
     _XMP_fatal("xmp_align_array: bad distribution");
   }
@@ -237,6 +258,9 @@ extern void _XMP_init_shadow_dim(_XMP_array_t *array, int i, int type, int lo, i
 
 int xmp_set_shadow(xmp_desc_t a, int dim_idx, int shdw_size_lo, int shdw_size_hi)
 {
+  _XMP_array_t *array = (_XMP_array_t *)a;
+  dim_idx = array->dim - 1 - dim_idx;
+  if(dim_idx < 0 || dim_idx >= array->dim) return XMP_ERROR;
   _XMP_init_shadow_dim((_XMP_array_t *)a, dim_idx, _XMP_N_SHADOW_NORMAL, shdw_size_lo, shdw_size_hi);
   return XMP_SUCCESS;
 }

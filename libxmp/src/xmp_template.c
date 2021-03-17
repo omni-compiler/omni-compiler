@@ -333,6 +333,8 @@ void _XMP_dist_template_DUPLICATION(_XMP_template_t *template, int template_inde
   _XMP_template_chunk_t *chunk = &(template->chunk[template_index]);
   _XMP_template_info_t *ti = &(template->info[template_index]);
 
+  // printf("temp_DUP: indx=%d\n",template_index);
+
   chunk->par_lower = ti->ser_lower;
   chunk->par_upper = ti->ser_upper;
   chunk->par_width = 1;

@@ -77,20 +77,39 @@ subroutine get1(snd_desc, rcv_desc, bufsize)
 
   ret = 0
 
+  snd_lb(1) = 1
+  snd_ub(1) = bufsize
+  rcv_lb(1) = 1
+  rcv_ub(1) = bufsize
+
+  print *,"get1 ..."
+  call xmp_reshape_coarray(snd_desc, src_desc, 4, 1, snd_lb, snd_ub, 1, img_dims)
+  call xmp_reshape_coarray(rcv_desc, dst_desc, 4, 1, rcv_lb, rcv_ub, 1, img_dims)
+!  snd_desc = xmp_reshape_coarray(src_desc, sizeof(int), 1,dims,1,img_dims,(void **)&snd_p);
+!  rcv_desc = xmp_reshape_coarray(dst_desc, sizeof(int), 1,dims,1,img_dims,(void **)&rcv_p);
+  print *,"get1 reshape ..."
   call xmp_coarray_bind(snd_desc,bufsnd)
   call xmp_coarray_bind(rcv_desc,bufrcv)
 
-  call xmp_new_array_section(snd_sec,1)
-  call xmp_new_array_section(rcv_sec,1)
+  if(xmp_this_image() == 1) then
+     call xmp_new_array_section(snd_sec,1)
+     call xmp_new_array_section(rcv_sec,1)
 
-!  bufrcv(start1:end1:stride1) = bufsnd(start1:end1:stride1)[2]
-  start1 = 1
-  end1 = bufsize
-  stride1 = 1
-  call xmp_array_section_set_triplet(snd_sec,1,start1,end1,stride1,status)
-  call xmp_array_section_set_triplet(rcv_sec,1,start1,end1,stride1,status)
-  img_dims(1) = 2
-  call xmp_coarray_get(img_dims,snd_desc,snd_sec,rcv_desc,rcv_sec,status)
+     !  bufrcv(start1:end1:stride1) = bufsnd(start1:end1:stride1)[2]
+     start1 = 1
+     end1 = bufsize
+     stride1 = 1
+     call xmp_array_section_set_triplet(snd_sec,1,start1,end1,stride1,status)
+     call xmp_array_section_set_triplet(rcv_sec,1,start1,end1,stride1,status)
+
+     print *,"get1 get ..."
+     img_dims(1) = 2
+     call xmp_coarray_get(img_dims,snd_desc,snd_sec,rcv_desc,rcv_sec,status)
+     print *,"get1 get done ..."
+
+     call xmp_free_array_section(snd_sec)
+     call xmp_free_array_section(rcv_sec)
+  end if
 
   DO I = 1, bufsize
     if(xmp_this_image() == 1) then
@@ -103,8 +122,6 @@ subroutine get1(snd_desc, rcv_desc, bufsize)
   end DO
 10 call xmp_sync_all(status)
 
-  call xmp_free_array_section(snd_sec)
-  call xmp_free_array_section(rcv_sec)
 
   if(xmp_this_image() == 1) then
      if(ret == 0) then

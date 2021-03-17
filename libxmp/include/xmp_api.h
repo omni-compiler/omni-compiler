@@ -131,6 +131,7 @@ int xmp_dist_template_CYCLIC(xmp_desc_t t, int template_index, int nodes_index);
 int xmp_dist_template_BLOCK_CYCLIC(xmp_desc_t t, int template_index, int nodes_index, unsigned long long width);
 int xmp_dist_template_GBLOCK(xmp_desc_t t, int template_index, int nodes_index,
 			       int *mapping_array, int *temp0);
+int xmp_dist_template_DUPLICATION(xmp_desc_t t, int template_dim_idx);
 
 xmp_desc_t xmpc_new_array(xmp_desc_t t, xmp_datatype_t type, int n_dims, int dim_size1,/* int dim_size2,*/ ... );
 int xmp_align_array(xmp_desc_t a, int array_dim_idx, int template_dim_idx, long long offset);
@@ -150,3 +151,6 @@ int xmp_template_gtol(xmp_desc_t desc, int dim, long long int global_idx, int *l
 xmp_desc_t xmp_new_coarray_mem(int nbytes, int img_ndims, int img_dim_size[], void **loc);
 int xmp_coarray_mem_put(int img_dims[], xmp_desc_t remote_desc, int nbytes, void *addr);
 int xmp_coarray_mem_get(int img_dims[], xmp_desc_t remote_desc, int nbytes, void *addr);
+xmp_desc_t xmp_reshape_coarray(xmp_desc_t org_desc, int elmt_size, int ndims, long dim_size[],
+			       int img_ndims, int img_dim_size[], void **loc);
+
