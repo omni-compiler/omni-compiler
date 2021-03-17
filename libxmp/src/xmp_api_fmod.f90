@@ -160,7 +160,7 @@ module xmp_api
        integer(8), intent(in), dimension(*) :: dim_lb, dim_ub
      end subroutine xmp_new_corray
 
-     subroutine xmp_reshape_corray(desc,orig_desc, elmt_size, ndims, dim_lb, dim_ub, &
+     subroutine xmp_reshape_corray(desc, orig_desc, elmt_size, ndims, dim_lb, dim_ub, &
           img_ndims, img_dim_size)
 !       type(xmp_desc), intent(out):: desc
        integer(8), intent(out):: desc
