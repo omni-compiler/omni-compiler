@@ -334,10 +334,11 @@ void _XMP_coarray_set_info(_XMP_coarray_t* c)
 /**
    Create coarray object and allocate coarray.
  */
-void _XMP_coarray_malloc(void **coarray_desc, void *addr)
+void _XMP_coarray_malloc(void **coarray_desc, void **addr)
 {
   _XMP_coarray_t* c = _XMP_alloc(sizeof(_XMP_coarray_t));
   c->desc_kind = XMP_DESC_COARRAY;
+  c->is_reshape = FALSE;
   _XMP_coarray_set_info(c);
   *coarray_desc = c;
 
@@ -357,6 +358,21 @@ void _XMP_coarray_malloc(void **coarray_desc, void *addr)
   _push_coarray_queue(c);
 }
 
+void _XMP_coarray_reshape(void **coarray_desc, _XMP_coarray_t *orig_desc, void **addr)
+{
+  _XMP_coarray_t* c = _XMP_alloc(sizeof(_XMP_coarray_t));
+
+  memcpy((void *)c, (void *)orig_desc,sizeof(_XMP_coarray_t));
+  c->is_reshape = TRUE;
+  _XMP_coarray_set_info(c);
+  *coarray_desc = c;
+
+  long transfer_size = _total_coarray_elmts*_elmt_size;
+  _XMP_check_less_than_SIZE_MAX(transfer_size);
+
+  *addr = c->real_addr;
+  _push_coarray_queue(c);
+}
 
 /**
    Create coarray object but not allocate coarray.
@@ -1641,7 +1657,9 @@ void _XMP_coarray_deallocate(_XMP_coarray_t *c)
 {
   if(c == NULL) return;
 
+  if(c->is_reshape) goto skip;
   free(c->addr);
+  
 #if defined(_XMP_GASNET)
   //
 #elif defined(_XMP_UTOFU)
@@ -1651,6 +1669,8 @@ void _XMP_coarray_deallocate(_XMP_coarray_t *c)
 #else
   free(c->real_addr);
 #endif
+
+ skip:
   free(c->coarray_elmts);
   free(c->distance_of_coarray_elmts);
   free(c->distance_of_image_elmts);
