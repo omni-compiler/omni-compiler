@@ -3,7 +3,7 @@ OMNI_FLAGS = $(shell xmpcc --show-env | grep OMNI_CPP_MUST_OPT | sed -e 's/OMNI_
 OMNI_LIBS = $(shell xmpcc --show-env | grep OMNI_LINKER_OPT | sed -e 's/OMNI_LINKER_OPT=//' -e 's/"//g')
 
 CC = mpicc
-CFLAGS = -O2 $(OMNI_FLAGS)
+CFLAGS = -g $(OMNI_FLAGS)
 
 ifndef NDX
 NDX = 1

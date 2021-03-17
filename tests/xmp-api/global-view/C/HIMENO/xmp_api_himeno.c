@@ -42,8 +42,9 @@
 #include <mpi.h>
 #include "param.h"
 #include <xmp.h>
-#include <xmp_api.h> //--- 2020 Fujitsu ---
-
+//--- 2020 Fujitsu
+#include <xmp_api.h>
+//--- 2020 Fujitsu end
 
 float jacobi(int);
 int initmax(int,int,int);
@@ -90,6 +91,7 @@ double *p_p, *bnd_p, *wrk1_p, *wrk2_p, *a_p, *b_p, *c_p;
 int i_init, i_cond, i_step,
     j_init, j_cond, j_step,
     k_init, k_cond, k_step;
+long long int g_i;
 //--- 2020 Fujitsu end
 
 double reflect_time = 0, reflect_time0, ave_reflect_time, max_reflect_time;
@@ -116,50 +118,43 @@ main(int argc,char **argv)
   xmp_api_init(argc, argv);
 
   // for xmp nodes n(NDY, NDX)
-  node_dims[1] = NDY; node_dims[0] = NDX;
+  node_dims[0] = NDY;
+  node_dims[1] = NDX;
   n_desc = xmp_global_nodes(2, node_dims, TRUE);
 
   // for template t(0:MKMAX-1, 0:MJMAX-1, 0:MIMAX-1)
   // and distribute t(*, block, block) onto n
-  t_desc = xmpc_new_template(p_desc, 3, (long long)MKMAX, (long long)MJMAX, (long long)MIMAX);
-  xmp_dist_template_BLOCK(t_desc, 0, 0);
+  t_desc = xmpc_new_template(n_desc, 3, (long long)MKMAX, (long long)MJMAX, (long long)MIMAX);
   xmp_dist_template_BLOCK(t_desc, 1, 1);
   xmp_dist_template_BLOCK(t_desc, 2, 2);
 
   // for xmp align p[k][j][i] with t(i, j, k)
   // and xmp shadow p[1][1][0]
   p_desc = xmpc_new_array(t_desc, XMP_FLOAT, 3, (long long)MKMAX, (long long)MJMAX, (long long)MIMAX);
-  xmp_align_array(p_desc, 0, 2, 0);
   xmp_align_array(p_desc, 1, 1, 0);
-  xmp_align_array(p_desc, 2, 0, 0);
-  xmp_set_shadow(p_desc, 0, 1, 1);
+  xmp_align_array(p_desc, 2, 2, 0);
   xmp_set_shadow(p_desc, 1, 1, 1);
-  xmp_set_shadow(p_desc, 1, 0, 0);
-  xmp_allocate_array(p_desc,(void **)&p_p);
+  xmp_set_shadow(p_desc, 2, 1, 1);
+  xmp_allocate_array(p_desc, (void **)&p_p);
 
   // xmp align bnd[k][j][i] with t(i, j, k)
   bnd_desc = xmpc_new_array(t_desc, XMP_FLOAT, 3, (long long)MKMAX, (long long)MJMAX, (long long)MIMAX);
-  xmp_align_array(bnd_desc, 0, 2, 0);
   xmp_align_array(bnd_desc, 1, 1, 0);
-  xmp_align_array(bnd_desc, 2, 0, 0);
-  xmp_allocate_array(bnd_desc,(void **)&bnd_p);
+  xmp_align_array(bnd_desc, 2, 2, 0);
+  xmp_allocate_array(bnd_desc, (void **)&bnd_p);
 
   // xmp align wrk1[k][j][i] with t(i, j, k)
   wrk1_desc = xmpc_new_array(t_desc, XMP_FLOAT, 3, (long long)MKMAX, (long long)MJMAX, (long long)MIMAX);
-  xmp_align_array(wrk1_desc, 0, 2, 0);
   xmp_align_array(wrk1_desc, 1, 1, 0);
-  xmp_align_array(wrk1_desc, 2, 0, 0);
-  xmp_allocate_array(wrk1_desc,(void **)&wrk1_p);
+  xmp_align_array(wrk1_desc, 2, 2, 0);
+  xmp_allocate_array(wrk1_desc, (void **)&wrk1_p);
 
   // xmp align wrk2[k][j][i] with t(i, j, k)
   wrk2_desc = xmpc_new_array(t_desc, XMP_FLOAT, 3, (long long)MKMAX, (long long)MJMAX, (long long)MIMAX);
-  xmp_align_array(wrk2_desc, 0, 2, 0);
   xmp_align_array(wrk2_desc, 1, 1, 0);
-  xmp_align_array(wrk2_desc, 2, 0, 0);
-  xmp_allocate_array(wrk2_desc,(void **)&wrk2_p);
-
+  xmp_align_array(wrk2_desc, 2, 2, 0);
+  xmp_allocate_array(wrk2_desc, (void **)&wrk2_p);
   //--- 2020 Fujitsu end
-
 
   target= 10.0;
   omega= 0.8;
@@ -353,6 +348,7 @@ initmt()
   for(i=i_init ; i<i_cond ; i+=i_step)
     for(j=j_init ; j<j_cond ; j+=j_step)
       for(k=k_init ; k<k_cond ; k+=k_step){
+	xmp_template_ltog(t_desc, 2, i, &g_i);
   //--- 2020 Fujitsu end
         a[0][i][j][k]=1.0;
         a[1][i][j][k]=1.0;
@@ -364,7 +360,10 @@ initmt()
         c[0][i][j][k]=1.0;
         c[1][i][j][k]=1.0;
         c[2][i][j][k]=1.0;
-	p[i][j][k]=(float)((i)*(i))/(float)((imax-1)*(imax-1));
+	//--- 2020 Fujitsu
+	//p[i][j][k]=(float)((i)*(i))/(float)((imax-1)*(imax-1));
+	p[i][j][k]=(float)((g_i)*(g_i))/(float)((imax-1)*(imax-1));
+	//--- 2020 Fujitsu
         wrk1[i][j][k]=0.0;
         wrk2[i][j][k]=0.0;
         bnd[i][j][k]=1.0;
@@ -414,6 +413,9 @@ jacobi(int nn)
 
           wrk2[i][j][k] = p[i][j][k] + omega * ss;
         }
+    //--- 2020 Fujitsu
+    xmp_reduction_scalar(XMP_SUM, XMP_FLOAT, (void *)&gosa);
+    //--- 2020 Fujitsu end
       
     //--- 2020 Fujitsu
     //#pragma xmp loop (k,j,i) on t(k,j,i)
