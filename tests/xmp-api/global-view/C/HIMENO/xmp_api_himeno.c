@@ -125,12 +125,13 @@ main(int argc,char **argv)
   // for template t(0:MKMAX-1, 0:MJMAX-1, 0:MIMAX-1)
   // and distribute t(*, block, block) onto n
   t_desc = xmpc_new_template(n_desc, 3, (long long)MKMAX, (long long)MJMAX, (long long)MIMAX);
-  xmp_dist_template_BLOCK(t_desc, 1, 1);
-  xmp_dist_template_BLOCK(t_desc, 2, 2);
+  xmp_dist_template_BLOCK(t_desc, 1, 0);
+  xmp_dist_template_BLOCK(t_desc, 2, 1);
 
   // for xmp align p[k][j][i] with t(i, j, k)
   // and xmp shadow p[1][1][0]
   p_desc = xmpc_new_array(t_desc, XMP_FLOAT, 3, (long long)MKMAX, (long long)MJMAX, (long long)MIMAX);
+  xmp_align_array(p_desc, 0, 0, 0);
   xmp_align_array(p_desc, 1, 1, 0);
   xmp_align_array(p_desc, 2, 2, 0);
   xmp_set_shadow(p_desc, 1, 1, 1);
@@ -139,21 +140,45 @@ main(int argc,char **argv)
 
   // xmp align bnd[k][j][i] with t(i, j, k)
   bnd_desc = xmpc_new_array(t_desc, XMP_FLOAT, 3, (long long)MKMAX, (long long)MJMAX, (long long)MIMAX);
+  xmp_align_array(bnd_desc, 0, 0, 0);
   xmp_align_array(bnd_desc, 1, 1, 0);
   xmp_align_array(bnd_desc, 2, 2, 0);
   xmp_allocate_array(bnd_desc, (void **)&bnd_p);
 
   // xmp align wrk1[k][j][i] with t(i, j, k)
   wrk1_desc = xmpc_new_array(t_desc, XMP_FLOAT, 3, (long long)MKMAX, (long long)MJMAX, (long long)MIMAX);
+  xmp_align_array(wrk1_desc, 0, 0, 0);
   xmp_align_array(wrk1_desc, 1, 1, 0);
   xmp_align_array(wrk1_desc, 2, 2, 0);
   xmp_allocate_array(wrk1_desc, (void **)&wrk1_p);
 
   // xmp align wrk2[k][j][i] with t(i, j, k)
   wrk2_desc = xmpc_new_array(t_desc, XMP_FLOAT, 3, (long long)MKMAX, (long long)MJMAX, (long long)MIMAX);
+  xmp_align_array(wrk2_desc, 0, 0, 0);
   xmp_align_array(wrk2_desc, 1, 1, 0);
   xmp_align_array(wrk2_desc, 2, 2, 0);
   xmp_allocate_array(wrk2_desc, (void **)&wrk2_p);
+
+  //#pragma xmp align a[*][k][j][i] with t(i, j, k)
+  a_desc = xmpc_new_array(t_desc, XMP_FLOAT, 4, (long long)MKMAX, (long long)MJMAX, (long long)MIMAX, (long long)4);
+  xmp_align_array(a_desc, 0, 0, 0);
+  xmp_align_array(a_desc, 1, 1, 0);
+  xmp_align_array(a_desc, 2, 2, 0);
+  xmp_allocate_array(a_desc, (void **)&a_p);
+
+  //#pragma xmp align b[*][k][j][i] with t(i, j, k)
+  b_desc = xmpc_new_array(t_desc, XMP_FLOAT, 4, (long long)MKMAX, (long long)MJMAX, (long long)MIMAX, (long long)3);
+  xmp_align_array(b_desc, 0, 0, 0);
+  xmp_align_array(b_desc, 1, 1, 0);
+  xmp_align_array(b_desc, 2, 2, 0);
+  xmp_allocate_array(b_desc, (void **)&b_p);
+
+  //#pragma xmp align c[*][k][j][i] with t(i, j, k)
+  c_desc = xmpc_new_array(t_desc, XMP_FLOAT, 4, (long long)MKMAX, (long long)MJMAX, (long long)MIMAX, (long long)3);
+  xmp_align_array(c_desc, 0, 0, 0);
+  xmp_align_array(c_desc, 1, 1, 0);
+  xmp_align_array(c_desc, 2, 2, 0);
+  xmp_allocate_array(c_desc, (void **)&c_p);
   //--- 2020 Fujitsu end
 
   target= 10.0;
