@@ -269,7 +269,7 @@ void xmp_new_coarray_(xmp_desc_t *desc, int *_elmt_size,
 					 *_img_ndims,img_dim_size,&loc); // call C interface
   ap->f_coarray_offset = dim_offset;
 
-  /* printf("new coarray=%p, addr=%p, loc=%p\n",ap,ap->real_addr,loc); */
+  // printf("new coarray=%p, addr=%p, loc=%p\n",ap,ap->real_addr,loc);
   *desc = (xmp_desc_t)ap;
 }
 
@@ -291,10 +291,8 @@ void xmp_reshape_coarray_(xmp_desc_t *desc,xmp_desc_t *orig_desc,int *_elmt_size
     dim_size[i] = dim_ub[ndims-1-i] - dim_lb[ndims-1-i] + 1;
   }
 
-  printf("call C reshape ...\n");
   ap = (_XMP_coarray_t *)xmp_reshape_coarray(*orig_desc,*_elmt_size,ndims,dim_size,
 					     *_img_ndims,img_dim_size,&loc); // call C interface
-  printf("call C reshape done ...\n");
   ap->f_coarray_offset = dim_offset;
 
   *desc = (xmp_desc_t)ap;

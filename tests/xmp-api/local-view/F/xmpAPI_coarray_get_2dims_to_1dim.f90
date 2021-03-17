@@ -59,15 +59,16 @@ program coarray_get_2dims_to_1dim
 
 end program coarray_get_2dims_to_1dim
 
-subroutine get1(snd_desc, rcv_desc, bufsize)
+subroutine get1(src_desc, dst_desc, bufsize)
   use xmp_api
-  integer(8) :: snd_desc, rcv_desc
+  integer(8) :: src_desc, dst_desc
   integer(4) bufsize
 
   integer , POINTER :: bufsnd ( : ) => null ( )
   integer , POINTER :: bufrcv ( : ) => null ( )
 
   integer i,ret
+  integer(8) :: snd_desc, rcv_desc
   integer(8) :: snd_sec, rcv_sec
   integer(8) :: start1, end1
   integer(4) ::  length1, stride1
@@ -82,12 +83,11 @@ subroutine get1(snd_desc, rcv_desc, bufsize)
   rcv_lb(1) = 1
   rcv_ub(1) = bufsize
 
-  print *,"get1 ..."
   call xmp_reshape_coarray(snd_desc, src_desc, 4, 1, snd_lb, snd_ub, 1, img_dims)
   call xmp_reshape_coarray(rcv_desc, dst_desc, 4, 1, rcv_lb, rcv_ub, 1, img_dims)
 !  snd_desc = xmp_reshape_coarray(src_desc, sizeof(int), 1,dims,1,img_dims,(void **)&snd_p);
 !  rcv_desc = xmp_reshape_coarray(dst_desc, sizeof(int), 1,dims,1,img_dims,(void **)&rcv_p);
-  print *,"get1 reshape ..."
+
   call xmp_coarray_bind(snd_desc,bufsnd)
   call xmp_coarray_bind(rcv_desc,bufrcv)
 
@@ -102,10 +102,8 @@ subroutine get1(snd_desc, rcv_desc, bufsize)
      call xmp_array_section_set_triplet(snd_sec,1,start1,end1,stride1,status)
      call xmp_array_section_set_triplet(rcv_sec,1,start1,end1,stride1,status)
 
-     print *,"get1 get ..."
      img_dims(1) = 2
      call xmp_coarray_get(img_dims,snd_desc,snd_sec,rcv_desc,rcv_sec,status)
-     print *,"get1 get done ..."
 
      call xmp_free_array_section(snd_sec)
      call xmp_free_array_section(rcv_sec)

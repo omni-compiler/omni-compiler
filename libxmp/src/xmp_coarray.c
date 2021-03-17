@@ -362,9 +362,9 @@ void _XMP_coarray_reshape(void **coarray_desc, _XMP_coarray_t *orig_desc, void *
 {
   _XMP_coarray_t* c = _XMP_alloc(sizeof(_XMP_coarray_t));
 
-  memcpy((void *)c, (void *)orig_desc,sizeof(_XMP_coarray_t));
+   memcpy((void *)c, (void *)orig_desc,sizeof(_XMP_coarray_t));
   c->is_reshape = TRUE;
-  _XMP_coarray_set_info(c);
+ _XMP_coarray_set_info(c);
   *coarray_desc = c;
 
   long transfer_size = _total_coarray_elmts*_elmt_size;
