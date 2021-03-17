@@ -79,8 +79,8 @@
       call xmp_new_template(t_desc, n_desc, 3, dim_lb, dim_ub)
 
       !--- !$xmp distribute t(*,block,block) onto n
-      call xmp_dist_template_block(t_desc, 2, 2, status)
-      call xmp_dist_template_block(t_desc, 3, 3, status)
+      call xmp_dist_template_block(t_desc, 2, 1, status)
+      call xmp_dist_template_block(t_desc, 3, 2, status)
 
       !--- !$xmp align (*,j,k) with t(*,j,k) :: p, bnd, wrk1, wrk2
       call xmp_new_array(p_desc, t_desc, XMP_FLOAT, 3, dim_lb, dim_ub)

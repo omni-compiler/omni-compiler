@@ -9,7 +9,7 @@ PROG = xmp_api_himeno$(NODES)
 ifeq ($(arch),Fugaku)
 FFLAGS += -Kfast -Qt -omp
 else
-FFLAGS += -fopenmp -O2
+FFLAGS += -fopenmp -g -O2
 endif
 
 LDFLAGS = ${FFLAGS}
