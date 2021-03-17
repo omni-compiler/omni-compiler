@@ -310,6 +310,8 @@ void _XMP_align_array_DUPLICATION(_XMP_array_t *array, int array_index, int temp
   int upper = ai->ser_upper;
   int size = ai->ser_size;
 
+  // printf("_XMP_align_array_DUPLICATION: %d %d %lld\n",array_index,template_index,align_subscript);
+
   // check range
   long long align_lower = lower + align_subscript;
   long long align_upper = upper + align_subscript;
@@ -345,8 +347,8 @@ void _XMP_align_array_BLOCK(_XMP_array_t *array, int array_index, int template_i
   _XMP_ASSERT(template->is_fixed);
   _XMP_ASSERT(template->is_distributed);
 
-  /* printf("align_array_BLOCK: array_idx=%d, temp_idx=%d, subscript=%lld\n", */
-  /* 	 array_index, template_index,align_subscript); */
+  //  printf("align_array_BLOCK: array_idx=%d, temp_idx=%d, subscript=%lld\n",
+  // array_index, template_index,align_subscript);
 
   _XMP_template_info_t *ti     = &(template->info[template_index]);
   _XMP_template_chunk_t *chunk = &(template->chunk[template_index]);

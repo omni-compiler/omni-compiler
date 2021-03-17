@@ -329,6 +329,8 @@ typedef struct xmp_coarray{
 
   int desc_kind;    // XMP_DESC_COARRAY
 
+  int is_reshape;  // reshape'd coarray
+
   char **addr;      // Pointer to each node.
                     // e.g.) xmp_coarray.addr[2] is a pointer of an object on node 2.
 

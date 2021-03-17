@@ -17,7 +17,22 @@ xmp_desc_t xmp_new_coarray(int elmt_size, int ndims, long dim_size[],
   
   _XMP_coarray_malloc_info_n(dim_size, ndims, elmt_size);
   _XMP_coarray_malloc_image_info_n(img_dim_size,img_ndims);
+  *loc = NULL; /* clear */
   _XMP_coarray_malloc(&desc,loc);
+  ((_XMP_coarray_t *)desc)->f_coarray_offset = NULL;
+  return desc;
+}
+
+extern void _XMP_coarray_reshape(void **coarray_desc, _XMP_coarray_t *orig_desc, void **loc);
+
+xmp_desc_t xmp_reshape_coarray(xmp_desc_t orig_desc, int elmt_size, int ndims, long dim_size[],
+			       int img_ndims, int img_dim_size[], void **loc)
+{
+  xmp_desc_t desc;
+
+  _XMP_coarray_malloc_info_n(dim_size, ndims, elmt_size);
+  _XMP_coarray_malloc_image_info_n(img_dim_size,img_ndims);
+  _XMP_coarray_reshape(&desc, (_XMP_coarray_t *)orig_desc, loc);
   ((_XMP_coarray_t *)desc)->f_coarray_offset = NULL;
   return desc;
 }
@@ -255,6 +270,33 @@ void xmp_new_coarray_(xmp_desc_t *desc, int *_elmt_size,
   ap->f_coarray_offset = dim_offset;
 
   /* printf("new coarray=%p, addr=%p, loc=%p\n",ap,ap->real_addr,loc); */
+  *desc = (xmp_desc_t)ap;
+}
+
+void xmp_reshape_coarray_(xmp_desc_t *desc,xmp_desc_t *orig_desc,int *_elmt_size,
+			  int *_ndims, long dim_lb[], long dim_ub[],
+			  int *_img_ndims, int img_dim_size[])
+{
+  int i;
+  int ndims = *_ndims;
+  long dim_size[_XMP_N_MAX_DIM];
+  long *dim_offset;
+  _XMP_coarray_t *ap;
+  void *loc = NULL;
+
+  dim_offset = (long *)_XMP_alloc(sizeof(long)*ndims);
+
+  for(i = 0; i < ndims; i++){
+    dim_offset[i] = dim_lb[ndims-1-i];
+    dim_size[i] = dim_ub[ndims-1-i] - dim_lb[ndims-1-i] + 1;
+  }
+
+  printf("call C reshape ...\n");
+  ap = (_XMP_coarray_t *)xmp_reshape_coarray(*orig_desc,*_elmt_size,ndims,dim_size,
+					     *_img_ndims,img_dim_size,&loc); // call C interface
+  printf("call C reshape done ...\n");
+  ap->f_coarray_offset = dim_offset;
+
   *desc = (xmp_desc_t)ap;
 }
 

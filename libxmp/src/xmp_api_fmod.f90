@@ -71,6 +71,12 @@ module xmp_api
        integer(4), intent(out) :: status
      end subroutine xmp_dist_template_block_cyclic
 
+     subroutine xmp_dist_template_duplication(desc,template_dim_idx,status)
+       integer(8), intent(in) :: desc
+       integer(4), intent(in) :: template_dim_idx
+       integer(4), intent(out) :: status
+     end subroutine xmp_dist_template_duplication
+
      subroutine xmp_new_array(desc,t_desc, type, n_dims, dim_lb, dim_ub)
        integer(8), intent(out) :: desc
        integer(8), intent(in) :: t_desc
@@ -153,6 +159,15 @@ module xmp_api
        integer(4), intent(in):: elmt_size,ndims,img_ndims, img_dim_size(*)
        integer(8), intent(in), dimension(*) :: dim_lb, dim_ub
      end subroutine xmp_new_corray
+
+     subroutine xmp_reshape_corray(desc,orig_desc, elmt_size, ndims, dim_lb, dim_ub, &
+          img_ndims, img_dim_size)
+!       type(xmp_desc), intent(out):: desc
+       integer(8), intent(out):: desc
+       integer(8), intent(in):: orig_desc
+       integer(4), intent(in):: elmt_size,ndims,img_ndims, img_dim_size(*)
+       integer(8), intent(in), dimension(*) :: dim_lb, dim_ub
+     end subroutine xmp_reshape_corray
 
      subroutine xmp_new_corray_mem(desc, nbytes, img_ndims, img_dim_size)
 !       type(xmp_desc), intent(out):: desc
