@@ -66,8 +66,10 @@ public class OMPanalyzePragma
 
         switch(p) {
         case TASK:
-    	info.setIfExpr(Xcons.FlogicalConstant(true));
-        info.setFinalExpr(Xcons.FlogicalConstant(false));
+            if (XmOption.isLanguageF() == true) {
+                info.setIfExpr(Xcons.FlogicalConstant(true));
+                info.setFinalExpr(Xcons.FlogicalConstant(false));
+            }
         case PARALLEL: /* new parallel section */
         case FOR: /* loop <clause_list> */
         case SECTIONS: /* sections <clause_list> */
