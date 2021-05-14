@@ -576,9 +576,19 @@ public class Xobject extends PropObject implements IXobject, XobjectVisitable, I
     {
         if(this == x)
             return true;
-        return (code == x.code && (type == x.type || type.equals(x.type)));
+        return (code == x.code && type != null && (type == x.type || type.equals(x.type)));
     }
 
+    public void replace(Xobject oldObj, Xobject newObj){
+      XobjectIterator j = new topdownXobjectIterator(this);
+      for (j.init(); !j.end(); j.next()) {
+	Xobject x = j.getXobject();
+	if (x != null && x.equals(oldObj)){
+	  j.setXobject(newObj);
+	}
+      }
+    }
+    
     public final String OpcodeName()
     {
         if(code == null)

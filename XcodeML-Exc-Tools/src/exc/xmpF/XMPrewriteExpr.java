@@ -3,6 +3,7 @@ package exc.xmpF;
 import exc.object.*;
 import exc.block.*;
 import exc.xcalablemp.*;
+import xcodeml.util.XmOption;
 import java.util.*;
 import static xcodeml.util.XmLog.fatal;
 
@@ -126,7 +127,7 @@ public class XMPrewriteExpr
 	  }
 
 	case EXPR_STATEMENT: // subroutine call
-	  insertSizeArray(st, fb);
+	  if (!XmOption.isMETAX()) insertSizeArray(st, fb);
 	  break;
 
 	}

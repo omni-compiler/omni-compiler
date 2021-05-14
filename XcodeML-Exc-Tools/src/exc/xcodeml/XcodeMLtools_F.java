@@ -40,7 +40,6 @@ import exc.object.XobjectFile;
 import exc.object.Xtype;
 import exc.object.EnumType;
 
-
 /**
  * tools for XcodeML/Fortran to Xcode translation.
  */
@@ -480,8 +479,29 @@ public class XcodeMLtools_F extends XcodeMLtools {
     case FUNC_ADDR:
       return Xcons.Symbol(code, type, getContentText(n));
 
+    case F_ARRAY_REF: {
+      NodeList list = n.getChildNodes();
+      int i;
+      x = null;
+      for (i = 0; i < list.getLength(); i++) {
+	Node nn = list.item(i);
+	if (nn.getNodeType() != Node.ELEMENT_NODE)
+	  continue;
+	x = toXobject(nn);
+	i++;
+	break;
+      }
+      XobjList xobjs = new XobjList(Xcode.LIST);
+      for (; i < list.getLength(); i++) {
+	Node nn = list.item(i);
+	if (nn.getNodeType() != Node.ELEMENT_NODE)
+	  continue;
+	xobjs.add(toXobject(nn));
+      }
+      return Xcons.FarrayRef(x, xobjs);
+    }
+
     case F_ALLOC:
-    case F_ARRAY_REF:
     case CO_ARRAY_REF: {
       NodeList list = n.getChildNodes();
       int i;
@@ -504,8 +524,20 @@ public class XcodeMLtools_F extends XcodeMLtools {
       return Xcons.List(code, type, x, xobjs);
     }
 
+    case F_VAR_REF: {
+      NodeList list = n.getChildNodes();
+      for (int i = 0; i < list.getLength(); i++) {
+	Node nn = list.item(i);
+	if (nn.getNodeType() != Node.ELEMENT_NODE)
+	  continue;
+	return Xcons.FvarRef(type, toXobject(nn));
+      }
+      return null;
+    }
+      
     case MEMBER_REF:
-      return Xcons.List(code, type, toXobject(getElement(n, "varRef")), getSymbol(n, "member"));
+      //return Xcons.List(code, type, toXobject(getElement(n, "varRef")), getSymbol(n, "member"));
+      return Xcons.memberRef(toXobject(getElement(n, "varRef")), getSymbol(n, "member").getString());
 
     case F_COMPLEX_PART_REF:
       return Xcons.List(code, type, toXobject(getElement(n, "varRef")), getSymbol(n, "part"));

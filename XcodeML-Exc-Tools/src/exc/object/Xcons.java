@@ -251,21 +251,22 @@ public class Xcons
 
     public static Xobject memberRef(Xobject x, String member_name)
     {
-        Xtype type = x.Type();
-        // if(!type.isPointer())
-        //     fatal("memberRef: not Pointer");
-        type = type.getRef();
-        if(!type.isStruct() && !type.isUnion())
-            fatal("memberAddr: not struct/union");
+        // Xtype type = x.Type();
+        // // if(!type.isPointer())
+        // //     fatal("memberRef: not Pointer");
+        // type = type.getRef();
+        // if(!type.isStruct() && !type.isUnion())
+        //     fatal("memberAddr: not struct/union");
         
-        Ident mid = type.getMemberList().getMember(member_name); // id_list
-        if(mid == null)
-            fatal("memberAddr: member name is not found: " + member_name);
+        // Ident mid = type.getMemberList().getMember(member_name); // id_list
+        // if(mid == null)
+        //     fatal("memberAddr: member name is not found: " + member_name);
         
-        type = mid.Type();
-        return List(Xcode.MEMBER_REF,
-            mid.Type(), x,
-            Symbol(Xcode.IDENT, mid.Type(), mid.getName()));
+        // type = mid.Type();
+        // return List(Xcode.MEMBER_REF,
+        //     mid.Type(), x,
+        //     Symbol(Xcode.IDENT, mid.Type(), mid.getName()));
+	return new MemberRef(x, member_name);
     }
 
     public static Xobject memberAddr(Xobject x, Ident mid)
@@ -897,9 +898,20 @@ public class Xcons
     
     public static Xobject FvarRef(Ident id)
     {
-        return List(Xcode.F_VAR_REF, id.getAddr());
+        //return List(Xcode.F_VAR_REF, id.getAddr());
+	return new FvarRef(id.getAddr());
     }
-    
+
+    public static Xobject FvarRef(Xobject var)
+    {
+	return new FvarRef(var);
+    }
+
+    public static Xobject FvarRef(Xtype type, Xobject var)
+    {
+	return new FvarRef(type, var);
+    }
+
     public static Xobject FindexRange(Xobject lb, Xobject ub, Xobject step)
     {
         return Xcons.List(Xcode.F_INDEX_RANGE, lb, ub, step);
@@ -937,9 +949,12 @@ public class Xcons
     
     public static Xobject FarrayRef(Xobject var, Xobject ... indices)
     {
-        Xobject x = Xcons.List(Xcode.F_ARRAY_REF, var.Type().getRef(),
-            Xcons.List(Xcode.F_VAR_REF, var));
-        Xobject l = Xcons.List();
+        // Xobject x = Xcons.List(Xcode.F_ARRAY_REF, var.Type().getRef(),
+        //     Xcons.List(Xcode.F_VAR_REF, var));
+
+	Xobject x = (var.Opcode() == Xcode.F_VAR_REF) ? var : Xcons.List(Xcode.F_VAR_REF, var.Type(), var);
+
+        XobjList l = Xcons.List();
         
         if(var.Type().isFarray()) {
             int n = var.Type().getNumDimensions() - indices.length;
@@ -951,15 +966,19 @@ public class Xcons
             l.add(Xcons.List(Xcode.F_ARRAY_INDEX, i));
         }
         
-        x.add(l);
-        return x;
+        // x.add(l);
+        // return x;
+	return new FarrayRef(x, l);
     }
     
     public static Xobject FarrayRef(Xobject var, XobjList indices)
     {
-        Xobject x = Xcons.List(Xcode.F_ARRAY_REF, var.Type().getRef(),
-            Xcons.List(Xcode.F_VAR_REF, var));
-        Xobject l = Xcons.List();
+        // Xobject x = Xcons.List(Xcode.F_ARRAY_REF, var.Type().getRef(),
+        //     Xcons.List(Xcode.F_VAR_REF, var));
+
+	Xobject x = (var.Opcode() == Xcode.F_VAR_REF) ? var : Xcons.List(Xcode.F_VAR_REF, var.Type(), var);
+
+	XobjList l = Xcons.List();
         
         if(var.Type().isFarray()) {
             int n = var.Type().getNumDimensions() - indices.Nargs();
@@ -971,8 +990,9 @@ public class Xcons
             l.add(Xcons.List(Xcode.F_ARRAY_INDEX, i));
         }
         
-        x.add(l);
-        return x;
+        // x.add(l);
+        // return x;
+	return new FarrayRef(x, l);
     }
 
     public static Xobject Fallocate(Xobject var, Xobject ... indices)
@@ -1005,5 +1025,11 @@ public class Xcons
     public static Xobject StatementLabel(String label)
     {
 	return Xcons.List(Xcode.STATEMENT_LABEL, Xcons.StringConstant(label));
+    }
+
+    public static Xobject makeAST(String format, Object... args)
+    {
+      ASTnode root = new ASTnode(format, args);
+      return root.toXobject();
     }
 }

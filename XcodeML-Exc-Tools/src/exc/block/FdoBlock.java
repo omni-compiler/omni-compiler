@@ -30,6 +30,11 @@ public class FdoBlock extends Block implements ForBlock
         }
     }
 
+    public FdoBlock(LineNo head, Xobject ind_var, Xobject lb, Xobject ub, Xobject step, BlockList body, String construct_name)
+    {
+	this(head, ind_var, Xcons.List(lb, ub, step), body, construct_name);
+    }
+    
     public FdoBlock(FdoBlock b)
     {
         super(Xcode.F_DO_STATEMENT, null, null);

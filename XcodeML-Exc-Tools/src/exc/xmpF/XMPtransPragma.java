@@ -57,7 +57,7 @@ public class XMPtransPragma
     FunctionBlock fblock = def.getBlock();
     BlockList prolog = Bcons.emptyBody();
     BlockList epilog = Bcons.emptyBody();
-    buildXMPobjectBlock(prolog, epilog, b);
+    if (!XmOption.isMETAX()) buildXMPobjectBlock(prolog, epilog, b);
 
     if (b == null){
       b = fblock.getBody().getHead();

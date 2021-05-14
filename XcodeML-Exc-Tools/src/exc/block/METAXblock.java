@@ -64,4 +64,36 @@ public class METAXblock extends PragmaBlock {
     }
   }
 
+  public Ident declIdent(String name, Xtype type){
+
+    Block block_decl = this.findParentDeclBlock();
+    //BlockList body_decl = (block != null) ? block.getBody() : current_def.getBlock().getBody();
+    BlockList body_decl = block_decl.getBody();
+
+    // Xobject id_list = body.getIdentList();
+    // if (id_list != null){
+    //   for (Xobject o : (XobjList)id_list){
+    // 	if (name.equals(o.getName())){
+    // 	  if (!type.equals(o.Type()))
+    // 	    XMP.fatal("declIdent: duplicated declaration: "+name);
+    // 	  return (Ident)o;
+    // 	}
+    //   }
+    // }
+
+    Ident id = Ident.FidentNotExternal(name, type);
+    body_decl.addIdent(id);
+
+    id.setIsDeclared(true);
+    XobjList declList = (XobjList)body_decl.getDecls();
+    if (declList == null){
+      declList = Xcons.List();
+      body_decl.setDecls(declList);
+    }
+    declList.add(Xcons.List(Xcode.VAR_DECL, id, null, null));
+    
+    return id;
+
+  }
+    
 }

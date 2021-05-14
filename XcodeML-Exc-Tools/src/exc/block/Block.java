@@ -145,6 +145,12 @@ public class Block extends PropObject implements IVarContainer
         throw new UnsupportedOperationException(toString());
     }
 
+    public Block replace(Xobject oldObj, Xobject newObj){
+      Xobject x = this.toXobject();
+      x.replace(oldObj, newObj);
+      return Bcons.buildBlock(x);
+    }
+
     /** get the body */
     public BlockList getBody()
     {
@@ -237,7 +243,7 @@ public class Block extends PropObject implements IVarContainer
         next = s;
         s.prev = this;
         if(s.next == null) { // tail of list
-            parent.tail = s;
+            if (parent != null) parent.tail = s;
         } else {
             s.next.prev = s;
         }
@@ -265,7 +271,7 @@ public class Block extends PropObject implements IVarContainer
         prev = s;
         s.next = this;
         if(s.prev == null) { // head of list
-            parent.head = s;
+            if (parent != null) parent.head = s;
         } else {
             s.prev.next = s;
         }
@@ -371,6 +377,15 @@ public class Block extends PropObject implements IVarContainer
         }
         return (parent.Opcode() == Xcode.F_BLOCK_STATEMENT) ? parent : null;
     }
+    public Block findParentDeclBlock()
+    {
+      Block parent = this;
+      while (parent.Opcode() != Xcode.F_BLOCK_STATEMENT && parent.Opcode() != Xcode.FUNCTION_DEFINITION){
+	parent = parent.getParentBlock();
+	if (parent == null) return null;
+      }
+      return parent;
+    }
     @Override
     public Ident findCommonIdent(String name)
     {
@@ -416,4 +431,23 @@ public class Block extends PropObject implements IVarContainer
         }
         return null;
     }
+
+    public XobjectDefEnv getEnv() {
+        for (BlockList b_list = parent; b_list != null; b_list = b_list.getParentList()) {
+            if (b_list.getParent() instanceof FunctionBlock) {
+                return ((FunctionBlock)b_list.getParent()).getEnv();
+            }
+        }
+        return null; // not found
+    }
+
+    public FunctionBlock getFunctionBlock(){
+      for (BlockList b_list = parent; b_list != null; b_list = b_list.getParentList()){
+	if (b_list.getParent() instanceof FunctionBlock){
+	  return (FunctionBlock)b_list.getParent();
+	}
+      }
+      return null; // not found
+    }
+
 }

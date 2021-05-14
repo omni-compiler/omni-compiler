@@ -111,6 +111,7 @@ public class omompx
     boolean xcalableMP         = false;
     boolean xcalableMPthreads  = false;
     boolean xcalableMPGPU      = false;
+    boolean metax              = false;
     boolean xmpf               = false;
     boolean async              = false;
     boolean xcalableACC        = false;
@@ -181,6 +182,8 @@ public class omompx
         xcalableMPthreads = true;
       } else if(arg.equals("-enable-gpu")) {
         xcalableMPGPU = true;
+      } else if(arg.equals("-enable-metax")) {
+        metax = true;
       } else if(arg.equals("-enable-Fonesided")) {
         Fonesided = true;
       } else if(arg.equals("-fxmpf")) {
@@ -315,6 +318,7 @@ public class omompx
     XmOption.setIsXcalableMP(xcalableMP);
     XmOption.setIsXcalableMPthreads(xcalableMPthreads);
     XmOption.setIsXcalableMPGPU(xcalableMPGPU);
+    XmOption.setIsMETAX(metax);
     XmOption.setTlogMPIisEnable(doTlog);
     XmOption.setFonesided(Fonesided);
     //    XmOption.setCoarrayNoUseStatement(coarray_noUseStmt);   // TEMPORARY
