@@ -1341,8 +1341,9 @@ public class AccKernel {
       case VAR: {
         String varName = x.getName();
         if (!fromId.getName().equals(varName)) continue;
-        Ident id = findInnerBlockIdent(b, parentBlock.getParent(), varName);
-        if (id != fromId && id != toId) continue; //if(id != fromId) continue;
+        Ident id = findInnerBlockIdent(b, parentBlock.getParent(), "_ACC_thread_x_id");
+System.out.println(id == null);
+        // if (id != fromId && id != toId) continue; //if(id != fromId) continue;
 
         Xobject replaceXobject = null;
         if (toId.Type().equals(fromId.Type())) {
@@ -1359,7 +1360,8 @@ public class AccKernel {
       case VAR_ADDR: {
         String varName = x.getName();
         if (!fromId.getName().equals(varName)) continue;
-        Ident id = findInnerBlockIdent(b, parentBlock.getParent(), varName);
+        Ident id = findInnerBlockIdent(b, parentBlock.getParent(), "_ACC_thread_x_id");
+System.out.println(id == null);
         if (id != fromId && id != toId) continue; //if(id != fromId) continue;
 
         Xobject replaceXobject = null;
