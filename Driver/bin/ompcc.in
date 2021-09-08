@@ -203,7 +203,7 @@ for c_file in "${c_files[@]}"; do
 	    FILE_USER_CL="${FILE_NAME}"_pp.cl
 	    omni_exec cp "${FILE_CL}" "${FILE_USER_CL}"
 	fi
-    elif [ $OPENACC_PLATFORM = "PZCL" ]; then
+    elif [ "$OPENACC_PLATFORM" = "PZCL" ]; then
 	#pzcl kernel compile
 	FILE_PZC=${TEMP_DIR}/"${FILE_NAME}"_pp.pzc
 	if [ -e "${FILE_PZC}" ]; then
