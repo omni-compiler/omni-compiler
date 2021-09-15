@@ -151,8 +151,8 @@ AC_ARG_WITH(gpucc,
 
 # specify GPU C compiler flags
 AC_ARG_WITH(gpu-cflags,
-	    [  --with-gpu-cflags=CFLAGS    GPU C compiler flags (default: -arch=sm_20 -O3 -Wno-deprecated-gpu-targets)],
-	    [GPU_CFLAGS="${withval}"], [GPU_CFLAGS="-arch=sm_20 -O3 -Wno-deprecated-gpu-targets"])
+	    [  --with-gpu-cflags=CFLAGS    GPU C compiler flags (default: -O3 -Wno-deprecated-gpu-targets)],
+	    [GPU_CFLAGS="${withval}"], [GPU_CFLAGS="-O3 -Wno-deprecated-gpu-targets"])
 
 # specify CUDA path
 AC_ARG_WITH(cuda,

@@ -1538,7 +1538,7 @@ Optional Packages:
   --with-thread               type of openmp thread
   --with-lock                 type of openmp lock
   --with-gpucc=CMD            GPU C compiler (default: nvcc)
-  --with-gpu-cflags=CFLAGS    GPU C compiler flags (default: -arch=sm_20 -O3 -Wno-deprecated-gpu-targets)
+  --with-gpu-cflags=CFLAGS    GPU C compiler flags (default: -O3 -Wno-deprecated-gpu-targets)
   --with-cuda=DIR             CUDA installation path (default: /usr/local/cuda)
   --with-opencl=DIR           OpenCL installation path for PEZY-SC2 (default: /usr/local/cuda)
   --with-pzcl=DIR             PZCL installation path
@@ -8161,7 +8161,7 @@ fi
 if test "${with_gpu_cflags+set}" = set; then :
   withval=$with_gpu_cflags; GPU_CFLAGS="${withval}"
 else
-  GPU_CFLAGS="-arch=sm_20 -O3 -Wno-deprecated-gpu-targets"
+  GPU_CFLAGS="-O3 -Wno-deprecated-gpu-targets"
 fi
 
 
