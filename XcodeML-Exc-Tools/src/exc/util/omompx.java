@@ -584,10 +584,9 @@ public class omompx
     }
     
     // Decompile
-    XmDecompilerContext context = null;
     XmToolFactory toolFactory = new XmToolFactory(lang);
+    XmDecompilerContext context = toolFactory.createDecompilerContext();
     if(lang.equals("F")) {
-      context = toolFactory.createDecompilerContext();
       if(maxColumns > 0)
         context.setProperty(XmDecompilerContext.KEY_MAX_COLUMNS, "" + maxColumns);
     }

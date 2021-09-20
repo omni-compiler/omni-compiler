@@ -15,6 +15,7 @@ public class OMPanalyzePragma
 {
     FuncDefBlock def;
     OMPfileEnv omp_env;
+    // BlockPrintWriter debug_writer =  new BlockPrintWriter(System.out);
 
     public void run(FuncDefBlock def, OMPfileEnv omp_env)
     {
@@ -23,11 +24,14 @@ public class OMPanalyzePragma
         Block b;
         Block fblock = def.getBlock();
         OMP.debug("run");
+
         // pass1: traverse to collect information about OMP pramga
-        if(OMP.debugFlag)
-            System.out.println("pass1:");
+        if(OMP.debugFlag) System.out.println("pass1:");
+
         b = fblock.getBody().getHead();
         b.setProp(OMP.prop, new OMPinfo(OMPpragma.FUNCTION_BODY, null, b, omp_env));
+
+	expandPragma(fblock);
 
         BlockIterator i = new topdownBlockIterator(fblock);
         for(i.init(); !i.end(); i.next()) {
@@ -37,6 +41,30 @@ public class OMPanalyzePragma
             if(b.Opcode() == Xcode.OMP_PRAGMA)
                 checkPragma((PragmaBlock)b);
         }
+    }
+
+    void expandPragma(Block fblock){
+        BlockIterator i = new bottomupBlockIterator(fblock);
+        for(i.init(); !i.end(); i.next()) {
+            Block b = i.getBlock();
+            if(b.Opcode() == Xcode.OMP_PRAGMA){
+                PragmaBlock pb = (PragmaBlock)b;
+		OMPpragma p = OMPpragma.valueOf(pb.getPragma());
+		Block bb;
+		switch(p){
+		case PARALLEL_FOR:       /* parallel for <clause_list> */
+		    pb = (PragmaBlock) b.copy();
+		    pb.setPragma("FOR");
+		    i.setBlock(new PragmaBlock(Xcode.OMP_PRAGMA, "PARALLEL", null, new BlockList(pb)));
+		    break;
+		case PARALLEL_SECTIONS:  /* parallel sections <clause_list> */
+		    pb = (PragmaBlock) b.copy();
+		    pb.setPragma("SECTIONS");
+		    i.setBlock(new PragmaBlock(Xcode.OMP_PRAGMA, "PARALLEL", null, new BlockList(pb)));
+		    break;
+		}
+	    }
+	}
     }
 
     OMPinfo outerOMPinfo(Block b)
@@ -60,7 +88,7 @@ public class OMPanalyzePragma
         OMPpragma p = info.pragma;
         OMPpragma c;
         Xobject t;
-       Block b;
+	Block b;
         List<XobjList> idLists;
         topdownBlockIterator bitr;
 
@@ -68,56 +96,60 @@ public class OMPanalyzePragma
         case TASK:
     	info.setIfExpr(Xcons.FlogicalConstant(true));
         info.setFinalExpr(Xcons.FlogicalConstant(false));
+
         case PARALLEL: /* new parallel section */
         case FOR: /* loop <clause_list> */
         case SECTIONS: /* sections <clause_list> */
         	// Assume that the kinds of the cluases are already checked
             idLists = new ArrayList<XobjList>();
-            for(Xobject a : (XobjList)pb.getClauses()) {
-                c = OMPpragma.valueOf(a.getArg(0));
-                switch(c) {
-                case DIR_IF:
-                    info.setIfExpr(a.getArg(1));
+	    if(pb.getClauses() != null) {
+		for(Xobject a : (XobjList)pb.getClauses()) {
+		    c = OMPpragma.valueOf(a.getArg(0));
+		    switch(c) {
+		    case DIR_IF:
+			info.setIfExpr(a.getArg(1));
+			break;
+		    case DATA_FINAL:
+			info.setFinalExpr(a.getArg(1));
+			break;
+		    case DIR_NOWAIT:
+			info.no_wait = true;
+			break;
+		    case DIR_ORDERED:
+			info.ordered = true;
+			break;
+		    case DIR_SCHEDULE:
+			info.setSchedule(a.getArg(1));
+			break;
+		    case DATA_DEFAULT:
+			info.data_default = OMPpragma.valueOf(a.getArg(1));
+			break;
+		    case DIR_NUM_THREADS:
+			info.num_threads = a.getArg(1);
+			break;
+		    case DIR_UNTIED:
+			info.untied = true;
+			OMP.debug("UNTIED");
+			break;
+		    case DIR_MERGEABLE:
+			info.mergeable = true;
+			OMP.debug("MERGEABLE");
                     break;
-                case DATA_FINAL:
-                    info.setFinalExpr(a.getArg(1));
-                    break;
-                case DIR_NOWAIT:
-                    info.no_wait = true;
-                    break;
-                case DIR_ORDERED:
-                    info.ordered = true;
-                    break;
-                case DIR_SCHEDULE:
-                    info.setSchedule(a.getArg(1));
-                    break;
-                case DATA_DEFAULT:
-                    info.data_default = OMPpragma.valueOf(a.getArg(1));
-                    break;
-                case DIR_NUM_THREADS:
-                    info.num_threads = a.getArg(1);
-                    break;
-                case DIR_UNTIED:
-                    info.untied = true;
-                    OMP.debug("UNTIED");
-                    break;
-                case DIR_MERGEABLE:
-                    info.mergeable = true;
-                    OMP.debug("MERGEABLE");
-                    break;
-                case DATA_DEPEND_IN:
-                case DATA_DEPEND_OUT:
-                case DATA_DEPEND_INOUT:
-                    info.mergeable = true;
-                    OMP.debug("DEPEND");
-                    break;
-                default: // DATA_*
-                    for(Xobject aa : (XobjList)a.getArg(1))
-                        info.declOMPvar(aa.getName(), c);
-                    idLists.add((XobjList)a.getArg(1));
-                    break;
-                }
-            }
+		    case DATA_DEPEND_IN:
+		    case DATA_DEPEND_OUT:
+		    case DATA_DEPEND_INOUT:
+			info.mergeable = true;
+			OMP.debug("DEPEND");
+			break;
+		    default: // DATA_*
+			for(Xobject aa : (XobjList)a.getArg(1))
+			    info.declOMPvar(aa.getName(), c);
+			idLists.add((XobjList)a.getArg(1));
+			break;
+		    }
+		}
+	    }
+
             for(XobjList l : idLists)
                 info.declOMPVarsInType(l);
             
