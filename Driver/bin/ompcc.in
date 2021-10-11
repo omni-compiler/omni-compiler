@@ -130,7 +130,11 @@ done
 
 ### Translator ###
 if [ "$ENABLE_ACC" = true ]; then
-    OMNI_CX2X_OPT="$OMNI_CX2X_OPT -facc"
+    if [ "$ENABLE_OMP_TO_ACC" = true ]; then
+        OMNI_CX2X_OPT="$OMNI_CX2X_OPT_FOR_OMP_TO_ACC -facc"
+    else
+        OMNI_CX2X_OPT="$OMNI_CX2X_OPT -facc"
+    fi
     [ "$DISABLE_LDG" = true ] && OMNI_CX2X_OPT="$OMNI_CX2X_OPT -no-ldg"
     [ "$DEFAULT_VECLEN" != "" ] && OMNI_CX2X_OPT="$OMNI_CX2X_OPT -default-veclen=${DEFAULT_VECLEN}"
     OMNI_CX2X_OPT="$OMNI_CX2X_OPT -platform=$OPENACC_PLATFORM"
