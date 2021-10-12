@@ -140,7 +140,13 @@ if [ "$ENABLE_ACC" = true ]; then
     OMNI_CX2X_OPT="$OMNI_CX2X_OPT -platform=$OPENACC_PLATFORM"
     OMNI_CX2X_OPT="$OMNI_CX2X_OPT -device=$OPENACC_DEVICE"
 else
-    [ "$ENABLE_TARGET" = false ] && OMNI_CX2X_OPT="$OMNI_CX2X_OPT -fopenmp"
+    if [ "$ENABLE_TARGET" = false ]; then
+        if [ "$ENABLE_OMP_TO_ACC" = true ]; then
+            OMNI_CX2X_OPT="$OMNI_CX2X_OPT_FOR_OMP_TO_ACC -fopenmp"
+        else
+            OMNI_CX2X_OPT="$OMNI_CX2X_OPT -fopenmp"
+        fi
+    fi
 fi
 
 [ "$ENABLE_TARGET" = true ] && xcode_translator_add_opt+=("-fopenmp-only-target")
