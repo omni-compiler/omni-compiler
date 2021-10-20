@@ -56,7 +56,7 @@ public class OMPtoACC extends OMPtranslate {
         super.doDef(d);
     }
 
-    public boolean isConverted() {
+    private boolean isConverted() {
         return isConverted;
     }
 
@@ -134,7 +134,7 @@ public class OMPtoACC extends OMPtranslate {
         Xobject mainDecls = mainXobjDef.getFuncDecls();
         Xobject mainBody = mainXobjDef.getFuncBody();
 
-        Ident mainFunc = env.declStaticIdent(ompcMainFunc,
+        Ident mainFunc = env.declExternIdent(ompcMainFunc,
                                              Xtype.Function(mainType));
         Ident mainOrgFunc = env.declStaticIdent(ompcMainOrgFunc,
                                                 Xtype.Function(mainType));
