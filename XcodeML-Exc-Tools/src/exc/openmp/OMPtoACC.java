@@ -113,7 +113,11 @@ public class OMPtoACC extends OMPtranslate {
 
         Xobject xobj = d.getDef();
 
+        OMP.debug("OMPtoACC: Before convert: " +  xobj);
+
         ompToAcc(xobj, null);
+
+        OMP.debug("OMPtoACC: After convert:  " +  xobj);
     }
 
 
