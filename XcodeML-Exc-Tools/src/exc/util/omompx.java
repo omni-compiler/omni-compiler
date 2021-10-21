@@ -8,7 +8,7 @@ import exc.openacc.ACC;
 import exc.openacc.AccDevice;
 import exc.openacc.AccTranslator;
 import exc.openmp.OMP;
-import exc.openmp.OMPtranslate;
+import exc.openmp.OMPtoACC;
 import exc.openmp.OMPDDRD;
 import exc.xcalablemp.XMP;
 import exc.xcalablemp.XMPglobalDecl;
@@ -478,6 +478,7 @@ public class omompx
     }
 
     // OpenMP translation
+    OMPtoACC ompToAccTranslator = null;
     if(ompf_dynamic_data_race_detect) {
       OMPDDRD omp_translator = new OMPDDRD(xobjFile);
       xobjFile.iterateDef(omp_translator);
@@ -496,14 +497,14 @@ public class omompx
     if(openMP || openMPonlyTarget) {
       if(openMPonlyTarget)
         xobjFile.addHeaderLine("#include \"ompc_target.h\"");
-      
-      OMPtranslate omp_translator = new OMPtranslate(xobjFile);
-      xobjFile.iterateDef(omp_translator);
+
+      ompToAccTranslator = new OMPtoACC(xobjFile);
+      xobjFile.iterateDef(ompToAccTranslator);
             
       if(OMP.hasErrors())
         System.exit(1);
             
-      omp_translator.finish();
+      ompToAccTranslator.finish();
             
       if(xcodeWriter != null) {
         xobjFile.Output(xcodeWriter);
@@ -513,7 +514,8 @@ public class omompx
 
     }
 
-    if(openACC){
+    if (openACC || (ompToAccTranslator != null &&
+                    ompToAccTranslator.isConverted())) {
       if(ACC.device == AccDevice.NONE){
         switch(ACC.platform){
           case CUDA:

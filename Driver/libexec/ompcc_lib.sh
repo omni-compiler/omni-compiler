@@ -152,9 +152,6 @@ function ompcc_set_parameters()
 	    -acc|--openacc)
 		[ ${ENABLE_ACC} = "0" ] && omni_error_exit "warning: $1 option is unavailable, rebuild the compiler with ./configure --enable-openacc"
 		ENABLE_ACC=true;;
-	    -omptoacc|--omp-to-acc)
-		[ ${ENABLE_ACC} = "0" ] && omni_error_exit "warning: $1 option is unavailable, rebuild the compiler with ./configure --enable-openacc"
-		ENABLE_OMP_TO_ACC=true;;
 	    -fopenmp-only-target)
 		ENABLE_TARGET=true;;
 	    --no-ldg)
