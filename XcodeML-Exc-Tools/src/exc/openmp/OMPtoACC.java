@@ -67,6 +67,8 @@ public class OMPtoACC extends OMPtranslate {
     private void ompToAccForDirective(Xobject directive,
                                       Xobject xobj, XobjArgs args) {
         switch (OMPpragma.valueOf(directive)) {
+        // sample.
+        /*
         case SINGLE:
             XobjList list = Xcons.List(Xcode.ACC_PRAGMA);
             list.add(Xcons.String(ACCpragma.PARALLEL.toString()));
@@ -74,8 +76,9 @@ public class OMPtoACC extends OMPtranslate {
             list.add(xobj.getArg(2)); // copy structured-block.
             args.setArg(list);
 
-            setIsConverted(true);
+            setIsConverted(true); // Always call it when it is converted to OpenACC.
             break;
+        */
         }
     }
 
