@@ -10,6 +10,7 @@ class AccManager {
   private final AccInformation _info;
   private final PragmaBlock _pb;
   private Xobject numGangs = null;
+  private Xobject numWorkers = null;
   private Xobject vectorLength = null;
   private final Map<CforBlock, LoopExecInfo> execMethodMap = new HashMap<CforBlock, LoopExecInfo>();
 
@@ -84,17 +85,20 @@ class AccManager {
 
     StringBuilder sb = new StringBuilder();
     if(execMethods.contains(ACCpragma.GANG)){
-      sb.append("block_");
+      if(execMethods.contains(ACCpragma.VECTOR) || execMethods.contains(ACCpragma.WORKER)){
+        sb.append("block_");
+      } else {
+        sb.append("block_x");
+      }
     }
 //    if(useWorker) {
       if (execMethods.contains(ACCpragma.WORKER)) {
-        sb.append("warp_");
+        sb.append("thread_y");
       }
 //    }
     if(execMethods.contains(ACCpragma.VECTOR)){
-      sb.append("thread_");
+      sb.append("thread_x");
     }
-    sb.append('x');
 
     return new String(sb);
 
@@ -107,9 +111,11 @@ class AccManager {
 
   public XobjList getBlockThreadSize(){
     Xobject bsx = getNumGangsExpr();
+    Xobject tsy = getNumWorkersExpr();
     Xobject tsx = getVectorLengthExpr();
 
     if(bsx == null) bsx = numGangs;
+    if(tsy == null) tsy = numWorkers;
     if(tsx == null) tsx = vectorLength;
 
     for(CforBlock key : execMethodMap.keySet()) {
@@ -121,6 +127,14 @@ class AccManager {
           tsx = Xcons.IntConstant(ACC.device.getDefaultVectorLength());
         }
       }
+      if (execMethods.contains(ACCpragma.WORKER)) {
+        if (tsy == null) {
+          tsy = Xcons.IntConstant(ACC.device.getMaxNumWorkers());
+        }
+      }      
+    }
+    if(tsy == null) {
+      tsy = Xcons.IntConstant(1);
     }
     if(tsx == null){
       tsx = Xcons.IntConstant(1);
@@ -152,14 +166,18 @@ class AccManager {
       bsx = Xcons.IntConstant(1);
     }
 
-    Xobject xone = Xcons.IntConstant(1);
+    // Xobject xone = Xcons.IntConstant(1);
 
     //return Xcons.List(Xcons.List(bsx, xone, xone), Xcons.List(tsx, xone, xone));
-    return Xcons.List(bsx, xone, tsx);
+    return Xcons.List(bsx, tsy, tsx);
   }
 
   public void setNumGangs(Xobject numGangs){
     this.numGangs = numGangs;
+  }
+
+  public void setNumWorkers(Xobject numWorkers){
+    this.numWorkers = numWorkers;
   }
 
   public void setVectorLength(Xobject vectorLength){
@@ -170,6 +188,11 @@ class AccManager {
     Xobject expr = _info.getIntExpr(ACCpragma.NUM_GANGS);
     if(expr != null) return expr;
     return _info.getIntExpr(ACCpragma.GANG);
+  }
+  private Xobject getNumWorkersExpr(){
+    Xobject expr = _info.getIntExpr(ACCpragma.NUM_WORKERS);
+    if(expr != null) return expr;
+    return _info.getIntExpr(ACCpragma.WORKER);
   }
   private Xobject getVectorLengthExpr(){
     Xobject expr = _info.getIntExpr(ACCpragma.VECT_LEN);

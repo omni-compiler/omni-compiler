@@ -22,6 +22,7 @@ public class AccKernel {
   public static final String ACC_GPU_DEVICE_FUNC_SUFFIX = "_DEVICE";
   private static final String ACC_CL_KERNEL_LAUNCHER_NAME = "_ACC_launch";
   private final Xobject _accThreadIndex = Xcons.Symbol(Xcode.VAR, Xtype.intType, "_ACC_thread_x_id");
+  private final Xobject _accThreadIndexY = Xcons.Symbol(Xcode.VAR, Xtype.intType, "_ACC_thread_y_id");
   private final Xobject _accBlockIndex = Xcons.Symbol(Xcode.VAR, Xtype.intType, "_ACC_block_x_id");
   private final Xobject _accSyncThreads = ACCutil.getMacroFuncId("_ACC_sync_threads", Xtype.voidType).Call();
   private final Xobject _accSyncGangs = ACCutil.getMacroFuncId("_ACC_sync_gangs", Xtype.voidType).Call();
@@ -618,10 +619,13 @@ public class AccKernel {
 
     Xobject numGangsExpr = info.getIntExpr(ACCpragma.NUM_GANGS); //info.getNumGangsExp();
     if (numGangsExpr == null) numGangsExpr = info.getIntExpr(ACCpragma.GANG);
+    Xobject numWorkersExpr = info.getIntExpr(ACCpragma.NUM_WORKERS);
+    if (numWorkersExpr == null) numWorkersExpr = info.getIntExpr(ACCpragma.WORKER);
     Xobject vectorLengthExpr = info.getIntExpr(ACCpragma.VECT_LEN); //info.getVectorLengthExp();
     if (vectorLengthExpr == null) vectorLengthExpr = info.getIntExpr(ACCpragma.VECTOR);
 //    System.out.println(numGangsExpr);
     if (numGangsExpr != null) gpuManager.setNumGangs(numGangsExpr);
+    if (numWorkersExpr != null) gpuManager.setNumWorkers(numWorkersExpr);
     if (vectorLengthExpr != null) gpuManager.setVectorLength(vectorLengthExpr);
 
     String execMethodName = gpuManager.getMethodName(forBlock);
@@ -1134,7 +1138,7 @@ public class AccKernel {
     XobjectFile devEnv = _decl.getEnvDevice();
     devEnv.add(launcherFuncDef);
 
-    Ident launcherFuncId = _decl.declExternIdent(launcherFuncDef.getName(), launcherFuncDef.getFuncType());
+    Ident launcherFuncId = _decl.declExternIdent(launcherFuncDef.getName(), Xtype.Function(Xtype.voidType));
     XobjList callArgs = Xcons.List();
     for(Xobject arg : deviceKernelCallArgs){
       if(arg.Opcode() == Xcode.CAST_EXPR && arg.Type().isArray()){
@@ -1401,7 +1405,8 @@ System.out.println(id == null);
     Xobject condition = null;
     if(outerParallelism.contains(ACCpragma.VECTOR)) {
       return thenBlock;
-    //}else if(outerParallelism.contains(ACCpragma.WORKER)){
+    }else if(outerParallelism.contains(ACCpragma.WORKER)){
+      condition = Xcons.binaryOp(Xcode.LOG_EQ_EXPR, _accThreadIndexY, Xcons.IntConstant(0));
     }else if(outerParallelism.contains(ACCpragma.GANG)){
       condition = Xcons.binaryOp(Xcode.LOG_EQ_EXPR, _accThreadIndex, Xcons.IntConstant(0));
     }else{
@@ -2294,12 +2299,16 @@ System.out.println(id == null);
     String makeExecString(EnumSet<ACCpragma> execSet){
       StringBuilder sb = new StringBuilder();
       if(execSet.contains(ACCpragma.GANG)){
-        sb.append('b');
-      }
-      if(execSet.contains(ACCpragma.VECTOR)){
-        sb.append('t');
-      }
-
+        sb.append('b');  // for gang   -> blockIdx.x
+        if(execSet.contains(ACCpragma.VECTOR)) {
+          sb.append('t');  // for acc loop gang vector
+        }
+      } else if(execSet.contains(ACCpragma.WORKER)) {
+        sb.append("ty"); // for worker -> threadIdx.y
+      } else if(execSet.contains(ACCpragma.VECTOR)) {
+        sb.append('t');  // for vector -> threadIdx.x
+      } else
+        ACC.fatal("failed at parallelaization clause (available: gang, worker, vector)");
       return sb.toString();
     }
 

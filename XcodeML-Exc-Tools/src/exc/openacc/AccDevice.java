@@ -38,7 +38,9 @@ public enum AccDevice {
                 return getNvidiaDevice(52);
             case "Pascal":
                 return getNvidiaDevice(60);
-            default:
+            case "Volta":
+                return getNvidiaDevice(70);
+             default:
                 return AccDevice.valueOf(deviceName);
             }
         }
@@ -53,7 +55,7 @@ public enum AccDevice {
         d.majorVersion = majorVersion;
         d.minorVersion = minorVersion;
         d.maxNumGangs = (majorVersion <= 2)? 65535 : 2147483647;
-        d.maxNumWorkers = 1;
+        d.maxNumWorkers = 1024;
         d.maxVectorLength = 1024;
         d.defaultVectorLength = 256;
         d.useReadOnlyDataCache = d.readOnlyDataCacheAvailable = (ccVersion >= 35);
