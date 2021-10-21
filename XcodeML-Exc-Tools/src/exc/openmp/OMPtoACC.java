@@ -56,7 +56,7 @@ public class OMPtoACC extends OMPtranslate {
         super.doDef(d);
     }
 
-    private boolean isConverted() {
+    public boolean isConverted() {
         return isConverted;
     }
 
