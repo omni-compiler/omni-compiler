@@ -32,6 +32,21 @@ void _ACC_gpu_init_reduction_var(int *var, int kind){
 }
 
 __device__ static inline
+void _ACC_gpu_init_reduction_var(unsigned int *var, int kind){
+  switch(kind){
+  case _ACC_REDUCTION_PLUS: *var = 0; return;
+  case _ACC_REDUCTION_MUL: *var = 1; return;
+  case _ACC_REDUCTION_MAX: *var = 0; return;
+  case _ACC_REDUCTION_MIN: *var = UINT_MAX; return;
+  case _ACC_REDUCTION_BITAND: *var = ~0; return;
+  case _ACC_REDUCTION_BITOR: *var = 0; return;
+  case _ACC_REDUCTION_BITXOR: *var = 0; return;
+  case _ACC_REDUCTION_LOGAND: *var = 1; return;
+  case _ACC_REDUCTION_LOGOR: *var = 0; return;
+  }
+}
+
+__device__ static inline
 void _ACC_gpu_init_reduction_var(char *var, int kind){
   switch(kind){
   case _ACC_REDUCTION_PLUS: *var = 0; return;
@@ -76,6 +91,22 @@ void _ACC_gpu_init_reduction_var_single(T *var, int kind){
 
 __device__ static inline
 int op(int a, int b, int kind){
+  switch(kind){
+  case _ACC_REDUCTION_PLUS: return a + b;
+  case _ACC_REDUCTION_MUL: return a * b;
+  case _ACC_REDUCTION_MAX: return (a > b)? a : b;
+  case _ACC_REDUCTION_MIN: return (a < b)? a : b;
+  case _ACC_REDUCTION_BITAND: return a & b;
+  case _ACC_REDUCTION_BITOR: return a | b;
+  case _ACC_REDUCTION_BITXOR: return a ^ b;
+  case _ACC_REDUCTION_LOGAND: return a && b;
+  case _ACC_REDUCTION_LOGOR: return a || b;
+  default: return a;
+  }
+}
+
+__device__ static inline
+int op(unsigned int a, unsigned int b, int kind){
   switch(kind){
   case _ACC_REDUCTION_PLUS: return a + b;
   case _ACC_REDUCTION_MUL: return a * b;
