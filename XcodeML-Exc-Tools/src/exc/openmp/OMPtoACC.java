@@ -6,6 +6,7 @@ import exc.object.*;
 import exc.xcodeml.XcodeMLtools;
 import exc.block.*;
 import exc.openacc.ACCpragma;
+import java.util.Iterator;
 
 public class OMPtoACC extends OMPtranslate {
     private static String MAIN_ARGC_NAME = "argc";
@@ -64,6 +65,113 @@ public class OMPtoACC extends OMPtranslate {
        isConverted = b;
     }
 
+    private XobjList convertFromMap(Xobject xobj,
+                                    XobjList clause) {
+        if (clause.Nargs() != 2) {
+            OMP.error((LineNo)xobj.getLineNo(),
+                      "Number of clauses is too small.");
+            return null;
+        }
+
+        XobjList mapArgs = (XobjList) clause.getArg(1);
+        if (mapArgs.Opcode() != Xcode.LIST) {
+            OMP.error((LineNo)xobj.getLineNo(),
+                      "Clause list does not exist");
+            return null;
+        }
+
+        XobjString mapType = (XobjString) mapArgs.getArg(0);
+        if (mapType.Opcode() != Xcode.STRING) {
+            OMP.error((LineNo)xobj.getLineNo(),
+                      "Map type does not exist.");
+            return null;
+        }
+
+        // check map-type-modifier.
+        if (mapType.getName().split(" ").length > 1) {
+            OMP.error((LineNo)xobj.getLineNo(),
+                      "'map-type-modifier (" +
+                      mapType.getName().split(" ")[0] +
+                      ")' is not supported.");
+            return null;
+        }
+
+        XobjList mapValues = (XobjList) mapArgs.getArg(1);
+
+        // NOTE: OpenMP xcode has an empty list
+        //       if the array range specification is omitted.
+        //       So, remove the empty list.
+        if (mapValues.getArg(0).getArg(1).isEmpty()) {
+            mapValues = Xcons.List(mapValues.getArg(0).getArg(0));
+        }
+
+        XobjList list = null;
+        switch (mapType.getName()) {
+        case "alloc":
+            list = Xcons.List(Xcons.String("CREATE"),
+                              mapValues);
+            break;
+        case "to":
+            list = Xcons.List(Xcons.String("COPYIN"),
+                              mapValues);
+            break;
+        case "from":
+            list = Xcons.List(Xcons.String("COPYOUT"),
+                              mapValues);
+            break;
+        case "tofrom":
+            list = Xcons.List(Xcons.String("COPY"),
+                              mapValues);
+            break;
+        default:
+            OMP.error((LineNo)xobj.getLineNo(),
+                      "'" + mapType.getName() + "'" +
+                      " cannot be specified for map.");
+            return null;
+        }
+        return list;
+    }
+
+    private void convertFromTargetData(Xobject xobj,
+                                       XobjArgs args) {
+        if (xobj.getArg(1) == null ||
+            xobj.getArg(1).Opcode() != Xcode.LIST) {
+            OMP.error((LineNo)xobj.getLineNo(),
+                      "Not found clause list.");
+            return;
+        }
+
+        XobjList clauses = (XobjList) xobj.getArg(1);
+        XobjList newClauses = Xcons.List();
+        for (Iterator<Xobject> it = clauses.iterator(); it.hasNext();) {
+            XobjList clause = (XobjList) it.next();
+            if (clause.Opcode() != Xcode.LIST ||
+                clause.Nargs() < 1) {
+                OMP.error((LineNo)xobj.getLineNo(),
+                          "Clause list does not exist or number of clauses is too small.");
+                return;
+            }
+
+            switch (OMPpragma.valueOf(clause.getArg(0))) {
+            case TARGET_DATA_MAP:
+                XobjList l = convertFromMap(xobj, clause);
+                if (OMP.hasError()) {
+                    return;
+                }
+                newClauses.add(l);
+                break;
+            }
+
+        }
+
+        XobjList list = Xcons.List(Xcode.ACC_PRAGMA, xobj.Type());
+        list.setLineNo(xobj.getLineNo());
+        list.add(Xcons.String(ACCpragma.PARALLEL.toString()));
+        list.add(newClauses);
+        args.setArg(list);
+        setIsConverted(true);
+    }
+
     private void ompToAccForDirective(Xobject directive,
                                       Xobject xobj, XobjArgs args) {
         switch (OMPpragma.valueOf(directive)) {
@@ -79,6 +187,10 @@ public class OMPtoACC extends OMPtranslate {
             setIsConverted(true); // Always call it when it is converted to OpenACC.
             break;
         */
+        case TARGET_DATA:
+            convertFromTargetData(xobj, args);
+            setIsConverted(true);
+            break;
         }
     }
 

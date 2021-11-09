@@ -33,6 +33,7 @@ public enum OMPpragma
     PARALLEL_SECTIONS,  /* parallel <clause_list> */
     TARGET_ENTER_DATA,
     FUNCTION_BODY,
+    TARGET_DATA,        /* target data <clause_list> */
     
     /*
      * clause
