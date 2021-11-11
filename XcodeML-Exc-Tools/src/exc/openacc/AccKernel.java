@@ -275,10 +275,17 @@ public class AccKernel {
         Xobject initialize = Xcons.Set(localId.Ref(), Xcons.Cast(arrayPtrType, constParamId.Ref()));
         kernelBuildInfo.addParamId(constParamId);
 
+        ACCvar accvar = _kernelInfo.findACCvar(id.getSym());
+        if(accvar != null && accvar.isFirstprivate())
+          localId.setProp(ACCgpuDecompiler.GPU_STRAGE_SHARED, true);
         kernelBuildInfo.addLocalId(localId);
         kernelBuildInfo.addInitBlock(Bcons.Statement(initialize));
       } else {
-        kernelBuildInfo.addParamId(makeParamId_new(id));
+        Ident localId = makeParamId_new(id);
+        ACCvar accvar = _kernelInfo.findACCvar(id.getSym());
+        if(accvar != null && accvar.isFirstprivate())
+          localId.setProp(ACCgpuDecompiler.GPU_STRAGE_SHARED, true);
+        kernelBuildInfo.addParamId(localId);
       }
     }
 
@@ -356,11 +363,11 @@ public class AccKernel {
   }
 
   private Xtype makeConstRestrictVoidType() {
-    Xtype copyType = Xtype.voidType.copy();
-    copyType.setIsConst(true);
-    Xtype ptrType = Xtype.Pointer(copyType);
+    Xtype ptrType = Xtype.voidType.copy();
     ptrType.setIsRestrict(true);
-    return ptrType;
+    Xtype copyType = Xtype.Pointer(ptrType);
+    copyType.setIsConst(true);
+    return copyType;
   }
 
   void rewriteReferenceType(Block b, XobjList paramIds) {
