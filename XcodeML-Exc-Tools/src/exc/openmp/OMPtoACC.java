@@ -69,7 +69,7 @@ public class OMPtoACC extends OMPtranslate {
                                     XobjList clause) {
         if (clause.Nargs() != 2) {
             OMP.error((LineNo)xobj.getLineNo(),
-                      "Number of clauses is too small.");
+                      "Number of clauses is large or small.");
             return null;
         }
 
@@ -105,22 +105,23 @@ public class OMPtoACC extends OMPtranslate {
             mapValues = Xcons.List(mapValues.getArg(0).getArg(0));
         }
 
+        // create COPY()/CREATE().
         XobjList list = null;
         switch (mapType.getName()) {
         case "alloc":
-            list = Xcons.List(Xcons.String("CREATE"),
+            list = Xcons.List(Xcons.String(ACCpragma.CREATE.toString()),
                               mapValues);
             break;
         case "to":
-            list = Xcons.List(Xcons.String("COPYIN"),
+            list = Xcons.List(Xcons.String(ACCpragma.COPYIN.toString()),
                               mapValues);
             break;
         case "from":
-            list = Xcons.List(Xcons.String("COPYOUT"),
+            list = Xcons.List(Xcons.String(ACCpragma.COPYOUT.toString()),
                               mapValues);
             break;
         case "tofrom":
-            list = Xcons.List(Xcons.String("COPY"),
+            list = Xcons.List(Xcons.String(ACCpragma.COPY.toString()),
                               mapValues);
             break;
         default:
