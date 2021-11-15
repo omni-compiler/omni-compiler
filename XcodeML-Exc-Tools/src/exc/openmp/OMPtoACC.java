@@ -215,7 +215,6 @@ public class OMPtoACC extends OMPtranslate {
         accPragma.add(Xcons.String(ACCpragma.PARALLEL.toString()));
         accPragma.add(accClauses);
         args.setArg(accPragma);
-        setIsConverted(true);
     }
 
     private void ompToAccForDirective(Xobject directive,
@@ -235,7 +234,7 @@ public class OMPtoACC extends OMPtranslate {
         */
         case TARGET_DATA:
             convertFromTargetData(xobj, args);
-            setIsConverted(true);
+            setIsConverted(true); // Always call it when it is converted to OpenACC.
             break;
         }
     }
