@@ -182,9 +182,9 @@ public class OMPtoACC extends OMPtranslate {
             return;
         }
 
-        XobjList clauses = (XobjList) xobj.getArg(1);
-        XobjList newClauses = Xcons.List();
-        for (Iterator<Xobject> it = clauses.iterator(); it.hasNext();) {
+        XobjList ompClauses = (XobjList) xobj.getArg(1);
+        XobjList accClauses = Xcons.List();
+        for (Iterator<Xobject> it = ompClauses.iterator(); it.hasNext();) {
             XobjList clause = (XobjList) it.next();
             if (clause.Opcode() != Xcode.LIST ||
                 clause.Nargs() < 1) {
@@ -207,14 +207,14 @@ public class OMPtoACC extends OMPtranslate {
             if (OMP.hasError()) {
                 return;
             }
-            newClauses.add(l);
+            accClauses.add(l);
         }
 
-        XobjList list = Xcons.List(Xcode.ACC_PRAGMA, xobj.Type());
-        list.setLineNo(xobj.getLineNo());
-        list.add(Xcons.String(ACCpragma.PARALLEL.toString()));
-        list.add(newClauses);
-        args.setArg(list);
+        XobjList accPragma = Xcons.List(Xcode.ACC_PRAGMA, xobj.Type());
+        accPragma.setLineNo(xobj.getLineNo());
+        accPragma.add(Xcons.String(ACCpragma.PARALLEL.toString()));
+        accPragma.add(accClauses);
+        args.setArg(accPragma);
         setIsConverted(true);
     }
 
