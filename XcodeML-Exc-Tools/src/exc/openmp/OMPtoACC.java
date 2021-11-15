@@ -66,6 +66,20 @@ public class OMPtoACC extends OMPtranslate {
        isConverted = b;
     }
 
+    private XobjList createAccPragma(ACCpragma directive, XobjList clauses,
+                                     Xobject xobj) {
+        XobjList accPragma = Xcons.List(Xcode.ACC_PRAGMA, xobj.Type());
+        accPragma.setLineNo(xobj.getLineNo());
+        accPragma.add(Xcons.String(directive.toString()));
+        accPragma.add(clauses);
+        return accPragma;
+    }
+
+    private void createAndAddAccPragma(ACCpragma directive, XobjList clauses,
+                                       Xobject xobj, XobjArgs args) {
+        args.setArg(createAccPragma(directive, clauses, xobj));
+    }
+
     private XobjList convertFromMap(Xobject xobj,
                                     XobjList clause) {
         if (clause.Nargs() != 2) {
@@ -210,11 +224,8 @@ public class OMPtoACC extends OMPtranslate {
             accClauses.add(l);
         }
 
-        XobjList accPragma = Xcons.List(Xcode.ACC_PRAGMA, xobj.Type());
-        accPragma.setLineNo(xobj.getLineNo());
-        accPragma.add(Xcons.String(ACCpragma.PARALLEL.toString()));
-        accPragma.add(accClauses);
-        args.setArg(accPragma);
+        createAndAddAccPragma(ACCpragma.PARALLEL, accClauses,
+                              xobj, args);
     }
 
     private void ompToAccForDirective(Xobject directive,
