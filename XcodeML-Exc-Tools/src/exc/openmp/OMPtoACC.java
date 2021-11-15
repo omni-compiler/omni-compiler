@@ -1,6 +1,7 @@
 package exc.openmp;
 
 import java.util.List;
+import java.util.Arrays;
 import xcodeml.util.XmOption;
 import exc.object.*;
 import exc.xcodeml.XcodeMLtools;
@@ -133,6 +134,45 @@ public class OMPtoACC extends OMPtranslate {
         return list;
     }
 
+    private XobjList convertFromIf(Xobject xobj,
+                                   XobjList clause,
+                                   OMPpragma[] modifiers) {
+        return convertFromIf(xobj, clause, modifiers, new OMPpragma[]{});
+    }
+
+    private XobjList convertFromIf(Xobject xobj,
+                                   XobjList clause,
+                                   OMPpragma[] modifiers,
+                                   OMPpragma[] ignoreModifiers) {
+        if (clause.Nargs() != 3) {
+            OMP.error((LineNo)xobj.getLineNo(),
+                      "Number of clauses is large or small.");
+            return null;
+        }
+
+        // check modifier.
+        if (!clause.getArg(1).isEmpty()) {
+            String modifierStr = clause.getArg(1).getArg(0).getName();
+
+            if (Arrays.asList(ignoreModifiers).
+                contains(OMPpragma.valueOf(modifierStr))) {
+                OMP.warning((LineNo)xobj.getLineNo(),
+                            "modifier('" +  modifierStr.replace("_", " ").
+                            toLowerCase() + "') cannot be specified. ignore.");
+            } else if (!Arrays.asList(modifiers).
+                       contains(OMPpragma.valueOf(modifierStr))) {
+                OMP.error((LineNo)xobj.getLineNo(),
+                          "modifier('" + modifierStr.replace("_", " ").
+                          toLowerCase() + "') cannot be specified.");
+                return null;
+            }
+        }
+
+        // create IF().
+        return Xcons.List(Xcons.String(ACCpragma.IF.toString()),
+                          clause.getArg(2));
+    }
+
     private void convertFromTargetData(Xobject xobj,
                                        XobjArgs args) {
         if (xobj.getArg(1) == null ||
@@ -153,16 +193,21 @@ public class OMPtoACC extends OMPtranslate {
                 return;
             }
 
+            XobjList l = null;
             switch (OMPpragma.valueOf(clause.getArg(0))) {
             case TARGET_DATA_MAP:
-                XobjList l = convertFromMap(xobj, clause);
-                if (OMP.hasError()) {
-                    return;
-                }
-                newClauses.add(l);
+                l = convertFromMap(xobj, clause);
+                break;
+            case DIR_IF:
+                l = convertFromIf(xobj, clause,
+                                  new OMPpragma[]{OMPpragma.TARGET_DATA});
                 break;
             }
 
+            if (OMP.hasError()) {
+                return;
+            }
+            newClauses.add(l);
         }
 
         XobjList list = Xcons.List(Xcode.ACC_PRAGMA, xobj.Type());
