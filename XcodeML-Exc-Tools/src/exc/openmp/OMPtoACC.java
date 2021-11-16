@@ -67,17 +67,15 @@ public class OMPtoACC extends OMPtranslate {
     }
 
     private XobjList createAccPragma(ACCpragma directive, XobjList clauses,
-                                     Xobject xobj) {
+                                     Xobject xobj, Xobject... addXobjs) {
         XobjList accPragma = Xcons.List(Xcode.ACC_PRAGMA, xobj.Type());
         accPragma.setLineNo(xobj.getLineNo());
         accPragma.add(Xcons.String(directive.toString()));
         accPragma.add(clauses);
+        for (Xobject x : addXobjs) {
+            accPragma.add(x);
+        }
         return accPragma;
-    }
-
-    private void createAndAddAccPragma(ACCpragma directive, XobjList clauses,
-                                       Xobject xobj, XobjArgs args) {
-        args.setArg(createAccPragma(directive, clauses, xobj));
     }
 
     private XobjList convertFromMap(Xobject xobj,
@@ -188,7 +186,7 @@ public class OMPtoACC extends OMPtranslate {
     }
 
     private void convertFromTargetData(Xobject xobj,
-                                       XobjArgs args) {
+                                       XobjArgs parentArgs) {
         if (xobj.getArg(1) == null ||
             xobj.getArg(1).Opcode() != Xcode.LIST) {
             OMP.error((LineNo)xobj.getLineNo(),
@@ -224,12 +222,57 @@ public class OMPtoACC extends OMPtranslate {
             accClauses.add(l);
         }
 
-        createAndAddAccPragma(ACCpragma.PARALLEL, accClauses,
-                              xobj, args);
+        parentArgs.setArg(createAccPragma(ACCpragma.PARALLEL,
+                                          accClauses, xobj));
     }
 
+    private void convertFromTargetTeamsDistributeParallelLoop(Xobject xobj,
+                                                              XobjArgs parentArgs) {
+        if (xobj.getArg(1) == null ||
+            xobj.getArg(1).Opcode() != Xcode.LIST) {
+            OMP.error((LineNo)xobj.getLineNo(),
+                      "Not found clause list.");
+            return;
+        }
+
+        XobjList ompClauses = (XobjList) xobj.getArg(1);
+        XobjList gangClause = Xcons.List(Xcons.String(ACCpragma.GANG.toString()));
+        XobjList accClauses = Xcons.List(gangClause);
+
+        for (Iterator<Xobject> it = ompClauses.iterator(); it.hasNext();) {
+            XobjList clause = (XobjList) it.next();
+            if (clause.Opcode() != Xcode.LIST ||
+                clause.Nargs() < 1) {
+                OMP.error((LineNo)xobj.getLineNo(),
+                          "Clause list does not exist or number of clauses is too small.");
+                return;
+            }
+
+            XobjList l = null;
+            switch (OMPpragma.valueOf(clause.getArg(0))) {
+            case TARGET_DATA_MAP:
+                l = convertFromMap(xobj, clause);
+                break;
+            case DIR_IF:
+                l = convertFromIf(xobj, clause,
+                                  new OMPpragma[]{OMPpragma.TARGET_DATA},
+                                  new OMPpragma[]{OMPpragma.PARALLEL_FOR});
+                break;
+            }
+
+            if (OMP.hasError()) {
+                return;
+            }
+            accClauses.add(l);
+        }
+
+        parentArgs.setArg(createAccPragma(ACCpragma.PARALLEL_LOOP,
+                                          accClauses, xobj, xobj.getArg(2)));
+    }
+
+
     private void ompToAccForDirective(Xobject directive,
-                                      Xobject xobj, XobjArgs args) {
+                                      Xobject xobj, XobjArgs parentArgs) {
         switch (OMPpragma.valueOf(directive)) {
         // sample.
         /*
@@ -238,19 +281,23 @@ public class OMPtoACC extends OMPtranslate {
             list.add(Xcons.String(ACCpragma.PARALLEL.toString()));
             list.add(Xcons.List());
             list.add(xobj.getArg(2)); // copy structured-block.
-            args.setArg(list);
+            parentArgs.setArg(list);
 
             setIsConverted(true); // Always call it when it is converted to OpenACC.
             break;
         */
         case TARGET_DATA:
-            convertFromTargetData(xobj, args);
+            convertFromTargetData(xobj, parentArgs);
+            setIsConverted(true); // Always call it when it is converted to OpenACC.
+            break;
+        case TARGET_TEAMS_DISTRIBUTE_PARALLEL_LOOP:
+            convertFromTargetTeamsDistributeParallelLoop(xobj, parentArgs);
             setIsConverted(true); // Always call it when it is converted to OpenACC.
             break;
         }
     }
 
-    private void ompToAcc(Xobject xobj, XobjArgs args) {
+    private void ompToAcc(Xobject xobj, XobjArgs parentArgs) {
         if (xobj == null || !(xobj instanceof XobjList)) {
             return;
         }
@@ -259,7 +306,7 @@ public class OMPtoACC extends OMPtranslate {
             Xobject directive = xobj.left();
 
             if (directive.Opcode() == Xcode.STRING) {
-                ompToAccForDirective(directive, xobj, args);
+                ompToAccForDirective(directive, xobj, parentArgs);
             } else {
                 OMP.error((LineNo)xobj.getLineNo(),
                           "directive is not specified.");
