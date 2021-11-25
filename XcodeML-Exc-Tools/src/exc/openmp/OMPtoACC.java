@@ -67,14 +67,19 @@ public class OMPtoACC extends OMPtranslate {
     }
 
     private XobjList createAccPragma(ACCpragma directive, XobjList clauses,
-                                     Xobject xobj, Xobject... addXobjs) {
+                                     Xobject xobj, int addArgsHeadPos) {
         XobjList accPragma = Xcons.List(Xcode.ACC_PRAGMA, xobj.Type());
         accPragma.setLineNo(xobj.getLineNo());
         accPragma.add(Xcons.String(directive.toString()));
         accPragma.add(clauses);
-        for (Xobject x : addXobjs) {
-            accPragma.add(x);
+
+        int pos = addArgsHeadPos;
+        Xobject arg = null;
+        while ((arg = xobj.getArgOrNull(pos)) != null) {
+            accPragma.add(arg);
+            pos++;
         }
+
         return accPragma;
     }
 
@@ -186,7 +191,7 @@ public class OMPtoACC extends OMPtranslate {
     }
 
     private void convertFromTargetData(Xobject xobj,
-                                       XobjArgs parentArgs) {
+                                       XobjArgs currentArgs) {
         if (xobj.getArg(1) == null ||
             xobj.getArg(1).Opcode() != Xcode.LIST) {
             OMP.error((LineNo)xobj.getLineNo(),
@@ -222,12 +227,13 @@ public class OMPtoACC extends OMPtranslate {
             accClauses.add(l);
         }
 
-        parentArgs.setArg(createAccPragma(ACCpragma.PARALLEL,
-                                          accClauses, xobj));
+
+        currentArgs.setArg(createAccPragma(ACCpragma.PARALLEL,
+                                           accClauses, xobj, 2));
     }
 
     private void convertFromTargetTeamsDistributeParallelLoop(Xobject xobj,
-                                                              XobjArgs parentArgs) {
+                                                              XobjArgs currentArgs) {
         if (xobj.getArg(1) == null ||
             xobj.getArg(1).Opcode() != Xcode.LIST) {
             OMP.error((LineNo)xobj.getLineNo(),
@@ -266,13 +272,13 @@ public class OMPtoACC extends OMPtranslate {
             accClauses.add(l);
         }
 
-        parentArgs.setArg(createAccPragma(ACCpragma.PARALLEL_LOOP,
-                                          accClauses, xobj, xobj.getArg(2)));
+        currentArgs.setArg(createAccPragma(ACCpragma.PARALLEL_LOOP,
+                                           accClauses, xobj, 2));
     }
 
 
-    private void ompToAccForDirective(Xobject directive,
-                                      Xobject xobj, XobjArgs parentArgs) {
+    private Xobject ompToAccForDirective(Xobject directive,
+                                         Xobject xobj, XobjArgs currentArgs) {
         switch (OMPpragma.valueOf(directive)) {
         // sample.
         /*
@@ -281,23 +287,81 @@ public class OMPtoACC extends OMPtranslate {
             list.add(Xcons.String(ACCpragma.PARALLEL.toString()));
             list.add(Xcons.List());
             list.add(xobj.getArg(2)); // copy structured-block.
-            parentArgs.setArg(list);
+            currentArgs.setArg(list);
 
             setIsConverted(true); // Always call it when it is converted to OpenACC.
             break;
         */
         case TARGET_DATA:
-            convertFromTargetData(xobj, parentArgs);
+            convertFromTargetData(xobj, currentArgs);
             setIsConverted(true); // Always call it when it is converted to OpenACC.
             break;
         case TARGET_TEAMS_DISTRIBUTE_PARALLEL_LOOP:
-            convertFromTargetTeamsDistributeParallelLoop(xobj, parentArgs);
+            convertFromTargetTeamsDistributeParallelLoop(xobj, currentArgs);
             setIsConverted(true); // Always call it when it is converted to OpenACC.
             break;
         }
+
+        // return converted xobject.
+        return currentArgs.getArg();
     }
 
-    private void ompToAcc(Xobject xobj, XobjArgs parentArgs) {
+    // NOTE: OMP xcodeML is paralleled if it is written in parallel.
+    //       ACC xcodeML is nested if it is written in parallel.
+    //       So, written in parallel will be converted to nesting.
+    //
+    //       - OMP xcodeML: paralleled.
+    //         <OMPPragma ...>
+    //           <string>TARGET_DATA</string>
+    //           <list>
+    //           </list>
+    //         </OMPPragma>
+    //         <linemarker ...>
+    //         <OMPPragma ...>
+    //           <string>TARGET_TEAMS_DISTRIBUTE_PARALLEL_LOOP</string>
+    //
+    //       - ACC xcodeML: nested.
+    //         <ACCPragma ...>
+    //           <string>PARALLEL</string>
+    //           <list>
+    //           </list>
+    //           <ACCPragma ...>
+    //             <string>PARALLEL_LOOP</string>
+    //
+    private void convertToNest(Xobject directive,
+                               Xobject xobj, XobjArgs currentArgs) {
+        switch (OMPpragma.valueOf(directive)) {
+        case TARGET_DATA:
+            XobjArgs xargsHead = null;
+            for (XobjArgs a = currentArgs.nextArgs(); a != null; a = a.nextArgs()) {
+                Xobject x = a.getArg();
+                if (x.Opcode() == Xcode.OMP_PRAGMA ||
+                    x.Opcode() == Xcode.LINEMARKER) {
+                    if (x.Opcode() == Xcode.OMP_PRAGMA) {
+                        XobjArgs as = new XobjArgs(x, null);
+
+                        if (xargsHead == null) {
+                            xargsHead = as;
+                        } else {
+                            xargsHead.tail().setNext(as);
+                        }
+                    }
+                } else {
+                    currentArgs.setNext(a);
+                    break;
+                }
+            }
+
+            if (xargsHead != null) {
+                xobj.getArgs().tail().setNext(xargsHead);
+            }
+            break;
+        }
+
+        return;
+    }
+
+    private void ompToAcc(Xobject xobj, XobjArgs currentArgs) {
         if (xobj == null || !(xobj instanceof XobjList)) {
             return;
         }
@@ -306,7 +370,8 @@ public class OMPtoACC extends OMPtranslate {
             Xobject directive = xobj.left();
 
             if (directive.Opcode() == Xcode.STRING) {
-                ompToAccForDirective(directive, xobj, parentArgs);
+                convertToNest(directive, xobj, currentArgs);
+                xobj = ompToAccForDirective(directive, xobj, currentArgs);
             } else {
                 OMP.error((LineNo)xobj.getLineNo(),
                           "directive is not specified.");
@@ -320,6 +385,7 @@ public class OMPtoACC extends OMPtranslate {
                 return;
             }
         }
+
 
         return;
     }
