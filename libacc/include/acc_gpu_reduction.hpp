@@ -88,6 +88,7 @@ T op(T a, T b, int kind){
 }
 
 
+#if 0 /* comment out temprary */
 #if __CUDA_ARCH__ >= 300
 #include <cuda.h>
 #if CUDA_VERSION <= 6000
@@ -127,6 +128,7 @@ void _ACC_reduce_lanes(T *output, T input, int kind, bool do_acc)
     *output = do_acc? op(*output, v, kind) : v;
   }
 }
+#endif
 
 /**
    Reduce input value among threads and store it to target pointer of thread 0 using shuffle instruction
