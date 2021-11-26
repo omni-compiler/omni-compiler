@@ -1,7 +1,6 @@
 package exc.openmp;
 
 import java.util.List;
-import java.util.Arrays;
 import xcodeml.util.XmOption;
 import exc.object.*;
 import exc.xcodeml.XcodeMLtools;
@@ -25,6 +24,7 @@ public class OMPtoACC extends OMPtranslate {
     private String ompcMainOrgFunc = transPragma.mainFunc + "_org";
 
     private OMPtoACCStack stack = new OMPtoACCStack();
+    private OMPtoACCClause clauseConverter = new OMPtoACCClause();
 
     private boolean isConverted = false;
 
@@ -85,113 +85,6 @@ public class OMPtoACC extends OMPtranslate {
         return accPragma;
     }
 
-    private XobjList convertFromMap(Xobject xobj,
-                                    XobjList clause) {
-        if (clause.Nargs() != 2) {
-            OMP.error((LineNo)xobj.getLineNo(),
-                      "Number of clauses is large or small.");
-            return null;
-        }
-
-        XobjList mapArgs = (XobjList) clause.getArg(1);
-        if (mapArgs.Opcode() != Xcode.LIST) {
-            OMP.error((LineNo)xobj.getLineNo(),
-                      "Clause list does not exist");
-            return null;
-        }
-
-        XobjString mapType = (XobjString) mapArgs.getArg(0);
-        if (mapType.Opcode() != Xcode.STRING) {
-            OMP.error((LineNo)xobj.getLineNo(),
-                      "Map type does not exist.");
-            return null;
-        }
-
-        // check map-type-modifier.
-        if (mapType.getName().split(" ").length > 1) {
-            OMP.error((LineNo)xobj.getLineNo(),
-                      "'map-type-modifier (" +
-                      mapType.getName().split(" ")[0] +
-                      ")' is not supported.");
-            return null;
-        }
-
-        XobjList mapValues = (XobjList) mapArgs.getArg(1);
-
-        // NOTE: OpenMP xcode has an empty list
-        //       if the array range specification is omitted.
-        //       So, remove the empty list.
-        if (mapValues.getArg(0).getArg(1).isEmpty()) {
-            mapValues = Xcons.List(mapValues.getArg(0).getArg(0));
-        }
-
-        // create COPY()/CREATE().
-        XobjList list = null;
-        switch (mapType.getName()) {
-        case "alloc":
-            list = Xcons.List(Xcons.String(ACCpragma.CREATE.toString()),
-                              mapValues);
-            break;
-        case "to":
-            list = Xcons.List(Xcons.String(ACCpragma.COPYIN.toString()),
-                              mapValues);
-            break;
-        case "from":
-            list = Xcons.List(Xcons.String(ACCpragma.COPYOUT.toString()),
-                              mapValues);
-            break;
-        case "tofrom":
-            list = Xcons.List(Xcons.String(ACCpragma.COPY.toString()),
-                              mapValues);
-            break;
-        default:
-            OMP.error((LineNo)xobj.getLineNo(),
-                      "'" + mapType.getName() + "'" +
-                      " cannot be specified for map.");
-            return null;
-        }
-        return list;
-    }
-
-    private XobjList convertFromIf(Xobject xobj,
-                                   XobjList clause,
-                                   OMPpragma[] modifiers) {
-        return convertFromIf(xobj, clause, modifiers, new OMPpragma[]{});
-    }
-
-    private XobjList convertFromIf(Xobject xobj,
-                                   XobjList clause,
-                                   OMPpragma[] modifiers,
-                                   OMPpragma[] ignoreModifiers) {
-        if (clause.Nargs() != 3) {
-            OMP.error((LineNo)xobj.getLineNo(),
-                      "Number of clauses is large or small.");
-            return null;
-        }
-
-        // check modifier.
-        if (!clause.getArg(1).isEmpty()) {
-            String modifierStr = clause.getArg(1).getArg(0).getName();
-
-            if (Arrays.asList(ignoreModifiers).
-                contains(OMPpragma.valueOf(modifierStr))) {
-                OMP.warning((LineNo)xobj.getLineNo(),
-                            "modifier('" +  modifierStr.replace("_", " ").
-                            toLowerCase() + "') cannot be specified. ignore.");
-            } else if (!Arrays.asList(modifiers).
-                       contains(OMPpragma.valueOf(modifierStr))) {
-                OMP.error((LineNo)xobj.getLineNo(),
-                          "modifier('" + modifierStr.replace("_", " ").
-                          toLowerCase() + "') cannot be specified.");
-                return null;
-            }
-        }
-
-        // create IF().
-        return Xcons.List(Xcons.String(ACCpragma.IF.toString()),
-                          clause.getArg(2));
-    }
-
     private void convertFromTargetData(Xobject xobj,
                                        XobjArgs currentArgs) {
         if (xobj.getArg(1) == null ||
@@ -215,20 +108,22 @@ public class OMPtoACC extends OMPtranslate {
             XobjList l = null;
             switch (OMPpragma.valueOf(clause.getArg(0))) {
             case TARGET_DATA_MAP:
-                l = convertFromMap(xobj, clause);
+                l = clauseConverter.convertFromMap(xobj, clause);
                 break;
             case DIR_IF:
-                l = convertFromIf(xobj, clause,
-                                  new OMPpragma[]{OMPpragma.TARGET_DATA});
+                l = clauseConverter.convertFromIf(xobj, clause,
+                                                  new OMPpragma[]{OMPpragma.TARGET_DATA});
                 break;
             }
 
             if (OMP.hasError()) {
                 return;
             }
-            accClauses.add(l);
-        }
 
+            if (l != null) {
+                accClauses.add(l);
+            }
+        }
 
         currentArgs.setArg(createAccPragma(ACCpragma.PARALLEL,
                                            accClauses, xobj, 2));
@@ -259,19 +154,22 @@ public class OMPtoACC extends OMPtranslate {
             XobjList l = null;
             switch (OMPpragma.valueOf(clause.getArg(0))) {
             case TARGET_DATA_MAP:
-                l = convertFromMap(xobj, clause);
+                l = clauseConverter.convertFromMap(xobj, clause);
                 break;
             case DIR_IF:
-                l = convertFromIf(xobj, clause,
-                                  new OMPpragma[]{OMPpragma.TARGET_DATA},
-                                  new OMPpragma[]{OMPpragma.PARALLEL_FOR});
+                l = clauseConverter.convertFromIf(xobj, clause,
+                                                  new OMPpragma[]{OMPpragma.TARGET},
+                                                  new OMPpragma[]{OMPpragma.PARALLEL_FOR});
                 break;
             }
 
             if (OMP.hasError()) {
                 return;
             }
-            accClauses.add(l);
+
+            if (l != null) {
+                accClauses.add(l);
+            }
         }
 
         currentArgs.setArg(createAccPragma(ACCpragma.PARALLEL_LOOP,
@@ -303,16 +201,19 @@ public class OMPtoACC extends OMPtranslate {
             XobjList l = null;
             switch (OMPpragma.valueOf(clause.getArg(0))) {
             case DIR_IF:
-                l = convertFromIf(xobj, clause,
-                                  new OMPpragma[]{},
-                                  new OMPpragma[]{OMPpragma.PARALLEL_FOR});
+                l = clauseConverter.convertFromIf(xobj, clause,
+                                                  new OMPpragma[]{},
+                                                  new OMPpragma[]{OMPpragma.PARALLEL_FOR});
                 break;
             }
 
             if (OMP.hasError()) {
                 return;
             }
-            accClauses.add(l);
+
+            if (l != null) {
+                accClauses.add(l);
+            }
         }
 
         currentArgs.setArg(createAccPragma(ACCpragma.PARALLEL_LOOP,
@@ -461,7 +362,6 @@ public class OMPtoACC extends OMPtranslate {
 
         OMP.debug("OMPtoACC: After convert:  " +  xobj);
     }
-
 
     private XobjList getRefs(XobjList ids){
         XobjList refs = Xcons.List();
