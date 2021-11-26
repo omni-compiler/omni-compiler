@@ -164,6 +164,9 @@ public class OMPtoACC extends OMPtranslate {
             case NUM_TEAMS:
                 l = clauseConverter.convertFromNumTeams(xobj, clause);
                 break;
+            case DATA_PRIVATE:
+                l = clauseConverter.convertFromPrivate(xobj, clause);
+                break;
             }
 
             if (OMP.hasError()) {
