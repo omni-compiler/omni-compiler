@@ -298,8 +298,7 @@ public class OMPtoACC extends OMPtranslate {
     private void convertToNest(Xobject directive,
                                Xobject xobj, XobjArgs currentArgs) {
         // TODO: target, target teams, target parallel
-        switch (OMPpragma.valueOf(directive)) {
-        case TARGET_DATA:
+        if (isTaskOffloadPragma(OMPpragma.valueOf(directive))) {
             XobjArgs xargsHead = null;
             for (XobjArgs a = currentArgs.nextArgs(); a != null; a = a.nextArgs()) {
                 Xobject x = a.getArg();
@@ -327,7 +326,6 @@ public class OMPtoACC extends OMPtranslate {
             if (xargsHead != null) {
                 xobj.getArgs().tail().setNext(xargsHead);
             }
-            break;
         }
 
         return;
