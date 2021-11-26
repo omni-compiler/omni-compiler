@@ -264,6 +264,15 @@ public class OMPtoACC extends OMPtranslate {
         return currentArgs.getArg();
     }
 
+    private boolean isTaskOffloadPragma(OMPpragma directive) {
+        switch (directive) {
+        // TODO: target, target teams, target parallel
+        case TARGET_DATA:
+            return true;
+        }
+        return false;
+    }
+
     // NOTE: OMP xcodeML is paralleled if it is written in parallel.
     //       ACC xcodeML is nested if it is written in parallel.
     //       So, written in parallel will be converted to nesting.
@@ -297,8 +306,13 @@ public class OMPtoACC extends OMPtranslate {
                 if (x.Opcode() == Xcode.OMP_PRAGMA ||
                     x.Opcode() == Xcode.LINEMARKER) {
                     if (x.Opcode() == Xcode.OMP_PRAGMA) {
-                        XobjArgs as = new XobjArgs(x, null);
 
+                        if (!isTaskOffloadPragma(OMPpragma.valueOf(x.getArg(0)))) {
+                            currentArgs.setNext(a);
+                            break;
+                        }
+
+                        XobjArgs as = new XobjArgs(x, null);
                         if (xargsHead == null) {
                             xargsHead = as;
                         } else {
