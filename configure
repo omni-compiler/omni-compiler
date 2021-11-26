@@ -8596,10 +8596,10 @@ fi
 # set defulat platform and device for OpenACC
 if test "x${use_cuda}" = "xyes"; then
     ACC_DEFAULT_PLATFORM=CUDA
-    ACC_DEFAULT_DEVICE=Fermi
+    ACC_DEFAULT_DEVICE=Volta
 elif test "x${use_opencl}" = "xyes"; then
     ACC_DEFAULT_PLATFORM=OpenCL
-    ACC_DEFAULT_DEVICE=Fermi
+    ACC_DEFAULT_DEVICE=Volta
 elif test "x${use_pzcl}" = "xyes"; then
     ACC_DEFAULT_PLATFORM=PZCL
     ACC_DEFAULT_DEVICE=PEZYSC
