@@ -161,6 +161,9 @@ public class OMPtoACC extends OMPtranslate {
                                                   new OMPpragma[]{OMPpragma.TARGET},
                                                   new OMPpragma[]{OMPpragma.PARALLEL_FOR});
                 break;
+            case NUM_TEAMS:
+                l = clauseConverter.convertFromNumTeams(xobj, clause);
+                break;
             }
 
             if (OMP.hasError()) {

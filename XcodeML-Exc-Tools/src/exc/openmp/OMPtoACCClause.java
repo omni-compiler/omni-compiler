@@ -130,4 +130,16 @@ public class OMPtoACCClause {
         return Xcons.List(Xcons.String(ACCpragma.IF.toString()),
                           clause.getArg(2));
     }
+
+    public XobjList convertFromNumTeams(Xobject xobj,
+                                        XobjList clause) {
+        if (clause.Nargs() != 2) {
+            OMP.error((LineNo)xobj.getLineNo(),
+                      "Number of clauses is large or small.");
+            return null;
+        }
+
+        return Xcons.List(Xcons.String(ACCpragma.NUM_GANGS.toString()),
+                          clause.getArg(1));
+    }
 }

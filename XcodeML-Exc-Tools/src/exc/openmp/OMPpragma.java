@@ -51,6 +51,7 @@ public enum OMPpragma
     _DATA_PRIVATE_SHARED, /* using internally */
     TARGET_DATA_MAP,
     DIR_NUM_THREADS,
+    NUM_TEAMS,
 
     /* DATA_REDUCTION_* values are synchronized with
        OMPC_REDUCTION_* values in ompc_reduction.h */
