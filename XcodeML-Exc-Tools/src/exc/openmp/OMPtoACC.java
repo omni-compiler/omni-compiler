@@ -306,17 +306,16 @@ public class OMPtoACC extends OMPtranslate {
                 if (x.Opcode() == Xcode.OMP_PRAGMA ||
                     x.Opcode() == Xcode.LINEMARKER) {
                     if (x.Opcode() == Xcode.OMP_PRAGMA) {
-
-                        if (!isTaskOffloadPragma(OMPpragma.valueOf(x.getArg(0)))) {
-                            currentArgs.setNext(a);
-                            break;
-                        }
-
                         XobjArgs as = new XobjArgs(x, null);
                         if (xargsHead == null) {
                             xargsHead = as;
                         } else {
                             xargsHead.tail().setNext(as);
+                        }
+
+                        if (!isTaskOffloadPragma(OMPpragma.valueOf(x.getArg(0)))) {
+                            currentArgs.setNext(a.nextArgs());
+                            break;
                         }
                     }
                 } else {
