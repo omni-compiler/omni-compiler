@@ -151,7 +151,12 @@ public enum OMPpragma
     
     public static OMPpragma valueOf(Xobject x)
     {
-        return valueOf(x.getString());
+	try {
+	    return valueOf(x.getString());
+	} catch (IllegalArgumentException e) {
+	    OMP.fatal("unknown OpenMP pragama: "+ x.getString());
+	    return null;
+        }
     }
 
     /** create reduction expression */
