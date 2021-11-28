@@ -167,6 +167,9 @@ public class OMPtoACC extends OMPtranslate {
             case DATA_PRIVATE:
                 l = clauseConverter.convertFromPrivate(xobj, clause);
                 break;
+            case DATA_FIRSTPRIVATE:
+                l = clauseConverter.convertFromFirstprivate(xobj, clause);
+                break;
             }
 
             if (OMP.hasError()) {
