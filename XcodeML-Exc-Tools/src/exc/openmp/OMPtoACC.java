@@ -170,6 +170,18 @@ public class OMPtoACC extends OMPtranslate {
             case DATA_FIRSTPRIVATE:
                 l = clauseConverter.convertFromFirstprivate(xobj, clause);
                 break;
+            case DATA_REDUCTION_PLUS:
+            case DATA_REDUCTION_MINUS:
+            case DATA_REDUCTION_MUL:
+            case DATA_REDUCTION_LOGAND:
+            case DATA_REDUCTION_LOGOR:
+            case DATA_REDUCTION_MIN:
+            case DATA_REDUCTION_MAX:
+            case DATA_REDUCTION_BITAND:
+            case DATA_REDUCTION_BITOR:
+            case DATA_REDUCTION_BITXOR:
+                l = clauseConverter.convertFromReduction(xobj, clause);
+                break;
             }
 
             if (OMP.hasError()) {
