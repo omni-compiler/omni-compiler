@@ -350,7 +350,7 @@ public class OMPtoACC extends OMPtranslate {
             setIsConverted(true); // Always call it when it is converted to OpenACC.
             break;
         case PARALLEL_FOR:
-            if (stack.isInTaskOffloadPragma()) {
+            if (stack.isInTaskOffload()) {
                 convertFromParallelLoop(xobj, currentArgs);
                 setIsConverted(true); // Always call it when it is converted to OpenACC.
             }
@@ -361,7 +361,7 @@ public class OMPtoACC extends OMPtranslate {
         return currentArgs.getArg();
     }
 
-    private boolean isTaskOffloadPragma(OMPpragma directive) {
+    private boolean isTaskOffloadWithStructuredBlock(OMPpragma directive) {
         switch (directive) {
         // TODO: target, target teams, target parallel
         case TARGET_DATA:
@@ -395,7 +395,7 @@ public class OMPtoACC extends OMPtranslate {
     private void convertToNest(Xobject directive,
                                Xobject xobj, XobjArgs currentArgs) {
         // TODO: target, target teams, target parallel
-        if (isTaskOffloadPragma(OMPpragma.valueOf(directive))) {
+        if (isTaskOffloadWithStructuredBlock(OMPpragma.valueOf(directive))) {
             XobjArgs xargsHead = null;
             for (XobjArgs a = currentArgs.nextArgs(); a != null; a = a.nextArgs()) {
                 Xobject x = a.getArg();
@@ -409,7 +409,8 @@ public class OMPtoACC extends OMPtranslate {
                             xargsHead.tail().setNext(as);
                         }
 
-                        if (!isTaskOffloadPragma(OMPpragma.valueOf(x.getArg(0)))) {
+                        if (!isTaskOffloadWithStructuredBlock(OMPpragma.
+                                                              valueOf(x.getArg(0)))) {
                             currentArgs.setNext(a.nextArgs());
                             break;
                         }

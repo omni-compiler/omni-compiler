@@ -19,7 +19,7 @@ public class OMPtoACCStack {
         return stack.pop();
     }
 
-    public boolean isInTaskOffloadPragma() {
+    public boolean isInTaskOffload() {
         Iterator<OMPpragma> it = stack.iterator();
 
         // 'stack' contains self.
