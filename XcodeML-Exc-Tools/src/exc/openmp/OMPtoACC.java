@@ -185,6 +185,9 @@ public class OMPtoACC extends OMPtranslate {
             case THREAD_LIMIT:
                 l = clauseConverter.convertFromThreadLimit(xobj, clause);
                 break;
+            case DIR_NUM_THREADS:
+                l = clauseConverter.convertFromNumThreads(xobj, clause);
+                break;
             }
 
             if (OMP.hasError()) {

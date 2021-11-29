@@ -229,4 +229,16 @@ public class OMPtoACCClause {
         return Xcons.List(Xcons.String(ACCpragma.VECT_LEN.toString()),
                           clause.getArg(1));
     }
+
+    public XobjList convertFromNumThreads(Xobject xobj,
+                                          XobjList clause) {
+        if (clause.Nargs() != 2) {
+            OMP.error((LineNo)xobj.getLineNo(),
+                      "Number of clauses is large or small.");
+            return null;
+        }
+
+        return Xcons.List(Xcons.String(ACCpragma.VECT_LEN.toString()),
+                          clause.getArg(1));
+    }
 }
