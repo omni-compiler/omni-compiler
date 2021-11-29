@@ -137,6 +137,7 @@ void _ACC_program_init_mem(_ACC_program_t **desc, char * kernel_bin_start, char 
 
   //build program
   ret = clBuildProgram(program->program, 1, &_ACC_cl_device_ids[_ACC_cl_device_num], build_option,  NULL, NULL);
+
 #ifndef PEZY
   if(ret != CL_SUCCESS){
     //print build error

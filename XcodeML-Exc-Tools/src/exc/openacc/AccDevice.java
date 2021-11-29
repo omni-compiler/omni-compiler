@@ -40,7 +40,7 @@ public enum AccDevice {
                 return getNvidiaDevice(60);
             case "Volta":
                 return getNvidiaDevice(70);
-             default:
+            default:
                 return AccDevice.valueOf(deviceName);
             }
         }

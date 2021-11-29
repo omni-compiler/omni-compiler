@@ -90,7 +90,7 @@ public class BlockPrintWriter extends XobjectPrintWriter implements BasicBlockVi
         if(b instanceof PragmaBlock) {
             PragmaBlock pb = (PragmaBlock)b;
             indent();
-            println(" pramga=" + pb.getPragma());
+            println(" pragma=" + pb.getPragma());
             indent();
             println(" args=" + pb.getClauses());
         } else if(b instanceof FunctionBlock) {
