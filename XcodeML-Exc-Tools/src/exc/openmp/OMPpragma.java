@@ -52,6 +52,7 @@ public enum OMPpragma
     TARGET_DATA_MAP,
     DIR_NUM_THREADS,
     NUM_TEAMS,
+    THREAD_LIMIT,
 
     /* DATA_REDUCTION_* values are synchronized with
        OMPC_REDUCTION_* values in ompc_reduction.h */

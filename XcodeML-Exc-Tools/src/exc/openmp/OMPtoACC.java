@@ -182,6 +182,9 @@ public class OMPtoACC extends OMPtranslate {
             case DATA_REDUCTION_BITXOR:
                 l = clauseConverter.convertFromReduction(xobj, clause);
                 break;
+            case THREAD_LIMIT:
+                l = clauseConverter.convertFromThreadLimit(xobj, clause);
+                break;
             }
 
             if (OMP.hasError()) {
