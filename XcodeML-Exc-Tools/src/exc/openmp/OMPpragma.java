@@ -53,6 +53,14 @@ public enum OMPpragma
     DIR_NUM_THREADS,
     NUM_TEAMS,
     THREAD_LIMIT,
+    TARGET_DEVICE,
+    USE_DEVICE_PTR,
+    DEFAULTMAP,
+    DEPEND,
+    COLLAPSE,
+    DIST_SCHEDULE,
+    PROC_BIND,
+    DATA_LINEAR,
 
     /* DATA_REDUCTION_* values are synchronized with
        OMPC_REDUCTION_* values in ompc_reduction.h */
