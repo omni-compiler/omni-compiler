@@ -142,6 +142,9 @@ public class OMPtoACC extends OMPtranslate {
         XobjList gangClause = Xcons.List(Xcons.String(ACCpragma.GANG.toString()));
         XobjList accClauses = Xcons.List(gangClause);
 
+        XobjList ompThreadLimitClause = null;
+        XobjList ompNumThreadsClause = null;
+
         for (Iterator<Xobject> it = ompClauses.iterator(); it.hasNext();) {
             XobjList clause = (XobjList) it.next();
             if (clause.Opcode() != Xcode.LIST ||
@@ -183,10 +186,12 @@ public class OMPtoACC extends OMPtranslate {
                 l = clauseConverter.convertFromReduction(xobj, clause);
                 break;
             case THREAD_LIMIT:
-                l = clauseConverter.convertFromThreadLimit(xobj, clause);
+                ompThreadLimitClause =
+                    clauseConverter.convertFromThreadLimit(xobj, clause);
                 break;
             case DIR_NUM_THREADS:
-                l = clauseConverter.convertFromNumThreads(xobj, clause);
+                ompNumThreadsClause =
+                    clauseConverter.convertFromNumThreads(xobj, clause);
                 break;
             }
 
@@ -197,6 +202,16 @@ public class OMPtoACC extends OMPtranslate {
             if (l != null) {
                 accClauses.add(l);
             }
+        }
+
+        // If 'thread_limit()' and 'num_threads()' are specified together,
+        // 'num_threads()' will take precedence.
+        if (ompThreadLimitClause != null && ompNumThreadsClause != null) {
+            accClauses.add(ompNumThreadsClause);
+        } else if (ompNumThreadsClause != null) {
+            accClauses.add(ompNumThreadsClause);
+        } else if (ompThreadLimitClause != null) {
+            accClauses.add(ompThreadLimitClause);
         }
 
         currentArgs.setArg(createAccPragma(ACCpragma.PARALLEL_LOOP,
