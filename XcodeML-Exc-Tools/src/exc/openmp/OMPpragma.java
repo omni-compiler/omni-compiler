@@ -55,6 +55,7 @@ public enum OMPpragma
     THREAD_LIMIT,
     TARGET_DEVICE,
     USE_DEVICE_PTR,
+    IS_DEVICE_PTR,
     DEFAULTMAP,
     DEPEND,
     COLLAPSE,

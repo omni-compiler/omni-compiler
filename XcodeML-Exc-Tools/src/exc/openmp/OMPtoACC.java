@@ -73,7 +73,9 @@ public class OMPtoACC extends OMPtranslate {
         case TARGET_DEVICE:
             return "device";
         case USE_DEVICE_PTR:
-            return "use_device_ptr, is_device_ptr";
+            return "use_device_ptr";
+        case IS_DEVICE_PTR:
+            return "is_device_ptr";
         case DEFAULTMAP:
             return "defaultmap";
         case DIR_NOWAIT:
@@ -231,7 +233,7 @@ public class OMPtoACC extends OMPtranslate {
                     clauseConverter.convertFromNumThreads(xobj, clause);
                 break;
             case TARGET_DEVICE:
-            case USE_DEVICE_PTR:
+            case IS_DEVICE_PTR:
             case DEFAULTMAP:
             case DIR_NOWAIT:
             case DEPEND:
@@ -367,6 +369,13 @@ public class OMPtoACC extends OMPtranslate {
                 setIsConverted(true); // Always call it when it is converted to OpenACC.
             }
             break;
+        default:
+            if (stack.isInTaskOffload()) {
+                OMP.error((LineNo)xobj.getLineNo(),
+                          "Cannot nest a non-taskoffload directive" +
+                          " inside a taskoffload directive.");
+                return null;
+            }
         }
 
         // return converted xobject.
