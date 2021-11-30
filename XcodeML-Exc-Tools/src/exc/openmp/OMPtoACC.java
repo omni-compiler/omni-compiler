@@ -346,11 +346,23 @@ public class OMPtoACC extends OMPtranslate {
             setIsConverted(true); // Always call it when it is converted to OpenACC.
             break;
         case TARGET_TEAMS_DISTRIBUTE_PARALLEL_LOOP:
+            if (stack.isInTaskOffloadWithForLoop()) {
+                OMP.error((LineNo)xobj.getLineNo(),
+                          "Cannot nest taskoffload for-loop inside taskoffload for-loop.");
+                return null;
+            }
+
             convertFromTargetTeamsDistributeParallelLoop(xobj, currentArgs);
             setIsConverted(true); // Always call it when it is converted to OpenACC.
             break;
         case PARALLEL_FOR:
             if (stack.isInTaskOffload()) {
+                if (stack.isInTaskOffloadWithForLoop()) {
+                    OMP.error((LineNo)xobj.getLineNo(),
+                              "Cannot nest taskoffload for-loop inside taskoffload for-loop.");
+                    return null;
+                }
+
                 convertFromParallelLoop(xobj, currentArgs);
                 setIsConverted(true); // Always call it when it is converted to OpenACC.
             }
@@ -443,6 +455,10 @@ public class OMPtoACC extends OMPtranslate {
             if (directive.Opcode() == Xcode.STRING) {
                 convertToNest(directive, xobj, currentArgs);
                 xobj = ompToAccForDirective(directive, xobj, currentArgs);
+
+                if (OMP.hasError()) {
+                    return;
+                }
             } else {
                 OMP.error((LineNo)xobj.getLineNo(),
                           "directive is not specified.");
