@@ -42,6 +42,17 @@ public class OMPtoACCDirectiveTargetData extends OMPtoACCDirective {
                             new OMPpragma[]{OMPpragma.TARGET_DATA},
                             new OMPpragma[]{});
                 break;
+            case TARGET_DEVICE:
+            case USE_DEVICE_PTR:
+                OMP.error((LineNo)xobj.getLineNo(),
+                          "Not implemented clause. ('" +
+                          notImplementedClauseStr(pragmaClause) +
+                          "').");
+                break;
+            default:
+                OMP.error((LineNo)xobj.getLineNo(),
+                          "Cannot be specified is cause.");
+                break;
             }
 
             if (OMP.hasError()) {
