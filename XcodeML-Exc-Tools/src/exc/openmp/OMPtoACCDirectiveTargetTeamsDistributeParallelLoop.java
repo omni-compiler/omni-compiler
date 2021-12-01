@@ -4,7 +4,7 @@ import exc.object.*;
 import exc.openacc.ACCpragma;
 import java.util.Iterator;
 
-public class OMPtoACCDirectiveTargetTeamsDistributeParallelLoop  extends OMPtoACCDirective {
+public class OMPtoACCDirectiveTargetTeamsDistributeParallelLoop extends OMPtoACCDirective {
     public OMPtoACCDirectiveTargetTeamsDistributeParallelLoop() {
         super();
     }
@@ -36,24 +36,12 @@ public class OMPtoACCDirectiveTargetTeamsDistributeParallelLoop  extends OMPtoAC
             }
 
             XobjList l = null;
-            switch (OMPpragma.valueOf(clause.getArg(0))) {
+            OMPpragma pragmaClause = OMPpragma.valueOf(clause.getArg(0));
+            switch (pragmaClause) {
             case TARGET_DATA_MAP:
-                l = clauseConverter.convertFromMap(xobj, clause);
-                break;
-            case DIR_IF:
-                l = clauseConverter.convertFromIf(xobj, clause,
-                                                  new OMPpragma[]{OMPpragma.TARGET},
-                                                  new OMPpragma[]{OMPpragma.PARALLEL_FOR});
-                break;
             case NUM_TEAMS:
-                l = clauseConverter.convertFromNumTeams(xobj, clause);
-                break;
             case DATA_PRIVATE:
-                l = clauseConverter.convertFromPrivate(xobj, clause);
-                break;
             case DATA_FIRSTPRIVATE:
-                l = clauseConverter.convertFromFirstprivate(xobj, clause);
-                break;
             case DATA_REDUCTION_PLUS:
             case DATA_REDUCTION_MINUS:
             case DATA_REDUCTION_MUL:
@@ -64,15 +52,21 @@ public class OMPtoACCDirectiveTargetTeamsDistributeParallelLoop  extends OMPtoAC
             case DATA_REDUCTION_BITAND:
             case DATA_REDUCTION_BITOR:
             case DATA_REDUCTION_BITXOR:
-                l = clauseConverter.convertFromReduction(xobj, clause);
+                l = clauseConverters.get(pragmaClause).convert(xobj, clause);
+                break;
+            case DIR_IF:
+                l = clauseConverters.get(pragmaClause).
+                    convert(xobj, clause,
+                            new OMPpragma[]{OMPpragma.TARGET},
+                            new OMPpragma[]{OMPpragma.PARALLEL_FOR});
                 break;
             case THREAD_LIMIT:
                 ompThreadLimitClause =
-                    clauseConverter.convertFromThreadLimit(xobj, clause);
+                    clauseConverters.get(pragmaClause).convert(xobj, clause);
                 break;
             case DIR_NUM_THREADS:
                 ompNumThreadsClause =
-                    clauseConverter.convertFromNumThreads(xobj, clause);
+                    clauseConverters.get(pragmaClause).convert(xobj, clause);
                 break;
             case TARGET_DEVICE:
             case IS_DEVICE_PTR:
@@ -91,7 +85,7 @@ public class OMPtoACCDirectiveTargetTeamsDistributeParallelLoop  extends OMPtoAC
             case DIR_ORDERED:
                 OMP.error((LineNo)xobj.getLineNo(),
                           "Not implemented clause. ('" +
-                          notImplementedClauseStr(OMPpragma.valueOf(clause.getArg(0))) +
+                          notImplementedClauseStr(pragmaClause) +
                           "').");
                 break;
             default:

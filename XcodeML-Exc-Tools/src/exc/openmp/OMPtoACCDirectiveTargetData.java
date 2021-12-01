@@ -31,13 +31,16 @@ public class OMPtoACCDirectiveTargetData extends OMPtoACCDirective {
             }
 
             XobjList l = null;
-            switch (OMPpragma.valueOf(clause.getArg(0))) {
+            OMPpragma pragmaClause = OMPpragma.valueOf(clause.getArg(0));
+            switch (pragmaClause) {
             case TARGET_DATA_MAP:
-                l = clauseConverter.convertFromMap(xobj, clause);
+                l = clauseConverters.get(pragmaClause).convert(xobj, clause);
                 break;
             case DIR_IF:
-                l = clauseConverter.convertFromIf(xobj, clause,
-                                                  new OMPpragma[]{OMPpragma.TARGET_DATA});
+                l = clauseConverters.get(pragmaClause).
+                    convert(xobj, clause,
+                            new OMPpragma[]{OMPpragma.TARGET_DATA},
+                            new OMPpragma[]{});
                 break;
             }
 

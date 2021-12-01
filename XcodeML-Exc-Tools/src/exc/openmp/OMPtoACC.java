@@ -22,7 +22,6 @@ public class OMPtoACC extends OMPtranslate {
     private String ompcMainOrgFunc = transPragma.mainFunc + "_org";
 
     private OMPtoACCStack stack = new OMPtoACCStack();
-    //private OMPtoACCDirective directiveConverter = new OMPtoACCDirective();
     private HashMap<OMPpragma, OMPtoACCDirective> directiveConverters =
         new HashMap<>() {
             {

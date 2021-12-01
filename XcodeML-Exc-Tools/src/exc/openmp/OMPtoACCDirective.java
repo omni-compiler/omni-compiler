@@ -2,9 +2,32 @@ package exc.openmp;
 
 import exc.object.*;
 import exc.openacc.ACCpragma;
+import java.util.HashMap;
 
 public class OMPtoACCDirective {
-    protected OMPtoACCClause clauseConverter = new OMPtoACCClause();
+    protected HashMap<OMPpragma, OMPtoACCClause> clauseConverters =
+        new HashMap<>() {
+            {
+                put(OMPpragma.DATA_FIRSTPRIVATE, new OMPtoACCClauseFirstprivate());
+                put(OMPpragma.DIR_IF, new OMPtoACCClauseIf());
+                put(OMPpragma.TARGET_DATA_MAP, new OMPtoACCClauseMap());
+                put(OMPpragma.NUM_TEAMS, new OMPtoACCClauseNumTeams());
+                put(OMPpragma.DIR_NUM_THREADS, new OMPtoACCClauseNumThreads());
+                put(OMPpragma.DATA_PRIVATE, new OMPtoACCClausePrivate());
+                put(OMPpragma.DATA_REDUCTION_PLUS, new OMPtoACCClauseReduction());
+                put(OMPpragma.DATA_REDUCTION_MINUS, new OMPtoACCClauseReduction());
+                put(OMPpragma.DATA_REDUCTION_MUL, new OMPtoACCClauseReduction());
+                put(OMPpragma.DATA_REDUCTION_LOGAND, new OMPtoACCClauseReduction());
+                put(OMPpragma.DATA_REDUCTION_LOGOR, new OMPtoACCClauseReduction());
+                put(OMPpragma.DATA_REDUCTION_MIN, new OMPtoACCClauseReduction());
+                put(OMPpragma.DATA_REDUCTION_MAX, new OMPtoACCClauseReduction());
+                put(OMPpragma.DATA_REDUCTION_BITAND, new OMPtoACCClauseReduction());
+                put(OMPpragma.DATA_REDUCTION_BITOR, new OMPtoACCClauseReduction());
+                put(OMPpragma.DATA_REDUCTION_BITXOR, new OMPtoACCClauseReduction());
+                put(OMPpragma.THREAD_LIMIT, new OMPtoACCClauseThreadLimit());
+            }
+        };
+
 
     public OMPtoACCDirective() {
     }

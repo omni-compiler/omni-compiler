@@ -33,11 +33,13 @@ public class OMPtoACCDirectiveParallelLoop extends OMPtoACCDirective {
             }
 
             XobjList l = null;
-            switch (OMPpragma.valueOf(clause.getArg(0))) {
+            OMPpragma pragmaClause = OMPpragma.valueOf(clause.getArg(0));
+            switch (pragmaClause) {
             case DIR_IF:
-                l = clauseConverter.convertFromIf(xobj, clause,
-                                                  new OMPpragma[]{},
-                                                  new OMPpragma[]{OMPpragma.PARALLEL_FOR});
+                l = clauseConverters.get(pragmaClause).
+                    convert(xobj, clause,
+                            new OMPpragma[]{},
+                            new OMPpragma[]{OMPpragma.PARALLEL_FOR});
                 break;
             }
 
