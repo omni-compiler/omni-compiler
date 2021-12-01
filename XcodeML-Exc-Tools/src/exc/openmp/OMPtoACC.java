@@ -4,6 +4,7 @@ import xcodeml.util.XmOption;
 import exc.object.*;
 import exc.block.*;
 import java.util.Iterator;
+import java.util.HashMap;
 
 public class OMPtoACC extends OMPtranslate {
     private static String MAIN_ARGC_NAME = "argc";
@@ -21,7 +22,16 @@ public class OMPtoACC extends OMPtranslate {
     private String ompcMainOrgFunc = transPragma.mainFunc + "_org";
 
     private OMPtoACCStack stack = new OMPtoACCStack();
-    private OMPtoACCDirective directiveConverter = new OMPtoACCDirective();
+    //private OMPtoACCDirective directiveConverter = new OMPtoACCDirective();
+    private HashMap<OMPpragma, OMPtoACCDirective> directiveConverters =
+        new HashMap<>() {
+            {
+                put(OMPpragma.TARGET_DATA, new OMPtoACCDirectiveTargetData());
+                put(OMPpragma.TARGET_TEAMS_DISTRIBUTE_PARALLEL_LOOP,
+                    new OMPtoACCDirectiveTargetTeamsDistributeParallelLoop());
+                put(OMPpragma.PARALLEL_FOR, new OMPtoACCDirectiveParallelLoop());
+            }
+        };
 
     private boolean isConverted = false;
 
@@ -83,7 +93,7 @@ public class OMPtoACC extends OMPtranslate {
             break;
         */
         case TARGET_DATA:
-            directiveConverter.convertFromTargetData(xobj, currentArgs);
+            directiveConverters.get(pragmaDirective).convert(xobj, currentArgs);
             setIsConverted(true); // Always call it when it is converted to OpenACC.
             break;
         case TARGET_TEAMS_DISTRIBUTE_PARALLEL_LOOP:
@@ -93,8 +103,7 @@ public class OMPtoACC extends OMPtranslate {
                 return null;
             }
 
-            directiveConverter.
-                convertFromTargetTeamsDistributeParallelLoop(xobj, currentArgs);
+            directiveConverters.get(pragmaDirective).convert(xobj, currentArgs);
             setIsConverted(true); // Always call it when it is converted to OpenACC.
             break;
         case PARALLEL_FOR:
@@ -105,7 +114,7 @@ public class OMPtoACC extends OMPtranslate {
                     return null;
                 }
 
-                directiveConverter.convertFromParallelLoop(xobj, currentArgs);
+                directiveConverters.get(pragmaDirective).convert(xobj, currentArgs);
                 setIsConverted(true); // Always call it when it is converted to OpenACC.
             }
             break;
