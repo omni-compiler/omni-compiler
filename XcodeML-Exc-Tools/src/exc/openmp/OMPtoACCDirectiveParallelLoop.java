@@ -35,11 +35,45 @@ public class OMPtoACCDirectiveParallelLoop extends OMPtoACCDirective {
             XobjList l = null;
             OMPpragma pragmaClause = OMPpragma.valueOf(clause.getArg(0));
             switch (pragmaClause) {
+            case DATA_PRIVATE:
+            case DATA_FIRSTPRIVATE:
+            case DIR_NUM_THREADS:
+            case DATA_REDUCTION_PLUS:
+            case DATA_REDUCTION_MINUS:
+            case DATA_REDUCTION_MUL:
+            case DATA_REDUCTION_LOGAND:
+            case DATA_REDUCTION_LOGOR:
+            case DATA_REDUCTION_MIN:
+            case DATA_REDUCTION_MAX:
+            case DATA_REDUCTION_BITAND:
+            case DATA_REDUCTION_BITOR:
+            case DATA_REDUCTION_BITXOR:
+                l = clauseConverters.get(pragmaClause).convert(xobj, clause);
+                break;
             case DIR_IF:
                 l = clauseConverters.get(pragmaClause).
                     convert(xobj, clause,
                             new OMPpragma[]{},
                             new OMPpragma[]{OMPpragma.PARALLEL_FOR});
+                break;
+            case DATA_DEFAULT:
+            case DATA_SHARED:
+            case DATA_COPYIN:
+            case PROC_BIND:
+            case DATA_LASTPRIVATE:
+            case DATA_LINEAR:
+            case DIR_SCHEDULE:
+            case COLLAPSE:
+            case DIR_ORDERED:
+            case DIR_NOWAIT:
+                OMP.error((LineNo)xobj.getLineNo(),
+                          "Not implemented clause. ('" +
+                          notImplementedClauseStr(pragmaClause) +
+                          "').");
+                break;
+            default:
+                OMP.error((LineNo)xobj.getLineNo(),
+                          "Cannot be specified is cause.");
                 break;
             }
 
