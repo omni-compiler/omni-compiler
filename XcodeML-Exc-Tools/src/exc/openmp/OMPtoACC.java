@@ -25,6 +25,7 @@ public class OMPtoACC extends OMPtranslate {
     private HashMap<OMPpragma, OMPtoACCDirective> directiveConverters =
         new HashMap<>() {
             {
+                put(OMPpragma.TARGET, new OMPtoACCDirectiveTarget());
                 put(OMPpragma.TARGET_DATA, new OMPtoACCDirectiveTargetData());
                 put(OMPpragma.TARGET_TEAMS_DISTRIBUTE_PARALLEL_LOOP,
                     new OMPtoACCDirectiveTargetTeamsDistributeParallelLoop());
@@ -91,6 +92,7 @@ public class OMPtoACC extends OMPtranslate {
             setIsConverted(true); // Always call it when it is converted to OpenACC.
             break;
         */
+        case TARGET:
         case TARGET_DATA:
             directiveConverters.get(pragmaDirective).convert(xobj, currentArgs);
             setIsConverted(true); // Always call it when it is converted to OpenACC.
@@ -133,6 +135,7 @@ public class OMPtoACC extends OMPtranslate {
     private boolean isTaskOffloadWithStructuredBlock(OMPpragma directive) {
         switch (directive) {
         // TODO: target, target teams, target parallel
+        case TARGET:
         case TARGET_DATA:
             return true;
         }
