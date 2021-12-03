@@ -36,6 +36,7 @@ public enum OMPpragma
     TARGET_DATA,        /* target data <clause_list> */
     TARGET_TEAMS_DISTRIBUTE_PARALLEL_LOOP, /* target teams distribute parallel for <clause_list> */
     TARGET,             /* target <clause_list> */
+    TARGET_TEAMS,       /* target teams <clause_list> */
 
     /*
      * clause

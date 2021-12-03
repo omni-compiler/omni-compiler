@@ -33,6 +33,7 @@ public class OMPtoACCStack {
             switch (p) {
             case TARGET:
             case TARGET_DATA:
+            case TARGET_TEAMS:
             case TARGET_TEAMS_DISTRIBUTE_PARALLEL_LOOP:
                 return true;
             }
