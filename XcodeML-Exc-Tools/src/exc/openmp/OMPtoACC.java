@@ -30,6 +30,8 @@ public class OMPtoACC extends OMPtranslate {
                 put(OMPpragma.TARGET_TEAMS, new OMPtoACCDirectiveTargetTeams());
                 put(OMPpragma.TARGET_TEAMS_DISTRIBUTE_PARALLEL_LOOP,
                     new OMPtoACCDirectiveTargetTeamsDistributeParallelLoop());
+                put(OMPpragma.DISTRIBUTE_PARALLEL_LOOP,
+                    new OMPtoACCDirectiveDistributeParallelLoop());
                 put(OMPpragma.PARALLEL_FOR, new OMPtoACCDirectiveParallelLoop());
             }
         };
@@ -100,6 +102,7 @@ public class OMPtoACC extends OMPtranslate {
             setIsConverted(true); // Always call it when it is converted to OpenACC.
             break;
         case TARGET_TEAMS_DISTRIBUTE_PARALLEL_LOOP:
+        case DISTRIBUTE_PARALLEL_LOOP:
             if (stack.isInTaskOffloadWithForLoop()) {
                 OMP.error((LineNo)xobj.getLineNo(),
                           "Cannot nest taskoffload for-loop inside taskoffload for-loop.");
