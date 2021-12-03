@@ -20,8 +20,7 @@ public class OMPtoACCDirectiveTargetTeamsDistributeParallelLoop extends OMPtoACC
         }
 
         XobjList ompClauses = (XobjList) xobj.getArg(1);
-        XobjList gangClause = Xcons.List(Xcons.String(ACCpragma.GANG.toString()));
-        XobjList accClauses = Xcons.List(gangClause);
+        XobjList accClauses = Xcons.List();
 
         XobjList ompThreadLimitClause = null;
         XobjList ompNumThreadsClause = null;

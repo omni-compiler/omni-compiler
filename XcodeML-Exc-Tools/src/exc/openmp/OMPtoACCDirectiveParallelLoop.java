@@ -20,8 +20,7 @@ public class OMPtoACCDirectiveParallelLoop extends OMPtoACCDirective {
         }
 
         XobjList ompClauses = (XobjList) xobj.getArg(1);
-        XobjList gangClause = Xcons.List(Xcons.String(ACCpragma.GANG.toString()));
-        XobjList accClauses = Xcons.List(gangClause);
+        XobjList accClauses = Xcons.List();
 
         for (Iterator<Xobject> it = ompClauses.iterator(); it.hasNext();) {
             XobjList clause = (XobjList) it.next();
