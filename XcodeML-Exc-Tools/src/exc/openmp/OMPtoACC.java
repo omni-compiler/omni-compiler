@@ -32,6 +32,7 @@ public class OMPtoACC extends OMPtranslate {
                     new OMPtoACCDirectiveTargetTeamsDistributeParallelLoop());
                 put(OMPpragma.DISTRIBUTE_PARALLEL_LOOP,
                     new OMPtoACCDirectiveDistributeParallelLoop());
+                put(OMPpragma.DISTRIBUTE, new OMPtoACCDirectiveDistribute());
                 put(OMPpragma.PARALLEL_FOR, new OMPtoACCDirectiveParallelLoop());
             }
         };
@@ -103,6 +104,7 @@ public class OMPtoACC extends OMPtranslate {
             break;
         case TARGET_TEAMS_DISTRIBUTE_PARALLEL_LOOP:
         case DISTRIBUTE_PARALLEL_LOOP:
+        case DISTRIBUTE:
             if (stack.isInTaskOffloadWithForLoop()) {
                 OMP.error((LineNo)xobj.getLineNo(),
                           "Cannot nest taskoffload for-loop inside taskoffload for-loop.");

@@ -36,6 +36,7 @@ public class OMPtoACCStack {
             case TARGET_TEAMS:
             case TARGET_TEAMS_DISTRIBUTE_PARALLEL_LOOP:
             case DISTRIBUTE_PARALLEL_LOOP:
+            case DISTRIBUTE:
                 return true;
             }
         }
@@ -59,6 +60,7 @@ public class OMPtoACCStack {
             switch (p) {
             case TARGET_TEAMS_DISTRIBUTE_PARALLEL_LOOP:
             case DISTRIBUTE_PARALLEL_LOOP:
+            case DISTRIBUTE:
             case PARALLEL_FOR:
                 return true;
             }
