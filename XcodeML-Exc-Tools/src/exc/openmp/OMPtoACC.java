@@ -38,6 +38,7 @@ public class OMPtoACC extends OMPtranslate {
                 put(OMPpragma.PARALLEL_FOR, new OMPtoACCDirectiveParallelLoop());
                 put(OMPpragma.PARALLEL, new OMPtoACCDirectiveParallel());
                 put(OMPpragma.FOR, new OMPtoACCDirectiveLoop());
+                put(OMPpragma.TEAMS, new OMPtoACCDirectiveTeams());
             }
         };
 
@@ -132,6 +133,7 @@ public class OMPtoACC extends OMPtranslate {
             }
             break;
         case PARALLEL:
+        case TEAMS:
             if (stack.isInTaskOffload()) {
                 directiveConverters.get(pragmaDirective).convert(xobj, currentArgs);
                 setIsConverted(true); // Always call it when it is converted to OpenACC.
@@ -158,6 +160,7 @@ public class OMPtoACC extends OMPtranslate {
         case TARGET_TEAMS:
             return true;
         case PARALLEL:
+        case TEAMS:
             if (stack.isInTaskOffload()) {
                 return true;
             }
