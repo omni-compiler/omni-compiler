@@ -70,11 +70,6 @@ public class OMPtoACCDirectiveTargetTeamsDistribute extends OMPtoACCDirective {
             case DATA_LASTPRIVATE:
             case COLLAPSE:
             case DIST_SCHEDULE:
-            case DATA_COPYIN:
-            case PROC_BIND:
-            case DATA_LINEAR:
-            case DIR_SCHEDULE:
-            case DIR_ORDERED:
                 OMP.error((LineNo)xobj.getLineNo(),
                           "Not implemented clause. ('" +
                           notImplementedClauseStr(pragmaClause) +
