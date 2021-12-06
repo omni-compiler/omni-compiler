@@ -30,6 +30,8 @@ public class OMPtoACC extends OMPtranslate {
                 put(OMPpragma.TARGET_TEAMS, new OMPtoACCDirectiveTargetTeams());
                 put(OMPpragma.TARGET_TEAMS_DISTRIBUTE_PARALLEL_LOOP,
                     new OMPtoACCDirectiveTargetTeamsDistributeParallelLoop());
+                put(OMPpragma.TARGET_TEAMS_DISTRIBUTE,
+                    new OMPtoACCDirectiveTargetTeamsDistribute());
                 put(OMPpragma.DISTRIBUTE_PARALLEL_LOOP,
                     new OMPtoACCDirectiveDistributeParallelLoop());
                 put(OMPpragma.DISTRIBUTE, new OMPtoACCDirectiveDistribute());
@@ -105,6 +107,7 @@ public class OMPtoACC extends OMPtranslate {
             setIsConverted(true); // Always call it when it is converted to OpenACC.
             break;
         case TARGET_TEAMS_DISTRIBUTE_PARALLEL_LOOP:
+        case TARGET_TEAMS_DISTRIBUTE:
         case DISTRIBUTE_PARALLEL_LOOP:
         case DISTRIBUTE:
             if (stack.isInTaskOffloadWithForLoop()) {

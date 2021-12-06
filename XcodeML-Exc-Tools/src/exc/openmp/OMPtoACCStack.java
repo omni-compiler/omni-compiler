@@ -35,6 +35,7 @@ public class OMPtoACCStack {
             case TARGET_DATA:
             case TARGET_TEAMS:
             case TARGET_TEAMS_DISTRIBUTE_PARALLEL_LOOP:
+            case TARGET_TEAMS_DISTRIBUTE:
             case DISTRIBUTE_PARALLEL_LOOP:
             case DISTRIBUTE:
                 return true;
@@ -59,6 +60,7 @@ public class OMPtoACCStack {
             //       teams distributea, teams distribute parallel for
             switch (p) {
             case TARGET_TEAMS_DISTRIBUTE_PARALLEL_LOOP:
+            case TARGET_TEAMS_DISTRIBUTE:
             case DISTRIBUTE_PARALLEL_LOOP:
             case DISTRIBUTE:
             case PARALLEL_FOR:
