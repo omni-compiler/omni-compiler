@@ -35,6 +35,7 @@ public class OMPtoACC extends OMPtranslate {
                 put(OMPpragma.DISTRIBUTE, new OMPtoACCDirectiveDistribute());
                 put(OMPpragma.PARALLEL_FOR, new OMPtoACCDirectiveParallelLoop());
                 put(OMPpragma.PARALLEL, new OMPtoACCDirectiveParallel());
+                put(OMPpragma.FOR, new OMPtoACCDirectiveLoop());
             }
         };
 
@@ -116,6 +117,7 @@ public class OMPtoACC extends OMPtranslate {
             setIsConverted(true); // Always call it when it is converted to OpenACC.
             break;
         case PARALLEL_FOR:
+        case FOR:
             if (stack.isInTaskOffload()) {
                 if (stack.isInTaskOffloadWithForLoop()) {
                     OMP.error((LineNo)xobj.getLineNo(),
@@ -270,7 +272,6 @@ public class OMPtoACC extends OMPtranslate {
         ompToAcc(xobj, null);
 
         OMP.debug("OMPtoACC: After convert:  " +  xobj);
-        System.out.println("OMPtoACC: After convert:  " +  xobj);
     }
 
     private XobjList getRefs(XobjList ids){

@@ -62,6 +62,7 @@ public class OMPtoACCStack {
             case DISTRIBUTE_PARALLEL_LOOP:
             case DISTRIBUTE:
             case PARALLEL_FOR:
+            case FOR:
                 return true;
             }
         }
