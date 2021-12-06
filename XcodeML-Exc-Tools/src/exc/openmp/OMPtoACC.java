@@ -34,6 +34,7 @@ public class OMPtoACC extends OMPtranslate {
                     new OMPtoACCDirectiveDistributeParallelLoop());
                 put(OMPpragma.DISTRIBUTE, new OMPtoACCDirectiveDistribute());
                 put(OMPpragma.PARALLEL_FOR, new OMPtoACCDirectiveParallelLoop());
+                put(OMPpragma.PARALLEL, new OMPtoACCDirectiveParallel());
             }
         };
 
@@ -121,7 +122,12 @@ public class OMPtoACC extends OMPtranslate {
                               "Cannot nest taskoffload for-loop inside taskoffload for-loop.");
                     return null;
                 }
-
+                directiveConverters.get(pragmaDirective).convert(xobj, currentArgs);
+                setIsConverted(true); // Always call it when it is converted to OpenACC.
+            }
+            break;
+        case PARALLEL:
+            if (stack.isInTaskOffload()) {
                 directiveConverters.get(pragmaDirective).convert(xobj, currentArgs);
                 setIsConverted(true); // Always call it when it is converted to OpenACC.
             }
@@ -146,6 +152,10 @@ public class OMPtoACC extends OMPtranslate {
         case TARGET_DATA:
         case TARGET_TEAMS:
             return true;
+        case PARALLEL:
+            if (stack.isInTaskOffload()) {
+                return true;
+            }
         }
         return false;
     }
@@ -260,6 +270,7 @@ public class OMPtoACC extends OMPtranslate {
         ompToAcc(xobj, null);
 
         OMP.debug("OMPtoACC: After convert:  " +  xobj);
+        System.out.println("OMPtoACC: After convert:  " +  xobj);
     }
 
     private XobjList getRefs(XobjList ids){
