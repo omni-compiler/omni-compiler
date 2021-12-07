@@ -34,6 +34,7 @@ public class OMPtoACCStack {
             case TARGET:
             case TARGET_DATA:
             case TARGET_TEAMS:
+            case TARGET_PARALLEL:
             case TARGET_TEAMS_DISTRIBUTE_PARALLEL_LOOP:
             case TARGET_TEAMS_DISTRIBUTE:
             case DISTRIBUTE_PARALLEL_LOOP:
