@@ -22,9 +22,6 @@ public class OMPtoACCDirectiveDistribute extends OMPtoACCDirective {
         XobjList ompClauses = (XobjList) xobj.getArg(1);
         XobjList accClauses = Xcons.List();
 
-        XobjList ompThreadLimitClause = null;
-        XobjList ompNumThreadsClause = null;
-
         for (Iterator<Xobject> it = ompClauses.iterator(); it.hasNext();) {
             XobjList clause = (XobjList) it.next();
             if (clause.Opcode() != Xcode.LIST ||
@@ -62,16 +59,6 @@ public class OMPtoACCDirectiveDistribute extends OMPtoACCDirective {
             if (l != null) {
                 accClauses.add(l);
             }
-        }
-
-        // If 'thread_limit()' and 'num_threads()' are specified together,
-        // 'num_threads()' will take precedence.
-        if (ompThreadLimitClause != null && ompNumThreadsClause != null) {
-            accClauses.add(ompNumThreadsClause);
-        } else if (ompNumThreadsClause != null) {
-            accClauses.add(ompNumThreadsClause);
-        } else if (ompThreadLimitClause != null) {
-            accClauses.add(ompThreadLimitClause);
         }
 
         currentArgs.setArg(createAccPragma(ACCpragma.PARALLEL_LOOP,
