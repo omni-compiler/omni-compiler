@@ -67,6 +67,13 @@ public class OMPtoACCStack {
             case DISTRIBUTE_PARALLEL_LOOP:
             case DISTRIBUTE:
                 return true;
+            case TEAMS_DISTRIBUTE:
+            case PARALLEL_FOR:
+            case FOR:
+                if (isInTaskOffload()) {
+                    return true;
+                }
+                return false;
             }
         }
 
