@@ -42,7 +42,7 @@ public class OMPtoACCClauseIf extends OMPtoACCClause {
                 OMP.warning((LineNo)xobj.getLineNo(),
                             "modifier('" +
                             ifModifierStr(OMPpragma.valueOf(modifierStr)) +
-                            "') cannot be specified. ignore.");
+                            "') cannot be specified. Ignore 'if' clause.");
                 return null;
             } else if (!Arrays.asList(modifiers).
                        contains(OMPpragma.valueOf(modifierStr))) {
