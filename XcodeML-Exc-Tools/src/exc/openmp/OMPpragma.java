@@ -44,6 +44,7 @@ public enum OMPpragma
     TARGET_TEAMS_DISTRIBUTE, /* target teams distribute <clause_list>  */
     TEAMS,              /* teams <clause_list> */
     TEAMS_DISTRIBUTE,   /* teams distribute <clause_list> */
+    TEAMS_DISTRIBUTE_PARALLEL_LOOP, /* teams distribute parallel for <clause_list> */
 
     /*
      * clause
