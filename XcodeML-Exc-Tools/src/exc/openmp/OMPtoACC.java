@@ -91,8 +91,25 @@ public class OMPtoACC extends OMPtranslate {
        isConverted = b;
     }
 
+    private void deleteNestedTaskoffloadForLoop(XobjList xobj,
+                                                XobjArgs currentArgs,
+                                                XobjArgs prevArgs) {
+        XobjArgs args = currentArgs;
+        Xobject x = prevArgs.getArg();
+
+        // Delete LINEMARKER.
+        // NOTE: If LINEMARKER is exists, OpenACC translator will fail.
+        if (x != null && x.Opcode() == Xcode.LINEMARKER) {
+            args = prevArgs;
+        }
+        args.setArg(xobj.getArg(2));
+        args.setNext(currentArgs.nextArgs());
+    }
+
     private Xobject ompToAccForDirective(Xobject directive,
-                                         Xobject xobj, XobjArgs currentArgs) {
+                                         Xobject xobj,
+                                         XobjArgs currentArgs,
+                                         XobjArgs prevArgs) {
         OMPpragma pragmaDirective = OMPpragma.valueOf(directive);
 
         switch (pragmaDirective) {
@@ -121,9 +138,13 @@ public class OMPtoACC extends OMPtranslate {
         case DISTRIBUTE_PARALLEL_LOOP:
         case DISTRIBUTE:
             if (stack.isInTaskOffloadWithForLoop()) {
-                OMP.error((LineNo)xobj.getLineNo(),
-                          "Cannot nest taskoffload for-loop inside taskoffload for-loop.");
-                return null;
+                OMP.warning((LineNo)xobj.getLineNo(),
+                            "Cannot nest taskoffload for-loop" +
+                            " inside taskoffload for-loop." +
+                            " Ignore nested taskoffload for-loop");
+                deleteNestedTaskoffloadForLoop((XobjList) xobj,
+                                               currentArgs,
+                                               prevArgs);
             }
 
             directiveConverters.get(pragmaDirective).convert(xobj, currentArgs);
@@ -135,10 +156,15 @@ public class OMPtoACC extends OMPtranslate {
         case FOR:
             if (stack.isInTaskOffload()) {
                 if (stack.isInTaskOffloadWithForLoop()) {
-                    OMP.error((LineNo)xobj.getLineNo(),
-                              "Cannot nest taskoffload for-loop inside taskoffload for-loop.");
-                    return null;
+                    OMP.warning((LineNo)xobj.getLineNo(),
+                                "Cannot nest taskoffload for-loop" +
+                                " inside taskoffload for-loop." +
+                                " Ignore nested taskoffload for-loop");
+                    deleteNestedTaskoffloadForLoop((XobjList) xobj,
+                                                   currentArgs,
+                                                   prevArgs);
                 }
+
                 directiveConverters.get(pragmaDirective).convert(xobj, currentArgs);
                 setIsConverted(true); // Always call it when it is converted to OpenACC.
             }
@@ -239,7 +265,9 @@ public class OMPtoACC extends OMPtranslate {
         return;
     }
 
-    private void ompToAcc(Xobject xobj, XobjArgs currentArgs) {
+    private void ompToAcc(Xobject xobj,
+                          XobjArgs currentArgs,
+                          XobjArgs prevArgs) {
         if (xobj == null || !(xobj instanceof XobjList)) {
             return;
         }
@@ -252,8 +280,9 @@ public class OMPtoACC extends OMPtranslate {
 
             if (directive.Opcode() == Xcode.STRING) {
                 convertToNest(directive, xobj, currentArgs);
-                xobj = ompToAccForDirective(directive, xobj, currentArgs);
-
+                xobj = ompToAccForDirective(directive, xobj,
+                                            currentArgs,
+                                            prevArgs);
                 if (OMP.hasError()) {
                     return;
                 }
@@ -265,10 +294,11 @@ public class OMPtoACC extends OMPtranslate {
         }
 
         for (XobjArgs a = xobj.getArgs(); a != null; a = a.nextArgs()) {
-            ompToAcc(a.getArg(), a);
+            ompToAcc(a.getArg(), a, prevArgs);
             if (OMP.hasError()) {
                 return;
             }
+            prevArgs = a;
         }
 
         if (opcode == Xcode.OMP_PRAGMA) {
@@ -287,7 +317,7 @@ public class OMPtoACC extends OMPtranslate {
 
         OMP.debug("OMPtoACC: Before convert: " +  xobj);
 
-        ompToAcc(xobj, null);
+        ompToAcc(xobj, null, null);
 
         OMP.debug("OMPtoACC: After convert:  " +  xobj);
     }
