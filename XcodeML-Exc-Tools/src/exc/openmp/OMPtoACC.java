@@ -265,6 +265,20 @@ public class OMPtoACC extends OMPtranslate {
         return;
     }
 
+    private OMPtoACCStackEntry createStackEntry(OMPpragma pragma,
+                                                XobjArgs currentArgs) {
+        XobjArgs next = currentArgs.nextArgs();
+
+        // NOET: The related structured-blocks(COMPOUND_STATEMENT)
+        //       also need to be managed.
+        if (next != null && next.getArg() != null &&
+            next.getArg().Opcode() == Xcode.COMPOUND_STATEMENT) {
+            return new OMPtoACCStackEntry(pragma, next.getArg());
+        }
+
+        return new OMPtoACCStackEntry(pragma);
+    }
+
     private void ompToAcc(Xobject xobj,
                           XobjArgs currentArgs,
                           XobjArgs prevArgs) {
@@ -276,7 +290,8 @@ public class OMPtoACC extends OMPtranslate {
         if (opcode == Xcode.OMP_PRAGMA) {
             Xobject directive = xobj.left();
 
-            stack.push(OMPpragma.valueOf(directive));
+            stack.push(createStackEntry(OMPpragma.valueOf(directive),
+                                        currentArgs));
 
             if (directive.Opcode() == Xcode.STRING) {
                 convertToNest(directive, xobj, currentArgs);
@@ -301,7 +316,9 @@ public class OMPtoACC extends OMPtranslate {
             prevArgs = a;
         }
 
-        if (opcode == Xcode.OMP_PRAGMA) {
+        if (((opcode == Xcode.OMP_PRAGMA ||
+              opcode == Xcode.COMPOUND_STATEMENT)) &&
+            stack.isPop(xobj)) {
             stack.pop();
         }
 
