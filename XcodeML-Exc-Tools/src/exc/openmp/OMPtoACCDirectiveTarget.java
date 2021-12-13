@@ -21,6 +21,7 @@ public class OMPtoACCDirectiveTarget extends OMPtoACCDirective {
 
         XobjList ompClauses = (XobjList) xobj.getArg(1);
         XobjList accClauses = Xcons.List();
+        XobjList accDataClauses = Xcons.List();
         for (Iterator<Xobject> it = ompClauses.iterator(); it.hasNext();) {
             XobjList clause = (XobjList) it.next();
             if (clause.Opcode() != Xcode.LIST ||
@@ -65,11 +66,20 @@ public class OMPtoACCDirectiveTarget extends OMPtoACCDirective {
             }
 
             if (l != null) {
-                accClauses.add(l);
+                if (pragmaClause == OMPpragma.TARGET_DATA_MAP) {
+                    accDataClauses.add(l);
+                } else {
+                    accClauses.add(l);
+                }
             }
         }
 
-        currentArgs.setArg(createAccPragma(ACCpragma.PARALLEL,
-                                           accClauses, xobj, 2));
+        XobjList accData = createAccPragma(ACCpragma.DATA,
+                                           accDataClauses, xobj);
+        XobjList acc = createAccPragma(ACCpragma.PARALLEL,
+                                       accClauses, xobj, 2);
+        XobjArgs accArgs = new XobjArgs(acc, currentArgs.nextArgs());
+        currentArgs.setNext(accArgs);
+        currentArgs.setArg(accData);
     }
 }

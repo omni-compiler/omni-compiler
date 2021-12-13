@@ -72,20 +72,27 @@ public class OMPtoACCDirective {
     }
 
     protected XobjList createAccPragma(ACCpragma directive, XobjList clauses,
-                                       Xobject xobj, int addArgsHeadPos) {
+                                       Xobject xobj, Integer addArgsHeadPos) {
         XobjList accPragma = Xcons.List(Xcode.ACC_PRAGMA, xobj.Type());
         accPragma.setLineNo(xobj.getLineNo());
         accPragma.add(Xcons.String(directive.toString()));
         accPragma.add(clauses);
 
-        int pos = addArgsHeadPos;
-        Xobject arg = null;
-        while ((arg = xobj.getArgOrNull(pos)) != null) {
-            accPragma.add(arg);
-            pos++;
+        if (addArgsHeadPos != null) {
+            int pos = addArgsHeadPos.intValue();
+            Xobject arg = null;
+            while ((arg = xobj.getArgOrNull(pos)) != null) {
+                accPragma.add(arg);
+                pos++;
+            }
         }
 
         return accPragma;
+    }
+
+    protected XobjList createAccPragma(ACCpragma directive, XobjList clauses,
+                                       Xobject xobj) {
+        return createAccPragma(directive, clauses, xobj, null);
     }
 
     public void convert(Xobject xobj,
