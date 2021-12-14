@@ -72,7 +72,7 @@ public class OMPtoACCDirectiveParallelLoop extends OMPtoACCDirective {
                 break;
             default:
                 OMP.error((LineNo)xobj.getLineNo(),
-                          "Cannot be specified is cause.");
+                          "Cannot be specified is clause.");
                 break;
             }
 
