@@ -269,9 +269,13 @@ public class OMPtoACC extends OMPtranslate {
                                                 XobjArgs currentArgs) {
         XobjArgs next = currentArgs.nextArgs();
 
-        // NOET: The related structured-blocks(COMPOUND_STATEMENT)
-        //       also need to be managed.
-        if (next != null && next.getArg() != null &&
+        // NOET: In the case of TARGET_DATA,
+        //       the levels of pragma and structured-block(COMPOUND_STATEMENT)
+        //       are the same in XcodeML.
+        //       So, TARGET_DATA needs to manage the
+        //       related structured-block(COMPOUND_STATEMENT).
+        if (pragma == OMPpragma.TARGET_DATA &&
+            next != null && next.getArg() != null &&
             next.getArg().Opcode() == Xcode.COMPOUND_STATEMENT) {
             return new OMPtoACCStackEntry(pragma, next.getArg());
         }
