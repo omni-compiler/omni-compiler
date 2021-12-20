@@ -65,7 +65,7 @@ class AccData extends AccDirective {
 
     if(var.getParent() != null) return;
 
-    if(var.isPrivate() || var.isFirstprivate()){
+    if(var.isPrivate() || var.isFirstprivate() && !var.isArray()){
       return;
     }
 

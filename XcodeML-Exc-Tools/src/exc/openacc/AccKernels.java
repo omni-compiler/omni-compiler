@@ -176,9 +176,11 @@ class AccKernels extends AccData {
 
     if(! _pb.getBody().isSingle()){
       for(Block b = pb.getBody().getHead(); b != null; b = b.getNext()){
-        List<Block> blockList = new ArrayList<Block>();
-        blockList.add(b);
-        blockListList.add(blockList);
+        if(b.toXobject().getArg(0).Opcode() != Xcode.LINEMARKER) {
+          List<Block> blockList = new ArrayList<Block>();
+          blockList.add(b);
+          blockListList.add(blockList);
+        }
       }
     }else{
       List<Block> blockList = new ArrayList<Block>();
