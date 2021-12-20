@@ -67,11 +67,25 @@ public class OMPtoACCDirectiveTeams extends OMPtoACCDirective {
             }
 
             if (l != null) {
-                accClauses.add(l);
+                // Delay all.
+                setContextClause(pragmaClause, l);
             }
         }
 
-        currentArgs.setArg(createAccPragma(ACCpragma.PARALLEL,
-                                           accClauses, xobj, 2));
+        // If nested task-offload is contained, convert to
+        // 'acc data' with empty clause.
+        // If not, convert to 'acc parallel' with all clause
+        // (Include delayed clauses).
+        XobjList acc = null;
+        if (containsNestedTaskOffload(xobj)) {
+            acc = createAccPragma(ACCpragma.DATA,
+                                  Xcons.List(), xobj, 2);
+        } else {
+            accClauses.mergeList(getContextClauses());
+
+            acc = createAccPragma(ACCpragma.PARALLEL,
+                                  accClauses, xobj, 2);
+        }
+        currentArgs.setArg(acc);
     }
 }

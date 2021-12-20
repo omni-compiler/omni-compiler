@@ -71,7 +71,7 @@ public class OMPtoACCDirectiveTargetTeams extends OMPtoACCDirective {
                 break;
             default:
                 OMP.error((LineNo)xobj.getLineNo(),
-                          "Cannot be specified is cause.");
+                          "Cannot be specified is clause.");
                 break;
             }
 
@@ -83,17 +83,27 @@ public class OMPtoACCDirectiveTargetTeams extends OMPtoACCDirective {
                 if (pragmaClause == OMPpragma.TARGET_DATA_MAP) {
                     accDataClauses.add(l);
                 } else {
-                    accClauses.add(l);
+                    // Delay all but copyXX/create clause.
+                    setContextClause(pragmaClause, l);
                 }
             }
         }
 
-        XobjList accData = createAccPragma(ACCpragma.DATA,
-                                           accDataClauses, xobj);
-        XobjList acc = createAccPragma(ACCpragma.PARALLEL,
-                                       accClauses, xobj, 2);
-        XobjArgs accArgs = new XobjArgs(acc, currentArgs.nextArgs());
-        currentArgs.setNext(accArgs);
-        currentArgs.setArg(accData);
+        // If nested task-offload is contained, convert to
+        // 'acc data' with copyXX/create clause.
+        // If not, convert to 'acc parallel' with all clause
+        // (Include delayed clauses).
+        XobjList acc = null;
+        if (containsNestedTaskOffload(xobj)) {
+            acc = createAccPragma(ACCpragma.DATA,
+                                  accDataClauses, xobj, 2);
+        } else {
+            accClauses.mergeList(accDataClauses);
+            accClauses.mergeList(getContextClauses());
+
+            acc = createAccPragma(ACCpragma.PARALLEL,
+                                  accClauses, xobj, 2);
+        }
+        currentArgs.setArg(acc);
     }
 }

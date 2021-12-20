@@ -57,10 +57,12 @@ public class OMPtoACCDirectiveDistribute extends OMPtoACCDirective {
             }
 
             if (l != null) {
-                accClauses.add(l);
+                setContextClause(pragmaClause, l);
             }
         }
 
+        // Merge delayed clauses.
+        accClauses.mergeList(getContextClauses());
         currentArgs.setArg(createAccPragma(ACCpragma.PARALLEL_LOOP,
                                            accClauses, xobj, 2));
     }

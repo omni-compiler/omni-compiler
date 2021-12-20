@@ -21,6 +21,7 @@ public class OMPtoACCDirectiveTargetTeamsDistributeParallelLoop extends OMPtoACC
 
         XobjList ompClauses = (XobjList) xobj.getArg(1);
         XobjList accClauses = Xcons.List();
+        XobjList accDataClauses = Xcons.List();
 
         XobjList ompThreadLimitClause = null;
         XobjList ompNumThreadsClause = null;
@@ -89,7 +90,7 @@ public class OMPtoACCDirectiveTargetTeamsDistributeParallelLoop extends OMPtoACC
                 break;
             default:
                 OMP.error((LineNo)xobj.getLineNo(),
-                          "Cannot be specified is cause.");
+                          "Cannot be specified is clause.");
                 break;
             }
 
@@ -98,20 +99,28 @@ public class OMPtoACCDirectiveTargetTeamsDistributeParallelLoop extends OMPtoACC
             }
 
             if (l != null) {
-                accClauses.add(l);
+                if (pragmaClause == OMPpragma.TARGET_DATA_MAP) {
+                    accDataClauses.add(l);
+                } else {
+                    // Delay all but copyXX/create clause.
+                    setContextClause(pragmaClause, l);
+                }
             }
         }
 
         // If 'thread_limit()' and 'num_threads()' are specified together,
         // 'num_threads()' will take precedence.
         if (ompThreadLimitClause != null && ompNumThreadsClause != null) {
-            accClauses.add(ompNumThreadsClause);
+            setContextClause(OMPpragma.DIR_NUM_THREADS, ompNumThreadsClause);
         } else if (ompNumThreadsClause != null) {
-            accClauses.add(ompNumThreadsClause);
+            setContextClause(OMPpragma.DIR_NUM_THREADS, ompNumThreadsClause);
         } else if (ompThreadLimitClause != null) {
-            accClauses.add(ompThreadLimitClause);
+            setContextClause(OMPpragma.THREAD_LIMIT, ompThreadLimitClause);
         }
 
+        // Merge delayed clauses.
+        accClauses.mergeList(accDataClauses);
+        accClauses.mergeList(getContextClauses());
         currentArgs.setArg(createAccPragma(ACCpragma.PARALLEL_LOOP,
                                            accClauses, xobj, 2));
     }

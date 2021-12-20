@@ -46,7 +46,6 @@ public class OMPtoACCStack {
         while (it.hasNext()) {
             OMPtoACCStackEntry e = (OMPtoACCStackEntry) it.next();
 
-            // TODO: target, target teams, target parallel, ...
             switch (e.getPragma()) {
             case TARGET:
             case TARGET_DATA:
@@ -74,9 +73,6 @@ public class OMPtoACCStack {
         while (it.hasNext()) {
             OMPtoACCStackEntry e = (OMPtoACCStackEntry) it.next();
 
-            // TODO: distribute parallel for, distribute,
-            //       for, target teams distribute, target parallel for,
-            //       teams distributea, teams distribute parallel for
             switch (e.getPragma()) {
             case TARGET_PARALLEL_LOOP:
             case TARGET_TEAMS_DISTRIBUTE_PARALLEL_LOOP:

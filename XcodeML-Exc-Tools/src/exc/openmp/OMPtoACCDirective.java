@@ -3,6 +3,8 @@ package exc.openmp;
 import exc.object.*;
 import exc.openacc.ACCpragma;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.Iterator;
 
 public class OMPtoACCDirective {
     protected HashMap<OMPpragma, OMPtoACCClause> clauseConverters =
@@ -28,8 +30,101 @@ public class OMPtoACCDirective {
             }
         };
 
+    protected static HashMap<OMPpragma, XobjList> contextClauses = new HashMap<>();
 
     public OMPtoACCDirective() {
+    }
+
+    protected void setContextClause(OMPpragma pragma, XobjList list) {
+        switch (pragma) {
+        case DATA_PRIVATE:
+        case DATA_FIRSTPRIVATE:
+        case DATA_REDUCTION_PLUS:
+        case DATA_REDUCTION_MINUS:
+        case DATA_REDUCTION_MUL:
+        case DATA_REDUCTION_LOGAND:
+        case DATA_REDUCTION_LOGOR:
+        case DATA_REDUCTION_MIN:
+        case DATA_REDUCTION_MAX:
+        case DATA_REDUCTION_BITAND:
+        case DATA_REDUCTION_BITOR:
+        case DATA_REDUCTION_BITXOR:
+            if (contextClauses.get(pragma) == null) {
+                contextClauses.put(pragma, list);
+            } else {
+                XobjList clauseXobjs = (XobjList) contextClauses.get(pragma).
+                    getArgs().nextArgs().getArg();
+                XobjList xobjs = (XobjList)list.getArgs().nextArgs().getArg();
+                clauseXobjs.mergeList(xobjs);
+            }
+            break;
+        case DIR_NUM_THREADS:
+            contextClauses.put(pragma, list);
+            contextClauses.remove(OMPpragma.THREAD_LIMIT);
+            break;
+        case THREAD_LIMIT:
+            contextClauses.put(pragma, list);
+            contextClauses.remove(OMPpragma.DIR_NUM_THREADS);
+        default:
+            contextClauses.put(pragma, list);
+        }
+    }
+
+    protected void resetContextClauses() {
+        contextClauses.clear();
+    }
+
+    protected XobjList getContextClauses() {
+        XobjList list = new XobjList();
+        for (Map.Entry<OMPpragma, XobjList> e : contextClauses.entrySet()) {
+            list.add(e.getValue());
+        }
+        return list;
+    }
+
+    private boolean containsNestedTaskOffloadInternal(Xobject xobj) {
+        if ((xobj == null) || !(xobj instanceof XobjList)) {
+            return false;
+        }
+
+        if (xobj.Opcode() == Xcode.OMP_PRAGMA) {
+            Xobject directive = xobj.left();
+            switch (OMPpragma.valueOf(directive)) {
+            case TARGET:
+            case TARGET_DATA:
+            case TARGET_PARALLEL:
+            case TARGET_PARALLEL_LOOP:
+            case TARGET_TEAMS:
+            case TARGET_TEAMS_DISTRIBUTE_PARALLEL_LOOP:
+            case TARGET_TEAMS_DISTRIBUTE:
+            case DISTRIBUTE_PARALLEL_LOOP:
+            case DISTRIBUTE:
+            case PARALLEL_FOR:
+            case PARALLEL:
+            case FOR:
+            case TEAMS:
+            case TEAMS_DISTRIBUTE:
+            case TEAMS_DISTRIBUTE_PARALLEL_LOOP:
+                return true;
+            }
+        }
+
+        for (XobjArgs a = xobj.getArgs(); a != null; a = a.nextArgs()) {
+            if (containsNestedTaskOffloadInternal(a.getArg())) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    protected boolean containsNestedTaskOffload(Xobject xobj) {
+        for (XobjArgs a = xobj.getArgs(); a != null; a = a.nextArgs()) {
+            if (containsNestedTaskOffloadInternal(a.getArg())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     protected String notImplementedClauseStr(OMPpragma clause){

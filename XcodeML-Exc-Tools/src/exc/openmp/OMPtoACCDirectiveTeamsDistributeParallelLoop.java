@@ -93,20 +93,22 @@ public class OMPtoACCDirectiveTeamsDistributeParallelLoop extends OMPtoACCDirect
             }
 
             if (l != null) {
-                accClauses.add(l);
+                setContextClause(pragmaClause, l);
             }
         }
 
         // If 'thread_limit()' and 'num_threads()' are specified together,
         // 'num_threads()' will take precedence.
         if (ompThreadLimitClause != null && ompNumThreadsClause != null) {
-            accClauses.add(ompNumThreadsClause);
+            setContextClause(OMPpragma.DIR_NUM_THREADS, ompNumThreadsClause);
         } else if (ompNumThreadsClause != null) {
-            accClauses.add(ompNumThreadsClause);
+            setContextClause(OMPpragma.DIR_NUM_THREADS, ompNumThreadsClause);
         } else if (ompThreadLimitClause != null) {
-            accClauses.add(ompThreadLimitClause);
+            setContextClause(OMPpragma.THREAD_LIMIT, ompThreadLimitClause);
         }
 
+        // Merge delayed clauses.
+        accClauses.mergeList(getContextClauses());
         currentArgs.setArg(createAccPragma(ACCpragma.PARALLEL_LOOP,
                                            accClauses, xobj, 2));
     }

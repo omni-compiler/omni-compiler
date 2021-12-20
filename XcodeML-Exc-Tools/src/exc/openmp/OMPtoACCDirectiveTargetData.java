@@ -52,7 +52,7 @@ public class OMPtoACCDirectiveTargetData extends OMPtoACCDirective {
                 break;
             default:
                 OMP.error((LineNo)xobj.getLineNo(),
-                          "Cannot be specified is cause.");
+                          "Cannot be specified is clause.");
                 break;
             }
 
@@ -64,17 +64,39 @@ public class OMPtoACCDirectiveTargetData extends OMPtoACCDirective {
                 if (pragmaClause == OMPpragma.TARGET_DATA_MAP) {
                     accDataClauses.add(l);
                 } else {
-                    accClauses.add(l);
+                    // Delay all but copyXX/create clause.
+                    setContextClause(pragmaClause, l);
                 }
             }
         }
 
-        XobjList accData = createAccPragma(ACCpragma.DATA,
-                                           accDataClauses, xobj);
-        XobjList acc = createAccPragma(ACCpragma.PARALLEL,
-                                       accClauses, xobj, 2);
-        XobjArgs accArgs = new XobjArgs(acc, currentArgs.nextArgs());
-        currentArgs.setNext(accArgs);
-        currentArgs.setArg(accData);
+        // NOET: In the case of TARGET_DATA,
+        //       the levels of pragma and structured-block(COMPOUND_STATEMENT)
+        //       are the same in XcodeML.
+        //       So, search for the next line(COMPOUND_STATEMENT).
+        Xobject x = xobj;
+        if (currentArgs.nextArgs() != null &&
+            currentArgs.nextArgs().getArg() != null &&
+            currentArgs.nextArgs().getArg().Opcode() ==
+            Xcode.COMPOUND_STATEMENT) {
+            x = currentArgs.nextArgs().getArg();
+        }
+
+        // If nested task-offload is contained, convert to
+        // 'acc data' with copyXX/create clause.
+        // If not, convert to 'acc parallel' with all clause
+        // (Include delayed clauses).
+        XobjList acc = null;
+        if (containsNestedTaskOffload(x)) {
+            acc = createAccPragma(ACCpragma.DATA,
+                                  accDataClauses, xobj, 2);
+        } else {
+            accClauses.mergeList(accDataClauses);
+            accClauses.mergeList(getContextClauses());
+
+            acc = createAccPragma(ACCpragma.PARALLEL,
+                                  accClauses, xobj, 2);
+        }
+        currentArgs.setArg(acc);
     }
 }

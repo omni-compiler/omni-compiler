@@ -21,6 +21,7 @@ public class OMPtoACCDirectiveTargetTeamsDistribute extends OMPtoACCDirective {
 
         XobjList ompClauses = (XobjList) xobj.getArg(1);
         XobjList accClauses = Xcons.List();
+        XobjList accDataClauses = Xcons.List();
 
         for (Iterator<Xobject> it = ompClauses.iterator(); it.hasNext();) {
             XobjList clause = (XobjList) it.next();
@@ -83,10 +84,18 @@ public class OMPtoACCDirectiveTargetTeamsDistribute extends OMPtoACCDirective {
             }
 
             if (l != null) {
-                accClauses.add(l);
+                if (pragmaClause == OMPpragma.TARGET_DATA_MAP) {
+                    accDataClauses.add(l);
+                } else {
+                    // Delay all but copyXX/create clause.
+                    setContextClause(pragmaClause, l);
+                }
             }
         }
 
+        // Merge delayed clauses.
+        accClauses.mergeList(accDataClauses);
+        accClauses.mergeList(getContextClauses());
         currentArgs.setArg(createAccPragma(ACCpragma.PARALLEL_LOOP,
                                            accClauses, xobj, 2));
     }

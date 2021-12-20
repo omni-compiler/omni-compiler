@@ -191,7 +191,6 @@ public class OMPtoACC extends OMPtranslate {
 
     private boolean isTaskOffloadWithStructuredBlock(OMPpragma directive) {
         switch (directive) {
-        // TODO: target, target teams, target parallel
         case TARGET:
         case TARGET_DATA:
         case TARGET_TEAMS:
