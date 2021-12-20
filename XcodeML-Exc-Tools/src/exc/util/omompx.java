@@ -352,6 +352,13 @@ public class omompx
         
     System.gc();
         
+    if (outputXcode) {
+      Writer dumpWriter = new BufferedWriter(new FileWriter(inXmlFile +
+                                                            ".xobj.1.dump"));
+      xobjFile.Output(dumpWriter);
+      dumpWriter.close();
+    }
+
     // XcalableMP translation
     if(xcalableMP) {
       XMPglobalDecl globalDecl   = new XMPglobalDecl(xobjFile);
@@ -512,6 +519,13 @@ public class omompx
       }
     }
 
+    }
+
+    if (outputXcode) {
+      Writer dumpWriter = new BufferedWriter(new FileWriter(inXmlFile +
+                                                            ".xobj.2.dump"));
+      xobjFile.Output(dumpWriter);
+      dumpWriter.close();
     }
 
     if (openACC || (ompToAccTranslator != null &&
