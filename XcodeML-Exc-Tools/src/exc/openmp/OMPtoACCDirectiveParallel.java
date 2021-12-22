@@ -93,6 +93,7 @@ public class OMPtoACCDirectiveParallel extends OMPtoACCDirective {
 
             acc = createAccPragma(ACCpragma.PARALLEL,
                                   accClauses, xobj, 2);
+            resetContextClauses();
         }
         currentArgs.setArg(acc);
     }

@@ -78,5 +78,6 @@ public class OMPtoACCDirectiveLoop extends OMPtoACCDirective {
         accClauses.mergeList(getContextClauses());
         currentArgs.setArg(createAccPragma(ACCpragma.PARALLEL_LOOP,
                                            accClauses, xobj, 2));
+        resetContextClauses();
     }
 }
