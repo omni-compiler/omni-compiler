@@ -46,13 +46,19 @@ public class OMPtoACCClauseMap extends OMPtoACCClause {
         // NOTE: OpenMP xcode has an empty list
         //       if the array range specification is omitted.
         //       So, remove the empty list.
-        for (Iterator<Xobject> it = ((XobjList) mapValues.getArg(0)).iterator(); it.hasNext();) {
-            Xobject value = (Xobject) it.next();
-            if (value.Opcode() == Xcode.LIST &&
-                ((XobjList) value).isEmpty()) {
-                ((XobjList) mapValues.getArg(0)).remove(value);
+        for (Iterator<Xobject> it1 = mapValues.iterator(); it1.hasNext();) {
+            Xobject values = (Xobject) it1.next();
+            if (values.Opcode() == Xcode.LIST) {
+                for (Iterator<Xobject> it2 = ((XobjList) values).iterator(); it2.hasNext();) {
+                    Xobject value = (Xobject) it2.next();
+                    if (value.Opcode() == Xcode.LIST &&
+                        ((XobjList) value).isEmpty()) {
+                        ((XobjList) values).remove(value);
+                    }
+                }
             }
         }
+
 
         // create COPY()/CREATE().
         XobjList list = null;
