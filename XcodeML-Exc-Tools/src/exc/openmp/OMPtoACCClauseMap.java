@@ -2,6 +2,7 @@ package exc.openmp;
 
 import exc.object.*;
 import exc.openacc.ACCpragma;
+import java.util.Iterator;
 
 public class OMPtoACCClauseMap extends OMPtoACCClause {
     public OMPtoACCClauseMap() {
@@ -45,8 +46,12 @@ public class OMPtoACCClauseMap extends OMPtoACCClause {
         // NOTE: OpenMP xcode has an empty list
         //       if the array range specification is omitted.
         //       So, remove the empty list.
-        if (mapValues.getArg(0).getArg(1).isEmpty()) {
-            mapValues = Xcons.List(mapValues.getArg(0).getArg(0));
+        for (Iterator<Xobject> it = ((XobjList) mapValues.getArg(0)).iterator(); it.hasNext();) {
+            Xobject value = (Xobject) it.next();
+            if (value.Opcode() == Xcode.LIST &&
+                ((XobjList) value).isEmpty()) {
+                ((XobjList) mapValues.getArg(0)).remove(value);
+            }
         }
 
         // create COPY()/CREATE().
