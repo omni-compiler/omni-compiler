@@ -181,13 +181,11 @@ fi
 ### Native Compiler ###
 # If the openmp and *.cu, *.ccl, *.pzc files exist,
 # link the openmp library with the openacc library.
+
+# ENABLE_ACC_OPT: "0" is true, "1" is false.
 ENABLE_LINK_OMP_ACC_LIBS=false
-if [ "${ENABLE_ACC}" != true ]; then
-    if [ -e "${TEMP_DIR}/${FILE_NAME}_pp.cu" -o \
-         -e "${TEMP_DIR}/${FILE_NAME}_pp.ccl" -o \
-         -e "${TEMP_DIR}/${FILE_NAME}_pp.pzc" ]; then
-        ENABLE_LINK_OMP_ACC_LIBS=true
-    fi
+if [ "${ENABLE_ACC}" != true -a "${ENABLE_ACC_OPT}" == 0 ]; then
+    ENABLE_LINK_OMP_ACC_LIBS=true
 fi
 
 if [ "$ENABLE_ACC" = true ]; then
