@@ -472,10 +472,10 @@ fi
 # set defulat platform and device for OpenACC
 if test "x${use_cuda}" = "xyes"; then
     ACC_DEFAULT_PLATFORM=CUDA
-    ACC_DEFAULT_DEVICE=Fermi
+    ACC_DEFAULT_DEVICE=Volta
 elif test "x${use_opencl}" = "xyes"; then
     ACC_DEFAULT_PLATFORM=OpenCL
-    ACC_DEFAULT_DEVICE=Fermi
+    ACC_DEFAULT_DEVICE=Volta
 elif test "x${use_pzcl}" = "xyes"; then
     ACC_DEFAULT_PLATFORM=PZCL
     ACC_DEFAULT_DEVICE=PEZYSC
@@ -1087,7 +1087,7 @@ else
 	*)
 	    chk2=`$MPI_CC --version 2> /dev/null | head -n2 | tail -n1`
 	    case $chk2 in
-		pgcc*)
+		pgcc*|nvc*)
 		    # OpenMP
 		    OPENMP_OPT_C="-mp"
 
@@ -1173,7 +1173,7 @@ else
 	*)
 	    chk2=`$MPI_FC --version 2> /dev/null | head -n2 | tail -n1`
 	    case $chk2 in
-		pgfortran*|pgf90*)
+		pgfortran*|pgf90*|nvfortran*)
 		    # OpenMP
 		    OPENMP_OPT_F="-mp"
 
@@ -1380,7 +1380,7 @@ else
 	*)
 	    chk2=`${CC} --version 2> /dev/null | head -n2 | tail -n1`
 	    case $chk2 in
-		pgcc*)
+		pgcc*|nvc*)
 		    CFLAGS="${CFLAGS} -c99" ;;
 		*)
 		    AC_MSG_ERROR([No supported C compiler was found.]) ;;
