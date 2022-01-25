@@ -32,6 +32,36 @@ void _ACC_gpu_init_reduction_var(int *var, int kind){
 }
 
 __device__ static inline
+void _ACC_gpu_init_reduction_var(unsigned int *var, int kind){
+  switch(kind){
+  case _ACC_REDUCTION_PLUS: *var = 0; return;
+  case _ACC_REDUCTION_MUL: *var = 1; return;
+  case _ACC_REDUCTION_MAX: *var = 0; return;
+  case _ACC_REDUCTION_MIN: *var = UINT_MAX; return;
+  case _ACC_REDUCTION_BITAND: *var = ~0; return;
+  case _ACC_REDUCTION_BITOR: *var = 0; return;
+  case _ACC_REDUCTION_BITXOR: *var = 0; return;
+  case _ACC_REDUCTION_LOGAND: *var = 1; return;
+  case _ACC_REDUCTION_LOGOR: *var = 0; return;
+  }
+}
+
+__device__ static inline
+void _ACC_gpu_init_reduction_var(char *var, int kind){
+  switch(kind){
+  case _ACC_REDUCTION_PLUS: *var = 0; return;
+  case _ACC_REDUCTION_MUL: *var = 1; return;
+  case _ACC_REDUCTION_MAX: *var = CHAR_MIN; return;
+  case _ACC_REDUCTION_MIN: *var = CHAR_MAX; return;
+  case _ACC_REDUCTION_BITAND: *var = ~0; return;
+  case _ACC_REDUCTION_BITOR: *var = 0; return;
+  case _ACC_REDUCTION_BITXOR: *var = 0; return;
+  case _ACC_REDUCTION_LOGAND: *var = 1; return;
+  case _ACC_REDUCTION_LOGOR: *var = 0; return;
+  }
+}
+
+__device__ static inline
 void _ACC_gpu_init_reduction_var(float *var, int kind){
   switch(kind){
   case _ACC_REDUCTION_PLUS: *var = 0.0f; return;
@@ -75,6 +105,38 @@ int op(int a, int b, int kind){
   }
 }
 
+__device__ static inline
+int op(unsigned int a, unsigned int b, int kind){
+  switch(kind){
+  case _ACC_REDUCTION_PLUS: return a + b;
+  case _ACC_REDUCTION_MUL: return a * b;
+  case _ACC_REDUCTION_MAX: return (a > b)? a : b;
+  case _ACC_REDUCTION_MIN: return (a < b)? a : b;
+  case _ACC_REDUCTION_BITAND: return a & b;
+  case _ACC_REDUCTION_BITOR: return a | b;
+  case _ACC_REDUCTION_BITXOR: return a ^ b;
+  case _ACC_REDUCTION_LOGAND: return a && b;
+  case _ACC_REDUCTION_LOGOR: return a || b;
+  default: return a;
+  }
+}
+
+__device__ static inline
+int op(char a, char b, int kind){
+  switch(kind){
+  case _ACC_REDUCTION_PLUS: return a + b;
+  case _ACC_REDUCTION_MUL: return a * b;
+  case _ACC_REDUCTION_MAX: return (a > b)? a : b;
+  case _ACC_REDUCTION_MIN: return (a < b)? a : b;
+  case _ACC_REDUCTION_BITAND: return a & b;
+  case _ACC_REDUCTION_BITOR: return a | b;
+  case _ACC_REDUCTION_BITXOR: return a ^ b;
+  case _ACC_REDUCTION_LOGAND: return a && b;
+  case _ACC_REDUCTION_LOGOR: return a || b;
+  default: return a;
+  }
+}
+
 template<typename T>
 __device__ static inline
 T op(T a, T b, int kind){
@@ -88,6 +150,7 @@ T op(T a, T b, int kind){
 }
 
 
+#if 0 /* comment out temprary */
 #if __CUDA_ARCH__ >= 300
 #include <cuda.h>
 #if CUDA_VERSION <= 6000
@@ -117,16 +180,59 @@ void _ACC_reduce_lanes(T *output, T input, int kind, bool do_acc)
   T v = input;
   unsigned int laneId = threadIdx.x & (32 - 1);
 
+#if CUDA_VERSION < 9000
   v = op(v, __shfl_xor(v, 16), kind);
   v = op(v, __shfl_xor(v, 8), kind);
   v = op(v, __shfl_xor(v, 4), kind);
   v = op(v, __shfl_xor(v, 2), kind);
   v = op(v, __shfl_xor(v, 1), kind);
+#else
+  v = op(v, __shfl_xor_sync(0xffffffff, v, 16), kind);
+  v = op(v, __shfl_xor_sync(0xffffffff, v, 8), kind);
+  v = op(v, __shfl_xor_sync(0xffffffff, v, 4), kind);
+  v = op(v, __shfl_xor_sync(0xffffffff, v, 2), kind);
+  v = op(v, __shfl_xor_sync(0xffffffff, v, 1), kind);
+#endif
 
   if(laneId == 0){
     *output = do_acc? op(*output, v, kind) : v;
   }
 }
+
+/**
+   Reduce input value among lanes and store it with addtional value to output location of lane 0 using shuffle instruction (for worker (-> threadIdx.y))
+   *
+   * @param[out] output   pointer to output
+   * @param[in]  input    input value
+   * @param[in]  kind     operator kind
+   * @param[in]  addition additional value
+   */
+template<typename T>
+__device__ static inline
+void _ACC_reduce_lanes_y(T *output, T input, int kind, bool do_acc)
+{
+  T v = input;
+  unsigned int laneId = threadIdx.y & (32 - 1);
+
+#if CUDA_VERSION < 9000
+  v = op(v, __shfl_xor(v, 16), kind);
+  v = op(v, __shfl_xor(v, 8), kind);
+  v = op(v, __shfl_xor(v, 4), kind);
+  v = op(v, __shfl_xor(v, 2), kind);
+  v = op(v, __shfl_xor(v, 1), kind);
+#else
+  v = op(v, __shfl_xor_sync(0xffffffff, v, 16), kind);
+  v = op(v, __shfl_xor_sync(0xffffffff, v, 8), kind);
+  v = op(v, __shfl_xor_sync(0xffffffff, v, 4), kind);
+  v = op(v, __shfl_xor_sync(0xffffffff, v, 2), kind);
+  v = op(v, __shfl_xor_sync(0xffffffff, v, 1), kind);
+#endif
+
+  if(laneId == 0){
+    *output = do_acc? op(*output, v, kind) : v;
+  }
+}
+#endif
 
 /**
    Reduce input value among threads and store it to target pointer of thread 0 using shuffle instruction
@@ -159,6 +265,39 @@ void _ACC_reduce_threads(T *target, T input, int kind, bool do_acc){
   }
   __syncthreads();
 }
+
+/**
+   Reduce input value among threads and store it to target pointer of thread 0 using shuffle instruction (for worker (-> threadIdx.y))
+   *
+   * @param[in,out] target   target pointer
+   * @param[in]     input    input value
+   * @param[in]     kind     operator kind
+   * @param[in]     do_acc   do accumulate flag
+   */
+template<typename T>
+__device__ static inline
+void _ACC_reduce_threads_y(T *target, T input, int kind, bool do_acc){
+  __shared__ T tmp[32];
+
+  unsigned int warpId = threadIdx.y >> 5;
+
+  _ACC_reduce_lanes(&tmp[warpId], input, kind, false);
+
+  __syncthreads();
+
+  if(warpId == 0){
+    unsigned int nwarps = blockDim.y >> 5 ;
+    T v;
+    if(threadIdx.y < nwarps){
+      v = tmp[threadIdx.y];
+    }else{
+      _ACC_gpu_init_reduction_var(&v, kind);
+    }
+    _ACC_reduce_lanes_y(target, v, kind, do_acc);
+  }
+  __syncthreads();
+}
+
 
 #else //__CUDA_ARCH__ < 300
 
@@ -346,6 +485,12 @@ template<typename T>
 __device__ static inline
 void _ACC_gpu_reduction_t(T *resultInBlock, int kind, T resultInThread){
   _ACC_reduce_threads(resultInBlock, resultInThread, kind, true);
+}
+
+template<typename T>
+__device__ static inline
+void _ACC_gpu_reduction_ty(T *resultInBlock, int kind, T resultInThread){
+  _ACC_reduce_threads_y(resultInBlock, resultInThread, kind, true);
 }
 
 #endif //_ACC_GPU_REDUCTION

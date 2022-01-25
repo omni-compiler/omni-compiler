@@ -38,6 +38,18 @@ static void _ACC_init_iter_block_x(T *gang_iter, T *gang_cond, T *gang_step, T0 
   *gang_step = 1;
 }
 
+/**
+   For worker -> threadIdx.y
+   *
+   */
+template<typename T, typename T0>
+__device__
+static void _ACC_init_iter_thread_y(T *iter, T *cond, T *step, T0 totaliter){
+  *iter = threadIdx.y;
+  *cond = totaliter;
+  *step = blockDim.x;
+}
+
 template<typename T, typename T0>
 __device__
 static void _ACC_init_iter_thread_x(T *iter, T *cond, T *step, T0 totaliter){
