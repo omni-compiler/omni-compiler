@@ -23,7 +23,7 @@ public class OMPtoACC extends OMPtranslate {
 
     private OMPtoACCStack stack = new OMPtoACCStack();
     private HashMap<OMPpragma, OMPtoACCDirective> directiveConverters =
-        new HashMap<>() {
+        new HashMap<OMPpragma, OMPtoACCDirective>() {
             {
                 put(OMPpragma.TARGET, new OMPtoACCDirectiveTarget());
                 put(OMPpragma.TARGET_DATA, new OMPtoACCDirectiveTargetData());

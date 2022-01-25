@@ -8,7 +8,7 @@ import java.util.Iterator;
 
 public class OMPtoACCDirective {
     protected HashMap<OMPpragma, OMPtoACCClause> clauseConverters =
-        new HashMap<>() {
+        new HashMap<OMPpragma, OMPtoACCClause>() {
             {
                 put(OMPpragma.DATA_FIRSTPRIVATE, new OMPtoACCClauseFirstprivate());
                 put(OMPpragma.DIR_IF, new OMPtoACCClauseIf());
@@ -30,7 +30,8 @@ public class OMPtoACCDirective {
             }
         };
 
-    protected static HashMap<OMPpragma, XobjList> contextClauses = new HashMap<>();
+    protected static HashMap<OMPpragma, XobjList> contextClauses =
+        new HashMap<OMPpragma, XobjList>();
 
     public OMPtoACCDirective() {
     }
