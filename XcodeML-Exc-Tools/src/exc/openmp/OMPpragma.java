@@ -33,7 +33,19 @@ public enum OMPpragma
     PARALLEL_SECTIONS,  /* parallel <clause_list> */
     TARGET_ENTER_DATA,
     FUNCTION_BODY,
-    
+    TARGET_DATA,        /* target data <clause_list> */
+    TARGET_TEAMS_DISTRIBUTE_PARALLEL_LOOP, /* target teams distribute parallel for <clause_list> */
+    TARGET,             /* target <clause_list> */
+    TARGET_TEAMS,       /* target teams <clause_list> */
+    TARGET_PARALLEL,    /* target parallel <clause_list> */
+    TARGET_PARALLEL_LOOP, /* target parallel for <clause_list> */
+    DISTRIBUTE_PARALLEL_LOOP, /* distribute parallel for <clause_list> */
+    DISTRIBUTE,         /* distribute <clause_list> */
+    TARGET_TEAMS_DISTRIBUTE, /* target teams distribute <clause_list>  */
+    TEAMS,              /* teams <clause_list> */
+    TEAMS_DISTRIBUTE,   /* teams distribute <clause_list> */
+    TEAMS_DISTRIBUTE_PARALLEL_LOOP, /* teams distribute parallel for <clause_list> */
+
     /*
      * clause
      */
@@ -48,6 +60,17 @@ public enum OMPpragma
     _DATA_PRIVATE_SHARED, /* using internally */
     TARGET_DATA_MAP,
     DIR_NUM_THREADS,
+    NUM_TEAMS,
+    THREAD_LIMIT,
+    TARGET_DEVICE,
+    USE_DEVICE_PTR,
+    IS_DEVICE_PTR,
+    DEFAULTMAP,
+    DEPEND,
+    COLLAPSE,
+    DIST_SCHEDULE,
+    PROC_BIND,
+    DATA_LINEAR,
 
     /* DATA_REDUCTION_* values are synchronized with
        OMPC_REDUCTION_* values in ompc_reduction.h */
