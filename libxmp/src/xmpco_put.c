@@ -89,17 +89,17 @@ static void _debugPrint_putCoarray(int bytes, int rank,
 \***************************************************/
 
 /* static infos */
-void * _localBuf_desc;           // descriptor of the memory pool
-size_t _localBuf_offset;         // offset of the local buffer in the memory pool
-char * _localBuf_baseAddr;       // local base address of the local buffer
-int    _localBuf_size;           // size of the local buffer
-char * _localBuf_name;           // name of the local buffer
+static void * _localBuf_desc;           // descriptor of the memory pool
+static size_t _localBuf_offset;         // offset of the local buffer in the memory pool
+static char * _localBuf_baseAddr;       // local base address of the local buffer
+static int    _localBuf_size;           // size of the local buffer
+static char * _localBuf_name;           // name of the local buffer
 
 /* dynamic infos */
-int    _localBuf_used;          // length of valid data in localBuf
-void * _target_desc;
-char * _target_baseAddr;
-int    _target_coindex;
+static int    _localBuf_used;          // length of valid data in localBuf
+static void * _target_desc;
+static char * _target_baseAddr;
+static int    _target_coindex;
 
 
 void _XMPCO_coarrayInit_put()
