@@ -520,21 +520,19 @@ public class omompx
     }
     
     }
-<<<<<<< HEAD
-    
+
     if(openACC){
-=======
 
-    if (outputXcode) {
-      Writer dumpWriter = new BufferedWriter(new FileWriter(inXmlFile +
-                                                            ".xobj.2.dump"));
-      xobjFile.Output(dumpWriter);
-      dumpWriter.close();
-    }
+    // if (outputXcode) {
+    //   Writer dumpWriter = new BufferedWriter(new FileWriter(inXmlFile +
+    //                                                         ".xobj.2.dump"));
+    //   xobjFile.Output(dumpWriter);
+    //   dumpWriter.close();
+    // }
 
-    if (openACC || (ompToAccTranslator != null &&
-                    ompToAccTranslator.isConverted())) {
->>>>>>> 7c74da40aa8468081d2721cba2b4434fbca4ea94
+    // if (openACC || (ompToAccTranslator != null &&
+    //                 ompToAccTranslator.isConverted())) {
+
       if(ACC.device == AccDevice.NONE){
         switch(ACC.platform){
           case CUDA:
