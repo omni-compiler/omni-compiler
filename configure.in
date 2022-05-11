@@ -477,17 +477,10 @@ if test "x${use_cuda}" = "xyes"; then
     ACC_DEFAULT_DEVICE=Volta
 elif test "x${use_opencl}" = "xyes"; then
     ACC_DEFAULT_PLATFORM=OpenCL
-<<<<<<< HEAD
     ACC_DEFAULT_DEVICE=Fermi
 #elif test "x${use_pzcl}" = "xyes"; then
 #    ACC_DEFAULT_PLATFORM=PZCL
 #    ACC_DEFAULT_DEVICE=PEZYSC
-=======
-    ACC_DEFAULT_DEVICE=Volta
-elif test "x${use_pzcl}" = "xyes"; then
-    ACC_DEFAULT_PLATFORM=PZCL
-    ACC_DEFAULT_DEVICE=PEZYSC
->>>>>>> 7c74da40aa8468081d2721cba2b4434fbca4ea94
 elif test "x${doOpenAcc}" = "xyes"; then
     AC_MSG_ERROR([CUDA, OpenCL not found. Please attach --with-cuda, --with-opencl, or --with-pzcl.])
 fi
