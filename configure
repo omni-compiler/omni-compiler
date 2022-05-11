@@ -10874,7 +10874,7 @@ fi
 	*)
 	    chk2=`$MPI_CC --version 2> /dev/null | head -n2 | tail -n1`
 	    case $chk2 in
-		pgcc*)
+		pgcc*|nvc*)
 		    # OpenMP
 		    OPENMP_OPT_C="-mp"
 
@@ -11032,7 +11032,7 @@ fi
 	*)
 	    chk2=`$MPI_FC --version 2> /dev/null | head -n2 | tail -n1`
 	    case $chk2 in
-		pgfortran*|pgf90*)
+		pgfortran*|pgf90*|nvfortran*)
 		    # OpenMP
 		    OPENMP_OPT_F="-mp"
 
@@ -11262,7 +11262,7 @@ else
 	*)
 	    chk2=`${CC} --version 2> /dev/null | head -n2 | tail -n1`
 	    case $chk2 in
-		pgcc*)
+		pgcc*|nvc*)
 		    CFLAGS="${CFLAGS} -c99" ;;
 		*)
 		    as_fn_error $? "No supported C compiler was found." "$LINENO" 5 ;;

@@ -37,11 +37,16 @@ ENABLE_ACC="@ENABLE_ACC@"   # "1" is yes, "0" is no.
 OMNI_GPUCC_CMD="@GPU_CMD@"
 OMNI_GPUCC_MUST_OPT="-c -I${OMNI_HOME}/include"
 OMNI_GPUCC_OPT="${OMNI_GPUCC_MUST_OPT}"
+<<<<<<< HEAD
 
 
 # For OpenCL
 OMNI_OPENCL_CC_CMD="${OMNI_HOME}/libexec/om_opencl_conv_str"
 #OMNI_PZCL_PREFIX="@PZCL_PREFIX@"
+=======
+OMNI_PZCL_PREFIX="@PZCL_PREFIX@"
+ENABLE_ACC_OPT="@ACC@" # "0" is true, "1" is false.
+>>>>>>> 7c74da40aa8468081d2721cba2b4434fbca4ea94
 
 # Linker
 OMNI_TRAVERSE="${OMNI_HOME}/libexec/omni_traverse.sh"

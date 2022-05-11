@@ -30,10 +30,10 @@ static char *_getVectorIter(void *descPtr, char *baseAddr, int bytes, int coinde
 \***************************************************/
 
 /* copy of static infos */
-void *_localBuf_desc;           // descriptor of the memory pool
-size_t _localBuf_offset;        // offset of the local buffer in the memory pool
-char *_localBuf_baseAddr;       // local base address of the local buffer
-char *_localBuf_name;           // name of the local buffer
+static void *_localBuf_desc;           // descriptor of the memory pool
+static size_t _localBuf_offset;        // offset of the local buffer in the memory pool
+static char *_localBuf_baseAddr;       // local base address of the local buffer
+static char *_localBuf_name;           // name of the local buffer
 
 
 void _XMPCO_coarrayInit_get()

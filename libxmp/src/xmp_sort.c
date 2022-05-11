@@ -59,11 +59,9 @@ static void get_rotate_pivot_for_DOUBLE           (void *p, const void *a, const
 static void get_rotate_pivot_for_LONG_DOUBLE      (void *p, const void *a, const int an,
 						   const void *b, const int bn);
 
-int dbg_flag = 0;
-
-MPI_Comm *comm;
-int me;
-int nprocs;
+static int dbg_flag = 0;
+static MPI_Comm *comm;
+static int me, nprocs;
 
 int (*compare_func)(const void *a, const void *b);
 void (*get_rotate_pivot)(void *p, const void *a, const int an, const void *b, const int bn);

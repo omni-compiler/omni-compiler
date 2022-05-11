@@ -135,7 +135,19 @@ if [ "$ENABLE_ACC" = true ]; then
     OMNI_CX2X_OPT="$OMNI_CX2X_OPT -platform=$OPENACC_PLATFORM"
     OMNI_CX2X_OPT="$OMNI_CX2X_OPT -device=$OPENACC_DEVICE"
 else
-    [ "$ENABLE_TARGET" = false ] && OMNI_CX2X_OPT="$OMNI_CX2X_OPT -fopenmp"
+    if [ "$ENABLE_TARGET" = false ]; then
+        OMNI_CX2X_OPT="$OMNI_CX2X_OPT -fopenmp"
+
+        # In case --enable-openacc option of configure is set.
+        # ENABLE_ACC_OPT: "0" is true, "1" is false.
+        if [ "${ENABLE_ACC_OPT}" == 0 ]; then
+            # Set OpenACC options for OpenMP to OpenACC convert.
+            [ "$DISABLE_LDG" = true ] && OMNI_CX2X_OPT="$OMNI_CX2X_OPT -no-ldg"
+            [ "$DEFAULT_VECLEN" != "" ] && OMNI_CX2X_OPT="$OMNI_CX2X_OPT -default-veclen=${DEFAULT_VECLEN}"
+            OMNI_CX2X_OPT="$OMNI_CX2X_OPT -platform=$OPENACC_PLATFORM"
+            OMNI_CX2X_OPT="$OMNI_CX2X_OPT -device=$OPENACC_DEVICE"
+        fi
+    fi
 fi
 
 [ "$ENABLE_TARGET" = true ] && xcode_translator_add_opt+=("-fopenmp-only-target")
@@ -166,8 +178,19 @@ fi
 [ "$STOP_BACKEND" = true ] && exit 0;
 
 ### Native Compiler ###
+# If the openmp and *.cu, *.ccl, *.pzc files exist,
+# link the openmp library with the openacc library.
+
+# ENABLE_ACC_OPT: "0" is true, "1" is false.
+ENABLE_LINK_OMP_ACC_LIBS=false
+if [ "${ENABLE_ACC}" != true -a "${ENABLE_ACC_OPT}" == 0 ]; then
+    ENABLE_LINK_OMP_ACC_LIBS=true
+fi
+
 if [ "$ENABLE_ACC" = true ]; then
     OMNI_CC_OPT="$OMNI_CC_OPT ${OPENACC_DEF}"
+elif [ "${ENABLE_LINK_OMP_ACC_LIBS}" = true ]; then
+    OMNI_CC_OPT="$OMNI_CC_OPT ${OPENACC_DEF} ${OPENMP_DEF}"
 else
     if [ "$ENABLE_TARGET" = true ]; then
 	OMNI_CC_OPT="-c -fopenmp -fopenmp-targets=nvptx64-nvidia-cuda"
@@ -225,7 +248,7 @@ for c_file in "${c_files[@]}"; do
     fi
     obj_files+=("${FILE_O}")
 done
-if [ "$ENABLE_ACC" = true ]; then
+if [ "$ENABLE_ACC" = true -o "${ENABLE_LINK_OMP_ACC_LIBS}" = true ]; then
     OMNI_TRAVERSE_OPT="--C --nm ${NM} --prefix acc"
     [ "${TARGET}" = "powerpc-hitachi-aix" ] && OMNI_TRAVERSE_OPT="${OMNI_TRAVERSE_OPT} --sr"
     TRAVERSE_FILE_C=${TEMP_DIR}/omni_traverse_${PID}.c
@@ -242,6 +265,18 @@ if [ "$ENABLE_ACC" = true ]; then
 	OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_OPENCL_LIB"
     fi
     obj_files+=("$TRAVERSE_FILE_O")
+elif [ "${ENABLE_LINK_OMP_ACC_LIBS}" = true ]; then
+    if [ "$OPENACC_PLATFORM" = "CUDA" ]; then
+	    OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_CUDA_LIB"
+    elif [ "$OPENACC_PLATFORM" = "OpenCL" ]; then
+	    OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_OPENCL_LIB"
+    elif [ "$OPENACC_PLATFORM" = "PZCL" ]; then
+	    OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_PZCL_LIB"
+    fi
+    obj_files+=("$TRAVERSE_FILE_O")
+
+    OMNI_LINKER_OPT="$OMNI_LINKER_OPT -lompc_mutex_pthread -lpthread -ltlog"
+    obj_files+=("$OMPC_MAIN_O")
 else
     if [ "$ENABLE_TARGET" = false ]; then
       OMNI_LINKER_OPT="$OMNI_LINKER_OPT -lompc_mutex_pthread -lpthread -ltlog"

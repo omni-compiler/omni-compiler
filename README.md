@@ -32,7 +32,7 @@ See docs/STATUS-XMP.md, docs/STATUS-CAF.md, and docs/STATUS-ACC.md
     $ mpirun -np 4 ./test
 
 -----
-# Quick	Reference for OpenACC
+# Quick	Reference for OpenACC and OpenMP(task offload)
 ## How to install
     $ ./configure --prefix=(INSTALL PATH) --enable-openacc --with-cuda=(CUDA PATH) --with-gpu-cflags="-arch=sm_35 -O2"
     $ make
@@ -40,7 +40,10 @@ See docs/STATUS-XMP.md, docs/STATUS-CAF.md, and docs/STATUS-ACC.md
     $ export PATH=(INSTALL PATH)/bin:$PATH
 
 ## Compile
+    OpenACC
     $ ompcc -acc -O2 test.c -o test --device=Kepler
+    OpenMP(task offload)
+    $ ompcc -O2 test.c -o test --device=Kepler
 
 ## Execute
     $ ./test

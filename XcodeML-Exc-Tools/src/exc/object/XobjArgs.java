@@ -51,6 +51,18 @@ public class XobjArgs
         return next.hasNullArg();
     }
 
+    public XobjArgs tail()
+    {
+        XobjArgs args = this;
+        while (true) {
+            if (args.nextArgs() == null) {
+                break;
+            }
+            args = args.nextArgs();
+        }
+        return args;
+    }
+
     public XobjArgs cfold(Block block)
     {
         Xobject arg2 = (arg == null) ? null : arg.cfold(block);
