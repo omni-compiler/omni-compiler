@@ -8,9 +8,12 @@ import xcodeml.util.XmLog;
  */
 public class ACC {
   public final static String prop = "_ACC_PROP_";
-  
-  private static boolean errorFlag      = false;
-  
+
+  private static boolean errorFlag    = false;
+  public static boolean CL_reduction = false /*true*/;  // reductino for OpenCL
+  public static boolean CL_no_generic_f = false /*true*/;  // OpenCL not support generic function
+  public static boolean debug_flag = false /*true*/;
+
   public static final int ACC_ASYNC_SYNC = -1;
   public static final int ACC_ASYNC_NOVAL = -2;
   public static final int HOST_TO_DEVICE = 400;
@@ -28,6 +31,13 @@ public class ACC {
   public static int version = 20;
   public static Platform platform = Platform.CUDA;
   public static AccDevice device = AccDevice.NONE;
+
+  public static void init(){
+    if(platform == Platform.OpenCL){
+      CL_no_generic_f = true;
+      CL_reduction = true;
+    }
+  }
 
   public static void exitByError() {
     if (errorFlag) System.exit(1);
@@ -51,12 +61,13 @@ public class ACC {
   }
   
   public static void debug(String msg) {
-    XmLog.debug("[OpenACC] " + msg);
+    // XmLog.debug("[OpenACC] " + msg);
+    if(ACC.debug_flag) XmLog.warning("[OpenACC] " + msg);
   }
 
   public enum Platform{
     CUDA,
     OpenCL,
-    PZCL,
+    //   PZCL,
   }
 }

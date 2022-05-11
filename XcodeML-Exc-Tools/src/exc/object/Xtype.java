@@ -81,6 +81,10 @@ public class Xtype
     public static final long TQ_FABSTRACT            = 1L << 36;  // abstract
     public static final long TQ_FDEFERRED            = 1L << 37;  // deferred
 
+
+    public static final long TQ_GLOBAL           = 1L << 38;  // __global (OpenCL)
+    public static final long TQ_LOCAL            = 1L << 39;  // __local (OpenCL)
+
     private String type_id;
     private int type_kind;
 
@@ -820,6 +824,18 @@ public class Xtype
     public final void setIsFdeferred(boolean enabled)
     {
         setTypeQualFlag(TQ_FDEFERRED, enabled);
+    }
+
+    /** return if is qualified by '__global' (OpenCL) */
+    public final boolean isGlobal()
+    {
+        return getTypeQualFlag(TQ_GLOBAL);
+    }
+
+    /** set qualifier '__global' (OpenCL) */
+    public final void setIsGlobal(boolean enabled)
+    {
+        setTypeQualFlag(TQ_GLOBAL, enabled);
     }
 
     /** Fortran : return if is qualified by 'bind' in pointer decl */

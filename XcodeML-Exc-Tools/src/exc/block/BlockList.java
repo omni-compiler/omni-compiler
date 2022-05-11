@@ -200,6 +200,7 @@ public class BlockList
         if(id_list == null)
             return null;
         for(Xobject a : (XobjList)id_list) {
+            if(a == null) continue;
             Ident id = (Ident)a;
             if(s.equals(id.getName()))
                 return id;

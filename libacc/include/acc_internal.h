@@ -13,7 +13,7 @@ typedef struct _ACC_queue_type _ACC_queue_t;
 typedef struct _ACC_mpool_type _ACC_mpool_t;
 
 //debug flag
-//#define DEBUG
+// #define DEBUG
 
 #define ACC_ASYNC_SYNC (-1)
 #define ACC_ASYNC_NOVAL (-2)

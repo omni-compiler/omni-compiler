@@ -53,3 +53,22 @@ function omni_acc_cuda_get_cc_version() # device_name
             return 1
     esac
 }
+
+function omni_acc_opencl_compile() # FILE_CU, FILE_O, args, ...
+{
+    local FILE_CL=$1
+    shift
+    local FILE_O=$1
+    shift
+    local ARGS=($@)
+
+    local FILE_O_GPU="${FILE_O}".gpu
+    local FILE_O_CPU="${FILE_O}".cpu
+    local FILE_CL_C="${FILE_CL}".c
+
+    omni_exec $OMNI_OPENCL_CC_CMD $OMNI_OPENCL_CC_OPT ${ARGS[@]} -o "${FILE_CL_C}" "${OMNI_HOME}/include/acc_cl_hdr.cl" "${FILE_CL}" 
+    omni_exec $OMNI_CC_CMD -c -o "${FILE_O_GPU}" "${FILE_CL_C}"
+    omni_exec mv "${FILE_O}" "${FILE_O_CPU}"
+    omni_exec ld -r "${FILE_O_CPU}" "${FILE_O_GPU}" -o "${FILE_O}"
+    omni_exec rm -f "${FILE_O_CPU}"
+}

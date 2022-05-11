@@ -91,8 +91,6 @@ class AccKernels extends AccData {
       return;
     }
 
-
-
     //generate data
     super.generate();
 
@@ -166,13 +164,6 @@ class AccKernels extends AccData {
       blockListList.add(blockList);
     }
 */
-    if(ACC.platform == ACC.Platform.PZCL){
-      List<Block> blockList = new ArrayList<Block>();
-      blockList.add(pb);
-      blockListList.add(blockList);
-      return blockListList;
-    }
-
 
     if(! _pb.getBody().isSingle()){
       for(Block b = pb.getBody().getHead(); b != null; b = b.getNext()){

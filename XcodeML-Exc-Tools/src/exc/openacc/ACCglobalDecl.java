@@ -285,9 +285,9 @@ class ACCglobalDecl{
       if(! embedKernel){
 	fileName = new File(fileName).getName();
       }
-      if(ACC.platform == ACC.Platform.PZCL){
-        fileName = ACCutil.removeExtension(fileName) + ".pz";
-      }
+      // if(ACC.platform == ACC.Platform.PZCL){
+      //   fileName = ACCutil.removeExtension(fileName) + ".pz";
+      // }
       XobjList args = Xcons.List(Xcons.AddrOf(_programId.getAddr()));
       if(embedKernel){
 	String varNameCommon = "_binary_" + fileName.replaceAll("\\.|/", "_");

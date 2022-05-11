@@ -253,11 +253,63 @@ c_output_MODE2() {
     echo "}"
 }
 
+c_output_MODE_ACC() {
+    echo "#include <string.h> // ACC mode ..."
+    for groupname in "${groupnames[@]}"; do
+        echo "extern void ${groupname}(void);"
+        for name in "${procedures[@]}"; do
+            if [[ ${name} =~ ${groupname}_* ]]; then
+                echo "extern void ${name}(void);"
+            fi
+        done
+    done
+    echo
+
+    for groupname in "${groupnames[@]}"; do
+	if [ "$groupname" = "acc_traverse_init" ]; then
+            for name in "${procedures[@]}"; do
+		if [[ ${name} =~ ${groupname}_* ]]; then
+                    FNAME=${name:23};
+		    echo "char *_binary___omni_tmp___"$FNAME"_cl_start;"
+		    echo "char *_binary___omni_tmp___"$FNAME"_cl_end;"
+		    echo "extern char *_cl_prog_"$FNAME";"
+		fi
+            done
+	fi
+    done
+    echo
+    
+    for groupname in "${groupnames[@]}"; do
+#	echo "groupname=" ${groupname}
+        echo "void ${groupname}() {"
+	if [ "$groupname" = "acc_traverse_init" ]; then
+           for name in "${procedures[@]}"; do
+               if [[ ${name} =~ ${groupname}_* ]]; then
+                   FNAME=${name:23};
+		   echo "_binary___omni_tmp___"$FNAME"_cl_start=_cl_prog_"$FNAME";"
+		   echo "_binary___omni_tmp___"$FNAME"_cl_end=_cl_prog_"$FNAME"+strlen(_cl_prog_"$FNAME");"
+               fi
+           done
+	fi
+        for name in "${procedures[@]}"; do
+            if [[ ${name} =~ ${groupname}_* ]]; then
+                echo "  ${name}();"
+            fi
+        done
+        echo "}"
+        echo
+    done
+}
+
 file_output() {
     case $MODE in
     1)  case "$LANG" in
         F) fortran_output_MODE1;;
-        C) c_output_MODE1;;
+        C) if [ "$PREFIX" = "acc" ]; then
+	       c_output_MODE_ACC
+	   else
+	       c_output_MODE1
+	   fi;;
         esac;;
     2)  case "$LANG" in
         F) fortran_output_MODE2;;

@@ -1540,8 +1540,7 @@ Optional Packages:
   --with-gpucc=CMD            GPU C compiler (default: nvcc)
   --with-gpu-cflags=CFLAGS    GPU C compiler flags (default: -O3 -Wno-deprecated-gpu-targets)
   --with-cuda=DIR             CUDA installation path (default: /usr/local/cuda)
-  --with-opencl=DIR           OpenCL installation path for PEZY-SC2 (default: /usr/local/cuda)
-  --with-pzcl=DIR             PZCL installation path
+  --with-opencl=DIR           OpenCL installation path (default: /usr/local/cuda)
   --with-libxml2=DIR          specify prefix directory for installed libxml2 package (default: /usr)
                               Equivalent to --with-libxml2-include=PATH/include plus --with-libxml2-lib=PATH/lib64
   --with-libxml2-include=DIR  specify directory for installed libxml2 include files
@@ -8184,16 +8183,15 @@ else
   use_opencl=no
 fi
 
-
-# specify PZCL path
-
+# obsolete
+# specify PZCL path 
+#
 # Check whether --with-pzcl was given.
-if test "${with_pzcl+set}" = set; then :
-  withval=$with_pzcl; PZCL_PREFIX="${withval}"; use_pzcl=yes
-else
-  use_pzcl=no
-fi
-
+#if test "${with_pzcl+set}" = set; then :
+#  withval=$with_pzcl; PZCL_PREFIX="${withval}"; use_pzcl=yes
+#else
+#  use_pzcl=no
+#fi
 
 # set cuda default path
 if test "x${CUDA_PREFIX}" = "xyes"; then
@@ -8219,10 +8217,11 @@ if test "x${use_opencl}" = "xyes"; then
 fi
 
 
+# obsolete
 # set pzcl default path
-if test "x${PZCL_PREFIX}" = "xyes"; then
-   as_fn_error $? "no argument with --with-pzcl" "$LINENO" 5
-fi
+#if test "x${PZCL_PREFIX}" = "xyes"; then
+#   as_fn_error $? "no argument with --with-pzcl" "$LINENO" 5
+#fi
 
 # AM_CONDITIONAL(PZCL, test x${use_pzcl} = xyes)
 PZCL=$FALSE
@@ -8600,11 +8599,11 @@ if test "x${use_cuda}" = "xyes"; then
 elif test "x${use_opencl}" = "xyes"; then
     ACC_DEFAULT_PLATFORM=OpenCL
     ACC_DEFAULT_DEVICE=Volta
-elif test "x${use_pzcl}" = "xyes"; then
-    ACC_DEFAULT_PLATFORM=PZCL
-    ACC_DEFAULT_DEVICE=PEZYSC
+#elif test "x${use_pzcl}" = "xyes"; then
+#    ACC_DEFAULT_PLATFORM=PZCL
+#    ACC_DEFAULT_DEVICE=PEZYSC
 elif test "x${doOpenAcc}" = "xyes"; then
-    as_fn_error $? "CUDA, OpenCL, or PZCL not found. Please attach --with-cuda, --with-opencl, or --with-pzcl." "$LINENO" 5
+    as_fn_error $? "CUDA, OpenCL, or PZCL not found. Please attach --with-cuda, or --with-opencl" "$LINENO" 5
 fi
 
 

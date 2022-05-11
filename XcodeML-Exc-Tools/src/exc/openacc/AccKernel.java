@@ -48,7 +48,7 @@ public class AccKernel {
     this._kernelInfo = info;
     this._kernelBlocks = kernelBlocks;
     this.gpuManager = new AccManager(_kernelInfo, _pb);
-    hasGangSync = (ACC.platform == ACC.Platform.PZCL);
+    hasGangSync = false /* (ACC.platform == ACC.Platform.PZCL)*/;
   }
 
   private XobjList getFuncInfo(Block block) {
@@ -92,7 +92,6 @@ public class AccKernel {
         launchFuncName = kernelMainName;
         break;
       case OpenCL:
-      case PZCL:
         launchFuncName = ACC_CL_KERNEL_LAUNCHER_NAME;
         break;
     }
@@ -106,8 +105,6 @@ public class AccKernel {
     //add deviceKernel and launchFunction
     XobjectFile devEnv = _decl.getEnvDevice();
     devEnv.add(deviceKernelDef);
-
-
 
     return makeLaunchFuncBlock(launchFuncName, deviceKernelDef);
   }
@@ -259,6 +256,9 @@ public class AccKernel {
     }
   }
 
+  //
+  // make kernel functions executed in GPU
+  //
   private XobjectDef makeDeviceKernelDef(String deviceKernelName, List<Ident> outerIdList, List<Block> kernelBody) {
     /* make deviceKernelBody */
     DeviceKernelBuildInfo kernelBuildInfo = new DeviceKernelBuildInfo();
@@ -335,11 +335,13 @@ public class AccKernel {
     }
     kernelBuildInfo.addInitBlock(reductionManager.makeLocalVarInitFuncs()); //deviceKernelBody.add(reductionManager.makeLocalVarInitFuncs());
 
-    kernelBuildInfo.addFinalizeBlock(reductionManager.makeReduceAndFinalizeFuncs()); //deviceKernelBody.add(reductionManager.makeReduceAndFinalizeFuncs());
+    if(ACC.CL_reduction) kernelBuildInfo.addInitBlock(reductionManager.makeReduceSetFuncs_CL());
+    kernelBuildInfo.addFinalizeBlock(reductionManager.makeReduceAndFinalizeFuncs());
+    //deviceKernelBody.add(reductionManager.makeReduceAndFinalizeFuncs());
 
-    if(ACC.device == AccDevice.PEZYSC){
-      kernelBuildInfo.addFinalizeBlock(Bcons.Statement(_accFlush));
-    }
+    // if(ACC.device == AccDevice.PEZYSC){
+    //   kernelBuildInfo.addFinalizeBlock(Bcons.Statement(_accFlush));
+    // }
 
     BlockList result = Bcons.emptyBody(kernelBuildInfo.getLocalIdList(), null);
     for(Block b : kernelBuildInfo.getInitBlockList()){
@@ -358,6 +360,14 @@ public class AccKernel {
 
     Ident deviceKernelId = _decl.getEnvDevice().declGlobalIdent(deviceKernelName, Xtype.Function(Xtype.voidType));
     ((FunctionType) deviceKernelId.Type()).setFuncParamIdList(deviceKernelParamIds);
+
+    if(ACC.platform == ACC.platform.OpenCL){
+      // make pointer paramter in kernel function "__global" for OpenCL
+      for(Xobject x : deviceKernelParamIds){
+        Ident id = (Ident) x;
+        if(id.Type().isPointer()) id.Type().setIsGlobal(true);
+      }
+    }
 
     return XobjectDef.Func(deviceKernelId, deviceKernelParamIds, null, resultBlock.toXobject());
   }
@@ -527,12 +537,6 @@ public class AccKernel {
           case OpenCL:
             id.setProp(ACCgpuDecompiler.GPU_STRAGE_SHARED, true);
             break;
-          case PZCL:
-            _globalIdList.add(id);
-            Ident newId = Ident.Local(id.getName(), Xtype.Pointer(id.Type()));
-            newId.setIsDeclared(id.isDeclared());
-            rewriteIdents.put(id, newId);
-            varInitSection.add(_globalMemoryStack.makePushFunc(newId.Ref(), Xcons.SizeOf(id.Type())));
           }
         }
       }
@@ -798,7 +802,6 @@ public class AccKernel {
     //make clac each idx from virtual idx
     Block calcEachVidxBlock = makeCalcIdxFuncCall(vIdxIdList, nIterIdList, iterIdx);
 
-
     //push Loop to stack
     Loop thisLoop = new Loop(forBlock, iterIdx, iterInit, iterCond, iterStep);
     loopStack.push(thisLoop);
@@ -851,7 +854,6 @@ public class AccKernel {
     for (Reduction red : reductionList) {
       red.rewrite(parallelLoopBlock);
     }
-
 
     //make resultBody
     resultBlockBuilder.add(parallelLoopBlock);
@@ -978,7 +980,7 @@ public class AccKernel {
     return Bcons.Statement(result);
   }
 
-
+  // make host code to launch the kernel
   private Block makeLaunchFuncBlock(String launchFuncName, XobjectDef deviceKernelDef) {
     XobjList deviceKernelCallArgs = Xcons.List();
     BlockListBuilder blockListBuilder = new BlockListBuilder();
@@ -992,8 +994,6 @@ public class AccKernel {
     Ident num_gangs = blockListBuilder.declLocalIdent("_ACC_num_gangs", Xtype.intType, num_gangs_decl);
     Ident num_workers = blockListBuilder.declLocalIdent("_ACC_num_workers", Xtype.intType, confDecl.getArg(1));
     Ident vec_len = blockListBuilder.declLocalIdent("_ACC_vec_len", Xtype.intType, confDecl.getArg(2));
-
-
 
     Ident mpool = Ident.Local("_ACC_mpool", Xtype.voidPtrType);
     Ident mpoolPos = Ident.Local("_ACC_mpool_pos", Xtype.longlongType);
@@ -1084,7 +1084,7 @@ public class AccKernel {
       kernelLauchBlock = makeLauncherFuncCallCUDA(launchFuncName, deviceKernelDef, deviceKernelCallArgs, num_gangs.Ref(), num_workers.Ref(), vec_len.Ref(), getAsyncExpr());
       break;
     case OpenCL:
-      case PZCL:
+   // case PZCL:
       String kernelName = deviceKernelDef.getName();
       Ident kernelConf =blockListBuilder.declLocalIdent("_ACC_conf", Xtype.Array(Xtype.intType, null), Xcons.List(num_gangs.Ref(), num_workers.Ref(), vec_len.Ref()));
       kernelLauchBlock = makeKernelLaunchBlock(ACC_CL_KERNEL_LAUNCHER_NAME, kernelName, deviceKernelCallArgs, kernelConf, getAsyncExpr());
@@ -1094,6 +1094,8 @@ public class AccKernel {
     }
     blockListBuilder.add(kernelLauchBlock);
 
+    /* execute reduction Ops on tempoary after executing main kernel */
+    /* generate Launch kernel call on host side */
     if (reductionManager.hasUsingTmpReduction()) {
       XobjectDef reductionKernelDef = reductionManager.makeReductionKernelDef(launchFuncName + "_red" + ACC_GPU_DEVICE_FUNC_SUFFIX);
 
@@ -1105,25 +1107,30 @@ public class AccKernel {
 
       switch (ACC.platform) {
       case CUDA:
-        reductionKernelCallBlock = makeLauncherFuncCallCUDA(launchFuncName + "_red", reductionKernelDef, reductionKernelCallArgs,
+        reductionKernelCallBlock = makeLauncherFuncCallCUDA(launchFuncName + "_red", reductionKernelDef,
+       	        reductionKernelCallArgs,
                 Xcons.IntConstant(reductionKernelVarCount),
                 Xcons.IntConstant(1),
                 Xcons.IntConstant(ACC.device.getDefaultVectorLength()),
                 getAsyncExpr());
         break;
       case OpenCL:
-        case PZCL:
+  //  case PZCL:
         BlockList body = Bcons.emptyBody();
         String kernelName = reductionKernelDef.getName();
-        Ident kernelConf = body.declLocalIdent("_ACC_conf", Xtype.Array(Xtype.intType, null), StorageClass.AUTO, Xcons.List(num_gangs.Ref(), num_workers.Ref(), vec_len.Ref()));
-        body.add(makeKernelLaunchBlock(ACC_CL_KERNEL_LAUNCHER_NAME, kernelName, reductionKernelCallArgs, kernelConf, getAsyncExpr()));
-        reductionKernelCallBlock = Bcons.COMPOUND(body);
+        Ident kernelConf = body.declLocalIdent("_ACC_conf", Xtype.Array(Xtype.intType, null),
+					       StorageClass.AUTO,
+					       Xcons.List(num_gangs.Ref(), num_workers.Ref(), vec_len.Ref()));
+        body.add(makeKernelLaunchBlock(ACC_CL_KERNEL_LAUNCHER_NAME, kernelName,
+				       reductionKernelCallArgs, kernelConf, getAsyncExpr()));
+       reductionKernelCallBlock = Bcons.COMPOUND(body);
         break;
       default:
         ACC.fatal("not supported platform");
       }
 
-      Block ifBlock = Bcons.IF(Xcons.binaryOp(Xcode.LOG_GT_EXPR, num_gangs.Ref(), Xcons.IntConstant(1)), reductionKernelCallBlock, null);
+      Block ifBlock = Bcons.IF(Xcons.binaryOp(Xcode.LOG_GT_EXPR, num_gangs.Ref(), Xcons.IntConstant(1)),
+                               reductionKernelCallBlock, null);
       blockListBuilder.add(ifBlock);
     }
 
@@ -1422,11 +1429,11 @@ System.out.println(id == null);
       case OpenCL:
         condition = Xcons.binaryOp(Xcode.LOG_EQ_EXPR, _accThreadIndex, Xcons.IntConstant(0));
         break;
-      case PZCL:
-        condition = Xcons.binaryOp(Xcode.LOG_AND_EXPR,
-                Xcons.binaryOp(Xcode.LOG_EQ_EXPR, _accBlockIndex, Xcons.IntConstant(0)),
-                Xcons.binaryOp(Xcode.LOG_EQ_EXPR, _accThreadIndex, Xcons.IntConstant(0)));
-        break;
+      // case PZCL:
+      //   condition = Xcons.binaryOp(Xcode.LOG_AND_EXPR,
+      //           Xcons.binaryOp(Xcode.LOG_EQ_EXPR, _accBlockIndex, Xcons.IntConstant(0)),
+      //           Xcons.binaryOp(Xcode.LOG_EQ_EXPR, _accThreadIndex, Xcons.IntConstant(0)));
+      //   break;
       }
     }
 
@@ -1444,13 +1451,16 @@ System.out.println(id == null);
       case CUDA:
       case OpenCL:
         return Bcons.Statement(_accSyncThreads);
-      case PZCL:
-        return Bcons.Statement(_accSyncGangs);
+      // case PZCL:
+      //   return Bcons.Statement(_accSyncGangs);
       }
       return null;
     }
   }
 
+  //
+  // Outer Id Collector
+  //
   private class OuterIdCollector {
     public Set<Ident> collect(Block topBlock) {
       Set<Ident> outerIdSet = new LinkedHashSet<Ident>();
@@ -1547,6 +1557,9 @@ System.out.println(id == null);
     }
   }
 
+  //
+  // Aassigned Id Collector
+  //
   private class AssignedIdCollector {
     Set<Ident> collect(Block kernelBlock) {
       Set<Ident> assignedIds = new LinkedHashSet<Ident>();
@@ -1664,6 +1677,9 @@ System.out.println(id == null);
     }
   }
 
+  //
+  // for Loop directive
+  //
   class Loop {
     final CforBlock forBlock;
     final boolean isParallelized;
@@ -1684,8 +1700,11 @@ System.out.println(id == null);
       abstStep = step;
       isParallelized = (idx != null);
     }
-  }
+  } // end of Loop
 
+  //
+  // SharedMemory
+  //
   class SharedMemory {
     final Ident externSmId;
     final Ident smOffsetId;
@@ -1735,8 +1754,11 @@ System.out.println(id == null);
     Block makeInitFunc() {
       return ACCutil.createFuncCallBlock("_ACC_gpu_init_sm_offset", Xcons.List(smOffsetId.getAddr()));
     }
-  }
+  } // end of Shared Memory
 
+  //
+  // Cache
+  //
   class Cache {
     final XobjList localIds = Xcons.IDList();
     final Ident cacheSizeArrayId;
@@ -2006,8 +2028,11 @@ System.out.println(id == null);
 
       return Xcons.List(loopIdx, constOffset, length);
     }
-  }
+  } // end of Cache
 
+  //
+  // reduction Manager
+  //
   class ReductionManager {
     Ident counterPtr = null;
     Ident tempPtr = null;
@@ -2023,6 +2048,7 @@ System.out.println(id == null);
       isLastVar.setProp(ACCgpuDecompiler.GPU_STRAGE_SHARED, true);
     }
 
+    // make functions definition for reduction exeuted after reduction
     public XobjectDef makeReductionKernelDef(String deviceKernelName) {
       BlockList reductionKernelBody = Bcons.emptyBody();
 
@@ -2035,7 +2061,13 @@ System.out.println(id == null);
         Reduction reduction = blockRedIter.next();
         if (! reduction.needsExternalReduction()) continue;
 
-        Block blockReduction = reduction.makeBlockReductionFuncCall(tempPtr, offsetMap.get(reduction), numBlocksId);//reduction.makeBlockReductionFuncCall(tempPtr, tmpOffsetElementSize)
+        Block blockReduction;
+	if(!ACC.CL_reduction){
+          blockReduction = reduction.makeBlockReductionFuncCall(tempPtr, offsetMap.get(reduction), numBlocksId);
+          //reduction.makeBlockReductionFuncCall(tempPtr, tmpOffsetElementSize)
+        } else {
+          blockReduction = reduction.makeReductionLocBlockFuncCall(tempPtr, offsetMap.get(reduction), numBlocksId);
+        }
         Block ifBlock = Bcons.IF(Xcons.binaryOp(Xcode.LOG_EQ_EXPR, blockIdx, Xcons.IntConstant(count)), blockReduction, null);
         reductionKernelBody.add(ifBlock);
         count++;
@@ -2051,6 +2083,14 @@ System.out.println(id == null);
 
       deviceKernelParamIds.add(tempPtr);
       deviceKernelParamIds.add(numBlocksId);
+
+      // make pointer paramter type "__global" for OpnenCL
+      if(ACC.platform == ACC.platform.OpenCL){
+        for(Xobject x : deviceKernelParamIds){
+          Ident id = (Ident) x;
+          if(id.Type().isPointer()) id.Type().setIsGlobal(true);
+        }
+      }
 
       Ident deviceKernelId = _decl.getEnvDevice().declGlobalIdent(deviceKernelName, Xtype.Function(Xtype.voidType));
       ((FunctionType) deviceKernelId.Type()).setFuncParamIdList(deviceKernelParamIds);
@@ -2085,6 +2125,7 @@ System.out.println(id == null);
         Reduction reduction = blockRedIter.next();
 	if(reduction.onlyKernelLast()){
           blockLocalIds.add(reduction.getLocalReductionVarId());
+          blockLocalIds.add(reduction.getLocReductionVarId());
 	}
       }
       return blockLocalIds;
@@ -2103,6 +2144,8 @@ System.out.println(id == null);
        *   }
        * }
        */
+      if(ACC.CL_reduction) return reductionManager.makeReduceAndFinalizeFuncs_CL();
+
       BlockList body = Bcons.emptyBody();
       BlockList thenBody = Bcons.emptyBody();
       BlockList tempWriteBody = Bcons.emptyBody();
@@ -2138,6 +2181,33 @@ System.out.println(id == null);
       return Bcons.COMPOUND(body);
     }
 
+    // for ACC.CL_reduction
+    public Block makeReduceAndFinalizeFuncs_CL() {
+      BlockList body = Bcons.emptyBody();
+
+      Iterator<Reduction> blockRedIter = reductionManager.BlockReductionIterator();
+      while (blockRedIter.hasNext()) {
+        Reduction reduction = blockRedIter.next();
+	if (reduction.needsExternalReduction()) {
+          body.add(reduction.makeReductionLocUpdateFuncCall());
+	}
+      }
+      return Bcons.COMPOUND(body);
+    }
+
+    public Block makeReduceSetFuncs_CL() {
+      BlockList body = Bcons.emptyBody();
+
+      Iterator<Reduction> blockRedIter = reductionManager.BlockReductionIterator();
+      while (blockRedIter.hasNext()) {
+        Reduction reduction = blockRedIter.next();
+	if (reduction.needsExternalReduction()) {
+          body.add(reduction.makeReductionLocSetFuncCall(tempPtr));
+	}
+      }
+      return Bcons.COMPOUND(body);
+    }
+
     Reduction addReduction(ACCvar var, EnumSet<ACCpragma> execMethodSet) {
       Reduction reduction = new Reduction(var, execMethodSet);
       reductionList.add(reduction);
@@ -2146,7 +2216,6 @@ System.out.println(id == null);
 
       //tmp setting
       offsetMap.put(reduction, totalElementSize);
-
 
       Xtype varType = var.getId().Type();
       Xobject elementSize;
@@ -2208,11 +2277,15 @@ System.out.println(id == null);
         //do nothing
       }
     }
-  }
+  } // end of Reduction Manager
 
+  //
+  // Reduction
+  // 
   class Reduction {
     final EnumSet<ACCpragma> execMethodSet;  //final ACCpragma execMethod;
     final Ident localVarId;
+    final Ident locVarId;  // hold location (address) for reduction
     final Ident varId;
     // --Commented out by Inspection (2015/02/24 21:12):Ident launchFuncLocalId;
     final ACCvar var;
@@ -2235,6 +2308,10 @@ System.out.println(id == null);
       if (execMethodSet.contains(ACCpragma.GANG) && !execMethodSet.contains(ACCpragma.VECTOR)) { //execMethod == ACCpragma._BLOCK) {
         localVarId.setProp(ACCgpuDecompiler.GPU_STRAGE_SHARED, true);
       }
+      
+      if(ACC.CL_reduction)
+        locVarId = Ident.Local(ACC_REDUCTION_VAR_PREFIX+"loc_"+ varId.getName(), Xtype.Pointer(varId.Type()));
+      else locVarId = null;
     }
 
     public Block makeSingleBlockReductionFuncCall(Ident tmpPtrId) {
@@ -2281,6 +2358,11 @@ System.out.println(id == null);
       return localVarId;
     }
 
+    public Ident getLocReductionVarId() {
+      return locVarId;
+    }
+
+    // initalize reduction variable 
     public Block makeInitReductionVarFuncCall(Ident id) {
       String funcName = "_ACC_gpu_init_reduction_var";
 
@@ -2288,6 +2370,10 @@ System.out.println(id == null);
         funcName += "_single";
       }
 
+      if(ACC.CL_no_generic_f){
+        funcName += "_"+varId.Type()+"_"+getReductionKindString();
+        return ACCutil.createFuncCallBlock(funcName, Xcons.List(id.getAddr()));
+      }
       return ACCutil.createFuncCallBlock(funcName, Xcons.List(id.getAddr(), Xcons.IntConstant(getReductionKindInt())));
     }
 
@@ -2295,12 +2381,45 @@ System.out.println(id == null);
       return makeInitReductionVarFuncCall(localVarId);
     }
 
+    // reduction on block
     public Block makeBlockReductionFuncCall(Ident tmpPtrId, Xobject tmpOffsetElementSize, Ident numBlocks) {
-      XobjList args = Xcons.List(varId.Ref(), Xcons.IntConstant(getReductionKindInt()), tmpPtrId.Ref(), tmpOffsetElementSize);
+      XobjList args = Xcons.List(varId.Ref(), Xcons.IntConstant(getReductionKindInt()),
+                                 tmpPtrId.Ref(), tmpOffsetElementSize);
       if (numBlocks != null) {
         args.add(numBlocks.Ref());
       }
       return ACCutil.createFuncCallBlock("_ACC_gpu_reduction_block", args);
+    }
+
+    // for CL_reduction
+    // set shared location for reduction
+    public Block makeReductionLocSetFuncCall(Ident tmpPtrId)
+    {
+      XobjList args = Xcons.List(locVarId.Ref(), varId.getAddr(), tmpPtrId.Ref());
+      String mang_name = "_ACC_gpu_reduction_loc_set";
+      mang_name += "_"+varId.Type()+"_"+getReductionKindString();
+      return ACCutil.createFuncCallBlock(mang_name, args);
+    }
+
+    // reduction on shared location
+    public Block makeReductionLocUpdateFuncCall(){
+      XobjList args = Xcons.List(locVarId.Ref(), localVarId.Ref());
+      String mang_name = "_ACC_gpu_reduction_loc_update";
+      mang_name += "_"+varId.Type()+"_"+getReductionKindString();
+      return ACCutil.createFuncCallBlock(mang_name, args);
+    }
+
+    // reduction value on tempoary area 
+    public Block makeReductionLocBlockFuncCall(Ident tmpPtrId, Xobject tmpOffsetElementSize,Ident numBlocks) {
+      XobjList args = Xcons.List(varId.Ref(), tmpPtrId.Ref(), tmpOffsetElementSize);
+
+      if (numBlocks != null) {
+        args.add(numBlocks.Ref());
+      } else args.add(Xcons.IntConstant(0));
+      
+      String mang_name = "_ACC_gpu_reduction_loc_block";
+      mang_name += "_"+varId.Type()+"_"+getReductionKindString();
+      return ACCutil.createFuncCallBlock(mang_name, args);
     }
 
     String makeExecString(EnumSet<ACCpragma> execSet){
@@ -2340,32 +2459,32 @@ System.out.println(id == null);
       return ACCutil.createFuncCallBlock(funcName, args);
     }
 
-    String makeExecString_PZCL(EnumSet<ACCpragma> execSet){
-      StringBuilder sb = new StringBuilder();
-      if(execSet.contains(ACCpragma.GANG)){
-        sb.append("PrCiViPe");
-      }
-      if(execSet.contains(ACCpragma.VECTOR)){
-        sb.append("Th");
-      }
+    // String makeExecString_PZCL(EnumSet<ACCpragma> execSet){
+    //   StringBuilder sb = new StringBuilder();
+    //   if(execSet.contains(ACCpragma.GANG)){
+    //     sb.append("PrCiViPe");
+    //   }
+    //   if(execSet.contains(ACCpragma.VECTOR)){
+    //     sb.append("Th");
+    //   }
 
-      return sb.toString();
-    }
+    //   return sb.toString();
+    // }
 
-    public Block makeInKernelReductionFuncCall_PZCL(){
-      String funcName = "_ACC_pzcl_reduction_" + makeExecString_PZCL(execMethodSet);
-      XobjList args = Xcons.List(varId.getAddr(), Xcons.IntConstant(getReductionKindInt()), localVarId.Ref());
+    // public Block makeInKernelReductionFuncCall_PZCL(){
+    //   String funcName = "_ACC_pzcl_reduction_" + makeExecString_PZCL(execMethodSet);
+    //   XobjList args = Xcons.List(varId.getAddr(), Xcons.IntConstant(getReductionKindInt()), localVarId.Ref());
 
-      return ACCutil.createFuncCallBlock(funcName, args);
-    }
+    //   return ACCutil.createFuncCallBlock(funcName, args);
+    // }
 
     public Block makeInKernelReductionFuncCall(Ident dstId){
       switch(ACC.platform){
       case CUDA:
       case OpenCL:
         return makeInKernelReductionFuncCall_CUDA(dstId);
-      case PZCL:
-        return makeInKernelReductionFuncCall_PZCL();
+      // case PZCL:
+      //   return makeInKernelReductionFuncCall_PZCL();
       }
       return null;
     }
@@ -2406,7 +2525,36 @@ System.out.println(id == null);
       case REDUCTION_LOGOR:
         return 8;
       default:
+        ACC.fatal("getReductionKindInt: unknown reduction kind");
         return -1;
+      }
+    }
+
+    private String getReductionKindString() {
+      ACCpragma pragma = var.getReductionOperator();
+      if (!pragma.isReduction()) ACC.fatal(pragma.getName() + " is not reduction clause");
+      switch (pragma) {
+      case REDUCTION_PLUS:
+        return "PLUS";
+      case REDUCTION_MUL:
+        return "MUL";
+      case REDUCTION_MAX:
+        return "MAX";
+      case REDUCTION_MIN:
+        return "MIN";
+      case REDUCTION_BITAND:
+        return "BITAND";
+      case REDUCTION_BITOR:
+        return "BITOR";
+      case REDUCTION_BITXOR:
+        return "BITXOR";
+      case REDUCTION_LOGAND:
+        return "LOGAND";
+      case REDUCTION_LOGOR:
+        return "LOGOR";
+      default:
+        ACC.fatal("getReductionKindString: unknown reduction kind");
+        return "???";
       }
     }
 
@@ -2425,18 +2573,21 @@ System.out.println(id == null);
     }
 
     public boolean onlyKernelLast() {
-      if(ACC.device == AccDevice.PEZYSC) return false;
+	//      if(ACC.device == AccDevice.PEZYSC) return false;
 
       return execMethodSet.contains(ACCpragma.GANG);
     }
 
     public boolean needsExternalReduction(){
-      if(ACC.device == AccDevice.PEZYSC) return false;
+	//      if(ACC.device == AccDevice.PEZYSC) return false;
 
       return !existsAtomicOperation() && execMethodSet.contains(ACCpragma.GANG);
     }
-  }
+  } // end of Reduction
 
+  //
+  // Block List Builder
+  //
   private class BlockListBuilder {
     private final List<Block> initBlockList = new ArrayList<Block>();
     private final List<Block> finalizeBlockList = new ArrayList<Block>();
@@ -2473,6 +2624,9 @@ System.out.println(id == null);
     }
   }
 
+  //
+  // Stack Memory
+  //
   private class StackMemory{
     private final Ident baseId;
     private final Ident posId;

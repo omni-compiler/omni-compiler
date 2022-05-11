@@ -9,15 +9,19 @@ abstract class AccDirective {
   final XobjectDef _xobjDef;
   final PragmaBlock _pb;
   final ACCglobalDecl _decl;
+
   AccDirective(ACCglobalDecl decl, AccInformation info){
     this(decl, info, null, null);
   }
+
   AccDirective(ACCglobalDecl decl, AccInformation info, XobjectDef xobjDef){
     this(decl, info, xobjDef, null);
   }
+
   AccDirective(ACCglobalDecl decl, AccInformation info, PragmaBlock pb){
     this(decl, info, null, pb);
   }
+
   AccDirective(ACCglobalDecl decl, AccInformation info, XobjectDef xobjDef, PragmaBlock pb){
     _decl = decl;
     _info = info;

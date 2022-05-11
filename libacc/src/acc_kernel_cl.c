@@ -66,7 +66,6 @@ void _ACC_launch(_ACC_program_t *program, int kernel_num, int *_ACC_conf, int as
     //CL_CHECK(clFlush(command_queue));
     CL_CHECK(clWaitForEvents(1, &event));
     CL_CHECK(clReleaseEvent(event));
-    //CL_CHECK(clFinish(command_queue));
   }
 }
 

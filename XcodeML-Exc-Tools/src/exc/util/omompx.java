@@ -510,21 +510,19 @@ public class omompx
         xcodeWriter.flush();
       }
     }
-
+    
     }
-
+    
     if(openACC){
       if(ACC.device == AccDevice.NONE){
         switch(ACC.platform){
           case CUDA:
-          case OpenCL:
-            ACC.device = AccDevice.getDevice("Fermi");
-            break;
-          case PZCL:
-            ACC.device = AccDevice.PEZYSC;
-            break;
+        case OpenCL:
+          ACC.device = AccDevice.getDevice("Fermi");
+          break;
         }
       }
+      ACC.init();
 
       if(accDefaultVectorLength > 0) {
         ACC.device.setDefaultVectorLength(accDefaultVectorLength);
