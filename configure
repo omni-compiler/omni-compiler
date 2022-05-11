@@ -13422,6 +13422,10 @@ ac_config_files="$ac_config_files Driver/bin/C_Trans"
 
 ac_config_files="$ac_config_files Driver/bin/F_Trans"
 
+ac_config_files="$ac_config_files Driver/bin/metax"
+
+ac_config_files="$ac_config_files Driver/bin/metac"
+
 #--------------------------------------------------------------------
 genLibTargetTmpl () {
     dir=$1
@@ -14164,6 +14168,8 @@ do
     "Driver/bin/xmpf90") CONFIG_FILES="$CONFIG_FILES Driver/bin/xmpf90" ;;
     "Driver/bin/C_Trans") CONFIG_FILES="$CONFIG_FILES Driver/bin/C_Trans" ;;
     "Driver/bin/F_Trans") CONFIG_FILES="$CONFIG_FILES Driver/bin/F_Trans" ;;
+    "Driver/bin/metax") CONFIG_FILES="$CONFIG_FILES Driver/bin/metax" ;;
+    "Driver/bin/metac") CONFIG_FILES="$CONFIG_FILES Driver/bin/metac" ;;
     "libompc/src/Makefile") CONFIG_FILES="$CONFIG_FILES libompc/src/Makefile" ;;
     "libompf/src/Makefile") CONFIG_FILES="$CONFIG_FILES libompf/src/Makefile" ;;
     "libtlog/src_threads/Makefile") CONFIG_FILES="$CONFIG_FILES libtlog/src_threads/Makefile" ;;

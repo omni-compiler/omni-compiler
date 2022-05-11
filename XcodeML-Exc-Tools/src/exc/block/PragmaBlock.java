@@ -31,7 +31,10 @@ public class PragmaBlock extends CompoundBlock
 	setLineNo(new LineNo(ln.fileName(), ln.lineNo() - 1));
       this.code = b.Opcode();
       this.pragma = b.getPragma();
-      this.args = b.getClauses().copy();
+      if (b.getClauses() != null)
+	this.args = b.getClauses().copy();
+      else
+	this.args = null;
     }
 
     /** make clone */

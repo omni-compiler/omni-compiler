@@ -108,6 +108,7 @@ public class Ident extends Xobject
         this.gcc_attrs = gccAttrs;
         this.enum_value = enum_value;
         this.fparam_value = fparam_value;
+	this.declared_module = null;
         this.codimensions = codimensions;
     }
 
@@ -142,6 +143,7 @@ public class Ident extends Xobject
       this.gcc_attrs = gccAttrs;
       this.enum_value = enum_value;
       this.fparam_value = fparam_value;
+      this.declared_module = null;
       this.codimensions = codimensions;
       this.type = type;
     }

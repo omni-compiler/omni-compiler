@@ -294,7 +294,7 @@ public class XMPtranslate implements XobjectDefVisitor
         create_main(d);
       }
       
-      else if (d.getParent() == null){ // neither internal nor module procedures
+      else if (d.getParent() == null && !XmOption.isMETAX()){ // neither internal nor module procedures
       	newChild = wrap_external(d);
       }
       fd = new FuncDefBlock(d);

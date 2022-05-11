@@ -404,7 +404,7 @@ public class omompx
       }
     }
 
-    if (xmpf && (xmpf_skipCafMode || !XmOption.isCoarray())) {
+    if (xmpf && (xmpf_skipCafMode || !XmOption.isCoarray()) && !metax) {
       System.out.println("<SKIP-CAF MODE> XMP/F Coarray translator is " +
                          "bypassed for " + xobjFile.getSourceFileName() + ".");
     }

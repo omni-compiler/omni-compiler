@@ -236,18 +236,18 @@ public class Block extends PropObject implements IVarContainer
     }
 
     /** add Block s */
-    public Block add(Block s)
+    public Block add(Block b)
     {
-        s.parent = parent;
-        s.next = next;
-        next = s;
-        s.prev = this;
-        if(s.next == null) { // tail of list
-            if (parent != null) parent.tail = s;
+        b.parent = parent;
+        b.next = next;
+        next = b;
+        b.prev = this;
+        if(b.next == null) { // tail of list
+            if (parent != null) parent.tail = b;
         } else {
-            s.next.prev = s;
+            b.next.prev = b;
         }
-        return s;
+        return b;
     }
 
     public Block add(BasicBlock bb)

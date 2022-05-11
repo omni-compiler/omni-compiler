@@ -33,6 +33,8 @@ Driver/bin/xmpcc
 Driver/bin/xmpf90
 Driver/bin/C_Trans
 Driver/bin/F_Trans
+Driver/bin/metac
+Driver/bin/metax
 Driver/etc/ompcc.conf
 Driver/etc/ompf90.conf
 Driver/etc/version

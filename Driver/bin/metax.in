@@ -1,0 +1,176 @@
+#!/bin/bash
+
+# OMNI_CX2X_CMD="@JAVA@"
+# OMNI_HOME="@OMNI_HOME@"
+# OMNI_JAR1="${OMNI_HOME}/share/om-exc-tools.jar"
+# OMNI_JAR2="${OMNI_HOME}/share/om-c-back.jar"
+# OMNI_JAR3="${OMNI_HOME}/share/om-f-back.jar"
+# OMNI_JAR4="${OMNI_HOME}/share/om-common.jar"
+# OMNI_FX2X_MUST_OPT="-cp ${METAPROGRAM_DIR:-.}:${OMNI_JAR4}:${OMNI_JAR3}:${OMNI_JAR2}:${OMNI_JAR1} exc.util.omompx -fxmpf -xf -M${OMNI_HOME}/include -M${OMNI_HOME}/fincludes"
+# METAX_OPT="-silent -decomp -enable-metax -l -fnocoarray"
+# OMNI_FX2X_OPT="@JAVA_OPT@ -Xmx400m -Xms200m ${OMNI_FX2X_MUST_OPT} @OMNI_X2X_FLAGS@ @OMNI_X2X_FONESIDED_OPT@ ${METAX_OPT}"
+
+# exec ${OMNI_CX2X_CMD} ${OMNI_FX2X_OPT} ${1+"$@"}
+
+### Read configration file and library ###
+OM_DRIVER_CONF_DIR=@OM_DRIVER_CONF_DIR@
+. ${OM_DRIVER_CONF_DIR}/xmpf90.conf
+. ${OMNI_HOME}/libexec/omni_common_lib.sh
+. ${OMNI_HOME}/libexec/metax_lib.sh
+
+### Directory for saving intermediate files ###
+PID=$$
+TEMP_DIR=/tmp/__omni_tmp__${PID}
+while test -e $TEMP_DIR; do
+    PID=$$
+    TEMP_DIR=/tmp/__omni_tmp__${PID}
+done
+DEBUG_TEMP_DIR="__omni_tmp__"
+
+### Default options ###
+ENABLE_LINKER=true
+ONLY_PP=false
+ENABLE_CPP=false
+VERBOSE=false
+ENABLE_DEBUG=false
+OUTPUT_TEMPORAL=false
+DRY_RUN=false
+STOP_PP=false
+STOP_FRONTEND=false
+STOP_TRANSLATOR=false
+STOP_BACKEND=false
+STOP_COMPILE=false
+MAKE_XML=false
+ONLY_XMOD=false
+ENABLE_OPENMP=false
+ENABLE_OPENACC=false
+ENABLE_XACC=false
+ENABLE_SCALASCA_ALL=false
+ENABLE_SCALASCA=false
+ENABLE_TLOG_ALL=false
+ENABLE_MAIN_XMP=false
+
+### Set options ###
+# e.g.) xmpf90 -I/usr/lib a.f b.F c.f90 d.F90 e.o --tmp --Wlfoo lib.a -omp -DTEST -Jdir -lm -o a.out
+#
+#  output_file="a.out"              # Output file
+#  f_files="a.f b.F c.f90 d.F90"    # All fortran files
+#  archive_files="lib.a"            # Archive files
+#  obj_files="e.o"                  # Object files
+#  module_dirs="-Jdir"              # Module dirs (Actually, the variables are changed in xmpf90_set_parameters)
+#  lib_args="-lm"                   # Library files
+#  define_opts="-DTEST"             # Define options
+#  other_args="-I/usr/lib"          # Options for Preprocessor, Compiler, and Linker
+# 
+#  Note that "-omp" is extracted by xmpf90_set_parameters, and set "ENABLE_OPENMP".
+#
+# To deal with space-separator in options, the following variables are defined as an array (#278)
+output_file=()
+f_files=()
+archive_files=()
+obj_files=()
+module_dirs=()
+lib_args=()
+define_opts=()
+other_args=()
+
+# Additional options defined by command line (e.g. --Wl..)
+pp_add_opt=()
+frontend_add_opt=()
+xcode_translator_add_opt=()
+native_add_opt=()
+backend_add_opt=()
+linker_add_opt=()
+module_opt=()
+trans_module_opt=()
+include_opt=()
+
+xmpf90_set_parameters ${@+"$@"}
+omni_f_check_file_exist
+
+### Create temporal directory ###
+[ $ENABLE_DEBUG = true ] && TEMP_DIR=$DEBUG_TEMP_DIR
+# Note that, if TEMP_DIR exists, the TEMP_DIR is not deleted (KAGEMAI #379)
+
+omni_exec mkdir -p $TEMP_DIR
+
+### Clean temporal directory before exit ###
+omni_set_trap
+
+### Preprocessor ###
+[ $ENABLE_OPENMP = true ] && OMNI_FPP_OPT="$OPENMP_OPT_F $OMNI_FPP_OPT"
+[ $ENABLE_XACC = true ]   && OMNI_FPP_OPT="-D_XCALABLEACC $OMNI_FPP_OPT"
+for file in "${f_files[@]}"; do
+    FILE=("${file}")
+    FILE_NAME=`omni_f_norm_file_name "${FILE}"`     # ./hoge/fuga.F -> hoge_2f_fuga_2f_a
+    EXT=${file##*.}
+    FILE_PP=${TEMP_DIR}/"${FILE_NAME}".${EXT}
+
+    if [ $EXT = "F90" -o $EXT = "F" -o $ENABLE_CPP = true ]; then
+        # When ">" or ">>" is used, please use "omni_exec_echo" and "omni_exec_run" instead of "omni_exec".
+	omni_exec_echo $OMNI_FPP_CMD "${define_opts[@]}" "${include_opt[@]}" "${pp_add_opt[@]}" $OMNI_FPP_OPT "${other_args[@]}" "${FILE}" ">" "${FILE_PP}"
+	[ $DRY_RUN = false ] && omni_exec_run  $OMNI_FPP_CMD "${define_opts[@]}" "${include_opt[@]}" "${pp_add_opt[@]}" $OMNI_FPP_OPT "${other_args[@]}" "${FILE}" > "${FILE_PP}"
+        # AIX compiler cannot output file with ".i" suffix. So, ">" is used.
+    fi
+done
+
+### Frontend ###
+[ $ENABLE_OPENACC = true -o $ENABLE_XACC = true ]   && frontend_add_opt+=("-facc")
+[ $ENABLE_OPENMP = true ] && frontend_add_opt+=("-fopenmp")
+for file in "${f_files[@]}"; do
+    FILE=("${file}")
+    FILE_NAME=`omni_f_norm_file_name "${FILE}"`     # ./hoge/fuga.F90 -> hoge_2f_fuga_2f_a
+    EXT=${file##*.}
+
+    if [ $EXT = "F90" -o $EXT = "F" -o $ENABLE_CPP = true ]; then
+	FILE_PP=${TEMP_DIR}/"${FILE_NAME}".${EXT}
+    else
+	FILE_PP="${FILE}"
+    fi
+    FILE_IN_X=${TEMP_DIR}/"${FILE_NAME}"_${EXT}_in.xml
+
+    if [ $ONLY_XMOD = true ]; then
+	FILE_IN_X="/dev/null"
+    else
+	FILE_IN_X=${TEMP_DIR}/"${FILE_NAME}"_${EXT}_in.xml
+    fi
+    
+    omni_exec $OMNI_F2X_CMD "${include_opt[@]}" "${module_opt[@]}" "${frontend_add_opt[@]}" $OMNI_F2X_OPT "${FILE_PP}" -o "${FILE_IN_X}"
+done
+if [ $MAKE_XML = true ]; then
+    cp "${FILE_IN_X}" ${file%.*}.xml
+fi
+[ $STOP_FRONTEND = true ] && exit 0;
+
+### Translator ###
+for file in "${f_files[@]}"; do
+    FILE=("${file}")
+    FILE_NAME=`omni_f_norm_file_name "${FILE}"`     # ./hoge/fuga.f90 -> hoge_2f_fuga_2f_a
+    EXT=${file##*.}
+    FILE_IN_X=${TEMP_DIR}/"${FILE_NAME}"_${EXT}_in.xml
+    FILE_OUT_F=${TEMP_DIR}/"${FILE_NAME}"_${EXT}_in.F90
+    # FILE_OUT_X=${TEMP_DIR}/"${FILE_NAME}"_${EXT}_out.xml
+
+    OMNI_FX2X_CMD="@JAVA@"
+    OMNI_HOME="@OMNI_HOME@"
+    OMNI_JAR1="${OMNI_HOME}/share/om-exc-tools.jar"
+    OMNI_JAR2="${OMNI_HOME}/share/om-c-back.jar"
+    OMNI_JAR3="${OMNI_HOME}/share/om-f-back.jar"
+    OMNI_JAR4="${OMNI_HOME}/share/om-common.jar"
+    OMNI_FX2X_MUST_OPT="-cp ${metaprogram_dir}${OMNI_JAR4}:${OMNI_JAR3}:${OMNI_JAR2}:${OMNI_JAR1} exc.util.omompx -fxmpf -xf -M${OMNI_HOME}/include -M${OMNI_HOME}/fincludes"
+    METAX_OPT="-silent -decomp -enable-metax -l -fnocoarray"
+    OMNI_FX2X_OPT="@JAVA_OPT@ -Xmx400m -Xms200m ${OMNI_FX2X_MUST_OPT} @OMNI_X2X_FLAGS@ @OMNI_X2X_FONESIDED_OPT@ ${METAX_OPT}"
+
+    omni_exec ${OMNI_FX2X_CMD} ${OMNI_FX2X_OPT} "${module_opt[@]}" "${trans_module_opt[@]}" "${FILE_IN_X}"
+    cp ${FILE_OUT_F} ${file%.*}_mtx.${EXT}
+    
+    # omni_exec $OMNI_FX2X_CMD $OMNI_FX2X_OPT "${xcode_translator_add_opt[@]}" "${module_opt[@]}" "${trans_module_opt[@]}" "${FILE_IN_X}"
+    # # also create ${TEMP_DIR}/${FILE_NAME}_${EXT}_in.F90
+    # # Note : The BlueGene/Q 's mpi compiler can compile only *.F90 in XMP process.
+    # # So that remains .F90 extention after process of the native compilier.
+done
+
+### Delete temporal directory ###
+[ $ENABLE_DEBUG = false ] && omni_exec rm -rf $TEMP_DIR
+
+exit 0

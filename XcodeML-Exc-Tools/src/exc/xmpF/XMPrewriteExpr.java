@@ -119,12 +119,12 @@ public class XMPrewriteExpr
 	  }
 
 	case F_STOP_STATEMENT:
-	  {
+	  if (!XmOption.isMETAX()){
 	    Ident f = env.declInternIdent(XMP.finalize_all_f, Xtype.FsubroutineType);
 	    Xobject call = f.callSubroutine();
 	    st.insert(call);
-	    break;
 	  }
+	  break;
 
 	case EXPR_STATEMENT: // subroutine call
 	  if (!XmOption.isMETAX()) insertSizeArray(st, fb);

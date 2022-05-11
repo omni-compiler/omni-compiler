@@ -7,24 +7,29 @@ public class MemberRef extends XobjList
 
   // arg(0) : VAR_REF
   // arg(1) : IDENT
+
+  public MemberRef(Xcode code, Xtype type)
+  {
+    super(code, type);
+  }
   
   public MemberRef(Xobject x, String member_name)
   {
     super(Xcode.MEMBER_REF, x.Type(), x);
     assert x.Opcode() == Xcode.F_VAR_REF;
 
-    Xtype type = x.Type();
+    //Xtype type = x.Type();
     //type = type.getRef(); ??????
-    if (!type.isStruct() && !type.isUnion())
+    if (!x.Type().isStruct() && !x.Type().isUnion())
       fatal("memberAddr: not struct/union");
         
     Ident mid = type.getMemberList().getMember(member_name); // id_list
     if (mid == null)
       fatal("memberAddr: member name is not found: " + member_name);
         
-    type = mid.Type();
+    this.type = mid.Type();
 
-    add(Xcons.Symbol(Xcode.IDENT, type, mid.getName()));
+    add(Xcons.Symbol(Xcode.IDENT, mid.Type(), mid.getName()));
   }
 
   // public Xobject getVarRef()
@@ -54,6 +59,20 @@ public class MemberRef extends XobjList
   public String getMemberName()
   {
     return this.getArg(1).getName();
+  }
+
+  /* returns the copy of this MemberRef object. */
+  @Override
+  public Xobject copy()
+  {
+    MemberRef x = new MemberRef(code, type);
+    for (XobjArgs a = args; a != null; a = a.nextArgs()) {
+      if (a.getArg() == null)
+	x.add(null);
+      else
+	x.add(a.getArg().copy());
+    }
+    return copyTo(x);
   }
 
 }

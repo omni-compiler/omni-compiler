@@ -282,7 +282,7 @@ public class Xcons
         if(XmOption.isLanguageC())
             return List(Xcode.MEMBER_ADDR, Xtype.Pointer(type), x,
                 Symbol(Xcode.IDENT, type, mid.getName()));
-        
+
         return List(Xcode.MEMBER_REF, type, x,
             Symbol(Xcode.IDENT, type, mid.getName()));
     }
@@ -558,7 +558,16 @@ public class Xcons
                 else
                     return Xcons.Cast(t, x);
             }
+
+	    break;
+
+        case MUL_EXPR:
+	    if (x.isIntConstant() && y.isIntConstant())
+		return Int(Xcode.INT_CONSTANT, t, x.getInt() * y.getInt());
+	    break;
+
         }
+
         return Xcons.List(code, t, x, y);
     }
 
@@ -926,6 +935,12 @@ public class Xcons
     {
         return FindexRange(Xcons.IntConstant(1), ub, null);
     }
+
+    // public static Xobject FindexRange(Xobject lb, Xobject ub, Xobject step,
+    // 				      Xobject is_assumed_shape, Xobject is_assumed_size)
+    // {
+    //     return new FindexRange(lb, ub, step, is_assumed_shape, is_assumed_size);
+    // }
     
     public static Xobject FindexRangeOfAssumedShape()
     {
@@ -952,7 +967,8 @@ public class Xcons
         // Xobject x = Xcons.List(Xcode.F_ARRAY_REF, var.Type().getRef(),
         //     Xcons.List(Xcode.F_VAR_REF, var));
 
-	Xobject x = (var.Opcode() == Xcode.F_VAR_REF) ? var : Xcons.List(Xcode.F_VAR_REF, var.Type(), var);
+	//Xobject x = (var.Opcode() == Xcode.F_VAR_REF) ? var : Xcons.List(Xcode.F_VAR_REF, var.Type(), var);
+	Xobject x = (var.Opcode() == Xcode.F_VAR_REF) ? var : Xcons.FvarRef(var);
 
         XobjList l = Xcons.List();
         
@@ -976,7 +992,8 @@ public class Xcons
         // Xobject x = Xcons.List(Xcode.F_ARRAY_REF, var.Type().getRef(),
         //     Xcons.List(Xcode.F_VAR_REF, var));
 
-	Xobject x = (var.Opcode() == Xcode.F_VAR_REF) ? var : Xcons.List(Xcode.F_VAR_REF, var.Type(), var);
+	//Xobject x = (var.Opcode() == Xcode.F_VAR_REF) ? var : Xcons.List(Xcode.F_VAR_REF, var.Type(), var);
+	Xobject x = (var.Opcode() == Xcode.F_VAR_REF) ? var : Xcons.FvarRef(var);
 
 	XobjList l = Xcons.List();
         

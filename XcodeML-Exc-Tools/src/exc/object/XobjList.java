@@ -37,7 +37,7 @@ public class XobjList extends Xobject implements Iterable<Xobject>, XobjContaine
     public XobjList(Xcode code, Xtype type, Xobject ... a)
     {
         super(code, type);
-        
+
         XobjArgs pa = null;
         
         if(a != null && a.length > 0) {
