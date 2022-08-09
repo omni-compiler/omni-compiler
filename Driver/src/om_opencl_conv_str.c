@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
   }
   
   if(str_name == NULL)  str_name = "";
-  fprintf(out_file,"char _binary___omni_tmp___%s_cl_start[] = \"",str_name);
+  fprintf(out_file,"char _cl_prog_%s[] = \"",str_name);
 
   while(ac < argc){
     arg = argv[ac++];
@@ -56,7 +56,6 @@ int main(int argc, char *argv[])
     fclose(in_file);
   }
   fprintf(out_file,"\";\n");
-  fprintf(out_file,"char _binary___omni_tmp___%s_cl_end[] = \"\";",str_name);
   fclose(out_file);
   exit(0);
 

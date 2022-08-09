@@ -55,10 +55,11 @@ public class OMPanalyzeDecl implements OMPfileEnv
         Xobject x = def.getDef();
         
         if(x.Opcode() == Xcode.OMP_PRAGMA) {
-            // (OMP_PRAGMA (STRING PragmaSyntax) (STRING OMPPragma) (LIST ...))
-            if(OMPpragma.valueOf(x.getArg(1)) != OMPpragma.THREADPRIVATE)
+            // ??? what PragmaSyntax? (OMP_PRAGMA (STRING PragmaSyntax) (STRING OMPPragma) (LIST ...)) 
+            // (OMP_PRAGMA (STRING OMPPragma) (LIST ...)) 
+            if(OMPpragma.valueOf(x.getArg(0)) != OMPpragma.THREADPRIVATE)
                 OMP.fatal("not threadprivate in decl");
-            getParent(def).declThreadPrivate(x, def, x.getArg(2));
+            getParent(def).declThreadPrivate(x, def, x.getArg(1));
             def.setDef(null);
         } else if(def.isFuncDef() || def.isFmoduleDef()) {
             setToXobject(def);

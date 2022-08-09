@@ -199,15 +199,15 @@ public class Bcons
     }
      
     /** create 'while' statement block */
-    public static Block DO_WHILE(BasicBlock cond, BlockList body)
+    public static Block Fdo_while(BasicBlock cond, BlockList body)
     {
     	return WHILE(Xcode.F_DO_WHILE_STATEMENT, cond, body, null);
     }
 
     /** create 'while' statement block */
-    public static Block DO_WHILE(Xobject cond, Block body)
+    public static Block Fdo_while(Xobject cond, Block body)
     {
-    	return DO_WHILE(BasicBlock.Cond(cond), new BlockList(body));
+    	return Fdo_while(BasicBlock.Cond(cond), new BlockList(body));
     }
 
     /** create C 'do' statement block */

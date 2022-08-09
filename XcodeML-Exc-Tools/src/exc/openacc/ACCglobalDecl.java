@@ -291,8 +291,8 @@ class ACCglobalDecl{
       XobjList args = Xcons.List(Xcons.AddrOf(_programId.getAddr()));
       if(embedKernel){
 	String varNameCommon = "_binary_" + fileName.replaceAll("\\.|/", "_");
-	Ident startId = _env.declExternIdent(varNameCommon + "_start", Xtype.Array(Xtype.charType, null));
-	Ident endId = _env.declExternIdent(varNameCommon + "_end", Xtype.Array(Xtype.charType, null));
+	Ident startId = _env.declExternIdent(varNameCommon + "_start", Xtype.Pointer(Xtype.charType));
+	Ident endId = _env.declExternIdent(varNameCommon + "_end", Xtype.Pointer(Xtype.charType));
         args.add(startId.Ref());
         args.add(endId.Ref());
       }else{

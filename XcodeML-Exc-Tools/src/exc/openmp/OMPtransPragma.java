@@ -1357,7 +1357,7 @@ public class OMPtransPragma
             /* otherwise, block scheduling */
             bb.add(OMPfuncIdent(staticShedInitFunc).Call(
                 Xcons.List(vlb, vub, step_ref, i.sched_chunk)));
-            ret_body.add(Bcons.DO_WHILE(OMPfuncIdent(staticShedNextFunc).Call(
+            ret_body.add(Bcons.WHILE(OMPfuncIdent(staticShedNextFunc).Call(
                 Xcons.List(vlb_addr, vub_addr)), comp_block));
             break;
 
@@ -1368,7 +1368,7 @@ public class OMPtransPragma
             arg.add(i.sched_chunk.getArg(2));
             arg.add(i.sched_chunk.getArg(3));
             bb.add(OMPfuncIdent(affinityShedInitFunc).Call(arg));
-            ret_body.add(Bcons.DO_WHILE(OMPfuncIdent(affinityShedNextFunc).Call(
+            ret_body.add(Bcons.WHILE(OMPfuncIdent(affinityShedNextFunc).Call(
                 Xcons.List(vlb_addr, vub_addr)), comp_block));
             break;
 
@@ -1377,7 +1377,7 @@ public class OMPtransPragma
                 i.sched_chunk = Xcons.IntConstant(1);
             bb.add(OMPfuncIdent(dynamicShedInitFunc).Call(
                 Xcons.List(vlb, vub, step_ref, i.sched_chunk)));
-            ret_body.add(Bcons.DO_WHILE(OMPfuncIdent(dynamicShedNextFunc).Call(
+            ret_body.add(Bcons.WHILE(OMPfuncIdent(dynamicShedNextFunc).Call(
                 Xcons.List(vlb_addr, vub_addr)), comp_block));
             break;
         case SCHED_GUIDED:
@@ -1385,13 +1385,13 @@ public class OMPtransPragma
                 i.sched_chunk = Xcons.IntConstant(1);
             bb.add(OMPfuncIdent(guidedShedInitFunc).Call(
                 Xcons.List(vlb, vub, step_ref, i.sched_chunk)));
-            ret_body.add(Bcons.DO_WHILE(OMPfuncIdent(guidedShedNextFunc).Call(
+            ret_body.add(Bcons.WHILE(OMPfuncIdent(guidedShedNextFunc).Call(
                 Xcons.List(vlb_addr, vub_addr)), comp_block));
             break;
         case SCHED_RUNTIME:
             bb.add(OMPfuncIdent(runtimeShedInitFunc).Call(
                 Xcons.List(vlb, vub, step_ref)));
-            ret_body.add(Bcons.DO_WHILE(OMPfuncIdent(runtimeShedNextFunc).Call(
+            ret_body.add(Bcons.WHILE(OMPfuncIdent(runtimeShedNextFunc).Call(
                 Xcons.List(vlb_addr, vub_addr)), comp_block));
             break;
         default:

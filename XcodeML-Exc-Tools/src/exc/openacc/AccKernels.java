@@ -27,7 +27,6 @@ class AccKernels extends AccData {
     }
     completeParallelism();
 
-
     //analyze and complete clause for kernel
     for(AccKernel accKernel : _accKernelList) {
       accKernel.analyze();
@@ -69,7 +68,6 @@ class AccKernels extends AccData {
     }
 
     /////////
-
 
     //this is the end of analyze
     super.analyze();

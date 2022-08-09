@@ -535,9 +535,9 @@ public class omompx
 
       if(ACC.device == AccDevice.NONE){
         switch(ACC.platform){
-          case CUDA:
+        case CUDA:
         case OpenCL:
-          ACC.device = AccDevice.getDevice("Fermi");
+          ACC.device = AccDevice.getDevice("Fermi"); // default?
           break;
         }
       }

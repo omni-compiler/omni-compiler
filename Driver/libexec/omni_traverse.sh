@@ -272,7 +272,7 @@ c_output_MODE_ACC() {
                     FNAME=${name:23};
 		    echo "char *_binary___omni_tmp___"$FNAME"_cl_start;"
 		    echo "char *_binary___omni_tmp___"$FNAME"_cl_end;"
-		    echo "extern char *_cl_prog_"$FNAME";"
+		    echo "extern char _cl_prog_"$FNAME"[];"
 		fi
             done
 	fi

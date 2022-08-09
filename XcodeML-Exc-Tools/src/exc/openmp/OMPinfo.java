@@ -804,6 +804,7 @@ public class OMPinfo
     void setIfExpr(Xobject cond)
     {
         OMP.debug("setIfExpr");
+	if(cond == null || cond.isEmpty()) return;
         if_expr = refOMPvarExpr(block.getParentBlock(), cond);
         if(XmOption.isLanguageC() && !if_expr.Type().isIntegral())
             if_expr = Xcons.Cast(Xtype.intType, if_expr);
@@ -814,6 +815,7 @@ public class OMPinfo
     void setFinalExpr(Xobject cond)
     {
         OMP.debug("setFinalExpr");
+	if(cond == null || cond.isEmpty()) return;
         final_expr = refOMPvarExpr(block.getParentBlock(), cond);
         if(XmOption.isLanguageC() && !final_expr.Type().isIntegral())
             final_expr = Xcons.Cast(Xtype.intType, final_expr);
