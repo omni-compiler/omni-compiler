@@ -12,7 +12,7 @@ public class ACC {
   private static boolean errorFlag    = false;
   public static boolean CL_reduction = false /*true*/;  // reductino for OpenCL
   public static boolean CL_no_generic_f = false /*true*/;  // OpenCL not support generic function
-  public static boolean debug_flag = false /*true2*/;
+  public static boolean debug_flag = false /*true*/;
 
   public static final int ACC_ASYNC_SYNC = -1;
   public static final int ACC_ASYNC_NOVAL = -2;
