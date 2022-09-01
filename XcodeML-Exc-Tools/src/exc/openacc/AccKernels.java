@@ -15,7 +15,7 @@ class AccKernels extends AccData {
     List<List<Block>> kernelBodyList = divideBlocksBetweenKernels(_pb);
 
     for(List<Block> kernelBody : kernelBodyList){
-      AccKernel accKernel = new AccKernel(_decl, _pb, _info, kernelBody);
+      AccKernel accKernel = ACC.getAccKernel(_decl, _pb, _info, kernelBody);
       _accKernelList.add(accKernel);
     }
   }

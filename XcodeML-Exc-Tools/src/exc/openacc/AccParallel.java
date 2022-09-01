@@ -13,7 +13,7 @@ class AccParallel extends AccData{
 
     List<Block> kernelBody = new ArrayList<Block>();
     kernelBody.add(_pb);
-    _accKernel = new AccKernel(_decl, _pb, _info, kernelBody);
+    _accKernel = ACC.getAccKernel(_decl, _pb, _info, kernelBody);
   }
 
   @Override

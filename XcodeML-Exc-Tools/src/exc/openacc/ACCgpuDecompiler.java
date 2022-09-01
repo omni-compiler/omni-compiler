@@ -14,6 +14,7 @@ class ACCgpuDecompiler {
   private static final int BUFFER_SIZE = 4096;
   private final String CUDA_SRC_EXTENSION = ".cu";
   private final String OPENCL_SRC_EXTENSION = ".cl";
+
   public static final String GPU_FUNC_CONF = "OEPNACC_GPU_FUNC_CONF_PROP";
   public static final String GPU_FUNC_CONF_ASYNC = "OEPNACC_GPU_FUNC_CONF_ASYNC_PROP";
   public static final String GPU_FUNC_CONF_SHAREDMEMORY = "OEPNACC_GPU_FUNC_CONF_SHAREDMEMORY_PROP";
@@ -44,33 +45,28 @@ class ACCgpuDecompiler {
 
     try{
       String filename = ACCutil.removeExtension(env.getSourceFileName());
-      switch(ACC.platform){
-        case CUDA:
-          filename += CUDA_SRC_EXTENSION;
-          break;
-        case OpenCL:
-          filename += OPENCL_SRC_EXTENSION;
-          break;
-        default:
-          ACC.fatal("unknown platform");
-      }
-      envDevice.setProgramAttributes(filename, "CUDA", "", "", "");
-      Writer w = new BufferedWriter(new FileWriter(filename), BUFFER_SIZE);
-      ACCgpuDecompileWriter writer = new ACCgpuDecompileWriter(w, envDevice);
-
-      List<String> includeLines = new ArrayList<String>();
-
+      ACCgpuDecompileWriter writer;
+      Writer w;
       switch(ACC.platform){
       case CUDA:
-        includeLines.add("#include \"acc.h\"");
-        includeLines.add("#include \"acc_gpu_func.hpp\"");
+        filename += CUDA_SRC_EXTENSION;
+        envDevice.setProgramAttributes(filename, "CUDA", "", "", "");
+        w = new BufferedWriter(new FileWriter(filename), BUFFER_SIZE);
+        writer = new ACCgpuDecompileWriter(w,envDevice);
         break;
       case OpenCL:
-        includeLines.add("/* #include \"acc_cl.h\" */");
+        filename += OPENCL_SRC_EXTENSION;
+        envDevice.setProgramAttributes(filename, "OpenCL", "", "", "");
+        w = new BufferedWriter(new FileWriter(filename), BUFFER_SIZE);
+        writer = new ACCclDecompileWriter(w,envDevice);
         break;
       default:
+        writer = null;
         ACC.fatal("unknown platform");
       }
+
+      List<String> includeLines = new ArrayList<String>();
+      writer.addHeaders(includeLines);
 
       if(XmOption.isXcalableMP()){
         includeLines.add("#include \"xmp_index_macro.h\"");

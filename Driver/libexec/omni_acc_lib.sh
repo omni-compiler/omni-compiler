@@ -65,10 +65,15 @@ function omni_acc_opencl_compile() # FILE_CU, FILE_O, args, ...
     local FILE_O_GPU="${FILE_O}".gpu
     local FILE_O_CPU="${FILE_O}".cpu
     local FILE_CL_C="${FILE_CL}".c
+    local FILE_1=$(mktemp)
+    local FILE_2=$(mktemp)
 
-    omni_exec $OMNI_OPENCL_CC_CMD $OMNI_OPENCL_CC_OPT ${ARGS[@]} -o "${FILE_CL_C}" "${OMNI_HOME}/include/acc_cl_hdr.cl" "${FILE_CL}" 
+    cat "${OMNI_HOME}/include/acc_cl_hdr.cl" "${OMNI_HOME}/include/acc_cl_reduction.cl"  "${FILE_CL}" >  "${FILE_1}"
+    omni_exec cpp "${FILE_1}" -o  "${FILE_2}"
+    omni_exec $OMNI_OPENCL_CC_CMD $OMNI_OPENCL_CC_OPT ${ARGS[@]} -o "${FILE_CL_C}" "${FILE_2}"
     omni_exec $OMNI_CC_CMD -c -o "${FILE_O_GPU}" "${FILE_CL_C}"
     omni_exec mv "${FILE_O}" "${FILE_O_CPU}"
     omni_exec ld -r "${FILE_O_CPU}" "${FILE_O_GPU}" -o "${FILE_O}"
     omni_exec rm -f "${FILE_O_CPU}"
+    omni_exec rm -f "${FILE_1}" "${FILE_2}" 
 }

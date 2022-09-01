@@ -89,7 +89,7 @@ void _ACC_flush()
 	//  flush();
 }
 
-void _ACC_sync(int const n)
+inline void _ACC_sync(int const n)
 {
   // switch(n){
   // case 0:
@@ -107,23 +107,23 @@ void _ACC_sync(int const n)
   // }
 }
 
-void _ACC_sync_gangs()
+inline void _ACC_sync_gangs()
 {
   //sync();
   //  flush();
 }
 
-void _ACC_sync_all()
+inline void _ACC_sync_all()
 {
 	//  sync();
 }
 
-void _ACC_flush_all()
+inline void _ACC_flush_all()
 {
   _ACC_flush();
 }
 
-void _ACC_yield()
+inline void _ACC_yield()
 {
 //  chgthread();
 }
@@ -149,193 +149,3 @@ void *_ACC_stack_push(void *base, unsigned long *pos, size_t size)
 //   return total_idx / niter;
 // }
 
-// end: acc_pezy.hpp 
-
-// reduction 
-#define _ACC_REDUCTION_PLUS 0
-#define _ACC_REDUCTION_MUL 1
-#define _ACC_REDUCTION_MAX 2
-#define _ACC_REDUCTION_MIN 3
-#define _ACC_REDUCTION_BITAND 4
-#define _ACC_REDUCTION_BITOR 5
-#define _ACC_REDUCTION_BITXOR 6
-#define _ACC_REDUCTION_LOGAND 7
-#define _ACC_REDUCTION_LOGOR 8
-
-// template<typename T>
-// __device__ static inline
-// T op(T a, T b, int kind){
-//   switch(kind){
-//   case _ACC_REDUCTION_PLUS: return a + b;
-//   case _ACC_REDUCTION_MUL: return a * b;
-//   case _ACC_REDUCTION_MAX: return (a > b)? a : b;
-//   case _ACC_REDUCTION_MIN: return (a < b)? a : b;
-//   default: return a;
-//   }
-// }
-
-inline
-double op_double(double a, double b, int kind){
-  switch(kind){
-  case _ACC_REDUCTION_PLUS: return a + b;
-  case _ACC_REDUCTION_MUL: return a * b;
-  case _ACC_REDUCTION_MAX: return (a > b)? a : b;
-  case _ACC_REDUCTION_MIN: return (a < b)? a : b;
-  default: return a;
-  }
-}
-
-#pragma OPENCL EXTENSION cl_khr_int64_base_atomics : enable
-#pragma OPENCL EXTENSION cl_khr_fp64 : enable
-typedef double real_t;
-typedef ulong  uint_t;
-#define ATOMIC_CMPXCHG(p,o,n)	atom_cmpxchg(p,o,n)
-
-// void atom_add_double(double *val, double delta)
-// void _ACC_reduce_threads(T *target, T input, int kind, bool do_acc)
-inline
-void _ACC_reduce_threads_double(volatile double *target, double input, int kind, bool do_acc)
-{
-    volatile union {
-	real_t r;
-	uint_t i;
-    } next, expected, current;
-
-    current.r = *target;
-
-    do {
-	expected.r = current.r;
-	next.r     = do_acc? op_double(expected.r,input,kind):input;
-	// next.r     = do_acc? (expected.r+input):input;
-	current.i  = ATOMIC_CMPXCHG((volatile __global uint_t *) target, expected.i, next.i);
-    } while (current.i != expected.i);
-
-#if 0
-  union {
-  double f;
-  ulong  i;
-  } old, new;
-
-  do
-  {
-     old.f = *target;
-     new.f = do_acc? op_double(old.f,input,kind):input;
-  } 
-  while (atomic_cmpxchg((volatile __global ulong *)target, old.i, new.i) != old.i);
-#endif
-}
-
-
-inline
-void _ACC_gpu_init_reduction_var_double(double *var, int kind){
-  switch(kind){
-  case _ACC_REDUCTION_PLUS: *var = 0.0; return;
-  case _ACC_REDUCTION_MUL: *var = 1.0; return;
-  case _ACC_REDUCTION_MAX: *var = -DBL_MAX; return;
-  case _ACC_REDUCTION_MIN: *var = DBL_MAX; return;
-  }
-}
-
-// _ACC_gpu_reduction_t_double(&_ACC_gpu_reduction_tmp_multiplied_total,1,_ACC_reduction_bt_multiplied_total);
-// _ACC_gpu_reduction_singleblock_double(multiplied_total,_ACC_gpu_reduction_tmp_multiplied_total,1);
-// _ACC_gpu_reduction_tmp_double(_ACC_gpu_reduction_tmp_multiplied_total,_ACC_GPU_RED_TMP,0);
-// _ACC_gpu_reduction_block_double(multiplied_total,1,_ACC_GPU_RED_TMP,0,_ACC_GPU_RED_NUM);
-
-
-// template<typename T>
-// __device__ static inline
-// void _ACC_gpu_reduction_block(T* result, int kind, void* buf, size_t element_offset, int num_elements){
-//  T *data = (T*)((char*)buf + (element_offset * num_elements));
-//
-//  T part_result;
-//  _ACC_gpu_init_reduction_var(&part_result, kind);
-//
-//  for(int idx = threadIdx.x; idx < num_elements; idx += blockDim.x){
-//    part_result = op(part_result, data[idx], kind);
-//  }
-//
-//  _ACC_reduce_threads(result, part_result, kind, CL_TRUE);
-// }
-
-inline
-void _ACC_gpu_reduction_block_double(double * result, int kind, void* buf, size_t element_offset, int num_elements){
-  double *data = (double *)((char*)buf + (element_offset * num_elements));
-  double part_result;
-  _ACC_gpu_init_reduction_var_double(&part_result, kind);
-  for(int idx = _ACC_thread_idx_x /*threadIdx.x*/; idx < num_elements; idx += _ACC_block_dim_x/*blockDim.x*/){
-    part_result = op_double(part_result, data[idx], kind);
-  }
-  _ACC_reduce_threads_double(result, part_result, kind, true);
-}
-
-// template<typename T>
-// __device__ static inline
-// void _ACC_gpu_reduction_block(T* result, int kind, void* tmp, size_toffsetElementSize){
-//  _ACC_gpu_reduction_block(result, kind, tmp, offsetElementSize, gridDim.x);
-// }
-
-// template<typename T>
-// __device__ static inline
-// void _ACC_gpu_reduction_singleblock(T* result, T resultInBlock, int kind){
-//  if(threadIdx.x == 0){
-//    *result = op(*result, resultInBlock, kind);
-//  }
-// }
-
-inline
-void _ACC_gpu_reduction_singleblock_double(double* result, double resultInBlock, int kind){
-  if(_ACC_thread_idx_x /*threadIdx.x*/ == 0){
-    *result = op_double(*result, resultInBlock, kind);
-  }
-}
-
-// template<typename T>
-// void _ACC_gpu_reduction_t(T *resultInBlock, int kind, T resultInThread){
-//  _ACC_reduce_threads(resultInBlock, resultInThread, kind, true);
-//}
-
-inline
-void _ACC_gpu_reduction_t_double(double *resultInBlock, int kind, double resultInThread){
-  _ACC_reduce_threads_double(resultInBlock, resultInThread, kind, true);
-}
-
-// template<typename T>
-// __device__ static inline
-// void _ACC_gpu_reduction_tmp(T resultInBlock, void *tmp, size_t offsetElementSize){
-//  if(threadIdx.x==0){
-//    void *tmpAddr =  (char*)tmp + (gridDim.x * offsetElementSize);
-//    ((T*)tmpAddr)[blockIdx.x] = resultInBlock;
-//  }
-//  __syncthreads();//is need?
-//}
-
-inline
-void _ACC_gpu_reduction_tmp_double(double resultInBlock, void *tmp, size_t offsetElementSize){
-  if(_ACC_thread_idx_x /*threadIdx.x*/ ==0){
-    void *tmpAddr =  (char*) tmp + (_ACC_grid_dim_x /*gridDim.x*/ * offsetElementSize);
-    ((double *)tmpAddr)[_ACC_block_idx_x /*blockIdx.x*/] = resultInBlock;
-  }
-  barrier(CLK_GLOBAL_MEM_FENCE); //  __syncthreads();//is need?
-}
-
-//----------------------------------------------------------------
-
-#define _ACC_gpu_init_reduction_var_double_MUL(x)  _ACC_gpu_init_reduction_var_double(x, 1)
-
-#define _ACC_gpu_reduction_loc_set_double_MUL(reduction_loc,result_loc, reduction_tmp) \
-  if((_ACC_grid_dim_x)==(1)) reduction_loc = result_loc; \
-  else reduction_loc = ((__global double *)reduction_tmp)+_ACC_block_idx_x;\
-  if(_ACC_thread_idx_x == 0) _ACC_gpu_init_reduction_var_double(reduction_loc,1); \
-  barrier(CLK_GLOBAL_MEM_FENCE); 
-
-#define _ACC_gpu_reduction_loc_update_double_MUL(reduction_loc, reduction_value) \
-    _ACC_reduce_threads_double(reduction_loc, reduction_value, 1, true)
-
-#define _ACC_gpu_reduction_loc_block_double_MUL(result_loc, reduction_tmp, off, reduction_tmp_size) \
-if((_ACC_thread_idx_x)==(0)) { \
-  double part_result; \
-  _ACC_gpu_init_reduction_var_double(&part_result, 1); \
-  for(int i = 0; i < reduction_tmp_size; i++) \
-      part_result = op_double(part_result, ((double *)reduction_tmp)[i], 1); \
-  *multiplied_total = op_double(*multiplied_total, part_result, 1); \
-  } 

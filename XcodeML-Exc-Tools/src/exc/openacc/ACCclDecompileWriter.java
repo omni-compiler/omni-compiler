@@ -4,47 +4,14 @@ import exc.object.*;
 import java.io.*;
 import java.util.*;
 
-class ACCgpuDecompileWriter extends PrintWriter {
-  XobjectFile _env = null;
+class ACCclDecompileWriter extends ACCgpuDecompileWriter {
 
-  public ACCgpuDecompileWriter(Writer out, XobjectFile env) {
-    super(out);
-    _env = env;
+  public ACCclDecompileWriter(Writer out, XobjectFile env) {
+    super(out,env);
   }
 
   public void addHeaders(List<String> includeLines){
-    switch(ACC.platform){
-    case CUDA:
-      includeLines.add("#include \"acc.h\"");
-      includeLines.add("#include \"acc_gpu_func.hpp\"");
-      break;
-    case OpenCL:
-      includeLines.add("/* #include \"acc_cl.h\" */");
-      break;
-    default:
-      ACC.fatal("unknown platform");
-    }
-  }
-  
-  public void printAll(){
-    //print declare of struct and union.
-    printIdentList(_env.getGlobalIdentList());
-    println();
-    
-    //print declare of function
-    List<XobjectDef> defList = _env.getDefs();
-    for(XobjectDef def : defList){
-      printFunc(def);
-      println();
-    }
-  }
-
-  public void printDeviceFunc(XobjectDef def, Ident deviceFuncId) {
-    printWithIdentList(def.getDef(), _env.getGlobalIdentList(), true, deviceFuncId);
-  }
-
-  public void printHostFunc(XobjectDef def) {
-    printWithIdentList(def.getDef(), _env.getGlobalIdentList(), false, null);
+    includeLines.add("/* #include \"acc_cl.h\" */");
   }
   
   void printFunc(XobjectDef def){
@@ -74,11 +41,6 @@ class ACCgpuDecompileWriter extends PrintWriter {
     default:
       break;
     }
-  }
-
-  void fatal(String msg) {
-    System.err.println("Fatal XobjectDecompileStream: " + msg);
-    System.exit(1);
   }
 
   void printWithIdentList(Xobject v, Xobject id_list, boolean isDeviceFunc, Ident deviceFuncId) {
@@ -128,16 +90,7 @@ class ACCgpuDecompileWriter extends PrintWriter {
               func_args += ")";
             }
             if (isDeviceFunc) {
-              switch (ACC.platform){
-                case CUDA:
-                  println("__global__ static");
-                  break;
-                case OpenCL:
-                  println("__kernel");
-                  break;
-                // case PZCL:
-                //   break;
-              }
+              println("__kernel");
             } else {
               println("extern \"C\"");
             }
@@ -878,19 +831,15 @@ class ACCgpuDecompileWriter extends PrintWriter {
       } break;
     case Xtype.ARRAY:
       {
+        if(t.isGlobal()){ // global array
+          decltype += "__global ";
+        }
+
         if (!decls.empty() && ((Xtype)decls.peek()).getKind() == Xtype.FUNCTION) {
           decltype += "*";
           decltype += makeDeclaratorRec(decls, name);
           break;
         }
-
-//        if (t.getArrayDim() < 0) {
-//          decltype += "(";
-//          decltype += "*";
-//          decltype += makeDeclaratorRec(decls, name);
-//          decltype += ")";
-//          break;
-//        }
 
         if (pred) {
           decltype += "(";
@@ -982,16 +931,7 @@ class ACCgpuDecompileWriter extends PrintWriter {
   void printIdentDecl(Ident id) {
     Object isShared = id.getProp(ACCgpuDecompiler.GPU_STRAGE_SHARED);
     if(isShared != null){
-      switch(ACC.platform){
-        case CUDA:
-          print("__shared__ ");
-          break;
-        case OpenCL:
-          print("__local ");
-          break;
-        // case PZCL:
-        //   break;
-      }
+      print("__local ");
     }
     switch (id.getStorageClass()) {
       case AUTO:
@@ -1139,22 +1079,6 @@ class ACCgpuDecompileWriter extends PrintWriter {
     }
 
     print(")");
-  }
-
-  void printBody(Xobject v) {
-    if (v == null) {
-      print("{}");  // null body
-      return;
-    }
-
-    if (v.Opcode() == Xcode.LIST) {
-      print("{");
-      print(v);
-      println();
-      print("}");
-    } else {
-      print(v);
-    }
   }
 
   void printDeclList(Xobject v, Xobject id_list) {

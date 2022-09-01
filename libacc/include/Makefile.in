@@ -9,23 +9,21 @@ FALSE           = 1
 TRUE            = 0
 IS_CUDA		= @CUDA@
 IS_OPENCL	= @OPENCL@
-IS_PZCL	        = @PZCL@
 
 ifeq ($(IS_CUDA), $(TRUE)) #if CUDA
 HEADERS += acc_gpu_func.hpp acc_gpu_reduction.hpp acc_gpu_atomic.hpp
 endif
 
 ifeq ($(IS_OPENCL), $(TRUE)) #if OPENCL
-HEADERS += acc_cl.h acc_cl_hdr.cl
-endif
-
-ifeq ($(IS_PZCL), $(TRUE)) #if PZCL
-HEADERS += acc_pezy.hpp acc_pezy_util.hpp acc_pezy_reduction.hpp
+HEADERS += acc_cl.h acc_cl_hdr.cl acc_cl_reduction.cl
 endif
 
 all:
 install: $(HEADERS)
 	$(MKDIR_P) $(DESTDIR)$(INSTALL_DIR)
 	$(INSTALL) $^ $(DESTDIR)$(INSTALL_DIR)
+
+acc_cl_reduction.cl: acc_cl_reduction_gen.pl
+	perl acc_cl_reduction_gen.pl > acc_cl_reduction.cl
 
 clean:

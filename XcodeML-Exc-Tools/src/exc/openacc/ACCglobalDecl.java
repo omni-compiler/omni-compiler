@@ -285,14 +285,13 @@ class ACCglobalDecl{
       if(! embedKernel){
 	fileName = new File(fileName).getName();
       }
-      // if(ACC.platform == ACC.Platform.PZCL){
-      //   fileName = ACCutil.removeExtension(fileName) + ".pz";
-      // }
+
       XobjList args = Xcons.List(Xcons.AddrOf(_programId.getAddr()));
       if(embedKernel){
-	String varNameCommon = "_binary_" + fileName.replaceAll("\\.|/", "_");
-	Ident startId = _env.declExternIdent(varNameCommon + "_start", Xtype.Pointer(Xtype.charType));
-	Ident endId = _env.declExternIdent(varNameCommon + "_end", Xtype.Pointer(Xtype.charType));
+        fileName = getSourceBaseName();
+	String varNameCommon = "_binary___omni_tmp___" + fileName.replaceAll("\\.|/", "_");
+	Ident startId = _env.declExternIdent(varNameCommon + "_cl_start", Xtype.Pointer(Xtype.charType));
+	Ident endId = _env.declExternIdent(varNameCommon + "_cl_end", Xtype.Pointer(Xtype.charType));
         args.add(startId.Ref());
         args.add(endId.Ref());
       }else{

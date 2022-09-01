@@ -1,6 +1,9 @@
 package exc.openacc;
 
 import exc.object.*;
+import exc.block.*;
+import java.util.*;
+
 import xcodeml.util.XmLog;
 
 /**
@@ -68,6 +71,17 @@ public class ACC {
   public enum Platform{
     CUDA,
     OpenCL,
-    //   PZCL,
+  }
+
+  // get/allocate AccKernel object according to platform
+  public static AccKernel getAccKernel(ACCglobalDecl decl, PragmaBlock pb, AccInformation info, List<Block> kernelBlocks)
+  {
+    switch (ACC.platform){
+    case OpenCL:
+      return new AccKernel_CL(decl, pb, info, kernelBlocks);
+    case CUDA:
+    default:
+      return new AccKernel(decl, pb, info, kernelBlocks);
+    }
   }
 }
