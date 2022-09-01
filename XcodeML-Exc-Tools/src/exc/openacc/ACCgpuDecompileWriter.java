@@ -839,10 +839,6 @@ class ACCgpuDecompileWriter extends PrintWriter {
     switch (t.getKind()) {
       case Xtype.POINTER:
         {
-          if(t.isGlobal()){ // global pointer
-            decltype += "__global ";
-          }
-
           decltype += "*";
           if (t.isConst()) {
             decltype += "const ";

@@ -25,7 +25,6 @@ class ACCglobalDecl{
   private Map<Ident, ACCvar> globalVarMap = new HashMap<Ident, ACCvar>();
   private List<String> _kernelNames = new ArrayList<String>();
   private Ident _programId = null;
-
   
   private static String ACC_INIT_FUNC_NAME = "_ACC_init";
   private static String ACC_FINALIZE_FUNC_NAME = "_ACC_finalize";
@@ -268,39 +267,64 @@ class ACCglobalDecl{
 
   void setupKernelsInitAndFinalize() {
     int numKernels = _kernelNames.size();
+    // System.out.println("setupKernelsInitAndFinalize ACC.platform="+ACC.platform+", numKernels="+numKernels);
     if(numKernels == 0) return;
-
-
-    { //init
-      boolean embedKernel = true;
-      Ident kernelInitFuncId = ACCutil.getMacroFuncId(embedKernel? ACC_KERNELS_INIT_MEM_FUNC_NAME : ACC_KERNELS_INIT_FUNC_NAME, Xtype.voidType);
-      XobjList nameList = Xcons.List();
-      for(String name : _kernelNames){
-        nameList.add(Xcons.StringConstant(name));
+    
+    switch (ACC.platform){
+    case CUDA:
+      { //init
+        Ident kernelInitFuncId = ACCutil.getMacroFuncId(ACC_KERNELS_INIT_FUNC_NAME, Xtype.voidType);
+        XobjList nameList = Xcons.List();
+        for(String name : _kernelNames){
+          nameList.add(Xcons.StringConstant(name));
+        }
+        BlockList body = Bcons.emptyBody();
+        Ident kernelNamesId = body.declLocalIdent("_ACC_kernel_names", Xtype.Array(Xtype.stringType, numKernels),
+                                                  StorageClass.AUTO, nameList);
+        String fileName = new File(_env_device.getSourceFileName()).getName();
+        XobjList args = Xcons.List(
+                                   Xcons.AddrOf(_programId.getAddr()),
+                                   Xcons.StringConstant(fileName),
+                                   Xcons.IntConstant(numKernels),
+                                   kernelNamesId.Ref());
+        body.add(kernelInitFuncId.Call(args));
+        addGlobalConstructor(Bcons.COMPOUND(body).toXobject());
       }
-      BlockList body = Bcons.emptyBody();
-      Ident kernelNamesId = body.declLocalIdent("_ACC_kernel_names", Xtype.Array(Xtype.stringType, numKernels),
-              StorageClass.AUTO, nameList);
-      String fileName = _env_device.getSourceFileName();
-      if(! embedKernel){
-	fileName = new File(fileName).getName();
-      }
+      break;
 
-      XobjList args = Xcons.List(Xcons.AddrOf(_programId.getAddr()));
-      if(embedKernel){
-        fileName = getSourceBaseName();
-	String varNameCommon = "_binary___omni_tmp___" + fileName.replaceAll("\\.|/", "_");
-	Ident startId = _env.declExternIdent(varNameCommon + "_cl_start", Xtype.Pointer(Xtype.charType));
-	Ident endId = _env.declExternIdent(varNameCommon + "_cl_end", Xtype.Pointer(Xtype.charType));
-        args.add(startId.Ref());
-        args.add(endId.Ref());
-      }else{
-        args.add(Xcons.StringConstant(fileName));
+    case OpenCL:
+      { //init
+        boolean embedKernel = true;
+        Ident kernelInitFuncId = ACCutil.getMacroFuncId(embedKernel? ACC_KERNELS_INIT_MEM_FUNC_NAME : ACC_KERNELS_INIT_FUNC_NAME, Xtype.voidType);
+        XobjList nameList = Xcons.List();
+        for(String name : _kernelNames){
+          nameList.add(Xcons.StringConstant(name));
+        }
+        BlockList body = Bcons.emptyBody();
+        Ident kernelNamesId = body.declLocalIdent("_ACC_kernel_names", Xtype.Array(Xtype.stringType, numKernels),
+                                                  StorageClass.AUTO, nameList);
+        String fileName = _env_device.getSourceFileName();
+        if(! embedKernel){
+          fileName = new File(fileName).getName();
+        }
+
+        XobjList args = Xcons.List(Xcons.AddrOf(_programId.getAddr()));
+        if(embedKernel){
+          fileName = getSourceBaseName();
+          String varNameCommon = "_binary___omni_tmp___" + fileName.replaceAll("\\.|/", "_");
+          Ident startId = _env.declExternIdent(varNameCommon + "_cl_start", Xtype.Pointer(Xtype.charType));
+          Ident endId = _env.declExternIdent(varNameCommon + "_cl_end", Xtype.Pointer(Xtype.charType));
+          args.add(startId.Ref());
+          args.add(endId.Ref());
+        }else{
+          args.add(Xcons.StringConstant(fileName));
+        }
+        args.add(Xcons.IntConstant(numKernels));
+        args.add(kernelNamesId.Ref());
+        body.add(kernelInitFuncId.Call(args));
+        addGlobalConstructor(Bcons.COMPOUND(body).toXobject());
       }
-      args.add(Xcons.IntConstant(numKernels));
-      args.add(kernelNamesId.Ref());
-      body.add(kernelInitFuncId.Call(args));
-      addGlobalConstructor(Bcons.COMPOUND(body).toXobject());
+    default:
     }
 
     { //finalize
@@ -311,5 +335,4 @@ class ACCglobalDecl{
       addGlobalDestructor(Bcons.COMPOUND(body).toXobject());
     }
   }
-
 }

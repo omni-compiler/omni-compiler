@@ -202,9 +202,10 @@ public class AccKernel_CL extends AccKernel {
     //make params
     //add paramId from outerId
     for (Ident id : outerIdList) {
-      //System.out.println("id="+id);
+      // System.out.println("id="+id);
       if (ACC.device.getUseReadOnlyDataCache() && _readOnlyOuterIdSet.contains(id)
 	  && (id.Type().isArray() || id.Type().isPointer())) {
+        //System.out.println("make const id="+id);
         Xtype constParamType = makeConstRestrictVoidType();
 	constParamType.setIsGlobal(true);
         Ident constParamId = Ident.Param("_ACC_cosnt_" + id.getName(), constParamType);
@@ -1009,7 +1010,7 @@ public class AccKernel_CL extends AccKernel {
     if (reductionManager.hasUsingTmpReduction()) {
       XobjectDef reductionKernelDef = reductionManager.makeReductionKernelDef(launchFuncName + "_red" + ACC_GPU_DEVICE_FUNC_SUFFIX);
 
-      System.out.println("reductionKernelDef="+reductionKernelDef);
+      // System.out.println("reductionKernelDef="+reductionKernelDef);
 
       XobjectFile devEnv = _decl.getEnvDevice();
       devEnv.add(reductionKernelDef);
@@ -1353,11 +1354,9 @@ public class AccKernel_CL extends AccKernel {
       deviceKernelParamIds.add(numBlocksId);
 
       // make pointer paramter type "__global" for OpnenCL
-      if(ACC.platform == ACC.platform.OpenCL){
-        for(Xobject x : deviceKernelParamIds){
-          Ident id = (Ident) x;
-          if(id.Type().isPointer()) id.Type().setIsGlobal(true);
-        }
+      for(Xobject x : deviceKernelParamIds){
+        Ident id = (Ident) x;
+        if(id.Type().isPointer()) id.Type().setIsGlobal(true);
       }
 
       Ident deviceKernelId = _decl.getEnvDevice().declGlobalIdent(deviceKernelName, Xtype.Function(Xtype.voidType));
@@ -1526,13 +1525,9 @@ public class AccKernel_CL extends AccKernel {
         localVarId.setProp(ACCgpuDecompiler.GPU_STRAGE_SHARED, true);
       }
       
-      if(ACC.CL_reduction){
-	  Xtype varId_type = Xtype.Pointer(varId.Type());
-	  varId_type.setIsGlobal(true);
-	  locVarId = Ident.Local(ACC_REDUCTION_VAR_PREFIX+"loc_"+ varId.getName(),varId_type);
-	
-      }
-      else locVarId = null;
+      Xtype varId_type = Xtype.Pointer(varId.Type());
+      varId_type.setIsGlobal(true);
+      locVarId = Ident.Local(ACC_REDUCTION_VAR_PREFIX+"loc_"+ varId.getName(),varId_type);
     }
 
     public Block makeSingleBlockReductionFuncCall(Ident tmpPtrId) {

@@ -13,7 +13,7 @@ public class ACC {
   public final static String prop = "_ACC_PROP_";
 
   private static boolean errorFlag    = false;
-  public static boolean CL_reduction = false /*true*/;  // reductino for OpenCL
+  // public static boolean CL_reduction = false /*true*/;  // reductino for OpenCL
   public static boolean CL_no_generic_f = false /*true*/;  // OpenCL not support generic function
   public static boolean debug_flag = false /*true*/;
 
@@ -38,7 +38,7 @@ public class ACC {
   public static void init(){
     if(platform == Platform.OpenCL){
       CL_no_generic_f = true;
-      CL_reduction = true;
+      // CL_reduction = true;
     }
   }
 

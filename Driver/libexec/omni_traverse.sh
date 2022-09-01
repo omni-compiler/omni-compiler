@@ -14,8 +14,8 @@ USAGE='usage: '$0' <option> ... <input_file> ...
     --verbose            verbose mode
     --F | --C            which language (necessary)
     --nm                 nm command
-    --sr                 Option for HITACHI SR series
     --prefix <prefix>    prefix characters of the target procecdure names, such as xmpf and xmpc
+    --platform <OpenCL|CUDA> platform for OpenACC
     -o <output_file>     name of the output file (*.f90 or *.c file is expected)
   <input_file>           input file name (.o and .a files are expected)
 '
@@ -24,7 +24,7 @@ USAGE='usage: '$0' <option> ... <input_file> ...
 # option analysis
 #--------------------------------------------------------------
 INFILES=()
-USE_SR=no
+PLATFORM="CUDA" # default is CUDA
 while [ -n "$1" ]; do
     case "$1" in
     --help)     HELP=yes;;
@@ -34,7 +34,7 @@ while [ -n "$1" ]; do
     --prefix)   shift; PREFIX="$1";;
     --nm)       shift; NM="$1";;
     --nm_opt)   shift; NM_OPT="$1";;
-    --sr)       USE_SR=yes;;
+    --platform) shift; PLATFORM="$1";;
     -o)         shift; OUTFILE="$1";;
     *.o)        INFILES+=("$1");;
     *.a)        INFILES+=("$1");;
@@ -42,15 +42,6 @@ while [ -n "$1" ]; do
     esac
     shift
 done
-
-#--------------------------------------------------------------
-# set PREFIX for mangling 
-#--------------------------------------------------------------
-if [ $USE_SR = no ]; then
-    M_PREFIX="$PREFIX"
-else
-    M_PREFIX=."$PREFIX"
-fi
 
 if [ "$HELP" = "yes" -o "$LANG" = "" ]; then
    echo "$USAGE" 1>&2
@@ -64,11 +55,11 @@ if [ "$VERBOSE" = "yes" ]; then
    echo VERBOSE=$VERBOSE
    echo LANG=$LANG
    echo PREFIX=$PREFIX
+   echo PLATFORM=$PLATFORM
    echo INFILES=${INFILES[@]}
    echo OUTFILE=$OUTFILE
    echo ---------------------------
 fi
-
 
 #--------------------------------------------------------------
 # find symbol names in the input files:
@@ -123,7 +114,7 @@ traversers=()
 for name in $undefNames; do
     name=${name#_}                # re-mangling for MacOS
     case $name in
-        ${M_PREFIX}_traverse_?*)
+        ${PREFIX}_traverse_?*)
         case "$LANG" in 
             F) traversers+=( ${name%_} );;    # omit the last '_'
             C) traversers+=( ${name#.} );;    # omit the first '.' on the HITACHI SR
@@ -136,12 +127,12 @@ procedures=()
 for name in $defNames; do
     name=${name#_}                # re-mangling for MacOS
     case $name in
-        ${M_PREFIX}_traverse_*_?* )
+        ${PREFIX}_traverse_*_?* )
             case "$LANG" in
                 F) procedures+=( ${name%_} );;    # omit the last '_'
                 C) procedures+=( ${name#.} );;    # omit the first '.' on the HITACHI SR
             esac;;
-        ${M_PREFIX}_traverse_* )
+        ${PREFIX}_traverse_* )
             echo found unacceptable name of traverse procedure: \"${name}\"
             error=yes;;
     esac
@@ -305,7 +296,7 @@ file_output() {
     case $MODE in
     1)  case "$LANG" in
         F) fortran_output_MODE1;;
-        C) if [ "$PREFIX" = "acc" ]; then
+        C) if [ "$PREFIX" = "acc" ] && [ "$PLATFORM" = "OpenCL" ]; then
 	       c_output_MODE_ACC
 	   else
 	       c_output_MODE1
