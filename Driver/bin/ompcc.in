@@ -250,7 +250,9 @@ for c_file in "${c_files[@]}"; do
 done
 if [ "$ENABLE_ACC" = true -o "${ENABLE_LINK_OMP_ACC_LIBS}" = true ]; then
     OMNI_TRAVERSE_OPT="--C --nm ${NM} --prefix acc"
-    [ "${TARGET}" = "powerpc-hitachi-aix" ] && OMNI_TRAVERSE_OPT="${OMNI_TRAVERSE_OPT} --sr"
+    if [ "$OPENACC_PLATFORM" = "OpenCL" ]; then
+	OMNI_TRAVERSE_OPT+=" --platform OpenCL ";
+    fi
     TRAVERSE_FILE_C=${TEMP_DIR}/omni_traverse_${PID}.c
     TRAVERSE_FILE_O=${TEMP_DIR}/omni_traverse_${PID}.o
     omni_exec $OMNI_TRAVERSE $OMNI_TRAVERSE_OPT -o $TRAVERSE_FILE_C "${obj_files[@]}" "${archive_files[@]}"
