@@ -596,19 +596,23 @@ ompc_runtime_sched_next(indvar_t *lb, indvar_t *up)
  * ordered
  */
 void
-ompc_set_loop_id(indvar_t i)
+ompc_ordered_set_id(/*indvar_t*/ int i)
 {
     struct ompc_thread *tp = ompc_current_thread();
-    tp->loop_id = i;
+    char *p = NULL;
+    tp->loop_id = (indvar_t)(p+i);
 }
 
-
 void
-ompc_init_ordered(indvar_t lb, int step)
+ompc_ordered_init(int i, int step)
 {
     int n,id;
     struct ompc_thread *tpp;
     struct ompc_thread *tp = ompc_current_thread();
+    indvar_t lb;
+    char *p = NULL;
+
+    lb = (indvar_t)(p+i);
 
     if ((n = ompc_get_num_threads (tp)) == 1) { /* not in parallel, do nothing */
       return;

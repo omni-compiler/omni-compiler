@@ -489,7 +489,7 @@ public class OMPtransPragmaBlock extends OMPtransPragma
 
         if(b.isOrdered()) {
             bb.add(OMPfuncIdent(orderedInitFunc).Call(Xcons.List(lb_var.Ref(), step_var.Ref())));
-            b.getBody().insert(OMPfuncIdent(orderedSetLoopIdFunc).Call(Xcons.List(ind_var)));
+            b.getBody().insert(OMPfuncIdent(orderedSetIdFunc).Call(Xcons.List(ind_var)));
         }
 
         Block loop_block = Bcons.FORall(

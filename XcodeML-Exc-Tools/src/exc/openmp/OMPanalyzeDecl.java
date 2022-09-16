@@ -1,3 +1,4 @@
+/* -*- Mode: java; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 package exc.openmp;
 
 import exc.object.*;
@@ -9,16 +10,16 @@ import xcodeml.util.XmOption;
 
 public class OMPanalyzeDecl implements OMPfileEnv
 {
-  private XobjectFile env;
-  private Vector<Ident> thdprv_vars = new Vector<Ident>();
-  private static final String PROP_KEY = "OMPanalyzeDecl";
-  private OMPanalyzeDecl parent;
-  private List<String> list = new LinkedList<String>();
+    private XobjectFile env;
+    private Vector<Ident> thdprv_vars = new Vector<Ident>();
+    private static final String PROP_KEY = "OMPanalyzeDecl";
+    private OMPanalyzeDecl parent;
+    private List<String> list = new LinkedList<String>();
 
-  public OMPanalyzeDecl(XobjectFile env)
-  {
-    this.env = env;
-  }
+    public OMPanalyzeDecl(XobjectFile env)
+    {
+        this.env = env;
+    }
     
     @Override
     public XobjectFile getFile()

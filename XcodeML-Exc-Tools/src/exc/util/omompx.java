@@ -4,12 +4,16 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import exc.object.XobjectFile;
+
 import exc.openacc.ACC;
 import exc.openacc.AccDevice;
 import exc.openacc.AccTranslator;
+
 import exc.openmp.OMP;
+import exc.openmp.OMPtranslate;
 import exc.openmp.OMPtoACC;
 import exc.openmp.OMPDDRD;
+
 import exc.xcalablemp.XMP;
 import exc.xcalablemp.XMPglobalDecl;
 import exc.xcalablemp.XMPtranslate;
@@ -332,6 +336,7 @@ public class omompx
 
     String srcPath  = inXmlFile;
     String baseName = null;
+
     if(dump || srcPath == null || srcPath.indexOf("<") >= 0 ) {
       srcPath = null;
     }
@@ -385,6 +390,7 @@ public class omompx
       xobjFile.addHeaderLine("# include \"xmp_func_decl.h\"");
       xobjFile.addHeaderLine("# include \"xmp_index_macro.h\"");
       xobjFile.addHeaderLine("# include \"xmp_comm_macro.h\"");
+
       if(all_profile || selective_profile){
         if (doScalasca == true) {
           xobjFile.addHeaderLine("# include \"xmp_scalasca.h\"");
@@ -405,7 +411,7 @@ public class omompx
         xobjFile.Output(xcodeWriter);
         xcodeWriter.flush();
       }
-    }
+    } /* if xcalableMP */
 
     if (xmpf && (xmpf_skipCafMode || !XmOption.isCoarray())) {
       System.out.println("<SKIP-CAF MODE> XMP/F Coarray translator is " +
@@ -485,7 +491,7 @@ public class omompx
     }
 
     // OpenMP translation
-    OMPtoACC ompToAccTranslator = null;
+
     if(ompf_dynamic_data_race_detect) {
       OMPDDRD omp_translator = new OMPDDRD(xobjFile);
       xobjFile.iterateDef(omp_translator);
@@ -501,38 +507,35 @@ public class omompx
       }
     } else {
 
-    if(openMP || openMPonlyTarget) {
-      if(openMPonlyTarget)
-        xobjFile.addHeaderLine("#include \"ompc_target.h\"");
+      if(openMP || openMPonlyTarget) {
 
-      ompToAccTranslator = new OMPtoACC(xobjFile);
-      xobjFile.iterateDef(ompToAccTranslator);
+        // if(openMPonlyTarget)
+        //   xobjFile.addHeaderLine("#include \"ompc_target.h\""); /* ???? */
+        
+        // OMPtoACC ompToAccTranslator = new OMPtoACC(xobjFile);
+        // xobjFile.iterateDef(ompToAccTranslator);
+        
+        // if(OMP.hasErrors())
+        //   System.exit(1);
             
-      if(OMP.hasErrors())
-        System.exit(1);
+        // ompToAccTranslator.finish();
+        
+        OMPtranslate ompTranslator = new OMPtranslate(xobjFile);
+        xobjFile.iterateDef(ompTranslator);
+        
+        if(OMP.hasErrors())
+          System.exit(1);
             
-      ompToAccTranslator.finish();
-            
-      if(xcodeWriter != null) {
-        xobjFile.Output(xcodeWriter);
-        xcodeWriter.flush();
+        ompTranslator.finish();
+        
+        if(xcodeWriter != null) {
+          xobjFile.Output(xcodeWriter);
+          xcodeWriter.flush();
+        }
       }
-    }
-    
     }
 
     if(openACC){
-
-    // if (outputXcode) {
-    //   Writer dumpWriter = new BufferedWriter(new FileWriter(inXmlFile +
-    //                                                         ".xobj.2.dump"));
-    //   xobjFile.Output(dumpWriter);
-    //   dumpWriter.close();
-    // }
-
-    // if (openACC || (ompToAccTranslator != null &&
-    //                 ompToAccTranslator.isConverted())) {
-
       if(ACC.device == AccDevice.NONE){
         switch(ACC.platform){
         case CUDA:
@@ -561,8 +564,8 @@ public class omompx
         xobjFile.Output(xcodeWriter);
         xcodeWriter.flush();
       }
-    }
-    
+    } /* OpenACC */
+
     if(!dump && outputXcode) {
       xcodeWriter.close();
     }
@@ -578,6 +581,8 @@ public class omompx
     Document xcodeDoc = xc2xcodeTranslator.write(xobjFile);
 
     // transformation from DOM to the file. It means to output DOM to the file.
+    // System.out.println("silent="+silent);
+    // silent = false;
     if(silent == false){
       try {
         Transformer transformer = TransformerFactory.newInstance().newTransformer();

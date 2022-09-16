@@ -1,3 +1,4 @@
+/* -*- Mode: java; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 package exc.openmp;
 
 import exc.object.*;
@@ -172,8 +173,9 @@ public class OMPinfo
     OMPvar declOMPvar(String name, OMPpragma atr)
     {
         OMP.debug("declOMPVar");
-        if(atr == null)
-            return null;
+        // System.out.println("declOMPVar name="+name+", atr="+atr);
+
+        if(atr == null)  return null;
         
         OMPvar v = null;
         Ident id = null;
@@ -254,11 +256,12 @@ public class OMPinfo
             OMP.error(block.getLineNo(), "undefined variable in clause, '" + name + "'");
             return null;
         }
+        
         Xtype t = id.Type();
-        if(t.isFunction()) {
-            OMP.error(block.getLineNo(), "data '" + name + "' in cluase is a function");
-            return null;
-        }
+        // if(t.isFunction()) {
+        //     OMP.error(block.getLineNo(), "data '" + name + "' in cluase is a function");
+        //     return null;
+        // }
         if(atr.isDataReduction()) {
             if((XmOption.isLanguageC()
                     && !t.isNumeric()) ||
@@ -323,6 +326,8 @@ public class OMPinfo
         OMP.debug("createPrivateAddr");
         Ident id = v.id;
         Xtype t = id.Type();
+
+        // System.out.println("createPrivateAddr="+v+", isVariableArray="+v.isVariableArray());
         
         if(v.isVariableArray()) {
             /* for variable length array, convert local copy into pointer */
@@ -599,7 +604,10 @@ public class OMPinfo
         
         Xtype pt;
         if(XmOption.isLanguageC()) {
-            pt = Xtype.Pointer(id.Type());
+            if(!id.Type().isArray())
+                pt = Xtype.Pointer(id.Type());
+            else 
+                pt = Xtype.Pointer(id.Type().getRef());
         } else {
             pt = id.Type().copy();
             pt.unsetIsFsave();
@@ -611,7 +619,8 @@ public class OMPinfo
         
         Ident id_local = Ident.Local(OMPtransPragma.THDPRV_LOCAL_VAR_PREFIX + id.getName(), pt);
         v.setThdPrvLocalId(id_local);
-        Xobject localAddr = id.Type().isArray() ? Xcons.PointerRef(id_local.Ref()) : id_local.Ref();
+        // Xobject localAddr = id.Type().isArray() ? Xcons.PointerRef(id_local.Ref()) : id_local.Ref(); 
+        Xobject localAddr = id_local.Ref(); 
         if(v.id.isCglobalVarOrFvar()) {
             if(XmOption.isLanguageF()) {
                 Xtype t = id.Type().copy();
@@ -639,6 +648,8 @@ public class OMPinfo
     OMPvar declCopyinThreadPrivate(OMPvar thdprv_var)
     {
         OMP.debug("declCopyinThreadPrivate");
+        // System.out.println("declCopyinThreadPrivate thdprv_var = "+thdprv_var);
+
         OMPvar v = new OMPvar(thdprv_var.id, OMPpragma.DATA_COPYIN);
         v.setPrivateAddr(thdprv_var.getPrivateAddr());
         v.setSharedAddr(thdprv_var.getSharedAddr());
@@ -783,6 +794,8 @@ public class OMPinfo
     void setSchedule(Xobject sched_arg)
     {
         OMP.debug("setSchedule");
+        // System.out.println("setSchedule arg="+sched_arg);
+
         if(sched_arg == null)
             return; // for error recovery
 
@@ -790,17 +803,22 @@ public class OMPinfo
             OMP.error(block.getLineNo(), "schedule clause is already specified");
             return;
         }
+        // sched_arg = (LIST (STRING SCHED_xxx) (LIST modifier) (LIST chk_expr)) 
         sched = OMPpragma.valueOf(sched_arg.getArg(0));
-        sched_chunk = sched_arg.getArgOrNull(1);
-        if(sched_chunk != null && sched_chunk.isEmpty())
-          sched_chunk = null;
-        if(sched == OMPpragma.SCHED_RUNTIME && sched_chunk != null)
-            OMP.error(block.getLineNo(), "schedule RUNTIME has chunk argument");
+        sched_chunk = sched_arg.getArgOrNull(2);
+        if(sched_chunk != null)
+            sched_chunk = sched_chunk.getArgOrNull(0);
         if(sched == OMPpragma.SCHED_AFFINITY)
             OMP.error(block.getLineNo(), "schedule AFFINITY is not supported in this mode");
-        sched_chunk = refOMPvarExpr(block.getParentBlock(), sched_chunk);
-        if(OMP.debugFlag)
-            System.out.println("schedule(" + sched + "," + sched_chunk + ")");
+        else {          
+            if(sched == OMPpragma.SCHED_RUNTIME && sched_chunk != null)
+                OMP.error(block.getLineNo(), "schedule RUNTIME has chunk argument");
+            else {
+                sched_chunk = refOMPvarExpr(block.getParentBlock(), sched_chunk);
+                if(OMP.debugFlag)
+                    System.out.println("schedule(" + sched + "," + sched_chunk + ")");
+            }
+        }
     }
 
     void setIfExpr(Xobject cond)

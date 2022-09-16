@@ -1,3 +1,4 @@
+/* -*- Mode: java; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 package exc.openmp;
 
 import java.util.ArrayList;
@@ -17,13 +18,12 @@ public class OMPanalyzePragma
     OMPfileEnv omp_env;
     // BlockPrintWriter debug_writer =  new BlockPrintWriter(System.out);
 
-    public void run(FuncDefBlock def, OMPfileEnv omp_env)
-    {
+    public void run(FuncDefBlock def, OMPfileEnv omp_env){
         this.def = def;
         this.omp_env = omp_env;
         Block b;
         Block fblock = def.getBlock();
-        OMP.debug("run");
+        OMP.debug("run OMPanalyzePragma ...");
 
         // pass1: traverse to collect information about OMP pramga
         if(OMP.debugFlag) System.out.println("pass1:");
@@ -31,8 +31,9 @@ public class OMPanalyzePragma
         b = fblock.getBody().getHead();
         b.setProp(OMP.prop, new OMPinfo(OMPpragma.FUNCTION_BODY, null, b, omp_env));
 
-	expandPragma(fblock);
+	// expandPragma(fblock);
 
+        // run checkPragma in order of topdown
         BlockIterator i = new topdownBlockIterator(fblock);
         for(i.init(); !i.end(); i.next()) {
             b = i.getBlock();
@@ -43,29 +44,31 @@ public class OMPanalyzePragma
         }
     }
 
-    void expandPragma(Block fblock){
-        BlockIterator i = new bottomupBlockIterator(fblock);
-        for(i.init(); !i.end(); i.next()) {
-            Block b = i.getBlock();
-            if(b.Opcode() == Xcode.OMP_PRAGMA){
-                PragmaBlock pb = (PragmaBlock)b;
-		OMPpragma p = OMPpragma.valueOf(pb.getPragma());
-		Block bb;
-		switch(p){
-		case PARALLEL_FOR:       /* parallel for <clause_list> */
-		    pb = (PragmaBlock) b.copy();
-		    pb.setPragma("FOR");
-		    i.setBlock(new PragmaBlock(Xcode.OMP_PRAGMA, "PARALLEL", null, new BlockList(pb)));
-		    break;
-		case PARALLEL_SECTIONS:  /* parallel sections <clause_list> */
-		    pb = (PragmaBlock) b.copy();
-		    pb.setPragma("SECTIONS");
-		    i.setBlock(new PragmaBlock(Xcode.OMP_PRAGMA, "PARALLEL", null, new BlockList(pb)));
-		    break;
-		}
-	    }
-	}
-    }
+    // PARALLEL_FOR and PARALLEL_SECTIONS are exanped by OMPpragmaParser.java
+    //
+    // void expandPragma(Block fblock){
+    //     BlockIterator i = new bottomupBlockIterator(fblock);
+    //     for(i.init(); !i.end(); i.next()) {
+    //         Block b = i.getBlock();
+    //         if(b.Opcode() == Xcode.OMP_PRAGMA){
+    //             PragmaBlock pb = (PragmaBlock)b;
+    //     	OMPpragma p = OMPpragma.valueOf(pb.getPragma());
+    //     	Block bb;
+    //     	switch(p){
+    //     	case PARALLEL_FOR:       /* parallel for <clause_list> */
+    //     	    pb = (PragmaBlock) b.copy();
+    //     	    pb.setPragma("FOR");
+    //     	    i.setBlock(new PragmaBlock(Xcode.OMP_PRAGMA, "PARALLEL", null, new BlockList(pb)));
+    //     	    break;
+    //     	case PARALLEL_SECTIONS:  /* parallel sections <clause_list> */
+    //     	    pb = (PragmaBlock) b.copy();
+    //     	    pb.setPragma("SECTIONS");
+    //     	    i.setBlock(new PragmaBlock(Xcode.OMP_PRAGMA, "PARALLEL", null, new BlockList(pb)));
+    //     	    break;
+    //     	}
+    //         }
+    //     }
+    // }
 
     OMPinfo outerOMPinfo(Block b)
     {
@@ -84,6 +87,7 @@ public class OMPanalyzePragma
         OMPinfo info = new OMPinfo(OMPpragma.valueOf(pb.getPragma()), outer, pb, omp_env);
         pb.setProp(OMP.prop, info);
         OMP.debug("checkPragma");
+        // System.out.println("checkPragma ="+info.pragma);
 
         OMPpragma p = info.pragma;
         OMPpragma c;
@@ -93,14 +97,15 @@ public class OMPanalyzePragma
         topdownBlockIterator bitr;
 
         switch(p) {
-        case TASK:
-    	info.setIfExpr(Xcons.FlogicalConstant(true));
-        info.setFinalExpr(Xcons.FlogicalConstant(false));
+        //     /* not completed yet */
+        // case TASK:
+        //     info.setIfExpr(Xcons.FlogicalConstant(true));
+        //     info.setFinalExpr(Xcons.FlogicalConstant(false));
 
         case PARALLEL: /* new parallel section */
         case FOR: /* loop <clause_list> */
         case SECTIONS: /* sections <clause_list> */
-        	// Assume that the kinds of the cluases are already checked
+            // Assume that the kinds of the cluases are already checked (by OMPpragmaParser.java)
             idLists = new ArrayList<XobjList>();
 	    if(pb.getClauses() != null) {
 		for(Xobject a : (XobjList)pb.getClauses()) {
@@ -170,41 +175,41 @@ public class OMPanalyzePragma
                     	OMPinfo outer2 =outerOMPinfo(pb2);
                     	OMPinfo info2 = new OMPinfo(OMPpragma.valueOf(pb2.getPragma()), outer2, pb2, omp_env);
                     	OMPpragma pc=info2.pragma;
-                    	switch(pc)
-                    	{
-                    	case SIMD:
-                    		info.simd=true;
-                    		break;
+                    	switch(pc) {
+                        case SIMD:
+                            info.simd=true;
+                            break;
                     	}
-                    }else
-                    if(pb.getBody().getHead().Opcode() != Xcode.F_DO_STATEMENT) {
-                        OMP.error(pb.getLineNo(), "DO loop must follows DO directive");
+                    } else
+                        if(pb.getBody().getHead().Opcode() != Xcode.F_DO_STATEMENT) {
+                            OMP.error(pb.getLineNo(), "DO loop must follows DO directive");
+                            return;
+                        }	
+                }
+
+                if(!info.simd) {
+                    ForBlock for_block = (ForBlock)pb.getBody().getHead();
+                    for_block.Canonicalize();
+                    if(!for_block.isCanonical()) {
+                        OMP.error(pb.getLineNo(), "not cannonical FOR/DO loop");
                         return;
                     }	
-                }
-                if(!info.simd)
-                {
-                	ForBlock for_block = (ForBlock)pb.getBody().getHead();
-                	for_block.Canonicalize();
-                	if(!for_block.isCanonical()) {
-                		OMP.error(pb.getLineNo(), "not cannonical FOR/DO loop");
-                		return;
-                	}	
                 	
-                	Xobject ind_var = for_block.getInductionVar();
-                	if(!info.isPrivateOMPvar(ind_var.getName())) {
-                		OMPvar v = info.findOMPvar(ind_var.getName());
-                		if(v == null) {
-                			info.declOMPvar(ind_var.getName(), OMPpragma.DATA_PRIVATE);
-                		} else if(!v.is_last_private && v.is_shared) {
-                			/* loop variable may be lastprivate */
-                			OMP.error(pb.getLineNo(), "FOR/DO loop variable '" + v.id.getName()
-                					+ "' is declared as shared");
-                			return;
-                		}	
-                	}	
+                    Xobject ind_var = for_block.getInductionVar();
+                    if(!info.isPrivateOMPvar(ind_var.getName())) {
+                        OMPvar v = info.findOMPvar(ind_var.getName());
+                        if(v == null) {
+                            info.declOMPvar(ind_var.getName(), OMPpragma.DATA_PRIVATE);
+                        } else if(!v.is_last_private && v.is_shared) {
+                            /* loop variable may be lastprivate */
+                            OMP.error(pb.getLineNo(), "FOR/DO loop variable '" + v.id.getName()
+                                      + "' is declared as shared");
+                            return;
+                        }	
+                    }	
                 }
             }
+
             if(p == OMPpragma.SECTIONS && outer != null && outer.pragma != OMPpragma.PARALLEL)
                 OMP.error(pb.getLineNo(), "'sections' directive is nested");
 
@@ -299,6 +304,8 @@ public class OMPanalyzePragma
             break;
 	case TARGET_ENTER_DATA:
 	    break;
+        case SECTION:
+          break;
         default:
             OMP.fatal("unknown OpenMP pramga = " + p);
             break;

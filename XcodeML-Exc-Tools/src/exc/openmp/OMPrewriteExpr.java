@@ -112,6 +112,7 @@ public class OMPrewriteExpr
             } else if(xx.isVariable()) {
                 if((v = OMPinfo.refOMPvar(b, xx.getName())) == null)
                     continue;
+                // System.out.println("rewrite var="+v);
                 if(v.is_reduction)
                     checkReductionExpr(v, xx, i.getParent());
                 else {
@@ -122,6 +123,7 @@ public class OMPrewriteExpr
             } else if(xx.isVarAddr() || xx.isArray() || xx.isArrayAddr()) {
                 if((v = OMPinfo.refOMPvar(b, xx.getName())) == null)
                     continue;
+                // System.out.println("rewrite array="+v+", inType="+inType);
                 if(v != null)
                     i.setXobject(inType ? v.getSharedAddr() : v.getAddr());
                 if(v.is_reduction) {

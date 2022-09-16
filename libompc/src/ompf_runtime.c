@@ -235,15 +235,14 @@ ompf_runtime_sched_next_(indvar_t *lb, indvar_t *ub)
 
 
 void
-ompf_set_loop_id_(indvar_t *i)
+ompf_ordered_set_id_(indvar_t *i)
 {
     extern void ompc_set_loop_id();
     ompc_set_loop_id(*i);
 }
 
-
 void
-ompf_init_ordered_(indvar_t *lb, int *step)
+ompf_ordered_init_(indvar_t *lb, int *step)
 {
     extern void ompc_init_ordered();
     ompc_init_ordered(*lb, *step);

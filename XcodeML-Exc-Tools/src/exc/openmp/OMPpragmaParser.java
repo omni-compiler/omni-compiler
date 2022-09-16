@@ -1,10 +1,11 @@
+/* -*- Mode: java; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 package exc.openmp;
 
 import xcodeml.util.XmException;
 import xcodeml.util.XmLog;
 import xcodeml.util.XmOption;
 import xcodeml.util.IXobject;
-import exc.object.ExternalPragmaParser;
+// import exc.object.ExternalPragmaParser;
 import exc.object.Ident;
 import exc.object.PragmaParser;
 import exc.object.PragmaSyntax;
@@ -14,19 +15,17 @@ import exc.object.Xcons;
 import exc.object.XobjArgs;
 import exc.object.XobjList;
 import exc.object.Xobject;
+import exc.object.XobjectFile;
 import java.util.ArrayList;
 
 /**
  * OpenMP pragma parser
  */
-public class OMPpragmaParser implements ExternalPragmaParser
+public class OMPpragmaParser extends PragmaParser
 {
-    /** base parser */
-    private PragmaParser _parser;
-    
-    public OMPpragmaParser(PragmaParser parser)
+    public OMPpragmaParser(XobjectFile xobjFile)
     {
-        _parser = parser;
+        super(xobjFile);
     }
 
     private class ResultClause
@@ -62,6 +61,8 @@ public class OMPpragmaParser implements ExternalPragmaParser
         Xobject v, c;
         ResultClause rc;
         
+        // System.out.println("OMPpragmaParser parse ... "); 
+
         if(x.getArgOrNull(0) == null)
             XmLog.fatal("pragma kind is null");
         OMPpragma pragma = OMPpragma.valueOf(x.getArg(0));
@@ -70,7 +71,7 @@ public class OMPpragmaParser implements ExternalPragmaParser
         case PARALLEL:
             /* parallel <clause_list> */
             rc = compile_OMP_pragma_clause(x.getArg(1), OMPpragma.PARALLEL, true);
-            return Xcons.List(Xcode.OMP_PRAGMA, x.getArg(0), rc.pclause, x.getArg(2));
+            return Xcons.List(Xcode.OMP_PRAGMA, x.getArg(0), rc.pclause, x.getArgOrNull(2));
     
         case PARALLEL_FOR:
             /* parallel for <clause_list> */
@@ -79,12 +80,12 @@ public class OMPpragmaParser implements ExternalPragmaParser
                 omp_kwd(OMPpragma.PARALLEL), rc.pclause,
                 Xcons.List(Xcode.OMP_PRAGMA,
                     omp_kwd(OMPpragma.FOR),
-                    rc.dclause, x.getArg(2)));
+                    rc.dclause, x.getArgOrNull(2)));
     
         case PARALLEL_SECTIONS:
             /* parallel sections <clause_list> */
             rc = compile_OMP_pragma_clause(x.getArg(1), OMPpragma.SECTIONS, true);
-            v = compile_OMP_SECTIONS_statement(x.getArg(2));
+            v = compile_OMP_SECTIONS_statement(x.getArgOrNull(2));
             return Xcons.List(Xcode.OMP_PRAGMA,
                 omp_kwd(OMPpragma.PARALLEL), rc.pclause,
                 Xcons.List(Xcode.OMP_PRAGMA,
@@ -92,8 +93,8 @@ public class OMPpragmaParser implements ExternalPragmaParser
     
         case FOR:
             /* for <clause_list> */
-        	rc = compile_OMP_pragma_clause(x.getArg(1), OMPpragma.FOR, false);
-            return Xcons.List(Xcode.OMP_PRAGMA, x.getArg(0), rc.dclause, x.getArg(2));
+            rc = compile_OMP_pragma_clause(x.getArg(1), OMPpragma.FOR, false);
+            return Xcons.List(Xcode.OMP_PRAGMA, x.getArg(0), rc.dclause, x.getArgOrNull(2));
 
         case SECTIONS:
             /* sections <clause_list> */
@@ -105,13 +106,13 @@ public class OMPpragmaParser implements ExternalPragmaParser
         case SINGLE:
             /* single <clause list> */
             rc = compile_OMP_pragma_clause(x.getArg(1), OMPpragma.SINGLE, false);
-            return Xcons.List(Xcode.OMP_PRAGMA, x.getArg(0), rc.dclause, x.getArg(2));
+            return Xcons.List(Xcode.OMP_PRAGMA, x.getArg(0), rc.dclause, x.getArgOrNull(2));
     
         case MASTER:
             /* master */
         case ORDERED:
             /* ordered */
-            return Xcons.List(Xcode.OMP_PRAGMA, x.getArg(0), null, x.getArg(2));
+            return Xcons.List(Xcode.OMP_PRAGMA, x.getArg(0), null, x.getArgOrNull(2));
             
         case CRITICAL:
             /* critical <name> */
@@ -119,7 +120,7 @@ public class OMPpragmaParser implements ExternalPragmaParser
             if(c != null && c.Nargs() > 1) {
                 throw exception("bad critical section name");
             }
-            return Xcons.List(Xcode.OMP_PRAGMA, x.getArg(0), c, x.getArg(2));
+            return Xcons.List(Xcode.OMP_PRAGMA, x.getArg(0), c, x.getArgOrNull(2));
     
         case ATOMIC:
             /* atomic */
@@ -144,13 +145,13 @@ public class OMPpragmaParser implements ExternalPragmaParser
         case FLUSH:
             /* flush <namelist> */
             c = x.getArg(1);
-            compile_OMP_name_list(c);
+            // compile_OMP_name_list(c);
             return Xcons.List(Xcode.OMP_PRAGMA, x.getArg(0), c, null);
     
         case THREADPRIVATE:
             /* threadprivate <namelist> */
             c = x.getArg(1);
-            compile_OMP_name_list(c);
+            // compile_OMP_name_list(c);
             return Xcons.List(Xcode.OMP_PRAGMA, x.getArg(0), c, null);
     
         default:
@@ -176,7 +177,7 @@ public class OMPpragmaParser implements ExternalPragmaParser
             if(id_list != null && !id_list.isEmpty()) {
                 throw exception("declarations in sections block");
             }
-            body = x.getArg(2);
+            body = x.getArgOrNull(2);
         } else {
             body = x;
         }
@@ -184,11 +185,12 @@ public class OMPpragmaParser implements ExternalPragmaParser
         section_list = Xcons.List();
         current_section = null;
         for(Xobject a : (XobjList)body) {
+            // System.out.println("compile_OMP_SECTIONS_statement a="+a);
             
             // child SECTION Xobject is not parsed yet here.
             //   ... (OMP_PRAGMA (PragmaSyntax) (OMPpragma))
             if(a.Opcode() == Xcode.OMP_PRAGMA &&
-                OMPpragma.valueOf(a.getArg(1)) == OMPpragma.SECTION) {
+                OMPpragma.valueOf(a.getArg(0)) == OMPpragma.SECTION) {
                 current_section = Xcons.CompoundStatement(
                     Xcons.IDList(), Xcons.List(), Xcons.List());
                 section_list.add(current_section);
@@ -217,6 +219,8 @@ public class OMPpragmaParser implements ExternalPragmaParser
         Xobject pclause = null;
         Xobject dclause = Xcons.List();
     
+        // System.out.println("compile_OMP_pragma_clause c="+pragma+", x="+x);
+        
         if(is_parallel)
             pclause = Xcons.statementList();
         for(Xobject c : (XobjList)x) {
@@ -230,7 +234,7 @@ public class OMPpragmaParser implements ExternalPragmaParser
                 break;
                 
             case DATA_SHARED:
-                compile_OMP_name_list(c.getArg(1));
+                // compile_OMP_name_list(c.getArg(1));
                 if(!is_parallel) {
                     throw exception("'shared' clause must be in PARALLEL");
                 }
@@ -238,7 +242,7 @@ public class OMPpragmaParser implements ExternalPragmaParser
                 break;
                 
             case DATA_COPYIN:
-                compile_OMP_name_list(c.getArg(1));
+                // compile_OMP_name_list(c.getArg(1));
                 if(!is_parallel) {
                     throw exception("'copyin' clause must be in PARALLEL");
                 }
@@ -263,7 +267,7 @@ public class OMPpragmaParser implements ExternalPragmaParser
             case DATA_PRIVATE:
             case DATA_FIRSTPRIVATE:
                 /* all pragma can have these */
-                compile_OMP_name_list(c.getArg(1));
+                // compile_OMP_name_list(c.getArg(1));
                 if(pragma == OMPpragma.PARALLEL)
                     pclause.add(c);
                 else     
@@ -271,7 +275,7 @@ public class OMPpragmaParser implements ExternalPragmaParser
                 break;
         
             case DATA_LASTPRIVATE:
-                compile_OMP_name_list(c.getArg(1));
+                // compile_OMP_name_list(c.getArg(1));
                 if(pragma != OMPpragma.FOR && pragma != OMPpragma.SECTIONS) {
                     if(XmOption.isLanguageC())
                         throw exception("'lastprivate' clause must be in FOR or SECTIONS");
@@ -282,7 +286,7 @@ public class OMPpragmaParser implements ExternalPragmaParser
                 break;
                 
             case DATA_COPYPRIVATE:
-                compile_OMP_name_list(c.getArg(1));
+                // compile_OMP_name_list(c.getArg(1));
                 if(pragma != OMPpragma.SINGLE) {
                     throw exception("'copyprivate' clause must be in SINGLE");
                 }
@@ -306,11 +310,11 @@ public class OMPpragmaParser implements ExternalPragmaParser
                     else
                         throw exception("'schedule' clause must be in DO");
                 }
-                v = c.getArg(1).getArg(1);
-                if(v != null && 
-                    OMPpragma.valueOf(c.getArg(1).getArg(0)) != OMPpragma.SCHED_AFFINITY) {
-                    c = Xcons.List(c.getArg(0), Xcons.List(c.getArg(1).getArg(0), v));
-                }
+                // v = c.getArg(1).getArg(1);
+                // if(v != null && 
+                //    OMPpragma.valueOf(c.getArg(1).getArg(0)) != OMPpragma.SCHED_AFFINITY) {
+                //     c = Xcons.List(c.getArg(0), Xcons.List(c.getArg(1).getArg(0), v));
+                // }
                 dclause.add(c);
                 break;
         
@@ -323,7 +327,7 @@ public class OMPpragmaParser implements ExternalPragmaParser
         
             default:
                 if(p.isDataReduction()) {
-                    compile_OMP_name_list(c.getArg(1));
+                    // compile_OMP_name_list(c.getArg(1));
                     if(pragma == OMPpragma.PARALLEL)
                         pclause.add(c);
                     else if(pragma == OMPpragma.FOR || pragma == OMPpragma.SECTIONS)
@@ -344,6 +348,10 @@ public class OMPpragmaParser implements ExternalPragmaParser
         return new ResultClause(pclause, dclause);
     }
     
+    //
+    // compile_OMP_name_list is not used !!!
+    //
+    //    checking varaible is done in OMPanalayzePragma.checkPragma  
     private void compile_OMP_name_list(Xobject name_list) throws XmException
     {
         if(name_list == null)
@@ -353,13 +361,13 @@ public class OMPpragmaParser implements ExternalPragmaParser
         
         for(XobjArgs a = name_list.getArgs(); a != null; a = a.nextArgs()) {
             Xobject v = a.getArg();
-            Ident id = _parser.findIdent(v.getName(), IXobject.FINDKIND_VAR);
+            Ident id = findIdent(v.getName(), IXobject.FINDKIND_VAR);
             
             if(id == null) {
                 if(XmOption.isLanguageC()) {
-                    id = _parser.getXobjectFile().findVarIdent(v.getName());
+                    id = getXobjectFile().findVarIdent(v.getName());
                 } else {
-                    id = _parser.findIdent(v.getName(), IXobject.FINDKIND_COMMON);
+                    id = findIdent(v.getName(), IXobject.FINDKIND_COMMON);
                     if(id.getStorageClass() != StorageClass.FCOMMON_NAME)
                         id = null;
                 }

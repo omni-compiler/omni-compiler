@@ -1,3 +1,4 @@
+/* -*- Mode: java; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 package exc.object;
 
 public abstract class XobjectIterator
@@ -39,4 +40,11 @@ public abstract class XobjectIterator
     {
         return topXobject;
     }
+
+  public String toString()
+  {
+    String s = "[x=";
+    s += currentXobject+",a="+currentArgs+"]";
+    return s;
+  }
 }

@@ -59,7 +59,6 @@ public class OMPtoACCClauseMap extends OMPtoACCClause {
             }
         }
 
-
         // create COPY()/CREATE().
         XobjList list = null;
         switch (mapType.getName()) {

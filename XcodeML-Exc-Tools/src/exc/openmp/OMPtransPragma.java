@@ -1,4 +1,4 @@
-/* -*- Mode: java; c-basic-offset:2 ; indent-tabs-mode:nil ; -*- */
+/* -*- Mode: java; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 package exc.openmp;
 import exc.object.*;
 import exc.block.*;
@@ -42,7 +42,7 @@ public class OMPtransPragma
   public String affinityShedNextFunc;
   
   public String orderedInitFunc;
-  public String orderedSetLoopIdFunc;
+  public String orderedSetIdFunc;
   public String orderedBeginFunc;
   public String orderedEndFunc;
   
@@ -144,8 +144,8 @@ public class OMPtransPragma
       affinityShedInitFunc = "ompc_affinity_sched_init";
       affinityShedNextFunc = "ompc_affinity_sched_next";
       
-      orderedInitFunc      = "ompc_init_ordered";
-      orderedSetLoopIdFunc = "ompc_set_loop_id";
+      orderedInitFunc      = "ompc_ordered_init";
+      orderedSetIdFunc 	   = "ompc_ordered_set_id";
       orderedBeginFunc     = "ompc_ordered_begin";
       orderedEndFunc       = "ompc_ordered_end";
       
@@ -204,8 +204,8 @@ public class OMPtransPragma
       affinityShedInitFunc = "ompf_affinity_sched_init";
       affinityShedNextFunc = "ompf_affinity_sched_next";
       
-      orderedInitFunc = "ompf_init_ordered";
-      orderedSetLoopIdFunc = "ompf_set_loop_id";
+      orderedInitFunc = "ompf_ordered_init";
+      orderedSetIdFunc = "ompf_ordered_set_id";
       orderedBeginFunc = "ompf_ordered_begin";
       orderedEndFunc = "ompf_ordered_end";
       
@@ -1299,18 +1299,18 @@ public class OMPtransPragma
             bb.add(OMPfuncIdent(orderedInitFunc).Call(
                 Xcons.List(vlb, step_var.Ref())));
             Xobject setLoopId;
-            if(XmOption.isLanguageC())
-                setLoopId = OMPfuncIdent(orderedSetLoopIdFunc).Call(
-                    Xcons.List(Xcons.Cast(indvarType, ind_var)));
-            else {
+            if(XmOption.isLanguageC()){
+                // setLoopId = OMPfuncIdent(orderedSetLoopIdFunc).Call(
+                // Xcons.List(Xcons.Cast(indvarType, ind_var)));
+                setLoopId = OMPfuncIdent(orderedSetIdFunc).Call(Xcons.List(ind_var));
+            } else {
                 use_alt = !MachineDep.sizeEquals(btype, ind_var.Type(), b);
                 if(use_alt) {
                     arg = Ident.Fident(env.genSym(ind_var.getName()), btype);
                     ret_body.addIdent((Ident)arg);
                     arg = ((Ident)arg).getAddr();
                 }
-                setLoopId = OMPfuncIdent(orderedSetLoopIdFunc).Call(
-                    Xcons.List(arg));
+                setLoopId = OMPfuncIdent(orderedSetIdFunc).Call(Xcons.List(arg));
             }
             
             for_block.getBody().insert(setLoopId);
@@ -1327,6 +1327,7 @@ public class OMPtransPragma
             ret_body.add(comp_block);
             break;
         case SCHED_STATIC:
+            // System.out.println("SCHED_STATIC chunk="+i.sched_chunk);
             if(i.sched_chunk == null) {
                 /* same as SCHED_NONE */
                 bb.add(OMPfuncIdent(blockShedFunc).Call(
@@ -1761,6 +1762,9 @@ public class OMPtransPragma
                 OMP.fatal("bad copyin: " + thdprv_id.getName());
             
             if(XmOption.isLanguageC()) {
+                // System.out.println("copyinThdprvFunc: local_id="+local_id+", ref="+local_id.Ref()+
+                //                    ", thdprv_id="+thdprv_id+", addr="+
+                //                    thdprv_id.getAddr()+",type="+thdprv_id.Type());
                 bb.add(OMPfuncIdent(copyinThdprvFunc).Call(
                     Xcons.List(local_id.Ref(), thdprv_id.getAddr(),
                         Xcons.SizeOf(thdprv_id.Type()))));

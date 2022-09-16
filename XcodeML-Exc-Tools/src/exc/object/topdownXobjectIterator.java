@@ -1,3 +1,4 @@
+/* -*- Mode: java; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 package exc.object;
 
 import java.util.Stack;
