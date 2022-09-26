@@ -1,10 +1,11 @@
-package exc.openmp;
+package exc.OMPtoACC;
 
 import exc.object.*;
+import exc.openmp.*;
 import exc.openacc.ACCpragma;
 
-public class OMPtoACCClausePrivate extends OMPtoACCClause {
-    public OMPtoACCClausePrivate() {
+public class OMPtoACCClauseNumTeams extends OMPtoACCClause {
+    public OMPtoACCClauseNumTeams() {
         super();
     }
 
@@ -17,8 +18,7 @@ public class OMPtoACCClausePrivate extends OMPtoACCClause {
             return null;
         }
 
-        return Xcons.List(Xcons.String(ACCpragma.PRIVATE.toString()),
+        return Xcons.List(Xcons.String(ACCpragma.NUM_GANGS.toString()),
                           clause.getArg(1));
     }
 }
-

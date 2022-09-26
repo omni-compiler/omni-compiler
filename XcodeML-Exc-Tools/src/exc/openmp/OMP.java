@@ -45,7 +45,7 @@ public class OMP
         return (id.getProp(thdprv_prop) != null);
     }
     
-    static boolean hasError()
+    public static boolean hasError()
     {
         return errorFlag;
     }

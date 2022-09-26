@@ -1,11 +1,12 @@
-package exc.openmp;
+package exc.OMPtoACC;
 
 import exc.object.*;
+import exc.openmp.*;
 import exc.openacc.ACCpragma;
 import java.util.Iterator;
 
-public class OMPtoACCDirectiveTargetTeamsDistribute extends OMPtoACCDirective {
-    public OMPtoACCDirectiveTargetTeamsDistribute() {
+public class OMPtoACCDirectiveDistribute extends OMPtoACCDirective {
+    public OMPtoACCDirectiveDistribute() {
         super();
     }
 
@@ -21,7 +22,6 @@ public class OMPtoACCDirectiveTargetTeamsDistribute extends OMPtoACCDirective {
 
         XobjList ompClauses = (XobjList) xobj.getArg(1);
         XobjList accClauses = Xcons.List();
-        XobjList accDataClauses = Xcons.List();
 
         for (Iterator<Xobject> it = ompClauses.iterator(); it.hasNext();) {
             XobjList clause = (XobjList) it.next();
@@ -35,36 +35,10 @@ public class OMPtoACCDirectiveTargetTeamsDistribute extends OMPtoACCDirective {
             XobjList l = null;
             OMPpragma pragmaClause = OMPpragma.valueOf(clause.getArg(0));
             switch (pragmaClause) {
-            case TARGET_DATA_MAP:
-            case NUM_TEAMS:
-            case THREAD_LIMIT:
             case DATA_PRIVATE:
             case DATA_FIRSTPRIVATE:
-            case DATA_REDUCTION_PLUS:
-            case DATA_REDUCTION_MINUS:
-            case DATA_REDUCTION_MUL:
-            case DATA_REDUCTION_LOGAND:
-            case DATA_REDUCTION_LOGOR:
-            case DATA_REDUCTION_MIN:
-            case DATA_REDUCTION_MAX:
-            case DATA_REDUCTION_BITAND:
-            case DATA_REDUCTION_BITOR:
-            case DATA_REDUCTION_BITXOR:
                 l = clauseConverters.get(pragmaClause).convert(xobj, clause);
                 break;
-            case DIR_IF:
-                l = clauseConverters.get(pragmaClause).
-                    convert(xobj, clause,
-                            new OMPpragma[]{OMPpragma.TARGET},
-                            new OMPpragma[]{});
-                break;
-            case TARGET_DEVICE:
-            case IS_DEVICE_PTR:
-            case DEFAULTMAP:
-            case DIR_NOWAIT:
-            case DEPEND:
-            case DATA_DEFAULT:
-            case DATA_SHARED:
             case DATA_LASTPRIVATE:
             case COLLAPSE:
             case DIST_SCHEDULE:
@@ -84,17 +58,11 @@ public class OMPtoACCDirectiveTargetTeamsDistribute extends OMPtoACCDirective {
             }
 
             if (l != null) {
-                if (pragmaClause == OMPpragma.TARGET_DATA_MAP) {
-                    accDataClauses.add(l);
-                } else {
-                    // Delay all but copyXX/create clause.
-                    setContextClause(pragmaClause, l);
-                }
+                setContextClause(pragmaClause, l);
             }
         }
 
         // Merge delayed clauses.
-        accClauses.mergeList(accDataClauses);
         accClauses.mergeList(getContextClauses());
         currentArgs.setArg(createAccPragma(ACCpragma.PARALLEL_LOOP,
                                            accClauses, xobj, 2));

@@ -1,11 +1,12 @@
-package exc.openmp;
+package exc.OMPtoACC;
 
 import exc.object.*;
+import exc.openmp.*;
 import exc.openacc.ACCpragma;
 import java.util.Iterator;
 
-public class OMPtoACCDirectiveTargetData extends OMPtoACCDirective {
-    public OMPtoACCDirectiveTargetData() {
+public class OMPtoACCDirectiveTargetParallelLoop extends OMPtoACCDirective {
+    public OMPtoACCDirectiveTargetParallelLoop() {
         super();
     }
 
@@ -22,6 +23,7 @@ public class OMPtoACCDirectiveTargetData extends OMPtoACCDirective {
         XobjList ompClauses = (XobjList) xobj.getArg(1);
         XobjList accClauses = Xcons.List();
         XobjList accDataClauses = Xcons.List();
+
         for (Iterator<Xobject> it = ompClauses.iterator(); it.hasNext();) {
             XobjList clause = (XobjList) it.next();
             if (clause.Opcode() != Xcode.LIST ||
@@ -35,16 +37,41 @@ public class OMPtoACCDirectiveTargetData extends OMPtoACCDirective {
             OMPpragma pragmaClause = OMPpragma.valueOf(clause.getArg(0));
             switch (pragmaClause) {
             case TARGET_DATA_MAP:
+            case DATA_PRIVATE:
+            case DATA_FIRSTPRIVATE:
+            case DIR_NUM_THREADS:
+            case DATA_REDUCTION_PLUS:
+            case DATA_REDUCTION_MINUS:
+            case DATA_REDUCTION_MUL:
+            case DATA_REDUCTION_LOGAND:
+            case DATA_REDUCTION_LOGOR:
+            case DATA_REDUCTION_MIN:
+            case DATA_REDUCTION_MAX:
+            case DATA_REDUCTION_BITAND:
+            case DATA_REDUCTION_BITOR:
+            case DATA_REDUCTION_BITXOR:
                 l = clauseConverters.get(pragmaClause).convert(xobj, clause);
                 break;
             case DIR_IF:
                 l = clauseConverters.get(pragmaClause).
                     convert(xobj, clause,
-                            new OMPpragma[]{OMPpragma.TARGET_DATA},
-                            new OMPpragma[]{});
+                            new OMPpragma[]{OMPpragma.TARGET},
+                            new OMPpragma[]{OMPpragma.PARALLEL_FOR});
                 break;
             case TARGET_DEVICE:
-            case USE_DEVICE_PTR:
+            case IS_DEVICE_PTR:
+            case DEFAULTMAP:
+            case DIR_NOWAIT:
+            case DEPEND:
+            case DATA_DEFAULT:
+            case DATA_SHARED:
+            case DATA_COPYIN:
+            case PROC_BIND:
+            case DATA_LASTPRIVATE:
+            case DATA_LINEAR:
+            case DIR_SCHEDULE:
+            case COLLAPSE:
+            case DIR_ORDERED:
                 OMP.error((LineNo)xobj.getLineNo(),
                           "Not implemented clause. ('" +
                           notImplementedClauseStr(pragmaClause) +
@@ -70,34 +97,11 @@ public class OMPtoACCDirectiveTargetData extends OMPtoACCDirective {
             }
         }
 
-        // NOET: In the case of TARGET_DATA,
-        //       the levels of pragma and structured-block(COMPOUND_STATEMENT)
-        //       are the same in XcodeML.
-        //       So, search for the next line(COMPOUND_STATEMENT).
-        Xobject x = xobj;
-        if (currentArgs.nextArgs() != null &&
-            currentArgs.nextArgs().getArg() != null &&
-            currentArgs.nextArgs().getArg().Opcode() ==
-            Xcode.COMPOUND_STATEMENT) {
-            x = currentArgs.nextArgs().getArg();
-        }
-
-        // If nested task-offload is contained, convert to
-        // 'acc data' with copyXX/create clause.
-        // If not, convert to 'acc parallel' with all clause
-        // (Include delayed clauses).
-        XobjList acc = null;
-        if (containsNestedTaskOffload(x)) {
-            acc = createAccPragma(ACCpragma.DATA,
-                                  accDataClauses, xobj, 2);
-        } else {
-            accClauses.mergeList(accDataClauses);
-            accClauses.mergeList(getContextClauses());
-
-            acc = createAccPragma(ACCpragma.PARALLEL,
-                                  accClauses, xobj, 2);
-            resetContextClauses();
-        }
-        currentArgs.setArg(acc);
+        // Merge delayed clauses.
+        accClauses.mergeList(accDataClauses);
+        accClauses.mergeList(getContextClauses());
+        currentArgs.setArg(createAccPragma(ACCpragma.PARALLEL_LOOP,
+                                           accClauses, xobj, 2));
+        resetContextClauses();
     }
 }

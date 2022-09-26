@@ -1,8 +1,11 @@
-package exc.openmp;
+/* -*- Mode: java; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
+package exc.OMPtoACC;
 
 import xcodeml.util.XmOption;
 import exc.object.*;
 import exc.block.*;
+import exc.openmp.*;
+
 import java.util.Iterator;
 import java.util.HashMap;
 

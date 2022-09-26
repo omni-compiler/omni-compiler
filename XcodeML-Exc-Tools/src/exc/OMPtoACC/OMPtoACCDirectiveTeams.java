@@ -1,11 +1,12 @@
-package exc.openmp;
+package exc.OMPtoACC;
 
 import exc.object.*;
+import exc.openmp.*;
 import exc.openacc.ACCpragma;
 import java.util.Iterator;
 
-public class OMPtoACCDirectiveDistributeParallelLoop extends OMPtoACCDirective {
-    public OMPtoACCDirectiveDistributeParallelLoop() {
+public class OMPtoACCDirectiveTeams extends OMPtoACCDirective {
+    public OMPtoACCDirectiveTeams() {
         super();
     }
 
@@ -21,7 +22,6 @@ public class OMPtoACCDirectiveDistributeParallelLoop extends OMPtoACCDirective {
 
         XobjList ompClauses = (XobjList) xobj.getArg(1);
         XobjList accClauses = Xcons.List();
-
         for (Iterator<Xobject> it = ompClauses.iterator(); it.hasNext();) {
             XobjList clause = (XobjList) it.next();
             if (clause.Opcode() != Xcode.LIST ||
@@ -36,7 +36,8 @@ public class OMPtoACCDirectiveDistributeParallelLoop extends OMPtoACCDirective {
             switch (pragmaClause) {
             case DATA_PRIVATE:
             case DATA_FIRSTPRIVATE:
-            case DIR_NUM_THREADS:
+            case NUM_TEAMS:
+            case THREAD_LIMIT:
             case DATA_REDUCTION_PLUS:
             case DATA_REDUCTION_MINUS:
             case DATA_REDUCTION_MUL:
@@ -49,24 +50,8 @@ public class OMPtoACCDirectiveDistributeParallelLoop extends OMPtoACCDirective {
             case DATA_REDUCTION_BITXOR:
                 l = clauseConverters.get(pragmaClause).convert(xobj, clause);
                 break;
-            case DIR_IF:
-                l = clauseConverters.get(pragmaClause).
-                    convert(xobj, clause,
-                            new OMPpragma[]{},
-                            new OMPpragma[]{OMPpragma.PARALLEL_FOR});
-                break;
-
-            case DATA_LASTPRIVATE:
-            case COLLAPSE:
-            case DIST_SCHEDULE:
             case DATA_DEFAULT:
             case DATA_SHARED:
-            case DATA_COPYIN:
-            case PROC_BIND:
-            case DATA_LINEAR:
-            case DIR_SCHEDULE:
-            case DIR_ORDERED:
-            case DIR_NOWAIT:
                 OMP.error((LineNo)xobj.getLineNo(),
                           "Not implemented clause. ('" +
                           notImplementedClauseStr(pragmaClause) +
@@ -83,14 +68,26 @@ public class OMPtoACCDirectiveDistributeParallelLoop extends OMPtoACCDirective {
             }
 
             if (l != null) {
+                // Delay all.
                 setContextClause(pragmaClause, l);
             }
         }
 
-        // Merge delayed clauses.
-        accClauses.mergeList(getContextClauses());
-        currentArgs.setArg(createAccPragma(ACCpragma.PARALLEL_LOOP,
-                                           accClauses, xobj, 2));
-        resetContextClauses();
+        // If nested task-offload is contained, convert to
+        // 'acc data' with empty clause.
+        // If not, convert to 'acc parallel' with all clause
+        // (Include delayed clauses).
+        XobjList acc = null;
+        if (containsNestedTaskOffload(xobj)) {
+            acc = createAccPragma(ACCpragma.DATA,
+                                  Xcons.List(), xobj, 2);
+        } else {
+            accClauses.mergeList(getContextClauses());
+
+            acc = createAccPragma(ACCpragma.PARALLEL,
+                                  accClauses, xobj, 2);
+            resetContextClauses();
+        }
+        currentArgs.setArg(acc);
     }
 }

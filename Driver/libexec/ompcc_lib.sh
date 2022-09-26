@@ -4,7 +4,6 @@ cat <<EOF
 usage: $1 <OPTIONS> <INPUTFILE> ...
 
 Compile Driver Options
-
    -o <file>         : place the output into <file>.
    -I <dir>          : add the directory dir to the list of directories to be searched for header files.
    -c                : compile and assemble, but do not link.
@@ -24,7 +23,6 @@ Compile Driver Options
    --stop-compile    : save intermediate files and stop after compile.
 
 Process Options
-
   --Wp[option] : add preprocessor option.
   --Wf[option] : add frontend option.
   --Wx[option] : add Xcode translator option.
@@ -33,15 +31,15 @@ Process Options
   --Wl[option] : add linker option.
 
 Omni OpenACC Options
-
-  -acc, --openacc         : enable OpenACC function.
+  -acc, -fopenacc         : enable OpenACC function.
   --no-ldg                : disable use of read-only data cache.
   --default-veclen=LENGTH : specify default vector length (default: 256)
-  --platform=PLATFORM     : Specify platform [CUDA | OpenCL | PZCL] (default: $OPENACC_PLATFORM)
-  --device=DEVICE         : Specify device [ccXX (XX is compute capability) | Fermi (=cc20) | Kepler (=cc35) | PEZYSC] (default: $OPENACC_DEVICE)
+  --platform=PLATFORM     : Specify platform [CUDA | OpenCL] (default: $OPENACC_PLATFORM)
+  --device=DEVICE         : Specify device [ccXX (XX is compute capability) | Fermi (=cc20) | Kepler (=cc35)] (default: $OPENACC_DEVICE)
 
 Omni OpenMP Options
-  -fopenmp-only-target    : enable OpenMP only target function.
+  -fopemp                 : enable OpenMP (default: on)
+  -fopenmp-target         : enable OpenMP target function.
 EOF
 }
 
@@ -149,10 +147,12 @@ function ompcc_set_parameters()
 		do
 		    linker_add_opt+=("$v")
 		done;;
-	    -acc|--openacc)
+	    -acc|-fopenacc)
 		[ ${ENABLE_ACC} = "0" ] && omni_error_exit "warning: $1 option is unavailable, rebuild the compiler with ./configure --enable-openacc"
 		ENABLE_ACC=true;;
-	    -fopenmp-only-target)
+	    -fopenmp)
+		ENABLE_OPENMP=true;;
+	    -fopenmp-target)
 		ENABLE_TARGET=true;;
 	    --no-ldg)
 		DISABLE_LDG=true;;

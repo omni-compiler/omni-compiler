@@ -1,6 +1,7 @@
-package exc.openmp;
+package exc.OMPtoACC;
 
 import exc.object.*;
+import exc.openmp.*;
 import exc.openacc.ACCpragma;
 
 public class OMPtoACCClauseReduction extends OMPtoACCClause {

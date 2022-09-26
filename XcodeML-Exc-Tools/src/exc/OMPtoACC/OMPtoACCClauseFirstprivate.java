@@ -1,10 +1,11 @@
-package exc.openmp;
+package exc.OMPtoACC;
 
 import exc.object.*;
+import exc.openmp.*;
 import exc.openacc.ACCpragma;
 
-public class OMPtoACCClauseNumThreads extends OMPtoACCClause {
-    public OMPtoACCClauseNumThreads() {
+public class OMPtoACCClauseFirstprivate extends OMPtoACCClause {
+    public OMPtoACCClauseFirstprivate() {
         super();
     }
 
@@ -17,7 +18,7 @@ public class OMPtoACCClauseNumThreads extends OMPtoACCClause {
             return null;
         }
 
-        return Xcons.List(Xcons.String(ACCpragma.VECT_LEN.toString()),
+        return Xcons.List(Xcons.String(ACCpragma.FIRSTPRIVATE.toString()),
                           clause.getArg(1));
     }
 }

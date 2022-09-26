@@ -1,4 +1,4 @@
-package exc.openmp;
+package exc.OMPtoACC;
 
 import exc.object.*;
 import java.util.ArrayDeque;

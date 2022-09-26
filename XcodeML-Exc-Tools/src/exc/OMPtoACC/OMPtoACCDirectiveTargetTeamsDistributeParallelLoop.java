@@ -1,11 +1,12 @@
-package exc.openmp;
+package exc.OMPtoACC;
 
 import exc.object.*;
+import exc.openmp.*;
 import exc.openacc.ACCpragma;
 import java.util.Iterator;
 
-public class OMPtoACCDirectiveTargetParallelLoop extends OMPtoACCDirective {
-    public OMPtoACCDirectiveTargetParallelLoop() {
+public class OMPtoACCDirectiveTargetTeamsDistributeParallelLoop extends OMPtoACCDirective {
+    public OMPtoACCDirectiveTargetTeamsDistributeParallelLoop() {
         super();
     }
 
@@ -23,6 +24,9 @@ public class OMPtoACCDirectiveTargetParallelLoop extends OMPtoACCDirective {
         XobjList accClauses = Xcons.List();
         XobjList accDataClauses = Xcons.List();
 
+        XobjList ompThreadLimitClause = null;
+        XobjList ompNumThreadsClause = null;
+
         for (Iterator<Xobject> it = ompClauses.iterator(); it.hasNext();) {
             XobjList clause = (XobjList) it.next();
             if (clause.Opcode() != Xcode.LIST ||
@@ -36,9 +40,9 @@ public class OMPtoACCDirectiveTargetParallelLoop extends OMPtoACCDirective {
             OMPpragma pragmaClause = OMPpragma.valueOf(clause.getArg(0));
             switch (pragmaClause) {
             case TARGET_DATA_MAP:
+            case NUM_TEAMS:
             case DATA_PRIVATE:
             case DATA_FIRSTPRIVATE:
-            case DIR_NUM_THREADS:
             case DATA_REDUCTION_PLUS:
             case DATA_REDUCTION_MINUS:
             case DATA_REDUCTION_MUL:
@@ -57,6 +61,14 @@ public class OMPtoACCDirectiveTargetParallelLoop extends OMPtoACCDirective {
                             new OMPpragma[]{OMPpragma.TARGET},
                             new OMPpragma[]{OMPpragma.PARALLEL_FOR});
                 break;
+            case THREAD_LIMIT:
+                ompThreadLimitClause =
+                    clauseConverters.get(pragmaClause).convert(xobj, clause);
+                break;
+            case DIR_NUM_THREADS:
+                ompNumThreadsClause =
+                    clauseConverters.get(pragmaClause).convert(xobj, clause);
+                break;
             case TARGET_DEVICE:
             case IS_DEVICE_PTR:
             case DEFAULTMAP:
@@ -64,12 +76,13 @@ public class OMPtoACCDirectiveTargetParallelLoop extends OMPtoACCDirective {
             case DEPEND:
             case DATA_DEFAULT:
             case DATA_SHARED:
+            case DATA_LASTPRIVATE:
+            case COLLAPSE:
+            case DIST_SCHEDULE:
             case DATA_COPYIN:
             case PROC_BIND:
-            case DATA_LASTPRIVATE:
             case DATA_LINEAR:
             case DIR_SCHEDULE:
-            case COLLAPSE:
             case DIR_ORDERED:
                 OMP.error((LineNo)xobj.getLineNo(),
                           "Not implemented clause. ('" +
@@ -94,6 +107,16 @@ public class OMPtoACCDirectiveTargetParallelLoop extends OMPtoACCDirective {
                     setContextClause(pragmaClause, l);
                 }
             }
+        }
+
+        // If 'thread_limit()' and 'num_threads()' are specified together,
+        // 'num_threads()' will take precedence.
+        if (ompThreadLimitClause != null && ompNumThreadsClause != null) {
+            setContextClause(OMPpragma.DIR_NUM_THREADS, ompNumThreadsClause);
+        } else if (ompNumThreadsClause != null) {
+            setContextClause(OMPpragma.DIR_NUM_THREADS, ompNumThreadsClause);
+        } else if (ompThreadLimitClause != null) {
+            setContextClause(OMPpragma.THREAD_LIMIT, ompThreadLimitClause);
         }
 
         // Merge delayed clauses.

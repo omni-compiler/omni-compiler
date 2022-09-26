@@ -11,7 +11,6 @@ import exc.openacc.AccTranslator;
 
 import exc.openmp.OMP;
 import exc.openmp.OMPtranslate;
-import exc.openmp.OMPtoACC;
 import exc.openmp.OMPDDRD;
 
 import exc.xcalablemp.XMP;
@@ -46,7 +45,7 @@ public class omompx
   private static void usage()
   {
     final String[] lines = {
-      "arguments: [-xc|-xf] [-l] [-fopenmp] [-fopenmp-only-target] [-f[no]coarray] [-dxcode] [-ddecomp] [-dump]",
+      "arguments: [-xc|-xf] [-l] [-fopenmp] [-f[no]coarray] [-dxcode] [-ddecomp] [-dump]",
       "           <input XcodeML file>",
       "           [-o <output reconstructed XcodeML file>]",
       "",
@@ -54,7 +53,6 @@ public class omompx
       "  -xf                   process XcodeML/Fortran document.",
       "  -l                    suppress line directive in decompiled code.",
       "  -fopenmp              enable OpenMP translation.",
-      "  -fopenmp-only-target  enable OpenMP only target translation.",
       "  -fcoarry[=suboption]",
       "                        enable coarray translation optionally with a suboption.",
       "  -fnocoarry            pass without coarray translation (default for C).",
@@ -109,7 +107,6 @@ public class omompx
     String outXmlFile          = null;
     String lang                = "C";
     boolean openMP             = false;
-    boolean openMPonlyTarget   = false;
     boolean openACC            = false;
     boolean coarray            = true;
     boolean xcalableMP         = false;
@@ -165,8 +162,6 @@ public class omompx
 	  exc.openmp.OMPDDRD.DDRD_NUM_THREADS = Integer.parseInt(n);
       } else if(arg.equals("-fopenmp")) {
         openMP = true;
-      } else if(arg.equals("-fopenmp-only-target")) {
-        openMPonlyTarget = true;
       } else if(arg.equals("-fcoarray")) {
         coarray = true;
       } else if(arg.equals("-fnocoarray")) {
@@ -313,7 +308,6 @@ public class omompx
    
     XmOption.setLanguage(XmLanguage.valueOf(lang));
     XmOption.setIsOpenMP(openMP);
-    XmOption.setIsOpenMPonlyTarget(openMPonlyTarget);
     XmOption.setIsCoarray(coarray);
     XmOption.setIsAsync(async);
     XmOption.setIsXcalableMP(xcalableMP);
@@ -506,32 +500,17 @@ public class omompx
         xcodeWriter.flush();
       }
     } else {
-
-      if(openMP || openMPonlyTarget) {
-
-        // if(openMPonlyTarget)
-        //   xobjFile.addHeaderLine("#include \"ompc_target.h\""); /* ???? */
-        
-        // OMPtoACC ompToAccTranslator = new OMPtoACC(xobjFile);
-        // xobjFile.iterateDef(ompToAccTranslator);
-        
-        // if(OMP.hasErrors())
-        //   System.exit(1);
+      OMPtranslate ompTranslator = new OMPtranslate(xobjFile);
+      xobjFile.iterateDef(ompTranslator);
+      
+      if(OMP.hasErrors())
+        System.exit(1);
             
-        // ompToAccTranslator.finish();
+      ompTranslator.finish();
         
-        OMPtranslate ompTranslator = new OMPtranslate(xobjFile);
-        xobjFile.iterateDef(ompTranslator);
-        
-        if(OMP.hasErrors())
-          System.exit(1);
-            
-        ompTranslator.finish();
-        
-        if(xcodeWriter != null) {
-          xobjFile.Output(xcodeWriter);
-          xcodeWriter.flush();
-        }
+      if(xcodeWriter != null) {
+        xobjFile.Output(xcodeWriter);
+        xcodeWriter.flush();
       }
     }
 

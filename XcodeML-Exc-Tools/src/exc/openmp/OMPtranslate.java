@@ -15,13 +15,13 @@ public class OMPtranslate implements XobjectDefVisitor
 {
     BlockPrintWriter debug_out;
     // XobjectPrintWriter debug_xout = new XobjectPrintWriter(System.out);
-    XobjectFile env;
+    public XobjectFile env;
 
     // alorithms
-    OMPanalyzePragma anaPragma = new OMPanalyzePragma();
-    OMPrewriteExpr rewriteExpr = new OMPrewriteExpr();
-    OMPtransPragma transPragma = new OMPtransPragma();
-    OMPpragmaParser pragmaParser = null;
+    public OMPanalyzePragma anaPragma = new OMPanalyzePragma();
+    public OMPrewriteExpr rewriteExpr = new OMPrewriteExpr();
+    public OMPtransPragma transPragma = new OMPtransPragma();
+    public OMPpragmaParser pragmaParser = null;
     
     public OMPtranslate(XobjectFile env)
     {

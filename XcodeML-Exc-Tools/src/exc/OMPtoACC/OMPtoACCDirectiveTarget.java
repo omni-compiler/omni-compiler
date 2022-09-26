@@ -1,11 +1,12 @@
-package exc.openmp;
+package exc.OMPtoACC;
 
 import exc.object.*;
+import exc.openmp.*;
 import exc.openacc.ACCpragma;
 import java.util.Iterator;
 
-public class OMPtoACCDirectiveParallel extends OMPtoACCDirective {
-    public OMPtoACCDirectiveParallel() {
+public class OMPtoACCDirectiveTarget extends OMPtoACCDirective {
+    public OMPtoACCDirectiveTarget() {
         super();
     }
 
@@ -21,7 +22,7 @@ public class OMPtoACCDirectiveParallel extends OMPtoACCDirective {
 
         XobjList ompClauses = (XobjList) xobj.getArg(1);
         XobjList accClauses = Xcons.List();
-
+        XobjList accDataClauses = Xcons.List();
         for (Iterator<Xobject> it = ompClauses.iterator(); it.hasNext();) {
             XobjList clause = (XobjList) it.next();
             if (clause.Opcode() != Xcode.LIST ||
@@ -34,31 +35,22 @@ public class OMPtoACCDirectiveParallel extends OMPtoACCDirective {
             XobjList l = null;
             OMPpragma pragmaClause = OMPpragma.valueOf(clause.getArg(0));
             switch (pragmaClause) {
+            case TARGET_DATA_MAP:
             case DATA_PRIVATE:
             case DATA_FIRSTPRIVATE:
-            case DIR_NUM_THREADS:
-            case DATA_REDUCTION_PLUS:
-            case DATA_REDUCTION_MINUS:
-            case DATA_REDUCTION_MUL:
-            case DATA_REDUCTION_LOGAND:
-            case DATA_REDUCTION_LOGOR:
-            case DATA_REDUCTION_MIN:
-            case DATA_REDUCTION_MAX:
-            case DATA_REDUCTION_BITAND:
-            case DATA_REDUCTION_BITOR:
-            case DATA_REDUCTION_BITXOR:
                 l = clauseConverters.get(pragmaClause).convert(xobj, clause);
                 break;
             case DIR_IF:
                 l = clauseConverters.get(pragmaClause).
                     convert(xobj, clause,
-                            new OMPpragma[]{},
-                            new OMPpragma[]{OMPpragma.PARALLEL_FOR});
+                            new OMPpragma[]{OMPpragma.TARGET},
+                            new OMPpragma[]{});
                 break;
-            case DATA_DEFAULT:
-            case DATA_SHARED:
-            case DATA_COPYIN:
-            case PROC_BIND:
+            case TARGET_DEVICE:
+            case IS_DEVICE_PTR:
+            case DEFAULTMAP:
+            case DIR_NOWAIT:
+            case DEPEND:
                 OMP.error((LineNo)xobj.getLineNo(),
                           "Not implemented clause. ('" +
                           notImplementedClauseStr(pragmaClause) +
@@ -75,20 +67,25 @@ public class OMPtoACCDirectiveParallel extends OMPtoACCDirective {
             }
 
             if (l != null) {
-                // Delay all but copyXX/create clause.
-                setContextClause(pragmaClause, l);
+                if (pragmaClause == OMPpragma.TARGET_DATA_MAP) {
+                    accDataClauses.add(l);
+                } else {
+                    // Delay all but copyXX/create clause.
+                    setContextClause(pragmaClause, l);
+                }
             }
         }
 
         // If nested task-offload is contained, convert to
-        // 'acc data' with empty clause.
+        // 'acc data' with copyXX/create clause.
         // If not, convert to 'acc parallel' with all clause
         // (Include delayed clauses).
         XobjList acc = null;
         if (containsNestedTaskOffload(xobj)) {
             acc = createAccPragma(ACCpragma.DATA,
-                                  Xcons.List(), xobj, 2);
+                                  accDataClauses, xobj, 2);
         } else {
+            accClauses.mergeList(accDataClauses);
             accClauses.mergeList(getContextClauses());
 
             acc = createAccPragma(ACCpragma.PARALLEL,

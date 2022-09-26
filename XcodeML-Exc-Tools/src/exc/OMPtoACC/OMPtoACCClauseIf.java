@@ -1,7 +1,9 @@
-package exc.openmp;
+package exc.OMPtoACC;
 
 import exc.object.*;
+import exc.openmp.*;
 import exc.openacc.ACCpragma;
+
 import java.util.Arrays;
 
 public class OMPtoACCClauseIf extends OMPtoACCClause {
