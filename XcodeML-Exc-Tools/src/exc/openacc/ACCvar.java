@@ -1,8 +1,7 @@
+/* -*- Mode: java; c-basic-offset:2 ; indent-tabs-mode:nil ; -*- */
 package exc.openacc;
 import exc.object.*;
 import java.util.*;
-
-
 
 public class ACCvar {
   public static final String prop = "_ACC_VAR";
@@ -50,6 +49,7 @@ public class ACCvar {
   ACCvar(Ident id, ACCpragma atr, ACCvar parent) throws ACCexception{
     this(id, null, atr, parent);
   }
+
   ACCvar(Ident id, XobjList subscripts, ACCpragma atr, ACCvar parent) throws ACCexception{
     this.id = id;
     
@@ -80,10 +80,12 @@ public class ACCvar {
     }
     symbol = id.getSym();
   }
+
   ACCvar(String symbol) {
     this.symbol = symbol;
     this.id = null;
   }
+
   ACCvar(Xobject x, ACCpragma atr) throws ACCexception{
     XobjList subscripts = null;
     if (x.Opcode() == Xcode.LIST) {
@@ -207,15 +209,14 @@ public class ACCvar {
     if (rangeList != null) {
       for (Xobject subscript : rangeList) {
         sb.append('[');
-        sb.append(subscript.getArg(0).getName());
+        sb.append(subscript.getArg(0).toString());
         sb.append(':');
-        sb.append(subscript.getArg(1).getName());
+        if(subscript.getArgOrNull(1) != null) sb.append(subscript.getArg(1).toString());
         sb.append(']');
       }
     }
     return new String(sb);
   }
-  
   
   public boolean isPresent(){
     return atrEnumSet.contains(Attribute.isPresent);
@@ -251,7 +252,6 @@ public class ACCvar {
     return atrEnumSet.contains(attr);
   }
   
-  
   public Ident getId(){
     if(_parent != null){
       return _parent.getId();
@@ -259,9 +259,11 @@ public class ACCvar {
       return id;
     }
   }
+
   public boolean isUse_device(){
     return atrEnumSet.contains(Attribute.isUseDevice);
   }
+
   public Ident getDevicePtr(){
     if(_parent != null){
       return _parent.getDevicePtr();
@@ -271,28 +273,33 @@ public class ACCvar {
     }
     return deviceptr;
   }
+
   public void setDevicePtr(Ident devicePtr){
     this.deviceptr = devicePtr;
   }
+
   public void setHostDesc(Ident hostDesc){
     this.hostDesc = hostDesc;
   }
+
   public Ident getHostDesc(){
     if(_parent != null){
       return _parent.getHostDesc();
     }
     return hostDesc;
   }
+
   public boolean isAllocated(){
     //return deviceptr != null;
     //return allocatesDeviceMemory();
     //return (deviceptr != null ) || allocatesDeviceMemory;
     return (deviceptr != null ) || atrEnumSet.contains(Attribute.create);
   }
+
   public ACCpragma getDataClause(){ return dataClause; }
-  public ACCpragma getReductionOperator(){
-    return reductionOp;
-  }
+
+  public ACCpragma getReductionOperator(){ return reductionOp; }
+
   public boolean contains(XobjList subscripts){
     return true;
     //FIXME implement!
@@ -500,6 +507,7 @@ public class ACCvar {
     }
     return false;
   }
+
   private long toLong(Xobject x) throws ACCexception{
     if(x == null){
       throw new ACCexception("null");
@@ -511,6 +519,7 @@ public class ACCvar {
     }throw new ACCexception("not constant");
 
   }
+
   private boolean hasIntersect(long low1, long len1, long low2, long len2){
     if(low1 < low2){
       return (low1+len1 > low2);
@@ -548,6 +557,7 @@ public class ACCvar {
   public String getSymbol(){
     return symbol;
   }
+
   public Xobject toXobject(){
     Xobject var = Xcons.Symbol(Xcode.VAR, symbol);
     if(rangeList == null) {
@@ -558,6 +568,7 @@ public class ACCvar {
       return l;
     }
   }
+
   public void setIdent(Ident id) throws  ACCexception{
     this.id = id;
 
@@ -570,6 +581,7 @@ public class ACCvar {
     }
     dim = rangeList.Nargs();
   }
+
   public void setParent(ACCvar var) throws ACCexception{
     _parent = var;
     this.id = var.getId();

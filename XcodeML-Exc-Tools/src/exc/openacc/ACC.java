@@ -1,3 +1,4 @@
+/* -*- Mode: java; c-basic-offset:2 ; indent-tabs-mode:nil ; -*- */
 package exc.openacc;
 
 import exc.object.*;
@@ -74,7 +75,8 @@ public class ACC {
   }
 
   // get/allocate AccKernel object according to platform
-  public static AccKernel getAccKernel(ACCglobalDecl decl, PragmaBlock pb, AccInformation info, List<Block> kernelBlocks)
+  public static AccKernel getAccKernel(ACCglobalDecl decl, PragmaBlock pb, AccInformation info,
+                                       List<Block> kernelBlocks)
   {
     switch (ACC.platform){
     case OpenCL:

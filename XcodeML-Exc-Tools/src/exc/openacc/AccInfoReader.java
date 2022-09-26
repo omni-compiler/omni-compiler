@@ -1,3 +1,4 @@
+/* -*- Mode: java; c-basic-offset:2 ; indent-tabs-mode:nil ; -*- */
 package exc.openacc;
 
 import exc.block.*;
@@ -8,11 +9,14 @@ class AccInfoReader extends AccProcessor{
     super(globalDecl, true, true);
   }
 
+  //
+  // declare and routine pragma
+  //
   void doGlobalAccPragma(Xobject def) throws ACCexception {
     String directiveName = def.getArg(0).getString();
     ACCpragma directive = ACCpragma.valueOf(directiveName);
 
-    if(! directive.isGlobalDirective()){
+    if(!directive.isGlobalDirective()){
       throw new ACCexception(directive.getName() + " is not global directive");
     }
 
@@ -33,6 +37,7 @@ class AccInfoReader extends AccProcessor{
 
   }
 
+  // data, parallel, parallel loop, ...
   void doLocalAccPragma(PragmaBlock pb) throws ACCexception {
     String directiveName = pb.getPragma();
     ACCpragma directive = ACCpragma.valueOf(directiveName);
@@ -43,6 +48,7 @@ class AccInfoReader extends AccProcessor{
     Xobject clauseList = pb.getClauses();
     AccInformation info = new AccInformation(directive, clauseList);
 
+    // create each object for directive and put it under AccDirective,prop
     switch (directive){
     case DATA:
       pb.setProp(AccDirective.prop, new AccData(_globalDecl, info, pb));
@@ -83,15 +89,15 @@ class AccInfoReader extends AccProcessor{
     case DECLARE:
       pb.setProp(AccDirective.prop, new AccDeclare(_globalDecl, info, pb));
       break;
-    case SYNC:
-      pb.setProp(AccDirective.prop, new AccSync(_globalDecl, info, pb));
-      break;
-    case FLUSH:
-      pb.setProp(AccDirective.prop, new AccFlush(_globalDecl, info, pb));
-      break;
-    case YIELD:
-      pb.setProp(AccDirective.prop, new AccYield(_globalDecl, info, pb));
-      break;
+    // case SYNC:
+    //   pb.setProp(AccDirective.prop, new AccSync(_globalDecl, info, pb));
+    //   break;
+    // case FLUSH:
+    //   pb.setProp(AccDirective.prop, new AccFlush(_globalDecl, info, pb));
+    //   break;
+    // case YIELD:
+    //   pb.setProp(AccDirective.prop, new AccYield(_globalDecl, info, pb));
+    //   break;
     default:
       ACC.fatal("unknown directive: " + directive.getName());
     }

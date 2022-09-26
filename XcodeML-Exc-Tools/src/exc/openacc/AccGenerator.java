@@ -1,3 +1,4 @@
+/* -*- Mode: java; c-basic-offset:2 ; indent-tabs-mode:nil ; -*- */
 package exc.openacc;
 
 import exc.block.PragmaBlock;
@@ -21,6 +22,6 @@ class AccGenerator extends AccProcessor{
     Object obj = po.getProp(AccDirective.prop);
     if (obj == null) return;
     AccDirective dire = (AccDirective) obj;
-    dire.generate();
+    dire.generate(); // call geneate method.
   }
 }

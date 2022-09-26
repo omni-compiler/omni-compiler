@@ -3,6 +3,9 @@ package exc.openacc;
 import exc.block.*;
 import exc.object.*;
 
+//
+// superclass of data structure for each directive
+//
 abstract class AccDirective {
   public static final String prop = "_ACC_DIRECTIVE";
   final AccInformation _info;
@@ -31,6 +34,7 @@ abstract class AccDirective {
   }
 
   void analyze() throws ACCexception {
+    System.out.println("AccDirctive: analyze _info="+_info);
     _info.validate(this);
   }
 
@@ -126,6 +130,7 @@ abstract class AccDirective {
     Ident id = findVarIdent(sym);
     return (id != null);
   }
+
 //  private void fixXobject(Xobject x, Block b) throws ACCexception {
 //    topdownXobjectIterator xIter = new topdownXobjectIterator(x);
 //    for (xIter.init(); !xIter.end(); xIter.next()) {
@@ -138,6 +143,7 @@ abstract class AccDirective {
 //      }
 //    }
 //  }
+
   private void setPropVar(Ident id, ACCvar var){
     id.setProp(ACCvar.prop, var);
   }
@@ -170,5 +176,19 @@ abstract class AccDirective {
     }
 
     return expr;
+  }
+
+  ACCpragma getDefaultVarAttr(){
+    if(_pb != null) {
+      for (Block b = _pb.getParentBlock(); b != null; b = b.getParentBlock()) {
+        AccDirective directive = getPropDirective(b);
+        if(directive == null) continue;
+        AccInformation info = directive.getInfo();
+        ACCpragma var_attr = info.getDefaultVarAttr();
+        if(var_attr == ACCpragma.NONE) continue;
+        return var_attr;
+      }
+    }
+    return ACCpragma.PRESENT_OR_COPY; // default action
   }
 }

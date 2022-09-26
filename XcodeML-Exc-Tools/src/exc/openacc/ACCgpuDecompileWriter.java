@@ -976,7 +976,7 @@ class ACCgpuDecompileWriter extends PrintWriter {
   }
 
   void printIdentDecl(Ident id) {
-    Object isShared = id.getProp(ACCgpuDecompiler.GPU_STRAGE_SHARED);
+    Object isShared = id.getProp(ACCgpuDecompiler.GPU_STORAGE_SHARED);
     if(isShared != null){
       switch(ACC.platform){
         case CUDA:

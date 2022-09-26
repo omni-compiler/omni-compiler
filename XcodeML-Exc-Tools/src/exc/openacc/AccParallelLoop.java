@@ -4,6 +4,7 @@ import exc.block.PragmaBlock;
 
 class AccParallelLoop extends AccParallel{
   private final AccLoop loop;
+
   AccParallelLoop(ACCglobalDecl decl, AccInformation info, PragmaBlock pb) {
     super(decl, info, pb);
     loop = new AccLoop(decl, info, pb);
@@ -11,10 +12,13 @@ class AccParallelLoop extends AccParallel{
 
   @Override
   void analyze() throws ACCexception{
-    //loop.analyze();
+    System.out.println("AccParallelLoop: analyze _info="+_info);
+
+    // don't call loop.analyze(); instead ...
     loop.checkParallelism();
     loop.addInductionVariableAsPrivate();
-    super.analyze();
+
+    super.analyze(); // analyze for PARALLEL directive
   }
 
   boolean isAcceptableClause(ACCpragma clauseKind){
