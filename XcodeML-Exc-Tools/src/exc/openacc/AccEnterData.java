@@ -37,6 +37,7 @@ class AccEnterData extends AccData{
     case WAIT:
     case COPYIN:
     case CREATE:
+    case DEFAULT:
     case PRESENT_OR_COPYIN:
     case PRESENT_OR_CREATE:
       return true;

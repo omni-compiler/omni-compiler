@@ -61,10 +61,15 @@ class AccKernels extends AccData {
       List<Ident> kernelOuterId = gpuKernel.getOuterIdList();
       outerIdSet.addAll(kernelOuterId);
     }
+    
+    ACCpragma default_attr = getDefaultVarAttr();
     for(Ident id : outerIdSet){
       String varName = id.getSym();
       if(_info.isDeclared(varName)) continue;
-      _info.addVar(ACCpragma.PRESENT_OR_COPY, Xcons.Symbol(Xcode.VAR, varName));
+      if(default_attr == ACCpragma.DEFAULT_NONE)
+        throw new ACCexception("Variable attribute '"+varName+"' must be specified due to default(none)");
+      else 
+        _info.addVar(default_attr, Xcons.Symbol(Xcode.VAR, varName)); 
     }
 
     /////////

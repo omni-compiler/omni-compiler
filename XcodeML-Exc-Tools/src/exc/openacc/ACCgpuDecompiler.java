@@ -18,7 +18,7 @@ class ACCgpuDecompiler {
   public static final String GPU_FUNC_CONF = "OEPNACC_GPU_FUNC_CONF_PROP";
   public static final String GPU_FUNC_CONF_ASYNC = "OEPNACC_GPU_FUNC_CONF_ASYNC_PROP";
   public static final String GPU_FUNC_CONF_SHAREDMEMORY = "OEPNACC_GPU_FUNC_CONF_SHAREDMEMORY_PROP";
-  public static final String GPU_STRAGE_SHARED = "OPENACC_GPU_SHARED";
+  public static final String GPU_STORAGE_SHARED = "OPENACC_GPU_SHARED";
 
   public void decompile(ACCglobalDecl decl){
     XobjectFile env = decl.getEnv();

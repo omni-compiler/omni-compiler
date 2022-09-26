@@ -1,3 +1,4 @@
+/* -*- Mode: java; c-basic-offset:2 ; indent-tabs-mode:nil ; -*- */
 package exc.openacc;
 
 import exc.block.*;
@@ -21,33 +22,40 @@ class AccParallel extends AccData{
     if(isDisabled()){
       return;
     }
+
     completeParallelism();
 
-
     //analyze and complete clause for kernel
+    System.out.println("AccParallel _acKernel.analyze ...");
     _accKernel.analyze();
 
     //set unspecified var's attribute from outerIdSet
     //TODO do these process at analyze
     Set<Ident> readOnlyOuterIdSet = _accKernel.getReadOnlyOuterIdSet();
+    ACCpragma default_var_attr = getDefaultVarAttr();
     for (Ident id : _accKernel.getOuterIdList()) {
       String varName = id.getName();
+      System.out.println("AccParallel OuterIdList id="+id);
       if(_info.isDeclared(varName)) continue; //if declared in same directive
-
+      
       ACCvar parentVar = findParentVar(id);
       ACCvar var = _info.findACCvar(varName);
-
 
       boolean isReductionVariableInKernel = isReductionVariableInKernel(id);
 
       if (!id.Type().isPointer()
-              && (ACC.version >= 20 || readOnlyOuterIdSet.contains(id))
-              && parentVar == null/* not appeared in outer data clause*/
-              && (var == null || !var.isReduction()) /* not reduction variable in the directive */
-              && !isReductionVariableInKernel /* not reduction variable in the kernel*/ ) {
+          && (ACC.version >= 20 || readOnlyOuterIdSet.contains(id))
+          && parentVar == null /* not appeared in outer data clause*/
+          && (var == null || !var.isReduction()) /* not reduction variable in the directive */
+          && !isReductionVariableInKernel /* not reduction variable in the kernel*/ ) {
+        System.out.println("AccParallel OuterIdList FIRSTPRIVATE id="+id);
         _info.addVar(ACCpragma.FIRSTPRIVATE, Xcons.Symbol(Xcode.VAR, varName));
       }else {
-        _info.addVar(ACCpragma.PRESENT_OR_COPY, Xcons.Symbol(Xcode.VAR, varName));
+        System.out.println("AccParallel OuterIdList  default_attr="+default_var_attr+" id="+id);
+        if(default_var_attr == ACCpragma.DEFAULT_NONE)
+          throw new ACCexception("Variable attribute '"+varName+"' must be specified due to default(none)");
+        else 
+          _info.addVar(default_var_attr, Xcons.Symbol(Xcode.VAR, varName)); 
       }
     }
 
@@ -87,6 +95,8 @@ class AccParallel extends AccData{
       return;
     }
 
+    System.out.println("AccParallel geneator _info="+_info);
+
     //generate data
     super.generate();
 
@@ -100,6 +110,8 @@ class AccParallel extends AccData{
       return;
     }
 
+    System.out.println("AccParallel rewrite _info="+_info);
+    
     //build
     BlockList beginBody = Bcons.emptyBody();
     for(Block b : initBlockList) beginBody.add(b);

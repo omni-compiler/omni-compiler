@@ -1,8 +1,8 @@
+/* -*- Mode: java; c-basic-offset:2 ; indent-tabs-mode:nil ; -*- */
 package exc.openacc;
 
 import exc.block.*;
 import exc.object.*;
-
 import java.util.*;
 
 public class AccKernel {
@@ -91,6 +91,7 @@ public class AccKernel {
         ACC.fatal(id.getName() + " not found");
       } else {
         _outerVarList.add(accvar);
+        System.out.println("add outVerList id="+id);
       }
     }
   }
@@ -272,6 +273,7 @@ public class AccKernel {
     //make params
     //add paramId from outerId
     for (Ident id : outerIdList) {
+      System.out.println("makeDeviceKernelDef outerIdList id="+id);
       if (ACC.device.getUseReadOnlyDataCache() && _readOnlyOuterIdSet.contains(id)
 	  && (id.Type().isArray() || id.Type().isPointer())) {
         Xtype constParamType = makeConstRestrictVoidType();
@@ -284,14 +286,14 @@ public class AccKernel {
 
         ACCvar accvar = _kernelInfo.findACCvar(id.getSym());
         if(accvar != null && accvar.isFirstprivate())
-          localId.setProp(ACCgpuDecompiler.GPU_STRAGE_SHARED, true);
+          localId.setProp(ACCgpuDecompiler.GPU_STORAGE_SHARED, true);
         kernelBuildInfo.addLocalId(localId);
         kernelBuildInfo.addInitBlock(Bcons.Statement(initialize));
       } else {
         Ident localId = makeParamId_new(id);
         ACCvar accvar = _kernelInfo.findACCvar(id.getSym());
         if(accvar != null && accvar.isFirstprivate())
-          localId.setProp(ACCgpuDecompiler.GPU_STRAGE_SHARED, true);
+          localId.setProp(ACCgpuDecompiler.GPU_STORAGE_SHARED, true);
         kernelBuildInfo.addParamId(localId);
       }
     }
@@ -305,7 +307,7 @@ public class AccKernel {
       for (ACCvar var : varList) {
         if (var.isPrivate()) {
           Ident privateId = Ident.Local(var.getName(), var.getId().Type());
-          privateId.setProp(ACCgpuDecompiler.GPU_STRAGE_SHARED, true);
+          privateId.setProp(ACCgpuDecompiler.GPU_STORAGE_SHARED, true); // ???
           kernelBuildInfo.addLocalId(privateId);
         }
       }
@@ -455,30 +457,32 @@ public class AccKernel {
           exception.printStackTrace();
           ACC.fatal("failed at atomic");
         }
-      }else if(pragma == ACCpragma.SYNC) {
-        AccSync syncDirective = (AccSync)b.getProp(AccDirective.prop);
-        try {
-          return syncDirective.makeSyncBlock();
-        } catch (ACCexception exception) {
-          exception.printStackTrace();
-          ACC.fatal("failed at sync");
-        }
-      }else if(pragma == ACCpragma.FLUSH) {
-        AccFlush flushDirective = (AccFlush)b.getProp(AccDirective.prop);
-        try {
-          return flushDirective.makeFlushBlock();
-        } catch (ACCexception exception) {
-          exception.printStackTrace();
-          ACC.fatal("failed at flush");
-        }
-      }else if(pragma == ACCpragma.YIELD) {
-        AccYield yieldDirective = (AccYield)b.getProp(AccDirective.prop);
-        try {
-          return yieldDirective.makeYieldBlock();
-        } catch (ACCexception exception) {
-          exception.printStackTrace();
-          ACC.fatal("failed at yield");
-        }
+
+      // }else if(pragma == ACCpragma.SYNC) {
+      //   AccSync syncDirective = (AccSync)b.getProp(AccDirective.prop);
+      //   try {
+      //     return syncDirective.makeSyncBlock();
+      //   } catch (ACCexception exception) {
+      //     exception.printStackTrace();
+      //     ACC.fatal("failed at sync");
+      //   }
+      // }else if(pragma == ACCpragma.FLUSH) {
+      //   AccFlush flushDirective = (AccFlush)b.getProp(AccDirective.prop);
+      //   try {
+      //     return flushDirective.makeFlushBlock();
+      //   } catch (ACCexception exception) {
+      //     exception.printStackTrace();
+      //     ACC.fatal("failed at flush");
+      //   }
+      // }else if(pragma == ACCpragma.YIELD) {
+      //   AccYield yieldDirective = (AccYield)b.getProp(AccDirective.prop);
+      //   try {
+      //     return yieldDirective.makeYieldBlock();
+      //   } catch (ACCexception exception) {
+      //     exception.printStackTrace();
+      //     ACC.fatal("failed at yield");
+      //   }
+
       }else {
         return makeCoreBlock(b.getBody(), deviceKernelBuildInfo);
       }
@@ -488,7 +492,7 @@ public class AccKernel {
         BlockList resultBody = Bcons.emptyBody();
 
         Ident sharedIfCond = resultBody.declLocalIdent("_ACC_if_cond", Xtype.charType);
-        sharedIfCond.setProp(ACCgpuDecompiler.GPU_STRAGE_SHARED, true);
+        sharedIfCond.setProp(ACCgpuDecompiler.GPU_STORAGE_SHARED, true);
 
         Block evalCondBlock = Bcons.IF(
                 Xcons.binaryOp(Xcode.LOG_EQ_EXPR, _accThreadIndex, Xcons.IntConstant(0)),
@@ -529,7 +533,7 @@ public class AccKernel {
       if (ids != null) {
         for (XobjArgs args = ids.getArgs(); args != null; args = args.nextArgs()) {
           Ident id = (Ident) args.getArg();
-          id.setProp(ACCgpuDecompiler.GPU_STRAGE_SHARED, true);
+          id.setProp(ACCgpuDecompiler.GPU_STORAGE_SHARED, true);
         }
       }
       //move decl initializer to body
@@ -683,7 +687,9 @@ public class AccKernel {
               Xobject sizeObj = Xcons.binaryOp(Xcode.MUL_EXPR,
                       ACCutil.getArrayElmtCountObj(varType),
                       Xcons.SizeOf(varType.getArrayElementType()));
-              XobjList initPrivateFuncArgs = Xcons.List(Xcons.Cast(Xtype.Pointer(Xtype.voidPtrType), arrayPtrId.getAddr()), privateArrayParamId.Ref(), sizeObj);
+              XobjList initPrivateFuncArgs =
+                Xcons.List(Xcons.Cast(Xtype.Pointer(Xtype.voidPtrType),
+                                      arrayPtrId.getAddr()), privateArrayParamId.Ref(), sizeObj);
               Block initPrivateFuncCall = ACCutil.createFuncCallBlock("_ACC_init_private", initPrivateFuncArgs);
               deviceKernelBuildInfo.addInitBlock(initPrivateFuncCall);
               allocList.add(Xcons.List(var.getId(), Xcons.IntConstant(0), sizeObj));
@@ -692,7 +698,8 @@ public class AccKernel {
             }
           } else {
             Ident privateLocalId = Ident.Local(var.getName(), varType);
-            privateLocalId.setProp(ACCgpuDecompiler.GPU_STRAGE_SHARED, true);
+            privateLocalId.setProp(ACCgpuDecompiler.GPU_STORAGE_SHARED, true);
+            // System.out.println("privateLocalId shared id="+privateLocalId);
             resultBlockBuilder.addIdent(privateLocalId);
           }
         }
@@ -760,8 +767,10 @@ public class AccKernel {
       Ident vIdxId = Ident.Local("_ACC_idx_" + indVarName, idxVarType);
       Ident indVarId = Ident.Local(indVarName, indVarType);
       Ident nIterId = resultBlockBuilder.declLocalIdent("_ACC_niter_" + indVarName, idxVarType);
-      Block calcNiterFuncCall = ACCutil.createFuncCallBlock("_ACC_calc_niter", Xcons.List(nIterId.getAddr(), init, cond, step));
-      Block calcIdxFuncCall = ACCutil.createFuncCallBlock(ACC_CALC_IDX_FUNC, Xcons.List(vIdxId.Ref(), indVarId.getAddr(), init, cond, step));
+      Block calcNiterFuncCall =
+        ACCutil.createFuncCallBlock("_ACC_calc_niter", Xcons.List(nIterId.getAddr(), init, cond, step));
+      Block calcIdxFuncCall =
+        ACCutil.createFuncCallBlock(ACC_CALC_IDX_FUNC, Xcons.List(vIdxId.Ref(), indVarId.getAddr(), init, cond, step));
 
       resultBlockBuilder.addInitBlock(calcNiterFuncCall);
 
@@ -788,7 +797,6 @@ public class AccKernel {
 
     Block initIterFunc = ACCutil.createFuncCallBlock(ACC_INIT_ITER_FUNC_PREFIX + execMethodName, initIterFuncArgs);
     resultBlockBuilder.addInitBlock(initIterFunc);
-
 
     //make clac each idx from virtual idx
     Block calcEachVidxBlock = makeCalcIdxFuncCall(vIdxIdList, nIterIdList, iterIdx);
@@ -928,7 +936,8 @@ public class AccKernel {
     if(identList != null){
       for(Xobject xobj : identList){
         Ident id = (Ident)xobj;
-        id.setProp(ACCgpuDecompiler.GPU_STRAGE_SHARED, true);
+        id.setProp(ACCgpuDecompiler.GPU_STORAGE_SHARED, true);
+        // System.out.println("resultBody shared id="+id);
       }
     }
 
@@ -972,7 +981,7 @@ public class AccKernel {
   }
 
   // make host code to launch the kernel
-   Block makeLaunchFuncBlock(String launchFuncName, XobjectDef deviceKernelDef) {
+  Block makeLaunchFuncBlock(String launchFuncName, XobjectDef deviceKernelDef) {
     XobjList deviceKernelCallArgs = Xcons.List();
     BlockListBuilder blockListBuilder = new BlockListBuilder();
     XobjList confDecl = gpuManager.getBlockThreadSize();
@@ -1062,9 +1071,11 @@ public class AccKernel {
       Block getBlockCounterFuncCall;
       Xobject asyncExpr = _kernelInfo.getIntExpr(ACCpragma.ASYNC);
       if (asyncExpr != null) {
-        getBlockCounterFuncCall = ACCutil.createFuncCallBlock("_ACC_gpu_get_block_count_async", Xcons.List(blockCountId.getAddr(), asyncExpr));
+        getBlockCounterFuncCall =
+          ACCutil.createFuncCallBlock("_ACC_gpu_get_block_count_async", Xcons.List(blockCountId.getAddr(), asyncExpr));
       } else {
-        getBlockCounterFuncCall = ACCutil.createFuncCallBlock("_ACC_gpu_get_block_count", Xcons.List(blockCountId.getAddr()));
+        getBlockCounterFuncCall =
+          ACCutil.createFuncCallBlock("_ACC_gpu_get_block_count", Xcons.List(blockCountId.getAddr()));
       }
       blockListBuilder.addInitBlock(getBlockCounterFuncCall);
     }
@@ -1076,7 +1087,8 @@ public class AccKernel {
     /* execute reduction Ops on tempoary after executing main kernel */
     /* generate Launch kernel call on host side */
     if (reductionManager.hasUsingTmpReduction()) {
-      XobjectDef reductionKernelDef = reductionManager.makeReductionKernelDef(launchFuncName + "_red" + ACC_GPU_DEVICE_FUNC_SUFFIX);
+      XobjectDef reductionKernelDef =
+        reductionManager.makeReductionKernelDef(launchFuncName + "_red" + ACC_GPU_DEVICE_FUNC_SUFFIX);
 
       XobjectFile devEnv = _decl.getEnvDevice();
       devEnv.add(reductionKernelDef);
@@ -1097,7 +1109,8 @@ public class AccKernel {
     }
 
     if (!_kernelInfo.hasClause(ACCpragma.ASYNC)) {
-      blockListBuilder.addFinalizeBlock(ACCutil.createFuncCallBlock("_ACC_gpu_wait", Xcons.List(Xcons.IntConstant(ACC.ACC_ASYNC_SYNC) /*_accAsyncSync*/)));
+      blockListBuilder.addFinalizeBlock(ACCutil.createFuncCallBlock("_ACC_gpu_wait",
+                                      Xcons.List(Xcons.IntConstant(ACC.ACC_ASYNC_SYNC) /*_accAsyncSync*/)));
     }
 
     BlockList launchFuncBody = blockListBuilder.build();
@@ -1105,7 +1118,8 @@ public class AccKernel {
     return Bcons.COMPOUND(launchFuncBody);
   }
 
-   Block makeLauncherFuncCallCUDA(String launchFuncName, XobjectDef deviceKernelDef, XobjList deviceKernelCallArgs, Xobject num_gangs, Xobject num_workers, Xobject vec_len, Xobject asyncExpr) {
+   Block makeLauncherFuncCallCUDA(String launchFuncName, XobjectDef deviceKernelDef, XobjList deviceKernelCallArgs,
+                                  Xobject num_gangs, Xobject num_workers, Xobject vec_len, Xobject asyncExpr) {
     Xobject const1 = Xcons.IntConstant(1);
     BlockList body = Bcons.emptyBody();
     XobjList conf = Xcons.List(num_gangs, const1, const1, vec_len, num_workers, const1);
@@ -1130,8 +1144,8 @@ public class AccKernel {
     return Bcons.COMPOUND(body);
   }
 
-
-   XobjectDef makeLauncherFuncDefCUDA(String launchFuncName, XobjectDef deviceKernelDef, XobjList deviceKernelCallArgs) {
+   XobjectDef makeLauncherFuncDefCUDA(String launchFuncName, XobjectDef deviceKernelDef,
+                                      XobjList deviceKernelCallArgs) {
     XobjList launcherFuncParamIds = Xcons.IDList();
     BlockList launcherFuncBody = Bcons.emptyBody();
     XobjList args = Xcons.List();
@@ -1222,14 +1236,19 @@ public class AccKernel {
   }
 
   public void analyze() {
+
+    System.out.println("AccKernel.analyze ... _kernelInfo="+_kernelInfo);
     gpuManager.analyze();
 
+    System.out.println("AccKernel.analyze outerID ..._kernelInfo="+_kernelInfo);
     //get outerId set
     Set<Ident> outerIdSet = new LinkedHashSet<Ident>();
     OuterIdCollector outerIdCollector = new OuterIdCollector();
     for (Block b : _kernelBlocks) {
       outerIdSet.addAll(outerIdCollector.collect(b));
     }
+
+    for (Ident id : outerIdSet)  System.out.println("outIdSet id="+id);
 
     //collect read only id
     _readOnlyOuterIdSet = new LinkedHashSet<Ident>(outerIdSet);
@@ -1238,12 +1257,15 @@ public class AccKernel {
       _readOnlyOuterIdSet.removeAll(assignedIdCollector.collect(b));
     }
 
+    for (Ident id : _readOnlyOuterIdSet)  System.out.println("readOnlyOutIdSet id="+id);
+
     //make outerId list
     _outerIdList = new ArrayList<Ident>(outerIdSet);
 
     //FIXME
     for (Ident id : _outerIdList) {
       ACCvar var = _kernelInfo.findACCvar(id.getSym());
+      System.out.println("outerId id="+id+",var="+var);
       if (var == null) continue;
       if (var.isReduction()) {
         ACCvar parentVar = findParentVar(id);
@@ -1414,12 +1436,11 @@ public class AccKernel {
       return outerIdSet;
     }
 
-    
     void collectlVarIdentsInDecl(Block topBlock, Set<Ident> outerIdSet) {
       BlockIterator bIter = new topdownBlockIterator(topBlock);
       for (bIter.init(); !bIter.end(); bIter.next()) {
         Block b = bIter.getBlock();
-
+        
         if(hasBody(b)){
           Xobject decls = b.getBody().getDecls();
           collectVarIdentsInDecls(topBlock, outerIdSet, b, decls);
@@ -1451,7 +1472,7 @@ public class AccKernel {
       }
     }
 
-     Set<String> collectVarNames(Xobject expr) {
+    Set<String> collectVarNames(Xobject expr) {
       Set<String> varNameSet = new LinkedHashSet<String>();
 
       XobjectIterator xobjIter = new topdownXobjectIterator(expr);
@@ -1475,7 +1496,7 @@ public class AccKernel {
       return varNameSet;
     }
 
-     boolean isPrivate(PragmaBlock pb, String varName) {
+    boolean isPrivate(PragmaBlock pb, String varName) {
       AccDirective directive = (AccDirective) pb.getProp(AccDirective.prop);
       AccInformation info = directive.getInfo();  //(AccInformation)pb.getProp(AccInformation.prop);
       if (info == null) return false;
@@ -1645,7 +1666,7 @@ public class AccKernel {
   } // end of Loop
 
   //
-  // SharedMemory
+  // SharedMemory for CUDA
   //
   class SharedMemory {
     final Ident externSmId;
@@ -1659,10 +1680,10 @@ public class AccKernel {
       Xtype externSmType = Xtype.Array(Xtype.charType, null);
       externSmId = Ident.Var("_ACC_sm", externSmType, Xtype.Pointer(externSmType), VarScope.GLOBAL);
       externSmId.setStorageClass(StorageClass.EXTERN);
-      externSmId.setProp(ACCgpuDecompiler.GPU_STRAGE_SHARED, true);
+      externSmId.setProp(ACCgpuDecompiler.GPU_STORAGE_SHARED, true);
 
       smOffsetId = Ident.Local("_ACC_sm_offset", Xtype.intType);
-      smOffsetId.setProp(ACCgpuDecompiler.GPU_STRAGE_SHARED, true);
+      smOffsetId.setProp(ACCgpuDecompiler.GPU_STORAGE_SHARED, true);
     }
 
     public Xobject getMaxSize() {
@@ -1724,7 +1745,7 @@ public class AccKernel {
       cacheDim = subscripts.Nargs();
 
       cacheSizeArrayId = Ident.Local("_ACC_cache_size_" + varId.getName(), Xtype.Array(Xtype.intType, cacheDim));
-      cacheSizeArrayId.setProp(ACCgpuDecompiler.GPU_STRAGE_SHARED, true);
+      cacheSizeArrayId.setProp(ACCgpuDecompiler.GPU_STORAGE_SHARED, true);
 
       cacheOffsetArrayId = Ident.Local("_ACC_cache_offset_" + varId.getName(), Xtype.Array(Xtype.intType, cacheDim));
 
@@ -1768,10 +1789,10 @@ public class AccKernel {
       BlockList cacheLoadBody = Bcons.emptyBody();
       XobjList cacheLoadBodyIds = Xcons.IDList();
 
-      Ident cacheLoadSizeArrayId = Ident.Local("_ACC_cache_load_size_" + varId.getName(), Xtype.Array(Xtype.intType, cacheDim));
-      cacheLoadSizeArrayId.setProp(ACCgpuDecompiler.GPU_STRAGE_SHARED, true);
+      Ident cacheLoadSizeArrayId =
+        Ident.Local("_ACC_cache_load_size_" + varId.getName(), Xtype.Array(Xtype.intType, cacheDim));
+      cacheLoadSizeArrayId.setProp(ACCgpuDecompiler.GPU_STORAGE_SHARED, true);
       cacheLoadBodyIds.add(cacheLoadSizeArrayId);
-
 
       int dim = 0;
       Xobject totalCacheSize = Xcons.IntConstant(1);
@@ -1987,7 +2008,7 @@ public class AccKernel {
       counterPtr = Ident.Param(ACC_REDUCTION_CNT_VAR, Xtype.Pointer(Xtype.unsignedType));//Ident.Var("_ACC_GPU_RED_CNT", Xtype.unsignedType, Xtype.Pointer(Xtype.unsignedType), VarScope.GLOBAL);
       tempPtr = Ident.Param(ACC_REDUCTION_TMP_VAR, Xtype.voidPtrType);//Ident.Var("_ACC_GPU_RED_TMP", Xtype.voidPtrType, Xtype.Pointer(Xtype.voidPtrType), VarScope.GLOBAL);
       isLastVar = Ident.Local("_ACC_GPU_IS_LAST_BLOCK", Xtype.intType);
-      isLastVar.setProp(ACCgpuDecompiler.GPU_STRAGE_SHARED, true);
+      isLastVar.setProp(ACCgpuDecompiler.GPU_STORAGE_SHARED, true);
     }
 
     // make functions definition for reduction exeuted after reduction
@@ -2208,8 +2229,9 @@ public class AccKernel {
       reductionVarPrefix += "_";
 
       localVarId = Ident.Local(reductionVarPrefix + varId.getName(), varId.Type());
-      if (execMethodSet.contains(ACCpragma.GANG) && !execMethodSet.contains(ACCpragma.VECTOR)) { //execMethod == ACCpragma._BLOCK) {
-        localVarId.setProp(ACCgpuDecompiler.GPU_STRAGE_SHARED, true);
+      if (execMethodSet.contains(ACCpragma.GANG) && !execMethodSet.contains(ACCpragma.VECTOR)) {
+        //execMethod == ACCpragma._BLOCK) 
+        localVarId.setProp(ACCgpuDecompiler.GPU_STORAGE_SHARED, true);
       }
       
       locVarId = null;

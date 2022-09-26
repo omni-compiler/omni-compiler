@@ -218,14 +218,14 @@ public class AccKernel_CL extends AccKernel {
 
         ACCvar accvar = _kernelInfo.findACCvar(id.getSym());
         if(accvar != null && accvar.isFirstprivate())
-          localId.setProp(ACCgpuDecompiler.GPU_STRAGE_SHARED, true);
+          localId.setProp(ACCgpuDecompiler.GPU_STORAGE_SHARED, true);
         kernelBuildInfo.addLocalId(localId);
         kernelBuildInfo.addInitBlock(Bcons.Statement(initialize));
       } else {
         Ident localId = makeParamId_new(id);
         ACCvar accvar = _kernelInfo.findACCvar(id.getSym());
         if(accvar != null && accvar.isFirstprivate())
-          localId.setProp(ACCgpuDecompiler.GPU_STRAGE_SHARED, true);
+          localId.setProp(ACCgpuDecompiler.GPU_STORAGE_SHARED, true);
         kernelBuildInfo.addParamId(localId);
       }
     }
@@ -239,7 +239,7 @@ public class AccKernel_CL extends AccKernel {
       for (ACCvar var : varList) {
         if (var.isPrivate()) {
           Ident privateId = Ident.Local(var.getName(), var.getId().Type());
-          privateId.setProp(ACCgpuDecompiler.GPU_STRAGE_SHARED, true);
+          privateId.setProp(ACCgpuDecompiler.GPU_STORAGE_SHARED, true);
           kernelBuildInfo.addLocalId(privateId);
         }
       }
@@ -384,30 +384,6 @@ public class AccKernel_CL extends AccKernel {
           exception.printStackTrace();
           ACC.fatal("failed at atomic");
         }
-      }else if(pragma == ACCpragma.SYNC) {
-        AccSync syncDirective = (AccSync)b.getProp(AccDirective.prop);
-        try {
-          return syncDirective.makeSyncBlock();
-        } catch (ACCexception exception) {
-          exception.printStackTrace();
-          ACC.fatal("failed at sync");
-        }
-      }else if(pragma == ACCpragma.FLUSH) {
-        AccFlush flushDirective = (AccFlush)b.getProp(AccDirective.prop);
-        try {
-          return flushDirective.makeFlushBlock();
-        } catch (ACCexception exception) {
-          exception.printStackTrace();
-          ACC.fatal("failed at flush");
-        }
-      }else if(pragma == ACCpragma.YIELD) {
-        AccYield yieldDirective = (AccYield)b.getProp(AccDirective.prop);
-        try {
-          return yieldDirective.makeYieldBlock();
-        } catch (ACCexception exception) {
-          exception.printStackTrace();
-          ACC.fatal("failed at yield");
-        }
       }else {
         return makeCoreBlock(b.getBody(), deviceKernelBuildInfo);
       }
@@ -417,7 +393,7 @@ public class AccKernel_CL extends AccKernel {
         BlockList resultBody = Bcons.emptyBody();
 
         Ident sharedIfCond = resultBody.declLocalIdent("_ACC_if_cond", Xtype.charType);
-        sharedIfCond.setProp(ACCgpuDecompiler.GPU_STRAGE_SHARED, true);
+        sharedIfCond.setProp(ACCgpuDecompiler.GPU_STORAGE_SHARED, true);
 
         Block evalCondBlock = Bcons.IF(
                 Xcons.binaryOp(Xcode.LOG_EQ_EXPR, _accThreadIndex, Xcons.IntConstant(0)),
@@ -458,7 +434,7 @@ public class AccKernel_CL extends AccKernel {
       if (ids != null) {
         for (XobjArgs args = ids.getArgs(); args != null; args = args.nextArgs()) {
           Ident id = (Ident) args.getArg();
-          id.setProp(ACCgpuDecompiler.GPU_STRAGE_SHARED, true);
+          id.setProp(ACCgpuDecompiler.GPU_STORAGE_SHARED, true);
         }
       }
 
@@ -622,7 +598,7 @@ public class AccKernel_CL extends AccKernel {
             }
           } else {
             Ident privateLocalId = Ident.Local(var.getName(), varType);
-            privateLocalId.setProp(ACCgpuDecompiler.GPU_STRAGE_SHARED, true);
+            privateLocalId.setProp(ACCgpuDecompiler.GPU_STORAGE_SHARED, true);
             resultBlockBuilder.addIdent(privateLocalId);
           }
         }
@@ -858,7 +834,7 @@ public class AccKernel_CL extends AccKernel {
     if(identList != null){
       for(Xobject xobj : identList){
         Ident id = (Ident)xobj;
-        id.setProp(ACCgpuDecompiler.GPU_STRAGE_SHARED, true);
+        id.setProp(ACCgpuDecompiler.GPU_STORAGE_SHARED, true);
       }
     }
 
@@ -1319,7 +1295,7 @@ public class AccKernel_CL extends AccKernel {
       counterPtr = Ident.Param(ACC_REDUCTION_CNT_VAR, Xtype.Pointer(Xtype.unsignedType));//Ident.Var("_ACC_GPU_RED_CNT", Xtype.unsignedType, Xtype.Pointer(Xtype.unsignedType), VarScope.GLOBAL);
       tempPtr = Ident.Param(ACC_REDUCTION_TMP_VAR, Xtype.voidPtrType);//Ident.Var("_ACC_GPU_RED_TMP", Xtype.voidPtrType, Xtype.Pointer(Xtype.voidPtrType), VarScope.GLOBAL);
       isLastVar = Ident.Local("_ACC_GPU_IS_LAST_BLOCK", Xtype.intType);
-      isLastVar.setProp(ACCgpuDecompiler.GPU_STRAGE_SHARED, true);
+      isLastVar.setProp(ACCgpuDecompiler.GPU_STORAGE_SHARED, true);
     }
 
     // make functions definition for reduction exeuted after reduction
@@ -1522,7 +1498,7 @@ public class AccKernel_CL extends AccKernel {
 
       localVarId = Ident.Local(reductionVarPrefix + varId.getName(), varId.Type());
       if (execMethodSet.contains(ACCpragma.GANG) && !execMethodSet.contains(ACCpragma.VECTOR)) { //execMethod == ACCpragma._BLOCK) {
-        localVarId.setProp(ACCgpuDecompiler.GPU_STRAGE_SHARED, true);
+        localVarId.setProp(ACCgpuDecompiler.GPU_STORAGE_SHARED, true);
       }
       
       Xtype varId_type = Xtype.Pointer(varId.Type());

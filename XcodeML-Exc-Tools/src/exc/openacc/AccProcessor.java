@@ -1,3 +1,4 @@
+/* -*- Mode: java; c-basic-offset:2 ; indent-tabs-mode:nil ; -*- */
 package exc.openacc;
 
 import exc.object.*;
@@ -5,7 +6,7 @@ import exc.block.*;
 
 abstract class AccProcessor {
   final ACCglobalDecl _globalDecl;
-  final private boolean _isTopdown;
+  final private boolean _isTopdown;  // order of traverse
   final private boolean _warnUnknownPragma;
 
   AccProcessor(ACCglobalDecl globalDecl, boolean isTopdown, boolean warnUnknownPragma) {

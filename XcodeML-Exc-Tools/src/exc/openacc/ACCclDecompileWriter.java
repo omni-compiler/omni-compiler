@@ -929,7 +929,7 @@ class ACCclDecompileWriter extends ACCgpuDecompileWriter {
   }
 
   void printIdentDecl(Ident id) {
-    Object isShared = id.getProp(ACCgpuDecompiler.GPU_STRAGE_SHARED);
+    Object isShared = id.getProp(ACCgpuDecompiler.GPU_STORAGE_SHARED);
     if(isShared != null){
       print("__local ");
     }

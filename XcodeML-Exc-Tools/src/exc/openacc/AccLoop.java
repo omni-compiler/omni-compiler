@@ -23,9 +23,7 @@ class AccLoop extends AccDirective{
   }
 
   @Override
-  void generate() throws ACCexception {
-
-  }
+  void generate() throws ACCexception { }
 
   @Override
   void rewrite() throws ACCexception {

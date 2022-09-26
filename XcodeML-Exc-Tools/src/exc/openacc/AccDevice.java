@@ -87,6 +87,7 @@ public enum AccDevice {
         }
         this.defaultVectorLength = defaultVectorLength;
     }
+
     int getDefaultVectorLength()
     {
         return defaultVectorLength;

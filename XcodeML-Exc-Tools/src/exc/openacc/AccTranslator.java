@@ -1,3 +1,4 @@
+/* -*- Mode: java; c-basic-offset:2 ; indent-tabs-mode:nil ; -*- */
 package exc.openacc;
 
 import exc.block.FuncDefBlock;
@@ -42,9 +43,12 @@ public class AccTranslator implements XobjectDefVisitor {
   }
 
   private void doFuncDef(FunctionBlock fb){
-    _infoReader.doFuncDef(fb);
+    System.out.println("### doFuncDef infoReader ...");
+    _infoReader.doFuncDef(fb); // infoReader: set info?
     ACC.exitByError();
-    _analyzer.doFuncDef(fb);
+
+    System.out.println("### doFuncDef analyzer ...");
+    _analyzer.doFuncDef(fb); // analyze
     ACC.exitByError();
 
     if(_onlyAnalyze) {
@@ -53,9 +57,12 @@ public class AccTranslator implements XobjectDefVisitor {
       return;
     }
 
-    _generator.doFuncDef(fb);
+    System.out.println("### doFuncDef generator ...");
+    _generator.doFuncDef(fb);  // geneate
     ACC.exitByError();
-    _rewrite.doFuncDef(fb);
+
+    System.out.println("### doFuncDef rewrite ...");
+    _rewrite.doFuncDef(fb);  // rewrite
     ACC.exitByError();
   }
 

@@ -3,6 +3,8 @@ import exc.object.Xobject;
 
 
 public enum ACCpragma {
+  NONE, // nothing specified
+
   //directive
   PARALLEL,
   KERNELS,
@@ -20,11 +22,11 @@ public enum ACCpragma {
   ATOMIC,
   ROUTINE,
 
-  
   //general
   IF,
   ASYNC,
-  
+  WAIT_CLAUSE,
+
   //accelerator clause
   NUM_GANGS,
   NUM_WORKERS,
@@ -51,6 +53,7 @@ public enum ACCpragma {
   COPYOUT,
   CREATE,
   DELETE,
+  DEFAULT,
   PRESENT,
   PRESENT_OR_COPY,
   PRESENT_OR_COPYIN,
@@ -90,11 +93,12 @@ public enum ACCpragma {
   ROUTINE_ARG,
 
   //internal
+  DEFAULT_NONE, // none for default clause
 
   //for pezy
-  SYNC,
-  FLUSH,
-  YIELD,
+  // SYNC,
+  // FLUSH,
+  // YIELD,
   ;
   
   private String name = null;
@@ -121,7 +125,8 @@ public enum ACCpragma {
     case PRESENT_OR_COPYOUT:
     case PRESENT_OR_CREATE:
     case DEVICEPTR:
-      return true;
+    case DEFAULT:
+    return true;
     default:
       return false;
     }
@@ -143,9 +148,9 @@ public enum ACCpragma {
     case DECLARE:
     case WAIT:
     case ROUTINE:
-    case SYNC:
-    case FLUSH:
-    case YIELD:
+      // case SYNC:
+      // case FLUSH:
+      // case YIELD:
       return true;
     default:
       return false;
@@ -212,9 +217,9 @@ public enum ACCpragma {
     case ENTER_DATA:
     case EXIT_DATA:
     case ATOMIC:
-    case SYNC:
-    case FLUSH:
-    case YIELD:
+      // case SYNC:
+      // case FLUSH:
+      // case YIELD:
       return true;
     }
     return false;

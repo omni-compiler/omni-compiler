@@ -1,3 +1,4 @@
+/* -*- Mode: java; c-basic-offset:2 ; indent-tabs-mode:nil ; -*- */
 package exc.openacc;
 
 import exc.block.*;
@@ -16,6 +17,7 @@ class AccData extends AccDirective {
   AccData(ACCglobalDecl decl, AccInformation info, PragmaBlock pb) {
     super(decl, info, pb);
   }
+
   AccData(ACCglobalDecl decl, AccInformation info, XobjectDef def) {
     super(decl, info, def);
   }
@@ -49,6 +51,8 @@ class AccData extends AccDirective {
   void generate() throws ACCexception {
     if(isDisabled()) return;
 
+    System.out.println("AccData geneator _info="+_info);
+
     for(ACCvar var : _info.getDeclarativeACCvarList()){
       generate(var);
     }
@@ -56,15 +60,19 @@ class AccData extends AccDirective {
 
   void generate(ACCvar var) throws ACCexception{
     //FIXME
-    {
-      ACCvar redVar = _info.findReductionACCvar(var.getSymbol());
-      if (redVar != null) {
-        return;
-      }
+    if(var.getParent() != null){
+      System.out.println("... not geneate: parent var="+var);
+      return;
     }
 
-    if(var.getParent() != null) return;
+    System.out.println("... geneate var="+var);
+    {
+      // if reduction varaible, not generated here ...
+      ACCvar redVar = _info.findReductionACCvar(var.getSymbol());
+      if (redVar != null)  return;
+    }
 
+    // if priave or firstprivate scalar, not geneated here ...
     if(var.isPrivate() || var.isFirstprivate() && !var.isArray()){
       return;
     }
@@ -80,13 +88,15 @@ class AccData extends AccDirective {
       return;
     }
 
-    initBlockList.add(makeInitFuncCallBlock(var));
+    System.out.println("... geneate block var="+var);
+
+    initBlockList.add(makeInitFuncCallBlock(var)); // genate init_func and put it initBlock
 
     int finalizeKind = 0;
     finalizeBlockList.add(makeFinalizeFuncCallBlock(var, finalizeKind));
 
-    copyinBlockList.add(makeCopyBlock(var, true, getAsyncExpr()));
-    copyoutBlockList.add(makeCopyBlock(var, false, getAsyncExpr()));
+    copyinBlockList.add(makeCopyBlock(var, true, getAsyncExpr()));  // for copyin
+    copyoutBlockList.add(makeCopyBlock(var, false, getAsyncExpr())); // for copyout
   }
 
   Ident declDevicePtr(String varSymbol, StorageClass storageClass){
@@ -117,6 +127,7 @@ class AccData extends AccDirective {
     return id;
   }
 
+  // initalize
   Block makeInitFuncCallBlock(ACCvar var) throws ACCexception{
     Xobject addrObj = var.getAddress();
     Ident hostDescId = var.getHostDesc();
@@ -130,7 +141,9 @@ class AccData extends AccDirective {
       lowerList.add(x.left());
       lengthList.add(x.right());
     }
-    XobjList initArgs = Xcons.List(hostDescId.getAddr(), devicePtrId.getAddr(), addrObj, Xcons.SizeOf(elementType), Xcons.IntConstant(dim), Xcons.IntConstant(pointerDimBit));
+    XobjList initArgs =
+      Xcons.List(hostDescId.getAddr(), devicePtrId.getAddr(), addrObj,
+                 Xcons.SizeOf(elementType), Xcons.IntConstant(dim), Xcons.IntConstant(pointerDimBit));
     String initFuncName = getInitFuncName(var);
 
     return ACCutil.createFuncCallBlockWithArrayRange(initFuncName, initArgs, Xcons.List(lowerList, lengthList));
@@ -138,7 +151,8 @@ class AccData extends AccDirective {
 
   Block makeFinalizeFuncCallBlock(ACCvar var, int finalizeKind){
     Ident hostDescId = var.getHostDesc();
-    return ACCutil.createFuncCallBlock(ACC.FINALIZE_DATA_FUNC_NAME, Xcons.List(hostDescId.Ref(), Xcons.IntConstant(finalizeKind)));
+    return ACCutil.createFuncCallBlock(ACC.FINALIZE_DATA_FUNC_NAME,
+                                       Xcons.List(hostDescId.Ref(), Xcons.IntConstant(finalizeKind)));
   }
 
   Block makeCopyBlock(ACCvar var, boolean isHostToDevice, Xobject async_num){
@@ -148,7 +162,7 @@ class AccData extends AccDirective {
       Ident hostDescId = var.getHostDesc();
       int direction = (isHostToDevice)? ACC.HOST_TO_DEVICE : ACC.DEVICE_TO_HOST;
       return ACCutil.createFuncCallBlock(copyFuncName,
-              Xcons.List(hostDescId.Ref(), Xcons.IntConstant(direction), async_num));
+                                         Xcons.List(hostDescId.Ref(), Xcons.IntConstant(direction), async_num));
     }else{
       return Bcons.emptyBlock();
     }
@@ -178,6 +192,8 @@ class AccData extends AccDirective {
 
   @Override
   void rewrite() throws ACCexception{
+    System.out.println("AccData rewrite _info="+_info);
+    
     //build
     BlockList beginBody = Bcons.emptyBody();
     for(Block b : initBlockList) beginBody.add(b);
