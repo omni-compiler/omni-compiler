@@ -37,11 +37,8 @@ ENABLE_ACC="@ENABLE_ACC@"   # "1" is yes, "0" is no.
 OMNI_GPUCC_CMD="@GPU_CMD@"
 OMNI_GPUCC_MUST_OPT="-c -I${OMNI_HOME}/include"
 OMNI_GPUCC_OPT="${OMNI_GPUCC_MUST_OPT}"
-
-# For OpenCL
-OMNI_OPENCL_CC_CMD="${OMNI_HOME}/libexec/om_opencl_conv_str"
-#OMNI_PZCL_PREFIX="@PZCL_PREFIX@"
-#ENABLE_ACC_OPT="@ACC@" # "0" is true, "1" is false.
+OMNI_PZCL_PREFIX="@PZCL_PREFIX@"
+ENABLE_ACC_OPT="@ACC@" # "0" is true, "1" is false.
 
 # Linker
 OMNI_TRAVERSE="${OMNI_HOME}/libexec/omni_traverse.sh"
@@ -50,5 +47,5 @@ OMNI_LINKER_MUST_OPT="-L${OMNI_HOME}/lib"
 OMNI_LINKER_OPT="${OMNI_LINKER_MUST_OPT} @OMNI_LNK_CFLAGS@"
 OMPC_MAIN_O="${OMNI_HOME}/lib/ompc_main.o"
 OMNI_CUDA_LIB="-lacc -lacc_cuda -L@CUDA_PREFIX@/lib64 -lcudart -lstdc++"
-OMNI_OPENCL_LIB="-lacc -lacc_cl -L@OPENCL_PREFIX@/lib64 -L@OPENCL_PREFIX@/lib -lOpenCL -lstdc++"
+OMNI_OPENCL_LIB="-lacc -lacc_cl -L@OPENCL_PREFIX@/lib64 -lOpenCL -lstdc++"
 OMNI_PZCL_LIB="-lacc -lacc_cl -L@PZCL_PREFIX@/lib @PZCL_PREFIX@/lib/libpzcl.a -lstdc++"
