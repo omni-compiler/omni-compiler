@@ -309,7 +309,7 @@ public class omompx
    
     XmOption.setLanguage(XmLanguage.valueOf(lang));
     XmOption.setIsOpenMP(openMP);
-    XmOption.setIsOpenMPonlyTarget(openMPonlyTarget);
+    XmOption.setIsOpenMPTarget(openMPonlyTarget);
     XmOption.setIsCoarray(coarray);
     XmOption.setIsAsync(async);
     XmOption.setIsXcalableMP(xcalableMP);

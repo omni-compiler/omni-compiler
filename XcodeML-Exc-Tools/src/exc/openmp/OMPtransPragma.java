@@ -322,7 +322,7 @@ public class OMPtransPragma
     OMPinfo i = (OMPinfo)pb.getProp(OMP.prop);
     OMP.debug("Pragma:" + i.pragma);
     
-    if(XmOption.isOpenMPOnlyTarget()){
+    if(XmOption.isOpenMPTarget()){
       switch(i.pragma) {
       case TARGET_ENTER_DATA:
         return transTargetEnterData(pb, i);
