@@ -15,23 +15,6 @@ MPI_Comm xmp_get_mpi_comm(void)
   return *comm;
 }
 
-void xmp_init_mpi(int *argc, char ***argv) {}
-void xmp_finalize_mpi(void) {}
-
-void xmp_init_py(MPI_Fint comm) {
-  _XMP_init(1, NULL, MPI_Comm_f2c(comm));
-}
-
-void xmp_init(MPI_Comm comm)
-{
-  _XMP_init(1, NULL, comm);
-}
-
-void xmp_finalize()
-{
-  _XMP_finalize(false);
-}
-
 int xmp_desc_kind(xmp_desc_t d, int *kind) 
 {
   *kind = *(int*)d;
@@ -48,7 +31,22 @@ int xmp_num_images(void)
   return _XMP_get_execution_nodes()->comm_size;
 }
 
+int xmp_num_images_(void)
+{
+  return _XMP_get_execution_nodes()->comm_size;
+}
+
 int xmp_node_num(void)
+{
+  return _XMP_get_execution_nodes()->comm_rank + 1;
+}
+
+/* int xmp_node_num_(void) */
+/* { */
+/*   return _XMP_get_execution_nodes()->comm_rank + 1; */
+/* } */
+
+int xmp_this_image(void)
 {
   return _XMP_get_execution_nodes()->comm_rank + 1;
 }
@@ -73,6 +71,11 @@ int xmp_all_num_nodes(void)
   return _XMP_world_size;
 }
 
+/* int xmp_all_node_num_(void) */
+/* { */
+/*   return _XMP_world_rank + 1; */
+/* } */
+
 int xmp_all_node_num(void)
 {
   return _XMP_world_rank + 1;
@@ -88,10 +91,20 @@ double xmp_wtime(void)
   return MPI_Wtime();
 }
 
+/* double xmp_wtime_(void) */
+/* { */
+/*   return MPI_Wtime(); */
+/* } */
+
 double xmp_wtick(void)
 {
   return MPI_Wtick();
 }
+
+/* double xmp_wtick_(void) */
+/* { */
+/*   return MPI_Wtick(); */
+/* } */
 
 int xmp_array_ndims(xmp_desc_t d, int *ndims) 
 {
@@ -177,6 +190,12 @@ int xmp_array_laddr(xmp_desc_t d, void **laddr)
   return 0;
 }
 
+void xmp_array_laddr_(xmp_desc_t *d, void **laddr)
+{
+  _XMP_array_t *a = (_XMP_array_t *)d;
+  *(void **)laddr = (void *)a->array_addr_p;
+}
+
 int xmp_array_ushadow(xmp_desc_t d, int dim, int *ushadow)
 {
   _XMP_array_t *a = (_XMP_array_t *)d;
@@ -235,7 +254,6 @@ int xmp_array_gtol(xmp_desc_t d, int dim, int g_idx, int *l_idx)
 {
   int rank;
   _XMP_align_local_idx((long long int)g_idx, l_idx, d, dim-1, &rank);
-
   return 0;
 }
 
@@ -609,7 +627,9 @@ void xmp_free(xmp_desc_t d){
 
 
 void xmp_exit(int status){
-  _XMP_finalize(true);
+  // _XMP_finalize(true);
+  extern void _XMP_finalize_no_traverse(bool isFinalize);
+  _XMP_finalize_no_traverse(true);
   exit(status);
 }
 

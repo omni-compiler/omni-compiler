@@ -1,10 +1,12 @@
 .PHONY: all install clean
 
 CC        = @MPI_CC@
+FC	  = @MPI_FC@
 CFLAGS    = @MPI_CFLAGS@ -I../../include -I../include -I$(TLOG_DIR)
 GPUCC     = @GPU_CMD@
 GPUCFLAGS = @GPU_CFLAGS@
 LIBDIR    = @OMNI_HOME@/lib
+INCDIR 	  = @OMNI_HOME@/include
 RANLIB    = @RANLIB@
 AR        = @AR@
 ARFLAGS   = @ARFLAGS@
@@ -24,7 +26,8 @@ OBJECTS   = xmp_lib.o xmp_util.o xmp_world.o xmp_nodes_stack.o xmp_nodes.o xmp_t
 	    xmp_barrier.o xmp_reduce.o xmp_bcast.o xmp_align.o xmp_shadow.o xmp_array_section.o \
 	    xmp_loop.o xmp_gmove.o xmp_math_function.o xmp_runtime.o xmp_tlog_runtime.o xmp_io.o \
 	    xmp_reflect.o xmp_pack_vector.o xmp_intrinsic.o xmp_section_desc.o xmp_sort.o xmp_async.o \
-            xmpc_gmove.o xmp_reduce_shadow.o xmp_index.o
+	    xmpc_gmove.o xmp_reduce_shadow.o xmp_index.o xmp_runtime_init.o \
+	xmp_api_global_view.o xmp_api_global_view_f.o xmp_api_util.o xmp_api_coarray.o xmp_api_fmod.o
 
 FALSE            = 1
 TRUE             = 0
@@ -170,12 +173,16 @@ $(TMP_DIR)/%.o : %.c
 	@$(MKDIR_P) $(TMP_DIR)
 	$(CC) $(CFLAGS) -c $< $(PICFLAGS) -o $@
 
+xmp_api_fmod.o: xmp_api_fmod.f90 xmp_coarray_bind.f90
+	$(FC) -fcray-pointer -c xmp_api_fmod.f90
+
 .c.o:
 	$(CC) $(CFLAGS) -o $@ $< -c
 
-install: $(LIBS)
+install: $(LIBS) xmp_api.mod
 	$(MKDIR_P) $(DESTDIR)$(LIBDIR)
 	$(INSTALL) $^ $(DESTDIR)$(LIBDIR)
+	$(INSTALL) xmp_api.mod $(DESTDIR)$(INCDIR)
 
 clean:
 	rm -rf *~ *.core core core.* *.o *.hex $(LIBS) $(TMP_DIR)

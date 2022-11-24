@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include "xmp.h"
 #include "xmp_internal.h"
 #include "xmp_constant.h"
 
@@ -324,15 +325,20 @@ void _XMP_coarray_set_info(_XMP_coarray_t* c)
   c->distance_of_coarray_elmts = distance_of_coarray_elmts;
   c->distance_of_image_elmts   = distance_of_image_elmts;
 
+  /* for(int i=0; i < _coarray_dims; i++) */
+  /*   printf("coarray_set_info[%d]=(%ld,%ld)\n",i,_coarray_elmts[i], distance_of_coarray_elmts[i]); */
+
   free(_image_elmts);  // Note: Do not free() _coarray_elmts.
 }
 
 /**
    Create coarray object and allocate coarray.
  */
-void _XMP_coarray_malloc(void **coarray_desc, void *addr)
+void _XMP_coarray_malloc(void **coarray_desc, void **addr)
 {
   _XMP_coarray_t* c = _XMP_alloc(sizeof(_XMP_coarray_t));
+  c->desc_kind = XMP_DESC_COARRAY;
+  c->is_reshape = FALSE;
   _XMP_coarray_set_info(c);
   *coarray_desc = c;
 
@@ -352,6 +358,21 @@ void _XMP_coarray_malloc(void **coarray_desc, void *addr)
   _push_coarray_queue(c);
 }
 
+void _XMP_coarray_reshape(void **coarray_desc, _XMP_coarray_t *orig_desc, void **addr)
+{
+  _XMP_coarray_t* c = _XMP_alloc(sizeof(_XMP_coarray_t));
+
+   memcpy((void *)c, (void *)orig_desc,sizeof(_XMP_coarray_t));
+  c->is_reshape = TRUE;
+ _XMP_coarray_set_info(c);
+  *coarray_desc = c;
+
+  long transfer_size = _total_coarray_elmts*_elmt_size;
+  _XMP_check_less_than_SIZE_MAX(transfer_size);
+
+  *addr = c->real_addr;
+  _push_coarray_queue(c);
+}
 
 /**
    Create coarray object but not allocate coarray.
@@ -359,6 +380,7 @@ void _XMP_coarray_malloc(void **coarray_desc, void *addr)
 void _XMP_coarray_regmem(void **coarray_desc, void *addr)
 {
   _XMP_coarray_t* c = _XMP_alloc(sizeof(_XMP_coarray_t));
+  c->desc_kind = XMP_DESC_COARRAY;
   _XMP_coarray_set_info(c);
   *coarray_desc = c;
 
@@ -933,6 +955,9 @@ void _XMP_coarray_rdma_array_set_n(const int n,
     _array[i].stride      = ((length[i] == 1)? 1 : stride[i]);
     _array[i].elmts       = elmts[i];
     _array[i].distance    = distance[i];
+    /* printf("i=%d [%ld,%ld,%ld,%ld,%ld]->[%ld,%ld,%ld,%ld,%ld]\n",i, */
+    /* 	   start[i], length[i], stride[i], elmts[i], distance[i], */
+    /* 	   _array[i].start, _array[i].length,  _array[i].stride,  _array[i].elmts,  _array[i].distance); */
   }
 }
 
@@ -1215,13 +1240,16 @@ void _XMP_coarray_put(void *remote_coarray, void *local_array, void *local_coarr
 /**************************************************************************/
 /* DESCRIPTION : Execute get operation                                    */
 /* ARGUMENT    : [IN/OUT] *remote_coarray : Descriptor of remote coarray  */
-/*               [IN/OUT] *local_array    : Descriptor of local coarray   */
+/*               [IN/OUT] *local_array    : address of local array   */
 /*               [IN/OUT] *local_coarray  : Descriptor of local coarray   */
 /* NOTE        :                                                          */
 /*     If a local_array is NOT a coarray, local_coarray == NULL.          */
 /**************************************************************************/
 void _XMP_coarray_get(void *remote_coarray, void *local_array, void *local_coarray)
 {
+  /* printf("_transfer_coarray_elmts=%ld, _transfer_array_elmts=%ld\n", */
+  /* 	 _transfer_coarray_elmts, _transfer_array_elmts); */
+
   if(_transfer_coarray_elmts == 0 || _transfer_array_elmts == 0) return;
 
   if(_transfer_coarray_elmts != _transfer_array_elmts && _transfer_coarray_elmts != 1){
@@ -1233,6 +1261,14 @@ void _XMP_coarray_get(void *remote_coarray, void *local_array, void *local_coarr
   for(int i=0;i<_image_dims;i++)
     target_rank += ((_XMP_coarray_t*)remote_coarray)->distance_of_image_elmts[i] * _image_num[i];
 
+  /* printf("_image_dims=%d, target_rank=%d\n", _image_dims, target_rank); */
+  /* printf("_array_dims=%d, _coarray_dims=%d:\n",_array_dims, _coarray_dims); */
+  /* for(int i=0; i < _array_dims; i++) */
+  /*   printf("array[%d]= [%ld, %ld, %ld, %ld, %ld] - coarray [%ld, %ld, %ld] \n",i, */
+  /* 	   _array[i].start, _array[i].length,_array[i].stride, */
+  /* 	   _array[i].elmts , _array[i].distance, */
+  /* 	   _coarray[i].start,_coarray[i].length, _coarray[i].stride); */
+  
   check_target_rank(target_rank);
   
   for(int i=0;i<_coarray_dims;i++){
@@ -1617,11 +1653,13 @@ static _XMP_coarray_t* _pop_coarray_queue()
 /**
    Deallocate memory space and an object of coarray
 */
-static void _XMP_coarray_deallocate(_XMP_coarray_t *c)
+void _XMP_coarray_deallocate(_XMP_coarray_t *c)
 {
   if(c == NULL) return;
 
+  if(c->is_reshape) goto skip;
   free(c->addr);
+  
 #if defined(_XMP_GASNET)
   //
 #elif defined(_XMP_UTOFU)
@@ -1631,6 +1669,8 @@ static void _XMP_coarray_deallocate(_XMP_coarray_t *c)
 #else
   free(c->real_addr);
 #endif
+
+ skip:
   free(c->coarray_elmts);
   free(c->distance_of_coarray_elmts);
   free(c->distance_of_image_elmts);
@@ -1659,7 +1699,7 @@ void _XMP_coarray_lastly_deallocate()
 /**************************************************************************/
 /* DESCRIPTION : Execute put operation for accelerator                    */
 /* ARGUMENT    : [IN/OUT] *remote_coarray : Descriptor of remote coarray  */
-/*               [IN/OUT] *local_array    : Descriptor of local coarray   */
+/*               [IN/OUT] *local_array    : address of local coarray   */
 /*               [IN/OUT] *local_coarray  : Descriptor of local coarray   */
 /* NOTE        :                                                          */
 /*     If a local_array is NOT a coarray, local_coarray == NULL.          */

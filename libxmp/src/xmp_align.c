@@ -31,10 +31,14 @@ void _XMP_calc_array_dim_elmts(_XMP_array_t *array, int array_index) {
 
 void _XMP_setup_reduce_type(MPI_Datatype *mpi_datatype, size_t *datatype_size, int datatype);
 
-void _XMP_init_array_desc(_XMP_array_t **array, _XMP_template_t *template, int dim,
-                          int type, size_t type_size, ...)
+
+void _XMP_init_array_desc_n(_XMP_array_t **array, _XMP_template_t *template, int dim,
+			    int type, size_t type_size, int dim_size[])
 {
   _XMP_array_t *a = _XMP_alloc(sizeof(_XMP_array_t) + sizeof(_XMP_array_info_t) * (dim - 1));
+
+  /* for(int i=0; i < dim; i++) */
+  /*   printf("_XMP_init_array_desc_n dim=%d, dim_size=%d\n",i, dim_size[i]); */
 
   a->desc_kind            = _XMP_DESC_ARRAY;
   
@@ -68,10 +72,10 @@ void _XMP_init_array_desc(_XMP_array_t **array, _XMP_template_t *template, int d
   //if (!template->is_fixed) _XMP_fatal("target template is not fixed");
   a->align_template = template;
 
-  va_list args;
-  va_start(args, type_size);
+  // va_list args;
+  // va_start(args, type_size);
   for (int i=0;i<dim;i++){
-    int size = va_arg(args, int);
+    int size = dim_size[i]; /* va_arg(args, int); */
     _XMP_ASSERT(size > 0);
     
     _XMP_array_info_t *ai = &(a->info[i]);
@@ -104,9 +108,23 @@ void _XMP_init_array_desc(_XMP_array_t **array, _XMP_template_t *template, int d
 
     ai->align_template_index = -1;
   }
-  va_end(args);
+  // va_end(args);
 
   *array = a;
+}
+
+void _XMP_init_array_desc(_XMP_array_t **array, _XMP_template_t *template, int dim,
+                          int type, size_t type_size, ...)
+{
+  int dim_size[_XMP_N_MAX_DIM];
+
+  va_list args;
+  va_start(args, type_size);
+  for (int i=0;i<dim;i++){
+    dim_size[i] = va_arg(args, int);
+  }
+  va_end(args);
+  _XMP_init_array_desc_n(array, template, dim, type, type_size, dim_size);
 }
 
 // NOTE: adesc created by this function is NOT complete. For use only in gmove_1to1.
@@ -292,6 +310,8 @@ void _XMP_align_array_DUPLICATION(_XMP_array_t *array, int array_index, int temp
   int upper = ai->ser_upper;
   int size = ai->ser_size;
 
+  // printf("_XMP_align_array_DUPLICATION: %d %d %lld\n",array_index,template_index,align_subscript);
+
   // check range
   long long align_lower = lower + align_subscript;
   long long align_upper = upper + align_subscript;
@@ -327,6 +347,9 @@ void _XMP_align_array_BLOCK(_XMP_array_t *array, int array_index, int template_i
   _XMP_ASSERT(template->is_fixed);
   _XMP_ASSERT(template->is_distributed);
 
+  //  printf("align_array_BLOCK: array_idx=%d, temp_idx=%d, subscript=%lld\n",
+  // array_index, template_index,align_subscript);
+
   _XMP_template_info_t *ti     = &(template->info[template_index]);
   _XMP_template_chunk_t *chunk = &(template->chunk[template_index]);
   _XMP_array_info_t *ai        = &(array->info[array_index]);
@@ -334,6 +357,10 @@ void _XMP_align_array_BLOCK(_XMP_array_t *array, int array_index, int template_i
   // check range
   long long align_lower = ai->ser_lower + align_subscript;
   long long align_upper = ai->ser_upper + align_subscript;
+  
+  /* printf("align: lower=%lld < %lld, upper=%lld < %lld \n", */
+  /* 	 align_lower, ti->ser_lower, align_upper, ti->ser_upper); */
+
   if(align_lower < ti->ser_lower || align_upper > ti->ser_upper)
     _XMP_fatal("aligned array is out of template bound");
 
@@ -649,6 +676,8 @@ void _XMP_alloc_array(void **array_addr, _XMP_array_t *array_desc, int is_coarra
 
   *array_addr = _XMP_alloc(total_elmts * (array_desc->type_size));
 
+  // printf("alloc_array: addr=%p, nbytes=%lld\n",*array_addr,total_elmts * (array_desc->type_size));
+
   // set members
   array_desc->array_addr_p = *array_addr;
   array_desc->total_elmts  = total_elmts;
@@ -698,7 +727,7 @@ void _XMP_alloc_array2(void **array_addr, _XMP_array_t *array_desc, int is_coarr
   int dim = array_desc->dim;
 
   for (int i = dim - 1; i >= 0; i--) {
-    *acc[i] = total_elmts;
+    if(acc[i] != NULL) *acc[i] = total_elmts;
 
     array_desc->info[i].dim_acc = total_elmts;
 
@@ -710,6 +739,8 @@ void _XMP_alloc_array2(void **array_addr, _XMP_array_t *array_desc, int is_coarr
   }
 
   *array_addr = _XMP_alloc(total_elmts * (array_desc->type_size));
+
+  // printf("alloc_array2: addr=%p, nbytes=%lld\n",*array_addr,total_elmts * (array_desc->type_size));
 
   // set members
   array_desc->array_addr_p = *array_addr;

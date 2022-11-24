@@ -41,6 +41,8 @@ void _XMP_calc_template_size(_XMP_template_t *t)
     int ser_lower = t->info[i].ser_lower;
     int ser_upper = t->info[i].ser_upper;
 
+    // printf("calc_template_size: %d = (%d,%d)\n",i,ser_lower,ser_upper);
+
     if(ser_lower > ser_upper)
       _XMP_fatal("the lower bound of template should be less than or equal to the upper bound");
 
@@ -170,7 +172,7 @@ static int _XMP_compare_task_exec_cond(_XMP_task_desc_t *task_desc,
   return _XMP_N_INT_TRUE;
 }
 
-static void _XMP_dist_template_CYCLIC_WIDTH(_XMP_template_t *template, int template_index, int nodes_index,
+void _XMP_dist_template_CYCLIC_WIDTH(_XMP_template_t *template, int template_index, int nodes_index,
                                             unsigned long long width) {
   _XMP_ASSERT(template->is_fixed);
   _XMP_ASSERT(template->is_distributed);
@@ -330,6 +332,8 @@ void _XMP_dist_template_DUPLICATION(_XMP_template_t *template, int template_inde
 
   _XMP_template_chunk_t *chunk = &(template->chunk[template_index]);
   _XMP_template_info_t *ti = &(template->info[template_index]);
+
+  // printf("temp_DUP: indx=%d\n",template_index);
 
   chunk->par_lower = ti->ser_lower;
   chunk->par_upper = ti->ser_upper;

@@ -39,7 +39,7 @@ typedef struct _XMP_nodes_info_type {
 
 typedef struct _XMP_nodes_type {
 
-  int desc_kind;
+  int desc_kind;  // XMP_DESC_NODES
   
   unsigned long long on_ref_id;
 
@@ -97,7 +97,7 @@ typedef struct _XMP_template_chunk_type {
 
 typedef struct _XMP_template_type {
 
-  int desc_kind;
+  int desc_kind;	// XMP_DESC_TEMPLATE
   
   unsigned long long on_ref_id;
 
@@ -107,7 +107,7 @@ typedef struct _XMP_template_type {
   
   int   dim;
 
-  // enable when is_distributed is true
+  // enable when is_distributed is `true
   _XMP_nodes_t *onto_nodes;
   _XMP_template_chunk_t *chunk;
   // ----------------------------------
@@ -265,7 +265,7 @@ typedef struct _XMP_array_info_type {
 
 typedef struct _XMP_array_type {
 
-  int desc_kind;
+  int desc_kind;    // XMP_DESC_ARRAY
   
   _Bool is_allocated;
   _Bool is_align_comm_member;
@@ -326,6 +326,11 @@ typedef struct _XMP_task_desc_type {
 
 // Note: When member is changed, _XMP_coarray_deallocate() may be changed.
 typedef struct xmp_coarray{
+
+  int desc_kind;    // XMP_DESC_COARRAY
+
+  int is_reshape;  // reshape'd coarray
+
   char **addr;      // Pointer to each node.
                     // e.g.) xmp_coarray.addr[2] is a pointer of an object on node 2.
 
@@ -349,7 +354,7 @@ typedef struct xmp_coarray{
   long *distance_of_coarray_elmts; // Distance between each dimension of coarray. A unit of the distance is Byte.
                                    // e.g.) When "int a[10][20][30]:[*]", distance_of_coarray_elmts[0] is 2400 (20*30*sizeof(int)),
                                    //       distance_of_coarray_elmts[1] is 120 (30*sizeof(int)),
-                                   //       distance_of_coarray_elmts[0] is 4 (sizeof(int)).
+                                   //       distance_of_coarray_elmts[2] is 4 (sizeof(int)).
 
   int image_dims; // Number of dimensions of image set.
                   // e.g.) When "int a[10][20]:[4][2][*]" is 3.
@@ -357,6 +362,11 @@ typedef struct xmp_coarray{
   int *distance_of_image_elmts; // Distance between each dimension of image set.
                                 // e.g.) When "int a[10][20]:[4][2][*]", distance_of_image_elmts[0] is 1,
                                 //       distance_of_image_elmts[1] is 4, distance_of_image_elmts[2] is 8.
+
+  long *f_coarray_offset;  // index offset in case of Fortran Coarray
+                       // e.g.) When "intger a(2:10,20):[*]", coarray_elmts[0] is 10-2+1=9, coarray_elmts[1] is 20.
+                       //               f_coarray_offset[0] is 2, f_coarray_offset[1] is 1x
+
 #ifdef _XMP_MPI3_ONESIDED
   MPI_Win win;
   //#ifdef _XMP_XACC
@@ -370,7 +380,7 @@ typedef struct xmp_coarray{
 #ifdef _XMP_UTOFU
   utofu_stadd_t *stadds;
 #endif
-}_XMP_coarray_t;
+} _XMP_coarray_t;
 
 typedef struct _XMP_array_section{
   long start;
