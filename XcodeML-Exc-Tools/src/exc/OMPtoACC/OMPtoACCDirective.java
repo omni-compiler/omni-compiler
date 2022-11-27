@@ -1,3 +1,4 @@
+/* -*- Mode: java; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 package exc.OMPtoACC;
 
 import exc.object.*;
@@ -13,11 +14,16 @@ public class OMPtoACCDirective {
         new HashMap<OMPpragma, OMPtoACCClause>() {
             {
                 put(OMPpragma.DATA_FIRSTPRIVATE, new OMPtoACCClauseFirstprivate());
+                put(OMPpragma.DATA_LASTPRIVATE, new OMPtoACCClauseLastprivate());
                 put(OMPpragma.DIR_IF, new OMPtoACCClauseIf());
                 put(OMPpragma.TARGET_DATA_MAP, new OMPtoACCClauseMap());
                 put(OMPpragma.NUM_TEAMS, new OMPtoACCClauseNumTeams());
                 put(OMPpragma.DIR_NUM_THREADS, new OMPtoACCClauseNumThreads());
                 put(OMPpragma.DATA_PRIVATE, new OMPtoACCClausePrivate());
+                put(OMPpragma.DATA_DEFAULT, new OMPtoACCClauseDefault());
+                put(OMPpragma.DATA_DEFAULT, new OMPtoACCClauseShared());
+                put(OMPpragma.DATA_LINEAR, new OMPtoACCClauseLinear());
+
                 put(OMPpragma.DATA_REDUCTION_PLUS, new OMPtoACCClauseReduction());
                 put(OMPpragma.DATA_REDUCTION_MINUS, new OMPtoACCClauseReduction());
                 put(OMPpragma.DATA_REDUCTION_MUL, new OMPtoACCClauseReduction());
@@ -29,6 +35,10 @@ public class OMPtoACCDirective {
                 put(OMPpragma.DATA_REDUCTION_BITOR, new OMPtoACCClauseReduction());
                 put(OMPpragma.DATA_REDUCTION_BITXOR, new OMPtoACCClauseReduction());
                 put(OMPpragma.THREAD_LIMIT, new OMPtoACCClauseThreadLimit());
+                put(OMPpragma.COLLAPSE, new OMPtoACCClauseCollapse());
+                put(OMPpragma.DIST_SCHEDULE, new OMPtoACCClauseDistSchedule());
+
+                put(OMPpragma.DEFAULTMAP, new OMPtoACCClauseDefaultmap());
             }
         };
 

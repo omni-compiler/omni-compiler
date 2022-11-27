@@ -1,3 +1,4 @@
+/* -*- Mode: java; c-basic-offset:2 ; indent-tabs-mode:nil ; -*- */
 package exc.openacc;
 
 import exc.block.*;
@@ -6,10 +7,10 @@ import exc.object.*;
 import java.util.ArrayList;
 import java.util.List;
 
-class AccUpdate extends AccData{
+public class AccUpdate extends AccData {
   private final List<Block> copyBlockList = new ArrayList<Block>();
 
-  AccUpdate(ACCglobalDecl decl, AccInformation info, PragmaBlock pb) {
+  public AccUpdate(ACCglobalDecl decl, AccInformation info, PragmaBlock pb) {
     super(decl, info, pb);
   }
 
@@ -17,6 +18,8 @@ class AccUpdate extends AccData{
     switch (clauseKind){
     case IF:
     case ASYNC:
+    case WAIT:
+    case WAIT_CLAUSE:
     case HOST:
     case DEVICE:
       return true;
@@ -34,7 +37,6 @@ class AccUpdate extends AccData{
       throw new ACCexception(var + " does not have update direction");
     }
   }
-
 
   @Override
   void generate() throws ACCexception{

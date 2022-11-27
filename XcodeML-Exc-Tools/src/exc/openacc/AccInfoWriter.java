@@ -1,3 +1,4 @@
+/* -*- Mode: java; c-basic-offset:2 ; indent-tabs-mode:nil ; -*- */
 package exc.openacc;
 
 import exc.block.*;
@@ -8,14 +9,14 @@ class AccInfoWriter extends AccProcessor {
     super(globalDecl, true, false);
   }
 
-  void doGlobalAccPragma(Xobject def) throws ACCexception {
+  public void doGlobalAccPragma(Xobject def) throws ACCexception {
     AccDirective directive = (AccDirective)def.getProp(AccDirective.prop);
     AccInformation info = directive.getInfo();
     Xobject clauses = info.toXobject();
     def.setArg(1, clauses);
   }
 
-  void doLocalAccPragma(PragmaBlock pb) throws ACCexception {
+  public void doLocalAccPragma(PragmaBlock pb) throws ACCexception {
     AccDirective directive = (AccDirective)pb.getProp(AccDirective.prop);
     AccInformation info = directive.getInfo(); //(AccInformation) pb.getProp(AccInformation.prop);
     Xobject clauses = info.toXobject();

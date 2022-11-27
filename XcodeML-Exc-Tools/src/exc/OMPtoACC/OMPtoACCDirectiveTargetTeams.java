@@ -50,6 +50,13 @@ public class OMPtoACCDirectiveTargetTeams extends OMPtoACCDirective {
             case DATA_REDUCTION_BITAND:
             case DATA_REDUCTION_BITOR:
             case DATA_REDUCTION_BITXOR:
+            case TARGET_DEVICE:
+            case IS_DEVICE_PTR:
+            case DEFAULTMAP:
+            case DIR_NOWAIT:
+            case DEPEND:
+            case DATA_DEFAULT:
+            case DATA_SHARED:
                 l = clauseConverters.get(pragmaClause).convert(xobj, clause);
                 break;
             case DIR_IF:
@@ -58,21 +65,9 @@ public class OMPtoACCDirectiveTargetTeams extends OMPtoACCDirective {
                             new OMPpragma[]{OMPpragma.TARGET},
                             new OMPpragma[]{});
                 break;
-            case TARGET_DEVICE:
-            case IS_DEVICE_PTR:
-            case DEFAULTMAP:
-            case DIR_NOWAIT:
-            case DEPEND:
-            case DATA_DEFAULT:
-            case DATA_SHARED:
-                OMP.error((LineNo)xobj.getLineNo(),
-                          "Not implemented clause. ('" +
-                          notImplementedClauseStr(pragmaClause) +
-                          "').");
-                break;
             default:
                 OMP.error((LineNo)xobj.getLineNo(),
-                          "Cannot be specified is clause.");
+                          "clause cannot be specified");
                 break;
             }
 

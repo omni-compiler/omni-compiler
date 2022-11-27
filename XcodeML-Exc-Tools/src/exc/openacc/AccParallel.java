@@ -5,11 +5,11 @@ import exc.block.*;
 import exc.object.*;
 import java.util.*;
 
-class AccParallel extends AccData{
+public class AccParallel extends AccData {
   private Block _parallelBlock;
   private final AccKernel _accKernel;
 
-  AccParallel(ACCglobalDecl decl, AccInformation info, PragmaBlock pb) {
+  public AccParallel(ACCglobalDecl decl, AccInformation info, PragmaBlock pb) {
     super(decl, info, pb);
 
     List<Block> kernelBody = new ArrayList<Block>();
@@ -26,7 +26,7 @@ class AccParallel extends AccData{
     completeParallelism();
 
     //analyze and complete clause for kernel
-    System.out.println("AccParallel _acKernel.analyze ...");
+    if(ACC.debug_flag) System.out.println("AccParallel _acKernel.analyze ...");
     _accKernel.analyze();
 
     //set unspecified var's attribute from outerIdSet
@@ -35,7 +35,7 @@ class AccParallel extends AccData{
     ACCpragma default_var_attr = getDefaultVarAttr();
     for (Ident id : _accKernel.getOuterIdList()) {
       String varName = id.getName();
-      System.out.println("AccParallel OuterIdList id="+id);
+      if(ACC.debug_flag) System.out.println("AccParallel OuterIdList id="+id);
       if(_info.isDeclared(varName)) continue; //if declared in same directive
       
       ACCvar parentVar = findParentVar(id);
@@ -48,10 +48,10 @@ class AccParallel extends AccData{
           && parentVar == null /* not appeared in outer data clause*/
           && (var == null || !var.isReduction()) /* not reduction variable in the directive */
           && !isReductionVariableInKernel /* not reduction variable in the kernel*/ ) {
-        System.out.println("AccParallel OuterIdList FIRSTPRIVATE id="+id);
+        if(ACC.debug_flag) System.out.println("AccParallel OuterIdList FIRSTPRIVATE id="+id);
         _info.addVar(ACCpragma.FIRSTPRIVATE, Xcons.Symbol(Xcode.VAR, varName));
       }else {
-        System.out.println("AccParallel OuterIdList  default_attr="+default_var_attr+" id="+id);
+        if(ACC.debug_flag) System.out.println("AccParallel OuterIdList  default_attr="+default_var_attr+" id="+id);
         if(default_var_attr == ACCpragma.DEFAULT_NONE)
           throw new ACCexception("Variable attribute '"+varName+"' must be specified due to default(none)");
         else 
@@ -68,8 +68,9 @@ class AccParallel extends AccData{
     BlockIterator blockIterator = new topdownBlockIterator(_pb.getBody());
     for(blockIterator.init(); !blockIterator.end(); blockIterator.next()){
       Block b = blockIterator.getBlock();
-      if(b.Opcode() != Xcode.ACC_PRAGMA) continue;
+      // if(b.Opcode() != Xcode.ACC_PRAGMA) continue;
       AccDirective directive = (AccDirective)b.getProp(AccDirective.prop);
+      if(directive == null) continue;
       AccInformation info = directive.getInfo();
       ACCvar var = info.findReductionACCvar(id.getName());
       if(var != null && var.getId() == id){
@@ -83,8 +84,9 @@ class AccParallel extends AccData{
     BlockIterator blockIterator = new topdownBlockIterator(_pb.getBody());
     for(blockIterator.init(); !blockIterator.end(); blockIterator.next()){
       Block b = blockIterator.getBlock();
-      if(b.Opcode() != Xcode.ACC_PRAGMA) continue;
+      // if(b.Opcode() != Xcode.ACC_PRAGMA) continue;
       AccDirective directive = (AccDirective)b.getProp(AccDirective.prop);
+      if(directive == null) continue;
       directive.analyze();
     }
   }
@@ -95,7 +97,7 @@ class AccParallel extends AccData{
       return;
     }
 
-    System.out.println("AccParallel geneator _info="+_info);
+    if(ACC.debug_flag) System.out.println("AccParallel geneator _info="+_info);
 
     //generate data
     super.generate();
@@ -110,7 +112,7 @@ class AccParallel extends AccData{
       return;
     }
 
-    System.out.println("AccParallel rewrite _info="+_info);
+    if(ACC.debug_flag) System.out.println("AccParallel rewrite _info="+_info);
     
     //build
     BlockList beginBody = Bcons.emptyBody();
@@ -148,6 +150,8 @@ class AccParallel extends AccData{
     switch (clauseKind) {
     case IF:
     case ASYNC:
+    case WAIT:
+    case WAIT_CLAUSE:
     case NUM_GANGS:
     case NUM_WORKERS:
     case VECT_LEN:

@@ -48,6 +48,10 @@ public class OMPtoACCDirectiveParallel extends OMPtoACCDirective {
             case DATA_REDUCTION_BITAND:
             case DATA_REDUCTION_BITOR:
             case DATA_REDUCTION_BITXOR:
+            case DATA_DEFAULT:
+            case DATA_SHARED:
+            case DATA_COPYIN:
+            case PROC_BIND:
                 l = clauseConverters.get(pragmaClause).convert(xobj, clause);
                 break;
             case DIR_IF:
@@ -56,18 +60,9 @@ public class OMPtoACCDirectiveParallel extends OMPtoACCDirective {
                             new OMPpragma[]{},
                             new OMPpragma[]{OMPpragma.PARALLEL_FOR});
                 break;
-            case DATA_DEFAULT:
-            case DATA_SHARED:
-            case DATA_COPYIN:
-            case PROC_BIND:
-                OMP.error((LineNo)xobj.getLineNo(),
-                          "Not implemented clause. ('" +
-                          notImplementedClauseStr(pragmaClause) +
-                          "').");
-                break;
             default:
                 OMP.error((LineNo)xobj.getLineNo(),
-                          "Cannot be specified is clause.");
+                          "clause cannot be specified");
                 break;
             }
 

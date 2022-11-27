@@ -32,12 +32,18 @@ public class OMPtoACCDirectiveTarget extends OMPtoACCDirective {
                 return;
             }
 
+            System.out.println("clause="+clause);
             XobjList l = null;
             OMPpragma pragmaClause = OMPpragma.valueOf(clause.getArg(0));
             switch (pragmaClause) {
             case TARGET_DATA_MAP:
             case DATA_PRIVATE:
             case DATA_FIRSTPRIVATE:
+            case TARGET_DEVICE:
+            case IS_DEVICE_PTR:
+            case DEFAULTMAP:
+            case DIR_NOWAIT:
+            case DEPEND:
                 l = clauseConverters.get(pragmaClause).convert(xobj, clause);
                 break;
             case DIR_IF:
@@ -46,19 +52,9 @@ public class OMPtoACCDirectiveTarget extends OMPtoACCDirective {
                             new OMPpragma[]{OMPpragma.TARGET},
                             new OMPpragma[]{});
                 break;
-            case TARGET_DEVICE:
-            case IS_DEVICE_PTR:
-            case DEFAULTMAP:
-            case DIR_NOWAIT:
-            case DEPEND:
-                OMP.error((LineNo)xobj.getLineNo(),
-                          "Not implemented clause. ('" +
-                          notImplementedClauseStr(pragmaClause) +
-                          "').");
-                break;
             default:
                 OMP.error((LineNo)xobj.getLineNo(),
-                          "Cannot be specified is clause.");
+                          "clause cannot be specified");
                 break;
             }
 

@@ -1,3 +1,4 @@
+/* -*- Mode: java; c-basic-offset:2 ; indent-tabs-mode:nil ; -*- */
 package exc.openacc;
 
 import exc.block.*;
@@ -82,8 +83,9 @@ class AccKernels extends AccData {
     BlockIterator blockIterator = new topdownBlockIterator(_pb.getBody());
     for(blockIterator.init(); !blockIterator.end(); blockIterator.next()){
       Block b = blockIterator.getBlock();
-      if(b.Opcode() != Xcode.ACC_PRAGMA) continue;
+      // if(b.Opcode() != Xcode.ACC_PRAGMA) continue;
       AccDirective directive = (AccDirective)b.getProp(AccDirective.prop);
+      if(directive == null) continue;
       directive.analyze();
     }
   }
@@ -212,6 +214,11 @@ class AccKernels extends AccData {
     switch (clauseKind){
     case IF:
     case ASYNC:
+    case WAIT:
+    case WAIT_CLAUSE:
+    case NUM_GANGS:
+    case NUM_WORKERS:
+    case VECT_LEN:
       return true;
     default:
       return clauseKind.isDataClause();

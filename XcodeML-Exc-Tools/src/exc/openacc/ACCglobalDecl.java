@@ -1,3 +1,4 @@
+/* -*- Mode: java; c-basic-offset:2 ; indent-tabs-mode:nil ; -*- */
 package exc.openacc;
 
 import java.io.File;
@@ -10,7 +11,7 @@ import exc.block.Bcons;
 import exc.block.BlockList;
 import exc.object.*;
 
-class ACCglobalDecl{
+public class ACCglobalDecl{
   private static final String ACC_DESTRUCTOR_FUNC_PREFIX = "acc_traverse_finalize_file_";
   private static final String ACC_CONSTRUCTOR_FUNC_PREFIX = "acc_traverse_init_file_";
   private static final String ACC_TRAVERSE_INIT_FUNC_NAME = "acc_traverse_init";
@@ -238,6 +239,7 @@ class ACCglobalDecl{
   ACCvar findACCvar(Ident varId){
     return globalVarMap.get(varId);
   }
+
   void addACCvar(ACCvar var){
     Ident varId = var.getId();
     

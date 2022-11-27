@@ -1,3 +1,4 @@
+/* -*- Mode: java; c-basic-offset:2 ; indent-tabs-mode:nil ; -*- */
 package exc.openacc;
 
 import exc.block.*;
@@ -6,18 +7,18 @@ import exc.object.*;
 //
 // superclass of data structure for each directive
 //
-abstract class AccDirective {
+public abstract class AccDirective {
   public static final String prop = "_ACC_DIRECTIVE";
-  final AccInformation _info;
+  public final AccInformation _info;
   final XobjectDef _xobjDef;
   final PragmaBlock _pb;
   final ACCglobalDecl _decl;
 
-  AccDirective(ACCglobalDecl decl, AccInformation info){
+  public AccDirective(ACCglobalDecl decl, AccInformation info){
     this(decl, info, null, null);
   }
 
-  AccDirective(ACCglobalDecl decl, AccInformation info, XobjectDef xobjDef){
+  public AccDirective(ACCglobalDecl decl, AccInformation info, XobjectDef xobjDef){
     this(decl, info, xobjDef, null);
   }
 
@@ -34,7 +35,7 @@ abstract class AccDirective {
   }
 
   void analyze() throws ACCexception {
-    System.out.println("AccDirctive: analyze _info="+_info);
+    if(ACC.debug_flag) System.out.println("AccDirctive: analyze _info="+_info);
     _info.validate(this);
   }
 

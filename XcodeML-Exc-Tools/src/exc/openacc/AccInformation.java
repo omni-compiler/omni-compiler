@@ -4,22 +4,30 @@ package exc.openacc;
 import exc.object.*;
 import java.util.*;
 
-class AccInformation {
-  private final ACCpragma _pragma; /* directive kind*/
-  private final List<Clause> _clauseList = new ArrayList<Clause>();
+import exc.openmp.OMPpragma;
 
-  //for redundant check
-  private final Set<String> _declaredSymbolSet = new HashSet<String>();
-  private final Set<ACCpragma> _singleClauseSet = new HashSet<ACCpragma>();
+public class AccInformation {
+  public ACCpragma _pragma; /* directive kind*/
+  final List<Clause> _clauseList = new ArrayList<Clause>();
 
-  ACCpragma default_var_attr;
-  
-  class Clause {
+  // for redundant check
+  final Set<String> _declaredSymbolSet = new HashSet<String>();
+  final Set<ACCpragma> _singleClauseSet = new HashSet<ACCpragma>();
+
+  public ACCpragma default_var_attr;
+  public OMPpragma omp_pragma = OMPpragma.OMP_NONE; /* OMP directive in case of converted OMP directive */
+  public boolean omp_has_teams = false;
+  public boolean omp_has_distribute = false;
+  public boolean omp_has_parallel = false;
+  public boolean omp_has_simd = false;
+
+  public class Clause {
     final ACCpragma _clauseKind;
 
-    Clause(ACCpragma clauseKind) throws ACCexception{
+    public Clause(ACCpragma clauseKind) throws ACCexception {
       _clauseKind = clauseKind;
       if(isSingle()){
+        if(ACC.debug_flag) System.out.println("single clause="+_clauseKind);
         if(_singleClauseSet.contains(clauseKind)){
           throw new ACCexception("'" + clauseKind.getName() + "' is already specified");
         }
@@ -54,15 +62,15 @@ class AccInformation {
 
     String getSymbol() { return null; }
 
-    boolean isSingle(){  return true; }
+    boolean isSingle(){ return true;  }
   }
 
-  class IntExprClause extends Clause {
+  public class IntExprClause extends Clause {
     private final Xobject arg;
 
-    IntExprClause(ACCpragma clauseKind, Xobject arg) throws ACCexception{
+    public IntExprClause(ACCpragma clauseKind, Xobject arg) throws ACCexception{
       super(clauseKind);
-      System.out.println("AccInformation IntExprClause="+clauseKind+", arg="+arg);
+      if(ACC.debug_flag) System.out.println("AccInformation IntExprClause="+clauseKind+", arg="+arg);
       if(arg == null) throw new ACCexception("null expr");
       this.arg = arg;
     }
@@ -82,7 +90,7 @@ class AccInformation {
     void validate(AccDirective directive) throws ACCexception {
       super.validate(directive);
       if(! directive.isIntExpr(arg)){
-        throw new ACCexception("'" + arg + "' is not int expr");
+        throw new ACCexception("'" + arg + "' is not int expression");
       }
     }
 
@@ -90,15 +98,21 @@ class AccInformation {
     Xobject getIntExpr(){
       return arg;
     }
+
+    @Override
+    boolean isSingle(){
+      if(_clauseKind == ACCpragma.WAIT_CLAUSE) return false; // wait clause can be multiple
+      return true;
+    }
   }
 
-  class SymbolClause extends Clause {
+  public class SymbolClause extends Clause {
     private final Xobject arg;
 
     SymbolClause(ACCpragma clauseKind, Xobject arg) throws ACCexception{
       super(clauseKind);
 
-      System.out.println("AccInformation SymbolClause="+clauseKind+", arg="+arg);
+      if(ACC.debug_flag) System.out.println("AccInformation SymbolClause="+clauseKind+", arg="+arg);
 
       if(arg == null) throw new ACCexception("null symbol");
       this.arg = arg;
@@ -130,14 +144,22 @@ class AccInformation {
     }
   }
 
-  class VarListClause extends Clause{
+  public class VarListClause extends Clause{
     final List<ACCvar> varList = new ArrayList<ACCvar>();
 
-    VarListClause(ACCpragma clauseKind, XobjList args) throws ACCexception{
+    public VarListClause(ACCpragma clauseKind, XobjList args) throws ACCexception{
       super(clauseKind);
+      if(ACC.debug_flag) System.out.println("AccInformation.VarListClause="+clauseKind+", args="+args);
+      init(args);
+    }
 
-      System.out.println("AccInformation.VarListClause="+clauseKind+", args="+args);
+    public VarListClause(ACCpragma clauseKind, Xobject args) throws ACCexception{
+      super(clauseKind);
+      if(ACC.debug_flag) System.out.println("AccInformation.VarListClause="+clauseKind+", args="+args);
+      init((XobjList)args);
+    }
 
+    void init(XobjList args) throws ACCexception{
       if(args == null) return;
       for(Xobject x : args){
         addVar(x);
@@ -154,7 +176,7 @@ class AccInformation {
         checkDuplication(var);
       }
       varList.add(var);
-      System.out.println("AccInformation. addVar var="+var);
+      if(ACC.debug_flag) System.out.println("AccInformation. addVar var="+var);
     }
 
     @Override
@@ -215,18 +237,22 @@ class AccInformation {
     }
   }
 
-  private void addClause(Clause clause){
+  public void addClause(Clause clause){
     _clauseList.add(clause);
   }
 
   //
   // constructor: AccInformation
   //
-  AccInformation(ACCpragma pragma, Xobject arg) throws ACCexception {
+  public AccInformation(ACCpragma pragma, Xobject arg) throws ACCexception {
     _pragma = pragma;
     default_var_attr = ACCpragma.NONE;
+
+    if(ACC.debug_flag) System.out.println("AccInformation: pragma="+pragma+" args="+arg);
     
     switch(pragma){
+    case NONE:
+      return; // for OMPtoACC
     case WAIT:
     case CACHE:
     // case SYNC:
@@ -242,7 +268,11 @@ class AccInformation {
       ACCpragma clauseKind = ACCpragma.valueOf(clause.getArg(0));
       Xobject clauseArg = clause.getArgOrNull(1);
 
-      addClause(makeClause(clauseKind, clauseArg));
+      if(clauseKind == ACCpragma.WAIT_CLAUSE){
+        for(XobjArgs a = clauseArg.getArgs(); a != null; a = a.nextArgs())
+          addClause(makeClause(clauseKind, a.getArg()));
+      } else 
+        addClause(makeClause(clauseKind, clauseArg));
     }
   }
 
@@ -259,15 +289,13 @@ class AccInformation {
     case NUM_WORKERS:
     case VECT_LEN:
     case COLLAPSE:
+    case WAIT_CLAUSE:
       return new IntExprClause(clauseKind, arg);
     case GANG:
     case WORKER:
     case VECTOR:
     case WAIT: //it will be int expr list
     case ASYNC: //it will be int expr list
-    // case SYNC:
-    // case FLUSH:
-    // case YIELD:
       if(arg == null){
         return new Clause(clauseKind);
       }else {
@@ -379,7 +407,7 @@ class AccInformation {
   List<ACCvar> getDeclarativeACCvarList(){
     List<ACCvar> list = new ArrayList<ACCvar>();
     for(Clause c : _clauseList){
-      System.out.println("c="+c);
+      if(ACC.debug_flag) System.out.println("c="+c);
       if(c._clauseKind.isDeclarativeClause()) {
         list.addAll(c.getVarList());
       }
@@ -396,11 +424,11 @@ class AccInformation {
   }
 
   ACCvar findACCvar(List<Clause> clauseList, String symbol){
-    // System.out.println("AccInformation findACCVar _pragma="+_pragma+" findACCvar symbol="+symbol);
+    if(ACC.debug_flag) System.out.println("AccInformation findACCVar _pragma="+_pragma+" findACCvar symbol="+symbol);
     for(Clause clause : clauseList){
       ACCvar var = clause.findVar(symbol);
       if(var != null){
-        // System.out.println("AccInformation findACCVar _pragma="+_pragma+" found var="+var);
+        if(ACC.debug_flag) System.out.println("AccInformation findACCVar _pragma="+_pragma+" found var="+var);
         return var;
       }
     }
@@ -435,7 +463,7 @@ class AccInformation {
 
   void validate(AccDirective directive) throws ACCexception{
     for(Clause clause : _clauseList){
-      System.out.println("validate clause="+clause);
+      if(ACC.debug_flag) System.out.println("validate clause="+clause);
       clause.validate(directive);
     }
   }

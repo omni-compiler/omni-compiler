@@ -91,7 +91,7 @@ public class AccKernel {
         ACC.fatal(id.getName() + " not found");
       } else {
         _outerVarList.add(accvar);
-        System.out.println("add outVerList id="+id);
+        if(ACC.debug_flag) System.out.println("add outVerList id="+id);
       }
     }
   }
@@ -273,7 +273,7 @@ public class AccKernel {
     //make params
     //add paramId from outerId
     for (Ident id : outerIdList) {
-      System.out.println("makeDeviceKernelDef outerIdList id="+id);
+      if(ACC.debug_flag) System.out.println("makeDeviceKernelDef outerIdList id="+id);
       if (ACC.device.getUseReadOnlyDataCache() && _readOnlyOuterIdSet.contains(id)
 	  && (id.Type().isArray() || id.Type().isPointer())) {
         Xtype constParamType = makeConstRestrictVoidType();
@@ -439,89 +439,94 @@ public class AccKernel {
     }
   }
 
-   Block makeCoreBlock(Block b, DeviceKernelBuildInfo deviceKernelBuildInfo) {
+  Block makeCoreBlock(Block b, DeviceKernelBuildInfo deviceKernelBuildInfo) {
     Set<ACCpragma> outerParallelisms = AccLoop.getOuterParallelism(b);
     switch (b.Opcode()) {
     case FOR_STATEMENT:
       return makeCoreBlockForStatement((CforBlock) b, deviceKernelBuildInfo);
     case COMPOUND_STATEMENT:
       return makeCoreBlock(b.getBody(), deviceKernelBuildInfo);
-    case ACC_PRAGMA: {
-      PragmaBlock pb = (PragmaBlock)b;
-      ACCpragma pragma = ACCpragma.valueOf(pb.getPragma());
-      if(pragma == ACCpragma.ATOMIC) {
-        AccAtomic atomicDirective = (AccAtomic)b.getProp(AccDirective.prop);
-        try {
-          return atomicDirective.makeAtomicBlock();
-        } catch (ACCexception exception) {
-          exception.printStackTrace();
-          ACC.fatal("failed at atomic");
+    case ACC_PRAGMA:
+      {
+        PragmaBlock pb = (PragmaBlock)b;
+        ACCpragma pragma = ACCpragma.valueOf(pb.getPragma());
+        if(pragma == ACCpragma.ATOMIC) {
+          AccAtomic atomicDirective = (AccAtomic)b.getProp(AccDirective.prop);
+          try {
+            return atomicDirective.makeAtomicBlock();
+          } catch (ACCexception exception) {
+            exception.printStackTrace();
+            ACC.fatal("failed at atomic");
+          }
+          
+          // }else if(pragma == ACCpragma.SYNC) {
+          //   AccSync syncDirective = (AccSync)b.getProp(AccDirective.prop);
+          //   try {
+          //     return syncDirective.makeSyncBlock();
+          //   } catch (ACCexception exception) {
+          //     exception.printStackTrace();
+          //     ACC.fatal("failed at sync");
+          //   }
+          // }else if(pragma == ACCpragma.FLUSH) {
+          //   AccFlush flushDirective = (AccFlush)b.getProp(AccDirective.prop);
+          //   try {
+          //     return flushDirective.makeFlushBlock();
+          //   } catch (ACCexception exception) {
+          //     exception.printStackTrace();
+          //     ACC.fatal("failed at flush");
+          //   }
+          // }else if(pragma == ACCpragma.YIELD) {
+          //   AccYield yieldDirective = (AccYield)b.getProp(AccDirective.prop);
+          //   try {
+          //     return yieldDirective.makeYieldBlock();
+          //   } catch (ACCexception exception) {
+          //     exception.printStackTrace();
+          //     ACC.fatal("failed at yield");
+          //   }
+        } else {
+          return makeCoreBlock(b.getBody(), deviceKernelBuildInfo);
         }
-
-      // }else if(pragma == ACCpragma.SYNC) {
-      //   AccSync syncDirective = (AccSync)b.getProp(AccDirective.prop);
-      //   try {
-      //     return syncDirective.makeSyncBlock();
-      //   } catch (ACCexception exception) {
-      //     exception.printStackTrace();
-      //     ACC.fatal("failed at sync");
-      //   }
-      // }else if(pragma == ACCpragma.FLUSH) {
-      //   AccFlush flushDirective = (AccFlush)b.getProp(AccDirective.prop);
-      //   try {
-      //     return flushDirective.makeFlushBlock();
-      //   } catch (ACCexception exception) {
-      //     exception.printStackTrace();
-      //     ACC.fatal("failed at flush");
-      //   }
-      // }else if(pragma == ACCpragma.YIELD) {
-      //   AccYield yieldDirective = (AccYield)b.getProp(AccDirective.prop);
-      //   try {
-      //     return yieldDirective.makeYieldBlock();
-      //   } catch (ACCexception exception) {
-      //     exception.printStackTrace();
-      //     ACC.fatal("failed at yield");
-      //   }
-
-      }else {
-        return makeCoreBlock(b.getBody(), deviceKernelBuildInfo);
       }
-    }
-    case IF_STATEMENT: {
-      if (!outerParallelisms.contains(ACCpragma.VECTOR)) {
-        BlockList resultBody = Bcons.emptyBody();
+    case OMP_PRAGMA:
+      return makeCoreBlock(b.getBody(), deviceKernelBuildInfo);
 
-        Ident sharedIfCond = resultBody.declLocalIdent("_ACC_if_cond", Xtype.charType);
-        sharedIfCond.setProp(ACCgpuDecompiler.GPU_STORAGE_SHARED, true);
+    case IF_STATEMENT:
+      {
+        if (!outerParallelisms.contains(ACCpragma.VECTOR)) {
+          BlockList resultBody = Bcons.emptyBody();
 
-        Block evalCondBlock = Bcons.IF(
-                Xcons.binaryOp(Xcode.LOG_EQ_EXPR, _accThreadIndex, Xcons.IntConstant(0)),
-                Bcons.Statement(Xcons.Set(sharedIfCond.Ref(), b.getCondBBlock().toXobject())),
-                null);
-        Block mainIfBlock = Bcons.IF(
-                sharedIfCond.Ref(),
-                makeCoreBlock(b.getThenBody(), deviceKernelBuildInfo),
-                makeCoreBlock(b.getElseBody(), deviceKernelBuildInfo));
+          Ident sharedIfCond = resultBody.declLocalIdent("_ACC_if_cond", Xtype.charType);
+          sharedIfCond.setProp(ACCgpuDecompiler.GPU_STORAGE_SHARED, true);
 
-        resultBody.add(evalCondBlock);
-        resultBody.add(_accSyncThreads);
-        resultBody.add(mainIfBlock);
+          Block evalCondBlock = Bcons.IF(
+                                         Xcons.binaryOp(Xcode.LOG_EQ_EXPR, _accThreadIndex, Xcons.IntConstant(0)),
+                                         Bcons.Statement(Xcons.Set(sharedIfCond.Ref(), b.getCondBBlock().toXobject())),
+                                         null);
+          Block mainIfBlock = Bcons.IF(
+                                       sharedIfCond.Ref(),
+                                       makeCoreBlock(b.getThenBody(), deviceKernelBuildInfo),
+                                       makeCoreBlock(b.getElseBody(), deviceKernelBuildInfo));
 
-        return Bcons.COMPOUND(resultBody);
-      } else {
-        return b.copy();
+          resultBody.add(evalCondBlock);
+          resultBody.add(_accSyncThreads);
+          resultBody.add(mainIfBlock);
+
+          return Bcons.COMPOUND(resultBody);
+        } else {
+          return b.copy();
+        }
       }
-    }
-    default: {
-      Block resultBlock = b.copy();
-      Block masterBlock = makeMasterBlock(EnumSet.copyOf(outerParallelisms), resultBlock);
-      Block syncBlock = makeSyncBlock(EnumSet.copyOf(outerParallelisms));
-      return Bcons.COMPOUND(Bcons.blockList(masterBlock, syncBlock));
-    }
+    default:
+      {
+        Block resultBlock = b.copy();
+        Block masterBlock = makeMasterBlock(EnumSet.copyOf(outerParallelisms), resultBlock);
+        Block syncBlock = makeSyncBlock(EnumSet.copyOf(outerParallelisms));
+        return Bcons.COMPOUND(Bcons.blockList(masterBlock, syncBlock));
+      }
     }
   }
 
-   Block makeCoreBlock(BlockList body, DeviceKernelBuildInfo deviceKernelBuildInfo) {
+  Block makeCoreBlock(BlockList body, DeviceKernelBuildInfo deviceKernelBuildInfo) {
     if (body == null) return Bcons.emptyBlock();
 
     Xobject ids = body.getIdentList();
@@ -615,8 +620,8 @@ public class AccKernel {
     //ACCinfo info = ACCutil.getACCinfo(forBlock);
     AccInformation info = null; //= (AccInformation)forBlock.getProp(AccInformation.prop);
     Block parentBlock = forBlock.getParentBlock();
-    if (parentBlock.Opcode() == Xcode.ACC_PRAGMA) {
-      AccDirective directive = (AccDirective) parentBlock.getProp(AccDirective.prop);
+    AccDirective directive = (AccDirective) parentBlock.getProp(AccDirective.prop);
+    if (directive != null) {
       info = directive.getInfo();
     }
 
@@ -872,8 +877,10 @@ public class AccKernel {
 
    void transLoopCache(CforBlock forBlock, BlockListBuilder resultBlockBuilder, List<Block> cacheLoadBlocks, List<Cache> cacheList) {
     Block headBlock = forBlock.getBody().getHead();
-    if (headBlock != null && headBlock.Opcode() == Xcode.ACC_PRAGMA) {
-      AccDirective directive = (AccDirective)headBlock.getProp(AccDirective.prop);
+    if(headBlock == null) return;
+
+    AccDirective directive = (AccDirective)headBlock.getProp(AccDirective.prop);
+    if (directive != null) {
       AccInformation headInfo = directive.getInfo();
       if (headInfo.getPragma() == ACCpragma.CACHE) {
         for (ACCvar var : headInfo.getACCvarList()) {
@@ -1237,10 +1244,10 @@ public class AccKernel {
 
   public void analyze() {
 
-    System.out.println("AccKernel.analyze ... _kernelInfo="+_kernelInfo);
+    if(ACC.debug_flag) System.out.println("AccKernel.analyze ... _kernelInfo="+_kernelInfo);
     gpuManager.analyze();
 
-    System.out.println("AccKernel.analyze outerID ..._kernelInfo="+_kernelInfo);
+    // System.out.println("AccKernel.analyze outerID ..._kernelInfo="+_kernelInfo);
     //get outerId set
     Set<Ident> outerIdSet = new LinkedHashSet<Ident>();
     OuterIdCollector outerIdCollector = new OuterIdCollector();
@@ -1248,7 +1255,8 @@ public class AccKernel {
       outerIdSet.addAll(outerIdCollector.collect(b));
     }
 
-    for (Ident id : outerIdSet)  System.out.println("outIdSet id="+id);
+    if(ACC.debug_flag)
+      for (Ident id : outerIdSet)  System.out.println("outIdSet id="+id);
 
     //collect read only id
     _readOnlyOuterIdSet = new LinkedHashSet<Ident>(outerIdSet);
@@ -1257,7 +1265,8 @@ public class AccKernel {
       _readOnlyOuterIdSet.removeAll(assignedIdCollector.collect(b));
     }
 
-    for (Ident id : _readOnlyOuterIdSet)  System.out.println("readOnlyOutIdSet id="+id);
+    if(ACC.debug_flag)
+      for (Ident id : _readOnlyOuterIdSet)  System.out.println("readOnlyOutIdSet id="+id);
 
     //make outerId list
     _outerIdList = new ArrayList<Ident>(outerIdSet);
@@ -1265,7 +1274,7 @@ public class AccKernel {
     //FIXME
     for (Ident id : _outerIdList) {
       ACCvar var = _kernelInfo.findACCvar(id.getSym());
-      System.out.println("outerId id="+id+",var="+var);
+      if(ACC.debug_flag) System.out.println("outerId id="+id+",var="+var);
       if (var == null) continue;
       if (var.isReduction()) {
         ACCvar parentVar = findParentVar(id);
@@ -1280,8 +1289,10 @@ public class AccKernel {
   ACCvar findParentVar(Ident varId) {
     if (_pb != null) {
       for (Block b = _pb.getParentBlock(); b != null; b = b.getParentBlock()) {
-        if (b.Opcode() != Xcode.ACC_PRAGMA) continue;
+        // if (b.Opcode() != Xcode.ACC_PRAGMA) continue;
         AccInformation info = ((AccDirective) b.getProp(AccDirective.prop)).getInfo();
+        if(info == null) continue;
+        
         ACCvar var = info.findACCvar(varId.getSym());
         if (var != null && var.getId() == varId) {
           return var;
@@ -1509,7 +1520,8 @@ public class AccKernel {
       // if an id exists between root to topBlock, the id is outerId
       for (Block b = block; b != null; b = b.getParentBlock()) {
         if (b == topBlock.getParentBlock()) break;
-        if (b.Opcode() == Xcode.ACC_PRAGMA && isPrivate((PragmaBlock) b, name)) return null;
+        if ((b.Opcode() == Xcode.ACC_PRAGMA || b.Opcode() == Xcode.OMP_PRAGMA) &&
+            isPrivate((PragmaBlock) b, name)) return null;
         if (hasLocalIdent(b.getBody(), name)) return null;
       }
       return topBlock.findVarIdent(name);

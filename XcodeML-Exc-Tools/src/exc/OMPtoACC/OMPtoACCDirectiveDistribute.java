@@ -1,3 +1,4 @@
+/* -*- Mode: java; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 package exc.OMPtoACC;
 
 import exc.object.*;
@@ -11,8 +12,7 @@ public class OMPtoACCDirectiveDistribute extends OMPtoACCDirective {
     }
 
     @Override
-    public void convert(Xobject xobj,
-                        XobjArgs currentArgs) {
+    public void convert(Xobject xobj, XobjArgs currentArgs) {
         if (xobj.getArg(1) == null ||
             xobj.getArg(1).Opcode() != Xcode.LIST) {
             OMP.error((LineNo)xobj.getLineNo(),
@@ -25,8 +25,7 @@ public class OMPtoACCDirectiveDistribute extends OMPtoACCDirective {
 
         for (Iterator<Xobject> it = ompClauses.iterator(); it.hasNext();) {
             XobjList clause = (XobjList) it.next();
-            if (clause.Opcode() != Xcode.LIST ||
-                clause.Nargs() < 1) {
+            if (clause.Opcode() != Xcode.LIST || clause.Nargs() < 1) {
                 OMP.error((LineNo)xobj.getLineNo(),
                           "Clause list does not exist or number of clauses is too small.");
                 return;
@@ -37,15 +36,10 @@ public class OMPtoACCDirectiveDistribute extends OMPtoACCDirective {
             switch (pragmaClause) {
             case DATA_PRIVATE:
             case DATA_FIRSTPRIVATE:
-                l = clauseConverters.get(pragmaClause).convert(xobj, clause);
-                break;
             case DATA_LASTPRIVATE:
             case COLLAPSE:
             case DIST_SCHEDULE:
-                OMP.error((LineNo)xobj.getLineNo(),
-                          "Not implemented clause. ('" +
-                          notImplementedClauseStr(pragmaClause) +
-                          "').");
+                l = clauseConverters.get(pragmaClause).convert(xobj, clause);
                 break;
             default:
                 OMP.error((LineNo)xobj.getLineNo(),

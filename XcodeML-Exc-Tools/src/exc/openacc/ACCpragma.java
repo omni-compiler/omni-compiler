@@ -1,6 +1,6 @@
+/* -*- Mode: java; c-basic-offset:2 ; indent-tabs-mode:nil ; -*- */
 package exc.openacc;
 import exc.object.Xobject;
-
 
 public enum ACCpragma {
   NONE, // nothing specified
@@ -95,10 +95,16 @@ public enum ACCpragma {
   //internal
   DEFAULT_NONE, // none for default clause
 
-  //for pezy
-  // SYNC,
-  // FLUSH,
-  // YIELD,
+  // from openmp
+  OMP_NUM_THREADS,
+  OMP_NUM_TEAMS,
+  OMP_SHARED,
+
+  OMP_LINEAR,
+  OMP_DIST_SCHEDULE,
+  OMP_LASTPRIVATE,
+  OMP_THREAD_LIMIT,
+  
   ;
   
   private String name = null;

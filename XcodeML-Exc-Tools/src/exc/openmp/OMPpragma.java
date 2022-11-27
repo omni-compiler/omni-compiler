@@ -1,3 +1,4 @@
+/* -*- Mode: java; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 package exc.openmp;
 
 import exc.object.Ident;
@@ -11,14 +12,18 @@ import exc.object.Xtype;
  */
 public enum OMPpragma
 {
+    OMP_NONE,
     /*
      * directive
      */
     PARALLEL,           /* parallel <clause_list> */
     FOR,                /* (for|do) <clause_list> */
     TASK,               /* task <clause list>*/
+
     SIMD,               /* simd <clause list>*/
-    DECLARE,            /* declare <clause_list> */
+    LOOP_SIMD,    
+    PARALLEL_LOOP_SIMD,    
+
     SECTIONS,           /* sections <clause_list> */
     SECTION,            /* section */
     SINGLE,             /* single <clause list> */
@@ -31,46 +36,88 @@ public enum OMPpragma
     THREADPRIVATE,      /* threadprivate <namelist> */
     PARALLEL_FOR,       /* parallel <clause_list> */
     PARALLEL_SECTIONS,  /* parallel <clause_list> */
-    TARGET_ENTER_DATA,
+
     FUNCTION_BODY,
-    TARGET_DATA,        /* target data <clause_list> */
-    TARGET_TEAMS_DISTRIBUTE_PARALLEL_LOOP, /* target teams distribute parallel for <clause_list> */
+
     TARGET,             /* target <clause_list> */
-    TARGET_TEAMS,       /* target teams <clause_list> */
+    TARGET_DATA,        /* target data <clause_list> */
+    TARGET_ENTER_DATA,
+    TARGET_EXIT_DATA,
+    TARGET_UPDATE,
+
+    TARGET_SIMD,
     TARGET_PARALLEL,    /* target parallel <clause_list> */
     TARGET_PARALLEL_LOOP, /* target parallel for <clause_list> */
-    DISTRIBUTE_PARALLEL_LOOP, /* distribute parallel for <clause_list> */
-    DISTRIBUTE,         /* distribute <clause_list> */
+    TARGET_PARALLEL_LOOP_SIMD,
+
+    TARGET_TEAMS,       /* target teams <clause_list> */
     TARGET_TEAMS_DISTRIBUTE, /* target teams distribute <clause_list>  */
+    TARGET_TEAMS_DISTRIBUTE_SIMD,
+    TARGET_TEAMS_DISTRIBUTE_PARALLEL_LOOP, /* target teams distribute parallel for <clause_list> */
+    TARGET_TEAMS_DISTRIBUTE_PARALLEL_LOOP_SIMD,
+
     TEAMS,              /* teams <clause_list> */
     TEAMS_DISTRIBUTE,   /* teams distribute <clause_list> */
+    TEAMS_DISTRIBUTE_SIMD,   
     TEAMS_DISTRIBUTE_PARALLEL_LOOP, /* teams distribute parallel for <clause_list> */
+    TEAMS_DISTRIBUTE_PARALLEL_LOOP_SIMD,
+
+    DISTRIBUTE,         /* distribute <clause_list> */
+    DISTRIBUTE_SIMD,
+    DISTRIBUTE_PARALLEL_LOOP, /* distribute parallel for <clause_list> */
+    DISTRIBUTE_PARALLEL_LOOP_SIMD,
+
+    DECLARE_REDUCTION,    /* declare reduction <id> <type-list> <combiner> <init-clause> */
+    DECLARE_SIMD,      /* declare simd <clause_list> */
+    DECLARE_TARGET,  /* declare target <extended-list> <clause_list> */
+    DECLARE_TARGET_START, /* declare target */
+    DECLARE_TARGET_END,   /* end declare target */
 
     /*
      * clause
      */
     DATA_NONE,           /* using internally */
-    DATA_DEFAULT,
-    DATA_PRIVATE,
-    DATA_SHARED,
-    DATA_FIRSTPRIVATE,
-    DATA_LASTPRIVATE,
-    DATA_COPYPRIVATE,
-    DATA_COPYIN,
+    DATA_DEFAULT,   /* default(shared|none) */
+    DATA_PRIVATE,   /* private(list) */
+    DATA_SHARED,    /* shared(list) */
+    DATA_FIRSTPRIVATE, /* firstprivate(list) */
+    DATA_LASTPRIVATE,  /* lastprivate(list) */
+    DATA_COPYPRIVATE, /* copyprivate(list) */
+    DATA_COPYIN,  /* copyin(list) */
     _DATA_PRIVATE_SHARED, /* using internally */
-    TARGET_DATA_MAP,
-    DIR_NUM_THREADS,
-    NUM_TEAMS,
-    THREAD_LIMIT,
-    TARGET_DEVICE,
-    USE_DEVICE_PTR,
-    IS_DEVICE_PTR,
-    DEFAULTMAP,
-    DEPEND,
-    COLLAPSE,
-    DIST_SCHEDULE,
-    PROC_BIND,
-    DATA_LINEAR,
+
+    TARGET_DATA_MAP, /* map([to|from|tofrom|alloc]: list) */
+    TARGET_DEVICE,  /* device(expr) */
+    TARGET_UPDATE_TO, /* to(list) */
+    TARGET_UPDATE_FROM, /* from(list) */
+    DIR_NUM_THREADS, /* num_threads(expr) */
+    NUM_TEAMS,  /* num_teams(expr) */
+    THREAD_LIMIT, /* thread_limit(expr) */
+    USE_DEVICE_PTR, /* use_device_ptr(list) */
+    IS_DEVICE_PTR, /* is_device_ptr(list) */
+    DEFAULTMAP, /* defaultmap(tofrom:scalar) */
+    DEPEND,   /* depend([in|out|inout]: list */
+    COLLAPSE, /* collapse(n) */
+    DIST_SCHEDULE, /* dist_schedule(kind[,chunk_size]) */
+    PROC_BIND,  /* proc_bind([master|cloase|spread]) */
+    DATA_LINEAR, /* linaer( ) */
+
+    SIMD_SAFELEN, /* safelen(length) */
+    SIMD_SIMDLEN, /* simdlen(length) */
+    SIMD_ALIGNED, /* aligned(arg-list[:alignment:) */
+    SIMD_UNIFORM, /* uniform(ag-list) */
+    SIMD_INBRANCH,  /* inbranch */
+    SIMD_NOTINBRANCH, /* notinbranch */
+
+    DIR_FINAL,  /* final(logical-expr) */
+    DIR_UNTIED, /* untied */
+    DIR_MERGEABLE, /* mergeable */
+    DIR_GRAINSIZE,  /* grainsize(size) */
+
+    DIR_ORDERED, /* orderd [(n)] */
+    DIR_IF,      /* if(expression) */
+    DIR_NOWAIT,  /* nowait */
+    DIR_SCHEDULE,  /* schedule(block,cyclic, ...) */
 
     /* DATA_REDUCTION_* values are synchronized with
        OMPC_REDUCTION_* values in ompc_reduction.h */
@@ -90,24 +137,18 @@ public enum OMPpragma
     DATA_REDUCTION_IOR(14),     // Fortran
     DATA_REDUCTION_IEOR(15),    // Fortran
 
+    /*
+     * for depend([in|out|inout]:)
+     */
     DATA_DEPEND_IN,
     DATA_DEPEND_OUT,
     DATA_DEPEND_INOUT,
 
-    DATA_FINAL,
-    DIR_UNTIED,
-    DIR_MERGEABLE,
-
-    DIR_ORDERED,
-    DIR_IF,
-    DIR_NOWAIT,
-    DIR_SCHEDULE,
-    
     /*
      * default clause value
      */
-    DEFAULT_NONE,
-    DEFAULT_SHARED,
+    DEFAULT_NONE,  /* default(none) */
+    DEFAULT_SHARED, /* default(shared)  */
     DEFAULT_PRIVATE,
     _DEFAULT_NOT_SET,       /* using internally */
 
@@ -211,5 +252,19 @@ public enum OMPpragma
             return Xcons.functionCall(
                 Ident.FidentNotExternal(func, Xtype.FnumericalAllFunctionType), Xcons.List(l, r));
         }
+    }
+
+    public boolean isGlobalDirective(){
+      switch(this){
+      case THREADPRIVATE:
+      case DECLARE_REDUCTION:
+      case DECLARE_SIMD:
+      case DECLARE_TARGET:
+      case DECLARE_TARGET_START:
+      case DECLARE_TARGET_END:
+        return true;
+      default:
+        return false;
+      }
     }
 }

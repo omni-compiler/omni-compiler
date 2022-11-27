@@ -1,3 +1,4 @@
+/* -*- Mode: java; c-basic-offset:2 ; indent-tabs-mode:nil ; -*- */
 package exc.openacc;
 
 import exc.block.*;
@@ -6,7 +7,6 @@ import exc.util.MachineDep;
 import exc.util.MachineDepConst;
 
 import java.util.*;
-
 
 class AccAtomic extends AccDirective {
   private Xtype _type;
@@ -139,14 +139,14 @@ class AccAtomic extends AccDirective {
         _operand = lhs;
         _val = rhsLeftOp;
         _operator = rhs.Opcode();
-        if(_operator == Xcode.MINUS_EXPR || _operator == Xcode.DIV_EXPR){
-          throw new ACCexception("'x = expr {-,/} x' is not supported yet");
-        }
+        // if(_operator == Xcode.MINUS_EXPR || _operator == Xcode.DIV_EXPR){
+        //   throw new ACCexception("'x = expr {-,/} x' is not supported yet");
+        // }
       } else {
         throw new ACCexception("not vaild");
       }
     }
-    break;
+      break;
     default:
       throw new ACCexception("unsupported statement");
     }
@@ -191,7 +191,7 @@ class AccAtomic extends AccDirective {
   }
 
   Block makeAtomicBlock() throws ACCexception {
-    Xobject atomicFuncCall = makeCudaAtomicFuncCall(Xcons.AddrOf(_operand), _val, _operator);
+    Xobject atomicFuncCall = makeAtomicFuncCall(Xcons.AddrOf(_operand), _val, _operator);
     return Bcons.Statement(Xcons.List(atomicFuncCall));
   }
 
@@ -208,7 +208,7 @@ class AccAtomic extends AccDirective {
     return null;
   }
 
-  private Xobject makeCudaAtomicFuncCall(Xobject addr, Xobject val, Xcode op) throws ACCexception {
+  private Xobject makeAtomicFuncCall(Xobject addr, Xobject val, Xcode op) throws ACCexception {
     String funcKind;
 
     if (!addr.Type().isPointer()) {
@@ -225,7 +225,7 @@ class AccAtomic extends AccDirective {
     case ASG_PLUS_EXPR:    // +=
     case PLUS_EXPR:        // +
       funcKind = "Add";
-      castType = getCudaAtomicAddCastType();
+      castType = getAtomicAddCastType();
       break;
     case POST_DECR_EXPR:   // x--
     case PRE_DECR_EXPR:    // --x
@@ -233,7 +233,7 @@ class AccAtomic extends AccDirective {
     case ASG_MINUS_EXPR:   // -=
     case MINUS_EXPR:       // -
       funcKind = "Add";
-      castType = getCudaAtomicAddCastType();
+      castType = getAtomicAddCastType();
       val = Xcons.unaryOp(Xcode.UNARY_MINUS_EXPR, val);
       break;
     case ASG_BIT_AND_EXPR: // &=
@@ -250,13 +250,21 @@ class AccAtomic extends AccDirective {
       break;
     case ASG_MUL_EXPR:     // *=
     case MUL_EXPR:         // *
+      funcKind = "Mul";
+      break;
     case ASG_DIV_EXPR:     // /=
     case DIV_EXPR:         // /
+      funcKind = "Div";
+      break;
     case ASG_LSHIFT_EXPR:  // <<=
     case LSHIFT_EXPR:      // <<
+      funcKind = "Lsft";
+      break;
     case ASG_RSHIFT_EXPR:  // >>=
     case RSHIFT_EXPR:      // >>
-      throw new ACCexception("unimplemented operator");
+      funcKind = "Rsft";
+      break;
+      // throw new ACCexception("unimplemented operator");
     default:
       throw new ACCexception("unsupported operator");
     }
@@ -283,7 +291,7 @@ class AccAtomic extends AccDirective {
     return funcCall;
   }
 
-  private Xtype getCudaAtomicAddCastType() {
+  private Xtype getAtomicAddCastType() {
     if(_type.equals(Xtype.longType) || _type.equals(Xtype.unsignedlongType)){
       if(MachineDepConst.SIZEOF_UNSIGNED_INT == MachineDepConst.SIZEOF_UNSIGNED_LONG){
         return (Xtype.unsignedType);

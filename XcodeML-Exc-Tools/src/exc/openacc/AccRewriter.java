@@ -1,3 +1,4 @@
+/* -*- Mode: java; c-basic-offset:2 ; indent-tabs-mode:nil ; -*- */
 package exc.openacc;
 
 import exc.block.PragmaBlock;
@@ -9,11 +10,11 @@ class AccRewriter extends AccProcessor{
     super(globalDecl, false, false);
   }
 
-  void doGlobalAccPragma(Xobject def) throws ACCexception {
+  public void doGlobalAccPragma(Xobject def) throws ACCexception {
     doAccPragma(def);
   }
 
-  void doLocalAccPragma(PragmaBlock pb) throws ACCexception {
+  public void doLocalAccPragma(PragmaBlock pb) throws ACCexception {
     doAccPragma(pb);
   }
 

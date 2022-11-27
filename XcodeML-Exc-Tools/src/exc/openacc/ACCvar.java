@@ -189,6 +189,7 @@ public class ACCvar {
       atrEnumSet.add(Attribute.isPresent);
       break;
     default:
+      // System.out.println("id="+id);
       throw new ACCexception("var:"+id.getName()+", attribute:" + atr +" is not valid");
     }
     dataClause = atr;

@@ -1,10 +1,11 @@
+/* -*- Mode: java; c-basic-offset:2 ; indent-tabs-mode:nil ; -*- */
 package exc.openacc;
 
 import exc.block.*;
 import exc.object.StorageClass;
 
-class AccExitData extends AccData{
-  AccExitData(ACCglobalDecl decl, AccInformation info, PragmaBlock pb) {
+public class AccExitData extends AccData{
+  public AccExitData(ACCglobalDecl decl, AccInformation info, PragmaBlock pb) {
     super(decl, info, pb);
   }
 
@@ -38,6 +39,7 @@ class AccExitData extends AccData{
     switch (clauseKind){
     case IF:
     case ASYNC:
+    case WAIT_CLAUSE:
     case WAIT:
     case COPYOUT:
     case DELETE:

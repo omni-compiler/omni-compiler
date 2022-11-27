@@ -4,20 +4,21 @@ package exc.openacc;
 import exc.object.*;
 import exc.block.*;
 
-abstract class AccProcessor {
-  final ACCglobalDecl _globalDecl;
+public abstract class AccProcessor {
+  public final ACCglobalDecl _globalDecl;
   final private boolean _isTopdown;  // order of traverse
   final private boolean _warnUnknownPragma;
 
-  AccProcessor(ACCglobalDecl globalDecl, boolean isTopdown, boolean warnUnknownPragma) {
+  public AccProcessor(ACCglobalDecl globalDecl, boolean isTopdown, boolean warnUnknownPragma) {
     _globalDecl = globalDecl;
     _isTopdown = isTopdown;
     _warnUnknownPragma = warnUnknownPragma;
   }
 
-  void doNonFuncDef(Xobject x) {
+  public void doNonFuncDef(Xobject x) {
     switch (x.Opcode()){
     case ACC_PRAGMA:
+    case OMP_PRAGMA:
       try{
         doGlobalAccPragma(x);
       }catch(ACCexception e){
@@ -30,10 +31,11 @@ abstract class AccProcessor {
       }
       break;
     default:
+      break;
     }
   }
 
-  void doFuncDef(FunctionBlock fb){
+  public void doFuncDef(FunctionBlock fb){
     BlockIterator blockIterator;
     if(_isTopdown){
       blockIterator = new topdownBlockIterator(fb);
@@ -45,6 +47,7 @@ abstract class AccProcessor {
       Block b = blockIterator.getBlock();
       switch (b.Opcode()) {
       case ACC_PRAGMA:
+      case OMP_PRAGMA:
         try {
           doLocalAccPragma((PragmaBlock) b);
         } catch (ACCexception e) {
@@ -57,10 +60,11 @@ abstract class AccProcessor {
         }
         break;
       default:
+        break;
       }
     }
   }
 
-  abstract void doGlobalAccPragma(Xobject x) throws ACCexception;
-  abstract void doLocalAccPragma(PragmaBlock pb) throws ACCexception;
+  public abstract void doGlobalAccPragma(Xobject x) throws ACCexception;
+  public abstract void doLocalAccPragma(PragmaBlock pb) throws ACCexception;
 }

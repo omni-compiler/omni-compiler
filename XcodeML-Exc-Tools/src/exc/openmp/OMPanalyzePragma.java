@@ -114,7 +114,7 @@ public class OMPanalyzePragma
 		    case DIR_IF:
 			info.setIfExpr(a.getArg(1));
 			break;
-		    case DATA_FINAL:
+		    case DIR_FINAL:
 			info.setFinalExpr(a.getArg(1));
 			break;
 		    case DIR_NOWAIT:
@@ -224,7 +224,7 @@ public class OMPanalyzePragma
             }
             break;
         case SIMD:
-        case DECLARE:
+            // case DECLARE:
 	    break;	
         case SINGLE: /* single <clause list> */
             for(XobjArgs a = pb.getClauses().getArgs(); a != null; a = a.nextArgs()) {

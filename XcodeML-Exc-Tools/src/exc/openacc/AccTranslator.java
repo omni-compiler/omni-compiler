@@ -7,15 +7,25 @@ import exc.object.*;
 import xcodeml.util.XmOption;
 
 public class AccTranslator implements XobjectDefVisitor {
-  private final ACCglobalDecl _globalDecl;
-  private final AccInfoReader _infoReader;
-  private final AccInfoWriter _infoWriter;
-  private final AccAnalyzer _analyzer;
-  private final AccGenerator _generator;
-  private final AccRewriter _rewrite;
-  private final boolean _onlyAnalyze;
+  public ACCglobalDecl _globalDecl;
+
+  public AccProcessor _infoReader;
+  public AccProcessor _infoWriter; // need?
+  public AccProcessor _analyzer;
+  public AccProcessor _generator;
+  public AccProcessor _rewrite;
+  public boolean _onlyAnalyze;
 
   public AccTranslator(XobjectFile xobjFile, boolean onlyAnalyze){
+    init(xobjFile, onlyAnalyze);
+  }
+
+  public AccTranslator(XobjectFile xobjFile){
+    init(xobjFile, false);
+  }
+  
+  void init(XobjectFile xobjFile, boolean onlyAnalyze){
+    
     if (!XmOption.isLanguageC()) {
       ACC.fatal("current version only supports C language.");
     }
@@ -43,11 +53,11 @@ public class AccTranslator implements XobjectDefVisitor {
   }
 
   private void doFuncDef(FunctionBlock fb){
-    System.out.println("### doFuncDef infoReader ...");
+    if(ACC.debug_flag) System.out.println("### doFuncDef infoReader ...");
     _infoReader.doFuncDef(fb); // infoReader: set info?
     ACC.exitByError();
 
-    System.out.println("### doFuncDef analyzer ...");
+    if(ACC.debug_flag) System.out.println("### doFuncDef analyzer ...");
     _analyzer.doFuncDef(fb); // analyze
     ACC.exitByError();
 
@@ -57,11 +67,11 @@ public class AccTranslator implements XobjectDefVisitor {
       return;
     }
 
-    System.out.println("### doFuncDef generator ...");
-    _generator.doFuncDef(fb);  // geneate
+    if(ACC.debug_flag) System.out.println("### doFuncDef generator ...");
+    _generator.doFuncDef(fb);  // generate
     ACC.exitByError();
 
-    System.out.println("### doFuncDef rewrite ...");
+    if(ACC.debug_flag) System.out.println("### doFuncDef rewrite ...");
     _rewrite.doFuncDef(fb);  // rewrite
     ACC.exitByError();
   }

@@ -51,6 +51,17 @@ public class OMPtoACCDirectiveTeamsDistributeParallelLoop extends OMPtoACCDirect
             case DATA_REDUCTION_BITAND:
             case DATA_REDUCTION_BITOR:
             case DATA_REDUCTION_BITXOR:
+            case DATA_DEFAULT:
+            case DATA_SHARED:
+            case DATA_LASTPRIVATE:
+            case COLLAPSE:
+            case DIST_SCHEDULE:
+            case DATA_COPYIN:
+            case PROC_BIND:
+            case DATA_LINEAR:
+            case DIR_SCHEDULE:
+            case DIR_ORDERED:
+            case DIR_NOWAIT:
                 l = clauseConverters.get(pragmaClause).convert(xobj, clause);
                 break;
             case DIR_IF:
@@ -66,22 +77,6 @@ public class OMPtoACCDirectiveTeamsDistributeParallelLoop extends OMPtoACCDirect
             case DIR_NUM_THREADS:
                 ompNumThreadsClause =
                     clauseConverters.get(pragmaClause).convert(xobj, clause);
-                break;
-            case DATA_DEFAULT:
-            case DATA_SHARED:
-            case DATA_LASTPRIVATE:
-            case COLLAPSE:
-            case DIST_SCHEDULE:
-            case DATA_COPYIN:
-            case PROC_BIND:
-            case DATA_LINEAR:
-            case DIR_SCHEDULE:
-            case DIR_ORDERED:
-            case DIR_NOWAIT:
-                OMP.error((LineNo)xobj.getLineNo(),
-                          "Not implemented clause. ('" +
-                          notImplementedClauseStr(pragmaClause) +
-                          "').");
                 break;
             default:
                 OMP.error((LineNo)xobj.getLineNo(),

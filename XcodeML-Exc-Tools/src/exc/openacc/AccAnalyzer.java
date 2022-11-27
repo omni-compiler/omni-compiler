@@ -10,11 +10,11 @@ class AccAnalyzer extends AccProcessor {
     super(globalDecl, true, false);
   }
 
-  void doGlobalAccPragma(Xobject def) throws ACCexception {
+  public void doGlobalAccPragma(Xobject def) throws ACCexception {
     doAccPragma(def);
   }
 
-  void doLocalAccPragma(PragmaBlock pb) throws ACCexception {
+  public void doLocalAccPragma(PragmaBlock pb) throws ACCexception {
     doAccPragma(pb);
   }
 

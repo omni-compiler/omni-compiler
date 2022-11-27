@@ -48,15 +48,6 @@ public class OMPtoACCDirectiveDistributeParallelLoop extends OMPtoACCDirective {
             case DATA_REDUCTION_BITAND:
             case DATA_REDUCTION_BITOR:
             case DATA_REDUCTION_BITXOR:
-                l = clauseConverters.get(pragmaClause).convert(xobj, clause);
-                break;
-            case DIR_IF:
-                l = clauseConverters.get(pragmaClause).
-                    convert(xobj, clause,
-                            new OMPpragma[]{},
-                            new OMPpragma[]{OMPpragma.PARALLEL_FOR});
-                break;
-
             case DATA_LASTPRIVATE:
             case COLLAPSE:
             case DIST_SCHEDULE:
@@ -68,14 +59,17 @@ public class OMPtoACCDirectiveDistributeParallelLoop extends OMPtoACCDirective {
             case DIR_SCHEDULE:
             case DIR_ORDERED:
             case DIR_NOWAIT:
-                OMP.error((LineNo)xobj.getLineNo(),
-                          "Not implemented clause. ('" +
-                          notImplementedClauseStr(pragmaClause) +
-                          "').");
+                l = clauseConverters.get(pragmaClause).convert(xobj, clause);
                 break;
+            case DIR_IF:
+                l = clauseConverters.get(pragmaClause).
+                    convert(xobj, clause,
+                            new OMPpragma[]{},
+                            new OMPpragma[]{OMPpragma.PARALLEL_FOR});
+                break;
+
             default:
-                OMP.error((LineNo)xobj.getLineNo(),
-                          "Cannot be specified is clause.");
+              OMP.error((LineNo)xobj.getLineNo(),"clause cannot be specified");
                 break;
             }
 

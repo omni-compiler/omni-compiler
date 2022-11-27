@@ -50,14 +50,6 @@ public class OMPtoACCDirectiveTargetParallelLoop extends OMPtoACCDirective {
             case DATA_REDUCTION_BITAND:
             case DATA_REDUCTION_BITOR:
             case DATA_REDUCTION_BITXOR:
-                l = clauseConverters.get(pragmaClause).convert(xobj, clause);
-                break;
-            case DIR_IF:
-                l = clauseConverters.get(pragmaClause).
-                    convert(xobj, clause,
-                            new OMPpragma[]{OMPpragma.TARGET},
-                            new OMPpragma[]{OMPpragma.PARALLEL_FOR});
-                break;
             case TARGET_DEVICE:
             case IS_DEVICE_PTR:
             case DEFAULTMAP:
@@ -72,14 +64,17 @@ public class OMPtoACCDirectiveTargetParallelLoop extends OMPtoACCDirective {
             case DIR_SCHEDULE:
             case COLLAPSE:
             case DIR_ORDERED:
-                OMP.error((LineNo)xobj.getLineNo(),
-                          "Not implemented clause. ('" +
-                          notImplementedClauseStr(pragmaClause) +
-                          "').");
+                l = clauseConverters.get(pragmaClause).convert(xobj, clause);
+                break;
+            case DIR_IF:
+                l = clauseConverters.get(pragmaClause).
+                    convert(xobj, clause,
+                            new OMPpragma[]{OMPpragma.TARGET},
+                            new OMPpragma[]{OMPpragma.PARALLEL_FOR});
                 break;
             default:
                 OMP.error((LineNo)xobj.getLineNo(),
-                          "Cannot be specified is clause.");
+                          "clause be specified");
                 break;
             }
 

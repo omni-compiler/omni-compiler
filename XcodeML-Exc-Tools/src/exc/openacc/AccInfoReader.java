@@ -12,9 +12,10 @@ class AccInfoReader extends AccProcessor{
   //
   // declare and routine pragma
   //
-  void doGlobalAccPragma(Xobject def) throws ACCexception {
+  public void doGlobalAccPragma(Xobject def) throws ACCexception {
     String directiveName = def.getArg(0).getString();
     ACCpragma directive = ACCpragma.valueOf(directiveName);
+    if(ACC.debug_flag) System.out.println("AccInfoReader.doGlobalAccProgram ... pragma="+directiveName);
 
     if(!directive.isGlobalDirective()){
       throw new ACCexception(directive.getName() + " is not global directive");
@@ -34,13 +35,13 @@ class AccInfoReader extends AccProcessor{
       default:
         ACC.fatal("unknown directive: " + directive.getName());
     }
-
   }
 
   // data, parallel, parallel loop, ...
-  void doLocalAccPragma(PragmaBlock pb) throws ACCexception {
+  public void doLocalAccPragma(PragmaBlock pb) throws ACCexception {
     String directiveName = pb.getPragma();
     ACCpragma directive = ACCpragma.valueOf(directiveName);
+    if(ACC.debug_flag) System.out.println("AccInfoReader.doLocalAccProgram ... pragma="+directiveName);
     if(! directive.isLocalDirective()){
       throw new ACCexception(directiveName + " is not local directive");
     }

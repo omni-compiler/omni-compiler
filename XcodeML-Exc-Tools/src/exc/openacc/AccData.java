@@ -5,7 +5,7 @@ import exc.block.*;
 import exc.object.*;
 import java.util.*;
 
-class AccData extends AccDirective {
+public class AccData extends AccDirective {
   private final static String DEVICE_PTR_PREFIX = "_ACC_DEVICE_ADDR_";
   private final static String HOST_DESC_PREFIX = "_ACC_HOST_DESC_";
   final List<Block> initBlockList = new ArrayList<Block>();
@@ -14,11 +14,11 @@ class AccData extends AccDirective {
   final List<Block> finalizeBlockList = new ArrayList<Block>();
   final XobjList idList = Xcons.IDList();
 
-  AccData(ACCglobalDecl decl, AccInformation info, PragmaBlock pb) {
+  public AccData(ACCglobalDecl decl, AccInformation info, PragmaBlock pb) {
     super(decl, info, pb);
   }
 
-  AccData(ACCglobalDecl decl, AccInformation info, XobjectDef def) {
+  public AccData(ACCglobalDecl decl, AccInformation info, XobjectDef def) {
     super(decl, info, def);
   }
 
@@ -51,7 +51,7 @@ class AccData extends AccDirective {
   void generate() throws ACCexception {
     if(isDisabled()) return;
 
-    System.out.println("AccData geneator _info="+_info);
+    // System.out.println("AccData geneator _info="+_info);
 
     for(ACCvar var : _info.getDeclarativeACCvarList()){
       generate(var);
@@ -61,18 +61,18 @@ class AccData extends AccDirective {
   void generate(ACCvar var) throws ACCexception{
     //FIXME
     if(var.getParent() != null){
-      System.out.println("... not geneate: parent var="+var);
+      if(ACC.debug_flag) System.out.println("... not generate: parent var="+var);
       return;
     }
 
-    System.out.println("... geneate var="+var);
+    if(ACC.debug_flag) System.out.println("... generate var="+var);
     {
       // if reduction varaible, not generated here ...
       ACCvar redVar = _info.findReductionACCvar(var.getSymbol());
       if (redVar != null)  return;
     }
 
-    // if priave or firstprivate scalar, not geneated here ...
+    // if priave or firstprivate scalar, not generated here ...
     if(var.isPrivate() || var.isFirstprivate() && !var.isArray()){
       return;
     }
@@ -88,7 +88,7 @@ class AccData extends AccDirective {
       return;
     }
 
-    System.out.println("... geneate block var="+var);
+    if(ACC.debug_flag) System.out.println("... generate block var="+var);
 
     initBlockList.add(makeInitFuncCallBlock(var)); // genate init_func and put it initBlock
 
@@ -192,7 +192,7 @@ class AccData extends AccDirective {
 
   @Override
   void rewrite() throws ACCexception{
-    System.out.println("AccData rewrite _info="+_info);
+    if(ACC.debug_flag) System.out.println("AccData rewrite _info="+_info);
     
     //build
     BlockList beginBody = Bcons.emptyBody();

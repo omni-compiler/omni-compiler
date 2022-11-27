@@ -1,3 +1,4 @@
+/* -*- Mode: java; c-basic-offset:2 ; indent-tabs-mode:nil ; -*- */
 package exc.openacc;
 
 import exc.block.*;
@@ -55,6 +56,7 @@ class AccDeclare extends AccData{
     switch (clauseKind){
     case IF:
     case ASYNC:
+    case WAIT_CLAUSE:
       return true;
     default:
       return clauseKind.isDataClause();

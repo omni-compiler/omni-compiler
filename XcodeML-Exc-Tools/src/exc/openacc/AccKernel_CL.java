@@ -1,3 +1,4 @@
+/* -*- Mode: java; c-basic-offset:2 ; indent-tabs-mode:nil ; -*- */
 package exc.openacc;
 
 import exc.block.*;
@@ -121,6 +122,7 @@ public class AccKernel_CL extends AccKernel {
       }
 
       Ident devicePtrId = var.getDevicePtr();
+      if(ACC.debug_flag) System.out.println("devicePrtId="+devicePtrId);
       Xobject devicePtr = devicePtrId.Ref();
       Xtype elmtType = var.getElementType();
       if(! elmtType.equals(devicePtrId.Type())){
@@ -388,6 +390,10 @@ public class AccKernel_CL extends AccKernel {
         return makeCoreBlock(b.getBody(), deviceKernelBuildInfo);
       }
     }
+
+    case OMP_PRAGMA:
+        return makeCoreBlock(b.getBody(), deviceKernelBuildInfo);
+
     case IF_STATEMENT: {
       if (!outerParallelisms.contains(ACCpragma.VECTOR)) {
         BlockList resultBody = Bcons.emptyBody();
@@ -517,10 +523,8 @@ public class AccKernel_CL extends AccKernel {
     //ACCinfo info = ACCutil.getACCinfo(forBlock);
     AccInformation info = null; //= (AccInformation)forBlock.getProp(AccInformation.prop);
     Block parentBlock = forBlock.getParentBlock();
-    if (parentBlock.Opcode() == Xcode.ACC_PRAGMA) {
-      AccDirective directive = (AccDirective) parentBlock.getProp(AccDirective.prop);
-      info = directive.getInfo();
-    }
+    AccDirective directive = (AccDirective) parentBlock.getProp(AccDirective.prop);
+    if (directive != null)  info = directive.getInfo();
 
     if (info == null || !info.getPragma().isLoop()) {
       return makeSequentialLoop(forBlock, deviceKernelBuildInfo, null);
@@ -770,8 +774,9 @@ public class AccKernel_CL extends AccKernel {
 
    void transLoopCache(CforBlock forBlock, BlockListBuilder resultBlockBuilder, List<Block> cacheLoadBlocks, List<Cache> cacheList) {
     Block headBlock = forBlock.getBody().getHead();
-    if (headBlock != null && headBlock.Opcode() == Xcode.ACC_PRAGMA) {
-      AccDirective directive = (AccDirective)headBlock.getProp(AccDirective.prop);
+    if (headBlock == null)  return;
+    AccDirective directive = (AccDirective)headBlock.getProp(AccDirective.prop);
+    if(directive != null){
       AccInformation headInfo = directive.getInfo();
       if (headInfo.getPragma() == ACCpragma.CACHE) {
         for (ACCvar var : headInfo.getACCvarList()) {
@@ -1170,8 +1175,10 @@ public class AccKernel_CL extends AccKernel {
   ACCvar findParentVar(Ident varId) {
     if (_pb != null) {
       for (Block b = _pb.getParentBlock(); b != null; b = b.getParentBlock()) {
-        if (b.Opcode() != Xcode.ACC_PRAGMA) continue;
-        AccInformation info = ((AccDirective) b.getProp(AccDirective.prop)).getInfo();
+        // if (b.Opcode() != Xcode.ACC_PRAGMA) continue;
+        AccDirective directive = (AccDirective) b.getProp(AccDirective.prop);
+        if(directive == null) continue;
+        AccInformation info = directive.getInfo();
         ACCvar var = info.findACCvar(varId.getSym());
         if (var != null && var.getId() == varId) {
           return var;
@@ -1730,10 +1737,13 @@ public class AccKernel_CL extends AccKernel {
 
     public boolean existsAtomicOperation(){
       ACCpragma op = var.getReductionOperator();
-      switch (var.getId().Type().getBasicType()) {
-      case BasicType.FLOAT:
-      case BasicType.INT:
-        return op != ACCpragma.REDUCTION_MUL;
+      if(ACC.debug_flag) System.out.println("existsAtomicOperation type="+var.getId().Type());
+      if(var.getId().Type().isBasic()){
+        switch (var.getId().Type().getBasicType()) {
+        case BasicType.FLOAT:
+        case BasicType.INT:
+          return op != ACCpragma.REDUCTION_MUL;
+        }
       }
       return false;
     }

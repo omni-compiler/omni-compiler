@@ -1,3 +1,4 @@
+/* -*- Mode: java; c-basic-offset:2 ; indent-tabs-mode:nil ; -*- */
 package exc.openacc;
 
 import exc.object.*;
@@ -675,6 +676,14 @@ class ACCclDecompileWriter extends ACCgpuDecompileWriter {
             typename += "unsigned"; break;
           case BasicType.INT:
             typename += "int"; break;
+          case BasicType.BOOL:
+            typename += "_Bool"; break;
+          case BasicType.FLOAT_COMPLEX:
+            typename += "float _Complex"; break;
+          case BasicType.DOUBLE_COMPLEX:
+            typename += "double _Complex"; break;
+          case BasicType.LONG_DOUBLE_COMPLEX:
+            typename += "long double _Complex"; break;
           default:
             fatal("makeTypeName: bad basic type "+type);
             break;

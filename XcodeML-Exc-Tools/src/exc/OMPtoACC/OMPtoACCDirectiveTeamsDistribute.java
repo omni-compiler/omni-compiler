@@ -49,21 +49,16 @@ public class OMPtoACCDirectiveTeamsDistribute extends OMPtoACCDirective {
             case DATA_REDUCTION_BITAND:
             case DATA_REDUCTION_BITOR:
             case DATA_REDUCTION_BITXOR:
-                l = clauseConverters.get(pragmaClause).convert(xobj, clause);
-                break;
             case DATA_DEFAULT:
             case DATA_SHARED:
             case DATA_LASTPRIVATE:
             case COLLAPSE:
             case DIST_SCHEDULE:
-                OMP.error((LineNo)xobj.getLineNo(),
-                          "Not implemented clause. ('" +
-                          notImplementedClauseStr(pragmaClause) +
-                          "').");
+                l = clauseConverters.get(pragmaClause).convert(xobj, clause);
                 break;
             default:
                 OMP.error((LineNo)xobj.getLineNo(),
-                          "Cannot be specified is clause.");
+                          "clause cannot be specified");
                 break;
             }
 

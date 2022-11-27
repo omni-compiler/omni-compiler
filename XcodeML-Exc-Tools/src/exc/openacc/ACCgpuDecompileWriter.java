@@ -1,3 +1,4 @@
+/* -*- Mode: java; c-basic-offset:2 ; indent-tabs-mode:nil ; -*- */
 package exc.openacc;
 
 import exc.object.*;
@@ -77,7 +78,7 @@ class ACCgpuDecompileWriter extends PrintWriter {
   }
 
   void fatal(String msg) {
-    System.err.println("Fatal XobjectDecompileStream: " + msg);
+    System.err.println("Fatal ACCgpuDecompileWriter: " + msg);
     System.exit(1);
   }
 
@@ -694,37 +695,39 @@ class ACCgpuDecompileWriter extends PrintWriter {
     switch (type.getKind()) {
       case Xtype.BASIC:
         switch(type.getBasicType()){
-          case BasicType.VOID:
-            typename += "void"; break;
-          case BasicType.CHAR:
-            typename += "char"; break;
-          case BasicType.SHORT:
-            typename += "short"; break;
-          case BasicType.LONG:
-            typename += "long"; break;
-          case BasicType.LONGLONG:
-            typename += "long long"; break;
-          case BasicType.UNSIGNED_CHAR:
-            typename += "unsigned char"; break;
-          case BasicType.UNSIGNED_SHORT:
-            typename += "unsigned short"; break;
-          case BasicType.UNSIGNED_LONG:
-            typename += "unsigned long"; break;
-          case BasicType.UNSIGNED_LONGLONG:
-            typename += "unsigned long long"; break;
-          case BasicType.FLOAT:
-            typename += "float"; break;
-          case BasicType.DOUBLE:
-            typename += "double"; break;
-          case BasicType.LONG_DOUBLE:
-            typename += "long double"; break;
-          case BasicType.UNSIGNED_INT:
-            typename += "unsigned"; break;
-          case BasicType.INT:
-            typename += "int"; break;
-          default:
-            fatal("makeTypeName: bad basic type "+type);
-            break;
+        case BasicType.VOID:
+          typename += "void"; break;
+        case BasicType.CHAR:
+          typename += "char"; break;
+        case BasicType.SHORT:
+          typename += "short"; break;
+        case BasicType.LONG:
+          typename += "long"; break;
+        case BasicType.LONGLONG:
+          typename += "long long"; break;
+        case BasicType.UNSIGNED_CHAR:
+          typename += "unsigned char"; break;
+        case BasicType.UNSIGNED_SHORT:
+          typename += "unsigned short"; break;
+        case BasicType.UNSIGNED_LONG:
+          typename += "unsigned long"; break;
+        case BasicType.UNSIGNED_LONGLONG:
+          typename += "unsigned long long"; break;
+        case BasicType.FLOAT:
+          typename += "float"; break;
+        case BasicType.DOUBLE:
+          typename += "double"; break;
+        case BasicType.LONG_DOUBLE:
+          typename += "long double"; break;
+        case BasicType.UNSIGNED_INT:
+          typename += "unsigned"; break;
+        case BasicType.INT:
+          typename += "int"; break;
+        case BasicType.BOOL:
+          typename += "_Bool"; break;
+        default:
+          fatal("makeTypeName: bad basic type "+type);
+          break;
         }
         return typename;
       case Xtype.STRUCT:

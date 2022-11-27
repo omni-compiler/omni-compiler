@@ -27,9 +27,9 @@ class AccManager {
 
     for (blockIterator.init(); !blockIterator.end(); blockIterator.next()) {
       Block b = blockIterator.getBlock();
-      if (b.Opcode() != Xcode.ACC_PRAGMA) continue;
-
+      // if (b.Opcode() != Xcode.ACC_PRAGMA) continue;
       AccDirective directive = (AccDirective)b.getProp(AccDirective.prop);
+      if(directive == null) continue;
       AccInformation info = directive.getInfo(); //(AccInformation) b.getProp(AccInformation.prop);
       if(! info.getPragma().isLoop()) continue;
       CforBlock forBlock = (CforBlock)(b.getBody().getHead());

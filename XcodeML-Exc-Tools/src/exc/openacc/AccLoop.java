@@ -1,14 +1,19 @@
+/* -*- Mode: java; c-basic-offset:2 ; indent-tabs-mode:nil ; -*- */
 package exc.openacc;
 
 import exc.block.*;
 import exc.object.*;
 import java.util.*;
 
-class AccLoop extends AccDirective{
+public class AccLoop extends AccDirective{
   //private boolean useWORKER = false;
   private final List<ACCpragma> parallelismList = Arrays.asList(ACCpragma.GANG, ACCpragma.VECTOR);
 
-  AccLoop(ACCglobalDecl decl, AccInformation info, PragmaBlock pb) {
+  boolean is_omp = false;
+  boolean has_distribute = false;
+  boolean has_simd = false;
+
+  public AccLoop(ACCglobalDecl decl, AccInformation info, PragmaBlock pb) {
     super(decl, info, pb);
   }
 
@@ -62,6 +67,7 @@ class AccLoop extends AccDirective{
     BlockIterator blockIterator = new topdownBlockIterator(mainforBlock.getBody());
     for(blockIterator.init(); !blockIterator.end(); blockIterator.next()){
       Block b = blockIterator.getBlock();
+      // ???? must be fixed
       if(b.Opcode() == Xcode.ACC_PRAGMA){
         PragmaBlock pb = (PragmaBlock)b;
         if(ACCpragma.valueOf(pb.getPragma()).isLoop()) break;
@@ -139,8 +145,9 @@ class AccLoop extends AccDirective{
     BlockIterator blockIterator = new topdownBlockIterator(_pb.getBody());
     for(blockIterator.init(); !blockIterator.end(); blockIterator.next()){
       Block b = blockIterator.getBlock();
-      if(b.Opcode() != Xcode.ACC_PRAGMA) continue;
+      // if(b.Opcode() != Xcode.ACC_PRAGMA) continue;
       AccDirective directive = (AccDirective)b.getProp(AccDirective.prop);
+      if(directive == null) continue;
       AccInformation info = directive.getInfo(); //(AccInformation)b.getProp(AccInformation.prop);
       if(info.getPragma() != ACCpragma.LOOP) continue;
       innerParallelism.addAll(getParallelismSet(info));
@@ -171,8 +178,9 @@ class AccLoop extends AccDirective{
   static Set<ACCpragma> getOuterParallelism(Block block){
     EnumSet<ACCpragma> outerParallelism = EnumSet.noneOf(ACCpragma.class);
     for(Block b = block.getParentBlock(); b != null; b = b.getParentBlock()){
-      if(b.Opcode() != Xcode.ACC_PRAGMA) continue;
+      // if(b.Opcode() != Xcode.ACC_PRAGMA) continue;
       AccDirective directive = (AccDirective)b.getProp(AccDirective.prop);
+      if(directive == null) continue;
       AccInformation info = directive.getInfo(); //(AccInformation)b.getProp(AccInformation.prop);
       if(! info.getPragma().isLoop()){
         if(info.getPragma().isCompute()){
@@ -277,8 +285,12 @@ class AccLoop extends AccDirective{
   boolean isAcceptableClause(ACCpragma clauseKind){
     switch (clauseKind) {
     case GANG:
+    case NUM_GANGS:
     case WORKER:
+    case NUM_WORKERS:
     case VECTOR:
+    case VECT_LEN:
+    case AUTO:
     case COLLAPSE:
     case SEQ:
     case INDEPENDENT:

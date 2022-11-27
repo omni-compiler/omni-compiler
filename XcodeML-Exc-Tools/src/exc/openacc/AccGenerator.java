@@ -10,11 +10,11 @@ class AccGenerator extends AccProcessor{
     super(globalDecl, true, false);
   }
 
-  void doGlobalAccPragma(Xobject def) throws ACCexception {
+  public void doGlobalAccPragma(Xobject def) throws ACCexception {
     doAccPragma(def);
   }
 
-  void doLocalAccPragma(PragmaBlock pb) throws ACCexception {
+  public void doLocalAccPragma(PragmaBlock pb) throws ACCexception {
     doAccPragma(pb);
   }
 
@@ -22,6 +22,6 @@ class AccGenerator extends AccProcessor{
     Object obj = po.getProp(AccDirective.prop);
     if (obj == null) return;
     AccDirective dire = (AccDirective) obj;
-    dire.generate(); // call geneate method.
+    dire.generate(); // call generate method.
   }
 }

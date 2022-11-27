@@ -12,8 +12,10 @@ import exc.openacc.AccTranslator;
 
 import exc.openmp.OMP;
 import exc.openmp.OMPtranslate;
-import exc.OMPtoACC.OMPtoACC;
 import exc.openmp.OMPDDRD;
+
+//import exc.OMPtoACC.OMPtoACC;
+import exc.omptarget.OMPtoAccTranslator;
 
 import exc.xcodeml.XcodeMLtools;
 import exc.xcodeml.XcodeMLtools_F;
@@ -261,37 +263,55 @@ public class omp2
       dumpWriter.close();
     }
 
-    // OpenMP translation
-    if(openMPTarget){
-      // xobjFile.addHeaderLine("#include \"ompc_target.h\""); /* ???? */
-      System.out.println("OpenMP target (OMPtoACC) ...");
-        
-      OMPtoACC ompToAccTranslator = new OMPtoACC(xobjFile);
-      xobjFile.iterateDef(ompToAccTranslator);
+    if(openMP) {
+      OMPtranslate ompTranslator = new OMPtranslate(xobjFile);
+      xobjFile.iterateDef(ompTranslator);
       
       if(OMP.hasErrors())
         System.exit(1);
       
-      ompToAccTranslator.finish();
-      openACC = true; // enable OpenACC pass
-    } else
-      if(openMP) {
-        OMPtranslate ompTranslator = new OMPtranslate(xobjFile);
-        xobjFile.iterateDef(ompTranslator);
+      ompTranslator.finish();
         
-        if(OMP.hasErrors())
-          System.exit(1);
-            
-        ompTranslator.finish();
-        
-        if(xcodeWriter != null) {
-          xobjFile.Output(xcodeWriter);
-          xcodeWriter.flush();
+      if(xcodeWriter != null) {
+        xobjFile.Output(xcodeWriter);
+        xcodeWriter.flush();
+      }
+    } 
+
+    if(openMPTarget){
+      // System.out.println("OpenMP target (only) ...");
+      if(ACC.device == AccDevice.NONE){
+        switch(ACC.platform){
+        case CUDA:
+        case OpenCL:
+          ACC.device = AccDevice.getDevice("Fermi"); // default?
+          break;
         }
-      } 
+      }
+      ACC.init();
+
+      if(accDefaultVectorLength > 0) {
+        ACC.device.setDefaultVectorLength(accDefaultVectorLength);
+      }
+
+      if(accDisableReadOnlyDataCache == true){
+        ACC.device.setUseReadOnlyDataCache(false);
+      }
+
+      //XmOption.setDebugOutput(true);
+      AccTranslator accTranslator = new OMPtoAccTranslator(xobjFile);
+      xobjFile.iterateDef(accTranslator);
+
+      accTranslator.finish();
+      
+      if(xcodeWriter != null) {
+        xobjFile.Output(xcodeWriter);
+        xcodeWriter.flush();
+      }
+    } /* OpenACC */
 
     if(openACC){
-      System.out.println("OpenACC ...");
+      // System.out.println("OpenACC ...");
       if(ACC.device == AccDevice.NONE){
         switch(ACC.platform){
         case CUDA:
