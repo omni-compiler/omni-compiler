@@ -883,7 +883,7 @@ public class AccKernel_CL extends AccKernel {
   }
 
   // make host code to launch the kernel
-   Block makeLaunchFuncBlock(String launchFuncName, XobjectDef deviceKernelDef) {
+  Block makeLaunchFuncBlock(String launchFuncName, XobjectDef deviceKernelDef) {
     XobjList deviceKernelCallArgs = Xcons.List();
     BlockListBuilder blockListBuilder = new BlockListBuilder();
     XobjList confDecl = gpuManager.getBlockThreadSize();
@@ -1408,8 +1408,11 @@ public class AccKernel_CL extends AccKernel {
     }
 
     Reduction addReduction(ACCvar var, EnumSet<ACCpragma> execMethodSet) {
+      System.out.println("addRedction ...");
       Reduction reduction = new Reduction(var, execMethodSet);
       reductionList.add(reduction);
+
+      System.out.println("addRedction neesExternalReduction ="+reduction.needsExternalReduction());
 
       if (!reduction.needsExternalReduction()) return reduction;
 
@@ -1756,6 +1759,7 @@ public class AccKernel_CL extends AccKernel {
 
     public boolean needsExternalReduction(){
 	//      if(ACC.device == AccDevice.PEZYSC) return false;
+      System.out.println("existsAtomicOperation()="+existsAtomicOperation());
 
       return !existsAtomicOperation() && execMethodSet.contains(ACCpragma.GANG);
     }

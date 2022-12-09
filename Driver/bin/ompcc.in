@@ -89,6 +89,7 @@ else
 	OMNI_CPP_OPT="$OMNI_CPP_OPT ${OPENMP_DEF}"
     fi
 fi
+
 for c_file in "${c_files[@]}"; do
     C_FILE=("${c_file}")
     FILE_NAME=`omni_c_norm_file_name "${C_FILE}"`     # ./hoge/fuga.c -> hoge_2f_fuga_2f_a
@@ -111,6 +112,7 @@ for c_file in "${c_files[@]}"; do
 	fi
     fi
 done
+
 [ "$STOP_PP" = true ] && exit 0;
 [ "$ONLY_PP" = true -a "$ENABLE_DEBUG" = true ] && exit 0;          # ompcc -E --debug hoge.c (save $TMP_DIR)
 [ "$ONLY_PP" = true ] && { omni_exec rm -rf $TEMP_DIR; exit 0; }  # ompcc -E hoge.c
@@ -134,22 +136,22 @@ if [ "$ENABLE_ACC" = true ]; then
     [ "$DEFAULT_VECLEN" != "" ] && OMNI_CX2X_OPT="$OMNI_CX2X_OPT -default-veclen=${DEFAULT_VECLEN}"
     OMNI_CX2X_OPT="$OMNI_CX2X_OPT -platform=$OPENACC_PLATFORM"
     OMNI_CX2X_OPT="$OMNI_CX2X_OPT -device=$OPENACC_DEVICE"
-else
+else # not OPENACC
     if [ "$ENABLE_TARGET" = false ]; then
         OMNI_CX2X_OPT="$OMNI_CX2X_OPT -fopenmp"
-
+    else
         # In case --enable-openacc option of configure is set.
         # ENABLE_ACC_OPT: "0" is true, "1" is false.
-        if [ "${ENABLE_ACC_OPT}" == 0 ]; then
-            # Set OpenACC options for OpenMP to OpenACC convert.
-            [ "$DISABLE_LDG" = true ] && OMNI_CX2X_OPT="$OMNI_CX2X_OPT -no-ldg"
-            [ "$DEFAULT_VECLEN" != "" ] && OMNI_CX2X_OPT="$OMNI_CX2X_OPT -default-veclen=${DEFAULT_VECLEN}"
-            OMNI_CX2X_OPT="$OMNI_CX2X_OPT -platform=$OPENACC_PLATFORM"
-            OMNI_CX2X_OPT="$OMNI_CX2X_OPT -device=$OPENACC_DEVICE"
-        fi
+        # Set OpenACC options for OpenMP to OpenACC convert.
+        [ "$DISABLE_LDG" = true ] && OMNI_CX2X_OPT="$OMNI_CX2X_OPT -no-ldg"
+        [ "$DEFAULT_VECLEN" != "" ] && OMNI_CX2X_OPT="$OMNI_CX2X_OPT -default-veclen=${DEFAULT_VECLEN}"
+        OMNI_CX2X_OPT="$OMNI_CX2X_OPT -platform=$OPENACC_PLATFORM"
+        OMNI_CX2X_OPT="$OMNI_CX2X_OPT -device=$OPENACC_DEVICE"
+	ENABLE_ACC=true
     fi
 fi
 
+### translator ###
 [ "$ENABLE_TARGET" = true ] && xcode_translator_add_opt+=("-fopenmp-target")
 for c_file in "${c_files[@]}"; do
     C_FILE=("${c_file}")
@@ -178,7 +180,7 @@ fi
 [ "$STOP_BACKEND" = true ] && exit 0;
 
 ### Native Compiler ###
-# If the openmp and *.cu, *.cl files exist,
+# If the openmp and *.cu, *.ccl files exist,
 # link the openmp library with the openacc library.
 
 # ENABLE_ACC_OPT: "0" is true, "1" is false.
@@ -194,6 +196,7 @@ elif [ "${ENABLE_LINK_OMP_ACC_LIBS}" = true ]; then
 else
     OMNI_CC_OPT="$OMNI_CC_OPT ${OPENMP_DEF}"
 fi
+
 for c_file in "${c_files[@]}"; do
     C_FILE=("${c_file}")
     FILE_NAME=`omni_c_norm_file_name "${C_FILE}"`     # ./hoge/fuga.c -> hoge_2f_fuga_2f_a
@@ -201,12 +204,10 @@ for c_file in "${c_files[@]}"; do
     FILE_O=${TEMP_DIR}/"${FILE_NAME}".o
     FILE_USER_O=`basename "${C_FILE}" .c`.o
 
-    if [ "$ENABLE_TARGET" = true ]; then
-      omni_exec $OMNI_CC_CMD $OMNI_CC_OPT "${native_add_opt[@]}" "${other_args[@]}" "${FILE_C}"
-    else
-      omni_exec $OMNI_CC_CMD $OMNI_CC_OPT "${native_add_opt[@]}" "${other_args[@]}" "${FILE_C}" -o "${FILE_O}"
-    fi
-    
+#    echo compile ... "$OPENACC_PLATFORM"
+
+    omni_exec $OMNI_CC_CMD $OMNI_CC_OPT "${native_add_opt[@]}" "${other_args[@]}" "${FILE_C}" -o "${FILE_O}"
+
     ### GPU Compiler ###
     if [ "$OPENACC_PLATFORM" = "CUDA" ]; then
 	FILE_CU=${TEMP_DIR}/"${FILE_NAME}"_pp.cu
@@ -220,14 +221,21 @@ for c_file in "${c_files[@]}"; do
 	if [ -e "${FILE_CL}" ]; then
 	    omni_acc_opencl_compile ${FILE_CL} ${FILE_O} -n ${FILE_NAME}_pp
 	fi
+    elif [ "$OPENACC_PLATFORM" = "FPGA" ]; then
+	FILE_CL=${TEMP_DIR}/"${FILE_NAME}"_pp.cl
+	if [ -e "${FILE_CL}" ]; then
+	    omni_acc_opencl_compile ${FILE_CL} ${FILE_O} -n ${FILE_NAME}_pp
+	fi
     fi
+
+#echo Enable_Target "$ENABLE_TARGET" "${FILE_USER_O}"
 
     if [ "$ENABLE_LINKER" = false -a "${output_file}" != "" ]; then
         omni_exec mv "${FILE_O}" "${output_file}"  # only a single file is created.
     else
 #        [ "$ENABLE_TARGET" = false ] && omni_exec cp "${FILE_O}" "${FILE_USER_O}"
- 	omni_exec cp "${FILE_O}" "${FILE_USER_O}"
- 	obj_files+=("${FILE_USER_O}")
+	omni_exec cp "${FILE_O}" "${FILE_USER_O}"
+	obj_files+=("${FILE_USER_O}")
     fi
 done
 
@@ -245,12 +253,15 @@ done
 #     else
 # 	FILE_O=${TEMP_DIR}/"${FILE_NAME}".o
 #     fi
+# #    FILE_O=${TEMP_DIR}/"${FILE_NAME}".o
 #     obj_files+=("${FILE_O}")
 # done
 
 if [ "$ENABLE_ACC" = true -o "${ENABLE_LINK_OMP_ACC_LIBS}" = true ]; then
     OMNI_TRAVERSE_OPT="--C --nm ${NM} --prefix acc"
     if [ "$OPENACC_PLATFORM" = "OpenCL" ]; then
+	OMNI_TRAVERSE_OPT+=" --platform OpenCL ";
+    elif [ "$OPENACC_PLATFORM" = "FPGA" ]; then
 	OMNI_TRAVERSE_OPT+=" --platform OpenCL ";
     fi
     TRAVERSE_FILE_C=${TEMP_DIR}/omni_traverse_${PID}.c
@@ -265,6 +276,8 @@ if [ "$ENABLE_ACC" = true ]; then
 	OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_CUDA_LIB"
     elif [ "$OPENACC_PLATFORM" = "OpenCL" ]; then
 	OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_OPENCL_LIB"
+    elif [ "$OPENACC_PLATFORM" = "FPGA" ]; then
+	OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_OPENCL_LIB"
     fi
     obj_files+=("$TRAVERSE_FILE_O")
 elif [ "${ENABLE_LINK_OMP_ACC_LIBS}" = true ]; then
@@ -272,8 +285,8 @@ elif [ "${ENABLE_LINK_OMP_ACC_LIBS}" = true ]; then
 	    OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_CUDA_LIB"
     elif [ "$OPENACC_PLATFORM" = "OpenCL" ]; then
 	    OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_OPENCL_LIB"
-    elif [ "$OPENACC_PLATFORM" = "PZCL" ]; then
-	    OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_PZCL_LIB"
+    elif [ "$OPENACC_PLATFORM" = "FPGA" ]; then
+	    OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_OPENCL_LIB"
     fi
     obj_files+=("$TRAVERSE_FILE_O")
 

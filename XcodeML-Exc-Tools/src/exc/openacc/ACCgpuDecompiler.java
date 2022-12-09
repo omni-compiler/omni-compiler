@@ -56,6 +56,7 @@ class ACCgpuDecompiler {
         writer = new ACCgpuDecompileWriter(w,envDevice);
         break;
       case OpenCL:
+      case FPGA:
         filename += OPENCL_SRC_EXTENSION;
         envDevice.setProgramAttributes(filename, "OpenCL", "", "", "");
         w = new BufferedWriter(new FileWriter(filename), BUFFER_SIZE);

@@ -72,6 +72,7 @@ public class ACC {
   public enum Platform{
     CUDA,
     OpenCL,
+    FPGA,
   }
 
   // get/allocate AccKernel object according to platform
@@ -81,6 +82,8 @@ public class ACC {
     switch (ACC.platform){
     case OpenCL:
       return new AccKernel_CL(decl, pb, info, kernelBlocks);
+    case FPGA:
+      return new AccKernel_FPGA(decl, pb, info, kernelBlocks);
     case CUDA:
     default:
       return new AccKernel(decl, pb, info, kernelBlocks);
