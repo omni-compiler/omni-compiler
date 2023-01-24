@@ -326,7 +326,42 @@ public class ACCglobalDecl{
         body.add(kernelInitFuncId.Call(args));
         addGlobalConstructor(Bcons.COMPOUND(body).toXobject());
       }
+      break;
+    case FPGA:
+      { //init
+        boolean embedKernel = true;
+        Ident kernelInitFuncId = ACCutil.getMacroFuncId(embedKernel? ACC_KERNELS_INIT_MEM_FUNC_NAME : ACC_KERNELS_INIT_FUNC_NAME, Xtype.voidType);
+        XobjList nameList = Xcons.List();
+        for(String name : _kernelNames){
+          nameList.add(Xcons.StringConstant(name));
+        }
+        BlockList body = Bcons.emptyBody();
+        Ident kernelNamesId = body.declLocalIdent("_ACC_kernel_names", Xtype.Array(Xtype.stringType, numKernels),
+                                                  StorageClass.AUTO, nameList);
+        String fileName = _env_device.getSourceFileName();
+        if(! embedKernel){
+          fileName = new File(fileName).getName();
+        }
+
+        XobjList args = Xcons.List(Xcons.AddrOf(_programId.getAddr()));
+        if(embedKernel){
+          fileName = getSourceBaseName();
+          String varNameCommon = "_binary___omni_tmp___" + fileName.replaceAll("\\.|/", "_");
+          Ident startId = _env.declExternIdent(varNameCommon + "_cl_start", Xtype.Pointer(Xtype.charType));
+          Ident endId = _env.declExternIdent(varNameCommon + "_cl_end", Xtype.Pointer(Xtype.charType));
+          args.add(startId.Ref());
+          args.add(endId.Ref());
+        }else{
+          args.add(Xcons.StringConstant(fileName));
+        }
+        args.add(Xcons.IntConstant(numKernels));
+        args.add(kernelNamesId.Ref());
+        body.add(kernelInitFuncId.Call(args));
+        addGlobalConstructor(Bcons.COMPOUND(body).toXobject());
+      }
+      break;
     default:
+      ACC.fatal("unknown platform");
     }
 
     { //finalize

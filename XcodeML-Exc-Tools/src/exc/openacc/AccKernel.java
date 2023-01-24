@@ -2475,7 +2475,6 @@ public class AccKernel {
 
     public boolean needsExternalReduction(){
 	//      if(ACC.device == AccDevice.PEZYSC) return false;
-
       return !existsAtomicOperation() && execMethodSet.contains(ACCpragma.GANG);
     }
   } // end of Reduction

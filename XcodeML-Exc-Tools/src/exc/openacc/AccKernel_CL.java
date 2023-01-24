@@ -1412,7 +1412,7 @@ public class AccKernel_CL extends AccKernel {
       Reduction reduction = new Reduction(var, execMethodSet);
       reductionList.add(reduction);
 
-      System.out.println("addRedction neesExternalReduction ="+reduction.needsExternalReduction());
+      System.out.println("addRedction needsExternalReduction ="+reduction.needsExternalReduction());
 
       if (!reduction.needsExternalReduction()) return reduction;
 
@@ -1739,15 +1739,16 @@ public class AccKernel_CL extends AccKernel {
     }
 
     public boolean existsAtomicOperation(){
-      ACCpragma op = var.getReductionOperator();
-      if(ACC.debug_flag) System.out.println("existsAtomicOperation type="+var.getId().Type());
-      if(var.getId().Type().isBasic()){
-        switch (var.getId().Type().getBasicType()) {
-        case BasicType.FLOAT:
-        case BasicType.INT:
-          return op != ACCpragma.REDUCTION_MUL;
-        }
-      }
+      // should be fixed!!!
+      // ACCpragma op = var.getReductionOperator();
+      // if(ACC.debug_flag) System.out.println("existsAtomicOperation type="+var.getId().Type());
+      // if(var.getId().Type().isBasic()){
+      //   switch (var.getId().Type().getBasicType()) {
+      //   case BasicType.FLOAT:
+      //   case BasicType.INT:
+      //     return op != ACCpragma.REDUCTION_MUL;
+      //   }
+      // }
       return false;
     }
 
@@ -1759,7 +1760,8 @@ public class AccKernel_CL extends AccKernel {
 
     public boolean needsExternalReduction(){
 	//      if(ACC.device == AccDevice.PEZYSC) return false;
-      System.out.println("existsAtomicOperation()="+existsAtomicOperation());
+      System.out.println("needsExternalReduction existsAtomicOperation()="+existsAtomicOperation());
+      System.out.println("needsExternalReduction GANG?="+execMethodSet.contains(ACCpragma.GANG));
 
       return !existsAtomicOperation() && execMethodSet.contains(ACCpragma.GANG);
     }
