@@ -106,20 +106,24 @@ public class OMPtoAccInformation extends AccInformation {
       {
         String map_type = arg.getArg(0).getString();
         
-        if(map_type.equals("from")) /* COPYIN */
-          return new VarListClause(ACCpragma.COPYIN,arg.getArg(1));
-        if(map_type.equals("tofrom")) /* COPYIN */
-          return new VarListClause(ACCpragma.COPY,arg.getArg(1));
         if(map_type.equals("to")) /* COPYIN */
+          return new VarListClause(ACCpragma.COPYIN,arg.getArg(1));
+        if(map_type.equals("tofrom")) /* COPY */
+          return new VarListClause(ACCpragma.COPY,arg.getArg(1));
+        if(map_type.equals("from")) /* COPYOUT */
           return new VarListClause(ACCpragma.COPYOUT,arg.getArg(1));
-        /* alloc, release, delete + always*/
+        if(map_type.equals("alloc")) /* CREATE */
+          return new VarListClause(ACCpragma.CREATE,arg.getArg(1));
+        /* release, delete + always*/
 
         OMPTarget.fatal("unknown TARGET_DATA_MAP map_type="+map_type);
       }
       break;
 
-    case DATA_DEFAULT:   /* default(shared|none) */
     case DATA_PRIVATE:   /* private(list) */
+      return new VarListClause(ACCpragma.PRIVATE,arg);
+
+    case DATA_DEFAULT:   /* default(shared|none) */
     case DATA_SHARED:    /* shared(list) */
     case DATA_FIRSTPRIVATE: /* firstprivate(list) */
     case DATA_LASTPRIVATE:  /* lastprivate(list) */

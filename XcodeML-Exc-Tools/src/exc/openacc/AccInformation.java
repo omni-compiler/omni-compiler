@@ -225,10 +225,13 @@ public class AccInformation {
 
     @Override
     void validate(AccDirective directive) throws ACCexception{
+      // System.out.println("VarListClause directive="+directive);
       super.validate(directive);
+      // System.out.println("VarListClause validate="+varList);
       for(ACCvar var : varList){
         directive.setVarIdent(var);
       }
+      // System.out.println("VarListClause validate end ...");
     }
 
     @Override
@@ -248,11 +251,11 @@ public class AccInformation {
     _pragma = pragma;
     default_var_attr = ACCpragma.NONE;
 
+    if(pragma == ACCpragma.NONE) return; // for OMPtoACC
+
     if(ACC.debug_flag) System.out.println("AccInformation: pragma="+pragma+" args="+arg);
     
     switch(pragma){
-    case NONE:
-      return; // for OMPtoACC
     case WAIT:
     case CACHE:
     // case SYNC:

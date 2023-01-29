@@ -20,8 +20,9 @@ class AccAnalyzer extends AccProcessor {
 
   void doAccPragma(PropObject po) throws ACCexception {
     Object obj = po.getProp(AccDirective.prop);
-    if (obj == null) return;
+    if (obj == null)  return;
     AccDirective dire = (AccDirective) obj;
+    // System.out.println("doAccPragma dire="+dire);
     dire.analyze(); // call analyze method.
   }
 }

@@ -7,7 +7,7 @@ import java.util.*;
 
 public class AccParallel extends AccData {
   private Block _parallelBlock;
-  private final AccKernel _accKernel;
+  private AccKernel _accKernel;
 
   public AccParallel(ACCglobalDecl decl, AccInformation info, PragmaBlock pb) {
     super(decl, info, pb);
@@ -26,9 +26,10 @@ public class AccParallel extends AccData {
     completeParallelism();
 
     //analyze and complete clause for kernel
-    if(ACC.debug_flag) System.out.println("AccParallel _acKernel.analyze ...");
+    if(ACC.debug_flag) System.out.println("AccParallel _accKernel.analyze ...");
     _accKernel.analyze();
 
+    if(ACC.debug_flag) System.out.println("AccParallel search var set ...");
     //set unspecified var's attribute from outerIdSet
     //TODO do these process at analyze
     Set<Ident> readOnlyOuterIdSet = _accKernel.getReadOnlyOuterIdSet();
@@ -58,9 +59,13 @@ public class AccParallel extends AccData {
           _info.addVar(default_var_attr, Xcons.Symbol(Xcode.VAR, varName)); 
       }
     }
+    
+    if(ACC.debug_flag) System.out.println("AccParallel _accKernel.analyze ... end");
 
     //this is the end of analyze
     super.analyze();
+
+    if(ACC.debug_flag) System.out.println("AccParallel _accKernel.analyze ... ret");
   }
 
   private boolean isReductionVariableInKernel(Ident id)

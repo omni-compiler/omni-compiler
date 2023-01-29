@@ -23,6 +23,7 @@ class AccManager {
   }
 
   public void analyze(){
+    if(ACC.debug_flag) System.out.println("gpuMananger analysis ... ");
     topdownBlockIterator blockIterator = new topdownBlockIterator(_pb);
 
     for (blockIterator.init(); !blockIterator.end(); blockIterator.next()) {

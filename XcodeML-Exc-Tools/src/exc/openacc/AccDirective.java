@@ -35,11 +35,12 @@ public abstract class AccDirective {
   }
 
   void analyze() throws ACCexception {
-    if(ACC.debug_flag) System.out.println("AccDirctive: analyze _info="+_info);
+    if(ACC.debug_flag) System.out.println("AccDirective: analyze _info="+_info);
     _info.validate(this);
   }
 
   void setVarIdent(ACCvar var) throws ACCexception{
+    if(ACC.debug_flag) System.out.println("setVarIdent var="+var);
     String symbol = var.getSymbol();
     Ident id = findVarIdent(symbol);
     if(id == null){
@@ -47,6 +48,7 @@ public abstract class AccDirective {
     }
 
     ACCvar parentVar = findParentVar(id);
+    if(ACC.debug_flag) System.out.println("setVarIdent var="+var+" parentVar="+parentVar);
     if(parentVar != null && var != parentVar){
       var.setParent(parentVar);
     }else{
@@ -61,11 +63,17 @@ public abstract class AccDirective {
   abstract void rewrite() throws ACCexception;
 
   Ident findVarIdent(String symbol){
+    Ident id;
+    if(ACC.debug_flag)
+      System.out.println("findVarIdent symbol="+symbol+" _pb_is_null="+(_pb==null)
+                         +" _isloop="+_info.getPragma().isLoop());
     if(_pb == null) return _decl.findVarIdent(symbol);
     if(_info.getPragma().isLoop()){
-      return _pb.getBody().getHead().findVarIdent(symbol);
-    }
-    return _pb.findVarIdent(symbol);
+      id = _pb.getBody().getHead().findVarIdent(symbol);
+    } else 
+      id = _pb.findVarIdent(symbol);
+    if(ACC.debug_flag) System.out.println("findVarIdent ret id="+id);
+    return id;
   }
 
   ACCvar findParentVar(Ident varId){
@@ -74,8 +82,10 @@ public abstract class AccDirective {
       if(var != null) return var;
     }
 
+    if(ACC.debug_flag) System.out.println("findPeranttVar search begin ... _pb.op="+_pb.Opcode());
     if(_pb != null) {
       for (Block b = _pb.getParentBlock(); b != null; b = b.getParentBlock()) {
+        // System.out.println("findPeranttVar search bp="+b.Opcode());
         AccDirective directive = getPropDirective(b);
         if(directive == null) continue;
         //if(b.Opcode() != Xcode.ACC_PRAGMA) continue;
@@ -85,6 +95,7 @@ public abstract class AccDirective {
           return var;
         }
       }
+      // System.out.println("findPeranttVar search end ...");
       
       ACCvar var = _decl.findACCvar(varId);
       if(var != null){
