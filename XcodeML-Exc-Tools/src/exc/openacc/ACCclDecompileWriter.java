@@ -804,7 +804,7 @@ class ACCclDecompileWriter extends ACCgpuDecompileWriter {
           if(t.isGlobal()){ // global pointer
             decltype += "__global ";
           }
-          if(t.isLocal()){ // global pointer
+          if(t.isLocal()){ // local pointer
             decltype += "__local ";
           }
 

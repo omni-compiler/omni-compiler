@@ -844,7 +844,7 @@ public class Xtype
         setTypeQualFlag(TQ_GLOBAL, enabled);
     }
 
-    /** set qualifier '__global' (OpenCL) */
+    /** set qualifier '__local' (OpenCL) */
     public final void setIsLocal(boolean enabled)
     {
         setTypeQualFlag(TQ_LOCAL, enabled);
