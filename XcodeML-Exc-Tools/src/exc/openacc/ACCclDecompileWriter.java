@@ -804,6 +804,9 @@ class ACCclDecompileWriter extends ACCgpuDecompileWriter {
           if(t.isGlobal()){ // global pointer
             decltype += "__global ";
           }
+          if(t.isLocal()){ // global pointer
+            decltype += "__local ";
+          }
 
           decltype += "*";
           if (t.isConst()) {
@@ -842,6 +845,9 @@ class ACCclDecompileWriter extends ACCgpuDecompileWriter {
       {
         if(t.isGlobal()){ // global array
           decltype += "__global ";
+        }
+        if(t.isLocal()){ // local array
+          decltype += "__local ";
         }
 
         if (!decls.empty() && ((Xtype)decls.peek()).getKind() == Xtype.FUNCTION) {

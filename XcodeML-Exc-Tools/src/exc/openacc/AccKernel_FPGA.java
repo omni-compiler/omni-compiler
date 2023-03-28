@@ -25,7 +25,7 @@ public class AccKernel_FPGA extends AccKernel {
     reductionManager = new ReductionManager();
     _globalMemoryStack = new StackMemory("_ACC_gmem_stack", Ident.Param("_ACC_gmem_stack_addr", Xtype.voidPtrType));
   }
-  
+
   public Block makeLaunchFuncCallBlock() {
     List<Block> kernelBody = _kernelBlocks;
 
@@ -204,7 +204,7 @@ public class AccKernel_FPGA extends AccKernel {
     //make params
     //add paramId from outerId
     for (Ident id : outerIdList) {
-      // System.out.println("id="+id);
+      System.out.println("makeDeviceKernelDef() [id = " + id + "]");
       if (ACC.device.getUseReadOnlyDataCache() && _readOnlyOuterIdSet.contains(id)
 	  && (id.Type().isArray() || id.Type().isPointer())) {
         //System.out.println("make const id="+id);
@@ -216,9 +216,17 @@ public class AccKernel_FPGA extends AccKernel {
 	arrayPtrType.setIsGlobal(true);
         Ident localId = Ident.Local(id.getName(), arrayPtrType);
         Xobject initialize = Xcons.Set(localId.Ref(), Xcons.Cast(arrayPtrType, constParamId.Ref()));
+
+        System.out.println("makeDeviceKernelDef() [initialize = " + initialize.toString() + "]");
+
         kernelBuildInfo.addParamId(constParamId);
 
         ACCvar accvar = _kernelInfo.findACCvar(id.getSym());
+
+        if(accvar != null) {
+          System.out.println("makeDeviceKernelDef() [accvar pattern 1 = " + accvar.getName() + "]");
+        }
+
         if(accvar != null && accvar.isFirstprivate())
           localId.setProp(ACCgpuDecompiler.GPU_STORAGE_SHARED, true);
         kernelBuildInfo.addLocalId(localId);
@@ -226,6 +234,11 @@ public class AccKernel_FPGA extends AccKernel {
       } else {
         Ident localId = makeParamId_new(id);
         ACCvar accvar = _kernelInfo.findACCvar(id.getSym());
+
+        if (accvar != null) {
+          System.out.println("makeDeviceKernelDef() [accvar pattern 2 = " + accvar.getName() + "]");
+        }
+
         if(accvar != null && accvar.isFirstprivate())
           localId.setProp(ACCgpuDecompiler.GPU_STORAGE_SHARED, true);
         kernelBuildInfo.addParamId(localId);
@@ -255,6 +268,9 @@ public class AccKernel_FPGA extends AccKernel {
 
     //if block reduction is used
     for(Xobject x : reductionManager.getBlockReductionLocalIds()){
+
+      System.out.println("makeDeviceKernelDef() [block reduction x = " + x.toString() + "]");
+
       kernelBuildInfo.addLocalId((Ident) x);
     }
 
@@ -284,6 +300,9 @@ public class AccKernel_FPGA extends AccKernel {
 
     BlockList result = Bcons.emptyBody(kernelBuildInfo.getLocalIdList(), null);
     for(Block b : kernelBuildInfo.getInitBlockList()){
+
+      System.out.println("makeDeviceKernelDef() [init block b = " + b.toString() + "]");
+
       result.add(b);
     }
     result.add(deviceKernelMainBlock);
@@ -551,6 +570,10 @@ public class AccKernel_FPGA extends AccKernel {
 //      return Bcons.FOR(forBlock.getInitBBlock(), forBlock.getCondBBlock(), forBlock.getIterBBlock(), body);
     }
 
+    if(true) {
+      return makeSequentialLoop(forBlock, deviceKernelBuildInfo, info);
+    }
+
     List<Block> cacheLoadBlocks = new ArrayList<Block>();
 
     LinkedList<CforBlock> collapsedForBlockList = new LinkedList<CforBlock>();
@@ -629,9 +652,13 @@ public class AccKernel_FPGA extends AccKernel {
     //while (vars.hasNext()) {
     //ACCvar var = vars.next();
     for (ACCvar var : info.getACCvarList()) {
+
+      System.out.println("makeCoreBlockForStatement() [ACCvar var = " + var.getName() + "]");
+
       if (!var.isReduction()) continue;
 
       Reduction reduction = reductionManager.addReduction(var, execMethodSet);
+
       if(_readOnlyOuterIdSet.contains(var.getId())){
         ACC.fatal("reduction variable is read-only, isn't it?");
       }
@@ -640,6 +667,7 @@ public class AccKernel_FPGA extends AccKernel {
         resultBlockBuilder.addInitBlock(reduction.makeInitReductionVarFuncCall());
         resultBlockBuilder.addFinalizeBlock(reduction.makeInKernelReductionFuncCall(null));
       }
+
       reductionList.add(reduction);
     }//end reduction
 
@@ -745,11 +773,10 @@ public class AccKernel_FPGA extends AccKernel {
     }
 
     Block parallelLoopBlock = Bcons.FOR(
-            Xcons.Set(iterIdx.Ref(), iterInit.Ref()),
-            Xcons.binaryOp(Xcode.LOG_LT_EXPR, iterIdx.Ref(), iterCond.Ref()),
-            Xcons.asgOp(Xcode.ASG_PLUS_EXPR, iterIdx.Ref(), iterStep.Ref()),
-            Bcons.COMPOUND(parallelLoopBody)
-    );
+        Xcons.Set(iterIdx.Ref(), iterInit.Ref()),
+        Xcons.binaryOp(Xcode.LOG_LT_EXPR, iterIdx.Ref(), iterCond.Ref()),
+        Xcons.asgOp(Xcode.ASG_PLUS_EXPR, iterIdx.Ref(), iterStep.Ref()),
+        Bcons.COMPOUND(parallelLoopBody));
 
     //rewriteReductionvar
     for (Reduction red : reductionList) {
@@ -762,7 +789,20 @@ public class AccKernel_FPGA extends AccKernel {
     if (hasGangSync && execMethodSet.contains(ACCpragma.GANG)){
       resultBlockBuilder.addFinalizeBlock(Bcons.Statement(_accSyncGangs));
     } else if (execMethodSet.contains(ACCpragma.VECTOR)) {
-      resultBlockBuilder.addFinalizeBlock(Bcons.Statement(_accSyncThreads));
+      // resultBlockBuilder.addFinalizeBlock(Bcons.Statement(_accSyncThreads));
+      // System.out.println("makeCoreBlockForStatement() [_accSyncThreads = " + _accSyncThreads.toString() + " ]");
+
+      Iterator<Reduction> reductionIterator = reductionManager.BlockReductionIterator();
+      while(reductionIterator.hasNext()) {
+        Reduction reduction = reductionIterator.next();
+        Xtype constParamType = reduction.varId.Type();
+        System.out.println("makeCoreBlockForStatement() [reduction.varId.Type() = " + constParamType.toString() + "]");
+        Ident constParamId = Ident.Param(reduction.var.toString(), constParamType);
+        Ident localId = reduction.localVarId;
+
+        Xobject finalize = Xcons.Set(constParamId.Ref(), localId.Ref());
+        resultBlockBuilder.addFinalizeBlock(Bcons.Statement(finalize));
+      }
     }
 
     //pop stack
@@ -805,6 +845,8 @@ public class AccKernel_FPGA extends AccKernel {
    Block makeSequentialLoop(CforBlock forBlock, DeviceKernelBuildInfo deviceKernelBuildInfo, AccInformation info) {
     loopStack.push(new Loop(forBlock));
     BlockList body = Bcons.blockList(makeCoreBlock(forBlock.getBody(), deviceKernelBuildInfo));
+    System.out.println("makeSequentialLoop() [body = " + body.toString() + "]");
+
     loopStack.pop();
 
     forBlock.Canonicalize();
@@ -822,6 +864,14 @@ public class AccKernel_FPGA extends AccKernel {
     BlockList resultBody = Bcons.emptyBody();
     if(info != null){
       for(ACCvar var : info.getACCvarList()){
+        if(var.isArray()) {
+          System.out.println("makeSequentialLoop() [var = " + var.toString() + "]");
+          System.out.println("makeSequentialLoop() [var.getSize() = " + var.getSize().toString() + "]");
+          XobjList rangelist = var.getSubscripts();
+          for(Xobject subscript : rangelist) {
+            System.out.println("makeSequentialLoop() [subscript.getArg(1) = " + subscript.getArg(1).toString() + "]");
+          }
+        }
         if(var.isPrivate()){
           if(var.getId() != originalInductionVarId) {
             resultBody.declLocalIdent(var.getName(), var.getId().Type());
@@ -1000,7 +1050,7 @@ public class AccKernel_FPGA extends AccKernel {
       Block reductionKernelCallBlock = Bcons.emptyBlock();
 
       BlockList body = Bcons.emptyBody();
-      kernelName = reductionKernelDef.getName(); 
+      kernelName = reductionKernelDef.getName();
       kernelConf = body.declLocalIdent("_ACC_conf", Xtype.Array(Xtype.intType, null),
                                              StorageClass.AUTO,
                                              Xcons.List(num_gangs.Ref(), num_workers.Ref(), vec_len.Ref()));
@@ -1104,6 +1154,8 @@ public class AccKernel_FPGA extends AccKernel {
 
   Ident makeParamId_new(Ident id) {
     String varName = id.getName();
+
+    System.out.println("makeParamId_new() [varName = " + varName + "]");
 
     switch (id.Type().getKind()) {
     case Xtype.ARRAY: {
@@ -1356,8 +1408,22 @@ public class AccKernel_FPGA extends AccKernel {
       Iterator<Reduction> blockRedIter = reductionManager.BlockReductionIterator();
       while (blockRedIter.hasNext()) {
         Reduction reduction = blockRedIter.next();
+        System.out.println("makeLocalVarInitFuncs() [reduction.var = " + reduction.var.toString() + "]");
+        System.out.println("makeLocalVarInitFuncs() [reduction.locVarID = " + reduction.locVarId.toString() + "]");
+        System.out.println("makeLocalVarInitFuncs() [reduction.localVarID = " + reduction.localVarId.toString() + "]");
 	if(reduction.onlyKernelLast()){
-          body.add(reduction.makeInitReductionVarFuncCall());
+          Xtype constParamType = reduction.varId.Type();
+          System.out.println("makeLocalVarInitFuncs() [reduction.varId.Type() = " + constParamType.toString() + "]");
+          Ident constParamId = Ident.Param(reduction.var.toString(),    constParamType);
+          Ident localId = reduction.localVarId;
+
+          Xobject initialize = Xcons.Set(localId.Ref(), constParamId.Ref());
+          body.add(Bcons.Statement(initialize));
+
+          // body.add(reduction.makeInitReductionVarFuncCall());
+
+          System.out.println("makeLocalVarInitFuncs() [block = " + Bcons.Statement(initialize).toString() + "]");
+          // System.out.println("makeLocalVarInitFuncs() [block = " + reduction.makeInitReductionVarFuncCall().toString() + "]");
 	}
       }
 
@@ -1483,7 +1549,7 @@ public class AccKernel_FPGA extends AccKernel {
 
   //
   // Reduction
-  // 
+  //
   class Reduction {
     final EnumSet<ACCpragma> execMethodSet;  //final ACCpragma execMethod;
     final Ident localVarId;
@@ -1510,7 +1576,7 @@ public class AccKernel_FPGA extends AccKernel {
       if (execMethodSet.contains(ACCpragma.GANG) && !execMethodSet.contains(ACCpragma.VECTOR)) { //execMethod == ACCpragma._BLOCK) {
         localVarId.setProp(ACCgpuDecompiler.GPU_STORAGE_SHARED, true);
       }
-      
+
       Xtype varId_type = Xtype.Pointer(varId.Type());
       varId_type.setIsGlobal(true);
       locVarId = Ident.Local(ACC_REDUCTION_VAR_PREFIX+"loc_"+ varId.getName(),varId_type);
@@ -1564,7 +1630,7 @@ public class AccKernel_FPGA extends AccKernel {
       return locVarId;
     }
 
-    // initalize reduction variable 
+    // initalize reduction variable
     public Block makeInitReductionVarFuncCall(Ident id) {
       String funcName = "_ACC_gpu_init_reduction_var";
 
@@ -1576,6 +1642,8 @@ public class AccKernel_FPGA extends AccKernel {
         funcName += "_"+varId.Type()+"_"+getReductionKindString();
         return ACCutil.createFuncCallBlock(funcName, Xcons.List(id.getAddr()));
       }
+      System.out.println("makeInitReductionVarFuncCall() [not ACC.CL_no_generic_f]");
+
       return ACCutil.createFuncCallBlock(funcName, Xcons.List(id.getAddr(), Xcons.IntConstant(getReductionKindInt())));
     }
 
@@ -1611,14 +1679,14 @@ public class AccKernel_FPGA extends AccKernel {
       return ACCutil.createFuncCallBlock(mang_name, args);
     }
 
-    // reduction value on tempoary area 
+    // reduction value on tempoary area
     public Block makeReductionLocBlockFuncCall(Ident tmpPtrId, Xobject tmpOffsetElementSize,Ident numBlocks) {
       XobjList args = Xcons.List(varId.Ref(), tmpPtrId.Ref(), tmpOffsetElementSize);
 
       if (numBlocks != null) {
         args.add(numBlocks.Ref());
       } else args.add(Xcons.IntConstant(0));
-      
+
       String mang_name = "_ACC_gpu_reduction_loc_block";
       mang_name += "_"+varId.Type()+"_"+getReductionKindString();
       return ACCutil.createFuncCallBlock(mang_name, args);
