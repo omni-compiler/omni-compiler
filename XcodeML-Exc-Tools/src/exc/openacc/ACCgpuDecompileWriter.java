@@ -183,6 +183,12 @@ class ACCgpuDecompileWriter extends PrintWriter {
     String op;
     if(v == null) return;
 
+    LineNo ln = v.getLineNo();
+    if(ln != null){
+      String prefix = ln.getLinePrefix();
+      if(prefix != null) println(prefix);
+    }
+    
     switch(v.Opcode()){
     case LIST:    /* nested */
       for(XobjArgs a = v.getArgs(); a != null; a = a.nextArgs())

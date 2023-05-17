@@ -134,6 +134,8 @@ class ACCclDecompileWriter extends ACCgpuDecompileWriter {
 
   void print(Xobject v){
     String op;
+    String prefix = null;
+
     if(v == null) return;
 
     switch(v.Opcode()){
@@ -176,6 +178,13 @@ class ACCclDecompileWriter extends ACCgpuDecompileWriter {
 
     case FOR_STATEMENT:  /* (FOR init cond iter body) */
       println();
+      {
+        LineNo ln = v.getLineNo();
+        if(ln != null)
+          prefix = ln.getLinePrefix();
+      }
+      if(prefix != null) println(prefix);
+
       print("for(");
       print(v.getArg(0));       /* init */
       print(";");
