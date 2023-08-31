@@ -132,6 +132,7 @@ public enum ACCpragma {
     case PRESENT_OR_CREATE:
     case DEVICEPTR:
     case DEFAULT:
+    case CACHE: /* extension */
     return true;
     default:
       return false;

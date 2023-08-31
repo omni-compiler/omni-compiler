@@ -889,6 +889,7 @@ public class AccKernel_FPGA extends AccKernel {
         LineNo ln = loop.getLineNo();
         if(ln == null) ln = new LineNo("",0);
         ln.setLinePrefix("/* AccKernel_FPGA.java makeSequentialLoop() 2 */");
+        ln.setLinePrefix("#pragma ivdp");
         System.out.println("Add LinePrefix !!!");
         loop.setLineNo(ln);
       }

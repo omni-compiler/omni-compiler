@@ -42,6 +42,7 @@ public class AccEnterData extends AccData{
     case DEFAULT:
     case PRESENT_OR_COPYIN:
     case PRESENT_OR_CREATE:
+    case CACHE: /* extension */
       return true;
     default:
       return false;
