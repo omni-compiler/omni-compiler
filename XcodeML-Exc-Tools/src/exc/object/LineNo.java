@@ -6,6 +6,7 @@ public class LineNo implements ILineNo
 {
     String fname;
     int ln;
+  String line_prefix;
 
     static LineNo current_lineno;
 
@@ -13,6 +14,7 @@ public class LineNo implements ILineNo
     {
         this.fname = fname.intern();
         this.ln = ln;
+        this.line_prefix = null;
     }
 
     public int lineNo()
@@ -24,6 +26,16 @@ public class LineNo implements ILineNo
     {
         return fname;
     }
+
+  public void setLinePrefix(String prefix)
+  {
+    line_prefix = prefix;
+  }
+
+  public String getLinePrefix()
+  {
+    return line_prefix;
+  }
 
     @Override
     public String toString()

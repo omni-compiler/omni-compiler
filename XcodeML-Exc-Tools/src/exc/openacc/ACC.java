@@ -12,6 +12,7 @@ import xcodeml.util.XmLog;
  */
 public class ACC {
   public final static String prop = "_ACC_PROP_";
+  public final static String pragma_line_prop = "_ACC_PRAGMA_LINE_PROP_";
 
   private static boolean errorFlag    = false;
   // public static boolean CL_reduction = false /*true*/;  // reductino for OpenCL

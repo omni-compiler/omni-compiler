@@ -832,10 +832,22 @@ public class Xtype
         return getTypeQualFlag(TQ_GLOBAL);
     }
 
+    /** return if is qualified by '__local' (OpenCL) */
+    public final boolean isLocal()
+    {
+        return getTypeQualFlag(TQ_LOCAL);
+    }
+
     /** set qualifier '__global' (OpenCL) */
     public final void setIsGlobal(boolean enabled)
     {
         setTypeQualFlag(TQ_GLOBAL, enabled);
+    }
+
+    /** set qualifier '__local' (OpenCL) */
+    public final void setIsLocal(boolean enabled)
+    {
+        setTypeQualFlag(TQ_LOCAL, enabled);
     }
 
     /** Fortran : return if is qualified by 'bind' in pointer decl */

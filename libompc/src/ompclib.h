@@ -27,7 +27,8 @@
 #endif
 
 #ifdef USE_PTHREAD      /* pthread: set gcc include path to 2.6(pdph3) */
-# include <pthread.h>
+#include <pthread.h>
+#include <sched.h>
 # ifndef OMNI_OS_CYGWIN32
 #  include <sched.h>
 # endif /* !OMNI_OS_CYGWIN32 */
