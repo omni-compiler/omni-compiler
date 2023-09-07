@@ -7,6 +7,7 @@
  * @file ompc_thread.c
  */
 
+#define _GNU_SOURCE
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -451,6 +452,26 @@ ompc_new_proc()
         }
     }
 #endif /* USE_SOL_THREAD */
+#ifdef USE_PTHREAD
+    ompc_bind_procs = 1; // force it
+    if(ompc_bind_procs && (ompc_max_threads <= ompc_n_proc)){
+        int s;
+        cpu_set_t cpuset;
+        pthread_t thread;
+        int cpu_n = ompc_proc_counter-1;
+
+        thread = pthread_self();
+        /* Set affinity mask to include CPUs 0 to 7 */
+        CPU_ZERO(&cpuset);
+        CPU_SET(cpu_n, &cpuset);
+
+        s = pthread_setaffinity_np(thread, sizeof(cpuset), &cpuset);
+        if (s != 0){
+          perror("pthread_setaffinity_np");
+          exit(1);
+        }
+    }
+#endif /* USE_PTHREAD */
     OMPC_PROC_UNLOCK();
     return p;
 }
