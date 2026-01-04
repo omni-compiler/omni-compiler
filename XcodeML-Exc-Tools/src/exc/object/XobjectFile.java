@@ -25,11 +25,14 @@ public class XobjectFile extends XobjectDefEnv {
 
   public boolean debugFlag;
   public static boolean gcc_huge_common_bug;
+
+  private final static String F2KOKKOS = "F2KOKKOS";
     
   ///////private String tailText = "";     // for collectInit temporary version
 
   /** default constructor */
   public XobjectFile() {
+    this.setProp(F2KOKKOS, null);
   }
 
   static void fatal(String msg) {

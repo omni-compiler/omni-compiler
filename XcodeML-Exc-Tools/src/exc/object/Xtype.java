@@ -164,6 +164,8 @@ public class Xtype
         new BasicType(BasicType.DOUBLE_COMPLEX);
     public static final BasicType longDoubleComplexType =
         new BasicType(BasicType.LONG_DOUBLE_COMPLEX);
+    public static final BasicType autoType =
+        new BasicType(BasicType.AUTO);
 
     public static final BasicType FintType =
         intType;

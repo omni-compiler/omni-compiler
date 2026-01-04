@@ -29,6 +29,9 @@ public enum XMPpragma {
     IMAGE,
     ARRAY,
 
+    PARALLEL_FOR,
+    PARALLEL_REDUCE,
+    
     FUNCTION_BODY,      
     PRAGMA_END;
 

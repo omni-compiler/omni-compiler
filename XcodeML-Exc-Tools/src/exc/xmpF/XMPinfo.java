@@ -54,6 +54,11 @@ public class XMPinfo
   //Xobject accOpt;
   boolean acc_flag;
 
+  // for PARALLEL_FOR
+  XobjList dataList;
+  XobjList onList;
+  XobjList tileList;
+    
   public XMPinfo(XMPpragma pragma, XMPinfo parent, Block b, XMPenv env) {
     this.pragma = pragma;
     this.parent = parent;
@@ -188,4 +193,16 @@ public class XMPinfo
   }
 
   public boolean isAcc() { return acc_flag; }
+
+  public XobjList getDataList() { return dataList; }
+  public XobjList getOnList() { return onList; }
+  public XobjList getTileList() { return tileList; }
+
+  public void setParallelFor(Vector<XMPdimInfo> dims, XobjList _dataList, XobjList _onList, XobjList _tileList){
+    loop_dims = dims;
+    dataList = _dataList;
+    onList = _onList;
+    tileList = _tileList;
+  }
+    
 }

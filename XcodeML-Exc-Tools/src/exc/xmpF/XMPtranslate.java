@@ -288,15 +288,15 @@ public class XMPtranslate implements XobjectDefVisitor
         return;
     } else if(d.isFuncDef()){ // declarations
       Xtype ft = d.getFuncType();
-      if(ft != null && ft.isFprogram()) {
-	ft.setIsFprogram(false);
-	replace_main(d);
-        create_main(d);
-      }
+      // if(ft != null && ft.isFprogram()) {
+      // 	ft.setIsFprogram(false);
+      // 	replace_main(d);
+      //   create_main(d);
+      // }
       
-      else if (d.getParent() == null){ // neither internal nor module procedures
-      	newChild = wrap_external(d);
-      }
+      // else if (d.getParent() == null){ // neither internal nor module procedures
+      // 	newChild = wrap_external(d);
+      // }
       fd = new FuncDefBlock(d);
     } else if (d.isBlockData()){
       return;

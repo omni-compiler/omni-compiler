@@ -158,6 +158,16 @@ public class XobjectDefEnv extends PropObject
         return null;
     }
 
+    public void addIdent(Ident id)
+    {
+	if (identList != null) {
+	    ((XobjList)identList).add(id);
+	}
+	else {
+	    identList = Xcons.List(id);;
+	}
+    }
+    
     @Override
     public Iterator<XobjectDef> iterator()
     {

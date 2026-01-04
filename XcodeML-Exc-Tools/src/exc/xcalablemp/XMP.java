@@ -36,6 +36,8 @@ public class XMP {
   public final static String PARENT_BLOCK               = "PARENT_BLOCK";
   public final static String SHADOW_DECL                = "SHADOW_DECL";
   public final static String DESC_FUNC_ARGS             = "DESC_FUNC_ARGS";
+
+  public final static String EXTERN                     = "EXTERN";
   
   private static boolean errorFlag			= false;
 

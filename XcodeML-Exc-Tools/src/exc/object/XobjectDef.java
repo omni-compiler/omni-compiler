@@ -18,6 +18,8 @@ public class XobjectDef extends PropObject implements IXobject, XobjectVisitable
   private XobjectDefEnv parent_env;
   private Xobject def;
   protected LinkedList<XobjectDef> child_defs = new LinkedList<XobjectDef>();
+
+  private final static String KOKKOS_NUM_KERNELS = "KOKKOS_NUM_KERNELS";
     
   public XobjectDef(Xobject def)
   {
@@ -60,6 +62,8 @@ public class XobjectDef extends PropObject implements IXobject, XobjectVisitable
       break;
     }
     }
+
+    this.setProp(KOKKOS_NUM_KERNELS, 0);
   }
   
   // static constructor
@@ -74,7 +78,7 @@ public class XobjectDef extends PropObject implements IXobject, XobjectVisitable
     return new XobjectDef(Xcons.List(Xcode.VAR_DECL,
 				     Xcons.Symbol(Xcode.IDENT, name), initializer));
   }
-    
+
   public Xobject getDef()
   {
     return def;

@@ -2,8 +2,9 @@
 
 INSTALL=@INSTALL@
 BINDIR=@OMNI_HOME@/bin
-SUBDIRS=xcodeml-tools libxmp/include libxmp/src libxmpf/include libxmpf/src libxmp/src_threads \
-	libtlog/src_threads libtlog/src_mpi XcodeML-Exc-Tools interfaces Driver/src
+#SUBDIRS=xcodeml-tools libxmp/include libxmp/src libxmpf/include libxmpf/src libxmp/src_threads \
+#	libtlog/src_threads libtlog/src_mpi XcodeML-Exc-Tools interfaces Driver/src
+SUBDIRS=xcodeml-tools XcodeML-Exc-Tools interfaces Driver/src
 
 FALSE=1
 TRUE=0

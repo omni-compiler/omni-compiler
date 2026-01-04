@@ -4,6 +4,7 @@ import exc.object.*;
 import exc.util.MachineDep;
 import exc.block.*;
 import xcodeml.util.XmOption;
+import xcodeml.util.XmLanguage;
 import java.io.File;
 import java.util.*;
 
@@ -147,10 +148,10 @@ public class XMPtransPragma
 
   void buildXMPobjectBlock(BlockList prolog, BlockList epilog, Block block){
     XMPsymbolTable table = (block != null) ? block.getXMPsymbolTable() : env.getXMPsymbolTable();
-    if (block == null) {
-      epilog.add(Xcons.StatementLabel(XMP.epilog_label_f));
-      epilog.add(Xcons.List(Xcode.F_CONTINUE_STATEMENT));
-    }
+    // if (block == null) {
+    //   epilog.add(Xcons.StatementLabel(XMP.epilog_label_f));
+    //   epilog.add(Xcons.List(Xcode.F_CONTINUE_STATEMENT));
+    // }
     if(table != null){
       // First, outputs all nodes
       for(XMPobject o: table.getXMPobjects()){
@@ -232,6 +233,9 @@ public class XMPtransPragma
     case IMAGE:
       return XMPtransCoarrayRun.translateImageDirective(pb, info);
 
+    case PARALLEL_FOR:
+      return translateParallelFor(pb, info);
+      
     case ARRAY:
       // should not reaach here.
 
@@ -1270,6 +1274,446 @@ public class XMPtransPragma
     return b;
   }
 
+  private final static String KOKKOS_NUM_KERNELS = "KOKKOS_NUM_KERNELS";
+  private final static String F2KOKKOS = "F2KOKKOS";
+  
+  private Block translateParallelFor(PragmaBlock pb, XMPinfo info){
+
+    XobjList args = Xcons.List();
+    Block b = Bcons.emptyBlock();
+    BasicBlock bb = b.getBasicBlock();
+
+    XobjList dataList = info.getDataList();
+    XobjList onList = info.getOnList();
+    XobjList tileList = info.getTileList();
+
+    assert dataList != null || !dataList.isEmptyList() || dataList != Xcons.List();
+    assert onList != null || !onList.isEmptyList() || onList != Xcons.List();
+
+    BlockList loopBody = info.getBody();
+
+    XobjectDef def = env.getCurrentDef().getDef();
+    
+    //
+    // Add use for the module.
+    //
+
+    XobjString modName0 = Xcons.Symbol(Xcode.IDENT, "iso_c_binding");
+    Xobject use0 = Xcons.List(Xcode.F_USE_DECL, modName0, Xcons.IntConstant(1));
+
+    int num_kernels = (int)def.getProp(KOKKOS_NUM_KERNELS);
+
+    if (num_kernels == 0){
+      env.getCurrentDef().getDef().getFuncDecls().add(use0);
+    }
+
+    XobjString modName1 = Xcons.Symbol(Xcode.IDENT, "flcl_mod");
+    Xobject use1 = Xcons.List(Xcode.F_USE_DECL, modName1, Xcons.IntConstant(0));
+    if (num_kernels == 0){
+      env.getCurrentDef().getDef().getFuncDecls().add(use1);
+    }
+
+    //def.setProp(KOKKOS_MODULE_USED, true);
+
+    // String filename = env.getEnv().getSourceFileName();
+    // int dotIndex = filename.lastIndexOf('.');
+    // XobjString modName = Xcons.Symbol(Xcode.IDENT, filename.substring(0, dotIndex) + "_kokkos_mod");
+    // Xobject use = Xcons.List(Xcode.F_USE_DECL, modName, Xcons.IntConstant(0));
+    // env.getCurrentDef().getDef().getFuncDecls().add(use);
+
+    XobjList paramDecls = Xcons.List(use0, use1);
+    Xobject paramList = Xcons.List(Xcode.ID_LIST);
+    
+    XMPmodule flcl_mod = env.findModule("flcl_mod");
+
+    for (Xtype t : flcl_mod.getEnv().getTypeList()){
+      env.getEnv().addType(t);
+    }
+
+    for (Xobject id : (XobjList)flcl_mod.getEnv().getGlobalIdentList()){
+      env.getEnv().addIdent((Ident)id);
+    }
+    
+    Xtype nd_array_t = flcl_mod.getEnv().findIdent("nd_array_t").Type();
+
+    //
+    // Translate the PARALLEL_FOR block.
+    //
+    
+    Ident f0 = env.declInternIdent(XMP.kokkos_sub_f + String.valueOf(num_kernels), Xtype.FsubroutineType);
+    f0.Type().setBind("c");
+
+    Ident f1 = flcl_mod.getEnv().findIdent(XMP.to_nd_array_f);
+
+    Iterator<Xobject> x = dataList.iterator();
+    while (x.hasNext()){
+	Xobject data = x.next();
+
+	if (data.Type().isFarray()){
+	    args.add(Xcons.functionCall(f1, Xcons.List(data)));
+	    Ident nd_array = env.getCurrentDef().getDef().declStaticIdent("nd_array_" + data.getName(), nd_array_t);
+	    //env.getCurrentDef().getDef().getFuncDecls().add(Xcons.List(Xcode.VAR_DECL, nd_array));
+	    paramList.add(nd_array);
+	    paramDecls.add(Xcons.List(Xcode.VAR_DECL, nd_array));
+	}
+	else {
+	    args.add(data);
+	    paramList.add(data);
+	    paramDecls.add(Xcons.List(Xcode.VAR_DECL, data));
+	}
+    }
+
+    Iterator<Xobject> y = onList.iterator();
+    while (y.hasNext()){
+	Xobject on = y.next();
+
+	for (int k = 0; k < info.getLoopDim(); k++){
+	  XMPdimInfo d_info = info.getLoopDimInfo(k);
+	  Xobject local_loop_var = d_info.getLoopVar();
+	  if (on.getName().equals(local_loop_var.getName())){
+	    Xobject lower = d_info.getLower();
+	    Xobject upper = d_info.getUpper();
+	    args.add(lower);
+	    args.add(upper);
+	    break;
+	  }
+	}
+
+	Xobject param_lower = Ident.Param(on.getName() + "_lb", Xtype.FintType);
+	Xobject param_upper = Ident.Param(on.getName() + "_ub", Xtype.FintType);
+	paramList.add(param_lower);
+	paramList.add(param_upper);
+	paramDecls.add(Xcons.List(Xcode.VAR_DECL, param_lower));
+	paramDecls.add(Xcons.List(Xcode.VAR_DECL, param_upper));
+    }
+
+    if (tileList != null){
+	Iterator<Xobject> z = tileList.iterator();
+	while (z.hasNext()){
+	    Xobject tile = z.next();
+	    args.add(tile);
+	    paramList.add(tile);
+	    paramDecls.add(Xcons.List(Xcode.VAR_DECL, tile));
+	}
+    }
+    
+    bb.add(f0.callSubroutine(args));
+
+    //
+    // generate the interface block
+    //
+
+    ((FunctionType)f0.Type()).setFuncParam(paramList);
+
+    //    XMPmodule mod = XMPmodule(env);
+    //mod.inputFile("flcl_mod");
+    
+    Xobject interFaceBlock = Xcons.FinterfaceFunctionDecl(f0, paramDecls);
+    env.getCurrentDef().getDef().getFuncDecls().add(interFaceBlock);
+
+    //
+    // generate Kokkos code
+    //
+
+    F2Kokkos f2kks = (F2Kokkos)env.getEnv().getProp(F2KOKKOS);
+    if (f2kks == null){
+      f2kks = new F2Kokkos(env.getEnv());
+      env.getEnv().setProp(F2KOKKOS, f2kks);
+    }
+
+    XobjectDef kksFunc = f2kks.generateKKSFunc(loopBody, dataList, onList, tileList, num_kernels);
+
+    //KKSdecompiler.decompile(kksFunc, env.getEnv());
+    f2kks.decompile(kksFunc);
+
+    def.setProp(KOKKOS_NUM_KERNELS, ++num_kernels);
+    
+    return b;
+    
+  }
+
+  // //
+  // // generate Kokkos code
+  // //
+  // XobjectDef generateKKSFunc(BlockList loopBody, XobjList dataList, XobjList onList, XobjList tileList){
+
+  //   XmOption.setLanguage(XmLanguage.C);
+
+  //   Vector<Integer> ndims = new Vector<>();
+  //   XobjList lbList = Xcons.List();
+  //   XobjList lenList = Xcons.List();
+    
+  //   // The wrapper
+    
+  //   Ident KKSFuncId = Ident.Local("kokkos_sub0", Xtype.Function(Xtype.voidType));
+
+  //   //
+  //   // The parameters
+  //   //
+    
+  //   Xobject KKSFuncParams = Xcons.List();
+  //   Xobject view_from_ndarray_args = Xcons.List();
+
+  //   // "00000" is a dummy.
+  //   Xtype nd_array_t = new StructType("00000", true, Xcons.String("nd_array_t"),
+  // 				      null, 0L, null);
+
+  //   for (Xobject a: dataList){
+  //     if (a.Type().isFarray()){
+  // 	Ident nd_array_param = Ident.Param("nd_array_" + a.getName(), Xtype.Pointer(nd_array_t));
+  // 	KKSFuncParams.add(nd_array_param);
+  // 	view_from_ndarray_args.add(nd_array_param.Ref());
+  // 	ndims.add(((FarrayType)a.Type()).getNumDimensions());
+  //     }
+  //     else {
+  // 	Ident param = Ident.Param(a.getName(), F2CPP_type(a.Type()));
+  // 	KKSFuncParams.add(param);
+  //     }
+  //   }      
+
+  //   for (Xobject a: onList){
+  //     Ident param = Ident.Param(a.getName() + "_len", Xtype.intType);
+  //     KKSFuncParams.add(param);
+  //     lbList.add(Xcons.IntConstant(0));
+  //     lenList.add(param.Ref());
+  //   }
+    
+  //   // Ident nd_array_x = Ident.Param("nd_array_x", Xtype.Pointer(Xtype.intType));
+  //   // Ident nd_array_y = Ident.Param("nd_array_y", Xtype.Pointer(Xtype.intType));
+  //   // Ident a = Ident.Param("a", Xtype.floatType);
+  //   // Ident ilen = Ident.Param("i_len", Xtype.intType);
+  //   // Ident jlen = Ident.Param("j_len", Xtype.intType);
+    
+  //   // Xobject KKSFuncParams = Xcons.List(nd_array_x, nd_array_y, a, ilen, jlen);
+
+  //   //
+  //   // The body
+  //   //
+    
+  //   // Convert Fortran arrays to Kokkos view
+
+  //   //auto x = flcl::view_from_ndarray<float**>(*nd_array_x);
+  //   //auto y = flcl::view_from_ndarray<float**>(*nd_array_y);
+
+  //   //Ident view_from_ndarray = Ident.Local("flcl::view_from_ndarray<float**>", Xtype.Function(Xtype.charType));
+    
+  //   Xobject id_list = Xcons.List();
+  //   Xobject decls = Xcons.List();
+
+  //   int i = 0;
+  //   for (Xobject d: dataList){
+  //     if (d.Type().isFarray()){
+  // 	Ident x = Ident.Local(d.getName(), Xtype.autoType);
+  // 	Xobject args_x = Xcons.List(Xcons.PointerRef(view_from_ndarray_args.getArg(i)));
+
+  // 	String view_from_ndarray_name = "flcl::view_from_ndarray<float";
+  // 	for (int j = 0; j < ndims.get(i); j++){
+  // 	  view_from_ndarray_name += "*";
+  // 	}
+  // 	view_from_ndarray_name += ">";
+  // 	// charType is a dummy.
+  // 	Ident view_from_ndarray = Ident.Local(view_from_ndarray_name, Xtype.Function(Xtype.charType));
+
+  // 	Xobject decl_x = Xcons.List(Xcode.VAR_DECL, x.getValue(), Xcons.functionCall(view_from_ndarray, args_x));
+  // 	id_list.add(x);
+  // 	decls.add(decl_x);
+
+  // 	i++;
+  //     }
+  //   }      
+
+  //   // Ident x = Ident.Local("x", Xtype.autoType);
+  //   // Xobject args_x = Xcons.List(Xcons.PointerRef(nd_array_x.Ref()));
+  //   // Xobject decl_x = Xcons.List(Xcode.VAR_DECL, x.getValue(), Xcons.functionCall(view_from_ndarray, args_x));
+
+  //   // Ident y = Ident.Local("y", Xtype.autoType);
+  //   // Xobject args_y = Xcons.List(Xcons.PointerRef(nd_array_y.Ref()));
+  //   // Xobject decl_y = Xcons.List(Xcode.VAR_DECL, y.getValue(), Xcons.functionCall(view_from_ndarray, args_y));
+
+  //   // Xobject id_list = Xcons.List(x, y);
+  //   // Xobject decls = Xcons.List(decl_x, decl_y);
+
+  //   BlockList KKSBlockList = new BlockList(id_list, decls);
+
+  //   //
+  //   // The kernel
+  //   //
+    
+  //   Ident kernelId = Ident.Local("parallel_for", Xtype.Function(Xtype.voidType));
+
+  //   Xobject kernelArgs = Xcons.List();
+  //   kernelArgs.add(Xcons.StringConstant("sub0"));
+
+  //   // MDRangePolicy
+
+  //   String nnests = String.valueOf(onList.Nargs());
+  //   Ident MDRangePolicyId = Ident.Local("Kokkos::MDRangePolicy<Kokkos::Rank<"+nnests+">>",
+  // 					Xtype.Function(Xtype.voidType)); // voidType is a dummy.
+  //   Xobject MDRangePolicyArgs = Xcons.List();
+  //   // kernelArgs.add(Xcons.List(il, jl),
+  //   // 	      Xcons.List(Xcons.binaryOp(Xcode.PLUS_EXPR, iu, Xcons.IntConstant(1)),
+  //   // 			 Xcons.binaryOp(Xcode.PLUS_EXPR, ju, Xcons.IntConstant(1))),
+  //   // 	      Xcons.List(t1, t2));
+
+  //   //MDRangePolicyArgs.add(Xcons.List(Xcons.IntConstant(0), Xcons.IntConstant(0)));
+  //   //MDRangePolicyArgs.add(Xcons.List(ilen.Ref(), jlen.Ref()));
+  //   MDRangePolicyArgs.add(lbList);
+  //   MDRangePolicyArgs.add(lenList);
+
+
+  //   kernelArgs.add(Xcons.functionCall(MDRangePolicyId, MDRangePolicyArgs));
+
+  //   // KOKKOS_LAMBDA
+
+  //   //args.add(KOKKOS_LAMBDA(int i, int j) "{y(i-yil,j-yjl) = y(i-yil,j-yjl) + a * x(i-xil,j-xjl)");
+
+  //   Ident kokkosLambdaId = Ident.FidentNotExternal("KOKKOS_LAMBDA", Xtype.Function(Xtype.voidType));
+  //   Xobject kokkosLambdaParams = Xcons.List();
+
+  //   for (Xobject a: onList){
+  //     kokkosLambdaParams.add(Ident.Local(a.getName(), Xtype.intType));
+  //   }
+
+  //   // translate loop body
+
+  //   loopBody = F2CPP_loopBody(loopBody);
+  //   Block kernelBlock = Bcons.COMPOUND(loopBody);
+
+  //   Xobject kokkos_lambda = Xcons.List(Xcode.FUNCTION_DEFINITION, kokkosLambdaId, kokkosLambdaParams,
+  // 				       null, kernelBlock.toXobject());
+    
+  //   kernelArgs.add(kokkos_lambda);
+  //   Xobject parallel_for = Xcons.functionCall(kernelId, kernelArgs);
+  //   KKSBlockList.add(Bcons.Statement(parallel_for));
+
+  //   Block externBlock = Bcons.COMPOUND(KKSBlockList);
+    
+  //   // Finish
+    
+  //   XobjectDef kksFunc = XobjectDef.Func(KKSFuncId, KKSFuncParams, null, externBlock.toXobject());
+      
+  //   XmOption.setLanguage(XmLanguage.F);
+
+  //   return kksFunc;
+  // }
+
+  
+  // BlockList F2CPP_loopBody(BlockList loopBody){
+  //   Xobject loopObject = loopBody.toXobject();
+  //   loopObject = F2CPP_Xobject(loopObject);
+  //   return Bcons.buildList(loopObject);
+  // }
+
+  
+  // Xobject F2CPP_Xobject(Xobject x){
+
+  //   Xobject xx = null;
+
+  //   if (x != null){
+  //     switch (x.Opcode()){
+
+  //     case F_STATEMENT_LIST:
+  //     case LIST:
+  // 	xx = Xcons.List();
+  // 	for (Xobject s : (XobjList)x){
+  // 	  xx.add(F2CPP_Xobject(s));
+  // 	}
+  // 	break;
+	  
+  //     case F_ASSIGN_STATEMENT: {
+  // 	xx = Xcons.List(Xcode.EXPR_STATEMENT, Xcons.Set(F2CPP_Xobject(x.getArg(0)), F2CPP_Xobject(x.getArg(1))));
+  // 	break;
+  //     }
+      
+  //     case PLUS_EXPR:
+  //     case MINUS_EXPR:
+  //     case MUL_EXPR:
+  //     case DIV_EXPR:
+  // 	xx = Xcons.binaryOp(x.Opcode(), F2CPP_Xobject(x.left()), F2CPP_Xobject(x.right()));
+  // 	break;
+	
+  //     case INT_CONSTANT:
+  //     case FLOAT_CONSTANT:
+  //     case LONG_CONSTANT:
+  // 	xx = x.copy();
+  // 	break;
+	  
+  //     case F_VAR_REF: {
+  // 	Xobject var = x.getArg(0);
+  // 	Ident id = Ident.Local(var.getSym(), x.Type());
+  // 	// if (id.getName().equals("i") || id.getName().equals("j")){
+  // 	//   i.setXobject(Xcons.binaryOp(Xcode.MINUS_EXPR, Xcons.SymbolRef(id), Xcons.IntConstant(1)));
+  // 	// }
+  // 	// else {
+  // 	xx = Xcons.SymbolRef(id);
+  // 	// }
+  // 	break;
+  //     }
+	  
+  //     case F_ARRAY_REF: {
+  // 	xx = Xcons.arrayRef(x.Type(), F2CPP_Xobject(x.getArg(0)), (XobjList)F2CPP_Xobject(x.getArg(1)));
+  // 	break;
+  //     }
+
+  //     case F_ARRAY_INDEX:
+  // 	xx = F2CPP_Xobject(x.getArg(0));
+  // 	break;
+
+  //     case VAR:
+  // 	xx = x.copy();
+  // 	break;
+	  
+  //     default:
+  // 	XMP.fatal("not supported by F2Kokkos: " + x);
+  // 	break;
+	  
+  // 	//case MOD_EXPR:
+  //     }
+  //   }
+    
+  //   return xx;
+    
+  // }
+
+
+  // Xtype F2CPP_type(Xtype t){
+
+  //   if (t != null){
+  //     switch (t.getBasicType()){
+
+  //     case BasicType.FLOAT:
+  // 	return Xtype.floatType;
+	  
+  //     default:
+  // 	XMP.fatal("not supported type by F2Kokkos: " + t);
+  // 	break;
+  //     }
+  //   }
+    
+  //   return t;
+    
+  // }
+
+  // //
+  // // generate a module for the interaface of kernel functions.
+  // //
+  // XobjectDef makeModuleDef(String modName, Ident funcName, XobjList paramDecls){
+  //   // (MODULE_DEFINITION, name, id, decls, contains)
+
+  //   Xobject use0 = Xcons.List(Xcode.F_USE_DECL, "iso_c_binding", Xcons.IntConstant(0));
+  //   decls.add(use0);
+  //   Xobject use1 = Xcons.List(Xcode.F_USE_DECL, "flcl_mod", Xcons.IntConstant(0));
+  //   decls.add(use1);
+  //   Xobject iFaceBlock = Xcons.FinterfaceFunctionDecl(Ident funcName, XobjList paramDecls);
+  //   decls.add(iFaceBlock);
+
+  //   Xobject def = Xcons.List(Xcode.F_MODULE_DEFINITION, modName, null, decls, null);
+  //   XobjectDef moduleDef = new XobjectDef(def, null);
+
+  //   return moduleDef;
+  // }
+
+    
   private Block buildAccHostData(Xobject useDeviceArg, BlockList body){
     return Bcons.PRAGMA(Xcode.ACC_PRAGMA,
             "HOST_DATA",

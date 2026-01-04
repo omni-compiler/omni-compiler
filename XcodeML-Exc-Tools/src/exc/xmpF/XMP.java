@@ -151,6 +151,9 @@ public class XMP {
   public final static String reduction_loc_acc_f  = "xaccf_reduction_loc_";
   public final static String bcast_acc_f          = "xaccf_bcast_";
 
+  public final static String kokkos_sub_f         = "kokkos_sub";
+  public final static String to_nd_array_f        = "to_nd_array";
+    
   private static boolean errorFlag			= false;
   private static boolean errorFlags			= false;
 

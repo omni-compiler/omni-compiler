@@ -1145,7 +1145,7 @@ else
 
 	    # MPI F
 	    MPI_FPPFLAGS="-E -cpp"
-	    MPI_FCFLAGS="-O2 $OPENMP_OPT_F"
+	    MPI_FCFLAGS="-O2 $OPENMP_OPT_F -fallow-argument-mismatch"
 	    MPI_MODINC="-J"
 	    MPI_FCLIBS=""
 

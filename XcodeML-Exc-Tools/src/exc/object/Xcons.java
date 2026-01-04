@@ -206,7 +206,7 @@ public class Xcons
     {
         if(!XmOption.isLanguageC())
             return x;
-        
+
         Xtype type = x.Type();
         if(type != null && type.isPointer())
             type = type.getRef();

@@ -334,7 +334,7 @@ public class Bcons
     }
 
     /** create block list for Xobject */
-    static BlockList buildList(Xobject v)
+    public static BlockList buildList(Xobject v)
     {
         Block b;
         BlockList b_list = new BlockList();

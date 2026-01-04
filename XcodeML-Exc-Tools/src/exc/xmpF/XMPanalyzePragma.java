@@ -270,6 +270,10 @@ public class XMPanalyzePragma
     case ARRAY:
       break;
 
+    case PARALLEL_FOR:
+      analyzeParallelFor(pb.getClauses(), pb.getBody(), info, pb);
+      break;
+      
     default:
       XMP.fatal("'" + pragmaName.toLowerCase() + 
 		"' directive is not supported yet");
@@ -859,6 +863,48 @@ public class XMPanalyzePragma
     //XMP.fatal("analyzeTasks");
   }
 
+  void analyzeParallelFor(Xobject parallelForDecl, BlockList loopBody,
+			  XMPinfo info, PragmaBlock pb){
+
+    Vector<XMPdimInfo> dims = new Vector<XMPdimInfo>();
+    
+    XobjList dataList = (XobjList)parallelForDecl.getArg(0);
+    XobjList onList   = (XobjList)parallelForDecl.getArg(1);
+    XobjList tileList = null;
+
+    if (parallelForDecl.Nargs() == 3)
+      tileList = (XobjList)parallelForDecl.getArg(2);
+
+    while (true){
+      ForBlock loopBlock = getOutermostLoopBlock(loopBody);
+      if (loopBlock == null) break;
+
+      boolean is_found = false;
+      for (Xobject x: onList){
+	//if (x.Opcode() == Xcode.LIST) x = x.getArg(0);
+	if (isEqualVar(loopBlock.getInductionVar(), x)){
+	  is_found = true;
+	  break;
+	}
+      }
+      
+      if (is_found)
+	dims.add(XMPdimInfo.loopInfo(loopBlock));
+      
+      loopBody = loopBlock.getBody();
+    }
+
+    // ForBlock loopBlock = getOutermostLoopBlock(loopBody);
+    // while (loopBlock != null){
+    //   loopBody = loopBlock.getBody();
+    //   loopBlock = getOutermostLoopBlock(loopBody);
+    // }
+    
+    info.setParallelFor(dims, dataList, onList, tileList);
+    info.setBody(loopBody);
+
+  }
+    
   private void analyzeGmove(Xobject gmoveDecl, BlockList body, 
 			    XMPinfo info, PragmaBlock pb) {
     Xobject gmoveOpt = gmoveDecl.getArg(0); // NORMAL | IN | OUT

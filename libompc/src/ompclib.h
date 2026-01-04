@@ -122,7 +122,7 @@ typedef struct {
 #elif defined(OMNI_CPU_X86_64)
 #   define CACHE_LINE_SIZE 64
 #else
-#   define CACHE_LINE_SIZE 32
+#   define CACHE_LINE_SIZE 64
 #endif /* OMNI_CPU_MIPS */
 
 #ifdef USE_SPROC

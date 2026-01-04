@@ -35,6 +35,8 @@ public class BasicType extends Xtype
     public final static int F_CHARACTER             = 23; // Fortran character
     public final static int F_NUMERIC               = 24; // Fortran scalar numeric (integer/real/double)
     public final static int F_NUMERIC_ALL           = 25; // Fortran all numeric (integer/real/double/complex)
+
+    public final static int AUTO                    = 26; // C++ auto 
     
     /** member variable */
     private int basic_type;

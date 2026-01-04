@@ -141,7 +141,7 @@ public class omompx
 
     // dynamic data race checking
     boolean ompf_dynamic_data_race_detect = false;
-
+    
     for(int i = 0; i < args.length; ++i) {
       String arg = args[i];
       String narg = (i < args.length - 1) ? args[i + 1] : null;

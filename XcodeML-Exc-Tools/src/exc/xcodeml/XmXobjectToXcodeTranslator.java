@@ -92,6 +92,7 @@ public abstract class XmXobjectToXcodeTranslator {
       Element e = createElement("typeTable");
       for(int i = 0; i < xtypeList.size(); i++){
 	Xtype xtype = xtypeList.get(i);
+	if (xtype.getKind() == Xtype.POINTER) continue;
 	addChildNodes(e, transType(xtype));
       }
 //         for (Xtype xtype : xtypeList) {

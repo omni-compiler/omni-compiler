@@ -24,13 +24,13 @@ public class XMPrewriteExpr
     if (fb == null) return;
 
     // rewrite return statements
-    BlockIterator iter5 = new topdownBlockIterator(fb);
-    for (iter5.init(); !iter5.end(); iter5.next()){
-      if (iter5.getBlock().Opcode() == Xcode.RETURN_STATEMENT){
-	Block b = Bcons.GOTO(Xcons.StringConstant(XMP.epilog_label_f));
-	iter5.setBlock(b);
-      }
-    }
+    // BlockIterator iter5 = new topdownBlockIterator(fb);
+    // for (iter5.init(); !iter5.end(); iter5.next()){
+    //   if (iter5.getBlock().Opcode() == Xcode.RETURN_STATEMENT){
+    // 	Block b = Bcons.GOTO(Xcons.StringConstant(XMP.epilog_label_f));
+    // 	iter5.setBlock(b);
+    //   }
+    // }
 
     // rewrite pointer assignment, allocate, deallocate, and stop statements
     BasicBlockIterator iter3 = new BasicBlockIterator(fb);
