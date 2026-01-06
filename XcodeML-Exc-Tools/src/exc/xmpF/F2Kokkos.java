@@ -74,12 +74,12 @@ public class F2Kokkos {
     Xobject view_from_ndarray_args = Xcons.List();
 
     // "00000" is a dummy.
-    Xtype nd_array_t = new StructType("00000", true, Xcons.String("nd_array_t"),
+    Xtype flcl_ndarray_t = new StructType("00000", true, Xcons.String("flcl_ndarray_t"),
 				      null, 0L, null);
 
     for (Xobject a: dataList){
       if (a.Type().isFarray()){
-	Ident nd_array_param = Ident.Param("nd_array_" + a.getName(), Xtype.Pointer(nd_array_t));
+	Ident nd_array_param = Ident.Param("nd_array_" + a.getName(), Xtype.Pointer(flcl_ndarray_t));
 	KKSFuncParams.add(nd_array_param);
 	view_from_ndarray_args.add(nd_array_param.Ref());
 	ndims.add(((FarrayType)a.Type()).getNumDimensions());
