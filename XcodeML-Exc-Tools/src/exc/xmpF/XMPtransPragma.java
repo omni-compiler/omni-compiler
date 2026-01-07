@@ -1350,16 +1350,21 @@ public class XMPtransPragma
 	Xobject data = x.next();
 
 	if (data.Type().isFarray()){
-	    args.add(Xcons.functionCall(f1, Xcons.List(data)));
-	    Ident nd_array = env.getCurrentDef().getDef().declStaticIdent("nd_array_" + data.getName(), nd_array_t);
-	    //env.getCurrentDef().getDef().getFuncDecls().add(Xcons.List(Xcode.VAR_DECL, nd_array));
-	    paramList.add(nd_array);
-	    paramDecls.add(Xcons.List(Xcode.VAR_DECL, nd_array));
+	  args.add(Xcons.functionCall(f1, Xcons.List(data)));
+	  Ident nd_array = env.getCurrentDef().getDef().declStaticIdent("nd_array_" + data.getName(), nd_array_t);
+	  //env.getCurrentDef().getDef().getFuncDecls().add(Xcons.List(Xcode.VAR_DECL, nd_array));
+	  paramList.add(nd_array);
+	  paramDecls.add(Xcons.List(Xcode.VAR_DECL, nd_array));
 	}
 	else {
-	    args.add(data);
-	    paramList.add(data);
-	    paramDecls.add(Xcons.List(Xcode.VAR_DECL, data));
+	  args.add(data);
+
+	  Xtype type_value = data.Type().copy();
+	  type_value.setIsFvalue(true);
+	  
+	  Xobject param_data = Ident.Param(data.getName(), type_value);
+	  paramList.add(param_data);
+	  paramDecls.add(Xcons.List(Xcode.VAR_DECL, param_data));
 	}
     }
 
@@ -1379,8 +1384,12 @@ public class XMPtransPragma
 	  }
 	}
 
-	Xobject param_lower = Ident.Param(on.getName() + "_lb", Xtype.FintType);
-	Xobject param_upper = Ident.Param(on.getName() + "_ub", Xtype.FintType);
+	Xtype intType_value = new BasicType(BasicType.INT, Xtype.TQ_FVALUE);
+	
+	//Xobject param_lower = Ident.Param(on.getName() + "_lb", Xtype.FintType);
+	//Xobject param_upper = Ident.Param(on.getName() + "_ub", Xtype.FintType);
+	Xobject param_lower = Ident.Param(on.getName() + "_lb", intType_value);
+	Xobject param_upper = Ident.Param(on.getName() + "_ub", intType_value);
 	paramList.add(param_lower);
 	paramList.add(param_upper);
 	paramDecls.add(Xcons.List(Xcode.VAR_DECL, param_lower));
@@ -1391,9 +1400,15 @@ public class XMPtransPragma
 	Iterator<Xobject> z = tileList.iterator();
 	while (z.hasNext()){
 	    Xobject tile = z.next();
+
 	    args.add(tile);
-	    paramList.add(tile);
-	    paramDecls.add(Xcons.List(Xcode.VAR_DECL, tile));
+
+	    Xtype intType_value = new BasicType(BasicType.INT, Xtype.TQ_FVALUE);
+
+	    // name of the parameters must be temporary because "tiles" can be integer constants.
+	    Xobject param_tile = Ident.Param(tile.getName(), intType_value);
+	    paramList.add(param_tile);
+	    paramDecls.add(Xcons.List(Xcode.VAR_DECL, param_tile));
 	}
     }
     
