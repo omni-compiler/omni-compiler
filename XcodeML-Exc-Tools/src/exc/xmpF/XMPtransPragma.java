@@ -1358,13 +1358,15 @@ public class XMPtransPragma
 	}
 	else {
 	  args.add(data);
+	  paramList.add(data);
+	  paramDecls.add(Xcons.List(Xcode.VAR_DECL, data));
 
-	  Xtype type_value = data.Type().copy();
-	  type_value.setIsFvalue(true);
+	  // Xtype type_value = data.Type().copy();
+	  // type_value.setIsFvalue(true);
 	  
-	  Xobject param_data = Ident.Param(data.getName(), type_value);
-	  paramList.add(param_data);
-	  paramDecls.add(Xcons.List(Xcode.VAR_DECL, param_data));
+	  // Xobject param_data = Ident.Param(data.getName(), type_value);
+	  // paramList.add(param_data);
+	  // paramDecls.add(Xcons.List(Xcode.VAR_DECL, param_data));
 	}
     }
 

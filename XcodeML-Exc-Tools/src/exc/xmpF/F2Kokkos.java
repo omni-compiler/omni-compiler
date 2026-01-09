@@ -85,7 +85,7 @@ public class F2Kokkos {
 	ndims.add(((FarrayType)a.Type()).getNumDimensions());
       }
       else {
-	Ident param = Ident.Param(a.getName(), F2CPP_type(a.Type()));
+	Ident param = Ident.Param(a.getName(), Xtype.Pointer(F2CPP_type(a.Type())));
 	KKSFuncParams.add(param);
       }
     }      
@@ -286,7 +286,16 @@ public class F2Kokkos {
 	break;
 
       case VAR:
-	xx = x.copy();
+
+	// must be fixed.
+	if (x.Type().equals(Xtype.intType)){
+	  xx = x.copy();
+	}
+	else {
+	  Ident id = Ident.Local(x.getSym(), Xtype.Pointer(x.Type()));
+	  xx = Xcons.PointerRef(Xcons.SymbolRef(id));
+	}
+
 	break;
 
       case FUNCTION_CALL: {

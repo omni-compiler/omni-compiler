@@ -275,8 +275,9 @@ public class KKSdecompileWriter extends PrintWriter {
         print(v.left().getSym());
         break;
       case VAR:
-        print("*");
+        print("(*");
         print(v.left());
+        print(")");
         break;
       case MEMBER_ADDR:
         print("(");
