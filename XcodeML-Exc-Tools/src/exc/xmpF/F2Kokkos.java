@@ -212,6 +212,12 @@ public class F2Kokkos {
     Xobject parallel_for = Xcons.functionCall(kernelId, kernelArgs);
     KKSBlockList.add(Bcons.Statement(parallel_for));
 
+    // generate Kokkos::fence
+
+    Ident fenceId = Ident.Local("Kokkos::fence", Xtype.Function(Xtype.voidType));
+    Xobject fence = Xcons.functionCall(fenceId, null);
+    KKSBlockList.add(Bcons.Statement(fence));
+
     Block externBlock = Bcons.COMPOUND(KKSBlockList);
     
     // Finish
