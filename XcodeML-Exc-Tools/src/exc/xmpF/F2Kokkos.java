@@ -324,7 +324,8 @@ public class F2Kokkos {
       case VAR:
 
 	// must be fixed.
-	if (x.getSym().equals(reductionList.getArg(1).getArg(0).getArg(0).getSym())){
+	if (reductionList != null &&
+	    x.getSym().equals(reductionList.getArg(1).getArg(0).getArg(0).getSym())){
 	  //Ident id = Ident.Local("l_" + x.getSym(), Xtype.Pointer(x.Type()));
 	  //xx = Xcons.PointerRef(Xcons.SymbolRef(id));
 	  Ident id = Ident.Local("l_" + x.getSym(), x.Type());
