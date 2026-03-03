@@ -234,6 +234,7 @@ public class XMPtransPragma
       return XMPtransCoarrayRun.translateImageDirective(pb, info);
 
     case PARALLEL_FOR:
+    case PARALLEL_REDUCE:
       return translateParallelFor(pb, info);
       
     case ARRAY:
@@ -1283,9 +1284,12 @@ public class XMPtransPragma
     Block b = Bcons.emptyBlock();
     BasicBlock bb = b.getBasicBlock();
 
+    XMPpragma kind = info.pragma;
+    
     XobjList dataList = info.getDataList();
     XobjList onList = info.getOnList();
     XobjList tileList = info.getTileList();
+    XobjList reductionList = info.getReductionList();
 
     assert dataList != null || !dataList.isEmptyList() || dataList != Xcons.List();
     assert onList != null || !onList.isEmptyList() || onList != Xcons.List();
@@ -1402,6 +1406,7 @@ public class XMPtransPragma
 	paramDecls.add(Xcons.List(Xcode.VAR_DECL, param_upper));
     }
 
+    tileList = null;
     if (tileList != null){
 	Iterator<Xobject> z = tileList.iterator();
 	while (z.hasNext()){
@@ -1416,6 +1421,25 @@ public class XMPtransPragma
 	    paramList.add(param_tile);
 	    paramDecls.add(Xcons.List(Xcode.VAR_DECL, param_tile));
 	}
+    }
+
+    if (reductionList != null){
+      // FIXME: assuming that only one reducer and SUM
+      Xobject reducer = reductionList.getArg(1).getArg(0).getArg(0);
+
+      if (reducer.Type().isFarray()){
+	  ; // should be an error
+      }
+      else {
+	args.add(reducer);
+	paramList.add(reducer);
+	Xobject dummy = reducer.copy();
+	Xtype dummy_type = dummy.Type().copy();
+	dummy_type.setIsFparameter(false);
+	dummy.setType(dummy_type);
+	paramDecls.add(Xcons.List(Xcode.VAR_DECL, dummy));
+      }
+
     }
     
     bb.add(f0.callSubroutine(args));
@@ -1442,7 +1466,8 @@ public class XMPtransPragma
       env.getEnv().setProp(F2KOKKOS, f2kks);
     }
 
-    XobjectDef kksFunc = f2kks.generateKKSFunc(loopBody, dataList, onList, tileList, num_kernels);
+    XobjectDef kksFunc = f2kks.generateKKSFunc(kind, loopBody,
+					       dataList, onList, tileList, reductionList, num_kernels);
 
     //KKSdecompiler.decompile(kksFunc, env.getEnv());
     f2kks.decompile(kksFunc);

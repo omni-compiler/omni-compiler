@@ -20,7 +20,7 @@ public class Xtype
     public final static int F_ARRAY         = 8;
     public final static int XMP_CO_ARRAY    = 9;
     public final static int F_COARRAY       = 10;        // ID=060
-
+    
     final static String kind_names[] = {
         "UNDEF",
         "BASIC",
@@ -85,6 +85,8 @@ public class Xtype
     public static final long TQ_GLOBAL           = 1L << 38;  // __global (OpenCL)
     public static final long TQ_LOCAL            = 1L << 39;  // __local (OpenCL)
 
+    public static final long TQ_REFERENCE        = 1L << 40;  // reference (C++)
+    
     private String type_id;
     private int type_kind;
 
@@ -840,6 +842,16 @@ public class Xtype
         setTypeQualFlag(TQ_GLOBAL, enabled);
     }
 
+    public final boolean isReference()
+    {
+	return getTypeQualFlag(TQ_REFERENCE);
+    }
+    
+    public final void setIsReference(boolean enabled)
+    {
+        setTypeQualFlag(TQ_REFERENCE, enabled);
+    }
+    
     /** Fortran : return if is qualified by 'bind' in pointer decl */
     public final String getBind()
     {

@@ -53,7 +53,8 @@ public class F2Kokkos {
   // generate Kokkos code
   //
   
-  public XobjectDef generateKKSFunc(BlockList loopBody, XobjList dataList, XobjList onList, XobjList tileList,
+  public XobjectDef generateKKSFunc(XMPpragma kind, BlockList loopBody,
+				    XobjList dataList, XobjList onList, XobjList tileList, XobjList reductionList,
 				    int num_kernels){
 
     XmOption.setLanguage(XmLanguage.C);
@@ -102,7 +103,13 @@ public class F2Kokkos {
       Xobject len = Xcons.binaryOp(Xcode.MINUS_EXPR, param_upper.Ref(), lb);
       lenList.add(len);
     }
-    
+
+    if (reductionList != null){
+      Xobject reducer = reductionList.getArg(1).getArg(0).getArg(0);
+      Ident param_reducer = Ident.Param(reducer.getName(), Xtype.Pointer(F2CPP_type(reducer.Type())));
+      KKSFuncParams.add(param_reducer);
+    }
+
     // Ident nd_array_x = Ident.Param("nd_array_x", Xtype.Pointer(Xtype.intType));
     // Ident nd_array_y = Ident.Param("nd_array_y", Xtype.Pointer(Xtype.intType));
     // Ident a = Ident.Param("a", Xtype.floatType);
@@ -163,8 +170,14 @@ public class F2Kokkos {
     //
     // The kernel
     //
-    
-    Ident kernelId = Ident.Local("parallel_for", Xtype.Function(Xtype.voidType));
+
+    Ident kernelId = null;
+    if (kind == XMPpragma.PARALLEL_FOR){
+      kernelId = Ident.Local("parallel_for", Xtype.Function(Xtype.voidType));
+    }
+    else {
+      kernelId = Ident.Local("parallel_reduce", Xtype.Function(Xtype.voidType));
+    }
 
     Xobject kernelArgs = Xcons.List();
     kernelArgs.add(Xcons.StringConstant(XMP.kokkos_sub_f + String.valueOf(num_kernels)));
@@ -200,17 +213,31 @@ public class F2Kokkos {
       kokkosLambdaParams.add(Ident.Local(a.getName(), Xtype.intType));
     }
 
+    if (reductionList != null){
+      Xobject x = reductionList.getArg(1).getArg(0).getArg(0);
+      //Ident id = Ident.Local("l_" + x.getSym(), Xtype.Pointer(x.Type()));
+      Xtype type = x.Type().copy(); type.setIsReference(true);
+      Ident id = Ident.Local("l_" + x.getSym(), type);
+      kokkosLambdaParams.add(id);
+    }
+    
     // translate loop body
 
-    loopBody = F2CPP_loopBody(loopBody);
+    loopBody = F2CPP_loopBody(loopBody, reductionList);
     Block kernelBlock = Bcons.COMPOUND(loopBody);
 
     Xobject kokkos_lambda = Xcons.List(Xcode.FUNCTION_DEFINITION, kokkosLambdaId, kokkosLambdaParams,
 				       null, kernelBlock.toXobject());
     
     kernelArgs.add(kokkos_lambda);
-    Xobject parallel_for = Xcons.functionCall(kernelId, kernelArgs);
-    KKSBlockList.add(Bcons.Statement(parallel_for));
+
+    if (kind == XMPpragma.PARALLEL_REDUCE){
+      Xobject result = reductionList.getArg(1).getArg(0).getArg(0);
+      kernelArgs.add(result);
+    }
+    
+    Xobject kernel = Xcons.functionCall(kernelId, kernelArgs);
+    KKSBlockList.add(Bcons.Statement(kernel));
 
     // generate Kokkos::fence
 
@@ -230,14 +257,14 @@ public class F2Kokkos {
   }
 
   
-  public BlockList F2CPP_loopBody(BlockList loopBody){
+  public BlockList F2CPP_loopBody(BlockList loopBody, XobjList reductionList){
     Xobject loopObject = loopBody.toXobject();
-    loopObject = F2CPP_Xobject(loopObject);
+    loopObject = F2CPP_Xobject(loopObject, reductionList);
     return Bcons.buildList(loopObject);
   }
 
   
-  public Xobject F2CPP_Xobject(Xobject x){
+  public Xobject F2CPP_Xobject(Xobject x, XobjList reductionList){
 
     Xobject xx = null;
 
@@ -248,12 +275,13 @@ public class F2Kokkos {
       case LIST:
 	xx = Xcons.List();
 	for (Xobject s : (XobjList)x){
-	  xx.add(F2CPP_Xobject(s));
+	  xx.add(F2CPP_Xobject(s, reductionList));
 	}
 	break;
 	  
       case F_ASSIGN_STATEMENT: {
-	xx = Xcons.List(Xcode.EXPR_STATEMENT, Xcons.Set(F2CPP_Xobject(x.getArg(0)), F2CPP_Xobject(x.getArg(1))));
+	xx = Xcons.List(Xcode.EXPR_STATEMENT, Xcons.Set(F2CPP_Xobject(x.getArg(0), reductionList),
+							F2CPP_Xobject(x.getArg(1), reductionList)));
 	break;
       }
       
@@ -261,7 +289,8 @@ public class F2Kokkos {
       case MINUS_EXPR:
       case MUL_EXPR:
       case DIV_EXPR:
-	xx = Xcons.binaryOp(x.Opcode(), F2CPP_Xobject(x.left()), F2CPP_Xobject(x.right()));
+	xx = Xcons.binaryOp(x.Opcode(), F2CPP_Xobject(x.left(), reductionList),
+			                F2CPP_Xobject(x.right(), reductionList));
 	break;
 	
       case INT_CONSTANT:
@@ -283,18 +312,26 @@ public class F2Kokkos {
       }
 	  
       case F_ARRAY_REF: {
-	xx = Xcons.arrayRef(x.Type(), F2CPP_Xobject(x.getArg(0)), (XobjList)F2CPP_Xobject(x.getArg(1)));
+	xx = Xcons.arrayRef(x.Type(), F2CPP_Xobject(x.getArg(0), reductionList),
+			              (XobjList)F2CPP_Xobject(x.getArg(1), reductionList));
 	break;
       }
 
       case F_ARRAY_INDEX:
-	xx = F2CPP_Xobject(x.getArg(0));
+	xx = F2CPP_Xobject(x.getArg(0), reductionList);
 	break;
 
       case VAR:
 
 	// must be fixed.
-	if (x.Type().equals(Xtype.intType)){
+	if (x.getSym().equals(reductionList.getArg(1).getArg(0).getArg(0).getSym())){
+	  //Ident id = Ident.Local("l_" + x.getSym(), Xtype.Pointer(x.Type()));
+	  //xx = Xcons.PointerRef(Xcons.SymbolRef(id));
+	  Ident id = Ident.Local("l_" + x.getSym(), x.Type());
+	  xx = Xcons.SymbolRef(id);
+	}
+	// must be fixed.
+	else if (x.Type().equals(Xtype.intType)){
 	  xx = x.copy();
 	}
 	else {
@@ -308,7 +345,7 @@ public class F2Kokkos {
 	String fname = x.left().getSym();
 	switch (fname){
 	case "dble":
-	  xx = Xcons.Cast(Xtype.floatType, F2CPP_Xobject(x.right()));
+	  xx = Xcons.Cast(Xtype.floatType, F2CPP_Xobject(x.right(), reductionList));
 	  return xx;
 	case "dabs":
 	  fname = "Kokkos::fabs";
@@ -320,7 +357,7 @@ public class F2Kokkos {
 	  fname = "Kokkos::cos";
 	  break;
 	}
-	Xobject args = F2CPP_Xobject(x.right());
+	Xobject args = F2CPP_Xobject(x.right(), reductionList);
 	xx = Xcons.functionCall(Ident.Local(fname, Xtype.Function(F2CPP_type(x.Type()))), args);
 	break;
       }

@@ -608,6 +608,7 @@ public class KKSdecompileWriter extends PrintWriter {
             fatal("makeTypeName: bad basic type "+type);
             break;
         }
+	if (type.isReference()) typename += " &";
         return typename;
       case Xtype.STRUCT:
         {

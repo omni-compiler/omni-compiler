@@ -271,6 +271,7 @@ public class XMPanalyzePragma
       break;
 
     case PARALLEL_FOR:
+    case PARALLEL_REDUCE:
       analyzeParallelFor(pb.getClauses(), pb.getBody(), info, pb);
       break;
       
@@ -871,9 +872,13 @@ public class XMPanalyzePragma
     XobjList dataList = (XobjList)parallelForDecl.getArg(0);
     XobjList onList   = (XobjList)parallelForDecl.getArg(1);
     XobjList tileList = null;
+    XobjList reductionList = null;
 
-    if (parallelForDecl.Nargs() == 3)
+    if (parallelForDecl.Nargs() >= 3)
       tileList = (XobjList)parallelForDecl.getArg(2);
+
+    if (parallelForDecl.Nargs() == 4)
+      reductionList = (XobjList)parallelForDecl.getArg(3);
 
     while (true){
       ForBlock loopBlock = getOutermostLoopBlock(loopBody);
@@ -900,7 +905,7 @@ public class XMPanalyzePragma
     //   loopBlock = getOutermostLoopBlock(loopBody);
     // }
     
-    info.setParallelFor(dims, dataList, onList, tileList);
+    info.setParallelFor(dims, dataList, onList, tileList, reductionList);
     info.setBody(loopBody);
 
   }

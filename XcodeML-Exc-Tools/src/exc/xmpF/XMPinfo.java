@@ -58,6 +58,8 @@ public class XMPinfo
   XobjList dataList;
   XobjList onList;
   XobjList tileList;
+  // for PARALLEL_REDUCE
+  XobjList reductionList;
     
   public XMPinfo(XMPpragma pragma, XMPinfo parent, Block b, XMPenv env) {
     this.pragma = pragma;
@@ -197,12 +199,15 @@ public class XMPinfo
   public XobjList getDataList() { return dataList; }
   public XobjList getOnList() { return onList; }
   public XobjList getTileList() { return tileList; }
+  public XobjList getReductionList() { return reductionList; }
 
-  public void setParallelFor(Vector<XMPdimInfo> dims, XobjList _dataList, XobjList _onList, XobjList _tileList){
+  public void setParallelFor(Vector<XMPdimInfo> dims,
+			     XobjList _dataList, XobjList _onList, XobjList _tileList, XobjList _reductionList){
     loop_dims = dims;
     dataList = _dataList;
     onList = _onList;
     tileList = _tileList;
+    reductionList = _reductionList;
   }
     
 }
