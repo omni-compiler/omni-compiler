@@ -8,6 +8,7 @@ import xcodeml.util.XmOption;
 import xcodeml.util.XmLanguage;
 import java.io.*;
 import java.util.*;
+import xcodeml.util.IXobject;
 
 /**
  * F2Kokkos
@@ -17,7 +18,7 @@ public class F2Kokkos {
   private KKSdecompileWriter out = null;
   private static final int BUFFER_SIZE = 4096;
   private static final String KKS_SRC_EXTENSION = "_kks.cc";
-
+  private XobjList _KKSFuncParams = null;
   
   // constructor
   public F2Kokkos(XobjectFile env){
@@ -61,7 +62,8 @@ public class F2Kokkos {
 
     Vector<Integer> ndims = new Vector<>();
     XobjList lbList = Xcons.List();
-    XobjList lenList = Xcons.List();
+    XobjList ubList = Xcons.List();
+    XobjList tList = Xcons.List();
     
     // The wrapper
     
@@ -71,7 +73,7 @@ public class F2Kokkos {
     // The parameters
     //
     
-    Xobject KKSFuncParams = Xcons.List();
+    Xobject KKSFuncParams = Xcons.List(Xcode.ID_LIST);
     Xobject view_from_ndarray_args = Xcons.List();
 
     // "00000" is a dummy.
@@ -82,6 +84,8 @@ public class F2Kokkos {
       if (a.Type().isFarray()){
 	Ident nd_array_param = Ident.Param("nd_array_" + a.getName(), Xtype.Pointer(flcl_ndarray_t));
 	KKSFuncParams.add(nd_array_param);
+	Ident array_lb_param = Ident.Param(a.getName() + "_lb", Xtype.Pointer(Xtype.intType));
+	KKSFuncParams.add(array_lb_param);
 	view_from_ndarray_args.add(nd_array_param.Ref());
 	ndims.add(((FarrayType)a.Type()).getNumDimensions());
       }
@@ -96,17 +100,21 @@ public class F2Kokkos {
       Ident param_upper = Ident.Param(a.getName() + "_ub", Xtype.intType);
       KKSFuncParams.add(param_lower);
       KKSFuncParams.add(param_upper);
-
-      Xobject lb = Xcons.binaryOp(Xcode.MINUS_EXPR, param_lower.Ref(), Xcons.IntConstant(1));
-      lbList.add(lb);
-
-      Xobject len = Xcons.binaryOp(Xcode.MINUS_EXPR, param_upper.Ref(), lb);
-      lenList.add(len);
+      lbList.add(param_lower.Ref());
+      ubList.add(param_upper.Ref());
     }
 
+    int tdim = 0;
+    for (Xobject t: tileList){
+      Ident param_t = Ident.Param("t" + String.valueOf(tdim++), Xtype.intType);
+      KKSFuncParams.add(param_t);
+      tList.add(param_t.Ref());
+    }
+    
+    Ident param_reducer = null;
     if (reductionList != null){
       Xobject reducer = reductionList.getArg(1).getArg(0).getArg(0);
-      Ident param_reducer = Ident.Param(reducer.getName(), Xtype.Pointer(F2CPP_type(reducer.Type())));
+      param_reducer = Ident.Param(reducer.getName(), Xtype.Pointer(F2CPP_type(reducer.Type())));
       KKSFuncParams.add(param_reducer);
     }
 
@@ -197,8 +205,8 @@ public class F2Kokkos {
     //MDRangePolicyArgs.add(Xcons.List(ilen.Ref(), jlen.Ref()));
 
     MDRangePolicyArgs.add(lbList);
-    MDRangePolicyArgs.add(lenList);
-
+    MDRangePolicyArgs.add(ubList);
+    if (tList.Nargs() > 0) MDRangePolicyArgs.add(tList);
 
     kernelArgs.add(Xcons.functionCall(MDRangePolicyId, MDRangePolicyArgs));
 
@@ -223,6 +231,7 @@ public class F2Kokkos {
     
     // translate loop body
 
+    _KKSFuncParams = (XobjList)KKSFuncParams;
     loopBody = F2CPP_loopBody(loopBody, reductionList);
     Block kernelBlock = Bcons.COMPOUND(loopBody);
 
@@ -232,8 +241,8 @@ public class F2Kokkos {
     kernelArgs.add(kokkos_lambda);
 
     if (kind == XMPpragma.PARALLEL_REDUCE){
-      Xobject result = reductionList.getArg(1).getArg(0).getArg(0);
-      kernelArgs.add(result);
+      //Xobject result = reductionList.getArg(1).getArg(0).getArg(0);
+      kernelArgs.add(Xcons.PointerRef(param_reducer.Ref()));
     }
     
     Xobject kernel = Xcons.functionCall(kernelId, kernelArgs);
@@ -312,8 +321,28 @@ public class F2Kokkos {
       }
 	  
       case F_ARRAY_REF: {
-	xx = Xcons.arrayRef(x.Type(), F2CPP_Xobject(x.getArg(0), reductionList),
-			              (XobjList)F2CPP_Xobject(x.getArg(1), reductionList));
+	XobjList orig_indices = (XobjList)x.getArg(1);
+	XobjList new_indices = Xcons.List();
+	FarrayType array_type = (FarrayType)x.getArg(0).Type();
+	for (int i = 0; i < array_type.getNumDimensions(); i++){
+	  Xobject idx = orig_indices.getArg(i).getArg(0);
+
+	  Xobject lb = null;
+	  if (array_type.isFfixedShape()){
+	    lb = array_type.getLbound(i, null);
+	  }
+	  else {
+	    Ident id_lb = _KKSFuncParams.find(x.getArg(0).getArg(0).getSym() + "_lb", IXobject.FINDKIND_VAR);
+	    Xobject array_lb = Xcons.SymbolRef(id_lb);
+	    lb = Xcons.arrayRef(Xtype.intType, array_lb, Xcons.List(Xcons.IntConstant(i)));
+	  }
+
+	  idx = Xcons.binaryOp(Xcode.MINUS_EXPR, F2CPP_Xobject(idx, reductionList), lb);
+	  new_indices.add(idx);
+	}
+
+	xx = Xcons.arrayRef(x.Type(), F2CPP_Xobject(x.getArg(0), reductionList), new_indices);
+
 	break;
       }
 

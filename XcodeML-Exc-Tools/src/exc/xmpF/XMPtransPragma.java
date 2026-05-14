@@ -1297,6 +1297,8 @@ public class XMPtransPragma
     BlockList loopBody = info.getBody();
 
     XobjectDef def = env.getCurrentDef().getDef();
+
+    int lineno = pb.getLineNo().lineNo();
     
     //
     // Add use for the module.
@@ -1339,15 +1341,18 @@ public class XMPtransPragma
     }
     
     Xtype nd_array_t = flcl_mod.getEnv().findIdent("nd_array_t").Type();
+    Xtype lb_t = Xtype.Farray(Xtype.FintType, Xcons.FindexRangeOfAssumedSize());
 
     //
     // Translate the PARALLEL_FOR block.
     //
     
-    Ident f0 = env.declInternIdent(XMP.kokkos_sub_f + String.valueOf(num_kernels), Xtype.FsubroutineType);
+    //Ident f0 = env.declInternIdent(XMP.kokkos_sub_f + String.valueOf(num_kernels), Xtype.FsubroutineType);
+    Ident f0 = env.declInternIdent(XMP.kokkos_sub_f + String.valueOf(lineno), Xtype.FsubroutineType);
     f0.Type().setBind("c");
 
     Ident f1 = flcl_mod.getEnv().findIdent(XMP.to_nd_array_f);
+    Ident lbound = env.declIntrinsicIdent("lbound", Xtype.FintFunctionType);
 
     Iterator<Xobject> x = dataList.iterator();
     while (x.hasNext()){
@@ -1355,10 +1360,16 @@ public class XMPtransPragma
 
 	if (data.Type().isFarray()){
 	  args.add(Xcons.functionCall(f1, Xcons.List(data)));
+	  args.add(Xcons.functionCall(lbound, Xcons.List(data)));
+
 	  Ident nd_array = env.getCurrentDef().getDef().declStaticIdent("nd_array_" + data.getName(), nd_array_t);
-	  //env.getCurrentDef().getDef().getFuncDecls().add(Xcons.List(Xcode.VAR_DECL, nd_array));
+	  Ident lb = env.getCurrentDef().getDef().declStaticIdent(data.getName() + "_lb", lb_t);
+
 	  paramList.add(nd_array);
+	  paramList.add(lb);
+
 	  paramDecls.add(Xcons.List(Xcode.VAR_DECL, nd_array));
+	  paramDecls.add(Xcons.List(Xcode.VAR_DECL, lb));
 	}
 	else {
 	  args.add(data);
@@ -1406,9 +1417,10 @@ public class XMPtransPragma
 	paramDecls.add(Xcons.List(Xcode.VAR_DECL, param_upper));
     }
 
-    tileList = null;
+    //    tileList = null;
     if (tileList != null){
 	Iterator<Xobject> z = tileList.iterator();
+	int tdim = 0;
 	while (z.hasNext()){
 	    Xobject tile = z.next();
 
@@ -1417,7 +1429,7 @@ public class XMPtransPragma
 	    Xtype intType_value = new BasicType(BasicType.INT, Xtype.TQ_FVALUE);
 
 	    // name of the parameters must be temporary because "tiles" can be integer constants.
-	    Xobject param_tile = Ident.Param(tile.getName(), intType_value);
+	    Xobject param_tile = Ident.Param("t" + String.valueOf(tdim++), intType_value);
 	    paramList.add(param_tile);
 	    paramDecls.add(Xcons.List(Xcode.VAR_DECL, param_tile));
 	}
@@ -1466,8 +1478,10 @@ public class XMPtransPragma
       env.getEnv().setProp(F2KOKKOS, f2kks);
     }
 
+    // XobjectDef kksFunc = f2kks.generateKKSFunc(kind, loopBody,
+    // 					       dataList, onList, tileList, reductionList, num_kernels);
     XobjectDef kksFunc = f2kks.generateKKSFunc(kind, loopBody,
-					       dataList, onList, tileList, reductionList, num_kernels);
+     					       dataList, onList, tileList, reductionList, lineno);
 
     //KKSdecompiler.decompile(kksFunc, env.getEnv());
     f2kks.decompile(kksFunc);
