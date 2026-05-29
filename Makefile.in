@@ -10,15 +10,15 @@ FALSE=1
 TRUE=0
 USER=$(shell whoami)
 
-IS_SUPERUX=@SUPERUX@
-ifeq ($(IS_SUPERUX), $(FALSE))
-    SUBDIRS+=libompc/src libompf/src
-endif
+# IS_SUPERUX=@SUPERUX@
+# ifeq ($(IS_SUPERUX), $(FALSE))
+#     SUBDIRS+=libompc/src libompf/src
+# endif
 
-IS_ACC=@ACC@
-ifeq ($(IS_ACC), $(TRUE))
-    SUBDIRS+=libacc/src libacc/include
-endif
+# IS_ACC=@ACC@
+# ifeq ($(IS_ACC), $(TRUE))
+#     SUBDIRS+=libacc/src libacc/include
+# endif
 
 all:
 	@for subdir in $(SUBDIRS) ; do \
