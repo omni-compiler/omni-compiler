@@ -105,10 +105,12 @@ public class F2Kokkos {
     }
 
     int tdim = 0;
-    for (Xobject t: tileList){
-      Ident param_t = Ident.Param("t" + String.valueOf(tdim++), Xtype.intType);
-      KKSFuncParams.add(param_t);
-      tList.add(param_t.Ref());
+    if (tileList != null){
+      for (Xobject t: tileList){
+	Ident param_t = Ident.Param("t" + String.valueOf(tdim++), Xtype.intType);
+	KKSFuncParams.add(param_t);
+	tList.add(param_t.Ref());
+      }
     }
     
     Ident param_reducer = null;
