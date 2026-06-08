@@ -27,7 +27,7 @@ set(INPUT_F90 ${SRC_DIR}/sub.f90)
 #   ${SRC_DIR}/flcl_view_mod.xmod)
 
 set(OUT_KKS_F90 ${GEN_DIR}/sub_kks.f90)
-#set(OUT_KKS_CC  ${GEN_DIR}/sub_kks.cc)
+set(OUT_KKS_CC  ${GEN_DIR}/sub_kks.cc)
 
 #----------------------------
 # Rules for F2Kokkos
