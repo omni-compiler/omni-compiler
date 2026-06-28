@@ -1,6 +1,6 @@
 subroutine sub(a, x, y)
 
-  use iso_fortran_env, only : int64
+!  use iso_fortran_env, only : int64
   
   integer, parameter :: N1 = 4096
   integer, parameter :: N2 = 4096
@@ -8,7 +8,7 @@ subroutine sub(a, x, y)
   real :: a
   real :: x(N1,N2), y(N1,N2)
 
-  integer(int64) :: t0, t1, rate
+  integer(8) :: t0, t1, rate
 
   call system_clock(t0, rate)
 
